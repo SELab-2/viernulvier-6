@@ -4,4 +4,4 @@
 
 
 
-# [Team](operations/team.md)
+[Team](operations/team.md)
