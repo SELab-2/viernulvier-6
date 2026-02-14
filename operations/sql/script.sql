@@ -53,6 +53,7 @@ CREATE TABLE events (
     uitdatabank_id TEXT, -- is this needed?
     secure BOOLEAN, -- waarvoor bestaat dit in viernulvier API?
     production_id UUID NOT NULL REFERENCES productions(id),
+    location_id UUID REFERENCES locations(id),
     hall_id UUID REFERENCES halls(id),
     prices JSONB
 );
