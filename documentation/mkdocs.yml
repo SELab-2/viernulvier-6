@@ -1,0 +1,6 @@
+site_name: viernulvier archief
+nav:
+  - Home: index.md
+  - About: about.md
+  - Deployment: deployment.md
+  - Database: database.md
