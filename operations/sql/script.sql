@@ -6,6 +6,7 @@ CREATE TABLE locations (
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
     vendor_id TEXT, -- geen idee wat dit is
     name TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
     address TEXT -- some sort of address?
 );
 
@@ -14,6 +15,7 @@ CREATE TABLE halls (
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
     name TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
     location_id UUID NOT NULL REFERENCES locations(id)
 );
 
@@ -22,6 +24,7 @@ CREATE TABLE productions (
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
     title TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
     supertitle TEXT,
     artist TEXT,
     minimum_age INTEGER,
@@ -30,13 +33,12 @@ CREATE TABLE productions (
     ends_at TIMESTAMP,
     last_enrollment_at TIMESTAMP,
     notify_registration_email TEXT, -- in API, hier nodig?
-    days_of_week TEXT, -- geen idee wat deze is
     starts_at_description TEXT, -- ook geen idee
     vendor_id TEXT,
     box_office_id TEXT,
     performer_field TEXT, -- ?
     performer_type TEXT,
-    attendance_mode TEXT -- ?
+    attendance_mode TEXT -- in persoon of online
 );
 
 -- Collections for shareable lists of events, blogs and productions
@@ -56,9 +58,6 @@ CREATE TABLE collection_items (
     created_at
 )
 
---- ook mogelijk: single table inheritance / Base entity pattern. shared parent table with subtype tables.
-
-
 CREATE TABLE events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP NOT NULL DEFAULT now(),
@@ -68,12 +67,36 @@ CREATE TABLE events (
     intermission_at TIME,
     doors_at TIME,
     box_office_id TEXT,
-    vendor_id TEXT,
-    max_tickets_per_order INTEGER,
+    vendor_id TEXT, -- what the fuck was this needed for
+    max_tickets_per_order INTEGER, -- do we need this for archive?
     uitdatabank_id TEXT, -- is this needed?
-    secure BOOLEAN, -- waarvoor bestaat dit in viernulvier API?
     production_id UUID NOT NULL REFERENCES productions(id),
     location_id UUID REFERENCES locations(id),
     hall_id UUID REFERENCES halls(id),
     prices JSONB
+);
+
+CREATE TABLE artists (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at TIMESTAMP NOT NULL DEFAULT now(),
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE production_artists (
+    production_id UUID NOT NULL REFERENCES productions(id),
+    artist_id     UUID NOT NULL REFERENCES artists(id),
+    PRIMARY KEY (production_id, artist_id)
+);
+
+CREATE TABLE blogposts (
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at   TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at   TIMESTAMP NOT NULL DEFAULT now(),
+    published_at TIMESTAMP,
+    slug         TEXT NOT NULL UNIQUE,
+    title        TEXT NOT NULL,
+    content      TEXT NOT NULL,
+    author       TEXT NOT NULL
 );
