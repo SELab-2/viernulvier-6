@@ -19,7 +19,7 @@ failures
 
 ### Backend controller
 
-Fastapi
+Rust
 
 ### Documentation
 
@@ -27,4 +27,4 @@ mkdocs in repo
 
 ### Other tech:
 selfhosted github runner on server
-uptime monitor
+uptime monitor op Hetzner VPS
