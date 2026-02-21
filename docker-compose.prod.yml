@@ -1,0 +1,19 @@
+services:
+  backend:
+    image: kayasem/viernulvier:latest
+    container_name: backend_archief
+    restart: always
+    environment:
+      DATABASE_URL: postgres://dev_archief:supersecurepassword@database:5432/archief
+      LOG_LEVEL: info
+    ports:
+      - "3000:3000"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    external: true
