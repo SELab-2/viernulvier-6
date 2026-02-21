@@ -1,4 +1,5 @@
 ### Frontend
+React wss
 
 ### Databank
 
@@ -10,4 +11,20 @@ Postgres biedt daarnaast full-text search in meerdere talen, JSON columns voor f
 Conclusie: Postgres wint door native datetime handling die perfect past bij de use case.
 
 ### Media storage
-min.io
+min.io -> high performance, S3 compatibility (incase they want
+migration and don't want the hassle of self hosting it), good for selfhosting (no vendor lock-in)
+
+-> self hosting means backups, monitoring, TLS, updates, disk
+failures
+
+### Backend controller
+
+Rust
+
+### Documentation
+
+mkdocs in repo
+
+### Other tech:
+selfhosted github runner on server
+uptime monitor op Hetzner VPS

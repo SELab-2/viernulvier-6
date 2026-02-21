@@ -39,6 +39,26 @@ CREATE TABLE productions (
     attendance_mode TEXT -- ?
 );
 
+-- Collections for shareable lists of events, blogs and productions
+
+CREATE TABLE collections (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+title,
+note,
+    created_at
+)
+
+CREATE TABLE collection_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    content_id (UUID)
+    content_type (enum: 'production', 'event', 'blogpost')
+    position -- ordering in the list
+    created_at
+)
+
+--- ook mogelijk: single table inheritance / Base entity pattern. shared parent table with subtype tables.
+
+
 CREATE TABLE events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP NOT NULL DEFAULT now(),
