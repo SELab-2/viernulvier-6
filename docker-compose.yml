@@ -1,0 +1,42 @@
+services:
+  database:
+    image: postgres:18
+    container_name: database
+    restart: always
+    environment:
+      POSTGRES_USER: dev_archief
+      POSTGRES_PASSWORD: supersecurepassword
+      POSTGRES_DB: archief
+    ports:
+      - "5432:5432"
+    volumes:
+      - archief_data:/var/lib/postgresql/18/docker
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev_archief -d archief"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: backend_archief
+    restart: always
+    environment:
+      DATABASE_URL: postgres://dev_archief:supersecurepassword@database:5432/archief
+      LOG_LEVEL: info
+    ports:
+      - "3000:3000"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - app_network
+
+volumes:
+  archief_data:
+
+networks:
+  app_network:
+    driver: bridge
