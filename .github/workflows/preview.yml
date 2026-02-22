@@ -52,12 +52,22 @@ jobs:
           docker compose --env-file .env --env-file infra/preview/.env.preview \
             -f infra/preview/docker-compose.preview.yml up -d --build
 
+      - name: Post preview URL comment
+        if: github.event.action != 'closed'
+        run: |
+          PREVIEW_URL="http://${{ vars.PREVIEW_HOST }}/pr-${{ github.event.pull_request.number }}"
+          echo "Posting preview URL: $PREVIEW_URL"
+          gh pr comment ${{ github.event.pull_request.number }} --body "Preview for this PR is available at $PREVIEW_URL"
+
       - name: Comment preview links
         uses: actions/github-script@v7
+        env:
+          PREVIEW_HOST: ${{ vars.PREVIEW_HOST }}
         with:
           script: |
-            const previewUrl = process.env.PREVIEW_URL;
-            const apiUrl = previewUrl + "/api";
+            const prNumber = context.payload.pull_request.number;
+            const previewUrl = `http://${process.env.PREVIEW_HOST}/pr-${prNumber}`;
+            const apiUrl = `${previewUrl}/api`;
 
             const body =
               "## Preview Environment\n\n" +
@@ -65,7 +75,7 @@ jobs:
               "- API: [Open API](" + apiUrl + ")\n";
 
             await github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: prNumber,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: body
