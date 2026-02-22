@@ -6,6 +6,7 @@ on:
 
 jobs:
   preview:
+    if: github.event.action != 'closed'
     runs-on: self-hosted
     environment: preview
 
@@ -20,25 +21,20 @@ jobs:
           docker compose version
 
       - name: Generate root .env
-        if: github.event.action != 'closed'
-        run: |
-          echo "PROJECT_NAME=${{ vars.PROJECT_NAME }}" > .env
+        run: echo "PROJECT_NAME=${{ vars.PROJECT_NAME }}" > .env
 
       - name: Generate preview env
-        if: github.event.action != 'closed'
         run: |
           mkdir -p infra/preview
           echo "PREVIEW_HOST=${{ vars.PREVIEW_HOST }}" > infra/preview/.env.preview
           echo "PREVIEW_NAME=pr-${{ github.event.pull_request.number }}" >> infra/preview/.env.preview
           echo "COMPOSE_PROJECT_NAME=${{ vars.PROJECT_NAME }}-preview-pr-${{ github.event.pull_request.number }}" >> infra/preview/.env.preview
-
           echo "PREVIEW_DB_USER=${{ secrets.PREVIEW_DB_USER }}" >> infra/preview/.env.preview
           echo "PREVIEW_DB_PASSWORD=${{ secrets.PREVIEW_DB_PASSWORD }}" >> infra/preview/.env.preview
           echo "PREVIEW_DB_NAME=${{ secrets.PREVIEW_DB_NAME }}" >> infra/preview/.env.preview
 
       - name: Ensure Traefik network exists
-        run: |
-          docker network inspect traefik >/dev/null 2>&1 || docker network create traefik
+        run: docker network inspect traefik >/dev/null 2>&1 || docker network create traefik
 
       - name: Ensure preview Traefik is running
         run: |
@@ -47,7 +43,6 @@ jobs:
           fi
 
       - name: Start preview stack
-        if: github.event.action != 'closed'
         run: |
           docker compose --env-file .env --env-file infra/preview/.env.preview \
             -f infra/preview/docker-compose.preview.yml up -d --build
@@ -82,10 +77,17 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
+      - name: Debug existing preview containers
+        run: docker compose --env-file .env --env-file infra/preview/.env.preview -f infra/preview/docker-compose.preview.yml ps
+
       - name: Cleanup preview stack
         run: |
-          if [ -f infra/preview/.env.preview ]; then
+          if [ -f .env ] && [ -f infra/preview/.env.preview ]; then
             docker compose --env-file .env --env-file infra/preview/.env.preview \
               -f infra/preview/docker-compose.preview.yml down -v || true
             rm -f infra/preview/.env.preview
+            rm -f .env
+            echo "Preview stack stopped."
+          else
+            echo "Skipping docker compose down: missing one or both env files"
           fi
