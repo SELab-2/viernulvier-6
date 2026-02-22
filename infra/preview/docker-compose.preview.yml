@@ -27,9 +27,9 @@ services:
     image: postgres:18
     container_name: ${COMPOSE_PROJECT_NAME}_db
     environment:
-      POSTGRES_USER: preview
-      POSTGRES_PASSWORD: preview
-      POSTGRES_DB: preview_db
+      POSTGRES_USER: ${PREVIEW_DB_USER}
+      POSTGRES_PASSWORD: ${PREVIEW_DB_PASSWORD}
+      POSTGRES_DB: ${PREVIEW_DB_NAME}
     volumes:
       - db_data:/var/lib/postgresql
     networks:
