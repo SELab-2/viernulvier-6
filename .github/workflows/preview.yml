@@ -19,11 +19,16 @@ jobs:
           docker info
           docker compose version
 
+      - name: Generate root .env
+        if: github.event.action != 'closed'
+        run: |
+          echo "PROJECT_NAME=${{ vars.PROJECT_NAME }}" > .env
+
       - name: Generate preview env
         if: github.event.action != 'closed'
         run: |
           mkdir -p infra/preview
-          echo "PROJECT_NAME=${{ vars.PROJECT_NAME }}" > infra/preview/.env.preview
+          echo "PREVIEW_HOST=${{ vars.PREVIEW_HOST }}" > infra/preview/.env.preview
           echo "PREVIEW_NAME=pr-${{ github.event.pull_request.number }}" >> infra/preview/.env.preview
           echo "COMPOSE_PROJECT_NAME=${{ vars.PROJECT_NAME }}-preview-pr-${{ github.event.pull_request.number }}" >> infra/preview/.env.preview
 
