@@ -1,0 +1,42 @@
+name: "Generate Preview Env"
+description: "Generate .env and .env.preview files deterministically"
+
+inputs:
+  pr_number:
+    description: "Pull request number"
+    required: true
+  project_name:
+    description: "Project name"
+    required: true
+  preview_host:
+    description: "Preview host"
+    required: true
+  db_user:
+    required: true
+  db_password:
+    required: true
+  db_name:
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Generate root .env
+      shell: bash
+      run: |
+        echo "PROJECT_NAME=${{ inputs.project_name }}" > .env
+        echo "Generated .env"
+
+    - name: Generate preview env file
+      shell: bash
+      run: |
+        mkdir -p infra/preview
+        cat > infra/preview/.env.preview <<EOF
+        PREVIEW_HOST=${{ inputs.preview_host }}
+        PREVIEW_NAME=pr-${{ inputs.pr_number }}
+        COMPOSE_PROJECT_NAME=${{ inputs.project_name }}-preview-pr-${{ inputs.pr_number }}
+        PREVIEW_DB_USER=${{ inputs.db_user }}
+        PREVIEW_DB_PASSWORD=${{ inputs.db_password }}
+        PREVIEW_DB_NAME=${{ inputs.db_name }}
+        EOF
+        echo "Generated infra/preview/.env.preview"
