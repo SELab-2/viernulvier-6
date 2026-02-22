@@ -4,11 +4,11 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}_frontend
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=PathPrefix(`/${COMPOSE_PROJECT_NAME}`)"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=web"
-      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-strip.stripprefix.prefixes=/${COMPOSE_PROJECT_NAME}"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${COMPOSE_PROJECT_NAME}-strip"
-      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
+      - "traefik.http.routers.${PREVIEW_NAME}.rule=PathPrefix(`/${PREVIEW_NAME}`)"
+      - "traefik.http.routers.${PREVIEW_NAME}.entrypoints=web"
+      - "traefik.http.middlewares.${PREVIEW_NAME}-strip.stripprefix.prefixes=/${PREVIEW_NAME}"
+      - "traefik.http.routers.${PREVIEW_NAME}.middlewares=${PREVIEW_NAME}-strip"
+      - "traefik.http.services.${PREVIEW_NAME}.loadbalancer.server.port=80"
     networks:
       - traefik
 
@@ -17,9 +17,9 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}_api
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.rule=PathPrefix(`/${COMPOSE_PROJECT_NAME}/api`)"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.entrypoints=web"
-      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-api.loadbalancer.server.port=80"
+      - "traefik.http.routers.${PREVIEW_NAME}-api.rule=PathPrefix(`/${PREVIEW_NAME}/api`)"
+      - "traefik.http.routers.${PREVIEW_NAME}-api.entrypoints=web"
+      - "traefik.http.services.${PREVIEW_NAME}-api.loadbalancer.server.port=80"
     networks:
       - traefik
 

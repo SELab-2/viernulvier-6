@@ -1,7 +1,7 @@
 services:
   traefik:
     image: traefik:v3.6.8
-    container_name: traefik
+    container_name: traefik_preview
     command:
       - "--api.dashboard=true"
       - "--log.level=INFO"
