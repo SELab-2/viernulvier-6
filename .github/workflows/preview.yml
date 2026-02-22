@@ -25,6 +25,12 @@ jobs:
       - name: Ensure Traefik network exists
         run: docker network inspect traefik >/dev/null 2>&1 || docker network create traefik
 
+      - name: Ensure preview Traefik is running
+        run: |
+          if [ -z "$(docker ps -q -f name=traefik_preview)" ]; then
+            docker compose -f infra/traefik/docker-compose.yml up -d
+          fi
+
       - name: Start preview stack
         if: github.event.action != 'closed'
         run: |
