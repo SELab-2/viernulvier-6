@@ -145,7 +145,6 @@ jobs:
             const body =
               marker +
               "\n## Preview Environment Stopped\n\n" +
-              "- URL: " + previewUrl + "\n\n" +
               "The preview containers have been stopped and removed because the PR was closed.";
 
             await github.rest.issues.createComment({
