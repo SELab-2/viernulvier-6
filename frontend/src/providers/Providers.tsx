@@ -2,7 +2,7 @@
 
 import { type AbstractIntlMessages } from "next-intl";
 
-import { IntlProvider, /*QueryProvider,*/ ThemeProvider } from "@/providers";
+import { IntlProvider, QueryProvider, ThemeProvider } from "@/providers";
 
 export function Providers({
   children,
@@ -16,9 +16,9 @@ export function Providers({
     return (
         <ThemeProvider>
             <IntlProvider messages={messages} locale={locale}>
-                {/* <QueryProvider> */}
+                <QueryProvider>
                     {children}
-                {/* </QueryProvider> */}
+                </QueryProvider>
             </IntlProvider>
         </ThemeProvider>
     );
