@@ -1,0 +1,45 @@
+services:
+  frontend:
+    image: nginx:alpine # TODO: replace by the proper frontend, this is just for testing purposes
+    container_name: ${COMPOSE_PROJECT_NAME}_frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=PathPrefix(`/${COMPOSE_PROJECT_NAME}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=web"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-strip.stripprefix.prefixes=/${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${COMPOSE_PROJECT_NAME}-strip"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
+    networks:
+      - traefik
+
+  api:
+    image: nginxdemos/hello # TODO: replace by the proper API, this is just for testing purposes
+    container_name: ${COMPOSE_PROJECT_NAME}_api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.rule=PathPrefix(`/${COMPOSE_PROJECT_NAME}/api`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.entrypoints=web"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-api.loadbalancer.server.port=80"
+    networks:
+      - traefik
+
+  db:
+    image: postgres:18
+    container_name: ${COMPOSE_PROJECT_NAME}_db
+    environment:
+      POSTGRES_USER: preview
+      POSTGRES_PASSWORD: preview
+      POSTGRES_DB: preview_db
+    volumes:
+      - db_data:/var/lib/postgresql
+    networks:
+      - internal
+
+volumes:
+  db_data:
+
+networks:
+  traefik:
+    external: true
+  internal:
+    driver: bridge
