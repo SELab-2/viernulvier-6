@@ -4,9 +4,8 @@ import { useCallback } from "react";
 import { MoonIcon, SunIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui";
-import dynamic from "next/dynamic";
 
-const ThemeSwitcherComponent = () => {
+export const ThemeSwitcher = () => {
     const { setTheme, theme } = useTheme();
 
     const toggleTheme = useCallback(() => {
@@ -14,19 +13,12 @@ const ThemeSwitcherComponent = () => {
     }, [setTheme, theme]);
 
     return (
-        <Button variant="outline" size="icon" onClick={toggleTheme}>
-            {theme === "dark" ? (
-                <SunIcon className="h-5 w-5" />
-            ) : (
-                <MoonIcon className="h-5 w-5" />
-            )}
-            <span className="sr-only">Toggle theme</span>
-        </Button>
+        <div className="flex flex-wrap items-center justify-center gap-2 md:flex-row">
+            <Button variant="outline" size="icon" onClick={toggleTheme}>
+                <SunIcon className="hidden [html.dark_&]:block" />
+                <MoonIcon className="hidden [html.light_&]:block" />
+                <span className="sr-only">Toggle theme</span>
+            </Button>
+        </div>
     );
 };
-
-// We exporteren een dynamische versie die SSR volledig uitschakelt
-export const ThemeSwitcher = dynamic(() => Promise.resolve(ThemeSwitcherComponent), {
-    ssr: false,
-    loading: () => <div className="w-9 h-9" />, // Behoudt de placeholder tegen layout shift
-});
