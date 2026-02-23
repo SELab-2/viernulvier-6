@@ -1,0 +1,14 @@
+name: Generate Production Env
+description: Creates a .env file for production using GitHub Secrets
+runs:
+  using: "composite"
+  steps:
+    - name: Create production .env
+      shell: bash
+      run: |
+        echo "COMPOSE_PROJECT_NAME=${{ vars.PROJECT_NAME }}" > .env
+        echo "PROD_DB_USER=${{ secrets.PROD_DB_USER }}" >> .env
+        echo "PROD_DB_PASSWORD=${{ secrets.PROD_DB_PASSWORD }}" >> .env
+        echo "PROD_DB_NAME=${{ secrets.PROD_DB_NAME }}" >> .env
+        echo "PROD_DATABASE_URL=${{ secrets.PROD_DATABASE_URL }}" >> .env
+        echo "PROD_LOG_LEVEL=${{ secrets.PROD_LOG_LEVEL }}" >> .env

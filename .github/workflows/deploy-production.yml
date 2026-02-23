@@ -1,0 +1,42 @@
+name: Deploy Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    environment: production
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Check Docker
+        run: |
+          docker info
+          docker compose version
+
+      - name: Ensure network exists
+        run: docker network inspect app_network >/dev/null 2>&1 || docker network create app_network
+
+      - name: Generate production .env
+        run: |
+          echo "PROD_DB_USER=${{ secrets.PROD_DB_USER }}" > .env
+          echo "PROD_DB_PASSWORD=${{ secrets.PROD_DB_PASSWORD }}" >> .env
+          echo "PROD_DB_NAME=${{ secrets.PROD_DB_NAME }}" >> .env
+          echo "PROD_DATABASE_URL=${{ secrets.PROD_DATABASE_URL }}" >> .env
+          echo "PROD_LOG_LEVEL=${{ secrets.PROD_LOG_LEVEL }}" >> .env
+
+      - name: Pull latest images
+        run: |
+          docker compose --env-file .env -f infra/production/docker-compose.prod.yml pull
+
+      - name: Deploy production stack
+        run: |
+          docker compose --env-file .env -f infra/production/docker-compose.prod.yml up -d --remove-orphans
+
+      - name: Cleanup unused images
+        run: docker image prune -f

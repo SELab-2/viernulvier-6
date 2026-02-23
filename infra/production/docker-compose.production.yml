@@ -1,0 +1,45 @@
+services:
+  backend:
+    image: kayasem/viernulvier-backend:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_backend
+    restart: always
+    environment:
+      DATABASE_URL: ${PROD_DATABASE_URL}
+      LOG_LEVEL: ${PROD_LOG_LEVEL}
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - app_network
+
+  frontend:
+    image: kayasem/${COMPOSE_PROJECT_NAME}_frontend:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_frontend
+    restart: always
+    networks:
+      - app_network
+
+  database:
+    image: postgres:16
+    container_name: ${COMPOSE_PROJECT_NAME}_database
+    restart: always
+    environment:
+      POSTGRES_USER: ${PROD_DB_USER}
+      POSTGRES_PASSWORD: ${PROD_DB_PASSWORD}
+      POSTGRES_DB: ${PROD_DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PROD_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+
+networks:
+  app_network:
+    external: true
