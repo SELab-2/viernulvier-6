@@ -1,4 +1,4 @@
-use rust_backend_template::{config::AppConfig, start_app};
+use viernulvier-api::{config::AppConfig, start_app};
 use std::error::Error;
 use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 

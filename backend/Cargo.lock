@@ -1133,7 +1133,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust_backend_template"
+name = "viernulvier-api"
 version = "0.1.0"
 dependencies = [
  "axum",
