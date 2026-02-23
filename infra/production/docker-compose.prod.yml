@@ -1,6 +1,6 @@
 services:
   backend:
-    image: kayasem/${COMPOSE_PROJECT_NAME}_backend:latest
+    image: kayasem/${COMPOSE_PROJECT_NAME}-backend:latest
     container_name: ${COMPOSE_PROJECT_NAME}_backend
     restart: always
     environment:
@@ -19,7 +19,7 @@ services:
       - "traefik.http.services.main-api.loadbalancer.server.port=3000"
 
   frontend:
-    image: kayasem/${COMPOSE_PROJECT_NAME}_frontend:latest
+    image: kayasem/${COMPOSE_PROJECT_NAME}-frontend:latest
     container_name: ${COMPOSE_PROJECT_NAME}_frontend
     restart: always
     networks:
