@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --ext js,ts,tsx --cache",
-    "lint:fix": "eslint . --ext js,ts,tsx --fix --cache && prettier --write .",
-    "lint:ci": "eslint . --ext js,ts,tsx --max-warnings=0 && prettier --check .",
+    "lint:fix": "eslint . --ext js,ts,tsx --fix --cache && npx prettier --write .",
+    "lint:ci": "eslint . --ext js,ts,tsx --max-warnings=0 && npx prettier --check .",
     "knip": "knip"
   },
   "dependencies": {

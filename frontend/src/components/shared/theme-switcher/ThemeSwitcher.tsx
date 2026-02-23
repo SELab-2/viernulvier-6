@@ -1,24 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import { MoonIcon, SunIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui";
+import dynamic from "next/dynamic";
 
-export const ThemeSwitcher = () => {
+const ThemeSwitcherComponent = () => {
     const { setTheme, theme } = useTheme();
-    const [mounted, setMounted] = useState(false);
-
-    // Prevent hydration mismatch by only rendering icons after mount
-    useEffect(() => {
-        setMounted(true);
-    }, []);
 
     const toggleTheme = useCallback(() => {
         setTheme(theme === "dark" ? "light" : "dark");
     }, [setTheme, theme]);
-
-    if (!mounted) return <div className="w-9 h-9" />; // Placeholder to avoid layout shift
 
     return (
         <Button variant="outline" size="icon" onClick={toggleTheme}>
@@ -31,3 +24,9 @@ export const ThemeSwitcher = () => {
         </Button>
     );
 };
+
+// We exporteren een dynamische versie die SSR volledig uitschakelt
+export const ThemeSwitcher = dynamic(() => Promise.resolve(ThemeSwitcherComponent), {
+    ssr: false,
+    loading: () => <div className="w-9 h-9" />, // Behoudt de placeholder tegen layout shift
+});
