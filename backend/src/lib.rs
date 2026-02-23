@@ -1,9 +1,13 @@
-use crate::{config::AppConfig, error::AppError, handlers::version::VersionHandler};
+use crate::{
+    api::import::get_productions, config::AppConfig, error::AppError,
+    handlers::version::VersionHandler,
+};
 use axum::{Router, routing::get};
 use database::Database;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::info;
 
+mod api;
 pub mod config;
 mod error;
 mod extractors;
@@ -16,6 +20,13 @@ pub struct AppState {
 }
 
 pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
+    let mut page = 1;
+    while let prods = get_productions(&config.api_key_404, page).await.unwrap()
+        && prods.view.next.is_some()
+    {
+        dbg!(&prods.view);
+        page += 1;
+    }
     let db = Database::create_connect_migrate(&config.database_url).await?;
 
     let state = AppState { db, config };
