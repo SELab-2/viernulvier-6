@@ -1,14 +1,17 @@
 services:
   frontend:
-    image: nginx:alpine # TODO: replace by the proper frontend, this is just for testing purposes
+    build:
+      context: ../../frontend
     container_name: ${COMPOSE_PROJECT_NAME}_frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=/${PREVIEW_NAME}/api
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${PREVIEW_NAME}.rule=PathPrefix(`/${PREVIEW_NAME}`)"
       - "traefik.http.routers.${PREVIEW_NAME}.entrypoints=web"
       - "traefik.http.middlewares.${PREVIEW_NAME}-strip.stripprefix.prefixes=/${PREVIEW_NAME}"
       - "traefik.http.routers.${PREVIEW_NAME}.middlewares=${PREVIEW_NAME}-strip"
-      - "traefik.http.services.${PREVIEW_NAME}.loadbalancer.server.port=80"
+      - "traefik.http.services.${PREVIEW_NAME}.loadbalancer.server.port=3000"
     networks:
       - traefik
 

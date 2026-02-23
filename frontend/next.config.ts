@@ -9,8 +9,10 @@ const withBundleAnalyzer = bundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
+    output: "standalone",
     reactCompiler: true,
 
+    // Local dev env
     turbopack: {
         rules: {
             "*.svg": {
@@ -20,6 +22,7 @@ const nextConfig: NextConfig = {
         },
     },
 
+    // Production build
     webpack(config: Configuration) {
         // Ensure module and rules exist on the config object
         if (!config.module || !config.module.rules) return config;

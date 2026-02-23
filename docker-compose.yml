@@ -19,6 +19,19 @@ services:
       timeout: 5s
       retries: 5
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend_archief
+    restart: always
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:3000
+    ports:
+      - "3001:3000"
+    networks:
+      - app_network
+
 volumes:
   archief_data:
 
