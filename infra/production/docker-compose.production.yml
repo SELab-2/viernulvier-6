@@ -25,6 +25,9 @@ services:
     networks:
       - app_network
       - traefik
+    environment:
+      - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_SITE_URL}/api
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.main.rule=PathPrefix(`/main`)"
