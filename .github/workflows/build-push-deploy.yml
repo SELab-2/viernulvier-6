@@ -64,6 +64,7 @@ jobs:
         uses: ./.github/actions/generate-prod-env
         with:
           project_name: ${{ vars.PROJECT_NAME }}
+          prod_host: ${{ vars.PROD_HOST }}
           db_user: ${{ secrets.PROD_DB_USER }}
           db_password: ${{ secrets.PROD_DB_PASSWORD }}
           db_name: ${{ secrets.PROD_DB_NAME }}
@@ -79,3 +80,4 @@ jobs:
 
       - name: Cleanup unused images
         run: docker image prune -f
+
