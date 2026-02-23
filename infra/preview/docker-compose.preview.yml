@@ -19,6 +19,7 @@ services:
       - "traefik.http.services.${PREVIEW_NAME}.loadbalancer.server.port=3000"
     networks:
       - traefik
+      - internal
 
   api:
     image: nginxdemos/hello # TODO: replace by the proper API, this is just for testing purposes
@@ -30,6 +31,7 @@ services:
       - "traefik.http.services.${PREVIEW_NAME}-api.loadbalancer.server.port=80"
     networks:
       - traefik
+      - internal
 
   db:
     image: postgres:18

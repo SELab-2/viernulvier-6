@@ -10,7 +10,7 @@ services:
       database:
         condition: service_healthy
     networks:
-      - app_network
+      - internal
       - traefik
     labels:
       - "traefik.enable=true"
@@ -18,13 +18,15 @@ services:
       - "traefik.http.routers.main-api.entrypoints=web"
       - "traefik.http.services.main-api.loadbalancer.server.port=3001"
       - "traefik.http.routers.main-api.priority=10"
+      - "traefik.http.middlewares.api-strip.stripprefix.prefixes=/api"
+      - "traefik.http.routers.main-api.middlewares=api-strip"
 
   frontend:
     image: kayasem/${COMPOSE_PROJECT_NAME}-frontend:latest
     container_name: ${COMPOSE_PROJECT_NAME}_frontend
     restart: always
     networks:
-      - app_network
+      - internal
       - traefik
     environment:
       - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
@@ -47,7 +49,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - app_network
+      - internal
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${PROD_DB_USER}"]
       interval: 10s
@@ -58,7 +60,7 @@ volumes:
   postgres_data:
 
 networks:
-  app_network:
-    external: true
+  internal:
+    driver: bridge
   traefik:
     external: true
