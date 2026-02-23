@@ -29,6 +29,7 @@ jobs:
           db_user: ${{ secrets.PREVIEW_DB_USER }}
           db_password: ${{ secrets.PREVIEW_DB_PASSWORD }}
           db_name: ${{ secrets.PREVIEW_DB_NAME }}
+          public_site_url: ${{ vars.NEXT_PUBLIC_SITE_URL }}
 
       - name: Ensure Traefik network exists
         run: docker network inspect traefik >/dev/null 2>&1 || docker network create traefik
@@ -105,6 +106,7 @@ jobs:
           db_user: ${{ secrets.PREVIEW_DB_USER }}
           db_password: ${{ secrets.PREVIEW_DB_PASSWORD }}
           db_name: ${{ secrets.PREVIEW_DB_NAME }}
+          public_site_url: ${{ vars.NEXT_PUBLIC_SITE_URL }}
 
       - name: Cleanup preview stack
         run: |

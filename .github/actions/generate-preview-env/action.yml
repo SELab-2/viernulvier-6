@@ -17,6 +17,8 @@ inputs:
     required: true
   db_name:
     required: true
+  public_site_url:
+    required: true
 
 runs:
   using: "composite"
@@ -38,5 +40,6 @@ runs:
         PREVIEW_DB_USER=${{ inputs.db_user }}
         PREVIEW_DB_PASSWORD=${{ inputs.db_password }}
         PREVIEW_DB_NAME=${{ inputs.db_name }}
+        NEXT_PUBLIC_SITE_URL=${{ inputs.public_site_url }}
         EOF
         echo "Generated infra/preview/.env.preview"
