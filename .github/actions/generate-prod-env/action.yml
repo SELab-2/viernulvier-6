@@ -5,6 +5,9 @@ inputs:
   project_name:
     description: "Project name"
     required: true
+  prod_host:
+    description: "Host domain"
+    required: true
   db_user:
     description: "Database user"
     required: true
@@ -25,6 +28,7 @@ runs:
       shell: bash
       run: |
         COMPOSE_PROJECT_NAME=${{ inputs.project_name }}
+        PROD_HOST=${{ inputs.prod_host }}
         PROD_DB_USER=${{ inputs.db_user }}
         PROD_DB_PASSWORD=${{ inputs.db_password }}
         PROD_DB_NAME=${{ inputs.db_name }}
@@ -38,7 +42,7 @@ runs:
         PROD_DB_PASSWORD=$PROD_DB_PASSWORD
         PROD_DB_NAME=$PROD_DB_NAME
         PROD_DATABASE_URL=$PROD_DATABASE_URL
-        NEXT_PUBLIC_SITE_URL=PROD_SITE_URL
+        NEXT_PUBLIC_SITE_URL=$PROD_SITE_URL
         EOF
 
         echo "Production .env generated."
