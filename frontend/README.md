@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VIERNULVIER Archief
 
-## Getting Started
+A frontend web application for the VIERNULVIER archive, built with Next.js 16, React 19, and Tailwind CSS v4.
 
-First, run the development server:
+---
+
+## 🛠 Tech Stack
+
+* **Framework:** Next.js 16 (App Router)
+* **Library:** React 19 (with React Compiler)
+* **Language:** TypeScript
+* **Styling:** Tailwind CSS v4, shadcn/ui, `next-themes` (Dark/Light mode)
+* **Data Fetching:** TanStack React Query v5
+* **Internationalization:** `next-intl` (English & Dutch)
+* **Environment Variables:** `@t3-oss/env-nextjs` & Zod
+* **Code Quality:** ESLint, Prettier, Knip (unused dependency/export detection)
+
+---
+
+## 🚀 Getting Started
+
+### 1. Prerequisites
+
+Make sure you have Node.js (v20+ recommended) and `npm` installed.
+
+### 2. Installation
+
+Clone the repository and install the dependencies:
+
+```bash
+npm install
+
+```
+
+### 3. Environment Variables
+
+Create a `.env` or `.env.local` file in the root directory. This project uses `@t3-oss/env-nextjs` for type-safe environment variables. Refer to `src/env.ts` for the required keys.
+
+### 4. Running the Development Server
+
+Start the development server using Turbopack for faster builds:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](https://www.google.com/search?q=http://localhost:3000) to view the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📜 Available Scripts
 
-## Learn More
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Starts the development server with Turbopack. |
+| `npm run build` | Builds the application for production. |
+| `npm run start` | Starts the production server. |
+| `npm run lint` | Runs ESLint to check for code issues. |
+| `npm run lint:fix` | Runs ESLint with the `--fix` flag and formats with Prettier. |
+| `npm run knip` | Runs Knip to find unused files, exports, and dependencies. |
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📁 Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The codebase strictly follows the Next.js App Router paradigm, housed entirely within the `src` directory:
 
-## Deploy on Vercel
+* **`src/app/[locale]/`**: The main application routes, wrapped in the `next-intl` locale segment for routing (`en`, `nl`).
+* **`src/components/`**: React components categorized by purpose:
+* `/layout`: High-level layout components (Header, Footer).
+* `/shared`: Reusable composite components (Theme Switcher, Locale Switcher).
+* `/ui`: Primitive, highly reusable UI components (auto built with shadcn/ui & Radix UI).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+* **`src/config/`**: Static configuration files for SEO and site metadata.
+* **`src/i18n/` & `src/messages/**`: Internationalization setup and the JSON dictionaries (`en.json`, `nl.json`) containing translations.
+* **`src/lib/`**: Utility functions, helpers, and the React Query client setup.
+* **`src/providers/`**: Global context providers (Theme, Query, Intl) wrapped for server/client boundary management.
+* **`src/env.ts`**: Zod schema for runtime environment variable validation.
+
+---
+
+## 🧩 Key Architecture Decisions
+
+* **React Compiler:** This project leverages the `babel-plugin-react-compiler`, reducing the need for manual `useMemo` and `useCallback` hooks.
+* **Type-Safe Environment:** Environment variables are strictly typed. The build will fail if required variables in `src/env.ts` are missing or invalid.
+* **Maintenance:** Use `npm run knip` regularly before committing to ensure no dead code or unused dependencies accumulate in the repository.
