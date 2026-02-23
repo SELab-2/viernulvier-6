@@ -28,6 +28,7 @@ const nextConfig: NextConfig = {
 
     // Local dev env
     turbopack: {
+        root: __dirname,
         rules: {
             "*.svg": {
                 loaders: ["@svgr/webpack"],
