@@ -4,7 +4,8 @@ services:
       context: ../../frontend
     container_name: ${COMPOSE_PROJECT_NAME}_frontend
     environment:
-      - NEXT_PUBLIC_API_URL=/${PREVIEW_NAME}/api
+      NEXT_PUBLIC_API_URL: /${PREVIEW_NAME}/api
+      NEXT_PUBLIC_SITE_URL: /${PREVIEW_NAME}/api
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${PREVIEW_NAME}.rule=PathPrefix(`/${PREVIEW_NAME}`)"
