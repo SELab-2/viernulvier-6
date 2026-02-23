@@ -1,5 +1,12 @@
 -- ipv autoincrement integer gebruik UUID maar de moderne die temporal ordening toelaat
 
+-- Reeksen zie ik inderdaad van bundelingen door middel van tagging. Een reeks is dan een gefilterde lijst van producties op basis van een bepaalde tag. Om hier flexibel mee om te kunnen springen is het wellicht handig om verschillende tag types te kunnen hebben/aanmaken. vb. een set 'genre' tags (concert, theater, ...), een set 'fesitval' tags (Videodroom 2025, Vooruit 100, Dunk Festival, ...), idealiter is dit in het CMS te beheren.
+
+-- > Aangezien tags heel losjes zijn. Kan ad hoc aangemaakt worden en assigned. In CMS etc
+
+--> kalender is niet perse wat ze vragen. Het is echter heel belangrijk om een listview te hebben die op kalender eigenschappen kan worden gefiltered.
+--> zijlijn van zoekbalk grouperen op jaardata? klassering? Moet ook duidelijk zijn dat het niet gaat om een actueel eventoverzicht. (Karel: hoe je de tijdscomponent gaat visualiseren is cruciaal?)
+
 CREATE TABLE locations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP NOT NULL DEFAULT now(),
