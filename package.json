@@ -7,6 +7,6 @@
   },
   "scripts": {
     "prepare": "husky",
-    "dev": "docker network create traefik 2>/dev/null || true && docker compose -f infra/traefik/docker-compose.yml up -d && docker compose -f infra/preview/docker-compose.preview.yml up -d"
+    "dev": "docker network create traefik 2>/dev/null || true && docker compose -f infra/traefik/docker-compose.yml up -d && docker compose -f infra/preview/docker-compose.preview.yml --env-file .env --env-file infra/preview/.env up -d"
   }
 }
