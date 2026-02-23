@@ -9,9 +9,9 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 
-export const LocaleSwitcher = ()=> {
+export const LocaleSwitcher = () => {
     const t = useTranslations("LocaleSwitcher");
     const locale = useLocale();
     const router = useRouter();
@@ -19,10 +19,7 @@ export const LocaleSwitcher = ()=> {
     const params = useParams();
 
     function onSelectChange(nextLocale: string) {
-        router.replace(
-            { pathname, query: params },
-            { locale: nextLocale }
-        );
+        router.replace({ pathname, query: params }, { locale: nextLocale });
     }
 
     return (
@@ -36,4 +33,4 @@ export const LocaleSwitcher = ()=> {
             </SelectContent>
         </Select>
     );
-}
+};
