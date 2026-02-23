@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
     output: "standalone",
     reactCompiler: true,
 
+    basePath: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}` : '',
+    assetPrefix: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}` : '',
+
     // Local dev env
     turbopack: {
         rules: {
