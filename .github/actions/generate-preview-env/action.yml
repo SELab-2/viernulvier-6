@@ -31,12 +31,24 @@ runs:
       shell: bash
       run: |
         mkdir -p infra/preview
-        cat > infra/preview/.env.preview <<EOF
+
         PREVIEW_HOST=${{ inputs.preview_host }}
-        PREVIEW_NAME=pr-${{ inputs.pr_number }}
-        COMPOSE_PROJECT_NAME=${{ inputs.project_name }}-preview-pr-${{ inputs.pr_number }}
+        PREVIEW_NAME="pr-${{ inputs.pr_number }}"
+        COMPOSE_PROJECT_NAME="${{ inputs.project_name }}-preview-pr-${{ inputs.pr_number }}"
         PREVIEW_DB_USER=${{ inputs.db_user }}
         PREVIEW_DB_PASSWORD=${{ inputs.db_password }}
         PREVIEW_DB_NAME=${{ inputs.db_name }}
+
+        PREVIEW_DATABASE_URL="postgres://${PREVIEW_DB_USER}:${PREVIEW_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}_database:5432/${PREVIEW_DB_NAME}"
+
+        cat > infra/preview/.env.preview <<EOF
+        PREVIEW_HOST=$PREVIEW_HOST
+        PREVIEW_NAME=$PREVIEW_NAME
+        COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME
+        PREVIEW_DB_USER=$PREVIEW_DB_USER
+        PREVIEW_DB_PASSWORD=$PREVIEW_DB_PASSWORD
+        PREVIEW_DB_NAME=$PREVIEW_DB_NAME
+        PREVIEW_DATABASE_URL=$PREVIEW_DATABASE_URL
         EOF
+
         echo "Generated infra/preview/.env.preview"
