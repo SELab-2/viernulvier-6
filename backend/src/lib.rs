@@ -28,7 +28,7 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
         .with_state(state);
 
     // start server
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3001").await?;
     info!("Listening on http://{}/", listener.local_addr().unwrap());
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
