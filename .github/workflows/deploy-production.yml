@@ -32,6 +32,7 @@ jobs:
           db_user: ${{ secrets.PROD_DB_USER }}
           db_password: ${{ secrets.PROD_DB_PASSWORD }}
           db_name: ${{ secrets.PROD_DB_NAME }}
+          public_site_url: ${{ vars.NEXT_PUBLIC_SITE_URL }}
 
       - name: Pull latest images
         run: |
