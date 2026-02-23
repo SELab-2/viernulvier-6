@@ -22,13 +22,13 @@ jobs:
       - name: Ensure network exists
         run: docker network inspect app_network >/dev/null 2>&1 || docker network create app_network
 
-      - name: Generate production .env
-        run: |
-          echo "PROD_DB_USER=${{ secrets.PROD_DB_USER }}" > .env
-          echo "PROD_DB_PASSWORD=${{ secrets.PROD_DB_PASSWORD }}" >> .env
-          echo "PROD_DB_NAME=${{ secrets.PROD_DB_NAME }}" >> .env
-          echo "PROD_DATABASE_URL=${{ secrets.PROD_DATABASE_URL }}" >> .env
-          echo "PROD_LOG_LEVEL=${{ secrets.PROD_LOG_LEVEL }}" >> .env
+      - name: Generate production env
+        uses: ./.github/actions/generate-prod-env
+        with:
+          project_name: ${{ vars.PROJECT_NAME }}
+          db_user: ${{ secrets.PROD_DB_USER }}
+          db_password: ${{ secrets.PROD_DB_PASSWORD }}
+          db_name: ${{ secrets.PROD_DB_NAME }}
 
       - name: Pull latest images
         run: |
