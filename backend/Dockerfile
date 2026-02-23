@@ -8,4 +8,4 @@ RUN apt-get update && apt-get install -y libssl-dev ca-certificates && rm -rf /v
 WORKDIR /app
 COPY --from=builder /app/target/release/viernulvier_api .
 EXPOSE 3001
-CMD ["./viernulvier-api"]
+CMD ["./viernulvier_api"]
