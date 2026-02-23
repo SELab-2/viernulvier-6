@@ -10,12 +10,12 @@ export const siteConfig: SiteConfig = {
     themeColor: "#ffffff",
     keywords: ["viernulvier", "art", "archive", "kunst", "archief"],
     social: {
-        linkedin: "viernulviergent"
+        linkedin: "viernulviergent",
     },
     //ogImage: "/og.jpg",
     languages: {
         nl: "/nl",
         en: "/en",
-        "x-default": "/nl"
-    }
+        "x-default": "/nl",
+    },
 } as const;

@@ -1,6 +1,6 @@
 export const LOCALES = {
-    nl: { label: "Nederlands", tag: "nl"},
-    en: { label: "English", tag: "en"}
+    nl: { label: "Nederlands", tag: "nl" },
+    en: { label: "English", tag: "en" },
 } as const;
 
 export type LocaleCode = keyof typeof LOCALES;
