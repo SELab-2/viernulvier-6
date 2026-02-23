@@ -15,6 +15,8 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.main-api.rule=PathPrefix(`/api`)"
+      - "traefik.http.middlewares.api-strip.stripprefix.prefixes=/api"
+      - "traefik.http.routers.main-api.middlewares=api-strip"
       - "traefik.http.routers.main-api.entrypoints=web"
       - "traefik.http.services.main-api.loadbalancer.server.port=3001"
       - "traefik.http.routers.main-api.priority=10"
