@@ -9,7 +9,8 @@
         "lint": "eslint . --ext js,ts,tsx --cache",
         "lint:fix": "eslint . --ext js,ts,tsx --fix --cache && npx prettier --write .",
         "lint:ci": "eslint . --ext js,ts,tsx --max-warnings=0 && npx prettier --check .",
-        "knip": "knip"
+        "knip": "knip",
+        "typecheck": "tsc --noEmit"
     },
     "lint-staged": {
         "*.{ts,tsx,js,jsx}": [
