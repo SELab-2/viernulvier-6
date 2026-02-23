@@ -25,6 +25,7 @@ runs:
         PROD_DB_USER=${{ inputs.db_user }}
         PROD_DB_PASSWORD=${{ inputs.db_password }}
         PROD_DB_NAME=${{ inputs.db_name }}
+        PREVIEW_SITE_URL=${{ inputs.public_site_url }}
 
         PROD_DATABASE_URL="postgres://${PROD_DB_USER}:${PROD_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}_database:5432/${PROD_DB_NAME}"
 
@@ -34,6 +35,7 @@ runs:
         PROD_DB_PASSWORD=$PROD_DB_PASSWORD
         PROD_DB_NAME=$PROD_DB_NAME
         PROD_DATABASE_URL=$PROD_DATABASE_URL
+        NEXT_PUBLIC_SITE_URL=$PREVIEW_SITE_URL
         EOF
 
         echo "Production .env generated."
