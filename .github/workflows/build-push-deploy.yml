@@ -1,0 +1,81 @@
+name: CI/CD Pipeline Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-push:
+    runs-on: self-hosted
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            kayasem/${{ vars.PROJECT_NAME }}-backend:latest
+            kayasem/${{ vars.PROJECT_NAME }}-backend:${{ github.sha }}
+
+      - name: Build and push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          build-args: |
+            "NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}"
+            "NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}/api"
+          tags: |
+            kayasem/${{ vars.PROJECT_NAME }}-frontend:latest
+            kayasem/${{ vars.PROJECT_NAME }}-frontend:${{ github.sha }}
+
+    deploy:
+      runs-on: self-hosted
+      environment: production
+      needs: build-push
+
+      steps:
+        - name: Checkout repo
+          uses: actions/checkout@v4
+
+        - name: Check Docker
+          run: |
+            docker info
+            docker compose version
+
+        - name: Ensure app_network exists
+          run: docker network inspect app_network >/dev/null 2>&1 || docker network create app_network
+
+        - name: Ensure traefik network exists
+          run: docker network inspect traefik >/dev/null 2>&1 || docker network create traefik
+
+        - name: Generate production env
+          uses: ./.github/actions/generate-prod-env
+          with:
+            project_name: ${{ vars.PROJECT_NAME }}
+            db_user: ${{ secrets.PROD_DB_USER }}
+            db_password: ${{ secrets.PROD_DB_PASSWORD }}
+            db_name: ${{ secrets.PROD_DB_NAME }}
+            public_site_url: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+
+        - name: Pull latest images
+          run: |
+            docker compose --env-file .env -f infra/production/docker-compose.prod.yml pull
+
+        - name: Deploy production stack
+          run: |
+            docker compose --env-file .env -f infra/production/docker-compose.prod.yml up -d --remove-orphans
+
+        - name: Cleanup unused images
+          run: docker image prune -f
