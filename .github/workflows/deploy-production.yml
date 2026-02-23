@@ -1,0 +1,45 @@
+name: Deploy Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    environment: production
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Check Docker
+        run: |
+          docker info
+          docker compose version
+
+      - name: Ensure app_network exists
+        run: docker network inspect app_network >/dev/null 2>&1 || docker network create app_network
+
+      - name: Ensure traefik network exists
+        run: docker network inspect traefik >/dev/null 2>&1 || docker network create traefik
+
+      - name: Generate production env
+        uses: ./.github/actions/generate-prod-env
+        with:
+          project_name: ${{ vars.PROJECT_NAME }}
+          db_user: ${{ secrets.PROD_DB_USER }}
+          db_password: ${{ secrets.PROD_DB_PASSWORD }}
+          db_name: ${{ secrets.PROD_DB_NAME }}
+
+      - name: Pull latest images
+        run: |
+          docker compose --env-file .env -f infra/production/docker-compose.prod.yml pull
+
+      - name: Deploy production stack
+        run: |
+          docker compose --env-file .env -f infra/production/docker-compose.prod.yml up -d --remove-orphans
+
+      - name: Cleanup unused images
+        run: docker image prune -f
