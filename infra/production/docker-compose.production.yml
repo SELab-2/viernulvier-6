@@ -1,6 +1,6 @@
 services:
   backend:
-    image: kayasem/viernulvier-backend:latest
+    image: kayasem/${COMPOSE_PROJECT_NAME}_backend:latest
     container_name: ${COMPOSE_PROJECT_NAME}_backend
     restart: always
     environment:
@@ -11,6 +11,12 @@ services:
         condition: service_healthy
     networks:
       - app_network
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.main-api.rule=PathPrefix(`/main/api`)"
+      - "traefik.http.routers.main-api.entrypoints=web"
+      - "traefik.http.services.main-api.loadbalancer.server.port=3000"
 
   frontend:
     image: kayasem/${COMPOSE_PROJECT_NAME}_frontend:latest
@@ -18,6 +24,14 @@ services:
     restart: always
     networks:
       - app_network
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.main.rule=PathPrefix(`/main`)"
+      - "traefik.http.routers.main.entrypoints=web"
+      - "traefik.http.middlewares.main-strip.stripprefix.prefixes=/main"
+      - "traefik.http.routers.main.middlewares=main-strip"
+      - "traefik.http.services.main.loadbalancer.server.port=80"
 
   database:
     image: postgres:16
@@ -32,7 +46,7 @@ services:
     networks:
       - app_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${PROD_DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${PROD_DB_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -42,4 +56,6 @@ volumes:
 
 networks:
   app_network:
+    external: true
+  traefik:
     external: true
