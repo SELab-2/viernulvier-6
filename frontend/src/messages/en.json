@@ -1,5 +1,8 @@
 {
   "General": {
     "projectName": "Viernulvier Archive"
+  },
+  "LocaleSwitcher": {
+    "label": "Select language"
   }
 }
