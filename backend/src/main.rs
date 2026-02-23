@@ -1,4 +1,4 @@
-use viernulvier-api::{config::AppConfig, start_app};
+use viernulvier_api::{config::AppConfig, start_app};
 use std::error::Error;
 use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
