@@ -22,13 +22,18 @@ services:
       - internal
 
   api:
-    image: nginxdemos/hello # TODO: replace by the proper API, this is just for testing purposes
+    build:
+      context: ../../backend
     container_name: ${COMPOSE_PROJECT_NAME}_api
+    environment:
+      DATABASE_URL: postgres://${PREVIEW_DB_USER}:${PREVIEW_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}_db:5432/${PREVIEW_DB_NAME}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${PREVIEW_NAME}-api.rule=PathPrefix(`/${PREVIEW_NAME}/api`)"
+      - "traefik.http.middlewares.${PREVIEW_NAME}-api-strip.stripprefix.prefixes=/${PREVIEW_NAME}/api"
+      - "traefik.http.routers.${PREVIEW_NAME}-api.middlewares=${PREVIEW_NAME}-api-strip"
       - "traefik.http.routers.${PREVIEW_NAME}-api.entrypoints=web"
-      - "traefik.http.services.${PREVIEW_NAME}-api.loadbalancer.server.port=80"
+      - "traefik.http.services.${PREVIEW_NAME}-api.loadbalancer.server.port=3001"
     networks:
       - traefik
       - internal
