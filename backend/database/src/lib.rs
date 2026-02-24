@@ -7,7 +7,13 @@ use crate::{
 };
 
 pub mod models {
+    pub mod artist;
+    pub mod blogpost;
+    pub mod collection;
+    pub mod collection_item;
+    pub mod event;
     pub mod internal_state;
+    pub mod production;
     pub mod user;
 }
 
