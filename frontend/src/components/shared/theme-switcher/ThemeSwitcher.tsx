@@ -1,24 +1,59 @@
 "use client";
 
-import { useCallback } from "react";
-import { MoonIcon, SunIcon } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { Button } from "@/components/ui";
+import { useCallback } from "react";
+import { cn } from "@/lib/utils";
 
 export const ThemeSwitcher = () => {
-    const { setTheme, theme } = useTheme();
+    const { theme, setTheme, systemTheme } = useTheme();
 
     const toggleTheme = useCallback(() => {
-        setTheme(theme === "dark" ? "light" : "dark");
-    }, [setTheme, theme]);
+        const current = theme === "system" ? systemTheme : theme;
+        const newTheme = current === "dark" ? "light" : "dark";
+        
+        // Enable transitions
+        document.documentElement.classList.add("theme-transitioning");
+        
+        // Change theme
+        setTheme(newTheme);
+        
+        // Cleanup after animation
+        setTimeout(() => {
+            document.documentElement.classList.remove("theme-transitioning");
+        }, 1000);
+    }, [theme, systemTheme, setTheme]);
+
+    const isDark = (theme === "system" ? systemTheme : theme) === "dark";
 
     return (
-        <div className="flex flex-wrap items-center justify-center gap-2 md:flex-row">
-            <Button variant="outline" size="icon" onClick={toggleTheme}>
-                <SunIcon className="hidden [html.dark_&]:block" />
-                <MoonIcon className="hidden [html.light_&]:block" />
-                <span className="sr-only">Toggle theme</span>
-            </Button>
-        </div>
+        <button
+            onClick={toggleTheme}
+            suppressHydrationWarning
+            className={cn(
+                "relative flex items-center justify-center",
+                "h-9 w-9 rounded-full",
+                "text-muted-foreground hover:text-foreground",
+                "hover:bg-muted/50",
+                "transition-colors",
+                "overflow-hidden"
+            )}
+            aria-label="Toggle theme"
+        >
+            <Sun 
+                className={cn(
+                    "h-4 w-4",
+                    "transition-all duration-700",
+                    isDark ? "rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
+                )} 
+            />
+            <Moon 
+                className={cn(
+                    "absolute h-4 w-4",
+                    "transition-all duration-700",
+                    isDark ? "rotate-0 scale-100 opacity-100" : "-rotate-90 scale-0 opacity-0"
+                )} 
+            />
+        </button>
     );
 };

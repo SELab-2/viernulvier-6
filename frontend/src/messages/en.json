@@ -1,8 +1,17 @@
 {
     "General": {
-        "projectName": "Viernulvier Archive"
+        "projectName": "Archive"
+    },
+    "Navigation": {
+        "home": "Home",
+        "archive": "Archive",
+        "about": "About"
+    },
+    "Hero": {
+        "title": "Archive",
+        "subtitle": "A digital collection of historical moments, documents and stories"
     },
     "LocaleSwitcher": {
-        "label": "Select language"
+        "label": "Language"
     }
 }

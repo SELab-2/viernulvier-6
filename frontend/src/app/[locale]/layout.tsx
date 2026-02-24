@@ -61,16 +61,14 @@ export default async function RootLayout({
     return (
         <html lang={locale} suppressHydrationWarning>
             <body
-                className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen w-full flex-col antialiased`}
+                className={`${geistSans.variable} ${geistMono.variable} min-h-screen w-full antialiased`}
             >
                 <Providers messages={messages} locale={locale} timeZone={timeZone}>
                     <Header />
-                    <main className="flex-1">{children}</main>
+                    {children}
                     <Toaster richColors />
                     <Footer />
                 </Providers>
-
-                {/* {env.NEXT_PUBLIC_GA_ID && <GoogleAnalytics gaId={env.NEXT_PUBLIC_GA_ID} />} */}
             </body>
         </html>
     );

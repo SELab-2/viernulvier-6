@@ -1,6 +1,9 @@
-import { useTranslations } from "next-intl";
+import { Hero } from "@/components/sections";
 
-export default function Home() {
-    const t = useTranslations("General");
-    return <h1>{t("projectName")}</h1>;
+export default function HomePage() {
+    return (
+        <main className="h-screen overflow-hidden">
+            <Hero />
+        </main>
+    );
 }

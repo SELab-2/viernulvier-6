@@ -1,15 +1,34 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { cn } from "@/lib/utils";
 
 export function Footer() {
-    const t = useTranslations("General");
-
+    // Minimal footer - only shows on non-home pages
     return (
-        <footer>
-            <div className="container">
-                <div className="flex items-center justify-center gap-2 py-10">
-                    <span>{t("projectName")}</span>
+        <footer
+            className={cn(
+                "border-t border-border/40",
+                "bg-background/50 backdrop-blur-sm"
+            )}
+        >
+            <div className="container mx-auto px-6 lg:px-8">
+                <div className="flex items-center justify-between py-6">
+                    <span
+                        className={cn(
+                            "text-xs font-mono text-muted-foreground/50",
+                            "tracking-widest"
+                        )}
+                    >
+                        © {new Date().getFullYear()}
+                    </span>
+                    <span
+                        className={cn(
+                            "text-xs font-mono text-muted-foreground/50",
+                            "tracking-widest"
+                        )}
+                    >
+                        ARCHIEF
+                    </span>
                 </div>
             </div>
         </footer>

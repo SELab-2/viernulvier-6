@@ -1,8 +1,17 @@
 {
     "General": {
-        "projectName": "Viernulvier Archief"
+        "projectName": "Archief"
+    },
+    "Navigation": {
+        "home": "Home",
+        "archive": "Archief",
+        "about": "Over"
+    },
+    "Hero": {
+        "title": "Archief",
+        "subtitle": "Een digitale verzameling van historische momenten, documenten en verhalen"
     },
     "LocaleSwitcher": {
-        "label": "Taal selecteren"
+        "label": "Taal"
     }
 }
