@@ -7,6 +7,9 @@ edition = "2024"
 name = "viernulvier_api"
 path = "src/main.rs"
 
+[lints.clippy]
+unused_async = "warn"
+
 [workspace]
 members = ["database"]
 

@@ -63,10 +63,12 @@ impl ApiImporter {
         let current_ts = Utc::now().to_rfc3339();
         let last_update_ts = self.get_last_updated().await;
 
-        self.update_productions(&last_update_ts).await;
+        let res = self.update_productions(&last_update_ts).await;
 
         // save timestamp for next time
-        self.set_last_updated(current_ts).await;
+        if res.is_ok() {
+            self.set_last_updated(current_ts).await;
+        }
     }
 
     /// fetch a collection of objects from the api
@@ -78,7 +80,7 @@ impl ApiImporter {
         page: u32,
         updated_after: &str,
     ) -> Result<ApiCollection<T>, reqwest::Error> {
-        let url = format!("{}{}", API_BASE_URL, path);
+        let url = format!("{API_BASE_URL}{path}");
 
         let mut request = self.client.get(&url).query(&[
             ("page", page.to_string().as_str()),
@@ -121,6 +123,7 @@ impl ApiImporter {
 
         while let Some(batch_result) = stream.next().await {
             let productions = batch_result?;
+            // TODO
             // self.db.productions().insert(&productions).await?;
             debug!("imported {} productions", productions.len());
         }
