@@ -4,7 +4,7 @@ use serde::Deserialize;
 use crate::api::models::localized_text::LocalizedText;
 
 #[derive(Deserialize, Debug)]
-pub struct Production {
+pub struct ApiProduction {
     #[serde(rename = "@id")]
     pub id: String,
     #[serde(rename = "@type")]
@@ -44,6 +44,7 @@ pub struct Production {
     pub media_gallery: Option<String>,
     pub review_gallery: Option<String>,
     pub poster_gallery: Option<String>,
+
     pub uitdatabank_keywords: Vec<String>,
     pub uitdatabank_theme: Option<String>,
     pub uitdatabank_type: Option<String>,

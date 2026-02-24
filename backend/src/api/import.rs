@@ -1,11 +1,11 @@
 use reqwest::Proxy;
 
-use crate::api::models::{collection::ApiCollection, production::Production};
+use crate::api::models::{collection::ApiCollection, production::ApiProduction};
 
 pub async fn get_productions(
     auth_token: &str,
     page: u32,
-) -> Result<ApiCollection<Production>, reqwest::Error> {
+) -> Result<ApiCollection<ApiProduction>, reqwest::Error> {
     let client = reqwest::Client::builder().user_agent("selab6").build()?;
     let response = client
         .get(format!(
@@ -16,7 +16,7 @@ pub async fn get_productions(
         .await?
         .error_for_status()?;
 
-    let collection: ApiCollection<Production> = response.json().await?;
+    let collection: ApiCollection<ApiProduction> = response.json().await?;
 
     dbg!(collection.members.len());
     Ok(collection)
