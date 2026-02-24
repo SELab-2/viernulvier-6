@@ -5,25 +5,33 @@ use uuid::Uuid;
 #[derive(Debug, FromRow, PartialEq)]
 pub struct Production {
     pub id: Uuid,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub slug: String,
 
-    title_nl: String,
-    title_en: String,
-    supertitle_nl: String,
-    supertitle_en: String,
-    artist_nl: String,
-    artist_en: String,
+    pub supertitle: Option<LocalizedText>,
+    pub title_nl: Option<LocalizedText>,
+    pub title_en: Option<LocalizedText>,
+    pub artist: Option<LocalizedText>,
+    pub meta_title: Option<LocalizedText>,
+    pub meta_description: Option<LocalizedText>,
+    pub tagline: Option<LocalizedText>,
+    pub teaser: Option<LocalizedText>,
+    pub description: Option<LocalizedText>,
+    pub description_extra: Option<LocalizedText>,
+    pub description_2: Option<LocalizedText>,
+    pub video_1: Option<LocalizedText>,
+    pub video_2: Option<LocalizedText>,
+    pub quote: Option<LocalizedText>,
+    pub quote_source: Option<LocalizedText>,
+    pub programme: Option<LocalizedText>,
+    pub info: Option<LocalizedText>,
+    pub description_short: Option<LocalizedText>,
+    pub eticket_info: Option<LocalizedText>,
 
-    minimum_age: u8,
-    maximum_age: u8,
-
-    // overall run of the production (not individual event times)
-    started_at: DateTime<Utc>,
-    ended_at: DateTime<Utc>,
-
-    // 'live', 'online', 'mixed', etc
-    attendence_mode: String,
-    vendor_id: String,
+    pub genres: Vec<String>,
+    pub events: Vec<String>,
+    pub media_gallery: Option<String>,
+    pub review_gallery: Option<String>,
+    pub poster_gallery: Option<String>,
+    pub uitdatabank_keywords: Vec<String>,
+    pub uitdatabank_theme: Option<String>,
+    pub uitdatabank_type: Option<String>,
 }
