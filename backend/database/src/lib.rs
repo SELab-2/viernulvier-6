@@ -4,6 +4,7 @@ use crate::{error::DatabaseError, repos::user::UserRepo};
 
 pub mod models {
     pub mod artist;
+    pub mod blogpost;
     pub mod event;
     pub mod production;
     pub mod user;
