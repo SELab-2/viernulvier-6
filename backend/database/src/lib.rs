@@ -3,6 +3,7 @@ use sqlx::{PgPool, postgres::PgPoolOptions};
 use crate::{error::DatabaseError, repos::user::UserRepo};
 
 pub mod models {
+    pub mod artist;
     pub mod event;
     pub mod production;
     pub mod user;
