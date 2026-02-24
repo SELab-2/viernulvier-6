@@ -1,5 +1,7 @@
 use std::env;
 
+use tracing::info;
+
 use crate::error::AppError;
 
 #[derive(Debug, Clone)]
@@ -9,6 +11,7 @@ pub struct AppConfig {
 
 impl AppConfig {
     pub fn load() -> Result<Self, AppError> {
+        info!("loading config from ENV vars");
         Ok(Self {
             database_url: get_env_var("DATABASE_URL")?,
         })

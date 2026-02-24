@@ -1,4 +1,5 @@
 use sqlx::{PgPool, postgres::PgPoolOptions};
+use tracing::info;
 
 use crate::{error::DatabaseError, repos::user::UserRepo};
 
@@ -23,6 +24,7 @@ impl Database {
     }
 
     pub async fn create_connect_migrate(db_url: &str) -> Result<Self, DatabaseError> {
+        info!("connecting to database");
         // connect to database
         let db = PgPoolOptions::new()
             .max_connections(5)
@@ -30,6 +32,7 @@ impl Database {
             .await?;
 
         // run migrations
+        info!("running migrations");
         sqlx::migrate!("../migrations").run(&db).await?;
 
         Ok(Self { db })

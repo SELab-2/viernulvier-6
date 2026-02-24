@@ -10,10 +10,12 @@ path = "src/lib.rs"
 
 [dependencies]
 thiserror = { version = "2.0.16", default-features = false }
+tracing = { version = "=0.1", default-features = false }
 # serde = { version = "1.0.219", default-features = false, features = ["derive"] }
 sqlx = { version = "0.8.6", default-features = false, features = [
     "runtime-tokio",
     "postgres",
     "migrate",
     "macros",
+    "json"
 ] }

@@ -249,6 +249,7 @@ version = "0.1.0"
 dependencies = [
  "sqlx",
  "thiserror",
+ "tracing",
 ]
 
 [[package]]
@@ -1133,20 +1134,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "viernulvier_api"
-version = "0.1.0"
-dependencies = [
- "axum",
- "database",
- "dotenvy",
- "thiserror",
- "tokio",
- "tower-http",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "ryu"
 version = "1.0.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1402,7 +1389,9 @@ dependencies = [
  "serde_json",
  "sha2",
  "sqlx-core",
+ "sqlx-mysql",
  "sqlx-postgres",
+ "sqlx-sqlite",
  "syn",
  "tokio",
  "url",
@@ -1439,6 +1428,7 @@ dependencies = [
  "percent-encoding",
  "rand",
  "rsa",
+ "serde",
  "sha1",
  "sha2",
  "smallvec",
@@ -1502,6 +1492,7 @@ dependencies = [
  "libsqlite3-sys",
  "log",
  "percent-encoding",
+ "serde",
  "serde_urlencoded",
  "sqlx-core",
  "thiserror",
@@ -1823,6 +1814,20 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
+
+[[package]]
+name = "viernulvier_api"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "database",
+ "dotenvy",
+ "thiserror",
+ "tokio",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+]
 
 [[package]]
 name = "wasi"
