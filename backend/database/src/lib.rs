@@ -1,13 +1,18 @@
 use sqlx::{PgPool, postgres::PgPoolOptions};
 use tracing::info;
 
-use crate::{error::DatabaseError, repos::user::UserRepo};
+use crate::{
+    error::DatabaseError,
+    repos::{internal_state::InternalStateRepo, user::UserRepo},
+};
 
 pub mod models {
+    pub mod internal_state;
     pub mod user;
 }
 
 pub mod repos {
+    pub mod internal_state;
     pub mod user;
 }
 
@@ -40,5 +45,9 @@ impl Database {
 
     pub fn users<'a>(&'a self) -> UserRepo<'a> {
         UserRepo::new(&self.db)
+    }
+
+    pub fn internal<'a>(&'a self) -> InternalStateRepo<'a> {
+        InternalStateRepo::new(&self.db)
     }
 }
