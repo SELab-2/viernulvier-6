@@ -1,6 +1,5 @@
 use crate::{
-    api::import::get_productions, config::AppConfig, error::AppError,
-    handlers::version::VersionHandler,
+    api::import::ApiImporter, config::AppConfig, error::AppError, handlers::version::VersionHandler,
 };
 use axum::{Router, routing::get};
 use database::Database;
@@ -20,14 +19,10 @@ pub struct AppState {
 }
 
 pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
-    let mut page = 1;
-    while let prods = get_productions(&config.api_key_404, page).await.unwrap()
-        && prods.view.next.is_some()
-    {
-        dbg!(&prods.view);
-        page += 1;
-    }
     let db = Database::create_connect_migrate(&config.database_url).await?;
+    ApiImporter::new(db.clone(), config.api_key_404.clone())
+        .update_since_last()
+        .await;
 
     let state = AppState { db, config };
 
