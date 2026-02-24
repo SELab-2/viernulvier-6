@@ -14,12 +14,13 @@ services:
       - traefik
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.main-api.rule=PathPrefix(`/api`)"
+      - "traefik.http.routers.main-api.rule=Host(`${PROD_HOST}`) && PathPrefix(`/api`)"
       - "traefik.http.middlewares.api-strip.stripprefix.prefixes=/api"
       - "traefik.http.routers.main-api.middlewares=api-strip"
-      - "traefik.http.routers.main-api.entrypoints=web"
+      - "traefik.http.routers.main-api.entrypoints=websecure"
       - "traefik.http.services.main-api.loadbalancer.server.port=3001"
       - "traefik.http.routers.main-api.priority=10"
+      - "traefik.http.routers.main-api.tls.certresolver=letsencrypt"
 
   frontend:
     image: kayasem/${COMPOSE_PROJECT_NAME}-frontend:latest
@@ -33,10 +34,11 @@ services:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_SITE_URL}/api
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.main.rule=PathPrefix(`/`)"
-      - "traefik.http.routers.main.entrypoints=web"
+      - "traefik.http.routers.main.rule=Host(`${PROD_HOST}`) && PathPrefix(`/`)"
+      - "traefik.http.routers.main.entrypoints=websecure"
       - "traefik.http.services.main.loadbalancer.server.port=3000"
       - "traefik.http.routers.main.priority=1"
+      - "traefik.http.routers.main.tls.certresolver=letsencrypt"
 
   database:
     image: postgres:16
