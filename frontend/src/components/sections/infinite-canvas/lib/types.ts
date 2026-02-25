@@ -10,7 +10,6 @@ export type InfiniteCanvasProps = {
     media: MediaItem[];
     onTextureProgress?: (progress: number) => void;
     showFps?: boolean;
-    showControls?: boolean;
     cameraFov?: number;
     cameraNear?: number;
     cameraFar?: number;
@@ -32,4 +31,11 @@ export type PlaneData = {
     position: THREE.Vector3;
     scale: THREE.Vector3;
     mediaIndex: number;
+};
+
+export type ChunkOffset = {
+    dx: number;
+    dy: number;
+    dz: number;
+    dist: number;
 };

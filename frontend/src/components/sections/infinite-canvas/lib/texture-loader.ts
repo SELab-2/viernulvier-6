@@ -10,7 +10,7 @@ const isTextureLoaded = (tex: THREE.Texture): boolean => {
     return img instanceof HTMLImageElement && img.complete && img.naturalWidth > 0;
 };
 
-export const getTexture = (
+export const loadTexture = (
     item: MediaItem,
     onLoad?: (texture: THREE.Texture) => void
 ): THREE.Texture => {

@@ -3,8 +3,8 @@
 import { Hero } from "@/components/sections";
 import { InfiniteCanvas } from "@/components/sections/infinite-canvas";
 import * as React from "react";
-import { MediaItem } from "@/components/sections/infinite-canvas/types";
-import manifest from "@/components/sections/infinite-canvas/artworks/manifest.json";
+import type { MediaItem } from "@/components/sections/infinite-canvas";
+import manifest from "@/data/artworks-manifest.json";
 
 export default function HomePage() {
     const [media] = React.useState<MediaItem[]>(manifest);
