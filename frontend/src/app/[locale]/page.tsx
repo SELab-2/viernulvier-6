@@ -9,7 +9,7 @@ import manifest from "@/components/sections/infinite-canvas/artworks/manifest.js
 export default function HomePage() {
     const [media] = React.useState<MediaItem[]>(manifest);
     const [textureProgress, setTextureProgress] = React.useState(0);
-
+    console.log(textureProgress);
     return (
         <main className="h-screen overflow-hidden">
             <InfiniteCanvas media={media} onTextureProgress={setTextureProgress} />
