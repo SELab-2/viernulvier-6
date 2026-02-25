@@ -1,16 +1,11 @@
-export const CHUNK_SIZE = 150;
+export const CHUNK_SIZE = 180;
 export const RENDER_DISTANCE = 2;
 export const CHUNK_FADE_MARGIN = 1;
-export const MAX_VELOCITY = 3.2;
 export const DEPTH_FADE_START = 140;
 export const DEPTH_FADE_END = 260;
 export const INVIS_THRESHOLD = 0.01;
-export const KEYBOARD_SPEED = 0.18;
-export const VELOCITY_LERP = 0.16;
-export const VELOCITY_DECAY = 0.9;
 export const INITIAL_CAMERA_Z = 50;
-export const AUTO_DRIFT_SPEED = 0.1;
-export const AUTO_DRIFT_CHANGE_INTERVAL = 8000;
+export const AUTO_DRIFT_SPEED = 0.03;
 
 export type ChunkOffset = {
     dx: number;

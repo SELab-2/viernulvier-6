@@ -1,10 +1,9 @@
 "use client";
 
-import { KeyboardControls, Stats, useKeyboardControls, useProgress } from "@react-three/drei";
+import { Stats, useProgress } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as React from "react";
 import * as THREE from "three";
-import { clamp, lerp } from "./utils";
 import {
     AUTO_DRIFT_SPEED,
     CHUNK_FADE_MARGIN,
@@ -14,54 +13,16 @@ import {
     DEPTH_FADE_START,
     INITIAL_CAMERA_Z,
     INVIS_THRESHOLD,
-    KEYBOARD_SPEED,
-    MAX_VELOCITY,
     RENDER_DISTANCE,
-    VELOCITY_DECAY,
-    VELOCITY_LERP,
 } from "./constants";
 import styles from "./style.module.css";
 import { getTexture } from "./texture-manager";
 import type { ChunkData, InfiniteCanvasProps, MediaItem, PlaneData } from "./types";
-import { generateChunkPlanesCached, getChunkUpdateThrottleMs, shouldThrottleUpdate } from "./utils";
+import { generateChunkPlanesCached, shouldThrottleUpdate } from "./utils";
 
 const PLANE_GEOMETRY = new THREE.PlaneGeometry(1, 1);
 
-const KEYBOARD_MAP = [
-    { name: "forward", keys: ["w", "W", "ArrowUp"] },
-    { name: "backward", keys: ["s", "S", "ArrowDown"] },
-    { name: "left", keys: ["a", "A", "ArrowLeft"] },
-    { name: "right", keys: ["d", "D", "ArrowRight"] },
-    { name: "up", keys: ["e", "E"] },
-    { name: "down", keys: ["q", "Q"] },
-];
-
-type KeyboardKeys = {
-    forward: boolean;
-    backward: boolean;
-    left: boolean;
-    right: boolean;
-    up: boolean;
-    down: boolean;
-};
-
-const getTouchDistance = (touches: Touch[]) => {
-    if (touches.length < 2) {
-        return 0;
-    }
-
-    const [t1, t2] = touches;
-    const dx = t1.clientX - t2.clientX;
-    const dy = t1.clientY - t2.clientY;
-    return Math.sqrt(dx * dx + dy * dy);
-};
-
-type CameraGridState = {
-    cx: number;
-    cy: number;
-    cz: number;
-    camZ: number;
-};
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 function MediaPlane({
     position,
@@ -78,7 +39,7 @@ function MediaPlane({
     chunkCx: number;
     chunkCy: number;
     chunkCz: number;
-    cameraGridRef: React.RefObject<CameraGridState>;
+    cameraGridRef: React.RefObject<{ cx: number; cy: number; cz: number; camZ: number }>;
 }) {
     const meshRef = React.useRef<THREE.Mesh>(null);
     const materialRef = React.useRef<THREE.MeshBasicMaterial>(null);
@@ -92,15 +53,10 @@ function MediaPlane({
         const mesh = meshRef.current;
         const state = localState.current;
 
-        if (!material || !mesh) {
-            return;
-        }
+        if (!material || !mesh) return;
 
         state.frame = (state.frame + 1) & 1;
-
-        if (state.opacity < INVIS_THRESHOLD && !mesh.visible && state.frame === 0) {
-            return;
-        }
+        if (state.opacity < INVIS_THRESHOLD && !mesh.visible && state.frame === 0) return;
 
         const cam = cameraGridRef.current;
         const dist = Math.max(
@@ -146,17 +102,14 @@ function MediaPlane({
         mesh.visible = state.opacity > INVIS_THRESHOLD;
     });
 
-    // Calculate display scale from media dimensions (from manifest)
     const displayScale = React.useMemo(() => {
         if (media.width && media.height) {
             const aspect = media.width / media.height;
             return new THREE.Vector3(scale.y * aspect, scale.y, 1);
         }
-
         return scale;
     }, [media.width, media.height, scale]);
 
-    // Load texture with onLoad callback
     React.useEffect(() => {
         const state = localState.current;
         state.ready = false;
@@ -164,7 +117,6 @@ function MediaPlane({
         setIsReady(false);
 
         const material = materialRef.current;
-
         if (material) {
             material.opacity = 0;
             material.depthWrite = false;
@@ -175,19 +127,15 @@ function MediaPlane({
             state.ready = true;
             setIsReady(true);
         });
-
         setTexture(tex);
     }, [media]);
 
-    // Apply texture when ready
     React.useEffect(() => {
         const material = materialRef.current;
         const mesh = meshRef.current;
         const state = localState.current;
 
-        if (!material || !mesh || !texture || !isReady || !state.ready) {
-            return;
-        }
+        if (!material || !mesh || !texture || !isReady || !state.ready) return;
 
         material.map = texture;
         material.opacity = state.opacity;
@@ -195,9 +143,7 @@ function MediaPlane({
         mesh.scale.copy(displayScale);
     }, [displayScale, texture, isReady]);
 
-    if (!texture || !isReady) {
-        return null;
-    }
+    if (!texture || !isReady) return null;
 
     return (
         <mesh
@@ -223,7 +169,7 @@ function Chunk({
     cy: number;
     cz: number;
     media: MediaItem[];
-    cameraGridRef: React.RefObject<CameraGridState>;
+    cameraGridRef: React.RefObject<{ cx: number; cy: number; cz: number; camZ: number }>;
 }) {
     const [planes, setPlanes] = React.useState<PlaneData[] | null>(null);
 
@@ -233,13 +179,11 @@ function Chunk({
 
         if (typeof requestIdleCallback !== "undefined") {
             const id = requestIdleCallback(run, { timeout: 100 });
-
             return () => {
                 canceled = true;
                 cancelIdleCallback(id);
             };
         }
-
         const id = setTimeout(run, 0);
         return () => {
             canceled = true;
@@ -247,19 +191,13 @@ function Chunk({
         };
     }, [cx, cy, cz]);
 
-    if (!planes) {
-        return null;
-    }
+    if (!planes) return null;
 
     return (
         <group>
             {planes.map((plane) => {
                 const mediaItem = media[plane.mediaIndex % media.length];
-
-                if (!mediaItem) {
-                    return null;
-                }
-
+                if (!mediaItem) return null;
                 return (
                     <MediaPlane
                         key={plane.id}
@@ -277,46 +215,6 @@ function Chunk({
     );
 }
 
-type ControllerState = {
-    velocity: { x: number; y: number; z: number };
-    targetVel: { x: number; y: number; z: number };
-    basePos: { x: number; y: number; z: number };
-    drift: { x: number; y: number };
-    mouse: { x: number; y: number };
-    lastMouse: { x: number; y: number };
-    scrollAccum: number;
-    isDragging: boolean;
-    lastTouches: Touch[];
-    lastTouchDist: number;
-    lastChunkKey: string;
-    lastChunkUpdate: number;
-    pendingChunk: { cx: number; cy: number; cz: number } | null;
-    autoDrift: { x: number; y: number; z: number };
-    lastAutoDriftChange: number;
-    hasUserInteracted: boolean;
-    lastInteractionTime: number;
-};
-
-const createInitialState = (camZ: number): ControllerState => ({
-    velocity: { x: 0, y: 0, z: 0 },
-    targetVel: { x: 0, y: 0, z: 0 },
-    basePos: { x: 0, y: 0, z: camZ },
-    drift: { x: 0, y: 0 },
-    mouse: { x: 0, y: 0 },
-    lastMouse: { x: 0, y: 0 },
-    scrollAccum: 0,
-    isDragging: false,
-    lastTouches: [],
-    lastTouchDist: 0,
-    lastChunkKey: "",
-    lastChunkUpdate: 0,
-    pendingChunk: null,
-    autoDrift: { x: 0.02, y: 0.01, z: 0 },
-    lastAutoDriftChange: 0,
-    hasUserInteracted: false,
-    lastInteractionTime: 0,
-});
-
 function SceneController({
     media,
     onTextureProgress,
@@ -324,17 +222,10 @@ function SceneController({
     media: MediaItem[];
     onTextureProgress?: (progress: number) => void;
 }) {
-    const { camera, gl } = useThree();
-    const [, getKeys] = useKeyboardControls<keyof KeyboardKeys>();
+    const { camera } = useThree();
 
-    const state = React.useRef<ControllerState>(createInitialState(INITIAL_CAMERA_Z));
-    const cameraGridRef = React.useRef<CameraGridState>({
-        cx: 0,
-        cy: 0,
-        cz: 0,
-        camZ: camera.position.z,
-    });
-
+    const pos = React.useRef({ x: 0, y: 0, z: INITIAL_CAMERA_Z });
+    const cameraGridRef = React.useRef({ cx: 0, cy: 0, cz: 0, camZ: INITIAL_CAMERA_Z });
     const [chunks, setChunks] = React.useState<ChunkData[]>([]);
 
     const { progress } = useProgress();
@@ -342,217 +233,14 @@ function SceneController({
 
     React.useEffect(() => {
         const rounded = Math.round(progress);
-
         if (rounded > maxProgress.current) {
             maxProgress.current = rounded;
             onTextureProgress?.(rounded);
         }
     }, [progress, onTextureProgress]);
 
+    // Initialize chunks
     React.useEffect(() => {
-        const canvas = gl.domElement;
-        const s = state.current;
-        canvas.style.setProperty("cursor", "grab");
-
-        const setCursor = (cursor: string) => {
-            canvas.style.setProperty("cursor", cursor);
-        };
-
-        const onMouseDown = (e: MouseEvent) => {
-            // Just start dragging - keep drift frozen at current value
-            s.isDragging = true;
-            s.lastMouse = { x: e.clientX, y: e.clientY };
-            s.hasUserInteracted = true;
-            s.lastInteractionTime = performance.now();
-            setCursor("grabbing");
-        };
-
-        const onMouseUp = () => {
-            s.isDragging = false;
-            setCursor("grab");
-        };
-
-        const onMouseLeave = () => {
-            s.mouse = { x: 0, y: 0 };
-            s.isDragging = false;
-            setCursor("grab");
-        };
-
-        const onMouseMove = (e: MouseEvent) => {
-            s.mouse = {
-                x: (e.clientX / window.innerWidth) * 2 - 1,
-                y: -(e.clientY / window.innerHeight) * 2 + 1,
-            };
-
-            if (s.isDragging) {
-                s.targetVel.x -= (e.clientX - s.lastMouse.x) * 0.025;
-                s.targetVel.y += (e.clientY - s.lastMouse.y) * 0.025;
-                s.lastMouse = { x: e.clientX, y: e.clientY };
-                s.hasUserInteracted = true;
-                s.lastInteractionTime = performance.now();
-            }
-        };
-
-        const onWheel = (e: WheelEvent) => {
-            e.preventDefault();
-            s.scrollAccum += e.deltaY * 0.006;
-            s.hasUserInteracted = true;
-            s.lastInteractionTime = performance.now();
-        };
-
-        const onTouchStart = (e: TouchEvent) => {
-            e.preventDefault();
-            s.lastTouches = Array.from(e.touches) as Touch[];
-            s.lastTouchDist = getTouchDistance(s.lastTouches);
-            s.hasUserInteracted = true;
-            s.lastInteractionTime = performance.now();
-            setCursor("grabbing");
-        };
-
-        const onTouchMove = (e: TouchEvent) => {
-            e.preventDefault();
-            const touches = Array.from(e.touches) as Touch[];
-
-            if (touches.length === 1 && s.lastTouches.length >= 1) {
-                const [touch] = touches;
-                const [last] = s.lastTouches;
-
-                if (touch && last) {
-                    s.targetVel.x -= (touch.clientX - last.clientX) * 0.02;
-                    s.targetVel.y += (touch.clientY - last.clientY) * 0.02;
-                }
-            } else if (touches.length === 2 && s.lastTouchDist > 0) {
-                const dist = getTouchDistance(touches);
-                s.scrollAccum += (s.lastTouchDist - dist) * 0.006;
-                s.lastTouchDist = dist;
-            }
-
-            s.hasUserInteracted = true;
-            s.lastInteractionTime = performance.now();
-            s.lastTouches = touches;
-        };
-
-        const onTouchEnd = (e: TouchEvent) => {
-            s.lastTouches = Array.from(e.touches) as Touch[];
-            s.lastTouchDist = getTouchDistance(s.lastTouches);
-            setCursor("grab");
-        };
-
-        canvas.addEventListener("mousedown", onMouseDown);
-        window.addEventListener("mouseup", onMouseUp);
-        window.addEventListener("mousemove", onMouseMove);
-        canvas.addEventListener("mouseleave", onMouseLeave);
-        canvas.addEventListener("wheel", onWheel, { passive: false });
-        canvas.addEventListener("touchstart", onTouchStart, { passive: false });
-        canvas.addEventListener("touchmove", onTouchMove, { passive: false });
-        canvas.addEventListener("touchend", onTouchEnd, { passive: false });
-
-        return () => {
-            canvas.removeEventListener("mousedown", onMouseDown);
-            window.removeEventListener("mouseup", onMouseUp);
-            window.removeEventListener("mousemove", onMouseMove);
-            canvas.removeEventListener("mouseleave", onMouseLeave);
-            canvas.removeEventListener("wheel", onWheel);
-            canvas.removeEventListener("touchstart", onTouchStart);
-            canvas.removeEventListener("touchmove", onTouchMove);
-            canvas.removeEventListener("touchend", onTouchEnd);
-        };
-    }, [gl]);
-
-    useFrame(() => {
-        const s = state.current;
-        const now = performance.now();
-
-        const { forward, backward, left, right, up, down } = getKeys();
-        if (forward) s.targetVel.z -= KEYBOARD_SPEED;
-        if (backward) s.targetVel.z += KEYBOARD_SPEED;
-        if (left) s.targetVel.x -= KEYBOARD_SPEED;
-        if (right) s.targetVel.x += KEYBOARD_SPEED;
-        if (down) s.targetVel.y -= KEYBOARD_SPEED;
-        if (up) s.targetVel.y += KEYBOARD_SPEED;
-
-        // Check keyboard interaction
-        if (forward || backward || left || right || up || down) {
-            s.hasUserInteracted = true;
-            s.lastInteractionTime = now;
-        }
-
-        // Auto-drift: beweeg langzaam voorwaarts (door de scene heen)
-        const timeSinceInteraction = now - s.lastInteractionTime;
-        const isIdle = !s.isDragging && timeSinceInteraction > 2000;
-
-        if (isIdle) {
-            // Beweeg langzaam voorwaarts in Z richting
-            s.basePos.z -= AUTO_DRIFT_SPEED;
-        }
-
-        const isZooming = Math.abs(s.velocity.z) > 0.05;
-        const zoomFactor = clamp(s.basePos.z / 50, 0.3, 2.0);
-        const driftAmount = 8.0 * zoomFactor;
-        const driftLerp = isZooming ? 0.2 : 0.12;
-
-        if (s.isDragging) {
-            // Freeze drift during drag - keep it at current value
-        } else {
-            s.drift.x = lerp(s.drift.x, s.mouse.x * driftAmount, driftLerp);
-            s.drift.y = lerp(s.drift.y, s.mouse.y * driftAmount, driftLerp);
-        }
-
-        s.targetVel.z += s.scrollAccum;
-        s.scrollAccum *= 0.8;
-
-        s.targetVel.x = clamp(s.targetVel.x, -MAX_VELOCITY, MAX_VELOCITY);
-        s.targetVel.y = clamp(s.targetVel.y, -MAX_VELOCITY, MAX_VELOCITY);
-        s.targetVel.z = clamp(s.targetVel.z, -MAX_VELOCITY, MAX_VELOCITY);
-
-        s.velocity.x = lerp(s.velocity.x, s.targetVel.x, VELOCITY_LERP);
-        s.velocity.y = lerp(s.velocity.y, s.targetVel.y, VELOCITY_LERP);
-        s.velocity.z = lerp(s.velocity.z, s.targetVel.z, VELOCITY_LERP);
-
-        s.basePos.x += s.velocity.x;
-        s.basePos.y += s.velocity.y;
-        s.basePos.z += s.velocity.z;
-
-        camera.position.set(s.basePos.x + s.drift.x, s.basePos.y + s.drift.y, s.basePos.z);
-
-        s.targetVel.x *= VELOCITY_DECAY;
-        s.targetVel.y *= VELOCITY_DECAY;
-        s.targetVel.z *= VELOCITY_DECAY;
-
-        const cx = Math.floor(s.basePos.x / CHUNK_SIZE);
-        const cy = Math.floor(s.basePos.y / CHUNK_SIZE);
-        const cz = Math.floor(s.basePos.z / CHUNK_SIZE);
-
-        cameraGridRef.current = { cx, cy, cz, camZ: s.basePos.z };
-
-        const key = `${cx},${cy},${cz}`;
-        if (key !== s.lastChunkKey) {
-            s.pendingChunk = { cx, cy, cz };
-            s.lastChunkKey = key;
-        }
-
-        const throttleMs = getChunkUpdateThrottleMs(isZooming, Math.abs(s.velocity.z));
-
-        if (s.pendingChunk && shouldThrottleUpdate(s.lastChunkUpdate, throttleMs, now)) {
-            const { cx: ucx, cy: ucy, cz: ucz } = s.pendingChunk;
-            s.pendingChunk = null;
-            s.lastChunkUpdate = now;
-
-            setChunks(
-                CHUNK_OFFSETS.map((o) => ({
-                    key: `${ucx + o.dx},${ucy + o.dy},${ucz + o.dz}`,
-                    cx: ucx + o.dx,
-                    cy: ucy + o.dy,
-                    cz: ucz + o.dz,
-                }))
-            );
-        }
-    });
-
-    React.useEffect(() => {
-        const s = state.current;
-        s.basePos = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
-
         setChunks(
             CHUNK_OFFSETS.map((o) => ({
                 key: `${o.dx},${o.dy},${o.dz}`,
@@ -561,7 +249,37 @@ function SceneController({
                 cz: o.dz,
             }))
         );
-    }, [camera]);
+    }, []);
+
+    const lastChunkUpdate = React.useRef(0);
+
+    useFrame(() => {
+        const now = performance.now();
+
+        // Auto-forward drift
+        pos.current.z -= AUTO_DRIFT_SPEED;
+
+        camera.position.set(pos.current.x, pos.current.y, pos.current.z);
+
+        const cx = Math.floor(pos.current.x / CHUNK_SIZE);
+        const cy = Math.floor(pos.current.y / CHUNK_SIZE);
+        const cz = Math.floor(pos.current.z / CHUNK_SIZE);
+
+        cameraGridRef.current = { cx, cy, cz, camZ: pos.current.z };
+
+        // Update chunks throttled
+        if (shouldThrottleUpdate(lastChunkUpdate.current, 100, now)) {
+            lastChunkUpdate.current = now;
+            setChunks(
+                CHUNK_OFFSETS.map((o) => ({
+                    key: `${cx + o.dx},${cy + o.dy},${cz + o.dz}`,
+                    cx: cx + o.dx,
+                    cy: cy + o.dy,
+                    cz: cz + o.dz,
+                }))
+            );
+        }
+    });
 
     return (
         <>
@@ -591,35 +309,31 @@ export function InfiniteCanvasScene({
     backgroundColor = "#ffffff",
     fogColor = "#ffffff",
 }: InfiniteCanvasProps) {
-    if (typeof window === "undefined") return; // Because SSR fails initially and throws error, must be client side
+    if (typeof window === "undefined") return;
 
     const dpr = Math.min(window.devicePixelRatio || 1);
 
-    if (!media.length) {
-        return null;
-    }
+    if (!media.length) return null;
 
     return (
-        <KeyboardControls map={KEYBOARD_MAP}>
-            <div className={styles.container}>
-                <Canvas
-                    camera={{
-                        position: [0, 0, INITIAL_CAMERA_Z],
-                        fov: cameraFov,
-                        near: cameraNear,
-                        far: cameraFar,
-                    }}
-                    dpr={dpr}
-                    flat
-                    gl={{ antialias: false, powerPreference: "high-performance" }}
-                    className={styles.canvas}
-                >
-                    <color attach="background" args={[backgroundColor]} />
-                    <fog attach="fog" args={[fogColor, fogNear, fogFar]} />
-                    <SceneController media={media} onTextureProgress={onTextureProgress} />
-                    {showFps && <Stats className={styles.stats} />}
-                </Canvas>
-            </div>
-        </KeyboardControls>
+        <div className={styles.container}>
+            <Canvas
+                camera={{
+                    position: [0, 0, INITIAL_CAMERA_Z],
+                    fov: cameraFov,
+                    near: cameraNear,
+                    far: cameraFar,
+                }}
+                dpr={dpr}
+                flat
+                gl={{ antialias: false, powerPreference: "high-performance" }}
+                className={styles.canvas}
+            >
+                <color attach="background" args={[backgroundColor]} />
+                <fog attach="fog" args={[fogColor, fogNear, fogFar]} />
+                <SceneController media={media} onTextureProgress={onTextureProgress} />
+                {showFps && <Stats className={styles.stats} />}
+            </Canvas>
+        </div>
     );
 }
