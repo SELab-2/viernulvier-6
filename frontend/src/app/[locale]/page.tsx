@@ -7,7 +7,6 @@ import type { MediaItem } from "@/components/sections/infinite-canvas";
 
 export default function HomePage() {
     const [media, setMedia] = React.useState<MediaItem[]>([]);
-    const [, setTextureProgress] = React.useState(0);
     const [isDark, setIsDark] = React.useState(false);
 
     // Fetch manifest
@@ -50,7 +49,6 @@ export default function HomePage() {
             <InfiniteCanvas
                 key={isDark ? "dark" : "light"}
                 media={media}
-                onTextureProgress={setTextureProgress}
                 backgroundColor={backgroundColor}
                 fogColor={fogColor}
             />
