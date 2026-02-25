@@ -2,11 +2,16 @@
 
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useCallback } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import { cn } from "@/lib/utils";
+
+const subscribe = () => () => {};
+const getSnapshot = () => true;
+const getServerSnapshot = () => false;
 
 export const ThemeSwitcher = () => {
     const { theme, setTheme, systemTheme } = useTheme();
+    const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
     const toggleTheme = useCallback(() => {
         const current = theme === "system" ? systemTheme : theme;
@@ -26,10 +31,27 @@ export const ThemeSwitcher = () => {
 
     const isDark = (theme === "system" ? systemTheme : theme) === "dark";
 
+    // Voorkom hydratatie mismatch - toon neutrale state tijdens SSR
+    if (!mounted) {
+        return (
+            <button
+                className={cn(
+                    "relative flex items-center justify-center",
+                    "h-9 w-9 rounded-full",
+                    "text-muted-foreground",
+                    "overflow-hidden"
+                )}
+                aria-label="Toggle theme"
+                disabled
+            >
+                <Sun className="h-4 w-4 opacity-50" />
+            </button>
+        );
+    }
+
     return (
         <button
             onClick={toggleTheme}
-            suppressHydrationWarning
             className={cn(
                 "relative flex items-center justify-center",
                 "h-9 w-9 rounded-full",

@@ -6,6 +6,7 @@ import * as React from "react";
 import * as THREE from "three";
 import { clamp, lerp } from "./utils";
 import {
+    AUTO_DRIFT_SPEED,
     CHUNK_FADE_MARGIN,
     CHUNK_OFFSETS,
     CHUNK_SIZE,
@@ -290,6 +291,10 @@ type ControllerState = {
     lastChunkKey: string;
     lastChunkUpdate: number;
     pendingChunk: { cx: number; cy: number; cz: number } | null;
+    autoDrift: { x: number; y: number; z: number };
+    lastAutoDriftChange: number;
+    hasUserInteracted: boolean;
+    lastInteractionTime: number;
 };
 
 const createInitialState = (camZ: number): ControllerState => ({
@@ -306,6 +311,10 @@ const createInitialState = (camZ: number): ControllerState => ({
     lastChunkKey: "",
     lastChunkUpdate: 0,
     pendingChunk: null,
+    autoDrift: { x: 0.02, y: 0.01, z: 0 },
+    lastAutoDriftChange: 0,
+    hasUserInteracted: false,
+    lastInteractionTime: 0,
 });
 
 function SceneController({
@@ -353,6 +362,8 @@ function SceneController({
             // Just start dragging - keep drift frozen at current value
             s.isDragging = true;
             s.lastMouse = { x: e.clientX, y: e.clientY };
+            s.hasUserInteracted = true;
+            s.lastInteractionTime = performance.now();
             setCursor("grabbing");
         };
 
@@ -377,18 +388,24 @@ function SceneController({
                 s.targetVel.x -= (e.clientX - s.lastMouse.x) * 0.025;
                 s.targetVel.y += (e.clientY - s.lastMouse.y) * 0.025;
                 s.lastMouse = { x: e.clientX, y: e.clientY };
+                s.hasUserInteracted = true;
+                s.lastInteractionTime = performance.now();
             }
         };
 
         const onWheel = (e: WheelEvent) => {
             e.preventDefault();
             s.scrollAccum += e.deltaY * 0.006;
+            s.hasUserInteracted = true;
+            s.lastInteractionTime = performance.now();
         };
 
         const onTouchStart = (e: TouchEvent) => {
             e.preventDefault();
             s.lastTouches = Array.from(e.touches) as Touch[];
             s.lastTouchDist = getTouchDistance(s.lastTouches);
+            s.hasUserInteracted = true;
+            s.lastInteractionTime = performance.now();
             setCursor("grabbing");
         };
 
@@ -410,6 +427,8 @@ function SceneController({
                 s.lastTouchDist = dist;
             }
 
+            s.hasUserInteracted = true;
+            s.lastInteractionTime = performance.now();
             s.lastTouches = touches;
         };
 
@@ -451,6 +470,21 @@ function SceneController({
         if (right) s.targetVel.x += KEYBOARD_SPEED;
         if (down) s.targetVel.y -= KEYBOARD_SPEED;
         if (up) s.targetVel.y += KEYBOARD_SPEED;
+
+        // Check keyboard interaction
+        if (forward || backward || left || right || up || down) {
+            s.hasUserInteracted = true;
+            s.lastInteractionTime = now;
+        }
+
+        // Auto-drift: beweeg langzaam voorwaarts (door de scene heen)
+        const timeSinceInteraction = now - s.lastInteractionTime;
+        const isIdle = !s.isDragging && timeSinceInteraction > 2000;
+
+        if (isIdle) {
+            // Beweeg langzaam voorwaarts in Z richting
+            s.basePos.z -= AUTO_DRIFT_SPEED;
+        }
 
         const isZooming = Math.abs(s.velocity.z) > 0.05;
         const zoomFactor = clamp(s.basePos.z / 50, 0.3, 2.0);
