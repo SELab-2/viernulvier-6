@@ -53,10 +53,7 @@ export default async function RootLayout({
 
     setRequestLocale(locale);
 
-    const [messages, timeZone] = await Promise.all([
-        getMessages(),
-        getTimeZone(),
-    ]);
+    const [messages, timeZone] = await Promise.all([getMessages(), getTimeZone()]);
 
     return (
         <html lang={locale} suppressHydrationWarning>

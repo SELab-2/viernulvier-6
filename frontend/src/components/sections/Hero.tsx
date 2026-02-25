@@ -23,8 +23,8 @@ export const Hero = () => {
                 <div
                     className={cn(
                         "absolute top-[-20%] right-[-10%]",
-                        "w-[60vw] h-[60vw] rounded-full",
-                        "bg-gradient-to-br from-primary/70 dark:from-primary/20 via-primary/30 dark:via-primary/5 to-transparent",
+                        "h-[60vw] w-[60vw] rounded-full",
+                        "from-primary/70 dark:from-primary/20 via-primary/30 dark:via-primary/5 bg-gradient-to-br to-transparent",
                         "blur-[100px]",
                         "animate-drift-slow"
                     )}
@@ -33,8 +33,8 @@ export const Hero = () => {
                 <div
                     className={cn(
                         "absolute bottom-[-30%] left-[-20%]",
-                        "w-[70vw] h-[70vw] rounded-full",
-                        "bg-gradient-to-tr from-accent/80 dark:from-accent/25 via-muted/90 dark:via-muted/30 to-transparent",
+                        "h-[70vw] w-[70vw] rounded-full",
+                        "from-accent/80 dark:from-accent/25 via-muted/90 dark:via-muted/30 bg-gradient-to-tr to-transparent",
                         "blur-[120px]",
                         "animate-drift-slower"
                     )}
@@ -43,8 +43,8 @@ export const Hero = () => {
                 <div
                     className={cn(
                         "absolute top-[40%] left-[30%]",
-                        "w-[30vw] h-[30vw] rounded-full",
-                        "bg-gradient-to-b from-foreground/50 dark:from-foreground/10 to-transparent",
+                        "h-[30vw] w-[30vw] rounded-full",
+                        "from-foreground/50 dark:from-foreground/10 bg-gradient-to-b to-transparent",
                         "blur-[80px]",
                         "animate-drift-medium"
                     )}
@@ -56,18 +56,18 @@ export const Hero = () => {
             <div
                 className={cn(
                     "absolute top-0 left-1/2 -translate-x-1/2",
-                    "w-px h-[12vh]",
-                    "bg-gradient-to-b from-border via-border/70 to-transparent",
+                    "h-[12vh] w-px",
+                    "from-border via-border/70 bg-gradient-to-b to-transparent",
                     "animate-grow-down"
                 )}
             />
 
             {/* Main content */}
-            <div className="relative z-10 flex flex-col items-center text-center px-6">
+            <div className="relative z-10 flex flex-col items-center px-6 text-center">
                 {/* Brand - groter */}
                 <span
                     className={cn(
-                        "mb-6 text-xs md:text-sm font-medium tracking-[0.3em] uppercase",
+                        "mb-6 text-xs font-medium tracking-[0.3em] uppercase md:text-sm",
                         "text-muted-foreground/70",
                         "animate-fade-in"
                     )}
@@ -81,8 +81,8 @@ export const Hero = () => {
                     <span
                         className={cn(
                             "absolute -left-8 md:-left-20",
-                            "flex items-center h-full",
-                            "text-3xl md:text-6xl font-light leading-none",
+                            "flex h-full items-center",
+                            "text-3xl leading-none font-light md:text-6xl",
                             "text-muted-foreground/20",
                             "hidden sm:flex",
                             "animate-bracket-left"
@@ -90,13 +90,13 @@ export const Hero = () => {
                     >
                         &#x276E;
                     </span>
-                    
+
                     {/* Right bracket */}
                     <span
                         className={cn(
                             "absolute -right-8 md:-right-20",
-                            "flex items-center h-full",
-                            "text-3xl md:text-6xl font-light leading-none",
+                            "flex h-full items-center",
+                            "text-3xl leading-none font-light md:text-6xl",
                             "text-muted-foreground/20",
                             "hidden sm:flex",
                             "animate-bracket-right"
@@ -120,11 +120,8 @@ export const Hero = () => {
                 </div>
 
                 {/* Divider */}
-                <div 
-                    className={cn(
-                        "w-16 h-px bg-border/60 mb-8",
-                        "animate-scale-x"
-                    )}
+                <div
+                    className={cn("bg-border/60 mb-8 h-px w-16", "animate-scale-x")}
                     style={{ animationDelay: "0.3s" }}
                 />
 
@@ -133,7 +130,7 @@ export const Hero = () => {
                     className={cn(
                         "max-w-sm md:max-w-md",
                         "text-sm md:text-base",
-                        "text-muted-foreground font-light leading-relaxed",
+                        "text-muted-foreground leading-relaxed font-light",
                         "mb-12",
                         "animate-fade-in-up"
                     )}
@@ -148,18 +145,18 @@ export const Hero = () => {
                     className={cn(
                         "group inline-flex items-center gap-2",
                         "px-6 py-3",
-                        "border border-border/60 rounded-full",
+                        "border-border/60 rounded-full border",
                         "text-[11px] font-medium tracking-[0.15em] uppercase",
                         "text-muted-foreground hover:text-foreground hover:border-foreground/30",
                         "transition-all duration-500 ease-out",
-                        "hover:scale-[1.02] hover:shadow-lg hover:shadow-foreground/5",
+                        "hover:shadow-foreground/5 hover:scale-[1.02] hover:shadow-lg",
                         "animate-fade-in-up"
                     )}
                     style={{ animationDelay: "0.5s" }}
                 >
                     {tNav("archive")}
-                    <ArrowRight 
-                        className="h-3 w-3 group-hover:translate-x-0.5 transition-transform duration-300" 
+                    <ArrowRight
+                        className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-0.5"
                         strokeWidth={2}
                     />
                 </Link>
@@ -169,7 +166,7 @@ export const Hero = () => {
             <div
                 className={cn(
                     "absolute bottom-8 left-1/2 -translate-x-1/2",
-                    "text-[10px] font-mono tracking-widest",
+                    "font-mono text-[10px] tracking-widest",
                     "text-muted-foreground/50",
                     "animate-fade-in"
                 )}

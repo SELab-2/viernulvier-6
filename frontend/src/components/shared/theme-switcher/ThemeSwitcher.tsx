@@ -11,13 +11,13 @@ export const ThemeSwitcher = () => {
     const toggleTheme = useCallback(() => {
         const current = theme === "system" ? systemTheme : theme;
         const newTheme = current === "dark" ? "light" : "dark";
-        
+
         // Enable transitions
         document.documentElement.classList.add("theme-transitioning");
-        
+
         // Change theme
         setTheme(newTheme);
-        
+
         // Cleanup after animation
         setTimeout(() => {
             document.documentElement.classList.remove("theme-transitioning");
@@ -40,19 +40,19 @@ export const ThemeSwitcher = () => {
             )}
             aria-label="Toggle theme"
         >
-            <Sun 
+            <Sun
                 className={cn(
                     "h-4 w-4",
                     "transition-all duration-700",
-                    isDark ? "rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
-                )} 
+                    isDark ? "scale-0 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100"
+                )}
             />
-            <Moon 
+            <Moon
                 className={cn(
                     "absolute h-4 w-4",
                     "transition-all duration-700",
-                    isDark ? "rotate-0 scale-100 opacity-100" : "-rotate-90 scale-0 opacity-0"
-                )} 
+                    isDark ? "scale-100 rotate-0 opacity-100" : "scale-0 -rotate-90 opacity-0"
+                )}
             />
         </button>
     );
