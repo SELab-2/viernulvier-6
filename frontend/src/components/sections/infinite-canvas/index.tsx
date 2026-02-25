@@ -7,6 +7,7 @@ const LazyInfiniteCanvasScene = React.lazy(() =>
 export function InfiniteCanvas(props: React.ComponentProps<typeof LazyInfiniteCanvasScene>) {
     return (
         <React.Suspense fallback={null}>
+            {}
             <LazyInfiniteCanvasScene {...props} />
         </React.Suspense>
     );

@@ -23,18 +23,6 @@ const evictPlaneCache = () => {
     }
 };
 
-export const getChunkUpdateThrottleMs = (isZooming: boolean, zoomSpeed: number): number => {
-    if (zoomSpeed > 1.0) {
-        return 500;
-    }
-
-    if (isZooming) {
-        return 400;
-    }
-
-    return 100;
-};
-
 export const getMediaDimensions = (media: HTMLImageElement | undefined) => {
     const width = media instanceof HTMLImageElement ? media.naturalWidth || media.width : undefined;
     const height =
