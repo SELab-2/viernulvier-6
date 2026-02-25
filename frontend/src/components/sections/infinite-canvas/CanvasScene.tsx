@@ -1,6 +1,6 @@
 "use client";
 
-import { Stats, useProgress } from "@react-three/drei";
+import { Stats } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as React from "react";
 import { Chunk } from "./components/Chunk";
@@ -16,29 +16,12 @@ type CameraState = {
     camZ: number;
 };
 
-function SceneContent({
-    media,
-    onTextureProgress,
-}: {
-    media: MediaItem[];
-    onTextureProgress?: (progress: number) => void;
-}) {
+function SceneContent({ media }: { media: MediaItem[] }) {
     const { camera } = useThree();
 
     const pos = React.useRef({ x: 0, y: 0, z: INITIAL_CAMERA_Z });
     const cameraRef = React.useRef<CameraState>({ cx: 0, cy: 0, cz: 0, camZ: INITIAL_CAMERA_Z });
     const [chunks, setChunks] = React.useState<ChunkData[]>([]);
-
-    const { progress } = useProgress();
-    const maxProgress = React.useRef(0);
-
-    React.useEffect(() => {
-        const rounded = Math.round(progress);
-        if (rounded > maxProgress.current) {
-            maxProgress.current = rounded;
-            onTextureProgress?.(rounded);
-        }
-    }, [progress, onTextureProgress]);
 
     // Initialize chunks
     React.useEffect(() => {
@@ -99,7 +82,6 @@ function SceneContent({
 
 export function CanvasScene({
     media,
-    onTextureProgress,
     showFps = false,
     cameraFov = 60,
     cameraNear = 1,
@@ -131,7 +113,7 @@ export function CanvasScene({
             >
                 <color attach="background" args={[backgroundColor]} />
                 <fog attach="fog" args={[fogColor, fogNear, fogFar]} />
-                <SceneContent media={media} onTextureProgress={onTextureProgress} />
+                <SceneContent media={media} />
                 {showFps && <Stats className={styles.stats} />}
             </Canvas>
         </div>
