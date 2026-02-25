@@ -1,7 +1,7 @@
 import { ChunkOffset } from "./types";
 
 // World settings
-export const CHUNK_SIZE = 180;
+export const CHUNK_SIZE = 150;
 export const RENDER_DISTANCE = 2;
 export const CHUNK_FADE_MARGIN = 1;
 
@@ -14,7 +14,7 @@ export const INVIS_THRESHOLD = 0.01;
 export const INITIAL_CAMERA_Z = 50;
 
 // Animation settings
-export const AUTO_DRIFT_SPEED = 0.03;
+export const AUTO_DRIFT_SPEED = 0.15;
 
 // Items per chunk
 export const ITEMS_PER_CHUNK = 3;
