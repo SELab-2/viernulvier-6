@@ -3,6 +3,8 @@
 import { Stats } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as React from "react";
+import * as THREE from "three";
+import { useSmoothThemeTransition } from "@/hooks/useSmoothThemeTransition";
 import { Chunk } from "./components/Chunk";
 import { AUTO_DRIFT_SPEED, CHUNK_OFFSETS, CHUNK_SIZE, INITIAL_CAMERA_Z } from "./lib/constants";
 import { shouldThrottleUpdate } from "./lib/math-utils";
@@ -18,12 +20,13 @@ type CameraState = {
 
 function SceneContent({ media }: { media: MediaItem[] }) {
     const { camera } = useThree();
+    useSmoothThemeTransition();
 
     const pos = React.useRef({ x: 0, y: 0, z: INITIAL_CAMERA_Z });
     const cameraRef = React.useRef<CameraState>({ cx: 0, cy: 0, cz: 0, camZ: INITIAL_CAMERA_Z });
     const [chunks, setChunks] = React.useState<ChunkData[]>([]);
 
-    // Initialize chunks
+    // Initialize chunks once
     React.useEffect(() => {
         setChunks(
             CHUNK_OFFSETS.map((o) => ({
@@ -50,7 +53,7 @@ function SceneContent({ media }: { media: MediaItem[] }) {
 
         cameraRef.current = { cx, cy, cz, camZ: pos.current.z };
 
-        // Update chunks throttled
+        // Update chunks throttled (every 100ms)
         if (shouldThrottleUpdate(lastChunkUpdate.current, 100, now)) {
             lastChunkUpdate.current = now;
             setChunks(
@@ -88,12 +91,10 @@ export function CanvasScene({
     cameraFar = 500,
     fogNear = 120,
     fogFar = 320,
-    backgroundColor = "#ffffff",
-    fogColor = "#ffffff",
-}: InfiniteCanvasProps) {
+}: Omit<InfiniteCanvasProps, "backgroundColor" | "fogColor">) {
     if (typeof window === "undefined") return null;
 
-    const dpr = Math.min(window.devicePixelRatio || 1);
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
 
     if (!media.length) return null;
 
@@ -108,11 +109,16 @@ export function CanvasScene({
                 }}
                 dpr={dpr}
                 flat
-                gl={{ antialias: false, powerPreference: "high-performance" }}
+                gl={{
+                    antialias: false,
+                    powerPreference: "high-performance",
+                    alpha: true,
+                }}
                 className={styles.canvas}
+                style={{ background: "transparent" }}
             >
-                <color attach="background" args={[backgroundColor]} />
-                <fog attach="fog" args={[fogColor, fogNear, fogFar]} />
+                <color attach="background" args={[new THREE.Color("#fafafa")]} />
+                <fog attach="fog" args={[new THREE.Color("#fafafa"), fogNear, fogFar]} />
                 <SceneContent media={media} />
                 {showFps && <Stats className={styles.stats} />}
             </Canvas>
