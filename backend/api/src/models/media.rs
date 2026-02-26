@@ -1,4 +1,4 @@
-use crate::api::models::localized_text::ApiLocalizedText;
+use crate::models::localized_text::ApiLocalizedText;
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 

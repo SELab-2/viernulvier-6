@@ -1,16 +1,23 @@
 use std::pin::pin;
 
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use database::{Database, models::internal_state::InternalStateKey};
 use futures::{Stream, StreamExt, stream};
-use reqwest::{Client, Proxy};
+use reqwest::Client;
 use serde::de::DeserializeOwned;
-use tracing::{debug, info, warn};
+use tracing::{info, warn};
 
-use crate::{
-    api::models::{collection::ApiCollection, production::ApiProduction},
-    config::AppConfig,
-};
+use crate::models::{collection::ApiCollection, production::ApiProduction};
+
+mod helper;
+pub mod models {
+    pub mod collection;
+    pub mod event;
+    pub mod genre;
+    pub mod localized_text;
+    pub mod media;
+    pub mod production;
+}
 
 const API_BASE_URL: &str = "https://www.viernulvier.gent/api/v1";
 
@@ -50,7 +57,8 @@ impl ApiImporter {
 
     /// saves the last updated time
     async fn set_last_updated(&self, timestamp: String) {
-        self.db
+        let _ = self // ignore the result, if not saved, we import again later
+            .db
             .internal()
             .set_value(InternalStateKey::LastApiUpdate, &timestamp)
             .await;
@@ -63,6 +71,7 @@ impl ApiImporter {
         let current_ts = Utc::now().to_rfc3339();
         let last_update_ts = self.get_last_updated().await;
 
+        // TODO start transactions
         let res = self.update_productions(&last_update_ts).await;
 
         // save timestamp for next time
@@ -82,7 +91,7 @@ impl ApiImporter {
     ) -> Result<ApiCollection<T>, reqwest::Error> {
         let url = format!("{API_BASE_URL}{path}");
 
-        let mut request = self.client.get(&url).query(&[
+        let request = self.client.get(&url).query(&[
             ("page", page.to_string().as_str()),
             ("updated_at[after]", updated_after),
         ]);
@@ -123,9 +132,16 @@ impl ApiImporter {
 
         while let Some(batch_result) = stream.next().await {
             let productions = batch_result?;
-            // TODO
-            // self.db.productions().insert(&productions).await?;
-            debug!("imported {} productions", productions.len());
+            let amt = productions.len();
+            info!("got {amt} productions from api");
+            for production in productions {
+                self.db
+                    .productions()
+                    .insert(production.into())
+                    .await
+                    .unwrap();
+            }
+            info!("inserted {amt} productions into db");
         }
 
         info!("finished importing productions");

@@ -2,7 +2,7 @@ CREATE TYPE collection_content_type AS ENUM ('production', 'event', 'blogpost');
 
 CREATE TABLE locations (
     id         UUID        PRIMARY KEY DEFAULT uuidv7(),
-    source_id  INTEGER -- id's coming from the viernulvier marketing website: https://www.viernulvier.gent/api/docs
+    source_id  INTEGER, -- id's coming from the viernulvier marketing website: https://www.viernulvier.gent/api/docs
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     name       TEXT        NOT NULL,
@@ -90,11 +90,11 @@ CREATE TABLE productions (
     description_short_en TEXT, -- FIX: can these be nullable, and if so, do we signal incomplete data in the CMS?
 
     eticket_info TEXT, -- FIX: ??
-    custom_data TEXT, -- FIX: ??
-    genres TEXT, -- FIX: array of strings?
-    uitdatabank_keywords TEXT, -- FIX: what should this be?
+    -- custom_data TEXT, -- FIX: not in api
+    -- genres TEXT, -- FIX: array of strings?
+    -- uitdatabank_keywords TEXT, -- FIX: what should this be?
     uitdatabank_theme TEXT,
-    uitdatabank_type TEXT,
+    uitdatabank_type TEXT
 );
 
 CREATE TABLE events (

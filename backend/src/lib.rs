@@ -1,13 +1,16 @@
 use crate::{
-    api::import::ApiImporter, config::AppConfig, error::AppError, handlers::version::VersionHandler,
+    config::AppConfig,
+    error::AppError,
+    handlers::{production::ProductionHandler, version::VersionHandler},
 };
+use api::ApiImporter;
 use axum::{Router, routing::get};
 use database::Database;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::info;
 
-mod api;
 pub mod config;
+mod dto;
 mod error;
 mod extractors;
 mod handlers;
@@ -20,9 +23,10 @@ pub struct AppState {
 
 pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
     let db = Database::create_connect_migrate(&config.database_url).await?;
-    ApiImporter::new(db.clone(), config.api_key_404.clone())
-        .update_since_last()
-        .await;
+
+    // start api importer
+    let api_importer = ApiImporter::new(db.clone(), config.api_key_404.clone());
+    tokio::spawn(async move { api_importer.update_since_last().await });
 
     let state = AppState { db, config };
 
@@ -50,7 +54,9 @@ pub fn router() -> Router<AppState> {
 }
 
 fn open_routes() -> Router<AppState> {
-    Router::new().route("/version", get(VersionHandler::get))
+    Router::new()
+        .route("/version", get(VersionHandler::get))
+        .route("/productions", get(ProductionHandler::all))
 }
 
 #[allow(clippy::expect_used)]

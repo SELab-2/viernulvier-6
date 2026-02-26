@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
-use crate::api::models::localized_text::ApiLocalizedText;
+use crate::models::localized_text::ApiLocalizedText;
 
 #[derive(Debug, Deserialize)]
 pub struct ApiGenre {
