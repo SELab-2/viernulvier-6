@@ -4,10 +4,12 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { ArrowRight } from "lucide-react";
 import { Link } from "@/i18n/routing";
+import { useTheme } from "@/hooks/useTheme";
 
 export const Hero = () => {
     const t = useTranslations("Hero");
     const tNav = useTranslations("Navigation");
+    const theme = useTheme(); // "light" | "dark" - use with transition-colors for smooth theme switch
 
     return (
         <section
@@ -17,8 +19,11 @@ export const Hero = () => {
                 "overflow-hidden"
             )}
         >
-            {/* Animated background layers */}
-            <div className="absolute inset-0 -z-10">
+            {/* Animated background layers - uses CSS transition for smooth theme switch */}
+            <div
+                className="absolute inset-0 -z-10 transition-colors duration-500"
+                data-theme={theme}
+            >
                 {/* Slow moving gradient orbs */}
                 <div
                     className={cn(
