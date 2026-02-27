@@ -20,6 +20,9 @@ inputs:
   public_site_url:
     description: "Public site url"
     required: true
+  jwt_secret:
+    description: "Backend JWT secret"
+    required: true
 
 runs:
   using: "composite"
@@ -35,7 +38,8 @@ runs:
         PROD_SITE_URL=${{ inputs.public_site_url }}
 
         PROD_DATABASE_URL="postgres://${PROD_DB_USER}:${PROD_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}_database:5432/${PROD_DB_NAME}"
-
+        PROD_JWT_SECRET=${{ inputs.jwt_secret }}
+        
         cat > .env <<EOF
         COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME
         PROD_HOST=$PROD_HOST
@@ -43,6 +47,7 @@ runs:
         PROD_DB_PASSWORD=$PROD_DB_PASSWORD
         PROD_DB_NAME=$PROD_DB_NAME
         PROD_DATABASE_URL=$PROD_DATABASE_URL
+        PROD_JWT_SECRET=$PROD_JWT_SECRET
         NEXT_PUBLIC_SITE_URL=$PROD_SITE_URL
         EOF
 

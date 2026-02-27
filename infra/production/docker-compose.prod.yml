@@ -5,6 +5,7 @@ services:
     restart: always
     environment:
       DATABASE_URL: ${PROD_DATABASE_URL}
+      JWT_SECRET: ${PROD_JWT_SECRET}
       LOG_LEVEL: ${PROD_LOG_LEVEL}
     depends_on:
       database:
