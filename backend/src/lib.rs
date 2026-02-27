@@ -1,7 +1,7 @@
 use crate::{
     config::AppConfig,
     error::AppError,
-    handlers::{production::ProductionHandler, version::VersionHandler, auth::AuthHandler },
+    handlers::{production::ProductionHandler, version::VersionHandler, auth::AuthHandler, admin::AdminHandler},
 };
 use api::ApiImporter;
 use axum::{Router, routing::get, routing::post};
@@ -58,6 +58,7 @@ fn open_routes() -> Router<AppState> {
         .route("/version", get(VersionHandler::get))
         .route("/productions", get(ProductionHandler::all))
         .route("/login", post(AuthHandler::login))
+        .route("/admin", get(AdminHandler::admin))
 }
 
 #[allow(clippy::expect_used)]

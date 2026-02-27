@@ -17,10 +17,10 @@ pub struct AuthResponse {
 }
 
 #[derive(Serialize, Deserialize)]
-struct Claims {
-    sub: String,
-    email: String,
-    exp: usize,
+pub struct Claims {
+    pub sub: String,
+    pub email: String,
+    pub exp: usize,
 }
 
 pub struct AuthHandler;
