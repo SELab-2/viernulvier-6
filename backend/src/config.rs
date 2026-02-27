@@ -8,6 +8,7 @@ use crate::error::AppError;
 pub struct AppConfig {
     pub database_url: String,
     pub api_key_404: String,
+    pub jwt_secret: String,
 }
 
 impl AppConfig {
@@ -16,6 +17,7 @@ impl AppConfig {
         Ok(Self {
             database_url: get_env_var("DATABASE_URL")?,
             api_key_404: get_env_var("API_KEY_404")?,
+            jwt_secret: get_env_var("JWT_SECRET")?,
         })
     }
 }

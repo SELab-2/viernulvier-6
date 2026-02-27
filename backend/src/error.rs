@@ -15,6 +15,9 @@ pub enum AppError {
     #[error("Internal server error: {0}")]
     Internal(String),
 
+    #[error("Unauthorized")]
+    Unauthorized,
+
     #[error("Database error: {0}")]
     Database(DatabaseError),
 
@@ -44,6 +47,7 @@ impl AppError {
         let (status, msg) = match self {
             Self::PayloadError(_) => (StatusCode::BAD_REQUEST, "Payload error"),
             Self::NotFound => (StatusCode::NOT_FOUND, "We couldn't find that."),
+            Self::Unauthorized => (StatusCode::UNAUTHORIZED, "Invalid credentials."),
             _ => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Please help I have internal errors. D:",

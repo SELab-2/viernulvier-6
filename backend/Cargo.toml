@@ -39,3 +39,5 @@ tower-http = { version = "0.6.6", default-features = false, features = [
     "cors",
 ] }
 uuid = { version = "1", features = ["v7", "serde"] }
+jsonwebtoken={ version = "10.3.0", features = ["rust_crypto"] }
+argon2="0.5.3"

@@ -1,10 +1,10 @@
 use crate::{
     config::AppConfig,
     error::AppError,
-    handlers::{production::ProductionHandler, version::VersionHandler},
+    handlers::{production::ProductionHandler, version::VersionHandler, auth::AuthHandler },
 };
 use api::ApiImporter;
-use axum::{Router, routing::get};
+use axum::{Router, routing::get, routing::post};
 use database::Database;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::info;
@@ -57,6 +57,7 @@ fn open_routes() -> Router<AppState> {
     Router::new()
         .route("/version", get(VersionHandler::get))
         .route("/productions", get(ProductionHandler::all))
+        .route("/login", post(AuthHandler::login))
 }
 
 #[allow(clippy::expect_used)]
