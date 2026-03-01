@@ -31,8 +31,7 @@ impl<'a> ProductionRepo<'a> {
     }
 
     pub async fn insert(&self, production: ProductionCreate) -> Result<Production, DatabaseError> {
-        let inserted_production = sqlx::query_as!(
-            Production,
+        let inserted_production = sqlx::query_as(
             r#"
             INSERT INTO productions (
                 source_id, slug,
@@ -64,44 +63,44 @@ impl<'a> ProductionRepo<'a> {
                 description_short_nl, description_short_en, eticket_info,
                 uitdatabank_theme, uitdatabank_type
             "#,
-            production.source_id,
-            production.slug,
-            production.supertitle_nl,
-            production.supertitle_en,
-            production.title_nl,
-            production.title_en,
-            production.artist_nl,
-            production.artist_en,
-            production.meta_title_nl,
-            production.meta_title_en,
-            production.meta_description_nl,
-            production.meta_description_en,
-            production.tagline_nl,
-            production.tagline_en,
-            production.teaser_nl,
-            production.teaser_en,
-            production.description_nl,
-            production.description_en,
-            production.description_extra_nl,
-            production.description_extra_en,
-            production.description_2_nl,
-            production.description_2_en,
-            production.video_1,
-            production.video_2,
-            production.quote_nl,
-            production.quote_en,
-            production.quote_source_nl,
-            production.quote_source_en,
-            production.programme_nl,
-            production.programme_en,
-            production.info_nl,
-            production.info_en,
-            production.description_short_nl,
-            production.description_short_en,
-            production.eticket_info,
-            production.uitdatabank_theme,
-            production.uitdatabank_type
         )
+        .bind(production.source_id)
+        .bind(production.slug)
+        .bind(production.base.supertitle_nl)
+        .bind(production.base.supertitle_en)
+        .bind(production.base.title_nl)
+        .bind(production.base.title_en)
+        .bind(production.base.artist_nl)
+        .bind(production.base.artist_en)
+        .bind(production.base.meta_title_nl)
+        .bind(production.base.meta_title_en)
+        .bind(production.base.meta_description_nl)
+        .bind(production.base.meta_description_en)
+        .bind(production.base.tagline_nl)
+        .bind(production.base.tagline_en)
+        .bind(production.base.teaser_nl)
+        .bind(production.base.teaser_en)
+        .bind(production.base.description_nl)
+        .bind(production.base.description_en)
+        .bind(production.base.description_extra_nl)
+        .bind(production.base.description_extra_en)
+        .bind(production.base.description_2_nl)
+        .bind(production.base.description_2_en)
+        .bind(production.base.video_1)
+        .bind(production.base.video_2)
+        .bind(production.base.quote_nl)
+        .bind(production.base.quote_en)
+        .bind(production.base.quote_source_nl)
+        .bind(production.base.quote_source_en)
+        .bind(production.base.programme_nl)
+        .bind(production.base.programme_en)
+        .bind(production.base.info_nl)
+        .bind(production.base.info_en)
+        .bind(production.base.description_short_nl)
+        .bind(production.base.description_short_en)
+        .bind(production.base.eticket_info)
+        .bind(production.base.uitdatabank_theme)
+        .bind(production.base.uitdatabank_type)
         .fetch_one(self.db)
         .await?;
 
