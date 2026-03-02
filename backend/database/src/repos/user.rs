@@ -15,7 +15,7 @@ impl<'a> UserRepo<'a> {
     }
 
     pub async fn by_id(&self, id: i32) -> Result<User, DatabaseError> {
-        sqlx::query_as("SELECT id, username, email, password_hash FROM \"users\" WHERE id = $1 LIMIT 1;")
+        sqlx::query_as("SELECT id, username, email, password_hash FROM users WHERE id = $1 LIMIT 1;")
             .bind(id)
             .fetch_optional(self.db)
             .await?
@@ -23,7 +23,7 @@ impl<'a> UserRepo<'a> {
     }
 
     pub async fn by_email(&self, email: &str) -> Result<User, DatabaseError> {
-        sqlx::query_as("SELECT id, username, email, password_hash FROM \"users\" WHERE email = $1 LIMIT 1;")
+        sqlx::query_as("SELECT id, username, email, password_hash FROM users WHERE email = $1 LIMIT 1;")
             .bind(email)
             .fetch_optional(self.db)
             .await?
@@ -33,7 +33,7 @@ impl<'a> UserRepo<'a> {
     pub async fn create(&self, user: UserCreate) -> Result<User, DatabaseError> {
         sqlx::query_as(
             "
-            INSERT INTO \"users\" (username, email, password_hash) VALUES ($1, $2, $3)
+            INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3)
             RETURNING id, username, email, password_hash;;
             ",
         )
@@ -48,8 +48,8 @@ impl<'a> UserRepo<'a> {
     pub async fn patch(&self, user_id: i32, patch_user: UserPatch) -> Result<User, DatabaseError> {
         sqlx::query_as(
             "
-            UPDATE \"users\" SET username = $1 WHERE id = $2
-            RETURNING id, username
+            UPDATE users SET username = $1 WHERE id = $2
+            RETURNING id, username;
             ",
         )
         .bind(patch_user.username)

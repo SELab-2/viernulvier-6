@@ -1,4 +1,8 @@
 use axum::{extract::FromRequestParts, http::request::Parts};
+use axum_extra::{
+    headers::{authorization::Bearer, Authorization},
+    TypedHeader,
+};
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use crate::{AppState, error::AppError, handlers::auth::Claims};
 
@@ -11,21 +15,13 @@ impl FromRequestParts<AppState> for AuthUser {
     type Rejection = AppError;
 
     async fn from_request_parts(parts: &mut Parts, state: &AppState) -> Result<Self, AppError> {
-        // Extract the Authorization header
-        let auth_header = parts
-            .headers
-            .get("Authorization")
-            .and_then(|v| v.to_str().ok())
-            .ok_or(AppError::Unauthorized)?;
+        let TypedHeader(Authorization(bearer)) =
+            TypedHeader::<Authorization<Bearer>>::from_request_parts(parts, state)
+                .await
+                .map_err(|_| AppError::Unauthorized)?;
 
-        // Strip "Bearer "
-        let token = auth_header
-            .strip_prefix("Bearer ")
-            .ok_or(AppError::Unauthorized)?;
-
-        // Decode and validate the JWT
         let token_data = decode::<Claims>(
-            token,
+            bearer.token(),
             &DecodingKey::from_secret(state.config.jwt_secret.as_bytes()),
             &Validation::default(),
         )
