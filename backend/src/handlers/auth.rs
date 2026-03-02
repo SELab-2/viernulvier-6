@@ -30,16 +30,12 @@ impl AuthHandler {
         State(state): State<AppState>,
         Json(payload): Json<LoginRequest>,
     ) -> Result<Json<AuthResponse>, AppError> {
-        tracing::info!("email: {}", payload.email);
-        tracing::info!("password: {}", payload.password);
 
         // 1. Fetch user by email
         let user = state.db.users()
             .by_email(&payload.email)
             .await
             .map_err(|_| AppError::Unauthorized)?;
-
-        tracing::info!("password hash: {}", user.password_hash);
 
 
         // 2. Verify password
