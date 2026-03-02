@@ -31,6 +31,7 @@ jobs:
           db_name: ${{ secrets.PREVIEW_DB_NAME }}
           public_site_url: ${{ vars.NEXT_PUBLIC_SITE_URL }}
           jwt_secret: ${{ secrets.JWT_SECRET }}
+          api_key_404: ${{ secrets.API_KEY_404 }}
 
       - name: Ensure Traefik network exists
         run: docker network inspect traefik >/dev/null 2>&1 || docker network create traefik
@@ -109,6 +110,7 @@ jobs:
           db_name: ${{ secrets.PREVIEW_DB_NAME }}
           public_site_url: ${{ vars.NEXT_PUBLIC_SITE_URL }}
           jwt_secret: ${{ secrets.JWT_SECRET }}
+          api_key_404: ${{ secrets.API_KEY_404 }}
 
       - name: Cleanup preview stack
         run: |

@@ -23,6 +23,9 @@ inputs:
   jwt_secret:
     description: "Backend JWT secret"
     required: true
+  api_key_404:
+    description: "API key for the viernulvier API"
+    required: true
 
 runs:
   using: "composite"
@@ -39,6 +42,7 @@ runs:
 
         PROD_DATABASE_URL="postgres://${PROD_DB_USER}:${PROD_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}_database:5432/${PROD_DB_NAME}"
         PROD_JWT_SECRET=${{ inputs.jwt_secret }}
+        PROD_API_KEY_404=${{ inputs.api_key_404 }}
         
         cat > .env <<EOF
         COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME
@@ -49,6 +53,7 @@ runs:
         PROD_DATABASE_URL=$PROD_DATABASE_URL
         PROD_JWT_SECRET=$PROD_JWT_SECRET
         NEXT_PUBLIC_SITE_URL=$PROD_SITE_URL
+        PROD_API_KEY_404=$PROD_API_KEY_404
         EOF
 
         echo "Production .env generated."
