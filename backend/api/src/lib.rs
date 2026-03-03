@@ -14,9 +14,11 @@ pub mod models {
     pub mod collection;
     pub mod event;
     pub mod genre;
+    pub mod hall;
     pub mod localized_text;
     pub mod media;
     pub mod production;
+    pub mod space;
 }
 
 const API_BASE_URL: &str = "https://www.viernulvier.gent/api/v1";
