@@ -7,7 +7,7 @@ use reqwest::Client;
 use serde::de::DeserializeOwned;
 use tracing::{info, warn};
 
-use crate::models::{collection::ApiCollection, production::ApiProduction};
+use crate::models::{collection::ApiCollection, production::ApiProduction, location::ApiLocation};
 
 mod helper;
 pub mod models {
@@ -19,6 +19,7 @@ pub mod models {
     pub mod media;
     pub mod production;
     pub mod space;
+    pub mod location;
 }
 
 const API_BASE_URL: &str = "https://www.viernulvier.gent/api/v1";
@@ -74,7 +75,12 @@ impl ApiImporter {
         let last_update_ts = self.get_last_updated().await;
 
         // TODO start transactions
-        let res = self.update_productions(&last_update_ts).await;
+        let res = async {
+            self.update_locations(&last_update_ts).await?;
+            self.update_productions(&last_update_ts).await?;
+            Ok::<(), reqwest::Error>(())
+        }
+        .await;
 
         // save timestamp for next time
         if res.is_ok() {
@@ -147,6 +153,30 @@ impl ApiImporter {
         }
 
         info!("finished importing productions");
+        Ok(())
+    }
+
+    pub async fn update_locations(&self, updated_after: &str) -> Result<(), reqwest::Error> {
+        info!("start updating locations");
+
+        let mut stream =
+            pin!(self.paginated_collection::<ApiLocation>("/locations", updated_after));
+
+        while let Some(batch_result) = stream.next().await {
+            let locations = batch_result?;
+            let amt = locations.len();
+            info!("got {amt} locations from api");
+            for location in locations {
+                self.db
+                    .locations()
+                    .insert(location.into())
+                    .await
+                    .unwrap();
+            }
+            info!("inserted {amt} locations into db");
+        }
+
+        info!("finished importing locations");
         Ok(())
     }
 }
