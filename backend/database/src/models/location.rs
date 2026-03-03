@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 #[derive(Debug, FromRow, PartialEq)]
 pub struct LocationBase {
-    pub name: String,
+    pub name: Option<String>, // not currently present in their API, but sometimes present in the CSV
     pub code: Option<String>,
     pub street: Option<String>,
     pub number: Option<String>,
