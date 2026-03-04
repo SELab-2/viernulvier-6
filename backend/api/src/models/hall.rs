@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use tracing::warn;
-use database::models::halls::HallCreate;
+use database::models::hall::HallCreate;
 use crate::{
     helper::flatten_single,
     models::localized_text::ApiLocalizedText,
@@ -64,7 +64,9 @@ impl From<ApiHall> for HallCreate {
             },
         };
 
-        let name = flatten_single(api.name);
+        let name = flatten_single(Some(api.name))
+            .expect("name should always be present"); // helper expects Option
+
         let remark = flatten_single(api.remark);
         
         let slug = match source_id {
@@ -78,9 +80,9 @@ impl From<ApiHall> for HallCreate {
             vendor_id: api.vendor_id,
             box_office_id: api.box_office_id,
             seat_selection: Some(seat_selection),
-            seat_selection: Some(open_seating),
+            open_seating: Some(open_seating),
             name,
-            remark: remark,
+            remark,
             
             location_id: Uuid::nil(), // FIX: workaroud for now, this is a hyperlink to a 'space', which in turn contains a location
             // the Uuid of that location should come here. Is that wat we want?

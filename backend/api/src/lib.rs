@@ -7,7 +7,7 @@ use reqwest::Client;
 use serde::de::DeserializeOwned;
 use tracing::{info, warn};
 
-use crate::models::{collection::ApiCollection, production::ApiProduction, location::ApiLocation};
+use crate::models::{collection::ApiCollection, production::ApiProduction, location::ApiLocation, hall::ApiHall};
 
 mod helper;
 pub mod models {
@@ -78,6 +78,7 @@ impl ApiImporter {
         let res = async {
             self.update_locations(&last_update_ts).await?;
             self.update_productions(&last_update_ts).await?;
+            self.update_halls(&last_update_ts).await?;
             Ok::<(), reqwest::Error>(())
         }
         .await;
@@ -177,6 +178,30 @@ impl ApiImporter {
         }
 
         info!("finished importing locations");
+        Ok(())
+    }
+
+    pub async fn update_halls(&self, updated_after: &str) -> Result<(), reqwest::Error> {
+        info!("start updating halls");
+
+        let mut stream =
+            pin!(self.paginated_collection::<ApiHall>("/halls", updated_after));
+
+        while let Some(batch_result) = stream.next().await {
+            let halls = batch_result?;
+            let amt = halls.len();
+            info!("got {amt} halls from api");
+            for hall in halls {
+                self.db
+                    .halls()
+                    .insert(hall.into())
+                    .await
+                    .unwrap();
+            }
+            info!("inserted {amt} halls into db");
+        }
+
+        info!("finished importing halls");
         Ok(())
     }
 }
