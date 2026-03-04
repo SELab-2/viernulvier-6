@@ -3,7 +3,7 @@ use tracing::info;
 
 use crate::{
     error::DatabaseError,
-    repos::{internal_state::InternalStateRepo, production::ProductionRepo, user::UserRepo, location::LocationRepo},
+    repos::{internal_state::InternalStateRepo, production::ProductionRepo, user::UserRepo, location::LocationRepo, hall::HallRepo},
 };
 
 pub mod models {
@@ -16,6 +16,7 @@ pub mod models {
     pub mod production;
     pub mod user;
     pub mod location;
+    pub mod hall;
 }
 
 pub mod repos {
@@ -23,6 +24,7 @@ pub mod repos {
     pub mod production;
     pub mod user;
     pub mod location;
+    pub mod hall;
 }
 
 pub mod error;
@@ -66,6 +68,10 @@ impl Database {
 
     pub fn locations<'a>(&'a self) -> LocationRepo<'a> {
         LocationRepo::new(&self.db)
+    }
+
+    pub fn halls<'a>(&'a self) -> HallRepo<'a> {
+        HallRepo::new(&self.db)
     }
 }
 

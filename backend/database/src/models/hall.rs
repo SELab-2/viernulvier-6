@@ -1,27 +1,23 @@
-use sqlx::FromRow;
+use ormlite::Model;
 use uuid::Uuid;
 
-#[derive(Debug, FromRow, PartialEq)]
-pub struct HallBase {
+#[derive(Debug, Model, PartialEq)]
+#[ormlite(insert = "HallCreate")]
+#[ormlite(table = "halls")]
+pub struct Hall {
+    pub id: Uuid,
+
+    pub source_id: Option<i32>,
+    pub slug: String,
+
     pub vendor_id: Option<String>,
     pub box_office_id: Option<String>,
     pub seat_selection: Option<bool>,
     pub open_seating: Option<bool>,
     pub name: String,
     pub remark: Option<String>,
-}
 
-#[derive(Debug, FromRow, PartialEq)]
-pub struct Hall {
-    pub id: Uuid,
-    #[sqlx(Flatten)]
-    pub base: HallBase,
-}
-
-#[derive(Debug)]
-pub struct HallCreate {
-    pub source_id: Option<String>,
-    pub slug: String,
-    pub base: HallBase,
+    // references
+    pub location_id: Uuid, // foreign key of the associated location
 }
 

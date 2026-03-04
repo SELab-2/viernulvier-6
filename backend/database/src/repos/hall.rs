@@ -1,0 +1,36 @@
+use ormlite::{Insert, Model};
+use sqlx::PgPool;
+use uuid::Uuid;
+
+use crate::{
+    error::DatabaseError,
+    models::hall::{Hall, HallCreate},
+};
+
+pub struct HallRepo<'a> {
+    db: &'a PgPool,
+}
+
+impl<'a> HallRepo<'a> {
+    pub fn new(db: &'a PgPool) -> Self {
+        Self { db }
+    }
+
+    pub async fn by_id(&self, id: Uuid) -> Result<Hall, DatabaseError> {
+        Hall::select()
+            .where_("id = $1")
+            .bind(id)
+            .fetch_optional(self.db)
+            .await?
+            .ok_or(DatabaseError::NotFound)
+    }
+
+    pub async fn all(&self, limit: usize) -> Result<Vec<Hall>, DatabaseError> {
+        Ok(Hall::select().limit(limit).fetch_all(self.db).await?)
+    }
+
+    pub async fn insert(&self, hall: HallCreate) -> Result<Hall, DatabaseError> {
+        Ok(hall.insert(self.db).await?)
+    }
+}
+
