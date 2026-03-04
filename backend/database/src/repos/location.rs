@@ -34,7 +34,7 @@ impl<'a> LocationRepo<'a> {
        let inserted_location = sqlx::query_as(
            r#"
            INSERT INTO locations (
-                source_id, slug,
+                source_id,
                 name, code, street, number,
                 postal_code, city, country, phone_1,
                 phone_2, is_owned_by_viernulvier, uitdatabank_id
@@ -51,7 +51,6 @@ impl<'a> LocationRepo<'a> {
            "#,
         )
         .bind(location.source_id)
-        .bind(location.slug)
         .bind(location.base.name)
         .bind(location.base.code)
         .bind(location.base.street)

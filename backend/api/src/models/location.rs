@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use database::models::location::{LocationBase, LocationCreate};
 use serde::Deserialize;
+use tracing::warn;
 
 #[derive(Deserialize, Debug)]
 pub struct ApiLocation {
@@ -36,23 +37,21 @@ impl From<ApiLocation> for LocationCreate {
             .id
             .split('/')
             .next_back() // removes and takes the end of the iterator, in this case the id
-            .and_then(|s| s.parse::<i32>().ok());
-        
-        let slug = match source_id { // FIX: leave it at that, since name is not present?
-            Some(id) => format!("location-{}", id),
-            None => "location-unknown".to_string(),
-        }; 
+            .and_then(|s| s.parse::<i32>().ok()); 
 
         let is_owned_by_viernulvier = match api.own_location.as_str() {
             "1" => true,
-            _ => false,
+            "" => false,
+            other => {
+                warn!("unexpected own_location value: {}, defaulting to false", other);
+                false
+            },
         };
 
         // TODO: implement reference to spaces? 
 
         Self {
             source_id,
-            slug,
             base: LocationBase {
                 name: api.name,
                 code: api.code,

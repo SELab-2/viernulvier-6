@@ -26,7 +26,6 @@ pub struct Location {
 #[derive(Debug)]
 pub struct LocationCreate {
     pub source_id: Option<i32>,
-    pub slug: String,
     pub base: LocationBase,
 }
 
