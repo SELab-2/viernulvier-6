@@ -55,6 +55,8 @@ jobs:
           
           cd infra/preview
           
+          FAILED=0
+          
           # Wait for database
           for i in {1..30}; do
             if docker compose --env-file ../../.env --env-file .env.preview \
@@ -62,18 +64,11 @@ jobs:
               echo "Database is healthy"
               break
             fi
-            echo "Waiting for database... ($i/30)"
-            sleep 2
-          done
-          
-          # Wait for garage
-          for i in {1..30}; do
-            if docker compose --env-file ../../.env --env-file .env.preview \
-              -f docker-compose.preview.yml ps garage | grep -q "healthy"; then
-              echo "Garage is healthy"
-              break
+            if [ "$i" -eq 30 ]; then
+              echo "Database failed to become healthy"
+              FAILED=1
             fi
-            echo "Waiting for garage... ($i/30)"
+            echo "Waiting for database... ($i/30)"
             sleep 2
           done
           
@@ -83,6 +78,10 @@ jobs:
               -f docker-compose.preview.yml ps api | grep -q "healthy"; then
               echo "API is healthy"
               break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "API failed to become healthy"
+              FAILED=1
             fi
             echo "Waiting for api... ($i/30)"
             sleep 2
@@ -95,9 +94,26 @@ jobs:
               echo "Frontend is healthy"
               break
             fi
+            if [ "$i" -eq 30 ]; then
+              echo "Frontend failed to become healthy"
+              FAILED=1
+            fi
             echo "Waiting for frontend... ($i/30)"
             sleep 2
           done
+          
+          # Check final status
+          if [ $FAILED -eq 1 ]; then
+            echo ""
+            echo "One or more services failed to become healthy"
+            echo ""
+            echo "Current container status:"
+            docker compose --env-file ../../.env --env-file .env.preview -f docker-compose.preview.yml ps
+            echo ""
+            echo "Container logs:"
+            docker compose --env-file ../../.env --env-file .env.preview -f docker-compose.preview.yml logs --tail 50
+            exit 1
+          fi
           
           echo "All services are ready"
 
