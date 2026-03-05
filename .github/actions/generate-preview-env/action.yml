@@ -43,32 +43,36 @@ runs:
 
     - name: Generate preview env file
       shell: bash
+      env:
+        PREVIEW_HOST: "${{ inputs.preview_host }}"
+        PREVIEW_NAME: "pr-${{ inputs.pr_number }}"
+        COMPOSE_PROJECT_NAME: "${{ inputs.project_name }}-preview-pr-${{ inputs.pr_number }}"
+        PREVIEW_DB_USER: "${{ inputs.db_user }}"
+        PREVIEW_DB_PASSWORD: "${{ inputs.db_password }}"
+        PREVIEW_DB_NAME: "${{ inputs.db_name }}"
+        PREVIEW_SITE_URL: "${{ inputs.public_site_url }}"
+        GARAGE_RPC_SECRET: "${{ inputs.garage_rpc_secret }}"
+        GARAGE_S3_ACCESS_KEY: "${{ inputs.garage_s3_access_key }}"
+        GARAGE_S3_SECRET_KEY: "${{ inputs.garage_s3_secret_key }}"
+        GARAGE_S3_BUCKET: "${{ inputs.garage_s3_bucket }}"
       run: |
         mkdir -p infra/preview
 
-        PREVIEW_HOST="${{ inputs.preview_host }}"
-        PREVIEW_NAME="pr-${{ inputs.pr_number }}"
-        COMPOSE_PROJECT_NAME="${{ inputs.project_name }}-preview-pr-${{ inputs.pr_number }}"
-        PREVIEW_DB_USER="${{ inputs.db_user }}"
-        PREVIEW_DB_PASSWORD="${{ inputs.db_password }}"
-        PREVIEW_DB_NAME="${{ inputs.db_name }}"
-        PREVIEW_SITE_URL="${{ inputs.public_site_url }}"
-
         PREVIEW_DATABASE_URL="postgres://${PREVIEW_DB_USER}:${PREVIEW_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}_database:5432/${PREVIEW_DB_NAME}"
 
-        cat > infra/preview/.env.preview <<EOF
-PREVIEW_HOST=${PREVIEW_HOST}
-PREVIEW_NAME=${PREVIEW_NAME}
-COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME}
-PREVIEW_DB_USER=${PREVIEW_DB_USER}
-PREVIEW_DB_PASSWORD=${PREVIEW_DB_PASSWORD}
-PREVIEW_DB_NAME=${PREVIEW_DB_NAME}
-PREVIEW_DATABASE_URL=${PREVIEW_DATABASE_URL}
-NEXT_PUBLIC_SITE_URL=${PREVIEW_SITE_URL}
-GARAGE_RPC_SECRET=${{ inputs.garage_rpc_secret }}
-GARAGE_S3_ACCESS_KEY=${{ inputs.garage_s3_access_key }}
-GARAGE_S3_SECRET_KEY=${{ inputs.garage_s3_secret_key }}
-GARAGE_S3_BUCKET=${{ inputs.garage_s3_bucket }}
-EOF
+        {
+          echo "PREVIEW_HOST=${PREVIEW_HOST}"
+          echo "PREVIEW_NAME=${PREVIEW_NAME}"
+          echo "COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME}"
+          echo "PREVIEW_DB_USER=${PREVIEW_DB_USER}"
+          echo "PREVIEW_DB_PASSWORD=${PREVIEW_DB_PASSWORD}"
+          echo "PREVIEW_DB_NAME=${PREVIEW_DB_NAME}"
+          echo "PREVIEW_DATABASE_URL=${PREVIEW_DATABASE_URL}"
+          echo "NEXT_PUBLIC_SITE_URL=${PREVIEW_SITE_URL}"
+          echo "GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET}"
+          echo "GARAGE_S3_ACCESS_KEY=${GARAGE_S3_ACCESS_KEY}"
+          echo "GARAGE_S3_SECRET_KEY=${GARAGE_S3_SECRET_KEY}"
+          echo "GARAGE_S3_BUCKET=${GARAGE_S3_BUCKET}"
+        } > infra/preview/.env.preview
 
         echo "Generated infra/preview/.env.preview"
