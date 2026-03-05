@@ -1,7 +1,7 @@
 use crate::{
     config::AppConfig,
     error::AppError,
-    handlers::{health::HealthHandler, production::ProductionHandler, version::VersionHandler},
+    handlers::{production::ProductionHandler, version::VersionHandler},
 };
 use api::ApiImporter;
 use axum::{Router, routing::get};
@@ -55,7 +55,6 @@ pub fn router() -> Router<AppState> {
 
 fn open_routes() -> Router<AppState> {
     Router::new()
-        .route("/health", get(HealthHandler::get))
         .route("/version", get(VersionHandler::get))
         .route("/productions", get(ProductionHandler::all))
 }
