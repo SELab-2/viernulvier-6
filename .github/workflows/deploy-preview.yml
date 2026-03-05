@@ -30,6 +30,10 @@ jobs:
           db_password: ${{ secrets.PREVIEW_DB_PASSWORD }}
           db_name: ${{ secrets.PREVIEW_DB_NAME }}
           public_site_url: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          garage_rpc_secret: ${{ secrets.GARAGE_RPC_SECRET }}
+          garage_s3_access_key: ${{ secrets.GARAGE_S3_ACCESS_KEY }}
+          garage_s3_secret_key: ${{ secrets.GARAGE_S3_SECRET_KEY }}
+          garage_s3_bucket: media
 
       - name: Ensure Traefik network exists
         run: docker network inspect traefik >/dev/null 2>&1 || docker network create traefik
@@ -107,6 +111,10 @@ jobs:
           db_password: ${{ secrets.PREVIEW_DB_PASSWORD }}
           db_name: ${{ secrets.PREVIEW_DB_NAME }}
           public_site_url: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          garage_rpc_secret: ${{ secrets.GARAGE_RPC_SECRET }}
+          garage_s3_access_key: ${{ secrets.GARAGE_S3_ACCESS_KEY }}
+          garage_s3_secret_key: ${{ secrets.GARAGE_S3_SECRET_KEY }}
+          garage_s3_bucket: media
 
       - name: Cleanup preview stack
         run: |

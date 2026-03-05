@@ -20,6 +20,18 @@ inputs:
   public_site_url:
     description: "Public site url"
     required: true
+  garage_rpc_secret:
+    description: "Garage RPC secret"
+    required: true
+  garage_s3_access_key:
+    description: "Garage S3 access key"
+    required: true
+  garage_s3_secret_key:
+    description: "Garage S3 secret key"
+    required: true
+  garage_s3_bucket:
+    description: "Garage S3 bucket name"
+    required: true
 
 runs:
   using: "composite"
@@ -44,6 +56,10 @@ runs:
         PROD_DB_NAME=$PROD_DB_NAME
         PROD_DATABASE_URL=$PROD_DATABASE_URL
         NEXT_PUBLIC_SITE_URL=$PROD_SITE_URL
+        GARAGE_RPC_SECRET=${{ inputs.garage_rpc_secret }}
+        GARAGE_S3_ACCESS_KEY=${{ inputs.garage_s3_access_key }}
+        GARAGE_S3_SECRET_KEY=${{ inputs.garage_s3_secret_key }}
+        GARAGE_S3_BUCKET=${{ inputs.garage_s3_bucket }}
         EOF
 
         echo "Production .env generated."

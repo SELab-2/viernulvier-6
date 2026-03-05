@@ -28,6 +28,11 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}_api
     environment:
       DATABASE_URL: postgres://${PREVIEW_DB_USER}:${PREVIEW_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}_db:5432/${PREVIEW_DB_NAME}
+      S3_ENDPOINT: http://${COMPOSE_PROJECT_NAME}_garage:3900
+      S3_REGION: garage
+      S3_ACCESS_KEY: ${GARAGE_S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${GARAGE_S3_SECRET_KEY}
+      S3_BUCKET: ${GARAGE_S3_BUCKET}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${PREVIEW_NAME}-api.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/api`)"
@@ -52,8 +57,27 @@ services:
     networks:
       - internal
 
+  garage:
+    image: dxflrs/garage:v2.2.0
+    container_name: ${COMPOSE_PROJECT_NAME}_garage
+    restart: unless-stopped
+    environment:
+      - GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET}
+    volumes:
+      - ./garage.toml:/etc/garage.toml
+      - garage_meta:/var/lib/garage/meta
+      - garage_data:/var/lib/garage/data
+    networks:
+      - internal
+    # Only expose S3 API (3900) and RPC (3901) internally
+    expose:
+      - "3900"
+      - "3901"
+
 volumes:
   db_data:
+  garage_meta:
+  garage_data:
 
 networks:
   traefik:

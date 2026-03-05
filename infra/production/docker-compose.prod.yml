@@ -6,9 +6,16 @@ services:
     environment:
       DATABASE_URL: ${PROD_DATABASE_URL}
       LOG_LEVEL: ${PROD_LOG_LEVEL}
+      S3_ENDPOINT: http://${COMPOSE_PROJECT_NAME}_garage:3900
+      S3_REGION: garage
+      S3_ACCESS_KEY: ${GARAGE_S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${GARAGE_S3_SECRET_KEY}
+      S3_BUCKET: ${GARAGE_S3_BUCKET}
     depends_on:
       database:
         condition: service_healthy
+      garage:
+        condition: service_started
     networks:
       - app_network
       - traefik
@@ -58,8 +65,27 @@ services:
       timeout: 5s
       retries: 5
 
+  garage:
+    image: dxflrs/garage:v2.2.0
+    container_name: ${COMPOSE_PROJECT_NAME}_garage
+    restart: always
+    environment:
+      - GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET}
+    volumes:
+      - ./garage.toml:/etc/garage.toml
+      - garage_meta:/var/lib/garage/meta
+      - garage_data:/var/lib/garage/data
+    networks:
+      - app_network
+    # Only expose S3 API (3900) and RPC (3901) internally
+    expose:
+      - "3900"
+      - "3901"
+
 volumes:
   postgres_data:
+  garage_meta:
+  garage_data:
 
 networks:
   app_network:
