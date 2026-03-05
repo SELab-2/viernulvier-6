@@ -1,8 +1,10 @@
 use chrono::{DateTime, Utc};
-use sqlx::FromRow;
+use ormlite::Model;
 use uuid::Uuid;
 
-#[derive(Debug, FromRow, PartialEq)]
+#[derive(Debug, Model, PartialEq)]
+#[ormlite(insert = "EventCreate")]
+#[ormlite(table = "events")]
 pub struct Event {
     pub id: Uuid,
     pub created_at: DateTime<Utc>,
