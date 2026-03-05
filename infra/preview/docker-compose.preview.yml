@@ -23,6 +23,26 @@ services:
       - internal
     restart: unless-stopped
 
+  docs:
+    build:
+      context: ../../docs
+    container_name: ${COMPOSE_PROJECT_NAME}_docs
+    labels:
+      - "traefik.enable=true"
+      # Route for /{preview-name}/docs (for PR previews)
+      - "traefik.http.routers.${PREVIEW_NAME}-docs.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/docs`)"
+      - "traefik.http.routers.${PREVIEW_NAME}-docs.entrypoints=websecure"
+      - "traefik.http.services.${PREVIEW_NAME}-docs.loadbalancer.server.port=3000"
+      - "traefik.http.routers.${PREVIEW_NAME}-docs.tls.certresolver=letsencrypt"
+      # Route for /docs (for local development)
+      - "traefik.http.routers.docs-local.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/docs`)"
+      - "traefik.http.routers.docs-local.entrypoints=websecure"
+      - "traefik.http.routers.docs-local.service=${PREVIEW_NAME}-docs"
+      - "traefik.http.routers.docs-local.tls.certresolver=letsencrypt"
+    networks:
+      - traefik
+      - internal
+
   api:
     build:
       context: ../../backend

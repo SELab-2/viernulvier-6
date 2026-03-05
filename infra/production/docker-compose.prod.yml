@@ -48,6 +48,20 @@ services:
       - "traefik.http.routers.main.priority=1"
       - "traefik.http.routers.main.tls.certresolver=letsencrypt"
 
+  docs:
+    image: kayasem/${COMPOSE_PROJECT_NAME}-docs:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_docs
+    restart: always
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.main-docs.rule=Host(`${PROD_HOST}`) && PathPrefix(`/docs`)"
+      - "traefik.http.routers.main-docs.entrypoints=websecure"
+      - "traefik.http.services.main-docs.loadbalancer.server.port=3000"
+      - "traefik.http.routers.main-docs.priority=5"
+      - "traefik.http.routers.main-docs.tls.certresolver=letsencrypt"
+
   database:
     image: postgres:18
     container_name: ${COMPOSE_PROJECT_NAME}_database
