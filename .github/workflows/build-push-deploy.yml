@@ -78,9 +78,14 @@ jobs:
         run: |
           docker compose --env-file .env -f infra/production/docker-compose.prod.yml pull
 
+      - name: Debug env file
+        run: |
+          echo "=== Production .env ==="
+          cat .env
+
       - name: Deploy production stack
         run: |
-          docker compose --env-file .env -f infra/production/docker-compose.prod.yml up -d --remove-orphans
+          docker compose --env-file .env -f infra/production/docker-compose.prod.yml up -d --remove-orphans --force-recreate
 
       - name: Cleanup unused images
         run: docker image prune -f

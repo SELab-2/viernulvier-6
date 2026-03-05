@@ -44,10 +44,18 @@ jobs:
             docker compose -f infra/traefik/docker-compose.yml up -d
           fi
 
+      - name: Debug env files
+        run: |
+          echo "=== .env ==="
+          cat .env
+          echo ""
+          echo "=== .env.preview ==="
+          cat infra/preview/.env.preview
+
       - name: Start preview stack
         run: |
           docker compose --env-file .env --env-file infra/preview/.env.preview \
-            -f infra/preview/docker-compose.preview.yml up -d --build
+            -f infra/preview/docker-compose.preview.yml up -d --build --force-recreate
 
       - name: Comment preview links (replace previous)
         uses: actions/github-script@v7
