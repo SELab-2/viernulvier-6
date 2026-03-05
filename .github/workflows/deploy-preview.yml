@@ -51,12 +51,14 @@ jobs:
 
       - name: Wait for services to be healthy
         run: |
-          echo "Waiting for services to be healthy..."
+          echo "Waiting for all services to be healthy..."
+          
+          cd infra/preview
           
           # Wait for database
           for i in {1..30}; do
-            if docker compose --env-file .env --env-file infra/preview/.env.preview \
-              -f infra/preview/docker-compose.preview.yml ps db | grep -q "healthy"; then
+            if docker compose --env-file ../../.env --env-file .env.preview \
+              -f docker-compose.preview.yml ps db | grep -q "healthy"; then
               echo "Database is healthy"
               break
             fi
@@ -66,9 +68,9 @@ jobs:
           
           # Wait for garage
           for i in {1..30}; do
-            if docker compose --env-file .env --env-file infra/preview/.env.preview \
-              -f infra/preview/docker-compose.preview.yml ps garage | grep -q "healthy\|Up"; then
-              echo "Garage is up"
+            if docker compose --env-file ../../.env --env-file .env.preview \
+              -f docker-compose.preview.yml ps garage | grep -q "healthy"; then
+              echo "Garage is healthy"
               break
             fi
             echo "Waiting for garage... ($i/30)"
@@ -77,12 +79,23 @@ jobs:
           
           # Wait for api
           for i in {1..30}; do
-            if docker compose --env-file .env --env-file infra/preview/.env.preview \
-              -f infra/preview/docker-compose.preview.yml ps api | grep -q "healthy\|Up"; then
-              echo "API is up"
+            if docker compose --env-file ../../.env --env-file .env.preview \
+              -f docker-compose.preview.yml ps api | grep -q "healthy"; then
+              echo "API is healthy"
               break
             fi
             echo "Waiting for api... ($i/30)"
+            sleep 2
+          done
+          
+          # Wait for frontend
+          for i in {1..30}; do
+            if docker compose --env-file ../../.env --env-file .env.preview \
+              -f docker-compose.preview.yml ps frontend | grep -q "healthy"; then
+              echo "Frontend is healthy"
+              break
+            fi
+            echo "Waiting for frontend... ($i/30)"
             sleep 2
           done
           
