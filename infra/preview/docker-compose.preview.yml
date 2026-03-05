@@ -14,9 +14,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.${PREVIEW_NAME}.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}`)"
       - "traefik.http.routers.${PREVIEW_NAME}.entrypoints=websecure"
-      #- "traefik.http.middlewares.${PREVIEW_NAME}-strip.stripprefix.prefixes=/${PREVIEW_NAME}"
-      #- "traefik.http.routers.${PREVIEW_NAME}.middlewares=${PREVIEW_NAME}-strip"
       - "traefik.http.services.${PREVIEW_NAME}.loadbalancer.server.port=3000"
+      - "traefik.http.routers.${PREVIEW_NAME}.priority=1"
       - "traefik.http.routers.${PREVIEW_NAME}.tls.certresolver=letsencrypt"
     networks:
       - traefik
@@ -29,15 +28,17 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}_docs
     labels:
       - "traefik.enable=true"
-      # Route for /{preview-name}/docs (for PR previews)
+      # Route for /{preview-name}/docs (for PR previews) - higher priority than frontend
       - "traefik.http.routers.${PREVIEW_NAME}-docs.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/docs`)"
       - "traefik.http.routers.${PREVIEW_NAME}-docs.entrypoints=websecure"
       - "traefik.http.services.${PREVIEW_NAME}-docs.loadbalancer.server.port=3000"
+      - "traefik.http.routers.${PREVIEW_NAME}-docs.priority=10"
       - "traefik.http.routers.${PREVIEW_NAME}-docs.tls.certresolver=letsencrypt"
       # Route for /docs (for local development)
       - "traefik.http.routers.docs-local.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/docs`)"
       - "traefik.http.routers.docs-local.entrypoints=websecure"
       - "traefik.http.routers.docs-local.service=${PREVIEW_NAME}-docs"
+      - "traefik.http.routers.docs-local.priority=10"
       - "traefik.http.routers.docs-local.tls.certresolver=letsencrypt"
     networks:
       - traefik
