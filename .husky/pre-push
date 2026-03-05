@@ -1,1 +1,2 @@
 cd frontend && npm run typecheck && npm run lint:ci
+cd ../docs && npm run lint:ci
