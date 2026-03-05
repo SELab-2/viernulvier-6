@@ -29,7 +29,7 @@ services:
       - traefik
       - internal
 
-  backend:
+  api:
     build:
       context: ../../backend
     container_name: ${COMPOSE_PROJECT_NAME}_api
