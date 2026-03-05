@@ -12,7 +12,7 @@ services:
       NEXT_PUBLIC_API_URL: http://api:80/api
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${PREVIEW_NAME}.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}`)"
+      - "traefik.http.routers.${PREVIEW_NAME}.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}`) && !PathPrefix(`/${PREVIEW_NAME}/docs`) && !PathPrefix(`/${PREVIEW_NAME}/api`)"
       - "traefik.http.routers.${PREVIEW_NAME}.entrypoints=websecure"
       - "traefik.http.services.${PREVIEW_NAME}.loadbalancer.server.port=3000"
       - "traefik.http.routers.${PREVIEW_NAME}.priority=1"

@@ -34,7 +34,7 @@ services:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_SITE_URL}/api
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.main.rule=Host(`${PROD_HOST}`) && PathPrefix(`/`)"
+      - "traefik.http.routers.main.rule=Host(`${PROD_HOST}`) && PathPrefix(`/`) && !PathPrefix(`/docs`) && !PathPrefix(`/api`)"
       - "traefik.http.routers.main.entrypoints=websecure"
       - "traefik.http.services.main.loadbalancer.server.port=3000"
       - "traefik.http.routers.main.priority=1"
