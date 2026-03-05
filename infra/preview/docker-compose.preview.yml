@@ -11,7 +11,8 @@ services:
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
       NEXT_PUBLIC_API_URL: http://api:80/api
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/health || exit 1"]
+      test:
+        ["CMD-SHELL", "wget -q --spider http://localhost:3000/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -45,7 +46,8 @@ services:
       garage:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:3001/health || exit 1"]
+      test:
+        ["CMD-SHELL", "wget -q --spider http://localhost:3001/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -74,14 +76,16 @@ services:
     networks:
       - internal
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${PREVIEW_DB_USER} -d ${PREVIEW_DB_NAME}"]
+      test:
+        ["CMD-SHELL", "pg_isready -U ${PREVIEW_DB_USER} -d ${PREVIEW_DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 10
       start_period: 10s
 
   garage:
-    image: dxflrs/garage:v2.2.0
+    build:
+      context: ../garage
     container_name: ${COMPOSE_PROJECT_NAME}_garage
     restart: unless-stopped
     environment:
@@ -92,15 +96,15 @@ services:
       - garage_data:/var/lib/garage/data
     networks:
       - internal
-    # Only expose S3 API (3900) and RPC (3901) internally
-    expose:
-      - "3900"
-      - "3901"
     healthcheck:
-      test: ["CMD-SHELL", "garage status 2>/dev/null | grep -q 'HEALTHY\\|DEGRADED' || exit 1"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
+      test: >
+        sh -c "
+          aws --endpoint-url=http://localhost:3900 s3 ls >/dev/null 2>&1
+          || exit 1
+        "
+      interval: 30s
+      timeout: 10s
+      retries: 3
       start_period: 10s
 
 volumes:
