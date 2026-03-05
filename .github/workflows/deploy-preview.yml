@@ -44,18 +44,49 @@ jobs:
             docker compose -f infra/traefik/docker-compose.yml up -d
           fi
 
-      - name: Debug env files
-        run: |
-          echo "=== .env ==="
-          cat .env
-          echo ""
-          echo "=== .env.preview ==="
-          cat infra/preview/.env.preview
-
       - name: Start preview stack
         run: |
           docker compose --env-file .env --env-file infra/preview/.env.preview \
             -f infra/preview/docker-compose.preview.yml up -d --build --force-recreate
+
+      - name: Wait for services to be healthy
+        run: |
+          echo "Waiting for services to be healthy..."
+          
+          # Wait for database
+          for i in {1..30}; do
+            if docker compose --env-file .env --env-file infra/preview/.env.preview \
+              -f infra/preview/docker-compose.preview.yml ps db | grep -q "healthy"; then
+              echo "Database is healthy"
+              break
+            fi
+            echo "Waiting for database... ($i/30)"
+            sleep 2
+          done
+          
+          # Wait for garage
+          for i in {1..30}; do
+            if docker compose --env-file .env --env-file infra/preview/.env.preview \
+              -f infra/preview/docker-compose.preview.yml ps garage | grep -q "healthy\|Up"; then
+              echo "Garage is up"
+              break
+            fi
+            echo "Waiting for garage... ($i/30)"
+            sleep 2
+          done
+          
+          # Wait for api
+          for i in {1..30}; do
+            if docker compose --env-file .env --env-file infra/preview/.env.preview \
+              -f infra/preview/docker-compose.preview.yml ps api | grep -q "healthy\|Up"; then
+              echo "API is up"
+              break
+            fi
+            echo "Waiting for api... ($i/30)"
+            sleep 2
+          done
+          
+          echo "All services are ready"
 
       - name: Comment preview links (replace previous)
         uses: actions/github-script@v7

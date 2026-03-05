@@ -78,14 +78,45 @@ jobs:
         run: |
           docker compose --env-file .env -f infra/production/docker-compose.prod.yml pull
 
-      - name: Debug env file
-        run: |
-          echo "=== Production .env ==="
-          cat .env
-
       - name: Deploy production stack
         run: |
           docker compose --env-file .env -f infra/production/docker-compose.prod.yml up -d --remove-orphans --force-recreate
+
+      - name: Wait for services to be healthy
+        run: |
+          echo "Waiting for services to be healthy..."
+          
+          # Wait for database
+          for i in {1..30}; do
+            if docker compose --env-file .env -f infra/production/docker-compose.prod.yml ps database | grep -q "healthy"; then
+              echo "Database is healthy"
+              break
+            fi
+            echo "Waiting for database... ($i/30)"
+            sleep 2
+          done
+          
+          # Wait for garage
+          for i in {1..30}; do
+            if docker compose --env-file .env -f infra/production/docker-compose.prod.yml ps garage | grep -q "healthy\|Up"; then
+              echo "Garage is up"
+              break
+            fi
+            echo "Waiting for garage... ($i/30)"
+            sleep 2
+          done
+          
+          # Wait for backend
+          for i in {1..30}; do
+            if docker compose --env-file .env -f infra/production/docker-compose.prod.yml ps backend | grep -q "healthy\|Up"; then
+              echo "Backend is up"
+              break
+            fi
+            echo "Waiting for backend... ($i/30)"
+            sleep 2
+          done
+          
+          echo "All services are ready"
 
       - name: Cleanup unused images
         run: docker image prune -f

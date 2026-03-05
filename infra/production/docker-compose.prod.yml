@@ -81,6 +81,12 @@ services:
     expose:
       - "3900"
       - "3901"
+    healthcheck:
+      test: ["CMD-SHELL", "garage status 2>/dev/null | grep -q 'HEALTHY\\|DEGRADED' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
 
 volumes:
   postgres_data:
