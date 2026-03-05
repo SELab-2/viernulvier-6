@@ -7,6 +7,7 @@ use reqwest::Client;
 use serde::de::DeserializeOwned;
 use tracing::{info, warn};
 
+use crate::models::event::ApiEvent;
 use crate::models::{
     collection::ApiCollection, hall::ApiHall, location::ApiLocation, production::ApiProduction,
     space::ApiSpace,
@@ -87,6 +88,7 @@ impl ApiImporter {
             self.update_spaces(&last_update_ts).await?;
             self.update_halls(&last_update_ts).await?;
             self.update_productions(&last_update_ts).await?;
+            self.update_events(&last_update_ts).await?;
             Ok::<(), reqwest::Error>(())
         }
         .await;
@@ -258,6 +260,25 @@ impl ApiImporter {
         }
 
         info!("Halls: finished importing");
+        Ok(())
+    }
+
+    pub async fn update_events(&self, updated_after: &str) -> Result<(), reqwest::Error> {
+        info!("start updating events");
+
+        let mut stream = pin!(self.paginated_collection::<ApiEvent>("/events", updated_after));
+
+        while let Some(batch_result) = stream.next().await {
+            let events = batch_result?;
+            let amt = events.len();
+            info!("got {amt} events from api");
+            for event in events {
+                self.db.events().insert(event.into()).await.unwrap();
+            }
+            info!("inserted {amt} events into db");
+        }
+
+        info!("finished importing events");
         Ok(())
     }
 }
