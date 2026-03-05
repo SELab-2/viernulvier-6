@@ -7,13 +7,12 @@ use reqwest::Client;
 use serde::de::DeserializeOwned;
 use tracing::{info, warn};
 
-use crate::models::event::ApiEvent;
-use crate::models::{
-    collection::ApiCollection, hall::ApiHall, location::ApiLocation, production::ApiProduction,
-    space::ApiSpace,
-};
-
 use crate::helper::extract_source_id;
+use crate::models::space::ApiSpace;
+use crate::models::{
+    collection::ApiCollection, event::ApiEvent, hall::ApiHall, location::ApiLocation,
+    production::ApiProduction,
+};
 
 mod helper;
 pub mod models {

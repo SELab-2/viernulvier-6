@@ -51,9 +51,12 @@ impl From<ApiEvent> for EventCreate {
             .hall
             .split('/')
             .next_back()
-            .and_then(|s| s.parse::<i32>().ok());
+            .and_then(|s| Uuid::parse_str(s).ok())
+            .expect("invalid hall id in event");
 
         Self {
+            created_at: api.created_at,
+            updated_at: api.updated_at,
             starts_at: api.starts_at,
             ends_at: api.ends_at,
             intermission_at: api.intermission_at,
@@ -64,7 +67,7 @@ impl From<ApiEvent> for EventCreate {
             max_tickets_per_order: api.max_tickets_per_order as i32,
             production_id,
             status: api.status,
-            hall: api.hall, // of hall_id als je dat liever hebt
+            hall: hall_id,
         }
     }
 }
