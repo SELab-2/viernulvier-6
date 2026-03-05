@@ -4,7 +4,7 @@ use tracing::info;
 use crate::{
     error::DatabaseError,
     repos::{
-        event::EventRepo, hall::HallRepo, internal_state::InternalStateRepo, location::LocationRepo,
+        event::EventRepo, hall::HallRepo, internal_state::InternalStateRepo,location::LocationRepo,
         production::ProductionRepo, space::SpaceRepo, user::UserRepo, sessions::SessionRepo
     },
 };
