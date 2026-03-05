@@ -91,16 +91,6 @@ services:
       - garage_data:/var/lib/garage/data
     networks:
       - app_network
-    healthcheck:
-      test: >
-        sh -c "
-          aws --endpoint-url=http://localhost:3900 s3 ls >/dev/null 2>&1
-          || exit 1
-        "
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
 
 volumes:
   postgres_data:

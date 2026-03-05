@@ -84,8 +84,7 @@ services:
       start_period: 10s
 
   garage:
-    build:
-      context: ../garage
+    image: dxflrs/garage:v2.2.0
     container_name: ${COMPOSE_PROJECT_NAME}_garage
     restart: unless-stopped
     environment:
@@ -96,16 +95,6 @@ services:
       - garage_data:/var/lib/garage/data
     networks:
       - internal
-    healthcheck:
-      test: >
-        sh -c "
-          aws --endpoint-url=http://localhost:3900 s3 ls >/dev/null 2>&1
-          || exit 1
-        "
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
 
 volumes:
   db_data:
