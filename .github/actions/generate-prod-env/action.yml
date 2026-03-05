@@ -63,24 +63,3 @@ runs:
         EOF
 
         echo "Production .env generated."
-
-    - name: Generate garage.toml with secret
-      shell: bash
-      run: |
-        cat > infra/production/garage.toml <<EOF
-        metadata_dir = "/var/lib/garage/meta"
-        data_dir = "/var/lib/garage/data"
-        db_engine = "lmdb"
-
-        replication_factor = 1
-
-        rpc_bind_addr = "[::]:3901"
-        rpc_secret = "${{ inputs.garage_rpc_secret }}"
-
-        [s3_api]
-        s3_region = "garage"
-        api_bind_addr = "[::]:3900"
-        root_domain = ".s3.garage.localhost"
-        EOF
-
-        echo "Generated infra/production/garage.toml"

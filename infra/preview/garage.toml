@@ -5,7 +5,7 @@ db_engine = "lmdb"
 replication_factor = 1
 
 rpc_bind_addr = "[::]:3901"
-# rpc_secret wordt gelezen uit GARAGE_RPC_SECRET env var
+# GARAGE_RPC_SECRET env var wordt automatisch gebruikt
 
 [s3_api]
 s3_region = "garage"
