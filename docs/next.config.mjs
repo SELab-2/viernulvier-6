@@ -22,6 +22,10 @@ const config = {
       },
     ];
   },
+  // Ensure source.config.ts is not marked as external
+  experimental: {
+    esmExternals: 'loose',
+  },
 };
 
 export default withMDX(config);
