@@ -84,55 +84,35 @@ jobs:
 
       - name: Wait for services to be healthy
         run: |
-          echo "Waiting for all services to be healthy..."
-
           cd infra/production
 
           FAILED=0
 
-          # Wait for database
-          for i in {1..30}; do
-            if docker compose --env-file ../../.env -f docker-compose.prod.yml ps database | grep -q "healthy"; then
-              echo "Database is healthy"
-              break
-            fi
-            if [ "$i" -eq 30 ]; then
-              echo "Database failed to become healthy"
-              FAILED=1
-            fi
-            echo "Waiting for database... ($i/30)"
-            sleep 2
-          done
+          wait_for_service() {
+            local service=$1
+            local max_attempts=${2:-30}
+            local env_file=${3:-../../.env}
+            local compose_file=${4:-docker-compose.prod.yml}
 
-          # Wait for backend
-          for i in {1..30}; do
-            if docker compose --env-file ../../.env -f docker-compose.prod.yml ps backend | grep -q "healthy"; then
-              echo "Backend is healthy"
-              break
-            fi
-            if [ "$i" -eq 30 ]; then
-              echo "Backend failed to become healthy"
-              FAILED=1
-            fi
-            echo "Waiting for backend... ($i/30)"
-            sleep 2
-          done
+            for i in $(seq 1 $max_attempts); do
+              if docker compose --env-file "$env_file" -f "$compose_file" ps "$service" | grep -q "healthy"; then
+                echo "$service is healthy"
+                return 0
+              fi
+              if [ "$i" -eq "$max_attempts" ]; then
+                echo "$service failed to become healthy"
+                FAILED=1
+                return 1
+              fi
+              echo "Waiting for $service... ($i/$max_attempts)"
+              sleep 2
+            done
+          }
 
-          # Wait for frontend
-          for i in {1..30}; do
-            if docker compose --env-file ../../.env -f docker-compose.prod.yml ps frontend | grep -q "healthy"; then
-              echo "Frontend is healthy"
-              break
-            fi
-            if [ "$i" -eq 30 ]; then
-              echo "Frontend failed to become healthy"
-              FAILED=1
-            fi
-            echo "Waiting for frontend... ($i/30)"
-            sleep 2
-          done
+          wait_for_service "database"
+          wait_for_service "backend"
+          wait_for_service "frontend"
 
-          # Check final status
           if [ $FAILED -eq 1 ]; then
             echo ""
             echo "One or more services failed to become healthy"
