@@ -19,7 +19,7 @@ use crate::error::AppError;
 use crate::handlers::{admin, auth, location, production, version};
 
 pub mod config;
-mod dto;
+pub mod dto;
 mod error;
 mod extractors;
 mod handlers;
