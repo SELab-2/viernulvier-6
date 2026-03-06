@@ -1,7 +1,9 @@
 use chrono::{DateTime, Utc};
-use database::models::location::{LocationBase, LocationCreate};
+use database::models::location::LocationCreate;
 use serde::Deserialize;
 use tracing::warn;
+
+use crate::helper::extract_source_id;
 
 #[derive(Deserialize, Debug)]
 pub struct ApiLocation {
@@ -27,17 +29,11 @@ pub struct ApiLocation {
     pub country: Option<String>,
     pub uitdatabank_id: Option<String>,
     
-    // references
-    pub spaces: Vec<String>, //TODO: currently not implemented
 }
 
 impl From<ApiLocation> for LocationCreate {
     fn from(api: ApiLocation) -> Self {
-        let source_id = api
-            .id
-            .split('/')
-            .next_back() // removes and takes the end of the iterator, in this case the id
-            .and_then(|s| s.parse::<i32>().ok()); 
+        let source_id = extract_source_id(&api.id);
 
         let is_owned_by_viernulvier = match api.own_location.as_str() {
             "1" => true,
@@ -48,23 +44,20 @@ impl From<ApiLocation> for LocationCreate {
             },
         };
 
-        // TODO: implement reference to spaces? 
-
         Self {
-            source_id,
-            base: LocationBase {
-                name: api.name,
-                code: api.code,
-                street: api.street,
-                number: api.number,
-                postal_code: api.postal_code,
-                city: api.city,
-                country: api.country,
-                phone_1: api.phone_1,
-                phone_2: api.phone_2,
-                is_owned_by_viernulvier: Some(is_owned_by_viernulvier),
-                uitdatabank_id: api.uitdatabank_id,
-            },
+            source_id: Some(source_id), // FIX: source_id's are currently Nullable inside the tables. Is there
+                             // a reason for that?
+            name: api.name,
+            code: api.code,
+            street: api.street,
+            number: api.number,
+            postal_code: api.postal_code,
+            city: api.city,
+            country: api.country,
+            phone_1: api.phone_1,
+            phone_2: api.phone_2,
+            is_owned_by_viernulvier: Some(is_owned_by_viernulvier),
+            uitdatabank_id: api.uitdatabank_id,
         }
     }
 }

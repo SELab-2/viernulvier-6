@@ -75,6 +75,8 @@ impl ApiImporter {
         let last_update_ts = self.get_last_updated().await;
 
         // TODO start transactions
+        // order : locations -> spaces -> halls
+        // a location contains a space, which in turn contains one or more hall
         let res = async {
             self.update_locations(&last_update_ts).await?;
             self.update_productions(&last_update_ts).await?;
