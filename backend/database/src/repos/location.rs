@@ -31,6 +31,15 @@ impl<'a> LocationRepo<'a> {
 
    pub async fn insert(&self, location: LocationCreate) -> Result<Location, DatabaseError> {
         Ok(location.insert(self.db).await?)
-   } 
+   }
+
+   pub async fn by_source_id(&self, source_id: i32) -> Result<Location, DatabaseError> {
+       Location::select()
+           .where_("source_id = $1")
+           .bind(source_id)
+           .fetch_optional(self.db)
+           .await?
+           .ok_or(DatabaseError::NotFound)
+   }
 }
 
