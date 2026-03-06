@@ -1,7 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
-use crate::models::localized_text::ApiLocalizedText;
+use crate::{
+    helper::flatten_single,
+    models::localized_text::ApiLocalizedText,
+};
 
 #[derive(Debug, Deserialize)]
 pub struct Space {
@@ -27,3 +30,4 @@ pub struct Space {
     /// \]
     pub halls: Vec<String>,
 }
+
