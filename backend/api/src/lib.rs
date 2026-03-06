@@ -7,7 +7,15 @@ use reqwest::Client;
 use serde::de::DeserializeOwned;
 use tracing::{info, warn};
 
-use crate::models::{collection::ApiCollection, production::ApiProduction, location::ApiLocation, hall::ApiHall};
+use crate::models::{
+    collection::ApiCollection,
+    production::ApiProduction,
+    location::ApiLocation,
+    hall::ApiHall,
+    space::ApiSpace
+};
+
+use crate::helper::extract_source_id;
 
 mod helper;
 pub mod models {
@@ -180,6 +188,43 @@ impl ApiImporter {
         }
 
         info!("finished importing locations");
+        Ok(())
+    }
+
+    pub async fn update_spaces(&self, updated_after: &str) -> Result<(), reqwest::Error> {
+        info!("start updating spaces");
+
+        let mut stream =
+            pin!(self.paginated_collection::<ApiSpace>("/spaces", updated_after));
+
+        while let Some(batch_result) = stream.next().await {
+            let spaces = batch_result?;
+            let amt = spaces.len();
+            info!("got {amt} spaces from api");
+            for space in spaces {
+
+                // first load in the related location and extract its id
+                let location_source_id = extract_source_id(&space.location);
+
+                let location = self.db
+                    .locations()
+                    .by_source_id(location_source_id)
+                    .await
+                    .unwrap();
+                
+                // construct a SpaceCreate out of it
+                let spaceCreate = space.to_create(location.id);
+
+                self.db
+                    .spaces()
+                    .insert(spaceCreate)
+                    .await
+                    .unwrap();
+            }
+            info!("inserted {amt} spaces into db");
+        }
+
+        info!("finished importing spaces");
         Ok(())
     }
 
