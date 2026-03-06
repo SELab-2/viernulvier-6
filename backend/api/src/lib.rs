@@ -87,8 +87,9 @@ impl ApiImporter {
         // a location contains a space, which in turn contains one or more hall
         let res = async {
             self.update_locations(&last_update_ts).await?;
-            self.update_productions(&last_update_ts).await?;
+            self.update_spaces(&last_update_ts).await?; 
             self.update_halls(&last_update_ts).await?;
+            self.update_productions(&last_update_ts).await?;
             Ok::<(), reqwest::Error>(())
         }
         .await;
@@ -213,11 +214,11 @@ impl ApiImporter {
                     .unwrap();
                 
                 // construct a SpaceCreate out of it
-                let spaceCreate = space.to_create(location.id);
+                let space_create = space.to_create(location.id);
 
                 self.db
                     .spaces()
-                    .insert(spaceCreate)
+                    .insert(space_create)
                     .await
                     .unwrap();
             }
@@ -239,9 +240,22 @@ impl ApiImporter {
             let amt = halls.len();
             info!("got {amt} halls from api");
             for hall in halls {
+
+                // first load in the related space and extract its id
+                let space_source_id = extract_source_id(&hall.space);
+
+                let space = self.db
+                    .spaces()
+                    .by_source_id(space_source_id)
+                    .await
+                    .unwrap();
+                
+                // construct a HallCreate out of it
+                let hall_create = hall.to_create(space.id);
+
                 self.db
                     .halls()
-                    .insert(hall.into())
+                    .insert(hall_create)
                     .await
                     .unwrap();
             }

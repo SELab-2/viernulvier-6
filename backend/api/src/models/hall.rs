@@ -3,9 +3,12 @@ use serde::Deserialize;
 use tracing::warn;
 use database::models::hall::HallCreate;
 use crate::{
-    helper::flatten_single,
+    helper::{flatten_single, extract_source_id},
     models::localized_text::ApiLocalizedText,
 };
+
+use slug::slugify;
+use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
 pub struct ApiHall {
@@ -32,21 +35,16 @@ pub struct ApiHall {
 
     /// link to location where the space is located
     /// "/api/v1/space/{id}"
-    pub space: Option<String>,
+    pub space: String,
 }
 
-use slug::slugify;
-use uuid::Uuid; // FIX: temporary, see location_id at the bottom of the file
+// halls are linked to a space, many_to_one. function that takes an ApiModel and a Uuid for
+// space, and returns a create model for Halls
+impl ApiHall {
+    pub fn to_create(self, space_uuid: Uuid) -> HallCreate {
+        let source_id = extract_source_id(&self.id);
 
-impl From<ApiHall> for HallCreate {
-    fn from(api: ApiHall) -> Self {
-        let source_id = api
-            .id
-            .split('/')
-            .next_back()
-            .and_then(|s| s.parse::<i32>().ok());
-        
-        let seat_selection = match api.seat_selection.as_str() {
+        let seat_selection = match self.seat_selection.as_str() {
             "1" => true,
             "" => false,
             other => {
@@ -55,7 +53,7 @@ impl From<ApiHall> for HallCreate {
             },
         };
 
-        let open_seating = match api.open_seating.as_str() {
+        let open_seating = match self.open_seating.as_str() {
             "1" => true,
             "" => false,
             other => {
@@ -64,29 +62,25 @@ impl From<ApiHall> for HallCreate {
             },
         };
 
-        let name = flatten_single(Some(api.name))
+        let name = flatten_single(Some(self.name))
             .expect("name should always be present"); // helper expects Option
 
-        let remark = flatten_single(api.remark);
+        let remark = flatten_single(self.remark);
         
-        let slug = match source_id {
-            Some(id) => format!("{}-{}", slugify(&name), id),
-            None => slugify(&name),
-        };
+        let slug = format!("{}-{}", slugify(&name), source_id);
 
-        Self {
-            source_id,
+        HallCreate {
+            source_id: Some(source_id),
             slug,
-            vendor_id: api.vendor_id,
-            box_office_id: api.box_office_id,
+            vendor_id: self.vendor_id,
+            box_office_id: self.box_office_id,
             seat_selection: Some(seat_selection),
             open_seating: Some(open_seating),
             name,
             remark,
-            
-            location_id: Uuid::nil(), // FIX: workaroud for now, this is a hyperlink to a 'space', which in turn contains a location
-            // the Uuid of that location should come here. Is that wat we want?
+            space_id: space_uuid,
         }
+
     }
 }
 

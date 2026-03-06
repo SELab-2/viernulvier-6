@@ -34,7 +34,7 @@ pub struct ApiSpace {
 }
 
 
-// spaces are linked to locations, many_to_one. function that takes an ApiModel and a Uui for
+// spaces are linked to a location, many_to_one. function that takes an ApiModel and a Uuid for
 // location, and returns a create model for Spaces
 impl ApiSpace {
     pub fn to_create(self, location_uuid: Uuid) -> SpaceCreate {

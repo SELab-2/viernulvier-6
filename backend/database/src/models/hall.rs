@@ -18,6 +18,6 @@ pub struct Hall {
     pub remark: Option<String>,
 
     // references
-    pub location_id: Uuid, // foreign key of the associated location
+    pub space_id: Uuid, // foreign key of the associated space
 }
 
