@@ -8,11 +8,8 @@ use serde::de::DeserializeOwned;
 use tracing::{info, warn};
 
 use crate::models::{
-    collection::ApiCollection,
-    production::ApiProduction,
-    location::ApiLocation,
-    hall::ApiHall,
-    space::ApiSpace
+    collection::ApiCollection, hall::ApiHall, location::ApiLocation, production::ApiProduction,
+    space::ApiSpace,
 };
 
 use crate::helper::extract_source_id;
@@ -24,10 +21,10 @@ pub mod models {
     pub mod genre;
     pub mod hall;
     pub mod localized_text;
+    pub mod location;
     pub mod media;
     pub mod production;
     pub mod space;
-    pub mod location;
 }
 
 const API_BASE_URL: &str = "https://www.viernulvier.gent/api/v1";
@@ -76,7 +73,7 @@ impl ApiImporter {
     }
 
     /// updates all objects from the external api since we last updated
-    pub async fn update_since_last(&self) {
+    pub async fn update_since_last(&self) -> Result<(), reqwest::Error> {
         // save the current timestamp now, to insure we don't lose any updated items
         // this can happen when updates are made while we are importing, as it takes quite long
         let current_ts = Utc::now().to_rfc3339();
@@ -87,7 +84,7 @@ impl ApiImporter {
         // a location contains a space, which in turn contains one or more hall
         let res = async {
             self.update_locations(&last_update_ts).await?;
-            self.update_spaces(&last_update_ts).await?; 
+            self.update_spaces(&last_update_ts).await?;
             self.update_halls(&last_update_ts).await?;
             self.update_productions(&last_update_ts).await?;
             Ok::<(), reqwest::Error>(())
@@ -98,6 +95,8 @@ impl ApiImporter {
         if res.is_ok() {
             self.set_last_updated(current_ts).await;
         }
+
+        res
     }
 
     /// fetch a collection of objects from the api
@@ -179,11 +178,7 @@ impl ApiImporter {
             let amt = locations.len();
             info!("got {amt} locations from api");
             for location in locations {
-                self.db
-                    .locations()
-                    .insert(location.into())
-                    .await
-                    .unwrap();
+                self.db.locations().insert(location.into()).await.unwrap();
             }
             info!("inserted {amt} locations into db");
         }
@@ -195,32 +190,27 @@ impl ApiImporter {
     pub async fn update_spaces(&self, updated_after: &str) -> Result<(), reqwest::Error> {
         info!("start updating spaces");
 
-        let mut stream =
-            pin!(self.paginated_collection::<ApiSpace>("/spaces", updated_after));
+        let mut stream = pin!(self.paginated_collection::<ApiSpace>("/spaces", updated_after));
 
         while let Some(batch_result) = stream.next().await {
             let spaces = batch_result?;
             let amt = spaces.len();
             info!("got {amt} spaces from api");
             for space in spaces {
-
                 // first load in the related location and extract its id
                 let location_source_id = extract_source_id(&space.location);
 
-                let location = self.db
+                let location = self
+                    .db
                     .locations()
                     .by_source_id(location_source_id)
                     .await
                     .unwrap();
-                
+
                 // construct a SpaceCreate out of it
                 let space_create = space.to_create(location.id);
 
-                self.db
-                    .spaces()
-                    .insert(space_create)
-                    .await
-                    .unwrap();
+                self.db.spaces().insert(space_create).await.unwrap();
             }
             info!("inserted {amt} spaces into db");
         }
@@ -232,32 +222,27 @@ impl ApiImporter {
     pub async fn update_halls(&self, updated_after: &str) -> Result<(), reqwest::Error> {
         info!("start updating halls");
 
-        let mut stream =
-            pin!(self.paginated_collection::<ApiHall>("/halls", updated_after));
+        let mut stream = pin!(self.paginated_collection::<ApiHall>("/halls", updated_after));
 
         while let Some(batch_result) = stream.next().await {
             let halls = batch_result?;
             let amt = halls.len();
             info!("got {amt} halls from api");
             for hall in halls {
-
                 // first load in the related space and extract its id
                 let space_source_id = extract_source_id(&hall.space);
 
-                let space = self.db
+                let space = self
+                    .db
                     .spaces()
                     .by_source_id(space_source_id)
                     .await
                     .unwrap();
-                
+
                 // construct a HallCreate out of it
                 let hall_create = hall.to_create(space.id);
 
-                self.db
-                    .halls()
-                    .insert(hall_create)
-                    .await
-                    .unwrap();
+                self.db.halls().insert(hall_create).await.unwrap();
             }
             info!("inserted {amt} halls into db");
         }
