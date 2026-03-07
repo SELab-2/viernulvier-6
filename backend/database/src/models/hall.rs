@@ -18,5 +18,5 @@ pub struct Hall {
     pub remark: Option<String>,
 
     // references
-    pub space_id: Uuid, // foreign key of the associated space
+    pub space_id: Option<Uuid>, // foreign key of the associated space
 }

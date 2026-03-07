@@ -1,3 +1,5 @@
+use tracing::warn;
+
 use crate::models::localized_text::ApiLocalizedText;
 
 /// Helper to split ApiLocalizedText into a tuple of (nl, en)
@@ -16,6 +18,14 @@ pub fn flatten_single(text: Option<ApiLocalizedText>) -> Option<String> {
 
 /// Helper to extract the id out of a hyperlink that has the format
 /// "https://www.viernulvier.gent/api/v1/spaces/1". The last int gets extracted.
-pub fn extract_source_id(hyperlink: &str) -> i32 {
-    hyperlink.rsplit('/').next().unwrap().parse().unwrap()
+pub fn extract_source_id(hyperlink: &str) -> Option<i32> {
+    let id: Option<i32> = hyperlink
+        .trim_end_matches('/')
+        .rsplit('/')
+        .next()
+        .and_then(|s| s.parse().ok());
+    if id.is_none() {
+        warn!("Failed to extract source_id from url: {}", hyperlink);
+    }
+    id
 }

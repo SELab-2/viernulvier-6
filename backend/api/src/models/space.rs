@@ -42,7 +42,7 @@ impl ApiSpace {
         let name_nl = flatten_single(Some(self.name)).expect("space should always have a name");
 
         SpaceCreate {
-            source_id: Some(source_id),
+            source_id,
             name_nl,
             location_id: location_uuid,
         }

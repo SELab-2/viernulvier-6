@@ -32,13 +32,13 @@ pub struct ApiHall {
 
     /// link to location where the space is located
     /// "/api/v1/space/{id}"
-    pub space: String,
+    pub space: Option<String>,
 }
 
 // halls are linked to a space, many_to_one. function that takes an ApiModel and a Uuid for
 // space, and returns a create model for Halls
 impl ApiHall {
-    pub fn to_create(self, space_uuid: Uuid) -> HallCreate {
+    pub fn to_create(self, space_uuid: Option<Uuid>) -> HallCreate {
         let source_id = extract_source_id(&self.id);
 
         let seat_selection = match self.seat_selection.as_str() {
@@ -69,10 +69,10 @@ impl ApiHall {
 
         let remark = flatten_single(self.remark);
 
-        let slug = format!("{}-{}", slugify(&name), source_id);
+        let slug = format!("{}-{}", slugify(&name), source_id.unwrap_or(0)); // FIX
 
         HallCreate {
-            source_id: Some(source_id),
+            source_id,
             slug,
             vendor_id: self.vendor_id,
             box_office_id: self.box_office_id,

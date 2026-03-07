@@ -47,7 +47,7 @@ impl From<ApiLocation> for LocationCreate {
         };
 
         Self {
-            source_id: Some(source_id), // FIX: source_id's are currently Nullable inside the tables. Is there
+            source_id, // FIX: source_id's are currently Nullable inside the tables. Is there
             // a reason for that?
             name: api.name,
             code: api.code,

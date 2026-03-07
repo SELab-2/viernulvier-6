@@ -198,7 +198,7 @@ impl ApiImporter {
             info!("got {amt} spaces from api");
             for space in spaces {
                 // first load in the related location and extract its id
-                let location_source_id = extract_source_id(&space.location);
+                let location_source_id = extract_source_id(&space.location).unwrap();
 
                 let location = self
                     .db
@@ -229,18 +229,28 @@ impl ApiImporter {
             let amt = halls.len();
             info!("got {amt} halls from api");
             for hall in halls {
-                // first load in the related space and extract its id
-                let space_source_id = extract_source_id(&hall.space);
+                let source_id = hall.space.as_deref().and_then(extract_source_id);
+                let space_id = match source_id {
+                    Some(id) => {
+                        // get the uuid of the space with a source id from the db
+                        let db_uuid = self
+                            .db
+                            .spaces()
+                            .by_source_id(id)
+                            .await
+                            .unwrap()
+                            .map(|s| s.id);
 
-                let space = self
-                    .db
-                    .spaces()
-                    .by_source_id(space_source_id)
-                    .await
-                    .unwrap();
+                        if db_uuid.is_none() {
+                            warn!("Space source_id {id} expected but not found in db for hall");
+                        }
+                        db_uuid
+                    }
+                    None => None,
+                };
 
                 // construct a HallCreate out of it
-                let hall_create = hall.to_create(space.id);
+                let hall_create = hall.to_create(space_id);
 
                 self.db.halls().insert(hall_create).await.unwrap();
             }
