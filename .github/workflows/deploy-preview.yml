@@ -4,49 +4,17 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
 
-# Explicit permissions needed for Dependabot and fork PRs
+# Explicit permissions needed for Dependabot and fork PRs to post comments
 permissions:
   contents: read
   pull-requests: write
   issues: write
 
 jobs:
-  # Build job runs for all PRs including Dependabot
-  # This verifies the code compiles without needing deployment secrets
-  build:
-    if: github.event.action != 'closed'
-    runs-on: self-hosted
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Build backend (verify)
-        run: |
-          cd backend
-          docker build -t backend-build-check .
-
-      - name: Build frontend (verify)
-        run: |
-          cd frontend
-          docker build -t frontend-build-check \
-            --build-arg NEXT_PUBLIC_SITE_URL=http://localhost \
-            --build-arg NEXT_PUBLIC_API_URL=http://localhost/api \
-            .
-
-      - name: Build docs (verify)
-        run: |
-          cd docs
-          docker build -t docs-build-check .
-
-      - name: Cleanup build images
-        run: |
-          docker rmi backend-build-check frontend-build-check docs-build-check 2>/dev/null || true
-
   preview:
     if: github.event.action != 'closed'
     runs-on: self-hosted
     environment: preview
-    needs: build
 
     steps:
       - name: Checkout repo
@@ -95,49 +63,39 @@ jobs:
             const docsUrl = `${previewUrl}/docs`;
             const apiUrl = `${previewUrl}/api`;
 
-            try {
-              // 1. Fetch all comments on the PR
-              const { data: comments } = await github.rest.issues.listComments({
-                issue_number: prNumber,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                per_page: 100
-              });
+            // 1. Fetch all comments on the PR
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
 
-              // 2. Delete previous preview comments (if any)
-              for (const comment of comments) {
-                if (comment.body && comment.body.includes(marker)) {
-                  await github.rest.issues.deleteComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    comment_id: comment.id
-                  });
-                }
-              }
-
-              // 3. Create fresh preview comment
-              const body =
-                marker +
-                "\n## Preview Environment \n\n" +
-                "- Frontend: [Open Preview](" + previewUrl + ")\n" +
-                "- Docs: [Open Docs](" + docsUrl + ")\n" +
-                "- API: [Open API](" + apiUrl + ")\n";
-
-              await github.rest.issues.createComment({
-                issue_number: prNumber,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: body
-              });
-            } catch (error) {
-              // Gracefully handle permission errors (e.g., from Dependabot)
-              if (error.status === 403) {
-                console.log("Warning: Could not post preview comment due to permission restrictions.");
-                console.log("Preview is still available at: " + previewUrl);
-              } else {
-                throw error;
+            // 2. Delete previous preview comments (if any)
+            for (const comment of comments) {
+              if (comment.body && comment.body.includes(marker)) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: comment.id
+                });
               }
             }
+
+            // 3. Create fresh preview comment
+            const body =
+              marker +
+              "\n## Preview Environment \n\n" +
+              "- Frontend: [Open Preview](" + previewUrl + ")\n" +
+              "- Docs: [Open Docs](" + docsUrl + ")\n" +
+              "- API: [Open API](" + apiUrl + ")\n";
+
+            await github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
 
   cleanup:
     if: github.event.action == 'closed'
@@ -177,41 +135,32 @@ jobs:
             const prNumber = context.payload.pull_request.number;
             const previewUrl = `http://${process.env.PREVIEW_HOST}/pr-${prNumber}`;
 
-            try {
-              const { data: comments } = await github.rest.issues.listComments({
-                issue_number: prNumber,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                per_page: 100
-              });
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
 
-              // Remove old preview comment (running state)
-              for (const comment of comments) {
-                if (comment.body && comment.body.includes(marker)) {
-                  await github.rest.issues.deleteComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    comment_id: comment.id
-                  });
-                }
-              }
-
-              const body =
-                marker +
-                "\n## Preview Environment Stopped\n\n" +
-                "The preview containers have been stopped and removed because the PR was closed.";
-
-              await github.rest.issues.createComment({
-                issue_number: prNumber,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: body
-              });
-            } catch (error) {
-              // Gracefully handle permission errors
-              if (error.status === 403) {
-                console.log("Warning: Could not post cleanup comment due to permission restrictions.");
-              } else {
-                throw error;
+            // Remove old preview comment (running state)
+            for (const comment of comments) {
+              if (comment.body && comment.body.includes(marker)) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: comment.id
+                });
               }
             }
+
+            const body =
+              marker +
+              "\n## Preview Environment Stopped\n\n" +
+              "The preview containers have been stopped and removed because the PR was closed.";
+
+            await github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
