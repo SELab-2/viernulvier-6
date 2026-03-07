@@ -144,7 +144,7 @@ impl ApiImporter {
     }
 
     pub async fn update_productions(&self, updated_after: &str) -> Result<(), reqwest::Error> {
-        info!("start updating productions");
+        info!("Productions: start updating");
 
         let mut stream =
             pin!(self.paginated_collection::<ApiProduction>("/productions", updated_after));
@@ -152,7 +152,7 @@ impl ApiImporter {
         while let Some(batch_result) = stream.next().await {
             let productions = batch_result?;
             let amt = productions.len();
-            info!("got {amt} productions from api");
+            info!("Productions: got {amt} from api");
             for production in productions {
                 self.db
                     .productions()
@@ -160,15 +160,15 @@ impl ApiImporter {
                     .await
                     .unwrap();
             }
-            info!("inserted {amt} productions into db");
+            info!("Productions: inserted {amt} into db");
         }
 
-        info!("finished importing productions");
+        info!("Productions: finished importing");
         Ok(())
     }
 
     pub async fn update_locations(&self, updated_after: &str) -> Result<(), reqwest::Error> {
-        info!("start updating locations");
+        info!("Locations: start updating");
 
         let mut stream =
             pin!(self.paginated_collection::<ApiLocation>("/locations", updated_after));
@@ -176,26 +176,26 @@ impl ApiImporter {
         while let Some(batch_result) = stream.next().await {
             let locations = batch_result?;
             let amt = locations.len();
-            info!("got {amt} locations from api");
+            info!("Locations: got {amt} from api");
             for location in locations {
                 self.db.locations().insert(location.into()).await.unwrap();
             }
-            info!("inserted {amt} locations into db");
+            info!("Locations: inserted {amt} into db");
         }
 
-        info!("finished importing locations");
+        info!("Locations: finished importing");
         Ok(())
     }
 
     pub async fn update_spaces(&self, updated_after: &str) -> Result<(), reqwest::Error> {
-        info!("start updating spaces");
+        info!("Spaces: start updating");
 
         let mut stream = pin!(self.paginated_collection::<ApiSpace>("/spaces", updated_after));
 
         while let Some(batch_result) = stream.next().await {
             let spaces = batch_result?;
             let amt = spaces.len();
-            info!("got {amt} spaces from api");
+            info!("Spaces: got {amt} from api");
             for space in spaces {
                 // first load in the related location and extract its id
                 let location_source_id = extract_source_id(&space.location).unwrap();
@@ -212,25 +212,25 @@ impl ApiImporter {
 
                 self.db.spaces().insert(space_create).await.unwrap();
             }
-            info!("inserted {amt} spaces into db");
+            info!("Spaces: inserted {amt} into db");
         }
 
-        info!("finished importing spaces");
+        info!("Spaces: finished importing");
         Ok(())
     }
 
     pub async fn update_halls(&self, updated_after: &str) -> Result<(), reqwest::Error> {
-        info!("start updating halls");
+        info!("Halls: start updating");
 
         let mut stream = pin!(self.paginated_collection::<ApiHall>("/halls", updated_after));
 
         while let Some(batch_result) = stream.next().await {
             let halls = batch_result?;
             let amt = halls.len();
-            info!("got {amt} halls from api");
+            info!("Halls: got {amt} from api");
             for hall in halls {
                 let source_id = hall.space.as_deref().and_then(extract_source_id);
-                let space_id = match source_id {
+                let space_uuid = match source_id {
                     Some(id) => {
                         // get the uuid of the space with a source id from the db
                         let db_uuid = self
@@ -242,7 +242,7 @@ impl ApiImporter {
                             .map(|s| s.id);
 
                         if db_uuid.is_none() {
-                            warn!("Space source_id {id} expected but not found in db for hall");
+                            warn!("Halls: Space source_id {id} expected but not found in db");
                         }
                         db_uuid
                     }
@@ -250,14 +250,14 @@ impl ApiImporter {
                 };
 
                 // construct a HallCreate out of it
-                let hall_create = hall.to_create(space_id);
+                let hall_create = hall.to_create(space_uuid);
 
                 self.db.halls().insert(hall_create).await.unwrap();
             }
-            info!("inserted {amt} halls into db");
+            info!("Halls: inserted {amt} into db");
         }
 
-        info!("finished importing halls");
+        info!("Halls: finished importing");
         Ok(())
     }
 }
