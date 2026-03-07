@@ -29,3 +29,23 @@ pub fn extract_source_id(hyperlink: &str) -> Option<i32> {
     }
     id
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_extract_source_id_valid_inputs() {
+        assert_eq!(extract_source_id("/api/v1/spaces/27"), Some(27));
+        assert_eq!(extract_source_id("/api/v1/spaces/1"), Some(1));
+        assert_eq!(extract_source_id("/api/v1/spaces/27/"), Some(27)); // trailing slash
+    }
+
+    #[test]
+    fn test_extract_source_id_invalid_inputs() {
+        assert_eq!(extract_source_id("/api/v1/spaces/abc"), None);
+        assert_eq!(extract_source_id("/api/v1/spaces/"), None);
+        assert_eq!(extract_source_id(""), None);
+        assert_eq!(extract_source_id("/"), None);
+    }
+}
