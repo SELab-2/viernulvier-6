@@ -1,11 +1,12 @@
 use database::{Database, models::production::Production};
 use o2o::o2o;
 use serde::Serialize;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::error::AppError;
 
-#[derive(o2o, Serialize)]
+#[derive(o2o, Serialize, ToSchema)]
 #[from_owned(Production)]
 pub struct ProductionPayload {
     pub id: Uuid,
