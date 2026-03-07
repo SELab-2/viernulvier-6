@@ -1,2 +1,2 @@
-ATLER TABLE locations
+ALTER TABLE locations
 DROP COLUMN slug;
