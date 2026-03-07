@@ -40,3 +40,6 @@ tower-http = { version = "0.6.6", default-features = false, features = [
 ] }
 uuid = { version = "1", features = ["v7", "serde"] }
 o2o = "0.5.4"
+utoipa = { version = "5.4.0", features = ["uuid", "axum_extras"] }
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum"] }
+utoipa-axum = "0.2.0"

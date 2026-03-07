@@ -1,13 +1,19 @@
 use crate::{
     config::AppConfig,
     error::AppError,
-    handlers::{production::ProductionHandler, version::VersionHandler},
+    handlers::{production, version},
+    dto::production::ProductionPayload,
 };
 use api::ApiImporter;
 use axum::{Router, routing::get};
 use database::Database;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info};
+
+use utoipa::OpenApi;
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_axum::routes;
+use utoipa_swagger_ui::SwaggerUi;
 
 pub mod config;
 mod dto;
@@ -20,6 +26,17 @@ pub struct AppState {
     pub db: Database,
     pub config: AppConfig,
 }
+
+#[derive(OpenApi)]
+#[openapi(
+    components(
+        schemas(ProductionPayload)
+    ),
+    tags(
+        (name = "viernulvier_api", description = "API Endpoints")
+    )
+)]
+pub struct ApiDoc;
 
 pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
     let db = Database::create_connect_migrate(&config.database_url).await?;
@@ -53,15 +70,19 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
 }
 
 pub fn router() -> Router<AppState> {
-    Router::new()
-        .merge(open_routes())
+    let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
+        .merge(open_routes()) 
+        .split_for_parts();
+
+    router
+        .merge(SwaggerUi::new("/docs").url("/api-doc/openapi.json", api))
         .fallback(get(|| async { AppError::NotFound }))
 }
 
-fn open_routes() -> Router<AppState> {
-    Router::new()
-        .route("/version", get(VersionHandler::get))
-        .route("/productions", get(ProductionHandler::all))
+fn open_routes() -> OpenApiRouter<AppState> {
+    OpenApiRouter::new()
+        .routes(routes!(version::get))
+        .routes(routes!(production::all))
 }
 
 #[allow(clippy::expect_used)]
