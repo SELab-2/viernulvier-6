@@ -21,4 +21,3 @@ pub struct Location {
     pub is_owned_by_viernulvier: Option<bool>,
     pub uitdatabank_id: Option<String>,
 }
-

@@ -17,11 +17,5 @@ pub fn flatten_single(text: Option<ApiLocalizedText>) -> Option<String> {
 /// Helper to extract the id out of a hyperlink that has the format
 /// "https://www.viernulvier.gent/api/v1/spaces/1". The last int gets extracted.
 pub fn extract_source_id(hyperlink: &str) -> i32 {
-    hyperlink
-        .rsplit('/')
-        .next()
-        .unwrap()
-        .parse()
-        .unwrap()
+    hyperlink.rsplit('/').next().unwrap().parse().unwrap()
 }
-

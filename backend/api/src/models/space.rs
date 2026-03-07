@@ -2,11 +2,11 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
-use database::models::space::SpaceCreate;
 use crate::{
-    helper::{flatten_single, extract_source_id},
+    helper::{extract_source_id, flatten_single},
     models::localized_text::ApiLocalizedText,
 };
+use database::models::space::SpaceCreate;
 
 #[derive(Debug, Deserialize)]
 pub struct ApiSpace {
@@ -33,15 +33,13 @@ pub struct ApiSpace {
     pub halls: Vec<String>,
 }
 
-
 // spaces are linked to a location, many_to_one. function that takes an ApiModel and a Uuid for
 // location, and returns a create model for Spaces
 impl ApiSpace {
     pub fn to_create(self, location_uuid: Uuid) -> SpaceCreate {
         let source_id = extract_source_id(&self.id);
 
-        let name_nl = flatten_single(Some(self.name))
-            .expect("space should always have a name");
+        let name_nl = flatten_single(Some(self.name)).expect("space should always have a name");
 
         SpaceCreate {
             source_id: Some(source_id),
@@ -50,4 +48,3 @@ impl ApiSpace {
         }
     }
 }
-

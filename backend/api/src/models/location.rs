@@ -12,12 +12,12 @@ pub struct ApiLocation {
     pub id: String,
     #[serde(rename = "@type")]
     pub jsonld_type: String,
-   
+
     // info
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub name: Option<String>, // not present in their API, but sometimes present in their CSV
-                                // containing the older data. 
+    // containing the older data.
     pub code: Option<String>,
     pub street: Option<String>,
     pub number: Option<String>,
@@ -28,7 +28,6 @@ pub struct ApiLocation {
     pub own_location: String, // "" for false, "1" for true, as per the API
     pub country: Option<String>,
     pub uitdatabank_id: Option<String>,
-    
 }
 
 impl From<ApiLocation> for LocationCreate {
@@ -39,14 +38,17 @@ impl From<ApiLocation> for LocationCreate {
             "1" => true,
             "" => false,
             other => {
-                warn!("unexpected own_location value: {}, defaulting to false", other);
+                warn!(
+                    "unexpected own_location value: {}, defaulting to false",
+                    other
+                );
                 false
-            },
+            }
         };
 
         Self {
             source_id: Some(source_id), // FIX: source_id's are currently Nullable inside the tables. Is there
-                             // a reason for that?
+            // a reason for that?
             name: api.name,
             code: api.code,
             street: api.street,
@@ -61,4 +63,3 @@ impl From<ApiLocation> for LocationCreate {
         }
     }
 }
-

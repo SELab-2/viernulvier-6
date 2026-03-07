@@ -33,4 +33,3 @@ impl<'a> HallRepo<'a> {
         Ok(hall.insert(self.db).await?)
     }
 }
-

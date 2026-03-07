@@ -20,4 +20,3 @@ pub struct Hall {
     // references
     pub space_id: Uuid, // foreign key of the associated space
 }
-

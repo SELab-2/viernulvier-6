@@ -3,7 +3,10 @@ use tracing::info;
 
 use crate::{
     error::DatabaseError,
-    repos::{internal_state::InternalStateRepo, production::ProductionRepo, user::UserRepo, location::LocationRepo, hall::HallRepo, space::SpaceRepo},
+    repos::{
+        hall::HallRepo, internal_state::InternalStateRepo, location::LocationRepo,
+        production::ProductionRepo, space::SpaceRepo, user::UserRepo,
+    },
 };
 
 pub mod models {
@@ -12,21 +15,21 @@ pub mod models {
     pub mod collection;
     pub mod collection_item;
     pub mod event;
-    pub mod internal_state;
-    pub mod production;
-    pub mod user;
-    pub mod location;
     pub mod hall;
+    pub mod internal_state;
+    pub mod location;
+    pub mod production;
     pub mod space;
+    pub mod user;
 }
 
 pub mod repos {
-    pub mod internal_state;
-    pub mod production;
-    pub mod user;
-    pub mod location;
     pub mod hall;
+    pub mod internal_state;
+    pub mod location;
+    pub mod production;
     pub mod space;
+    pub mod user;
 }
 
 pub mod error;
@@ -80,4 +83,3 @@ impl Database {
         SpaceRepo::new(&self.db)
     }
 }
-

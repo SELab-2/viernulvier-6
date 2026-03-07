@@ -40,6 +40,5 @@ impl<'a> SpaceRepo<'a> {
             .fetch_optional(self.db)
             .await?
             .ok_or(DatabaseError::NotFound)
-   }
+    }
 }
-
