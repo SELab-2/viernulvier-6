@@ -7,7 +7,7 @@ use api::ApiImporter;
 use axum::{Router, routing::get};
 use database::Database;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
-use tracing::info;
+use tracing::{error, info};
 
 pub mod config;
 mod dto;
@@ -26,7 +26,12 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
 
     // start api importer
     let api_importer = ApiImporter::new(db.clone(), config.api_key_404.clone());
-    tokio::spawn(async move { api_importer.update_since_last().await });
+    tokio::spawn(async move {
+        match api_importer.update_since_last().await {
+            Ok(()) => info!("API importer finished successfully"),
+            Err(e) => error!("API imported ended with error: {e:?}"),
+        }
+    });
 
     let state = AppState { db, config };
 

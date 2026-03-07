@@ -1,8 +1,15 @@
-use sqlx::FromRow;
+use ormlite::Model;
 use uuid::Uuid;
 
-#[derive(Debug, FromRow, PartialEq)]
-pub struct ProductionBase {
+#[derive(Debug, Model, PartialEq)]
+#[ormlite(insert = "ProductionCreate")]
+#[ormlite(table = "productions")]
+pub struct Production {
+    pub id: Uuid,
+
+    pub source_id: Option<i32>,
+    pub slug: String,
+
     pub supertitle_nl: Option<String>,
     pub supertitle_en: Option<String>,
     pub title_nl: Option<String>,
@@ -41,19 +48,4 @@ pub struct ProductionBase {
     // pub uitdatabank_keywords: Option<String>,
     pub uitdatabank_theme: Option<String>,
     pub uitdatabank_type: Option<String>,
-}
-
-#[derive(Debug, FromRow, PartialEq)]
-pub struct Production {
-    pub id: Uuid,
-    #[sqlx(flatten)]
-    pub base: ProductionBase,
-}
-
-#[derive(Debug)]
-pub struct ProductionCreate {
-    pub source_id: Option<i32>,
-    pub slug: String,
-
-    pub base: ProductionBase,
 }

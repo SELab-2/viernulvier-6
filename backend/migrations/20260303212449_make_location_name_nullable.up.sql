@@ -1,0 +1,2 @@
+ALTER TABLE locations
+ALTER COLUMN name DROP NOT NULL;

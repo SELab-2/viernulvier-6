@@ -8,6 +8,9 @@ pub enum DatabaseError {
     #[error("Migration error: {0}")]
     Migrate(#[from] sqlx::migrate::MigrateError),
 
+    #[error("Ormlite error: {0}")]
+    Ormlist(#[from] ormlite::Error),
+
     #[error("Query returned no rows")]
     NotFound,
 }

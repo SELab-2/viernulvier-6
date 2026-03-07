@@ -22,10 +22,10 @@ pub struct View {
     pub id: String,
     #[serde(rename = "@type")]
     pub jsonld_type: String,
-    pub first: String,
-    pub last: String,
-    pub previous: Option<String>,
-    pub next: Option<String>,
+    pub first: Option<String>,    // can be null if there are no results
+    pub last: Option<String>,     // can be null if there are no results
+    pub previous: Option<String>, // can be null on the first page
+    pub next: Option<String>,     // can be null on the last page
 }
 
 #[derive(Debug, Deserialize)]
