@@ -6,7 +6,7 @@ import { routing } from "@/i18n/routing";
 const intlMiddleware = createIntlMiddleware(routing);
 
 export function proxy(request: NextRequest) {
-    const token = request.cookies.get("jwt")?.value;
+    const token = request.cookies.get("access_token")?.value;
     const pathname = request.nextUrl.pathname;
 
     const isAuthRoute = pathname.includes("/login");

@@ -5,20 +5,20 @@ import { LoginDTO } from "@/types/auth.types";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
 
+type User = {
+    user_id: string;
+    email: string;
+};
+
 export const useUser = (options?: { enabled?: boolean }) => {
-    return useQuery({
+    return useQuery<User>({
         queryKey: ["user"],
         queryFn: async () => {
-            try {
-                const { data } = await api.get("/admin");
-                // For now, since /admin returns a string, we return a simple object
-                return { loggedIn: true, data };
-            } catch (error) {
-                return null;
-            }
+            const { data } = await api.get("/admin");
+            return data;
         },
         retry: false,
-        staleTime: 5 * 60_000,
+        staleTime: 2.5 * 60_000,
         refetchOnMount: true,
         ...options,
     });
@@ -35,7 +35,7 @@ export const useLogin = () => {
         },
         onSuccess: async () => {
             await queryClient.refetchQueries({ queryKey: ["user"] });
-            router.push("/");
+            router.push("/admin");
         },
         onError: (error: AxiosError) => {
             if (error.response?.status === 401) {
