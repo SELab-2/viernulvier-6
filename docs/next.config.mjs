@@ -11,17 +11,18 @@ const config = {
   output: 'standalone',
   serverExternalPackages: ['@takumi-rs/image-response'],
   reactStrictMode: true,
-  basePath: '/docs',
-  // For preview deployments, assets need to be loaded from the preview prefix
-  assetPrefix: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}` : undefined,
+  // For preview: app is served at /pr-NN/docs
+  // For production: app is served at /docs
+  basePath: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}/docs` : '/docs',
+  // Assets under /pr-NN/docs/_next so they route to docs container (not frontend)
+  assetPrefix: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}/docs` : '/docs',
   turbopack: {
     root: __dirname,
   },
   async rewrites() {
     return [
       {
-        // Relative to basePath (/docs)
-        source: '/:path*.mdx',
+        source: '/docs/:path*.mdx',
         destination: '/llms.mdx/docs/:path*',
       },
     ];
