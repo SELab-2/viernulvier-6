@@ -69,6 +69,7 @@ jobs:
           db_password: ${{ secrets.PROD_DB_PASSWORD }}
           db_name: ${{ secrets.PROD_DB_NAME }}
           public_site_url: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          api_key_404: ${{ secrets.API_KEY_404 }}
 
       - name: Pull latest images
         run: |

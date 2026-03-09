@@ -20,6 +20,9 @@ inputs:
   public_site_url:
     description: "Public site url"
     required: true
+  api_key_404:
+    description: "API key for the viernulvier API"
+    required: true
 
 runs:
   using: "composite"
@@ -35,7 +38,7 @@ runs:
         PROD_SITE_URL=${{ inputs.public_site_url }}
 
         PROD_DATABASE_URL="postgres://${PROD_DB_USER}:${PROD_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}_database:5432/${PROD_DB_NAME}"
-
+        PROD_API_KEY_404=${{ inputs.api_key_404 }}
         cat > .env <<EOF
         COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME
         PROD_HOST=$PROD_HOST
@@ -44,6 +47,7 @@ runs:
         PROD_DB_NAME=$PROD_DB_NAME
         PROD_DATABASE_URL=$PROD_DATABASE_URL
         NEXT_PUBLIC_SITE_URL=$PROD_SITE_URL
+        PROD_API_KEY_404=$PROD_API_KEY_404
         EOF
 
         echo "Production .env generated."
