@@ -30,6 +30,7 @@ inputs:
     required: true
   garage_s3_bucket:
     description: "Garage S3 bucket name"
+  api_key_404:
     required: true
 
 runs:
@@ -59,8 +60,7 @@ runs:
         mkdir -p infra/preview
 
         PREVIEW_DATABASE_URL="postgres://${PREVIEW_DB_USER}:${PREVIEW_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}_database:5432/${PREVIEW_DB_NAME}"
-
-        {
+         {
           echo "PREVIEW_HOST=${PREVIEW_HOST}"
           echo "PREVIEW_NAME=${PREVIEW_NAME}"
           echo "COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME}"
@@ -73,6 +73,7 @@ runs:
           echo "GARAGE_S3_ACCESS_KEY=${GARAGE_S3_ACCESS_KEY}"
           echo "GARAGE_S3_SECRET_KEY=${GARAGE_S3_SECRET_KEY}"
           echo "GARAGE_S3_BUCKET=${GARAGE_S3_BUCKET}"
+          echo "PREVIEW_API_KEY_404=${PREVIEW_API_KEY_404}"
         } > infra/preview/.env.preview
 
         echo "Generated infra/preview/.env.preview"

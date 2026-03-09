@@ -1,6 +1,5 @@
 name: "Generate Production Env"
 description: "Creates a .env file for production using inputs (including secrets)"
-
 inputs:
   project_name:
     description: "Project name"
@@ -32,7 +31,9 @@ inputs:
   garage_s3_bucket:
     description: "Garage S3 bucket name"
     required: true
-
+  api_key_404:
+    description: "API key for the viernulvier API"
+    required: true
 runs:
   using: "composite"
   steps:
@@ -49,6 +50,7 @@ runs:
         GARAGE_S3_ACCESS_KEY: "${{ inputs.garage_s3_access_key }}"
         GARAGE_S3_SECRET_KEY: "${{ inputs.garage_s3_secret_key }}"
         GARAGE_S3_BUCKET: "${{ inputs.garage_s3_bucket }}"
+        PROD_API_KEY_404: "${{ inputs.api_key_404 }}"
       run: |
         PROD_DATABASE_URL="postgres://${PROD_DB_USER}:${PROD_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}_database:5432/${PROD_DB_NAME}"
 
@@ -64,6 +66,7 @@ runs:
           echo "GARAGE_S3_ACCESS_KEY=${GARAGE_S3_ACCESS_KEY}"
           echo "GARAGE_S3_SECRET_KEY=${GARAGE_S3_SECRET_KEY}"
           echo "GARAGE_S3_BUCKET=${GARAGE_S3_BUCKET}"
+          echo "PROD_API_KEY_404=${PROD_API_KEY_404}"
         } > .env
 
         echo "Production .env generated."
