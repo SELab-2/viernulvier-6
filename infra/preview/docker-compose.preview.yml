@@ -25,6 +25,8 @@ services:
   docs:
     build:
       context: ../../docs
+      args:
+        - PREVIEW_NAME=${PREVIEW_NAME}
     container_name: ${COMPOSE_PROJECT_NAME}_docs
     labels:
       - "traefik.enable=true"

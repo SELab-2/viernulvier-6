@@ -26,6 +26,10 @@ COPY . .
 # Learn more here: https://nextjs.org/telemetry
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Accept build argument for preview name (used for assetPrefix)
+ARG PREVIEW_NAME
+ENV PREVIEW_NAME=${PREVIEW_NAME}
+
 RUN \
     if [ -f yarn.lock ]; then yarn run build; \
     elif [ -f package-lock.json ]; then npm run build; \

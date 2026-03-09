@@ -11,13 +11,17 @@ const config = {
   output: 'standalone',
   serverExternalPackages: ['@takumi-rs/image-response'],
   reactStrictMode: true,
+  basePath: '/docs',
+  // For preview deployments, assets need to be loaded from the preview prefix
+  assetPrefix: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}` : undefined,
   turbopack: {
     root: __dirname,
   },
   async rewrites() {
     return [
       {
-        source: '/docs/:path*.mdx',
+        // Relative to basePath (/docs)
+        source: '/:path*.mdx',
         destination: '/llms.mdx/docs/:path*',
       },
     ];
