@@ -30,6 +30,8 @@ services:
       - "traefik.enable=true"
       # Route for /{preview-name}/docs (for PR previews) - higher priority than frontend
       - "traefik.http.routers.${PREVIEW_NAME}-docs.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/docs`)"
+      - "traefik.http.middlewares.${PREVIEW_NAME}-docs-strip.stripprefix.prefixes=/${PREVIEW_NAME}"
+      - "traefik.http.routers.${PREVIEW_NAME}-docs.middlewares=${PREVIEW_NAME}-docs-strip"
       - "traefik.http.routers.${PREVIEW_NAME}-docs.entrypoints=websecure"
       - "traefik.http.services.${PREVIEW_NAME}-docs.loadbalancer.server.port=3000"
       - "traefik.http.routers.${PREVIEW_NAME}-docs.priority=10"
