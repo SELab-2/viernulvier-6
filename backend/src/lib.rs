@@ -121,6 +121,7 @@ fn open_routes() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(version::get))
         .routes(routes!(production::all))
+        .routes(routes!(production::by_id))
         .routes(routes!(location::all))
         .routes(routes!(location::by_id))
         .routes(routes!(auth::login))

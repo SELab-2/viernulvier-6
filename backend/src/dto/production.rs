@@ -64,4 +64,11 @@ impl ProductionPayload {
             .map(Self::from)
             .collect())
     }
+    pub async fn by_id(db: &Database, id: Uuid) -> Result<Self, AppError> {
+        Ok(Self::from(
+            db.productions()
+                .by_id(id)
+                .await?
+        ))
+    }
 }
