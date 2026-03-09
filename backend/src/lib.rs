@@ -5,7 +5,7 @@ use crate::{
     dto::production::ProductionPayload,
 };
 use api::ApiImporter;
-use axum::{Router, routing::get, routing::post};
+use axum::{Router, routing::get};
 use database::Database;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info};

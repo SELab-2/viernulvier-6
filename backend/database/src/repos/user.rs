@@ -1,4 +1,4 @@
-use ormlite::Model;
+use ormlite::{Insert, Model};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -35,15 +35,7 @@ impl<'a> UserRepo<'a> {
     }
 
     pub async fn create(&self, user: UserCreate) -> Result<User, DatabaseError> {
-        let model = sqlx::query_as::<_, User>(
-            "INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING *"
-        )
-        .bind(user.username)
-        .bind(user.email)
-        .bind(user.password_hash)
-        .fetch_one(self.db)
-        .await?;
-        Ok(model)
+        Ok(user.insert(self.db).await?)
     }
 
     pub async fn patch(&self, user_id: Uuid, patch_user: UserPatch) -> Result<User, DatabaseError> {
