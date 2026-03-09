@@ -4,6 +4,12 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
 
+# Explicit permissions needed for Dependabot and fork PRs to post comments
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   preview:
     if: github.event.action != 'closed'
@@ -12,7 +18,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Check Docker availability
         run: |
@@ -97,7 +103,7 @@ jobs:
     environment: preview
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Generate env files (composite action)
         uses: ./.github/actions/generate-preview-env

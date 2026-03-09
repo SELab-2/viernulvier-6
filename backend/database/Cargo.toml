@@ -13,7 +13,7 @@ thiserror = { version = "2.0.16", default-features = false }
 tracing = { version = "=0.1", default-features = false }
 # serde = { version = "1.0.219", default-features = false, features = ["derive"] }
 chrono = { version = "0.4.44", features = ["serde"] }
-uuid = { version = "1", features = ["v7", "serde"] }
+uuid = { version = "1", features = ["v7"] }
 sqlx = { version = "0.8.6", default-features = false, features = [
     "runtime-tokio",
     "postgres",
@@ -21,8 +21,6 @@ sqlx = { version = "0.8.6", default-features = false, features = [
     "macros",
     "json",
     "chrono",
-    "time",
     "uuid",
 ] }
-time = { version = "0.3.47", features = ["serde"] }
-serde = { version = "1.0.228", features = ["derive"] }
+ormlite = { version = "0.24.3", features = ["default-postgres"] }
