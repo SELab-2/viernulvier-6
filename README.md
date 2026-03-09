@@ -1,8 +1,12 @@
-# viernulvier-6
+![Status](http://46.224.176.244:3001/api/badge/1/status) ![Uptime](http://46.224.176.244:3001/api/badge/1/uptime) ![Ping](http://46.224.176.244:3001/api/badge/1/ping) ![Avg Response](http://46.224.176.244:3001/api/badge/1/avg-response) ![Cert Expiry](http://46.224.176.244:3001/api/badge/1/cert-exp)
 
-![Status](http://46.224.176.244:3001/api/badge/1/status) ![Uptime](http://46.224.176.244:3001/api/badge/1/uptime) ![Ping](http://46.224.176.244:3001/api/badge/1/ping) ![Avg Response](http://46.224.176.244:3001/api/badge/1/avg-response) ![Cert Expiry](http://46.224.176.244:3001/api/badge/1/cert-exp) ![Response](http://46.224.176.244:3001/api/badge/1/response)
+Milestone 3 (final)
+- a technical installation guide (local setup, how to run tests,
+etc). Preferably in readme itself
+- a user manual (in PDF or hosted or so). must be linked from the
+  readme
+- any external services must be linked from the README
 
----
 
 
 
