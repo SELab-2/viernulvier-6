@@ -1,19 +1,19 @@
 use crate::{
     config::AppConfig,
+    dto::{location::LocationPayload, production::ProductionPayload},
     error::AppError,
-    handlers::{production, version, auth, admin},
-    dto::production::ProductionPayload,
+    handlers::{admin, auth, location, production, version},
 };
 use api::ApiImporter;
-use axum::{Router, routing::get};
 use axum::http::{HeaderValue, Method};
+use axum::{Router, routing::get};
 use database::Database;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info};
 
 use utoipa::{
+    Modify, OpenApi,
     openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
-    Modify, OpenApi
 };
 
 use utoipa_axum::router::OpenApiRouter;
@@ -35,7 +35,7 @@ pub struct AppState {
 #[derive(OpenApi)]
 #[openapi(
     components(
-        schemas(ProductionPayload)
+        schemas(ProductionPayload, LocationPayload)
     ),
     modifiers(&SecurityAddon),
     tags(
@@ -121,6 +121,8 @@ fn open_routes() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(version::get))
         .routes(routes!(production::all))
+        .routes(routes!(location::all))
+        .routes(routes!(location::by_id))
         .routes(routes!(auth::login))
         .routes(routes!(auth::refresh))
         .routes(routes!(auth::logout))
