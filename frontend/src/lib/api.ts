@@ -1,5 +1,6 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { queryClient } from "./query-client";
+import { FailedRequest } from "@/types/api.types";
 
 export const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -7,9 +8,9 @@ export const api = axios.create({
 });
 
 let isRefreshing = false;
-let failedQueue: any[] = [];
+let failedQueue: FailedRequest[] = [];
 
-const processQueue = (error: any, token: string | null = null) => {
+const processQueue = (error: AxiosError | null, token: string | null = null) => {
     failedQueue.forEach((prom) => {
         if (error) {
             prom.reject(error);
@@ -48,7 +49,7 @@ api.interceptors.response.use(
                 processQueue(null);
                 return api(originalRequest);
             } catch (refreshError) {
-                processQueue(refreshError, null);
+                processQueue(refreshError as AxiosError, null);
                 queryClient.clear();
                 // Only redirect if we are not already on the login page
                 if (typeof window !== "undefined" && !window.location.pathname.endsWith("/login")) {

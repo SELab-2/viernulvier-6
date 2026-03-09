@@ -3,6 +3,7 @@ export interface LoginDTO {
     password: string;
 }
 
-export interface AuthResponse {
-    message: string;
-}
+export type AdminUser = {
+    user_id: string;
+    email: string;
+};

@@ -1,17 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
-import { LoginDTO } from "@/types/auth.types";
+import { LoginDTO, AdminUser } from "@/types/auth.types";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
 
-type User = {
-    user_id: string;
-    email: string;
-};
-
 export const useUser = (options?: { enabled?: boolean }) => {
-    return useQuery<User>({
+    return useQuery<AdminUser>({
         queryKey: ["user"],
         queryFn: async () => {
             const { data } = await api.get("/admin");
