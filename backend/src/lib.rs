@@ -58,6 +58,8 @@ fn open_routes() -> Router<AppState> {
         .route("/version", get(VersionHandler::get))
         .route("/productions", get(ProductionHandler::all))
         .route("/login", post(AuthHandler::login))
+        .route("/refresh", post(AuthHandler::refresh))
+        .route("/logout", post(AuthHandler::logout))
         .route("/admin", get(AdminHandler::admin))
 }
 
