@@ -13,7 +13,6 @@ import { routing } from "@/i18n/routing";
 import "../globals.css";
 
 import { Footer, Header } from "@/components/layout";
-import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/providers";
 
 const geistSans = Geist({
@@ -63,7 +62,6 @@ export default async function RootLayout({
                 <Providers messages={messages} locale={locale}>
                     <Header />
                     <main className="flex-1">{children}</main>
-                    <Toaster richColors />
                     <Footer />
                 </Providers>
 

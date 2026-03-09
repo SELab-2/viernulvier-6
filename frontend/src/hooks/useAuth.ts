@@ -5,7 +5,7 @@ import { LoginDTO } from "@/types/auth.types";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
 
-export const useUser = () => {
+export const useUser = (options?: { enabled?: boolean }) => {
     return useQuery({
         queryKey: ["user"],
         queryFn: async () => {
@@ -18,7 +18,9 @@ export const useUser = () => {
             }
         },
         retry: false,
-        staleTime: 2.5 * 60_000, // Check every 2.5 minutes
+        staleTime: 5 * 60_000,
+        refetchOnMount: true,
+        ...options,
     });
 };
 
@@ -31,10 +33,9 @@ export const useLogin = () => {
             const { data } = await api.post("/login", credentials);
             return data;
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["user"] });
-            router.refresh();
-            router.push("/admin");
+        onSuccess: async () => {
+            await queryClient.refetchQueries({ queryKey: ["user"] });
+            router.push("/");
         },
         onError: (error: AxiosError) => {
             if (error.response?.status === 401) {

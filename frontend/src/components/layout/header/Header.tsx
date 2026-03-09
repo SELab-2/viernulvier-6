@@ -2,9 +2,13 @@
 import { LocaleSwitcher, ThemeSwitcher } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { useUser, useLogout } from "@/hooks/useAuth";
+import { usePathname } from "@/i18n/routing";
 
 export const Header = () => {
-    const { data: user } = useUser();
+    const pathname = usePathname();
+    const isLoginPage = pathname === "/login";
+
+    const { data: user } = useUser({ enabled: !isLoginPage });
     const { mutate: logout, isPending: isLoggingOut } = useLogout();
 
     return (

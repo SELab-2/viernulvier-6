@@ -50,7 +50,8 @@ api.interceptors.response.use(
             } catch (refreshError) {
                 processQueue(refreshError, null);
                 queryClient.clear();
-                if (typeof window !== "undefined") {
+                // Only redirect if we are not already on the login page
+                if (typeof window !== "undefined" && !window.location.pathname.endsWith("/login")) {
                     window.location.href = "/login";
                 }
                 return Promise.reject(refreshError);
