@@ -30,6 +30,7 @@ inputs:
     required: true
   garage_s3_bucket:
     description: "Garage S3 bucket name"
+    required: true
   api_key_404:
     required: true
 
