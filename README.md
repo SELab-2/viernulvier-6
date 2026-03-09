@@ -18,6 +18,4 @@ etc). Preferably in readme itself
 - any external services must be linked from the README
 
 
-
-
 [Team](operations/team.md)
