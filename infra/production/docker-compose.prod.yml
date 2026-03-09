@@ -5,6 +5,7 @@ services:
     restart: always
     environment:
       DATABASE_URL: ${PROD_DATABASE_URL}
+      API_KEY_404: ${PROD_API_KEY_404}
       LOG_LEVEL: ${PROD_LOG_LEVEL}
     depends_on:
       database:
