@@ -7,16 +7,24 @@ use reqwest::Client;
 use serde::de::DeserializeOwned;
 use tracing::{info, warn};
 
-use crate::models::{collection::ApiCollection, production::ApiProduction};
+use crate::models::{
+    collection::ApiCollection, hall::ApiHall, location::ApiLocation, production::ApiProduction,
+    space::ApiSpace,
+};
+
+use crate::helper::extract_source_id;
 
 mod helper;
 pub mod models {
     pub mod collection;
     pub mod event;
     pub mod genre;
+    pub mod hall;
     pub mod localized_text;
+    pub mod location;
     pub mod media;
     pub mod production;
+    pub mod space;
 }
 
 const API_BASE_URL: &str = "https://www.viernulvier.gent/api/v1";
@@ -65,19 +73,30 @@ impl ApiImporter {
     }
 
     /// updates all objects from the external api since we last updated
-    pub async fn update_since_last(&self) {
+    pub async fn update_since_last(&self) -> Result<(), reqwest::Error> {
         // save the current timestamp now, to insure we don't lose any updated items
         // this can happen when updates are made while we are importing, as it takes quite long
         let current_ts = Utc::now().to_rfc3339();
         let last_update_ts = self.get_last_updated().await;
 
         // TODO start transactions
-        let res = self.update_productions(&last_update_ts).await;
+        // order : locations -> spaces -> halls
+        // a location contains a space, which in turn contains one or more hall
+        let res = async {
+            self.update_locations(&last_update_ts).await?;
+            self.update_spaces(&last_update_ts).await?;
+            self.update_halls(&last_update_ts).await?;
+            self.update_productions(&last_update_ts).await?;
+            Ok::<(), reqwest::Error>(())
+        }
+        .await;
 
         // save timestamp for next time
         if res.is_ok() {
             self.set_last_updated(current_ts).await;
         }
+
+        res
     }
 
     /// fetch a collection of objects from the api
@@ -125,7 +144,7 @@ impl ApiImporter {
     }
 
     pub async fn update_productions(&self, updated_after: &str) -> Result<(), reqwest::Error> {
-        info!("start updating productions");
+        info!("Productions: start updating");
 
         let mut stream =
             pin!(self.paginated_collection::<ApiProduction>("/productions", updated_after));
@@ -133,7 +152,7 @@ impl ApiImporter {
         while let Some(batch_result) = stream.next().await {
             let productions = batch_result?;
             let amt = productions.len();
-            info!("got {amt} productions from api");
+            info!("Productions: got {amt} from api");
             for production in productions {
                 self.db
                     .productions()
@@ -141,10 +160,104 @@ impl ApiImporter {
                     .await
                     .unwrap();
             }
-            info!("inserted {amt} productions into db");
+            info!("Productions: inserted {amt} into db");
         }
 
-        info!("finished importing productions");
+        info!("Productions: finished importing");
+        Ok(())
+    }
+
+    pub async fn update_locations(&self, updated_after: &str) -> Result<(), reqwest::Error> {
+        info!("Locations: start updating");
+
+        let mut stream =
+            pin!(self.paginated_collection::<ApiLocation>("/locations", updated_after));
+
+        while let Some(batch_result) = stream.next().await {
+            let locations = batch_result?;
+            let amt = locations.len();
+            info!("Locations: got {amt} from api");
+            for location in locations {
+                self.db.locations().insert(location.into()).await.unwrap();
+            }
+            info!("Locations: inserted {amt} into db");
+        }
+
+        info!("Locations: finished importing");
+        Ok(())
+    }
+
+    pub async fn update_spaces(&self, updated_after: &str) -> Result<(), reqwest::Error> {
+        info!("Spaces: start updating");
+
+        let mut stream = pin!(self.paginated_collection::<ApiSpace>("/spaces", updated_after));
+
+        while let Some(batch_result) = stream.next().await {
+            let spaces = batch_result?;
+            let amt = spaces.len();
+            info!("Spaces: got {amt} from api");
+            for space in spaces {
+                // first load in the related location and extract its id
+                let location_source_id = extract_source_id(&space.location).unwrap();
+
+                let location = self
+                    .db
+                    .locations()
+                    .by_source_id(location_source_id)
+                    .await
+                    .unwrap();
+
+                // construct a SpaceCreate out of it
+                let space_create = space.to_create(location.id);
+
+                self.db.spaces().insert(space_create).await.unwrap();
+            }
+            info!("Spaces: inserted {amt} into db");
+        }
+
+        info!("Spaces: finished importing");
+        Ok(())
+    }
+
+    pub async fn update_halls(&self, updated_after: &str) -> Result<(), reqwest::Error> {
+        info!("Halls: start updating");
+
+        let mut stream = pin!(self.paginated_collection::<ApiHall>("/halls", updated_after));
+
+        while let Some(batch_result) = stream.next().await {
+            let halls = batch_result?;
+            let amt = halls.len();
+            info!("Halls: got {amt} from api");
+            for hall in halls {
+                let source_id = hall.space.as_deref().and_then(extract_source_id);
+                let space_uuid = match source_id {
+                    Some(id) => {
+                        // get the uuid of the space with a source id from the db
+                        let db_uuid = self
+                            .db
+                            .spaces()
+                            .by_source_id(id)
+                            .await
+                            .unwrap()
+                            .map(|s| s.id);
+
+                        if db_uuid.is_none() {
+                            warn!("Halls: Space source_id {id} expected but not found in db");
+                        }
+                        db_uuid
+                    }
+                    None => None,
+                };
+
+                // construct a HallCreate out of it
+                let hall_create = hall.to_create(space_uuid);
+
+                self.db.halls().insert(hall_create).await.unwrap();
+            }
+            info!("Halls: inserted {amt} into db");
+        }
+
+        info!("Halls: finished importing");
         Ok(())
     }
 }
