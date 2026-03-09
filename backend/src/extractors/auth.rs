@@ -1,8 +1,8 @@
+use crate::{AppState, error::AppError, handlers::auth::Claims};
 use axum::{extract::FromRequestParts, http::request::Parts};
 use axum_extra::extract::CookieJar;
-use jsonwebtoken::{decode, DecodingKey, Validation};
+use jsonwebtoken::{DecodingKey, Validation, decode};
 use uuid::Uuid;
-use crate::{AppState, error::AppError, handlers::auth::Claims};
 
 pub struct AuthUser {
     pub user_id: Uuid,
@@ -14,12 +14,13 @@ impl FromRequestParts<AppState> for AuthUser {
     type Rejection = AppError;
 
     async fn from_request_parts(parts: &mut Parts, state: &AppState) -> Result<Self, AppError> {
-        let jar = CookieJar::from_request_parts(parts, state)
+        let jar = <CookieJar as FromRequestParts<AppState>>::from_request_parts(parts, state)
             .await
             .map_err(|_| AppError::Unauthorized)?;
 
-        let token = jar.get("access_token")
-            .map(|cookie| cookie.value())
+        let token = jar
+            .get("access_token")
+            .map(|cookie: &axum_extra::extract::cookie::Cookie<'static>| cookie.value().to_string())
             .ok_or(AppError::Unauthorized)?;
 
         let token_data = decode::<Claims>(
@@ -27,7 +28,7 @@ impl FromRequestParts<AppState> for AuthUser {
             &DecodingKey::from_secret(state.config.jwt_secret.as_bytes()),
             &Validation::default(),
         )
-            .map_err(|_| AppError::Unauthorized)?;
+        .map_err(|_| AppError::Unauthorized)?;
 
         Ok(AuthUser {
             user_id: token_data.claims.sub,

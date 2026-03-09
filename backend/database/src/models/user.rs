@@ -1,8 +1,10 @@
-use sqlx::FromRow;
+use ormlite::Model;
 use uuid::Uuid;
 
-#[derive(Debug, FromRow, PartialEq)]
+#[derive(Debug, Model, PartialEq)]
+#[ormlite(table = "users")]
 pub struct User {
+    #[ormlite(primary_key)]
     pub id: Uuid,
     pub username: String,
     pub email: String,

@@ -25,7 +25,7 @@ export const useLogin = () => {
 
     return useMutation({
         mutationFn: async (credentials: LoginDTO) => {
-            const { data } = await api.post("/login", credentials);
+            const { data } = await api.post("/auth/login", credentials);
             return data;
         },
         onSuccess: async () => {
@@ -48,7 +48,7 @@ export const useLogout = () => {
 
     return useMutation({
         mutationFn: async () => {
-            await api.post("/logout");
+            await api.post("/auth/logout");
         },
         onSuccess: () => {
             queryClient.clear();
