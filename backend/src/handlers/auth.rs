@@ -13,7 +13,7 @@ use uuid::Uuid;
 use crate::{config::AppConfig, error::AppError, extractors::auth::AuthUser};
 use database::{Database, models::session::SessionCreate};
 
-const ACCESS_TOKEN_EXPIRY_MINUTES: i64 = 15;
+const ACCESS_TOKEN_EXPIRY_MINUTES: i64 = 5;
 const REFRESH_TOKEN_EXPIRY_DAYS: i64 = 7;
 
 #[derive(Deserialize)]
