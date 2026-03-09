@@ -1,8 +1,93 @@
 ---
-title: Database
-description: Database documentation
+title: Database Architecture
+description: Comprehensive documentation of the PostgreSQL database, the SQLx toolkit, migration management, and the Data Access Layer for the viernulvier-archief.
 ---
 
-# Database
+# Database Architecture
 
-Database documentation.
+The `viernulvier-archief` application relies on a robust relational database to store its heavily interconnected domain data, ranging from cultural productions and events to physical locations, halls, and user sessions.
+
+## Core Tech Stack
+
+- **Database Engine**: [PostgreSQL](https://www.postgresql.org/)
+- **Database Driver & Toolkit**: [SQLx](https://github.com/launchbadge/sqlx) (Async, pure Rust SQL crate)
+- **Migration Manager**: SQLx CLI
+
+---
+
+## 1. Schema & Domain Models
+
+The database schema is designed to handle complex relationships associated with an archive system. Key domain models defined in the schema (and mapped in `backend/database/src/models/`) include:
+
+- **Events & Productions**: The core cultural entities (`production`, `event`).
+- **Spatial Data**: Hierarchical physical locations (`location`, `space`, `hall`).
+- **Media & Content**: Associated files, artists, blog posts, and curated collections (`media`, `artist`, `blogpost`, `collection`, `collection_item`).
+- **System & Auth**: Administrative accounts and active user sessions (`user`, `session`).
+- **Internationalization**: Localized text representations mapping strings across supported languages (Dutch/English).
+
+### Triggers & Automation
+
+We use database-level triggers to guarantee data integrity without relying solely on application logic. For example, the `update_at_trigger` (introduced in `migrations/20260210143803_update_at_trigger.up.sql`) automatically updates the `updated_at` timestamp column whenever a row is modified.
+
+---
+
+## 2. Data Access Layer (DAL)
+
+We employ the **Repository Pattern** to interact with the database, fully isolated within the `backend/database` crate.
+
+- **Isolation**: The HTTP web server (`backend/src`) never writes raw SQL queries. Instead, it calls methods on repository structs (e.g., `ProductionRepository`, `UserRepository`) located in `backend/database/src/repos/`.
+- **Compile-Time Checking**: Thanks to **SQLx**, all SQL queries written in the repository layer are verified against the actual PostgreSQL schema at compile time. If a column name changes or a type is mismatched, the Rust code will fail to compile, virtually eliminating runtime SQL syntax errors.
+- **Connection Pooling**: The application uses an async connection pool configured at startup, which is injected into the HTTP handlers via Axum extractors and passed down to the repository functions.
+
+---
+
+## 3. Migration Management
+
+Database schema versions are strictly controlled using SQLx migrations. All migration files are stored in the `backend/migrations/` directory.
+
+### Migration Structure
+
+Every database change consists of two files, prefixed by a timestamp to ensure they are executed in the correct order:
+
+- `[timestamp]_name.up.sql`: Applies the changes (e.g., `CREATE TABLE`, `ALTER TABLE`).
+- `[timestamp]_name.down.sql`: Reverts the changes (e.g., `DROP TABLE`), allowing for safe rollbacks.
+
+_Example:_
+
+- `20260224000000_initial.up.sql` (Base schema creation)
+- `20260224000000_initial.down.sql` (Schema teardown)
+- `20260306151410_halls_swap_locationUUID_for_spaceUUID.up.sql` (Schema evolution)
+
+### Working with Migrations
+
+To manage the database locally, you must use the `sqlx-cli`. If you haven't installed it yet, run:
+
+```bash
+cargo install sqlx-cli --no-default-features --features rustls,postgres
+```
+
+**Common Commands:**
+
+- **Create Database**: `sqlx database create` (Uses the `DATABASE_URL` environment variable).
+- **Run Migrations**: `sqlx migrate run` (Applies all pending `.up.sql` scripts).
+- **Revert Last Migration**: `sqlx migrate revert` (Runs the `.down.sql` script of the last applied migration).
+- **Create a New Migration**: `sqlx migrate add <migration_name>` (Generates empty up/down SQL files with the current timestamp).
+
+---
+
+## 4. Compile-Time Verification Setup
+
+Because SQLx verifies queries at compile time, the Rust compiler needs access to a live database or a cached schema file (`sqlx-data.json`).
+
+**Local Development:**
+Ensure your local PostgreSQL database is running and `DATABASE_URL` is set in your `.env` file before running `cargo build` or `cargo check`.
+
+**Offline Mode (CI/CD):**
+To allow our GitHub Actions CI pipeline to build the backend without spinning up a live PostgreSQL database, we utilize SQLx's offline feature.
+If you change any SQL queries or add migrations, you must update the offline cache by running:
+
+```bash
+cargo sqlx prepare --workspace
+```
+
+This generates/updates the `sqlx-data.json` file, which should be committed to version control.

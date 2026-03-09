@@ -1,8 +1,129 @@
 ---
-title: Frontend
-description: Frontend documentation
+title: Frontend Architecture
+description: Comprehensive documentation of the core architecture, routing structure, styling foundation, and developer tooling for the viernulvier-archief frontend.
 ---
 
-# Frontend
+# Frontend Architecture
 
-Frontend documentation.
+The `viernulvier-archief` frontend is a modern web application built for performance, internationalization, and a robust developer experience. This document outlines the core technologies, directory structure, and foundational choices that drive the UI.
+
+## Core Tech Stack
+
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
+- **Library**: [React 19](https://react.dev/) with the [React Compiler](https://react.dev/learn/react-compiler) enabled for optimized rendering.
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) & [shadcn/ui](https://ui.shadcn.com/)
+- **Data Fetching**: [TanStack React Query v5](https://tanstack.com/query/latest)
+- **Internationalization (i18n)**: [next-intl](https://next-intl-docs.vercel.app/)
+- **Type Safety**: TypeScript & [@t3-oss/env-nextjs](https://env.t3.gg/)
+- **Linting & Tooling**: ESLint, Prettier, Husky, and [Knip](https://knip.dev/) (for unused dependency detection)
+
+---
+
+## Directory Structure
+
+The frontend code is localized entirely within the `frontend/` directory, keeping a strict separation of concerns within the `src/` folder.
+
+```text
+frontend/
+├── src/
+│   ├── app/                # Next.js App Router entry points (pages, layouts, etc.)
+│   ├── components/         # React components organized by scope
+│   ├── config/             # Static configurations (SEO, site meta)
+│   ├── constants/          # Global constants (e.g., i18n configurations)
+│   ├── hooks/              # Custom React hooks (e.g., useAuth)
+│   ├── i18n/               # next-intl configuration and routing
+│   ├── lib/                # Utility functions, API clients, and core library wrappers
+│   ├── messages/           # i18n translation dictionaries (JSON)
+│   ├── providers/          # Global context providers (Theme, Query, i18n)
+│   └── types/              # TypeScript type definitions (API, Auth, Config)
+├── env.ts                  # Type-safe environment variable schema
+├── proxy.ts                # API Proxy configuration for backend communication
+└── next.config.ts          # Next.js configuration
+```
+
+---
+
+## Key Foundations
+
+### 1. App Router & Internationalization (i18n)
+
+We utilize the Next.js App Router mapped with `next-intl` to support seamless internationalization for both English (`en`) and Dutch (`nl`).
+
+- **Routing Structure**: All pages are scoped under the `[locale]` dynamic segment (e.g., `src/app/[locale]/page.tsx`).
+- **Dictionaries**: Translations are managed via plain JSON files located in `src/messages/en.json` and `src/messages/nl.json`.
+- **Locale & Theme Switching**: Dedicated components (`LocaleSwitcher`, `ThemeSwitcher`) are available in `src/components/shared/` to allow users to customize their experience.
+
+### 2. Styling & Theming
+
+The application utilizes **Tailwind CSS v4** as the primary styling engine.
+
+- **UI Components**: Foundational components (Button, Select, Sonner) are scaffolded using `shadcn/ui` and located in `src/components/ui/`.
+- **Dark/Light Mode**: Implemented globally using `next-themes` via the `ThemeProvider` wrapped around the root layout.
+
+### 3. Data Fetching, State & API Proxy
+
+We rely on **TanStack React Query v5** for server-state management, data fetching, caching, and synchronization.
+
+- **API Configuration**: Core API fetching utilities and axios/fetch wrappers are maintained in `src/lib/api.ts`.
+- **Proxying (`proxy.ts`)**: To handle CORS and securely route requests to the Rust backend, a proxy configuration is established. This ensures smooth communication between the frontend client and backend API during local development and in production.
+- **Setup**: The query client is configured in `src/lib/query-client.ts` and injected into the React tree via `src/providers/QueryProvider.tsx`.
+
+### 4. Authentication Strategy
+
+The application handles authentication specifically for the admin features (`/admin`).
+
+- **Custom Hooks**: Session management and authentication logic are handled via `src/hooks/useAuth.ts`.
+- **Typing**: Strict type definitions for auth payloads are kept in `src/types/auth.types.ts`.
+- **Components**: The login interface is modularized in `src/components/auth/LoginForm.tsx`.
+
+### 5. SEO & Metadata
+
+Built-in Next.js App Router features are heavily utilized to manage search engine optimization and metadata generation:
+
+- **Static Configuration**: Base site configuration is maintained in `src/config/site.config.ts` and `seo.config.ts`.
+- **Dynamic Crawling**: `src/app/sitemap.ts` and `src/app/robots.ts` programmatically generate the `sitemap.xml` and `robots.txt` required by search engine crawlers.
+
+### 6. Component Architecture
+
+To maintain a scalable UI, the `components/` directory is split by specific concerns:
+
+- **`layout/`**: Structural components used across the app (`Header`, `Footer`).
+- **`shared/`**: Reusable components that don't belong to a specific feature or generic UI library (e.g., `LocaleSwitcher`).
+- **`ui/`**: Low-level, generic UI elements (buttons, inputs, dialogs) largely generated via `shadcn/ui`.
+- **`auth/`**: Domain-specific components handling user authentication (e.g., `LoginForm`).
+
+### 7. Type-Safe Environment Variables
+
+Environment variables are rigorously validated at build-time and run-time using `@t3-oss/env-nextjs`.
+
+- **Definition**: The schema is defined in `src/env.ts`.
+- **Usage**: By importing `env` from this file instead of using `process.env` directly, we ensure total type-safety and immediate feedback if a required variable is missing.
+
+---
+
+## Developer Tooling & Deployment
+
+The repository guarantees high code quality through a strict suite of developer tools:
+
+- **Code Quality**: ESLint (`eslint.config.mjs`) and Prettier enforce consistent code style.
+- **Git Hooks**: Husky (`.husky/`) runs pre-commit checks and commit-msg linting (via `commitlint.config.js`).
+- **Dependency Management**: [Knip](https://knip.dev/) is configured to scan the workspace and identify unused files, unreferenced exports, and unused dependencies, keeping the bundle lean.
+
+### Deployment & Docker
+
+The frontend is fully containerized with its own `Dockerfile` and `.dockerignore`. CI/CD pipelines defined in the `.github/workflows/` directory handle automated building, pushing, and deploying previews and production builds via Docker Compose environments.
+
+## Getting Started
+
+1. Copy the example environment variables:
+   ```bash
+   cp .env.example .env.local
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Run the development server:
+   ```bash
+   npm run dev
+   ```

@@ -1,8 +1,66 @@
 ---
-title: Deployment
-description: Deployment documentation
+title: Deployment Infrastructure
+description: Comprehensive guide to the deployment infrastructure, including Traefik reverse proxy setup, Docker Compose environments, and GitHub Actions CI/CD pipelines.
 ---
 
-# Deployment
+# Deployment Infrastructure
 
-Deployment documentation.
+The `viernulvier-archief` project uses a fully containerized deployment strategy. It leverages Docker and Docker Compose for orchestration, Traefik for dynamic routing and SSL, and GitHub Actions for continuous integration and continuous deployment (CI/CD).
+
+All infrastructure configurations are located in the `infra/` and `.github/` directories.
+
+---
+
+## 1. Reverse Proxy (Traefik)
+
+We use **Traefik** (`infra/traefik/docker-compose.yml`) as the global edge router for all incoming HTTP/HTTPS traffic.
+
+- **Dynamic Discovery**: Traefik connects directly to the Docker socket. It automatically discovers newly deployed frontend and backend containers and routes traffic to them based on Docker labels (e.g., `traefik.http.routers.frontend.rule=Host(...)`).
+- **SSL Termination**: It is configured with an ACME provider (Let's Encrypt) to automatically provision, attach, and renew TLS certificates for all routed domains without manual intervention.
+- **Global Network**: Traefik operates on an external Docker network called `traefik-public`. Applications that need external exposure attach to this network.
+
+---
+
+## 2. Container Orchestration (Docker Compose)
+
+The application stack (Frontend, Backend API, and PostgreSQL Database) is orchestrated using environment-specific Docker Compose files.
+
+### Production Environment (`infra/production/docker-compose.prod.yml`)
+
+- Runs the stable `main` branch images.
+- **Networking**:
+  - `traefik-public`: Connects the frontend and backend to the Traefik router.
+  - `internal`: A private backend network ensuring the database is isolated and only accessible by the API container.
+- Persistent volumes are mounted to ensure database data outlives container restarts.
+
+### Preview Environments (`infra/preview/docker-compose.preview.yml`)
+
+- Spins up an ephemeral, isolated copy of the entire stack for every Pull Request.
+- **Dynamic Routing**: Uses the `${PR_NUMBER}` environment variable to generate dynamic subdomains (e.g., `pr-123.example.com`), allowing isolated testing without port conflicts.
+- Utilizes a fresh PostgreSQL database instance for each PR to prevent data pollution.
+
+---
+
+## 3. CI/CD Pipelines (GitHub Actions)
+
+Our automated workflows (`.github/workflows/`) handle building, pushing, and deploying code using GitHub Actions. Both pipelines utilize multi-stage `Dockerfile`s to build optimized, lightweight images.
+
+### Production Pipeline (`build-push-deploy.yml`)
+
+1. **Trigger**: Executes automatically on a push/merge to the `main` branch.
+2. **Build & Push**: Compiles the Rust backend and Next.js frontend, builds Docker images, and pushes them to the GitHub Container Registry (`ghcr.io`).
+3. **Environment Generation**: Uses the custom action `.github/actions/generate-prod-env/` to securely write GitHub Secrets into a `.env` file on the deployment server.
+4. **Deploy**: Connects to the server via SSH, pulls the new images, and recreates the production Docker Compose stack with minimal downtime.
+
+### Preview Pipeline (`deploy-preview.yml`)
+
+1. **Trigger**: Executes when a Pull Request is opened, synchronized, or reopened.
+2. **Tagging**: Docker images are built and tagged uniquely using the PR's commit SHA (`${{ github.sha }}`).
+3. **Environment Generation**: Uses `.github/actions/generate-preview-env/` to dynamically map specific staging secrets to the preview `.env` file.
+4. **Deploy**: SSHs into the staging server, pulls the SHA-tagged images, and launches the isolated preview stack.
+
+---
+
+## 4. Environment Variables Management
+
+Secrets and configuration are entirely managed via GitHub Actions Secrets. The custom `.github/actions/` scripts safely map these secrets into `.env` files on the target host machines during deployment, ensuring that no sensitive credentials are ever hardcoded or committed to the repository.
