@@ -12,6 +12,7 @@ pub struct AppConfig {
     pub access_token_expiry_minutes: i8,
     pub refresh_token_expiry_days: i8,
     pub allowed_origins: Vec<String>,
+    pub preview_name: String,
 }
 
 impl AppConfig {
@@ -29,6 +30,7 @@ impl AppConfig {
             access_token_expiry_minutes: 5,
             refresh_token_expiry_days: 7,
             allowed_origins,
+            preview_name: env::var("PREVIEW_NAME").unwrap_or_default(),
         })
     }
 }
