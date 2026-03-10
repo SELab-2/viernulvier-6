@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { LoginDTO, AdminUser } from "@/types/auth.types";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
@@ -57,7 +57,6 @@ export const useLogout = () => {
         },
         onError: () => {
             toast.error("An error occurred during logout");
-            // Clear local state anyway
             queryClient.clear();
             router.push("/login");
         },

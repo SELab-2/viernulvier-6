@@ -73,21 +73,20 @@ fn generate_access_token(
 
 fn access_cookie(token: String) -> Cookie<'static> {
     Cookie::build(("access_token", token))
-        .http_only(true)
+        //.http_only(true)
         .secure(true)
         .same_site(SameSite::Strict)
         .path("/")
-        // `axum-extra` Cookie uses `cookie::time::Duration` in version 0.18, let's just omit max_age here or use cookie::time
         .max_age(Duration::minutes(ACCESS_TOKEN_EXPIRY_MINUTES))
         .build()
 }
 
 fn refresh_cookie(token: String) -> Cookie<'static> {
     Cookie::build(("refresh_token", token))
-        .http_only(true)
+        //.http_only(true)
         .secure(true)
         .same_site(SameSite::Strict)
-        .path("/refresh")
+        .path("/auth/refresh")
         .max_age(Duration::days(REFRESH_TOKEN_EXPIRY_DAYS))
         .build()
 }
@@ -148,7 +147,7 @@ pub async fn login(
     Ok((
         updated_jar,
         Json(AuthResponse {
-            message: "Token refreshed".into(),
+            message: "Logged in".into(),
             success: true,
         }),
     ))
@@ -219,7 +218,7 @@ pub async fn refresh(
         (status = 200, description = "Logged out successfully", body = AuthResponse)
     ),
     security(
-        ("access_token" = []),
+        ("cookie_auth" = []),
         ("refresh_token" = [])
     )
 )]

@@ -1,6 +1,6 @@
 import axios, { AxiosError } from "axios";
 import { queryClient } from "./query-client";
-import { FailedRequest } from "@/types/api.types";
+import { FailedRequest, CustomAxiosRequestConfig } from "@/types/api.types";
 
 export const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -23,15 +23,16 @@ const processQueue = (error: AxiosError | null, token: string | null = null) => 
 
 api.interceptors.response.use(
     (response) => response,
-    async (error) => {
-        const originalRequest = error.config;
+    async (error: AxiosError) => {
+        const originalRequest = error.config as CustomAxiosRequestConfig;
 
         // Skip refresh for login/logout and if it's already a retry
         if (
             error.response?.status === 401 &&
             !originalRequest._retry &&
-            !originalRequest.url?.includes("/login") &&
-            !originalRequest.url?.includes("/logout")
+            !originalRequest.url?.includes("/auth/login") &&
+            !originalRequest.url?.includes("/auth/logout") &&
+            !originalRequest.url?.includes("/auth/refresh")
         ) {
             if (isRefreshing) {
                 return new Promise((resolve, reject) => {

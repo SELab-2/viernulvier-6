@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
 import { routing } from "@/i18n/routing";
@@ -13,14 +12,17 @@ export function proxy(request: NextRequest) {
     const isProtectedRoute = pathname.includes("/admin");
 
     if (isProtectedRoute && !token) {
-        return NextResponse.redirect(new URL("/login", request.url));
+        // Mutate the path and let next-intl handle the localized redirect
+        request.nextUrl.pathname = "/login";
+        return intlMiddleware(request);
     }
 
     if (isAuthRoute && token) {
-        return NextResponse.redirect(new URL("/admin", request.url));
+        // Mutate the path and let next-intl handle the localized redirect
+        request.nextUrl.pathname = "/admin";
+        return intlMiddleware(request);
     }
 
-    // Process i18n routing if no auth redirects are needed
     return intlMiddleware(request);
 }
 
