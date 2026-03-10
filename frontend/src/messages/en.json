@@ -14,5 +14,13 @@
         "submitButtonLoading": "Logging in...",
         "errorInvalidCredentials": "Invalid email or password.",
         "errorGeneric": "Something went wrong. Please try again later."
+    },
+    "Admin": {
+        "title": "Admin Dashboard",
+        "welcomeBack": "Welcome back!",
+        "emailLabel": "Email",
+        "loading": "Loading admin dashboard...",
+        "quickActions": "Quick Actions",
+        "comingSoon": "More features coming soon..."
     }
 }
