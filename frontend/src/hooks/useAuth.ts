@@ -9,7 +9,7 @@ export const useUser = (options?: { enabled?: boolean }) => {
     return useQuery<AdminUser>({
         queryKey: ["user"],
         queryFn: async () => {
-            const { data } = await api.get("/admin");
+            const { data } = await api.get("/admin/me");
             return data;
         },
         retry: false,

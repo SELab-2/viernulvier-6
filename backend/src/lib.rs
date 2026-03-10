@@ -10,7 +10,11 @@ use database::Database;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info};
 
-use utoipa::OpenApi;
+use utoipa::{
+    openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
+    Modify, OpenApi
+};
+
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
 use utoipa_swagger_ui::SwaggerUi;
@@ -32,11 +36,31 @@ pub struct AppState {
     components(
         schemas(ProductionPayload)
     ),
+    modifiers(&SecurityAddon),
     tags(
         (name = "viernulvier_api", description = "API Endpoints")
     )
 )]
 pub struct ApiDoc;
+struct SecurityAddon;
+
+impl Modify for SecurityAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        if let Some(components) = openapi.components.as_mut() {
+            // Register Access Token (JWT)
+            components.add_security_scheme(
+                "cookie_auth", // Internal name for the scheme
+                SecurityScheme::ApiKey(ApiKey::Cookie(ApiKeyValue::new("access_token"))),
+            );
+
+            // Register Refresh Token
+            components.add_security_scheme(
+                "refresh_token",
+                SecurityScheme::ApiKey(ApiKey::Cookie(ApiKeyValue::new("refresh_token"))),
+            );
+        }
+    }
+}
 
 pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
     let db = Database::create_connect_migrate(&config.database_url).await?;

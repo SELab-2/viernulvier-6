@@ -11,7 +11,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use time::Duration;
 use uuid::Uuid;
 
-use crate::{config::AppConfig, error::AppError, extractors::auth::AuthUser};
+use crate::{config::AppConfig, error::AppError, error::ErrorResponse, extractors::auth::AuthUser};
 use database::{Database, models::session::SessionCreate};
 use utoipa::ToSchema;
 
@@ -27,6 +27,7 @@ pub struct LoginRequest {
 #[derive(Serialize, ToSchema)]
 pub struct AuthResponse {
     pub message: String,
+    pub success: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -98,7 +99,9 @@ fn refresh_cookie(token: String) -> Cookie<'static> {
     description = "Login to the API",
     request_body = LoginRequest,
     responses(
-        (status = 200, description = "Success", body = AuthResponse)
+        (status = 200, description = "Success", body = AuthResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 500, description = "Internal Server Error", body = ErrorResponse)
     )
 )]
 pub async fn login(
@@ -145,7 +148,8 @@ pub async fn login(
     Ok((
         updated_jar,
         Json(AuthResponse {
-            message: "Success".into(),
+            message: "Token refreshed".into(),
+            success: true,
         }),
     ))
 }
@@ -154,9 +158,13 @@ pub async fn login(
     method(post),
     path = "/auth/refresh",
     tag = "Auth",
-    description = "Refresh the access token",
+    description = "Refresh the access token using the refresh cookie",
     responses(
-        (status = 200, description = "Success", body = AuthResponse)
+        (status = 200, description = "Success", body = AuthResponse),
+        (status = 401, description = "Unauthorized - Invalid or expired refresh token", body = ErrorResponse)
+    ),
+    security(
+        ("refresh_token" = [])
     )
 )]
 pub async fn refresh(
@@ -197,6 +205,7 @@ pub async fn refresh(
         updated_jar,
         Json(AuthResponse {
             message: "Token refreshed".into(),
+            success: true,
         }),
     ))
 }
@@ -205,9 +214,13 @@ pub async fn refresh(
     method(post),
     path = "/auth/logout",
     tag = "Auth",
-    description = "Logout from the API",
+    description = "Logout and invalidate sessions",
     responses(
-        (status = 200, description = "Success", body = AuthResponse)
+        (status = 200, description = "Logged out successfully", body = AuthResponse)
+    ),
+    security(
+        ("access_token" = []),
+        ("refresh_token" = [])
     )
 )]
 pub async fn logout(
@@ -240,6 +253,7 @@ pub async fn logout(
         updated_jar,
         Json(AuthResponse {
             message: "Logged out".into(),
+            success: true,
         }),
     ))
 }

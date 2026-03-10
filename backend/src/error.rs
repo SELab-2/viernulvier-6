@@ -1,6 +1,9 @@
 use std::io::Error as IoError;
 use thiserror::Error;
 
+use utoipa::ToSchema;
+use serde::Serialize;
+
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
@@ -34,27 +37,34 @@ pub enum AppError {
     PayloadError(String),
 }
 
+#[derive(Serialize, ToSchema)]
+pub struct ErrorResponse {
+    #[schema(example = "An error occurred during processing")]
+    pub message: String,
+    pub success: bool,
+}
+
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        // log!
         tracing::error!("{}", self);
-        self.error_page().into_response()
+
+        let (status, msg) = self.error_details();
+
+        (status, axum::Json(ErrorResponse { message: msg.to_string(), success: false })).into_response()
     }
 }
 
 impl AppError {
-    fn error_page(&self) -> (StatusCode, &'static str) {
-        let (status, msg) = match self {
+    fn error_details(&self) -> (StatusCode, &'static str) {
+        match self {
             Self::PayloadError(_) => (StatusCode::BAD_REQUEST, "Payload error"),
             Self::NotFound => (StatusCode::NOT_FOUND, "We couldn't find that."),
             Self::Unauthorized => (StatusCode::UNAUTHORIZED, "Invalid credentials."),
             _ => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "Please help I have internal errors. D:",
+                "An internal error occurred.",
             ),
-        };
-
-        (status, msg)
+        }
     }
 }
 
