@@ -10,13 +10,13 @@ export function LoginForm() {
     const loginTranslations = useTranslations("Login");
     const { mutate, isPending, error, isError } = useLogin();
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        mutate({
-            email: formData.get("email") as string,
-            password: formData.get("password") as string,
-        });
+        const form = e.currentTarget;
+        const email = form.email.value;
+        const password = form.password.value;
+
+        mutate({ email, password });
     };
 
     const axiosError = error as AxiosError;
@@ -28,7 +28,7 @@ export function LoginForm() {
         : null;
 
     return (
-        <div className="mx-auto flex w-full max-w-sm flex-col gap-6">
+        <>
             <div className="flex flex-col gap-2 text-center">
                 <h1 className="text-2xl font-semibold tracking-tight">
                     {loginTranslations("title")}
@@ -64,6 +64,6 @@ export function LoginForm() {
                     {loginTranslations("submitButton")}
                 </SubmitButton>
             </form>
-        </div>
+        </>
     );
 }
