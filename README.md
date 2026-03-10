@@ -2,8 +2,8 @@
 
 | Service | Status | Uptime (30d) | Avg Response | Cert Expiry |
 |---------|--------|--------------|--------------|-------------|
-| Frontend | ![Status](http://46.224.176.244:3001/api/badge/1/status?style=flat-square) | ![Uptime](http://46.224.176.244:3001/api/badge/1/uptime?style=flat-square&duration=720) | ![Avg Response](http://46.224.176.244:3001/api/badge/1/avg-response?style=flat-square) | ![Cert Expiry](http://46.224.176.244:3001/api/badge/1/cert-exp?style=flat-square) |
-| Backend | ![Status](http://46.224.176.244:3001/api/badge/4/status?style=flat-square) | ![Uptime](http://46.224.176.244:3001/api/badge/4/uptime?style=flat-square&duration=720) | ![Avg Response](http://46.224.176.244:3001/api/badge/4/avg-response?style=flat-square) | ![Cert Expiry](http://46.224.176.244:3001/api/badge/4/cert-exp?style=flat-square) |
+| Frontend | ![Status](http://46.224.176.244:3001/api/badge/1/status?style=flat-square) | ![Uptime](http://46.224.176.244:3001/api/badge/1/uptime/720?style=flat-square&labelSuffix=d&label=30) | ![Avg Response](http://46.224.176.244:3001/api/badge/1/avg-response?style=flat-square) | ![Cert Expiry](http://46.224.176.244:3001/api/badge/1/cert-exp?style=flat-square) |
+| Backend | ![Status](http://46.224.176.244:3001/api/badge/4/status?style=flat-square) | ![Uptime](http://46.224.176.244:3001/api/badge/4/uptime/720?style=flat-square&labelSuffix=d&label=30) | ![Avg Response](http://46.224.176.244:3001/api/badge/4/avg-response?style=flat-square) | ![Cert Expiry](http://46.224.176.244:3001/api/badge/4/cert-exp?style=flat-square) |
 
 ## External Services
 
