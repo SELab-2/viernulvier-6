@@ -65,7 +65,7 @@ struct PathPrefixAddon {
 impl Modify for PathPrefixAddon {
     fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
         let mut base_path = if self.preview_name.is_empty() {
-            "".to_string()
+            "/api".to_string()
         } else {
             format!("/{}/api", self.preview_name)
         };
@@ -127,7 +127,7 @@ pub fn router(state: AppState) -> Router<AppState> {
     let mut openapi = ApiDoc::openapi();
 
     let base_path = if state.config.preview_name.is_empty() {
-        "".to_string()
+        "/api".to_string()
     } else {
         format!("/{}/api", state.config.preview_name).replace("//", "/")
     };
@@ -147,13 +147,9 @@ pub fn router(state: AppState) -> Router<AppState> {
     let swagger_ui = SwaggerUi::new(docs_path)
         .url(openapi_json_path, api_spec);
 
-    let app = if base_path.is_empty() || base_path == "/" {
-        Router::new().merge(api_router)
-    } else {
-        Router::new().nest(&base_path, api_router)
-    };
-
-    app.merge(swagger_ui)
+    Router::new()
+        .nest(&base_path, api_router)
+        .merge(swagger_ui)
         .fallback(get(|| async { AppError::NotFound }))
 }
 
