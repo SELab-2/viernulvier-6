@@ -1,9 +1,9 @@
 # viernulvier-6
 
-| Service | Status | Uptime | Avg Response | Cert Expiry |
-|---------|--------|--------|--------------|-------------|
-| Frontend | ![Status](http://46.224.176.244:3001/api/badge/1/status) | ![Uptime](http://46.224.176.244:3001/api/badge/1/uptime) | ![Avg Response](http://46.224.176.244:3001/api/badge/1/avg-response) | ![Cert Expiry](http://46.224.176.244:3001/api/badge/1/cert-exp) |
-| Backend | ![Status](http://46.224.176.244:3001/api/badge/4/status) | ![Uptime](http://46.224.176.244:3001/api/badge/4/uptime) | ![Avg Response](http://46.224.176.244:3001/api/badge/4/avg-response) | ![Cert Expiry](http://46.224.176.244:3001/api/badge/4/cert-exp) |
+| Service | Status | Uptime (30d) | Avg Response | Cert Expiry |
+|---------|--------|--------------|--------------|-------------|
+| Frontend | ![Status](http://46.224.176.244:3001/api/badge/1/status?style=flat-square) | ![Uptime](http://46.224.176.244:3001/api/badge/1/uptime?style=flat-square&duration=720) | ![Avg Response](http://46.224.176.244:3001/api/badge/1/avg-response?style=flat-square) | ![Cert Expiry](http://46.224.176.244:3001/api/badge/1/cert-exp?style=flat-square) |
+| Backend | ![Status](http://46.224.176.244:3001/api/badge/4/status?style=flat-square) | ![Uptime](http://46.224.176.244:3001/api/badge/4/uptime?style=flat-square&duration=720) | ![Avg Response](http://46.224.176.244:3001/api/badge/4/avg-response?style=flat-square) | ![Cert Expiry](http://46.224.176.244:3001/api/badge/4/cert-exp?style=flat-square) |
 
 ## External Services
 
