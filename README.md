@@ -3,7 +3,7 @@
 | Service | Status | Uptime | Avg Response | Cert Expiry |
 |---------|--------|--------|--------------|-------------|
 | Frontend | ![Status](http://46.224.176.244:3001/api/badge/1/status) | ![Uptime](http://46.224.176.244:3001/api/badge/1/uptime) | ![Avg Response](http://46.224.176.244:3001/api/badge/1/avg-response) | ![Cert Expiry](http://46.224.176.244:3001/api/badge/1/cert-exp) |
-| Backend | ![Status](http://46.224.176.244:3001/api/badge/1/status) | ![Uptime](http://46.224.176.244:3001/api/badge/1/uptime) | ![Avg Response](http://46.224.176.244:3001/api/badge/1/avg-response) | ![Cert Expiry](http://46.224.176.244:3001/api/badge/1/cert-exp) |
+| Backend | ![Status](http://46.224.176.244:3001/api/badge/4/status) | ![Uptime](http://46.224.176.244:3001/api/badge/4/uptime) | ![Avg Response](http://46.224.176.244:3001/api/badge/4/avg-response) | ![Cert Expiry](http://46.224.176.244:3001/api/badge/4/cert-exp) |
 
 ## External Services
 
