@@ -15,8 +15,8 @@ use crate::{config::AppConfig, error::AppError, error::ErrorResponse, extractors
 use database::{Database, models::session::SessionCreate};
 use utoipa::ToSchema;
 
-const ACCESS_TOKEN_EXPIRY_MINUTES: i64 = 5;
-const REFRESH_TOKEN_EXPIRY_DAYS: i64 = 7;
+const ACCESS_TOKEN_COOKIE: &str = "access_token";
+const REFRESH_TOKEN_COOKIE: &str = "refresh_token";
 
 #[derive(Deserialize, ToSchema)]
 pub struct LoginRequest {
@@ -49,12 +49,13 @@ fn generate_access_token(
     email: &str,
     session_id: Uuid,
     secret: &str,
+    expiry_minutes: i8,
 ) -> Result<String, AppError> {
     let exp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_secs()
-        + (ACCESS_TOKEN_EXPIRY_MINUTES as u64 * 60);
+        + (expiry_minutes as u64 * 60);
 
     let claims = Claims {
         sub: user_id,
@@ -71,23 +72,23 @@ fn generate_access_token(
     .map_err(|_| AppError::Internal("JWT error".into()))
 }
 
-fn access_cookie(token: String) -> Cookie<'static> {
-    Cookie::build(("access_token", token))
-        //.http_only(true)
+fn access_cookie(token: String, expiry_minutes: i8) -> Cookie<'static> {
+    Cookie::build((ACCESS_TOKEN_COOKIE, token))
+        .http_only(true)
         .secure(true)
         .same_site(SameSite::Strict)
         .path("/")
-        .max_age(Duration::minutes(ACCESS_TOKEN_EXPIRY_MINUTES))
+        .max_age(Duration::minutes(expiry_minutes as i64))
         .build()
 }
 
-fn refresh_cookie(token: String) -> Cookie<'static> {
-    Cookie::build(("refresh_token", token))
-        //.http_only(true)
+fn refresh_cookie(token: String, expiry_days: i8) -> Cookie<'static> {
+    Cookie::build((REFRESH_TOKEN_COOKIE, token))
+        .http_only(true)
         .secure(true)
         .same_site(SameSite::Strict)
         .path("/auth/refresh")
-        .max_age(Duration::days(REFRESH_TOKEN_EXPIRY_DAYS))
+        .max_age(Duration::days(expiry_days as i64)) // Cast to i64
         .build()
 }
 
@@ -126,7 +127,7 @@ pub async fn login(
     rand::thread_rng().fill_bytes(&mut random_bytes);
     let refresh_token = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(random_bytes);
 
-    let expiry_date = Utc::now() + chrono::Duration::days(REFRESH_TOKEN_EXPIRY_DAYS);
+    let expiry_date = Utc::now() + chrono::Duration::days(config.refresh_token_expiry_days as i64);
     let hashed_token = hash_token(&refresh_token);
 
     let session = db
@@ -138,10 +139,16 @@ pub async fn login(
         })
         .await?;
 
-    let access_token = generate_access_token(user.id, &user.email, session.id, &config.jwt_secret)?;
+    let access_token = generate_access_token(
+        user.id,
+        &user.email,
+        session.id,
+        &config.jwt_secret,
+        config.access_token_expiry_minutes
+    )?;
 
-    let access_cookie = access_cookie(access_token);
-    let refresh_cookie = refresh_cookie(refresh_token);
+    let access_cookie = access_cookie(access_token, config.access_token_expiry_minutes);
+    let refresh_cookie = refresh_cookie(refresh_token, config.refresh_token_expiry_days);
 
     let updated_jar = jar.add(access_cookie).add(refresh_cookie);
     Ok((
@@ -194,10 +201,15 @@ pub async fn refresh(
         .await
         .map_err(|_| AppError::Unauthorized)?;
 
-    let new_access_token =
-        generate_access_token(user.id, &user.email, session.id, &config.jwt_secret)?;
+    let new_access_token = generate_access_token(
+        user.id,
+        &user.email,
+        session.id,
+        &config.jwt_secret,
+        config.access_token_expiry_minutes
+    )?;
 
-    let access_cookie = access_cookie(new_access_token);
+    let access_cookie = access_cookie(new_access_token, config.access_token_expiry_minutes);
     let updated_jar = jar.add(access_cookie);
 
     Ok((
