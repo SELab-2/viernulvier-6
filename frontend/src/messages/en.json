@@ -4,5 +4,15 @@
     },
     "LocaleSwitcher": {
         "label": "Select language"
+    },
+    "Login": {
+        "title": "Welcome back",
+        "subtitle": "Enter your credentials to sign in",
+        "emailPlaceholder": "Email",
+        "passwordPlaceholder": "Password",
+        "submitButton": "Login",
+        "submitButtonLoading": "Logging in...",
+        "errorInvalidCredentials": "Invalid email or password.",
+        "errorGeneric": "Something went wrong. Please try again later."
     }
 }
