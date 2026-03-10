@@ -1,8 +1,11 @@
-use axum::{Json, extract::Path};
+use axum::extract::Path;
 use database::Database;
 use uuid::Uuid;
 
-use crate::{dto::location::LocationPayload, error::AppError};
+use crate::{
+    dto::location::LocationPayload,
+    handlers::{IntoApiResponse, JsonResponse},
+};
 
 #[utoipa::path(
     method(get),
@@ -13,8 +16,8 @@ use crate::{dto::location::LocationPayload, error::AppError};
         (status = 200, description = "Success", body = [LocationPayload])
     )
 )]
-pub async fn all(db: Database) -> Result<Json<Vec<LocationPayload>>, AppError> {
-    Ok(Json(LocationPayload::all(&db, 10).await?))
+pub async fn all(db: Database) -> JsonResponse<Vec<LocationPayload>> {
+    LocationPayload::all(&db, 10).await?.json()
 }
 
 #[utoipa::path(
@@ -29,9 +32,6 @@ pub async fn all(db: Database) -> Result<Json<Vec<LocationPayload>>, AppError> {
         (status = 200, description = "Success", body = LocationPayload)
     )
 )]
-pub async fn by_id(
-    db: Database,
-    Path(id): Path<Uuid>,
-) -> Result<Json<LocationPayload>, AppError> {
-    Ok(Json(LocationPayload::by_id(&db, id).await?))
+pub async fn by_id(db: Database, Path(id): Path<Uuid>) -> JsonResponse<LocationPayload> {
+    LocationPayload::by_id(&db, id).await?.json()
 }

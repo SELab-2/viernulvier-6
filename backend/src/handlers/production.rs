@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::{
     dto::production::{ProductionPayload, ProductionPostPayload},
-    error::AppError,
+    handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
 };
 
 #[utoipa::path(
@@ -16,8 +16,8 @@ use crate::{
         (status = 200, description = "Success", body = [ProductionPayload])
     )
 )]
-pub async fn get_all(db: Database) -> Result<Json<Vec<ProductionPayload>>, AppError> {
-    Ok(Json(ProductionPayload::all(&db, 10).await?))
+pub async fn get_all(db: Database) -> JsonResponse<Vec<ProductionPayload>> {
+    ProductionPayload::all(&db, 10).await?.json()
 }
 
 #[utoipa::path(
@@ -32,11 +32,8 @@ pub async fn get_all(db: Database) -> Result<Json<Vec<ProductionPayload>>, AppEr
         (status = 200, description = "Success", body = ProductionPayload)
     )
 )]
-pub async fn get_one(
-    db: Database,
-    Path(id): Path<Uuid>,
-) -> Result<Json<ProductionPayload>, AppError> {
-    Ok(Json(ProductionPayload::by_id(&db, id).await?))
+pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<ProductionPayload> {
+    ProductionPayload::by_id(&db, id).await?.json()
 }
 
 #[utoipa::path(
@@ -45,14 +42,14 @@ pub async fn get_one(
     tag = "Productions",
     description = "Create a production",
     responses(
-        (status = 200, description = "Success", body = ProductionPayload)
+        (status = 201, description = "Created", body = ProductionPayload)
     )
 )]
 pub async fn post(
     db: Database,
     Json(production): Json<ProductionPostPayload>,
-) -> Result<Json<ProductionPayload>, AppError> {
-    Ok(Json(production.create(&db).await?))
+) -> JsonStatusResponse<ProductionPayload> {
+    production.create(&db).await?.json_created()
 }
 
 #[utoipa::path(
@@ -67,7 +64,7 @@ pub async fn post(
         (status = 204, description = "No Content")
     )
 )]
-pub async fn delete(db: Database, Path(id): Path<Uuid>) -> Result<StatusCode, AppError> {
+pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
     ProductionPayload::delete(&db, id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -84,6 +81,6 @@ pub async fn delete(db: Database, Path(id): Path<Uuid>) -> Result<StatusCode, Ap
 pub async fn put(
     db: Database,
     Json(production): Json<ProductionPayload>,
-) -> Result<Json<ProductionPayload>, AppError> {
+) -> JsonResponse<ProductionPayload> {
     Ok(Json(production.update(&db).await?))
 }
