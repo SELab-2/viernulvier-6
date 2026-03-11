@@ -6,13 +6,15 @@ export function IntlProvider({
     children,
     messages,
     locale,
+    timeZone,
 }: {
     children: React.ReactNode;
     messages: AbstractIntlMessages;
     locale?: string;
+    timeZone?: string;
 }) {
     return (
-        <NextIntlClientProvider messages={messages} locale={locale}>
+        <NextIntlClientProvider messages={messages} locale={locale} timeZone={timeZone}>
             {children}
         </NextIntlClientProvider>
     );

@@ -5,8 +5,10 @@ services:
     restart: always
     environment:
       DATABASE_URL: ${PROD_DATABASE_URL}
+      JWT_SECRET: ${PROD_JWT_SECRET}
       API_KEY_404: ${PROD_API_KEY_404}
       LOG_LEVEL: ${PROD_LOG_LEVEL}
+      ALLOWED_ORIGINS: ${NEXT_PUBLIC_SITE_URL}
     depends_on:
       database:
         condition: service_healthy
