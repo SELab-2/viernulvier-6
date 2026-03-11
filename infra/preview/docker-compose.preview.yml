@@ -16,7 +16,7 @@ services:
       - "traefik.http.routers.${PREVIEW_NAME}.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}`) && !PathPrefix(`/${PREVIEW_NAME}/docs`) && !PathPrefix(`/${PREVIEW_NAME}/api`)"
       - "traefik.http.routers.${PREVIEW_NAME}.entrypoints=websecure"
       - "traefik.http.services.${PREVIEW_NAME}.loadbalancer.server.port=3000"
-      - "traefik.http.routers.${PREVIEW_NAME}.priority=1"
+      #- "traefik.http.routers.${PREVIEW_NAME}.priority=1"
       - "traefik.http.routers.${PREVIEW_NAME}.tls.certresolver=letsencrypt"
       - "traefik.http.middlewares.${PREVIEW_NAME}-prefix.headers.customrequestheaders.X-Forwarded-Prefix=/${PREVIEW_NAME}"
       - "traefik.http.routers.${PREVIEW_NAME}.middlewares=${PREVIEW_NAME}-prefix"
@@ -40,7 +40,7 @@ services:
       - "traefik.http.routers.${PREVIEW_NAME}-docs.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/docs`)"
       - "traefik.http.routers.${PREVIEW_NAME}-docs.entrypoints=websecure"
       - "traefik.http.services.${PREVIEW_NAME}-docs.loadbalancer.server.port=3002"
-      - "traefik.http.routers.${PREVIEW_NAME}-docs.priority=2"
+      #- "traefik.http.routers.${PREVIEW_NAME}-docs.priority=2"
       - "traefik.http.routers.${PREVIEW_NAME}-docs.tls.certresolver=letsencrypt"
       - "traefik.http.middlewares.${PREVIEW_NAME}-prefix-docs.headers.customrequestheaders.X-Forwarded-Prefix=/${PREVIEW_NAME}/docs"
       - "traefik.http.routers.${PREVIEW_NAME}-docs.middlewares=${PREVIEW_NAME}-prefix-docs"
@@ -74,7 +74,7 @@ services:
       - "traefik.http.routers.${PREVIEW_NAME}-api.entrypoints=websecure"
       - "traefik.http.services.${PREVIEW_NAME}-api.loadbalancer.server.port=3001"
       - "traefik.http.routers.${PREVIEW_NAME}-api.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.${PREVIEW_NAME}-docs.priority=3"
+      #- "traefik.http.routers.${PREVIEW_NAME}-docs.priority=3"
     networks:
       - traefik
       - internal
