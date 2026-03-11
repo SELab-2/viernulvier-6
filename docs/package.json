@@ -12,7 +12,8 @@
     "lint:ci": "eslint . --ext .ts,.tsx,.js,.jsx,.mjs --max-warnings=0 && prettier --check .",
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx,.mjs --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs}": [

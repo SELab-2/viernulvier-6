@@ -2,9 +2,11 @@ import { docs } from 'fumadocs-mdx:collections/server';
 import { type InferPageType, loader } from 'fumadocs-core/source';
 import { lucideIconsPlugin } from 'fumadocs-core/source/lucide-icons';
 
+const baseUrl = process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}/docs` : '/docs';
+
 // See https://fumadocs.dev/docs/headless/source-api for more info
 export const source = loader({
-  baseUrl: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}/docs` : '/docs',
+  baseUrl,
   source: docs.toFumadocsSource(),
   plugins: [lucideIconsPlugin()],
 });
@@ -14,7 +16,7 @@ export function getPageImage(page: InferPageType<typeof source>) {
 
   return {
     segments,
-    url: `${source.baseUrl}/og/${segments.join('/')}`,
+    url: `${baseUrl}/og/${segments.join('/')}`,
   };
 }
 
