@@ -18,6 +18,8 @@ services:
       - "traefik.http.services.${PREVIEW_NAME}.loadbalancer.server.port=3000"
       - "traefik.http.routers.${PREVIEW_NAME}.priority=1"
       - "traefik.http.routers.${PREVIEW_NAME}.tls.certresolver=letsencrypt"
+      - "traefik.http.middlewares.${PREVIEW_NAME}-prefix.headers.customrequestheaders.X-Forwarded-Prefix=/${PREVIEW_NAME}"
+      - "traefik.http.routers.${PREVIEW_NAME}.middlewares=${PREVIEW_NAME}-prefix"
     networks:
       - traefik
       - internal
