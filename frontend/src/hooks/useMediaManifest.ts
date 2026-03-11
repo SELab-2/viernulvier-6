@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { MediaItem } from "@/components/sections/infinite-canvas";
 
-const MANIFEST_URL = "/data/artworks-manifest.json";
+const MANIFEST_URL = "data/artworks-manifest.json";
 
 interface UseMediaManifestResult {
     media: MediaItem[];
