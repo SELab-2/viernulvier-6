@@ -1,2 +1,3 @@
+set -e
 cd frontend && npx lint-staged
 cd ../docs && npx lint-staged
