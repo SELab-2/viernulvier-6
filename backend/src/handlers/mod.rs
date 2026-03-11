@@ -10,6 +10,7 @@ pub mod production;
 pub mod hall;
 pub mod space;
 pub mod version;
+pub mod event;
 
 pub type JsonResponse<T> = Result<Json<T>, AppError>;
 pub type JsonStatusResponse<T> = Result<(StatusCode, Json<T>), AppError>;
