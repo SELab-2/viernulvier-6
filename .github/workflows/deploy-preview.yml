@@ -36,6 +36,7 @@ jobs:
           db_password: ${{ secrets.PREVIEW_DB_PASSWORD }}
           db_name: ${{ secrets.PREVIEW_DB_NAME }}
           public_site_url: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          jwt_secret: ${{ secrets.JWT_SECRET }}
           api_key_404: ${{ secrets.API_KEY_404 }}
 
       - name: Ensure Traefik network exists
@@ -60,7 +61,7 @@ jobs:
           script: |
             const marker = "<!-- preview-env -->";
             const prNumber = context.payload.pull_request.number;
-            const previewUrl = `http://${process.env.PREVIEW_HOST}/pr-${prNumber}`;
+            const previewUrl = `https://${process.env.PREVIEW_HOST}/pr-${prNumber}`;
             const apiUrl = `${previewUrl}/api`;
 
             // 1. Fetch all comments on the PR
@@ -114,6 +115,7 @@ jobs:
           db_password: ${{ secrets.PREVIEW_DB_PASSWORD }}
           db_name: ${{ secrets.PREVIEW_DB_NAME }}
           public_site_url: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          jwt_secret: ${{ secrets.JWT_SECRET }}
           api_key_404: ${{ secrets.API_KEY_404 }}
 
       - name: Cleanup preview stack
@@ -132,7 +134,7 @@ jobs:
           script: |
             const marker = "<!-- preview-env -->";
             const prNumber = context.payload.pull_request.number;
-            const previewUrl = `http://${process.env.PREVIEW_HOST}/pr-${prNumber}`;
+            const previewUrl = `https://${process.env.PREVIEW_HOST}/pr-${prNumber}`;
 
             const { data: comments } = await github.rest.issues.listComments({
               issue_number: prNumber,

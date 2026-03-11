@@ -4,12 +4,12 @@ services:
       context: ../../frontend
       args:
         - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
-        - NEXT_PUBLIC_API_URL=http://api:80/api
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_SITE_URL}/${PREVIEW_NAME}/api
         - PREVIEW_NAME=${PREVIEW_NAME}
     container_name: ${COMPOSE_PROJECT_NAME}_frontend
     environment:
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
-      NEXT_PUBLIC_API_URL: http://api:80/api
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_SITE_URL}/${PREVIEW_NAME}/api
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${PREVIEW_NAME}.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}`)"
@@ -28,7 +28,9 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}_api
     environment:
       DATABASE_URL: postgres://${PREVIEW_DB_USER}:${PREVIEW_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}_db:5432/${PREVIEW_DB_NAME}
+      JWT_SECRET: ${PREVIEW_JWT_SECRET}
       API_KEY_404: ${PREVIEW_API_KEY_404}
+      ALLOWED_ORIGINS: ${NEXT_PUBLIC_SITE_URL}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${PREVIEW_NAME}-api.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/api`)"
