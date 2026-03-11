@@ -34,9 +34,6 @@ pub struct AppState {
 
 #[derive(OpenApi)]
 #[openapi(
-    components(
-        schemas(ProductionPayload, ProductionPostPayload, LocationPayload)
-    ),
     modifiers(&SecurityAddon),
     tags(
         (name = "viernulvier_api", description = "API Endpoints")
