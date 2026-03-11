@@ -5,9 +5,8 @@ import { TIMEZONE } from "@/constants/i18n.constants";
 import { routing } from "./routing";
 
 export default getRequestConfig(async ({ requestLocale }) => {
-    const locale = hasLocale(routing.locales, requestLocale)
-        ? requestLocale
-        : routing.defaultLocale;
+    const requested = await requestLocale;
+    const locale = hasLocale(routing.locales, requested) ? requested : routing.defaultLocale;
 
     return {
         locale,

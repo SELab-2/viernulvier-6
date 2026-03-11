@@ -3,7 +3,6 @@
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useCallback, useSyncExternalStore } from "react";
-import { cn } from "@/lib/utils";
 
 const subscribe = () => () => {};
 const getSnapshot = () => true;
@@ -16,35 +15,19 @@ export const ThemeSwitcher = () => {
     const toggleTheme = useCallback(() => {
         const current = theme === "system" ? systemTheme : theme;
         const newTheme = current === "dark" ? "light" : "dark";
-
-        // Enable transitions
-        document.documentElement.classList.add("theme-transitioning");
-
-        // Change theme
         setTheme(newTheme);
-
-        // Cleanup after animation
-        setTimeout(() => {
-            document.documentElement.classList.remove("theme-transitioning");
-        }, 1000);
     }, [theme, systemTheme, setTheme]);
 
     const isDark = (theme === "system" ? systemTheme : theme) === "dark";
 
-    // Voorkom hydratatie mismatch - toon neutrale state tijdens SSR
     if (!mounted) {
         return (
             <button
-                className={cn(
-                    "relative flex items-center justify-center",
-                    "h-9 w-9 rounded-full",
-                    "text-muted-foreground",
-                    "overflow-hidden"
-                )}
+                className="text-muted-foreground/50 flex h-9 w-9 items-center justify-center"
                 aria-label="Toggle theme"
                 disabled
             >
-                <Sun className="h-4 w-4 opacity-50" />
+                <Sun className="h-4 w-4" />
             </button>
         );
     }
@@ -52,29 +35,14 @@ export const ThemeSwitcher = () => {
     return (
         <button
             onClick={toggleTheme}
-            className={cn(
-                "relative flex items-center justify-center",
-                "h-9 w-9 rounded-full",
-                "text-muted-foreground hover:text-foreground",
-                "hover:bg-muted/50",
-                "transition-colors",
-                "overflow-hidden"
-            )}
+            className="text-muted-foreground hover:text-foreground flex h-9 w-9 items-center justify-center transition-colors"
             aria-label="Toggle theme"
         >
             <Sun
-                className={cn(
-                    "h-4 w-4",
-                    "transition-all duration-700",
-                    isDark ? "scale-0 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100"
-                )}
+                className={`h-4 w-4 transition-all duration-300 ${isDark ? "absolute scale-0 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100"}`}
             />
             <Moon
-                className={cn(
-                    "absolute h-4 w-4",
-                    "transition-all duration-700",
-                    isDark ? "scale-100 rotate-0 opacity-100" : "scale-0 -rotate-90 opacity-0"
-                )}
+                className={`h-4 w-4 transition-all duration-300 ${isDark ? "scale-100 rotate-0 opacity-100" : "absolute scale-0 -rotate-90 opacity-0"}`}
             />
         </button>
     );

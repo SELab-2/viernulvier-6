@@ -1,15 +1,24 @@
 {
     "General": {
-        "projectName": "Archive"
+        "projectName": "Archive",
+        "brandName": "VierNulVier",
+        "loading": "Loading..."
     },
     "Navigation": {
         "home": "Home",
         "archive": "Archive",
-        "about": "About"
+        "about": "About",
+        "login": "Login",
+        "logout": "Logout"
     },
-    "Hero": {
-        "title": "Archive",
-        "subtitle": "A digital collection of historical moments, documents and stories"
+    "Home": {
+        "hero": {
+            "title": "Archive",
+            "subtitle": "A digital collection of historical moments, documents and stories",
+            "ctaText": "Archive",
+            "ctaHref": "/archive",
+            "bottomText": "404"
+        }
     },
     "LocaleSwitcher": {
         "label": "Select language"

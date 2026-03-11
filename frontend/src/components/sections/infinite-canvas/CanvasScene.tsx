@@ -11,12 +11,21 @@ import { shouldThrottleUpdate } from "./lib/math-utils";
 import styles from "./styles/infinite-canvas.module.css";
 import type { ChunkData, InfiniteCanvasProps, MediaItem } from "./lib/types";
 
+const LIGHT_COLOR = "#ffffff";
+const DARK_COLOR = "#0a0a0a";
+
 type CameraState = {
     cx: number;
     cy: number;
     cz: number;
     camZ: number;
 };
+
+// Get initial theme color before React hydration
+function getInitialThemeColor() {
+    if (typeof document === "undefined") return LIGHT_COLOR;
+    return document.documentElement.classList.contains("dark") ? DARK_COLOR : LIGHT_COLOR;
+}
 
 function SceneContent({ media }: { media: MediaItem[] }) {
     const { camera } = useThree();
@@ -98,6 +107,8 @@ export function CanvasScene({
 
     if (!media.length) return null;
 
+    const initialColor = getInitialThemeColor();
+
     return (
         <div className={styles.container}>
             <Canvas
@@ -112,13 +123,12 @@ export function CanvasScene({
                 gl={{
                     antialias: false,
                     powerPreference: "high-performance",
-                    alpha: true,
+                    alpha: false,
                 }}
                 className={styles.canvas}
-                style={{ background: "transparent" }}
             >
-                <color attach="background" args={[new THREE.Color("#fafafa")]} />
-                <fog attach="fog" args={[new THREE.Color("#fafafa"), fogNear, fogFar]} />
+                <color attach="background" args={[new THREE.Color(initialColor)]} />
+                <fog attach="fog" args={[new THREE.Color(initialColor), fogNear, fogFar]} />
                 <SceneContent media={media} />
                 {showFps && <Stats className={styles.stats} />}
             </Canvas>

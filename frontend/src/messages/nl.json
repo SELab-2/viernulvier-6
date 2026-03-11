@@ -1,15 +1,24 @@
 {
     "General": {
-        "projectName": "Archief"
+        "projectName": "Archief",
+        "brandName": "VierNulVier",
+        "loading": "Laden..."
     },
     "Navigation": {
         "home": "Home",
         "archive": "Archief",
-        "about": "Over"
+        "about": "Over",
+        "login": "Inloggen",
+        "logout": "Uitloggen"
     },
-    "Hero": {
-        "title": "Archief",
-        "subtitle": "Een digitale verzameling van historische momenten, documenten en verhalen"
+    "Home": {
+        "hero": {
+            "title": "Archief",
+            "subtitle": "Een digitale verzameling van historische momenten, documenten en verhalen",
+            "ctaText": "Archief",
+            "ctaHref": "/archive",
+            "bottomText": "404"
+        }
     },
     "LocaleSwitcher": {
         "label": "Taal selecteren"

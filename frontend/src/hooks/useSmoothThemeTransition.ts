@@ -5,9 +5,13 @@ import * as React from "react";
 import * as THREE from "three";
 import { useTheme } from "./useTheme";
 
-const LIGHT_COLOR = "#fafafa";
+const LIGHT_COLOR = "#ffffff";
 const DARK_COLOR = "#0a0a0a";
-const DEFAULT_LERP_FACTOR = 0.08;
+
+function getInitialColor() {
+    if (typeof document === "undefined") return LIGHT_COLOR;
+    return document.documentElement.classList.contains("dark") ? DARK_COLOR : LIGHT_COLOR;
+}
 
 /**
  * Smoothly transitions Three.js scene background and fog colors
@@ -16,7 +20,7 @@ const DEFAULT_LERP_FACTOR = 0.08;
  * This hook uses useTheme internally and runs the animation
  * entirely within Three.js (no React re-renders during transition).
  *
- * @param lerpFactor - Speed of transition (0.01 = slow, 0.2 = fast). Default: 0.08
+ * @param lerpFactor - Speed of transition (0.01 = slow, 0.2 = fast). Default: 0.15
  *
  * @example
  * ```tsx
@@ -26,12 +30,13 @@ const DEFAULT_LERP_FACTOR = 0.08;
  * }
  * ```
  */
-export function useSmoothThemeTransition(lerpFactor = DEFAULT_LERP_FACTOR) {
+export function useSmoothThemeTransition(lerpFactor = 0.15) {
     const { scene } = useThree();
     const theme = useTheme();
 
-    const targetColor = React.useRef(new THREE.Color(LIGHT_COLOR));
-    const currentColor = React.useRef(new THREE.Color(LIGHT_COLOR));
+    const initialColor = getInitialColor();
+    const targetColor = React.useRef(new THREE.Color(initialColor));
+    const currentColor = React.useRef(new THREE.Color(initialColor));
 
     // Update target color when theme changes
     React.useEffect(() => {

@@ -1,27 +1,21 @@
-"use client";
-
+import { getTranslations } from "next-intl/server";
 import { Hero } from "@/components/sections";
-import { InfiniteCanvas } from "@/components/sections/infinite-canvas";
-import * as React from "react";
-import type { MediaItem } from "@/components/sections/infinite-canvas";
+import { HomeCanvas } from "./HomeCanvas";
 
-export default function HomePage() {
-    const [media, setMedia] = React.useState<MediaItem[]>([]);
-
-    // Fetch manifest
-    React.useEffect(() => {
-        fetch("/data/artworks-manifest.json")
-            .then((res) => res.json())
-            .then((data) => setMedia(data))
-            .catch((err) => console.error("Failed to load manifest:", err));
-    }, []);
-
-    if (!media.length) return null;
+export default async function HomePage() {
+    const homeTranslations = await getTranslations("Home");
+    const generalTranslations = await getTranslations("General");
 
     return (
-        <main className="relative h-screen overflow-hidden">
-            <InfiniteCanvas media={media} />
-            <Hero />
-        </main>
+        <div className="relative flex-1 overflow-hidden">
+            <HomeCanvas />
+            <Hero
+                brand={generalTranslations("brandName")}
+                title={homeTranslations("hero.title")}
+                subtitle={homeTranslations("hero.subtitle")}
+                ctaText={homeTranslations("hero.ctaText")}
+                ctaHref={homeTranslations("hero.ctaHref")}
+            />
+        </div>
     );
 }

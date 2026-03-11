@@ -36,7 +36,7 @@ export function LoginForm() {
                 <p className="text-muted-foreground text-sm">{loginTranslations("subtitle")}</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
                 <InputField
                     name="email"
                     type="email"

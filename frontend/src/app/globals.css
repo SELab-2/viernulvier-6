@@ -123,95 +123,34 @@
     }
 }
 
-/* Smooth theme transition */
-html.theme-transitioning,
-html.theme-transitioning *,
-html.theme-transitioning *::before,
-html.theme-transitioning *::after {
+/* Smooth theme transition - 300ms for snappy feel */
+html {
     transition:
-        background-color 1s cubic-bezier(0.25, 0.1, 0.25, 1),
-        border-color 1s cubic-bezier(0.25, 0.1, 0.25, 1),
-        color 1s cubic-bezier(0.25, 0.1, 0.25, 1),
-        fill 1s cubic-bezier(0.25, 0.1, 0.25, 1),
-        stroke 1s cubic-bezier(0.25, 0.1, 0.25, 1),
-        box-shadow 1s cubic-bezier(0.25, 0.1, 0.25, 1);
+        background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Random-ish orb animations - each has unique movement */
-@keyframes drift-1 {
-    0% {
-        transform: translate(0, 0) scale(1);
-    }
-    15% {
-        transform: translate(5%, -3%) scale(1.05);
-    }
-    35% {
-        transform: translate(-2%, 8%) scale(0.97);
-    }
-    55% {
-        transform: translate(-8%, -5%) scale(1.03);
-    }
-    75% {
-        transform: translate(3%, -8%) scale(0.98);
-    }
-    100% {
-        transform: translate(0, 0) scale(1);
-    }
-}
-
-@keyframes drift-2 {
-    0% {
-        transform: translate(0, 0) scale(1);
-    }
-    20% {
-        transform: translate(-6%, 4%) scale(1.08);
-    }
-    40% {
-        transform: translate(4%, -6%) scale(0.95);
-    }
-    60% {
-        transform: translate(7%, 5%) scale(1.04);
-    }
-    80% {
-        transform: translate(-4%, -7%) scale(0.97);
-    }
-    100% {
-        transform: translate(0, 0) scale(1);
-    }
-}
-
-@keyframes drift-3 {
-    0% {
-        transform: translate(0, 0) scale(1);
-    }
-    12% {
-        transform: translate(8%, 6%) scale(1.06);
-    }
-    28% {
-        transform: translate(-5%, -4%) scale(0.98);
-    }
-    48% {
-        transform: translate(-3%, 9%) scale(1.02);
-    }
-    68% {
-        transform: translate(6%, -3%) scale(0.96);
-    }
-    88% {
-        transform: translate(-7%, -6%) scale(1.04);
-    }
-    100% {
-        transform: translate(0, 0) scale(1);
-    }
-}
-
-.animate-drift-slow {
-    animation: drift-1 14s ease-in-out infinite;
-}
-
-.animate-drift-slower {
-    animation: drift-2 18s ease-in-out infinite;
-}
-
-.animate-drift-medium {
-    animation: drift-3 11s ease-in-out infinite;
+/* Apply to common theme-affected elements */
+body,
+header,
+footer,
+main,
+div,
+span,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+a,
+button,
+nav {
+    transition:
+        background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        fill 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        stroke 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }

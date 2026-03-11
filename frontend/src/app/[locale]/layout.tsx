@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { notFound } from "next/navigation";
 
 import { hasLocale } from "next-intl";
-import { getMessages, getTimeZone, setRequestLocale } from "next-intl/server";
+import { getTimeZone, setRequestLocale } from "next-intl/server";
 
 import { seoConfig } from "@/config/seo.config";
 import { siteConfig } from "@/config/site.config";
@@ -14,6 +14,7 @@ import "../globals.css";
 
 import { Footer, Header } from "@/components/layout";
 import { Providers } from "@/providers";
+import { Toaster } from "@/components/ui";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -41,6 +42,25 @@ export async function generateMetadata({
     };
 }
 
+// Script to prevent flash of wrong theme - runs before React hydration
+const ThemeScript = () => (
+    <script
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: Theme detection script must run before hydration
+        dangerouslySetInnerHTML={{
+            __html: `
+                (function() {
+                    try {
+                        var theme = localStorage.getItem('theme');
+                        var systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                        var resolved = theme === 'system' || !theme ? systemTheme : theme;
+                        document.documentElement.classList.add(resolved);
+                    } catch (e) {}
+                })();
+            `,
+        }}
+    />
+);
+
 export default async function RootLayout({
     children,
     params,
@@ -56,16 +76,20 @@ export default async function RootLayout({
 
     setRequestLocale(locale);
 
-    const [messages, timeZone] = await Promise.all([getMessages(), getTimeZone()]);
+    const messages = (await import(`../../messages/${locale}.json`)).default;
+    const timeZone = await getTimeZone();
 
     return (
         <html lang={locale} suppressHydrationWarning>
+            <head>
+                <ThemeScript />
+            </head>
             <body
-                className={`${geistSans.variable} ${geistMono.variable} min-h-screen w-full antialiased`}
+                className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen flex-col antialiased`}
             >
                 <Providers messages={messages} locale={locale} timeZone={timeZone}>
                     <Header />
-                    {children}
+                    <main className="flex flex-1 flex-col">{children}</main>
                     <Toaster richColors />
                     <Footer />
                 </Providers>
