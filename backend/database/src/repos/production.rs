@@ -32,4 +32,17 @@ impl<'a> ProductionRepo<'a> {
     pub async fn insert(&self, production: ProductionCreate) -> Result<Production, DatabaseError> {
         Ok(production.insert(self.db).await?)
     }
+
+    pub async fn update(&self, production: Production) -> Result<Production, DatabaseError> {
+        Ok(production.update_all_fields(self.db).await?)
+    }
+
+    pub async fn delete(&self, id: Uuid) -> Result<(), DatabaseError> {
+        sqlx::query("DELETE FROM productions WHERE id = ?")
+            .bind(id)
+            .execute(self.db)
+            .await?;
+
+        Ok(())
+    }
 }

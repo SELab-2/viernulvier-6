@@ -1,24 +1,24 @@
-use crate::{
-    config::AppConfig,
-    error::AppError,
-    handlers::{production, version, auth, admin},
-    dto::production::ProductionPayload,
-};
 use api::ApiImporter;
-use axum::{Router, routing::get};
 use axum::http::{HeaderValue, Method};
+use axum::{Router, routing::get};
 use database::Database;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info};
 
 use utoipa::{
+    Modify, OpenApi,
     openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
-    Modify, OpenApi
 };
 
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
 use utoipa_swagger_ui::SwaggerUi;
+
+use crate::config::AppConfig;
+use crate::dto::location::LocationPayload;
+use crate::dto::production::{ProductionPayload, ProductionPostPayload};
+use crate::error::AppError;
+use crate::handlers::{admin, auth, location, production, version};
 
 pub mod config;
 mod dto;
@@ -34,9 +34,6 @@ pub struct AppState {
 
 #[derive(OpenApi)]
 #[openapi(
-    components(
-        schemas(ProductionPayload)
-    ),
     modifiers(&SecurityAddon),
     tags(
         (name = "viernulvier_api", description = "API Endpoints")
@@ -120,7 +117,13 @@ pub fn router() -> Router<AppState> {
 fn open_routes() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(version::get))
-        .routes(routes!(production::all))
+        .routes(routes!(location::all))
+        .routes(routes!(production::get_all))
+        .routes(routes!(production::get_one))
+        .routes(routes!(production::post))
+        .routes(routes!(production::delete))
+        .routes(routes!(production::put))
+        .routes(routes!(location::by_id))
         .routes(routes!(auth::login))
         .routes(routes!(auth::refresh))
         .routes(routes!(auth::logout))
