@@ -1,6 +1,6 @@
 import axios, { AxiosError } from "axios";
 import { queryClient } from "./query-client";
-import { FailedRequest, CustomAxiosRequestConfig } from "@/types/api.types";
+import { FailedRequest, CustomAxiosRequestConfig } from "@/types/api/api.types";
 
 export const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -51,7 +51,7 @@ api.interceptors.response.use(
                 return api(originalRequest);
             } catch (refreshError) {
                 processQueue(refreshError as AxiosError, null);
-                queryClient.clear();
+                queryClient.removeQueries({ queryKey: ["user"] });
                 // Only redirect if we are not already on the login page
                 if (typeof window !== "undefined" && !window.location.pathname.endsWith("/login")) {
                     // Force a reload. The middleware will catch the missing token

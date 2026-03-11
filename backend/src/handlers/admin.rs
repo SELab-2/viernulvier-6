@@ -5,7 +5,7 @@ use utoipa::ToSchema;
 
 #[derive(Serialize, ToSchema)]
 pub struct AdminResponse {
-    pub user_id: String,
+    pub id: String,
     pub email: String,
 }
 
@@ -27,7 +27,7 @@ pub async fn admin(
     _state: State<AppState>,
 ) -> Result<Json<AdminResponse>, AppError> {
     Ok(Json(AdminResponse {
-        user_id: auth.user_id.to_string(),
-        email: auth.email,
+        id: auth.id.to_string(),
+        email: auth.email
     }))
 }

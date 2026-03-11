@@ -13,7 +13,8 @@
         "submitButton": "Inloggen",
         "submitButtonLoading": "Bezig met inloggen...",
         "errorInvalidCredentials": "Ongeldig e-mailadres of wachtwoord.",
-        "errorGeneric": "Er is iets misgegaan. Probeer het later opnieuw."
+        "errorGeneric": "Er is iets misgegaan. Probeer het later opnieuw.",
+        "loggedOut": "Succesvol uitgelogd."
     },
     "Admin": {
         "title": "Admin Dashboard",

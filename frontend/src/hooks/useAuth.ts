@@ -1,16 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useRouter } from "@/i18n/routing";
-import { LoginDTO, AdminUser } from "@/types/auth.types";
+import { LoginDTO } from "@/types/dto/auth.types";
+import { User } from "@/types/models/user.types";
+import { UserResponse } from "@/types/api/auth.api.types";
+import { mapUser } from "@/mappers/user.mapper";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 export const useUser = (options?: { enabled?: boolean }) => {
-    return useQuery<AdminUser>({
+    return useQuery<User>({
         queryKey: ["user"],
         queryFn: async () => {
-            const { data } = await api.get("/admin/me");
-            return data;
+            const { data } = await api.get<UserResponse>("/admin/me");
+            return mapUser(data);
         },
         retry: false,
         staleTime: 2.5 * 60_000,
@@ -29,14 +33,14 @@ export const useLogin = () => {
             return data;
         },
         onSuccess: async () => {
-            await queryClient.refetchQueries({ queryKey: ["user"] });
+            queryClient.invalidateQueries({ queryKey: ["user"] });
             router.push("/admin");
         },
         onError: (error: AxiosError) => {
             if (error.response?.status === 401) {
-                toast.error("Invalid email or password");
+                toast.error(t("Login.errorInvalidCredentials"));
             } else {
-                toast.error("An error occurred during login");
+                toast.error(t("Login.errorGeneric"));
             }
         },
     });
@@ -51,13 +55,14 @@ export const useLogout = () => {
             await api.post("/auth/logout");
         },
         onSuccess: () => {
-            queryClient.clear();
+            queryClient.removeQueries({ queryKey: ["user"] });
             router.push("/login");
-            toast.success("Logged out successfully");
+            toast.success(t("Login.loggedOut"));
         },
         onError: () => {
-            toast.error("An error occurred during logout");
-            queryClient.clear();
+            toast.error(t("Login.errorGeneric"));
+            queryClient.removeQueries({ queryKey: ["user"] });
+
             router.push("/login");
         },
     });

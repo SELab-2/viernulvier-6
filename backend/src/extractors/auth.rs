@@ -5,7 +5,7 @@ use jsonwebtoken::{DecodingKey, Validation, decode};
 use uuid::Uuid;
 
 pub struct AuthUser {
-    pub user_id: Uuid,
+    pub id: Uuid,
     pub email: String,
     pub session_id: Uuid,
 }
@@ -31,7 +31,7 @@ impl FromRequestParts<AppState> for AuthUser {
         .map_err(|_| AppError::Unauthorized)?;
 
         Ok(AuthUser {
-            user_id: token_data.claims.sub,
+            id: token_data.claims.sub,
             email: token_data.claims.email,
             session_id: token_data.claims.sid,
         })
