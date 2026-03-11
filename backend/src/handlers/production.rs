@@ -29,7 +29,8 @@ pub async fn get_all(db: Database) -> JsonResponse<Vec<ProductionPayload>> {
         ("id" = Uuid, Path, description = "Production UUID")
     ),
     responses(
-        (status = 200, description = "Success", body = ProductionPayload)
+        (status = 200, description = "Success", body = ProductionPayload),
+        (status = 404, description = "Not found")
     )
 )]
 pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<ProductionPayload> {
@@ -61,7 +62,8 @@ pub async fn post(
             ("id" = Uuid, Path, description = "Production UUID")
         ),
     responses(
-        (status = 204, description = "No Content")
+        (status = 204, description = "No Content"),
+        (status = 404, description = "Not found")
     )
 )]
 pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
@@ -75,7 +77,8 @@ pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
     tag = "Productions",
     description = "Update the fields of a production",
     responses(
-        (status = 200, description = "Success", body = ProductionPayload)
+        (status = 200, description = "Success", body = ProductionPayload),
+        (status = 404, description = "Not found")
     )
 )]
 pub async fn put(

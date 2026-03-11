@@ -29,7 +29,8 @@ pub async fn all(db: Database) -> JsonResponse<Vec<LocationPayload>> {
         ("id" = Uuid, Path, description = "Location UUID")
     ),
     responses(
-        (status = 200, description = "Success", body = LocationPayload)
+        (status = 200, description = "Success", body = LocationPayload),
+        (status = 404, description = "Not found")
     )
 )]
 pub async fn by_id(db: Database, Path(id): Path<Uuid>) -> JsonResponse<LocationPayload> {
