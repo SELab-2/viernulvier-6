@@ -13,8 +13,8 @@ const config = {
   reactStrictMode: true,
   // Traefik routes /docs to this app, so no basePath needed
   // The app serves content at root level ( Traefik handles the /docs prefix externally)
-  basePath: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}` : '',
-  assetPrefix: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}` : '',
+  basePath: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}/docs` : '',
+  assetPrefix: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}/docs` : '',
   turbopack: {
     root: __dirname,
   },
