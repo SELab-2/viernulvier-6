@@ -77,8 +77,8 @@ impl From<ApiEvent> for EventCreate {
         Self {
             created_at: api.created_at,
             updated_at: api.updated_at,
-            starts_at: api.starts_at,
-            ends_at: api.ends_at,
+            started_at: api.starts_at,
+            ended_at: api.ends_at,
             intermission_at: api.intermission_at,
             doors_at: api.doors_at,
             vendor_id: api.vendor_id,
