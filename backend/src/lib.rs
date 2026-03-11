@@ -16,7 +16,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::config::AppConfig;
 use crate::error::AppError;
-use crate::handlers::{admin, auth, location, production, version};
+use crate::handlers::{admin, auth, hall, location, production, version};
 
 pub mod config;
 pub mod dto;
@@ -126,6 +126,11 @@ fn open_routes() -> OpenApiRouter<AppState> {
         .routes(routes!(auth::refresh))
         .routes(routes!(auth::logout))
         .routes(routes!(admin::admin))
+        .routes(routes!(hall::get_all))
+        .routes(routes!(hall::get_one))
+        .routes(routes!(hall::post))
+        .routes(routes!(hall::delete))
+        .routes(routes!(hall::put))
 }
 
 #[allow(clippy::expect_used)]
