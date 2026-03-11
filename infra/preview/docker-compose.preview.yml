@@ -41,7 +41,7 @@ services:
       - "traefik.http.routers.${PREVIEW_NAME}-docs.priority=10"
       - "traefik.http.routers.${PREVIEW_NAME}-docs.tls.certresolver=letsencrypt"
       - "traefik.http.middlewares.${PREVIEW_NAME}-prefix-docs.headers.customrequestheaders.X-Forwarded-Prefix=/${PREVIEW_NAME}/docs"
-      - "traefik.http.routers.${PREVIEW_NAME}.middlewares=${PREVIEW_NAME}-prefix-docs"
+      - "traefik.http.routers.${PREVIEW_NAME}-docs.middlewares=${PREVIEW_NAME}-prefix-docs"
     networks:
       - traefik
       - internal
