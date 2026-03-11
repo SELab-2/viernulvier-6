@@ -35,7 +35,7 @@ services:
       # NO strip middleware - full path goes to container (same as frontend)
       - "traefik.http.routers.${PREVIEW_NAME}-docs.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/docs`)"
       - "traefik.http.routers.${PREVIEW_NAME}-docs.entrypoints=websecure"
-      - "traefik.http.services.${PREVIEW_NAME}-docs.loadbalancer.server.port=3000"
+      - "traefik.http.services.${PREVIEW_NAME}-docs.loadbalancer.server.port=3002"
       - "traefik.http.routers.${PREVIEW_NAME}-docs.priority=10"
       - "traefik.http.routers.${PREVIEW_NAME}-docs.tls.certresolver=letsencrypt"
     networks:
