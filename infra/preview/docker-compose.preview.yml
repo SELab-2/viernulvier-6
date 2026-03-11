@@ -10,6 +10,7 @@ services:
     environment:
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_SITE_URL}/${PREVIEW_NAME}/api
+      PREVIEW_NAME: ${PREVIEW_NAME}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${PREVIEW_NAME}.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}`) && !PathPrefix(`/${PREVIEW_NAME}/docs`) && !PathPrefix(`/${PREVIEW_NAME}/api`)"
@@ -37,12 +38,6 @@ services:
       - "traefik.http.services.${PREVIEW_NAME}-docs.loadbalancer.server.port=3000"
       - "traefik.http.routers.${PREVIEW_NAME}-docs.priority=10"
       - "traefik.http.routers.${PREVIEW_NAME}-docs.tls.certresolver=letsencrypt"
-      # Route for /docs (for local development)
-      - "traefik.http.routers.docs-local.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/docs`)"
-      - "traefik.http.routers.docs-local.entrypoints=websecure"
-      - "traefik.http.routers.docs-local.service=${PREVIEW_NAME}-docs"
-      - "traefik.http.routers.docs-local.priority=10"
-      - "traefik.http.routers.docs-local.tls.certresolver=letsencrypt"
     networks:
       - traefik
       - internal
