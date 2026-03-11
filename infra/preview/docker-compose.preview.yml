@@ -31,6 +31,8 @@ services:
       args:
         - PREVIEW_NAME=${PREVIEW_NAME}
     container_name: ${COMPOSE_PROJECT_NAME}_docs
+    environment:
+      PREVIEW_NAME: ${PREVIEW_NAME}
     labels:
       - "traefik.enable=true"
       # Route for /{preview-name}/docs (for PR previews) - higher priority than frontend
