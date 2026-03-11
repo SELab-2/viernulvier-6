@@ -56,23 +56,32 @@ pub struct ApiEvent {
     pub external_order_url: ApiLocalizedText,
 }
 
+fn parse_uuid_from_iri(iri: &str) -> Option<Uuid> {
+    let trimmed = iri.trim_end_matches('/');
+    trimmed
+        .rsplit('/')
+        .next()
+        .filter(|segment| !segment.is_empty())
+        .and_then(|segment| Uuid::parse_str(segment).ok())
+}
+
 impl From<ApiEvent> for EventCreate {
     fn from(api: ApiEvent) -> Self {
-        let production_id = api
-            .production
-            .id
-            .split('/')
-            .next_back()
-            .and_then(|s| Uuid::parse_str(s).ok())
-            .expect("invalid production id in event");
+        let production_id = match parse_uuid_from_iri(&api.production.id) {
+            Some(id) => id,
+            None => {
+                eprintln!("warning: invalid production id in event: {}", api.production.id);
+                Uuid::nil()
+            }
+        };
 
-        let hall_id = api
-            .hall
-            .id
-            .split('/')
-            .next_back()
-            .and_then(|s| Uuid::parse_str(s).ok())
-            .expect("invalid hall id in event");
+        let hall_id = match parse_uuid_from_iri(&api.hall.id) {
+            Some(id) => id,
+            None => {
+                eprintln!("warning: invalid hall id in event: {}", api.hall.id);
+                Uuid::nil()
+            }
+        };
 
         Self {
             created_at: api.created_at,
