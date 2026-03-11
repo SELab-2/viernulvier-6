@@ -77,9 +77,12 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
 
     let state = AppState { db, config };
 
-    let allowed_origins = [
-        "https://sel2-6.ugent.be/".parse::<HeaderValue>().unwrap(),
-    ];
+    let allowed_origins: Vec<HeaderValue> = state
+        .config
+        .allowed_origins
+        .iter()
+        .map(|s| s.parse::<HeaderValue>().unwrap())
+        .collect();
 
     let app = Router::new()
         .merge(router())

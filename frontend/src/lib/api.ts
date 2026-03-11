@@ -54,7 +54,9 @@ api.interceptors.response.use(
                 queryClient.clear();
                 // Only redirect if we are not already on the login page
                 if (typeof window !== "undefined" && !window.location.pathname.endsWith("/login")) {
-                    window.location.href = "/login";
+                    // Force a reload. The middleware will catch the missing token
+                    // and safely redirect to the localized /login route.
+                    window.location.reload();
                 }
                 return Promise.reject(refreshError);
             } finally {
