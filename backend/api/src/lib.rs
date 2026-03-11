@@ -263,21 +263,21 @@ impl ApiImporter {
     }
 
     pub async fn update_events(&self, updated_after: &str) -> Result<(), reqwest::Error> {
-        info!("start updating events");
+        info!("Events: start updating");
 
         let mut stream = pin!(self.paginated_collection::<ApiEvent>("/events", updated_after));
 
         while let Some(batch_result) = stream.next().await {
             let events = batch_result?;
             let amt = events.len();
-            info!("got {amt} events from api");
+            info!("Events: got {amt} from api");
             for event in events {
                 self.db.events().insert(event.into()).await.unwrap();
             }
-            info!("inserted {amt} events into db");
+            info!("Events: inserted {amt} into db");
         }
 
-        info!("finished importing events");
+        info!("Events: finished importing");
         Ok(())
     }
 }
