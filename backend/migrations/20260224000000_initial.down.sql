@@ -1,0 +1,10 @@
+DROP TABLE blogposts;
+DROP TABLE collection_items;
+DROP TABLE collections;
+DROP TABLE production_artists;
+DROP TABLE artists;
+DROP TABLE events;
+DROP TABLE productions;
+DROP TABLE halls;
+DROP TABLE locations;
+DROP TYPE collection_content_type;

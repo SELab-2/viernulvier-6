@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 
 export function Footer() {
+    const generalTranslations = useTranslations("General");    
     // Minimal footer - only shows on non-home pages
     return (
         <footer className={cn("border-border/40 border-t", "bg-background/50 backdrop-blur-sm")}>
@@ -22,7 +23,7 @@ export function Footer() {
                             "tracking-widest"
                         )}
                     >
-                        ARCHIEF
+                        {generalTranslations("projectName")}
                     </span>
                 </div>
             </div>

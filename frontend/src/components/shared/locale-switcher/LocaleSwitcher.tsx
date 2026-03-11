@@ -12,7 +12,7 @@ const locales = [
 ];
 
 export const LocaleSwitcher = () => {
-    const t = useTranslations("LocaleSwitcher");
+    const localeSwitcherTranslations = useTranslations("LocaleSwitcher");
     const locale = useLocale();
     const router = useRouter();
     const pathname = usePathname();
@@ -36,63 +36,14 @@ export const LocaleSwitcher = () => {
     }, []);
 
     return (
-        <div ref={ref} className="relative">
-            <button
-                onClick={() => setOpen(!open)}
-                className={cn(
-                    "flex items-center gap-1",
-                    "h-9 px-2",
-                    "text-[11px] font-medium tracking-wider",
-                    "text-muted-foreground hover:text-foreground",
-                    "transition-colors duration-300"
-                )}
-                aria-expanded={open}
-                aria-haspopup="listbox"
-                aria-label={t("label")}
-            >
-                <span className={open ? "text-foreground" : ""}>{locale.toUpperCase()}</span>
-                <span
-                    className={cn(
-                        "text-muted-foreground/30",
-                        "transition-transform duration-300",
-                        open && "rotate-90"
-                    )}
-                >
-                    /
-                </span>
-            </button>
-
-            {open && (
-                <div
-                    className={cn(
-                        "absolute top-full right-0 z-50 mt-1",
-                        "flex flex-col",
-                        "bg-background/80 backdrop-blur-md",
-                        "border-border/20 border",
-                        "animate-fade-in"
-                    )}
-                    role="listbox"
-                >
-                    {locales.map((loc) => (
-                        <button
-                            key={loc.code}
-                            onClick={() => onSelectChange(loc.code)}
-                            className={cn(
-                                "px-3 py-1.5",
-                                "text-[11px] font-medium tracking-wider",
-                                "transition-colors duration-200",
-                                locale === loc.code
-                                    ? "text-foreground"
-                                    : "text-muted-foreground/50 hover:text-muted-foreground"
-                            )}
-                            role="option"
-                            aria-selected={locale === loc.code}
-                        >
-                            {loc.label}
-                        </button>
-                    ))}
-                </div>
-            )}
-        </div>
+        <Select defaultValue={locale} onValueChange={onSelectChange}>
+            <SelectTrigger className="w-30">
+                <SelectValue placeholder={localeSwitcherTranslations("label")} />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="nl">Nederlands</SelectItem>
+            </SelectContent>
+        </Select>
     );
 };

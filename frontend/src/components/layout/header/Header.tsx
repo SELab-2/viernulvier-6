@@ -1,28 +1,33 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { LocaleSwitcher } from "@/components/shared/locale-switcher/LocaleSwitcher";
-import { ThemeSwitcher } from "@/components/shared/theme-switcher/ThemeSwitcher";
+import { LocaleSwitcher, ThemeSwitcher } from "@/components/shared";
+import { Button } from "@/components/ui/button";
+import { useUser, useLogout } from "@/hooks/useAuth";
+import { usePathname } from "@/i18n/routing";
 
 export const Header = () => {
-    return (
-        <header className={cn("fixed top-0 right-0 left-0 z-50", "bg-transparent")}>
-            <div className="container mx-auto px-6 lg:px-8">
-                <div className="flex h-20 items-center justify-between">
-                    {/* Logo - VierNulVier */}
-                    <span
-                        className={cn("text-xs font-semibold tracking-[0.15em]", "text-foreground")}
-                    >
-                        VierNulVier
-                    </span>
+    const pathname = usePathname();
+    const isLoginPage = pathname === "/login";
 
-                    {/* Actions */}
-                    <div className="flex items-center">
-                        <ThemeSwitcher />
-                        <div className="bg-border/40 mx-2 h-3.5 w-px" />
-                        <LocaleSwitcher />
-                    </div>
-                </div>
+    const { data: user } = useUser({ enabled: !isLoginPage });
+    const { mutate: logout, isPending: isLoggingOut } = useLogout();
+
+    return (
+        <header className="flex w-full items-center justify-center gap-4 py-8">
+            <div className="flex items-center gap-2">
+                <ThemeSwitcher />
+                <LocaleSwitcher />
+                {user && (
+                    <Button
+                        variant="ghost"
+                        onClick={() => logout()}
+                        disabled={isLoggingOut}
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    >
+                        {isLoggingOut ? "..." : "Logout"}
+                    </Button>
+                )}
             </div>
         </header>
     );

@@ -12,6 +12,25 @@
         "subtitle": "Een digitale verzameling van historische momenten, documenten en verhalen"
     },
     "LocaleSwitcher": {
-        "label": "Taal"
+        "label": "Taal selecteren"
+    },
+    "Login": {
+        "title": "Welkom terug",
+        "subtitle": "Vul je gegevens in om in te loggen",
+        "emailPlaceholder": "Email",
+        "passwordPlaceholder": "Wachtwoord",
+        "submitButton": "Inloggen",
+        "submitButtonLoading": "Bezig met inloggen...",
+        "errorInvalidCredentials": "Ongeldig e-mailadres of wachtwoord.",
+        "errorGeneric": "Er is iets misgegaan. Probeer het later opnieuw.",
+        "loggedOut": "Succesvol uitgelogd."
+    },
+    "Admin": {
+        "title": "Admin Dashboard",
+        "welcomeBack": "Welkom terug!",
+        "emailLabel": "E-mail",
+        "loading": "Admin dashboard laden...",
+        "quickActions": "Snelle acties",
+        "comingSoon": "Meer functies binnenkort beschikbaar..."
     }
 }

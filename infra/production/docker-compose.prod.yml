@@ -5,7 +5,10 @@ services:
     restart: always
     environment:
       DATABASE_URL: ${PROD_DATABASE_URL}
+      JWT_SECRET: ${PROD_JWT_SECRET}
+      API_KEY_404: ${PROD_API_KEY_404}
       LOG_LEVEL: ${PROD_LOG_LEVEL}
+      ALLOWED_ORIGINS: ${NEXT_PUBLIC_SITE_URL}
     depends_on:
       database:
         condition: service_healthy
@@ -41,7 +44,7 @@ services:
       - "traefik.http.routers.main.tls.certresolver=letsencrypt"
 
   database:
-    image: postgres:16
+    image: postgres:18
     container_name: ${COMPOSE_PROJECT_NAME}_database
     restart: always
     environment:
@@ -49,7 +52,7 @@ services:
       POSTGRES_PASSWORD: ${PROD_DB_PASSWORD}
       POSTGRES_DB: ${PROD_DB_NAME}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     networks:
       - app_network
     healthcheck:

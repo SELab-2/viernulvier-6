@@ -13,7 +13,6 @@ import { routing } from "@/i18n/routing";
 import "../globals.css";
 
 import { Footer, Header } from "@/components/layout";
-import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/providers";
 
 const geistSans = Geist({
@@ -26,7 +25,11 @@ const geistMono = Geist_Mono({
     subsets: ["latin"],
 });
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+export async function generateMetadata({
+    params,
+}: {
+    params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
     const { locale } = await params;
 
     return {
@@ -35,7 +38,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
             canonical: `/${locale}`,
             languages: siteConfig.languages,
         },
-    } satisfies Metadata;
+    };
 }
 
 export default async function RootLayout({

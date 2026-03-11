@@ -4,6 +4,12 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
 
+# Explicit permissions needed for Dependabot and fork PRs to post comments
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   preview:
     if: github.event.action != 'closed'
@@ -12,7 +18,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Check Docker availability
         run: |
@@ -30,6 +36,8 @@ jobs:
           db_password: ${{ secrets.PREVIEW_DB_PASSWORD }}
           db_name: ${{ secrets.PREVIEW_DB_NAME }}
           public_site_url: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          jwt_secret: ${{ secrets.JWT_SECRET }}
+          api_key_404: ${{ secrets.API_KEY_404 }}
 
       - name: Ensure Traefik network exists
         run: docker network inspect traefik >/dev/null 2>&1 || docker network create traefik
@@ -53,7 +61,7 @@ jobs:
           script: |
             const marker = "<!-- preview-env -->";
             const prNumber = context.payload.pull_request.number;
-            const previewUrl = `http://${process.env.PREVIEW_HOST}/pr-${prNumber}`;
+            const previewUrl = `https://${process.env.PREVIEW_HOST}/pr-${prNumber}`;
             const apiUrl = `${previewUrl}/api`;
 
             // 1. Fetch all comments on the PR
@@ -95,7 +103,7 @@ jobs:
     environment: preview
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Generate env files (composite action)
         uses: ./.github/actions/generate-preview-env
@@ -107,6 +115,8 @@ jobs:
           db_password: ${{ secrets.PREVIEW_DB_PASSWORD }}
           db_name: ${{ secrets.PREVIEW_DB_NAME }}
           public_site_url: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          jwt_secret: ${{ secrets.JWT_SECRET }}
+          api_key_404: ${{ secrets.API_KEY_404 }}
 
       - name: Cleanup preview stack
         run: |
@@ -124,7 +134,7 @@ jobs:
           script: |
             const marker = "<!-- preview-env -->";
             const prNumber = context.payload.pull_request.number;
-            const previewUrl = `http://${process.env.PREVIEW_HOST}/pr-${prNumber}`;
+            const previewUrl = `https://${process.env.PREVIEW_HOST}/pr-${prNumber}`;
 
             const { data: comments } = await github.rest.issues.listComments({
               issue_number: prNumber,

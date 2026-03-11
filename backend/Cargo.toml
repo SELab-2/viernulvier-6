@@ -7,17 +7,21 @@ edition = "2024"
 name = "viernulvier_api"
 path = "src/main.rs"
 
+[lints.clippy]
+unused_async = "warn"
+
 [workspace]
-members = ["database"]
+members = ["database", "api"]
 
 [dependencies]
 database = { path = "database" }
+api = { path = "api" }
 
 axum = "0.8.8"
 dotenvy = "0.15.7"
 thiserror = "2.0.17"
-# serde_json = "1.0.149"
-# serde = {version= "1.0.228", features = ["derive"]}
+serde_json = "1.0.149"
+serde = {version= "1.0.228", features = ["derive"]}
 tracing = { version = "=0.1", default-features = false }
 tracing-subscriber = { version = "=0.3", default-features = false, features = [
     "env-filter",
@@ -34,3 +38,17 @@ tower-http = { version = "0.6.6", default-features = false, features = [
     "compression-zstd",
     "cors",
 ] }
+uuid = { version = "1", features = ["v7", "serde"] }
+o2o = "0.5.4"
+utoipa = { version = "5.4.0", features = ["uuid", "axum_extras"] }
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum"] }
+utoipa-axum = "0.2.0"
+axum-extra = { version = "0.12.5", features = ["cookie"] }
+jsonwebtoken={ version = "10.3.0", features = ["rust_crypto"] }
+argon2 = "0.5.3"
+base64 = "0.22.1"
+rand = "0.8"
+sha2 = "0.10.9"
+hex = "0.4.3"
+chrono = "0.4.44"
+time = "0.3.47"
