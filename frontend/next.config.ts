@@ -15,6 +15,17 @@ const nextConfig: NextConfig = {
     basePath: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}` : "",
     assetPrefix: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}` : "",
 
+    async redirects() {
+        return [
+            {
+                // Redirect /pr-17 or /pr-17/ to /pr-17/nl
+                source: "/",
+                destination: "/nl",
+                permanent: false,
+            },
+        ];
+    },
+
     // Local dev env
     turbopack: {
         root: __dirname,
