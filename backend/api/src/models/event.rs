@@ -84,7 +84,8 @@ impl From<ApiEvent> for EventCreate {
             vendor_id: api.vendor_id,
             box_office_id: api.box_office_id,
             uitdatabank_id: api.uitdatabank_id,
-            max_tickets_per_order: api.max_tickets_per_order as i32,
+            max_tickets_per_order: i32::try_from(api.max_tickets_per_order)
+                .expect("max_tickets_per_order out of range for i32"),
             production_id,
             status: api.status.short_name,
             hall_id,
