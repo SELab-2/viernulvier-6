@@ -52,12 +52,10 @@ api.interceptors.response.use(
             } catch (refreshError) {
                 processQueue(refreshError as AxiosError, null);
                 queryClient.removeQueries({ queryKey: ["user"] });
-                // Only redirect if we are not already on the login page
-                if (typeof window !== "undefined" && !window.location.pathname.endsWith("/login")) {
-                    // Force a reload. The middleware will catch the missing token
-                    // and safely redirect to the localized /login route.
-                    window.location.reload();
-                }
+
+                // Protected pages (e.g. /admin) already guard via useEffect and proxy.ts should redirect aswell.
+                // Reloading here would cause an infinite loop on public pages.
+
                 return Promise.reject(refreshError);
             } finally {
                 isRefreshing = false;
