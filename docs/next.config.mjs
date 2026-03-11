@@ -11,19 +11,18 @@ const config = {
   output: 'standalone',
   serverExternalPackages: ['@takumi-rs/image-response'],
   reactStrictMode: true,
-  // For preview: app is served at /pr-NN/docs
-  // For production: app is served at /docs
-  basePath: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}/docs` : '/docs',
-  // Assets under /pr-NN/docs/_next so they route to docs container (not frontend)
-  assetPrefix: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}/docs` : '/docs',
+  // Traefik routes /docs to this app, so no basePath needed
+  // The app serves content at root level ( Traefik handles the /docs prefix externally)
+  basePath: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}` : '',
+  assetPrefix: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}` : '',
   turbopack: {
     root: __dirname,
   },
   async rewrites() {
     return [
       {
-        source: '/docs/:path*.mdx',
-        destination: '/llms.mdx/docs/:path*',
+        source: '/:path*.mdx',
+        destination: '/llms.mdx/:path*',
       },
     ];
   },
