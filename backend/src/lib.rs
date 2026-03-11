@@ -87,7 +87,7 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
         .layer(TraceLayer::new_for_http())
         .layer(
             CorsLayer::new()
-                .allow_origin(tower_http::cors::AllowOrigin::mirror_request())
+                .allow_origin(allowed_origins)
                 .allow_methods([Method::GET, Method::POST])
                 .allow_headers([axum::http::header::CONTENT_TYPE])
                 .allow_credentials(true),
