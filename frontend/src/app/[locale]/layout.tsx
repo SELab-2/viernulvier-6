@@ -25,7 +25,11 @@ const geistMono = Geist_Mono({
     subsets: ["latin"],
 });
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+export async function generateMetadata({
+    params,
+}: {
+    params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
     const { locale } = await params;
 
     return {
@@ -34,7 +38,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
             canonical: `/${locale}`,
             languages: siteConfig.languages,
         },
-    } satisfies Metadata;
+    };
 }
 
 export default async function RootLayout({
