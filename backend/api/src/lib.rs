@@ -272,7 +272,9 @@ impl ApiImporter {
             let amt = events.len();
             info!("Events: got {amt} from api");
             for event in events {
-                self.db.events().insert(event.into()).await.unwrap();
+                if let Err(e) = self.db.events().insert(event.into()).await {
+                    warn!("Events: failed to insert event: {e}");
+                }
             }
             info!("Events: inserted {amt} into db");
         }
