@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { notFound } from "next/navigation";
 
 import { hasLocale } from "next-intl";
-import { getMessages, setRequestLocale } from "next-intl/server";
+import { getMessages, getTimeZone, setRequestLocale } from "next-intl/server";
 
 import { seoConfig } from "@/config/seo.config";
 import { siteConfig } from "@/config/site.config";
@@ -53,13 +53,14 @@ export default async function RootLayout({
     setRequestLocale(locale);
 
     const messages = await getMessages();
+    const timeZone = await getTimeZone();
 
     return (
         <html lang={locale} suppressHydrationWarning>
             <body
                 className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen w-full flex-col antialiased`}
             >
-                <Providers messages={messages} locale={locale}>
+                <Providers messages={messages} locale={locale} timeZone={timeZone}>
                     <Header />
                     <main className="flex-1">{children}</main>
                     <Footer />
