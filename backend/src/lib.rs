@@ -6,6 +6,7 @@ use crate::{
 };
 use api::ApiImporter;
 use axum::{Router, routing::get};
+use axum::http::{HeaderValue, Method};
 use database::Database;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info};
@@ -76,11 +77,21 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
 
     let state = AppState { db, config };
 
+    let allowed_origins = [
+        "https://sel2-6.ugent.be/".parse::<HeaderValue>().unwrap(),
+    ];
+
     let app = Router::new()
         .merge(router())
         .layer(CompressionLayer::new())
         .layer(TraceLayer::new_for_http())
-        .layer(CorsLayer::very_permissive())
+        .layer(
+            CorsLayer::new()
+                .allow_origin(tower_http::cors::AllowOrigin::mirror_request())
+                .allow_methods([Method::GET, Method::POST])
+                .allow_headers([axum::http::header::CONTENT_TYPE])
+                .allow_credentials(true),
+        )
         .with_state(state);
 
     // start server

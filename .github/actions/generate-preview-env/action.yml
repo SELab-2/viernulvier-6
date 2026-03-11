@@ -49,7 +49,7 @@ runs:
         PREVIEW_DATABASE_URL="postgres://${PREVIEW_DB_USER}:${PREVIEW_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}_database:5432/${PREVIEW_DB_NAME}"
         PREVIEW_JWT_SECRET=${{ inputs.jwt_secret }}
         PREVIEW_API_KEY_404=${{ inputs.api_key_404 }}
-        
+   
         cat > infra/preview/.env.preview <<EOF
         PREVIEW_HOST=$PREVIEW_HOST
         PREVIEW_NAME=$PREVIEW_NAME
@@ -60,7 +60,7 @@ runs:
         PREVIEW_DATABASE_URL=$PREVIEW_DATABASE_URL
         PREVIEW_JWT_SECRET=$PREVIEW_JWT_SECRET
         PREVIEW_API_KEY_404=$PREVIEW_API_KEY_404
-        NEXT_PUBLIC_SITE_URL=$PREVIEW_SITE_URL
+        NEXT_PUBLIC_SITE_URL=$PREVIEW_SITE_URL$PREVIEW_NAME
         EOF
 
         echo "Generated infra/preview/.env.preview"
