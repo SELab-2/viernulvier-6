@@ -6,6 +6,25 @@ use uuid::Uuid;
 use crate::models::localized_text::ApiLocalizedText;
 
 #[derive(Debug, Deserialize)]
+pub struct ApiEventProduction {
+    #[serde(rename = "@id")]
+    pub id: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ApiEventStatus {
+    #[serde(rename = "@id")]
+    pub id: String,
+    pub short_name: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ApiEventHall {
+    #[serde(rename = "@id")]
+    pub id: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct ApiEvent {
     #[serde(rename = "@context")]
     pub context: String,
@@ -28,10 +47,9 @@ pub struct ApiEvent {
     pub secure: bool,
     pub sms_verification: bool,
 
-    pub production: String,
-    pub status: String,
-    pub hall: String,
-    pub prices: Vec<String>,
+    pub production: ApiEventProduction,
+    pub status: ApiEventStatus,
+    pub hall: ApiEventHall,
 
     pub info: ApiLocalizedText,
     pub eticket_info: ApiLocalizedText,
@@ -42,6 +60,7 @@ impl From<ApiEvent> for EventCreate {
     fn from(api: ApiEvent) -> Self {
         let production_id = api
             .production
+            .id
             .split('/')
             .next_back()
             .and_then(|s| Uuid::parse_str(s).ok())
@@ -49,6 +68,7 @@ impl From<ApiEvent> for EventCreate {
 
         let hall_id = api
             .hall
+            .id
             .split('/')
             .next_back()
             .and_then(|s| Uuid::parse_str(s).ok())
@@ -66,8 +86,8 @@ impl From<ApiEvent> for EventCreate {
             uitdatabank_id: api.uitdatabank_id,
             max_tickets_per_order: api.max_tickets_per_order as i32,
             production_id,
-            status: api.status,
-            hall: hall_id,
+            status: api.status.short_name,
+            hall_id,
         }
     }
 }
