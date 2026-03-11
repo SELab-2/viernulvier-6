@@ -26,6 +26,7 @@ export const useUser = (options?: { enabled?: boolean }) => {
 export const useLogin = () => {
     const queryClient = useQueryClient();
     const router = useRouter();
+    const t = useTranslations("Login");
 
     return useMutation({
         mutationFn: async (credentials: LoginDTO) => {
@@ -38,9 +39,9 @@ export const useLogin = () => {
         },
         onError: (error: AxiosError) => {
             if (error.response?.status === 401) {
-                toast.error(t("Login.errorInvalidCredentials"));
+                toast.error(t("errorInvalidCredentials"));
             } else {
-                toast.error(t("Login.errorGeneric"));
+                toast.error(t("errorGeneric"));
             }
         },
     });
@@ -49,6 +50,7 @@ export const useLogin = () => {
 export const useLogout = () => {
     const queryClient = useQueryClient();
     const router = useRouter();
+    const t = useTranslations("Login");
 
     return useMutation({
         mutationFn: async () => {
@@ -57,10 +59,10 @@ export const useLogout = () => {
         onSuccess: () => {
             queryClient.removeQueries({ queryKey: ["user"] });
             router.push("/login");
-            toast.success(t("Login.loggedOut"));
+            toast.success(t("loggedOut"));
         },
         onError: () => {
-            toast.error(t("Login.errorGeneric"));
+            toast.error(t("errorGeneric"));
             queryClient.removeQueries({ queryKey: ["user"] });
 
             router.push("/login");
