@@ -65,6 +65,7 @@ jobs:
           script: |
             const marker = "<!-- preview-env -->";
             const prNumber = context.payload.pull_request.number;
+
             const previewUrl = `https://${process.env.PREVIEW_HOST}/pr-${prNumber}`;
             const docsUrl = `${previewUrl}/docs`;
             const apiUrl = `${previewUrl}/api`;
