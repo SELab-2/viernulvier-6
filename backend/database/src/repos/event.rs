@@ -32,4 +32,8 @@ impl<'a> EventRepo<'a> {
     pub async fn insert(&self, event: EventCreate) -> Result<Event, DatabaseError> {
         Ok(event.insert(self.db).await?)
     }
+
+    pub async fn by_production(&self, production_id: Uuid) -> Result<Vec<Event>, DatabaseError> {
+        Ok(Event::select().where_("production_id = $1").bind(production_id).fetch_all(self.db).await?)
+    }
 }

@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::{
     error::ErrorResponse,
-    dto::production::{ProductionPayload, ProductionPostPayload},
+    dto::{event::EventPayload, production::{ProductionPayload, ProductionPostPayload}},
     handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
 };
 
@@ -43,6 +43,23 @@ pub async fn get_one(
     Path(id): Path<Uuid>
 ) -> JsonResponse<ProductionPayload> {
     ProductionPayload::by_id(&db, id).await?.json()
+}
+
+#[utoipa::path(
+    method(get),
+    path = "/productions/{id}/events",
+    tag = "Productions",
+    description = "Get all events for a production",
+    params(
+        ("id" = Uuid, Path, description = "Production UUID")
+    ),
+    responses(
+        (status = 200, description = "Success", body = [EventPayload]),
+        (status = 404, description = "Not found")
+    )
+)]
+pub async fn get_events(db: Database, Path(id): Path<Uuid>) -> JsonResponse<Vec<EventPayload>> {
+    EventPayload::by_production(&db, id).await?.json()
 }
 
 #[utoipa::path(

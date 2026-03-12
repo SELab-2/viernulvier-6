@@ -44,4 +44,8 @@ impl EventPayload {
     pub async fn by_id(db: &Database, id: Uuid) -> Result<Self, AppError> {
         Ok(db.events().by_id(id).await?.into())
     }
+
+    pub async fn by_production(db: &Database, id: Uuid) -> Result<Vec<Self>, AppError> {
+        Ok(db.events().by_production(id).await?.into_iter().map(Self::from).collect())
+    }
 }
