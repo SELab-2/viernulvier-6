@@ -272,9 +272,38 @@ impl ApiImporter {
             let amt = events.len();
             info!("Events: got {amt} from api");
             for event in events {
-                if let Err(e) = self.db.events().insert(event.into()).await {
-                    warn!("Events: failed to insert event: {e}");
-                }
+                let production_uuid = match event.production_source_id() {
+                    Some(id) => {
+                        let uuid = self.db.productions().by_source_id(id).await
+                            .unwrap()
+                            .map(|p| p.id);
+                        if uuid.is_none() {
+                            warn!("Events: production source_id {id} not found in db, skipping");
+                        }
+                        uuid
+                    }
+                    None => None,
+                };
+
+                let Some(production_id) = production_uuid else {
+                    continue;
+                };
+
+                let hall_uuid = match event.hall_source_id() {
+                    Some(id) => {
+                        let uuid = self.db.halls().by_source_id(id).await
+                            .unwrap()
+                            .map(|h| h.id);
+                        if uuid.is_none() {
+                            warn!("Events: hall source_id {id} not found in db");
+                        }
+                        uuid
+                    }
+                    None => None,
+                };
+
+                let event_create = event.to_create(production_id, hall_uuid);
+                self.db.events().insert(event_create).await.unwrap();
             }
             info!("Events: inserted {amt} into db");
         }
