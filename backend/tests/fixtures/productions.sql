@@ -1,4 +1,5 @@
 INSERT INTO productions (
+    id,
     source_id,
     slug,
     title_nl,
@@ -16,6 +17,7 @@ INSERT INTO productions (
     tagline_nl
 ) VALUES
 (
+    '11111111-1111-1111-1111-111111111111',
     1001,
     'heavy-metal-knitting-2026',
     'Heavy Metal Breien',
@@ -33,6 +35,7 @@ INSERT INTO productions (
     'Wol en staal.'
 ),
 (
+    '22222222-2222-2222-2222-222222222222',
     1002,
     'digital-dystopia-talk',
     'Digitale Dystopie',
@@ -50,6 +53,7 @@ INSERT INTO productions (
     'Is de toekomst binair?'
 ),
 (
+    '33333333-3333-3333-3333-333333333333',
     1003,
     'minimal-event-test',
     'Minimaal Event',
@@ -67,6 +71,7 @@ INSERT INTO productions (
     NULL
 ),
 (
+    '44444444-4444-4444-4444-444444444444',
     1004,
     'jazz-night-de-vooruit',
     'Jazz Nacht',
@@ -84,6 +89,7 @@ INSERT INTO productions (
     'Improvisatie op zijn best.'
 ),
 (
+    '55555555-5555-5555-5555-555555555555',
     1005,
     'experimental-dance-piece',
     'Beweging in Beeld',
