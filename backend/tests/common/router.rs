@@ -52,6 +52,20 @@ impl TestRouter {
         self.request(Method::POST, path, Some(body)).await
     }
 
+    /// send a put request to an endpoint on this router
+    ///
+    /// must have a leading "/"
+    pub async fn put<T: Serialize>(&self, path: &str, body: T) -> Response<Body> {
+        self.request(Method::PUT, path, Some(body)).await
+    }
+
+    /// send a delete request to an endpoint on this router
+    ///
+    /// must have a leading "/"
+    pub async fn delete(&self, path: &str) -> Response<Body> {
+        self.request(Method::DELETE, path, None::<()>).await
+    }
+
     /// send a request to an endpoint on this router
     ///
     /// must have a leading "/"
