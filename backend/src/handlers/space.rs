@@ -14,7 +14,7 @@ use crate::{
     tag = "Spaces",
     description = "Get all spaces",
     responses(
-        (status = 201, description = "Success", body = [SpacePayload])
+        (status = 200, description = "Success", body = [SpacePayload])
     )
 )]
 pub async fn get_all(db: Database) -> JsonResponse<Vec<SpacePayload>> {

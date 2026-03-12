@@ -13,7 +13,7 @@ use crate::{
     tag = "Halls",
     description = "Get all halls",
     responses(
-        (status = 201, description = "Success", body = [HallPayload])
+        (status = 200, description = "Success", body = [HallPayload])
     )
 )]
 pub async fn get_all(db: Database) -> JsonResponse<Vec<HallPayload>> {
