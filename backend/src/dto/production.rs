@@ -87,7 +87,7 @@ pub struct ProductionPayload {
     pub uitdatabank_type: Option<String>,
 }
 
-#[derive(o2o, Deserialize, ToSchema)]
+#[derive(o2o, Serialize, Deserialize, ToSchema)]
 #[owned_into(ProductionCreate)]
 pub struct ProductionPostPayload {
     pub source_id: Option<i32>,

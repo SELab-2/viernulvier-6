@@ -52,3 +52,15 @@ sha2 = "0.10.9"
 hex = "0.4.3"
 chrono = "0.4.44"
 time = "0.3.47"
+
+[dev-dependencies]
+http-body-util = "0.1.2"
+tower = { version = "0.4.13", default-features = false, features = ["util"] }
+mime = "0.3"
+test-log = {version = "0.2", default-features = false, features = ["trace"]}
+sqlx = { version = "0.8.6", default-features = false, features = [
+    "runtime-tokio",
+    "postgres",
+    "migrate",
+    "macros",
+] }
