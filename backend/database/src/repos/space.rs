@@ -40,4 +40,17 @@ impl<'a> SpaceRepo<'a> {
             .fetch_optional(self.db)
             .await?)
     }
+
+    pub async fn update(&self, space: Space) -> Result<Space, DatabaseError> {
+        Ok(space.update_all_fields(self.db).await?)
+    }
+
+    pub async fn delete(&self, id: Uuid) -> Result<(), DatabaseError> {
+        sqlx::query("DELETE FROM spaces WHERE id = $1")
+            .bind(id)
+            .execute(self.db)
+            .await?;
+
+        Ok(())
+    }
 }

@@ -12,6 +12,7 @@ pub struct AdminResponse {
 #[utoipa::path(
     method(get),
     path = "/admin/me",
+    operation_id = "get_admin_info",
     tag = "Admin",
     description = "Receive admin info of the logged in user",
     responses(
