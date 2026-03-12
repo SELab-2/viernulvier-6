@@ -12,9 +12,9 @@ use crate::{
     method(get),
     path = "/spaces",
     tag = "Spaces",
-    description = "Create a space",
+    description = "Get all spaces",
     responses(
-        (status = 201, description = "Created", body = [SpacePayload])
+        (status = 201, description = "Success", body = [SpacePayload])
     )
 )]
 pub async fn get_all(db: Database) -> JsonResponse<Vec<SpacePayload>> {
@@ -30,7 +30,8 @@ pub async fn get_all(db: Database) -> JsonResponse<Vec<SpacePayload>> {
         ("id" = Uuid, Path, description = "Space UUID")
     ),
     responses(
-        (status = 200, description = "Success", body = SpacePayload)
+        (status = 200, description = "Success", body = SpacePayload),
+        (status = 404, description = "Not found")
     )
 )]
 pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<SpacePayload> {
@@ -62,7 +63,8 @@ pub async fn post(
             ("id" = Uuid, Path, description = "Space UUID")
         ),
     responses(
-        (status = 204, description = "No Content")
+        (status = 204, description = "No Content"),
+        (status = 404, description = "Not found")
     )
 )]
 pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
@@ -76,7 +78,8 @@ pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
     tag = "Spaces",
     description = "Update the fields of a space",
     responses(
-        (status = 200, description = "Success", body = SpacePayload)
+        (status = 200, description = "Success", body = SpacePayload),
+        (status = 404, description = "Not found")
     )
 )]
 pub async fn put(db: Database, Json(space): Json<SpacePayload>) -> JsonResponse<SpacePayload> {

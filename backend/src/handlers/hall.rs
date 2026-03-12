@@ -11,9 +11,9 @@ use crate::{
     method(get),
     path = "/halls",
     tag = "Halls",
-    description = "Create a hall",
+    description = "Get all halls",
     responses(
-        (status = 201, description = "Created", body = [HallPayload])
+        (status = 201, description = "Success", body = [HallPayload])
     )
 )]
 pub async fn get_all(db: Database) -> JsonResponse<Vec<HallPayload>> {
@@ -29,7 +29,8 @@ pub async fn get_all(db: Database) -> JsonResponse<Vec<HallPayload>> {
         ("id" = Uuid, Path, description = "Hall UUID")
     ),
     responses(
-        (status = 200, description = "Success", body = HallPayload)
+        (status = 200, description = "Success", body = HallPayload),
+        (status = 404, description = "Not found")
     )
 )]
 pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<HallPayload> {
@@ -61,7 +62,8 @@ pub async fn post(
             ("id" = Uuid, Path, description = "Hall UUID")
         ),
     responses(
-        (status = 204, description = "No Content")
+        (status = 204, description = "No Content"),
+        (status = 404, description = "Not found")
     )
 )]
 pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
@@ -75,7 +77,8 @@ pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
     tag = "Halls",
     description = "Update the fields of a hall",
     responses(
-        (status = 200, description = "Success", body = HallPayload)
+        (status = 200, description = "Success", body = HallPayload),
+        (status = 404, description = "Not found")
     )
 )]
 pub async fn put(db: Database, Json(hall): Json<HallPayload>) -> JsonResponse<HallPayload> {
