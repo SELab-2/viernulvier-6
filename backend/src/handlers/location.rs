@@ -11,6 +11,7 @@ use crate::{
     method(get),
     path = "/locations",
     tag = "Locations",
+    operation_id = "get_all_locations",
     description = "Get all locations",
     responses(
         (status = 200, description = "Success", body = [LocationPayload])
@@ -24,6 +25,7 @@ pub async fn get_all(db: Database) -> JsonResponse<Vec<LocationPayload>> {
     method(get),
     path = "/locations/{id}",
     tag = "Locations",
+    operation_id = "get_one_location",
     description = "Get location by id",
     params(
         ("id" = Uuid, Path, description = "Location UUID")
@@ -41,6 +43,7 @@ pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<Locatio
     method(post),
     path = "/locations",
     tag = "Locations",
+    operation_id = "create_location",
     description = "Create a location",
     responses(
         (status = 201, description = "Created", body = LocationPayload)
@@ -57,6 +60,7 @@ pub async fn post(
     method(delete),
     path = "/locations/{id}",
     tag = "Locations",
+    operation_id = "delete_location",
     description = "Delete a location",
     params(
             ("id" = Uuid, Path, description = "Location UUID")
@@ -75,6 +79,7 @@ pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
     method(put),
     path = "/locations",
     tag = "Locations",
+    operation_id = "update_location",
     description = "Update the fields of a location",
     responses(
         (status = 200, description = "Success", body = LocationPayload),

@@ -11,6 +11,7 @@ use crate::{
     method(get),
     path = "/halls",
     tag = "Halls",
+    operation_id = "get_all_halls",
     description = "Get all halls",
     responses(
         (status = 200, description = "Success", body = [HallPayload])
@@ -24,6 +25,7 @@ pub async fn get_all(db: Database) -> JsonResponse<Vec<HallPayload>> {
     method(get),
     path = "/halls/{id}",
     tag = "Halls",
+    operation_id = "get_one_hall",
     description = "Get a hall by id",
     params(
         ("id" = Uuid, Path, description = "Hall UUID")
@@ -41,6 +43,7 @@ pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<HallPay
     method(post),
     path = "/halls",
     tag = "Halls",
+    operation_id = "create_hall",
     description = "Create a hall",
     responses(
         (status = 201, description = "Created", body = HallPayload)
@@ -57,6 +60,7 @@ pub async fn post(
     method(delete),
     path = "/halls/{id}",
     tag = "Halls",
+    operation_id = "delete_hall",
     description = "Delete a hall",
     params(
             ("id" = Uuid, Path, description = "Hall UUID")
@@ -75,6 +79,7 @@ pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
     method(put),
     path = "/halls",
     tag = "Halls",
+    operation_id = "update_hall",
     description = "Update the fields of a hall",
     responses(
         (status = 200, description = "Success", body = HallPayload),

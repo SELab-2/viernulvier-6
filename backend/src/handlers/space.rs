@@ -12,6 +12,7 @@ use crate::{
     method(get),
     path = "/spaces",
     tag = "Spaces",
+    operation_id = "get_all_spaces",
     description = "Get all spaces",
     responses(
         (status = 200, description = "Success", body = [SpacePayload])
@@ -25,6 +26,7 @@ pub async fn get_all(db: Database) -> JsonResponse<Vec<SpacePayload>> {
     method(get),
     path = "/spaces/{id}",
     tag = "Spaces",
+    operation_id = "get_one_space",
     description = "Get a space by id",
     params(
         ("id" = Uuid, Path, description = "Space UUID")
@@ -42,6 +44,7 @@ pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<SpacePa
     method(post),
     path = "/spaces",
     tag = "Spaces",
+    operation_id = "create_space",
     description = "Create a space",
     responses(
         (status = 201, description = "Created", body = SpacePayload)
@@ -58,6 +61,7 @@ pub async fn post(
     method(delete),
     path = "/spaces/{id}",
     tag = "Spaces",
+    operation_id = "delete_space",
     description = "Delete a space",
     params(
             ("id" = Uuid, Path, description = "Space UUID")
@@ -76,6 +80,7 @@ pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
     method(put),
     path = "/spaces",
     tag = "Spaces",
+    operation_id = "update_space",
     description = "Update the fields of a space",
     responses(
         (status = 200, description = "Success", body = SpacePayload),
