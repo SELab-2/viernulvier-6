@@ -15,8 +15,6 @@ use utoipa_axum::routes;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::config::AppConfig;
-use crate::dto::location::LocationPayload;
-use crate::dto::production::{ProductionPayload, ProductionPostPayload};
 use crate::error::AppError;
 use crate::handlers::{admin, auth, location, production, version};
 
