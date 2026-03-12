@@ -3,7 +3,7 @@ use database::Database;
 use uuid::Uuid;
 
 use crate::{
-    dto::event::EventPayload,
+    dto::event::{EventPayload, EventPostPayload},
     handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
 };
 
@@ -35,4 +35,52 @@ pub async fn get_all(db: Database) -> JsonResponse<Vec<EventPayload>> {
 )]
 pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<EventPayload> {
     EventPayload::by_id(&db, id).await?.json()
+}
+
+#[utoipa::path(
+    method(post),
+    path = "/events",
+    tag = "Events",
+    description = "Create an event",
+    responses(
+        (status = 201, description = "Created", body = EventPayload)
+    )
+)]
+pub async fn post(
+    db: Database,
+    Json(event): Json<EventPostPayload>,
+) -> JsonStatusResponse<EventPayload> {
+    event.create(&db).await?.json_created()
+}
+
+#[utoipa::path(
+    method(delete),
+    path = "/events/{id}",
+    tag = "Events",
+    description = "Delete an event",
+    params(
+        ("id" = Uuid, Path, description = "Event UUID")
+    ),
+    responses(
+        (status = 204, description = "No Content"),
+        (status = 404, description = "Not found")
+    )
+)]
+pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
+    EventPayload::delete(&db, id).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
+    method(put),
+    path = "/events",
+    tag = "Events",
+    description = "Update an event",
+    responses(
+        (status = 200, description = "Success", body = EventPayload),
+        (status = 404, description = "Not found")
+    )
+)]
+pub async fn put(db: Database, Json(event): Json<EventPayload>) -> JsonResponse<EventPayload> {
+    Ok(Json(event.update(&db).await?))
 }

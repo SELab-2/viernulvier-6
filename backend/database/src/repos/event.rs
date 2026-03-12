@@ -33,7 +33,24 @@ impl<'a> EventRepo<'a> {
         Ok(event.insert(self.db).await?)
     }
 
+    pub async fn update(&self, event: Event) -> Result<Event, DatabaseError> {
+        Ok(event.update_all_fields(self.db).await?)
+    }
+
+    pub async fn delete(&self, id: Uuid) -> Result<(), DatabaseError> {
+        sqlx::query("DELETE FROM events WHERE id = $1")
+            .bind(id)
+            .execute(self.db)
+            .await?;
+
+        Ok(())
+    }
+    
     pub async fn by_production(&self, production_id: Uuid) -> Result<Vec<Event>, DatabaseError> {
-        Ok(Event::select().where_("production_id = $1").bind(production_id).fetch_all(self.db).await?)
+        Ok(Event::select()
+        .where_("production_id = $1")
+        .bind(production_id)
+        .fetch_all(self.db)
+        .await?)
     }
 }
