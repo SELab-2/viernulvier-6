@@ -11,6 +11,7 @@ use crate::{
     method(get),
     path = "/productions",
     tag = "Productions",
+    operation_id = "get_all_productions",
     description = "Get all productions",
     responses(
         (status = 200, description = "Success", body = [ProductionPayload])
@@ -24,6 +25,7 @@ pub async fn get_all(db: Database) -> JsonResponse<Vec<ProductionPayload>> {
     method(get),
     path = "/productions/{id}",
     tag = "Productions",
+    operation_id = "get_one_production",
     description = "Get a production by id",
     params(
         ("id" = Uuid, Path, description = "Production UUID")
@@ -41,6 +43,7 @@ pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<Product
     method(post),
     path = "/productions",
     tag = "Productions",
+    operation_id = "create_production",
     description = "Create a production",
     responses(
         (status = 201, description = "Created", body = ProductionPayload)
@@ -57,6 +60,7 @@ pub async fn post(
     method(delete),
     path = "/productions/{id}",
     tag = "Productions",
+    operation_id = "delete_production",
     description = "Delete a production",
     params(
             ("id" = Uuid, Path, description = "Production UUID")
@@ -75,6 +79,7 @@ pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
     method(put),
     path = "/productions",
     tag = "Productions",
+    operation_id = "update_production",
     description = "Update the fields of a production",
     responses(
         (status = 200, description = "Success", body = ProductionPayload),

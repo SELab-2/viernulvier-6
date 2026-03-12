@@ -96,6 +96,7 @@ fn refresh_cookie(token: String, expiry_days: i8) -> Cookie<'static> {
     method(post),
     path = "/auth/login",
     tag = "Auth",
+    operation_id = "auth_login",
     description = "Login to the API",
     request_body = LoginRequest,
     responses(
@@ -164,6 +165,7 @@ pub async fn login(
     method(post),
     path = "/auth/refresh",
     tag = "Auth",
+    operation_id = "refresh_access_token",
     description = "Refresh the access token using the refresh cookie",
     responses(
         (status = 200, description = "Success", body = AuthResponse),
@@ -225,6 +227,7 @@ pub async fn refresh(
     method(post),
     path = "/auth/logout",
     tag = "Auth",
+    operation_id = "logout_and_invalidate_sessions",
     description = "Logout and invalidate sessions",
     responses(
         (status = 200, description = "Logged out successfully", body = AuthResponse)
