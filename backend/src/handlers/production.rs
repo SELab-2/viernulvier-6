@@ -49,6 +49,7 @@ pub async fn get_one(
     method(get),
     path = "/productions/{id}/events",
     tag = "Productions",
+    operation_id = "get_events_by_production_id",
     description = "Get all events for a production",
     params(
         ("id" = Uuid, Path, description = "Production UUID")

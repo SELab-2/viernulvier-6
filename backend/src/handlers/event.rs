@@ -11,6 +11,7 @@ use crate::{
     method(get),
     path = "/events",
     tag = "Events",
+    operation_id = "get_all_events",
     description = "Get all events",
     responses(
         (status = 200, description = "Success", body = [EventPayload])
@@ -24,6 +25,7 @@ pub async fn get_all(db: Database) -> JsonResponse<Vec<EventPayload>> {
     method(get),
     path = "/events/{id}",
     tag = "Events",
+    operation_id = "get_event_by_id",
     description = "Get an event by id",
     params(
         ("id" = Uuid, Path, description = "Event UUID")
@@ -41,6 +43,7 @@ pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<EventPa
     method(post),
     path = "/events",
     tag = "Events",
+    operation_id = "create_event",
     description = "Create an event",
     responses(
         (status = 201, description = "Created", body = EventPayload)
@@ -57,6 +60,7 @@ pub async fn post(
     method(delete),
     path = "/events/{id}",
     tag = "Events",
+    operation_id = "delete_event",
     description = "Delete an event",
     params(
         ("id" = Uuid, Path, description = "Event UUID")
@@ -75,6 +79,7 @@ pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
     method(put),
     path = "/events",
     tag = "Events",
+    operation_id = "update_event",
     description = "Update an event",
     responses(
         (status = 200, description = "Success", body = EventPayload),
