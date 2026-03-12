@@ -1,0 +1,88 @@
+use axum::{
+    Json,
+    body::Body,
+    http::{Method, Request, header},
+    response::{IntoResponse, Response},
+};
+use database::Database;
+use dotenvy::dotenv;
+use serde::Serialize;
+use sqlx::PgPool;
+use tower::ServiceExt;
+use viernulvier_api::{AppState, config::AppConfig, router};
+
+pub struct TestRouter {
+    router: axum::Router,
+}
+
+impl TestRouter {
+    pub fn new(db: PgPool) -> Self {
+        let _ = dotenv();
+
+        let config = AppConfig::load().unwrap();
+
+        let state = AppState {
+            db: Database::new(db),
+            config,
+        };
+
+        Self {
+            router: router().with_state(state),
+        }
+    }
+
+    /// send a request to an endpoint on this router
+    ///
+    /// must have a leading "/"
+    pub async fn get(&self, path: &str) -> Response<Body> {
+        self.request(Method::GET, path, None::<()>).await
+    }
+
+    /// send a patch request to an endpoint on this router
+    ///
+    /// must have a leading "/"
+    pub async fn patch<T: Serialize>(&self, path: &str, body: T) -> Response<Body> {
+        self.request(Method::PATCH, path, Some(body)).await
+    }
+
+    /// send a post request to an endpoint on this router
+    ///
+    /// must have a leading "/"
+    pub async fn post<T: Serialize>(&self, path: &str, body: T) -> Response<Body> {
+        self.request(Method::POST, path, Some(body)).await
+    }
+
+    /// send a put request to an endpoint on this router
+    ///
+    /// must have a leading "/"
+    pub async fn put<T: Serialize>(&self, path: &str, body: T) -> Response<Body> {
+        self.request(Method::PUT, path, Some(body)).await
+    }
+
+    /// send a delete request to an endpoint on this router
+    ///
+    /// must have a leading "/"
+    pub async fn delete(&self, path: &str) -> Response<Body> {
+        self.request(Method::DELETE, path, None::<()>).await
+    }
+
+    /// send a request to an endpoint on this router
+    ///
+    /// must have a leading "/"
+    async fn request<T: Serialize>(
+        &self,
+        method: Method,
+        path: &str,
+        body: Option<T>,
+    ) -> Response<Body> {
+        let request_builder = Request::builder().method(method).uri(path);
+        let request = match body {
+            Some(body) => request_builder
+                .header(header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+                .body(Json(body).into_response().into_body()),
+            None => request_builder.body(Body::empty()),
+        };
+
+        self.router.clone().oneshot(request.unwrap()).await.unwrap()
+    }
+}
