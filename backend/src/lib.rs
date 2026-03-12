@@ -16,7 +16,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::config::AppConfig;
 use crate::error::AppError;
-use crate::handlers::{admin, auth, location, production, version};
+use crate::handlers::{admin, auth, hall, location, production, space, version};
 
 pub mod config;
 pub mod dto;
@@ -114,18 +114,37 @@ pub fn router() -> Router<AppState> {
 
 fn open_routes() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
+        // version
         .routes(routes!(version::get))
-        .routes(routes!(location::all))
+        // locations
+        .routes(routes!(location::get_all))
+        .routes(routes!(location::get_one))
+        .routes(routes!(location::post))
+        .routes(routes!(location::delete))
+        .routes(routes!(location::put))
+        // productions
         .routes(routes!(production::get_all))
         .routes(routes!(production::get_one))
         .routes(routes!(production::post))
         .routes(routes!(production::delete))
         .routes(routes!(production::put))
-        .routes(routes!(location::by_id))
+        // auth
         .routes(routes!(auth::login))
         .routes(routes!(auth::refresh))
         .routes(routes!(auth::logout))
         .routes(routes!(admin::admin))
+        // halls
+        .routes(routes!(hall::get_all))
+        .routes(routes!(hall::get_one))
+        .routes(routes!(hall::post))
+        .routes(routes!(hall::delete))
+        .routes(routes!(hall::put))
+        // spaces
+        .routes(routes!(space::get_all))
+        .routes(routes!(space::get_one))
+        .routes(routes!(space::post))
+        .routes(routes!(space::delete))
+        .routes(routes!(space::put))
 }
 
 #[allow(clippy::expect_used)]

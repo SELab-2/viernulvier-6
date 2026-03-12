@@ -41,4 +41,17 @@ impl<'a> LocationRepo<'a> {
             .await?
             .ok_or(DatabaseError::NotFound)
     }
+
+    pub async fn update(&self, location: Location) -> Result<Location, DatabaseError> {
+        Ok(location.update_all_fields(self.db).await?)
+    }
+
+    pub async fn delete(&self, id: Uuid) -> Result<(), DatabaseError> {
+        sqlx::query("DELETE FROM locations WHERE id = $1")
+            .bind(id)
+            .execute(self.db)
+            .await?;
+
+        Ok(())
+    }
 }
