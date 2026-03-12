@@ -49,4 +49,12 @@ impl<'a> ProductionRepo<'a> {
 
         Ok(())
     }
+
+    pub async fn by_source_id(&self, source_id: i32) -> Result<Option<Production>, DatabaseError> {
+    Ok(Production::select()
+        .where_("source_id = $1")
+        .bind(source_id)
+        .fetch_optional(self.db)
+        .await?)
+}
 }
