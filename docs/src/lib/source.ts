@@ -6,7 +6,7 @@ const baseUrl = process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}/docs` :
 
 // See https://fumadocs.dev/docs/headless/source-api for more info
 export const source = loader({
-  baseUrl,
+  baseUrl: '/', // EXTRA basepath above nextjs basepath, should be /
   source: docs.toFumadocsSource(),
   plugins: [lucideIconsPlugin()],
 });
