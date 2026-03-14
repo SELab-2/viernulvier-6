@@ -3,8 +3,8 @@ use database::models::event::EventCreate;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::models::localized_text::ApiLocalizedText;
 use crate::helper::extract_source_id;
+use crate::models::localized_text::ApiLocalizedText;
 
 #[derive(Debug, Deserialize)]
 pub struct ApiEventProduction {
@@ -56,14 +56,15 @@ impl ApiEvent {
             source_id: extract_source_id(&self.id),
             created_at: self.created_at,
             updated_at: self.updated_at,
-            started_at: self.starts_at,
-            ended_at: self.ends_at,
+            starts_at: self.starts_at,
+            ends_at: self.ends_at,
             intermission_at: self.intermission_at,
             doors_at: self.doors_at,    
             vendor_id: self.vendor_id,
             box_office_id: self.box_office_id,
             uitdatabank_id: self.uitdatabank_id,
-            max_tickets_per_order: self.max_tickets_per_order
+            max_tickets_per_order: self
+                .max_tickets_per_order
                 .map(|v| i32::try_from(v).expect("max_tickets_per_order out of range")),
             production_id,
             status: self.status,
@@ -71,3 +72,4 @@ impl ApiEvent {
         }
     }
 }
+
