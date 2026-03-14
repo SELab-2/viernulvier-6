@@ -9,8 +9,8 @@ pub struct Event {
     pub id: Uuid,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    pub started_at: DateTime<Utc>,
-    pub ended_at: Option<DateTime<Utc>>,
+    pub start_time: DateTime<Utc>,
+    pub end_time: Option<DateTime<Utc>>,
     pub intermission_at: Option<DateTime<Utc>>,
     pub doors_at: Option<DateTime<Utc>>,
 

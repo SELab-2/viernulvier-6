@@ -55,8 +55,8 @@ impl ApiEvent {
         EventCreate {
             created_at: self.created_at,
             updated_at: self.updated_at,
-            started_at: self.starts_at,
-            ended_at: self.ends_at,
+            start_time: self.starts_at,
+            end_time: self.ends_at,
             intermission_at: self.intermission_at,
             doors_at: self.doors_at,
             vendor_id: self.vendor_id,
