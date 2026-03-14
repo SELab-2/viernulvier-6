@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use database::{Database, models::tag::TagWithFacet};
 use serde::Serialize;
 use utoipa::ToSchema;
@@ -27,27 +29,25 @@ impl FacetDto {
 }
 
 fn group_into_facets(rows: Vec<TagWithFacet>) -> Vec<FacetDto> {
-    let mut facets: Vec<FacetDto> = Vec::new();
+    let mut map: HashMap<String, FacetDto> = HashMap::new();
 
     for row in rows {
-        match facets.iter_mut().find(|f| f.slug == row.facet_slug) {
-            Some(facet) => facet.tags.push(TagDto {
-                slug: row.tag_slug,
-                label: row.tag_label,
-                sort_order: row.tag_sort_order,
-            }),
-            None => facets.push(FacetDto {
+        map.entry(row.facet_slug.clone())
+            .or_insert_with(|| FacetDto {
                 slug: row.facet_slug,
                 label: row.facet_label,
                 sort_order: row.facet_sort_order,
-                tags: vec![TagDto {
-                    slug: row.tag_slug,
-                    label: row.tag_label,
-                    sort_order: row.tag_sort_order,
-                }],
-            }),
-        }
+                tags: Vec::new(),
+            })
+            .tags
+            .push(TagDto {
+                slug: row.tag_slug,
+                label: row.tag_label,
+                sort_order: row.tag_sort_order,
+            });
     }
 
+    let mut facets: Vec<FacetDto> = map.into_values().collect();
+    facets.sort_by_key(|f| f.sort_order);
     facets
 }
