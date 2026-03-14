@@ -1,5 +1,5 @@
 use ormlite::Model;
-use uuid::UUid;
+use uuid::Uuid;
 
 #[derive(Debug, Model)]
 #[ormlite(insert = "FacetCreate")]
@@ -9,5 +9,5 @@ pub struct Facet {
     pub slug: String,
     pub label: String,
     pub description: Option<String>,
-    pub sort_order: I32,
+    pub sort_order: i32,
 }
