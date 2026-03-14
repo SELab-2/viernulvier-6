@@ -8,12 +8,14 @@ use crate::error::AppError;
 pub struct TagDto {
     pub slug: String,
     pub label: String,
+    pub sort_order: i32,
 }
 
 #[derive(Serialize, ToSchema)]
 pub struct FacetDto {
     pub slug: String,
     pub label: String,
+    pub sort_order: i32,
     pub tags: Vec<TagDto>,
 }
 
@@ -32,13 +34,16 @@ fn group_into_facets(rows: Vec<TagWithFacet>) -> Vec<FacetDto> {
             Some(facet) => facet.tags.push(TagDto {
                 slug: row.tag_slug,
                 label: row.tag_label,
+                sort_order: row.tag_sort_order,
             }),
             None => facets.push(FacetDto {
                 slug: row.facet_slug,
                 label: row.facet_label,
+                sort_order: row.facet_sort_order,
                 tags: vec![TagDto {
                     slug: row.tag_slug,
                     label: row.tag_label,
+                    sort_order: row.tag_sort_order,
                 }],
             }),
         }

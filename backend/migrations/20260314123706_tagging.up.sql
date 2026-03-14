@@ -7,7 +7,7 @@
 
 -- facets: defines the available facet namespaces and which entity types they apply to.
 CREATE TABLE facets (
-  id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  id           uuid        PRIMARY KEY DEFAULT uuidv7(),
   slug         text        NOT NULL UNIQUE,   -- 'discipline', 'theme', …
   label        text        NOT NULL,          -- 'Discipline', 'Theme', …
   description  text,
@@ -28,7 +28,7 @@ CREATE TABLE facet_entity_types (
 
 -- tags: the controlled vocabulary. Each tag belongs to a facet.
 CREATE TABLE tags (
-  id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  id           uuid        PRIMARY KEY DEFAULT uuidv7(),
   facet_id     uuid        NOT NULL REFERENCES facets(id) ON DELETE RESTRICT,
   slug         text        NOT NULL,   -- 'world-premiere', 'memory', …
   label        text        NOT NULL,   -- 'World premiere', 'Memory', …
@@ -42,7 +42,7 @@ CREATE TABLE tags (
 
 -- taggings: Polymorphic join: any entity can be tagged. entity_type is the entity table name ('production', 'article', 'artist', 'picture').
 CREATE TABLE taggings (
-  id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  id           uuid        PRIMARY KEY DEFAULT uuidv7(),
   tag_id       uuid        NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
   entity_type  text        NOT NULL,
   entity_id    uuid        NOT NULL,
