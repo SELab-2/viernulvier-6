@@ -82,9 +82,7 @@ JOIN (VALUES
 ) AS e(facet_slug, entity_type) ON f.slug = e.facet_slug;
 
 
--- =============================================================
--- Seed data — tags
--- =============================================================
+-- Seed data: tags
 
 -- discipline
 INSERT INTO tags (facet_id, slug, label, sort_order)
@@ -160,7 +158,7 @@ SELECT
 FROM tags t
 JOIN facets f ON f.id = t.facet_id;
 
--- per-entity tag summary — for listing tags on entity pages
+-- per-entity tag summary. for listing tags on entity pages
 CREATE VIEW entity_tags AS
 SELECT
   tg.entity_type,
