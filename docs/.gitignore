@@ -1,0 +1,13 @@
+# fumadocs
+/.source/
+
+# next.js
+/.next/
+/out/
+
+# dependencies
+/node_modules
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
