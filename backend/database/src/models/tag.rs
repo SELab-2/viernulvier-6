@@ -25,3 +25,13 @@ pub struct EntityTag {
     pub tag_label: String,
     pub sort_order: i32,
 }
+
+#[derive(Debug, FromRow)]
+pub struct TagWithFacet {
+    pub facet_slug: String,
+    pub facet_label: String,
+    pub facet_sort_order: i32,
+    pub tag_slug: String,
+    pub tag_label: String,
+    pub tag_sort_order: i32,
+}

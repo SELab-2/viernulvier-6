@@ -5,7 +5,8 @@ use crate::{
     error::DatabaseError,
     repos::{
         hall::HallRepo, internal_state::InternalStateRepo, location::LocationRepo,
-        production::ProductionRepo, space::SpaceRepo, user::UserRepo, sessions::SessionRepo
+        production::ProductionRepo, space::SpaceRepo, user::UserRepo, sessions::SessionRepo,
+        tag::TagRepo,
     },
 };
 
@@ -15,11 +16,14 @@ pub mod models {
     pub mod collection;
     pub mod collection_item;
     pub mod event;
+    pub mod facet;
     pub mod hall;
     pub mod internal_state;
     pub mod location;
     pub mod production;
     pub mod space;
+    pub mod tag;
+    pub mod tagging;
     pub mod user;
     pub mod session;
 }
@@ -30,6 +34,7 @@ pub mod repos {
     pub mod location;
     pub mod production;
     pub mod space;
+    pub mod tag;
     pub mod user;
     pub mod sessions;
 }
@@ -87,5 +92,9 @@ impl Database {
 
     pub fn spaces<'a>(&'a self) -> SpaceRepo<'a> {
         SpaceRepo::new(&self.db)
+    }
+
+    pub fn tags<'a>(&'a self) -> TagRepo<'a> {
+        TagRepo::new(&self.db)
     }
 }
