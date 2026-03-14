@@ -201,7 +201,7 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(space::post))
         .routes(routes!(space::delete))
         .routes(routes!(space::put))
-  
+
         // taxonomies
         .routes(routes!(taxonomy::get_facets))
 
