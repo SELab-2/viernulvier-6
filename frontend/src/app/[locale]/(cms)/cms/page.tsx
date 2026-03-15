@@ -3,23 +3,41 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useRouter, useSearchParams } from "next/navigation";
+
+const TABS = [
+    { value: "overview", label: "Overview" },
+    { value: "content", label: "Content" },
+    { value: "ingestion", label: "Ingest" },
+    { value: "import", label: "Automatic import" },
+] as const;
+
+type Tab = (typeof TABS)[number]["value"];
+
+function isValidTab(value: string | null): value is Tab {
+    return TABS.some((t) => t.value === value);
+}
 
 export default function CmsDashboardPage() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const rawTab = searchParams.get("tab");
+    const activeTab: Tab = isValidTab(rawTab) ? rawTab : "overview";
+
+    function handleTabChange(value: string) {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("tab", value);
+        router.replace(`?${params.toString()}`);
+    }
+
     return (
-        <Tabs defaultValue="overview" className="flex h-screen flex-col">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex h-screen flex-col">
             <TabsList variant="line" className="w-full justify-start rounded-none border-b px-4">
-                <TabsTrigger value="overview" className="flex-none">
-                    Overview
-                </TabsTrigger>
-                <TabsTrigger value="content" className="flex-none">
-                    Content
-                </TabsTrigger>
-                <TabsTrigger value="ingestion" className="flex-none">
-                    Ingest
-                </TabsTrigger>
-                <TabsTrigger value="import" className="flex-none">
-                    Automatic import
-                </TabsTrigger>
+                {TABS.map((tab) => (
+                    <TabsTrigger key={tab.value} value={tab.value} className="flex-none">
+                        {tab.label}
+                    </TabsTrigger>
+                ))}
             </TabsList>
 
             <TabsContent value="overview" className="flex-1 p-4">
