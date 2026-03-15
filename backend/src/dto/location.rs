@@ -28,7 +28,7 @@ pub struct LocationPayload {
     pub uitdatabank_id: Option<String>,
 }
 
-#[derive(o2o, Deserialize, ToSchema)]
+#[derive(o2o, Serialize, Deserialize, ToSchema)]
 #[owned_into(LocationCreate)]
 pub struct LocationPostPayload {
     pub source_id: Option<i32>,
