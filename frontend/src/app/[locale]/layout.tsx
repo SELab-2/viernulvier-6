@@ -12,7 +12,6 @@ import { routing } from "@/i18n/routing";
 
 import "../globals.css";
 
-import { Footer, Header } from "@/components/layout";
 import { Providers } from "@/providers";
 
 const geistSans = Geist({
@@ -65,9 +64,7 @@ export default async function RootLayout({
                 className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen w-full flex-col antialiased`}
             >
                 <Providers messages={messages} locale={locale} timeZone={timeZone}>
-                    <Header />
-                    <main className="flex-1">{children}</main>
-                    <Footer />
+                    {children}
                 </Providers>
 
                 {/* {env.NEXT_PUBLIC_GA_ID && <GoogleAnalytics gaId={env.NEXT_PUBLIC_GA_ID} />} */}
