@@ -7,7 +7,7 @@ import { useUser } from "@/hooks/useAuth";
 import { useRouter } from "@/i18n/routing";
 import { DashboardCard, LoadingState, PageHeader } from "@/components/shared";
 
-export default function AdminPage() {
+export default function CmsDashboardPage() {
     const adminTranslations = useTranslations("Admin");
     const { data: user, isLoading } = useUser();
     const router = useRouter();

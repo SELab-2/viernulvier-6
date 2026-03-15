@@ -9,7 +9,7 @@ export function proxy(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
 
     const isAuthRoute = pathname.includes("/login");
-    const isProtectedRoute = pathname.includes("/admin");
+    const isProtectedRoute = pathname.includes("/cms");
 
     if (isProtectedRoute && !token) {
         // Mutate the path and let next-intl handle the localized redirect
@@ -19,7 +19,7 @@ export function proxy(request: NextRequest) {
 
     if (isAuthRoute && token) {
         // Mutate the path and let next-intl handle the localized redirect
-        request.nextUrl.pathname = "/admin";
+        request.nextUrl.pathname = "/cms";
         return intlMiddleware(request);
     }
 
