@@ -1,27 +1,48 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-
-import { DashboardCard, PageHeader } from "@/components/shared";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function CmsDashboardPage() {
-    const adminTranslations = useTranslations("Admin");
-
-    const userInfoSubtitle = <>{adminTranslations("welcomeBack")}</>;
-
     return (
-        <div className="container mx-auto max-w-4xl px-4 py-12">
-            <div className="flex flex-col gap-8">
-                <PageHeader title={adminTranslations("title")} subtitle={userInfoSubtitle} />
+        <Tabs defaultValue="overview" className="flex h-screen flex-col">
+            <TabsList variant="line" className="w-full justify-start rounded-none border-b px-4">
+                <TabsTrigger value="overview" className="flex-none">
+                    Overview
+                </TabsTrigger>
+                <TabsTrigger value="content" className="flex-none">
+                    Content
+                </TabsTrigger>
+                <TabsTrigger value="ingestion" className="flex-none">
+                    Ingest
+                </TabsTrigger>
+                <TabsTrigger value="import" className="flex-none">
+                    Automatic import
+                </TabsTrigger>
+            </TabsList>
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    <DashboardCard title={adminTranslations("quickActions")}>
-                        <p className="text-muted-foreground text-sm italic">
-                            {adminTranslations("comingSoon")}
-                        </p>
-                    </DashboardCard>
-                </div>
-            </div>
-        </div>
+            <TabsContent value="overview" className="flex-1 p-4">
+                Overview content
+            </TabsContent>
+
+            <TabsContent value="content" className="m-0 flex-1 overflow-hidden">
+                <SidebarProvider className="h-full min-h-0">
+                    <AppSidebar />
+                    <main className="flex-1 overflow-auto p-4">
+                        <SidebarTrigger />
+                        Content table goes here
+                    </main>
+                </SidebarProvider>
+            </TabsContent>
+
+            <TabsContent value="ingestion" className="flex-1 p-4">
+                Ingestion content (bulk media import and metadata attachment)
+            </TabsContent>
+
+            <TabsContent value="import" className="flex-1 p-4">
+                Status of the automatic marketing website import. Errors, graph, data...
+            </TabsContent>
+        </Tabs>
     );
 }
