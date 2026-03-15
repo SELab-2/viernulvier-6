@@ -35,7 +35,7 @@ export const useLogin = () => {
         },
         onSuccess: async () => {
             queryClient.invalidateQueries({ queryKey: ["user"] });
-            router.push("/editor");
+            router.push("/cms");
         },
         onError: (error: AxiosError) => {
             if (error.response?.status === 401) {
