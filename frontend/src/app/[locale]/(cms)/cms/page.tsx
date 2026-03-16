@@ -5,8 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { EntityTable } from "./entity-table";
 
 const TABS = [
-    { value: "overview", label: "Overview" },
-    { value: "content", label: "Content" },
+    { value: "overview", label: "CMS Overview" },
+    { value: "content", label: "Manage content" },
     { value: "ingestion", label: "Ingest" },
     { value: "import", label: "Automatic import" },
 ] as const;
@@ -26,6 +26,9 @@ export default function CmsDashboardPage() {
     function handleTabChange(value: string) {
         const params = new URLSearchParams(searchParams.toString());
         params.set("tab", value);
+        if (value !== "content") {
+            params.delete("type");
+        }
         router.replace(`?${params.toString()}`);
     }
 
