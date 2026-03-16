@@ -1,6 +1,3 @@
 /infra @tst-038
-/backend @hanneskt
-/backend @Kaya-Sem
-
-/frontend @tst-038
-/frontend @Thoosje
+/backend @hanneskt @Kaya-Sem
+/frontend @tst-038 @Thoosje
