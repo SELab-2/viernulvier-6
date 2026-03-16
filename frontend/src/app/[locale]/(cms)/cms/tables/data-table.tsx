@@ -1,7 +1,18 @@
 "use client";
 
-import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import {
+    ColumnDef,
+    ExpandedState,
+    Row,
+    flexRender,
+    getCoreRowModel,
+    getExpandedRowModel,
+    useReactTable,
+} from "@tanstack/react-table";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { Fragment, ReactNode, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import {
     Table,
     TableBody,
@@ -14,14 +25,53 @@ import {
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
+    renderSubComponent?: (row: Row<TData>) => ReactNode;
+    getRowCanExpand?: (row: Row<TData>) => boolean;
 }
 
-export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData, TValue>) {
+export function DataTable<TData, TValue>({
+    columns,
+    data,
+    renderSubComponent,
+    getRowCanExpand,
+}: DataTableProps<TData, TValue>) {
+    const [expanded, setExpanded] = useState<ExpandedState>({});
+
+    const expanderColumn: ColumnDef<TData> = {
+        id: "expander",
+        header: () => null,
+        cell: ({ row }) =>
+            row.getCanExpand() ? (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={row.getToggleExpandedHandler()}
+                    className="h-6 w-6 p-0"
+                >
+                    {row.getIsExpanded() ? (
+                        <ChevronDown className="h-4 w-4" />
+                    ) : (
+                        <ChevronRight className="h-4 w-4" />
+                    )}
+                </Button>
+            ) : null,
+    };
+
+    const allColumns: ColumnDef<TData, TValue>[] = renderSubComponent
+        ? [expanderColumn as ColumnDef<TData, TValue>, ...columns]
+        : columns;
+
     // eslint-disable-next-line react-hooks/incompatible-library
     const table = useReactTable({
         data,
-        columns,
+        columns: allColumns,
         getCoreRowModel: getCoreRowModel(),
+        ...(renderSubComponent && {
+            getExpandedRowModel: getExpandedRowModel(),
+            getRowCanExpand,
+            state: { expanded },
+            onExpandedChange: setExpanded,
+        }),
     });
 
     return (
@@ -30,35 +80,45 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
                 <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id}>
-                            {headerGroup.headers.map((header) => {
-                                return (
-                                    <TableHead key={header.id}>
-                                        {header.isPlaceholder
-                                            ? null
-                                            : flexRender(
-                                                  header.column.columnDef.header,
-                                                  header.getContext()
-                                              )}
-                                    </TableHead>
-                                );
-                            })}
+                            {headerGroup.headers.map((header) => (
+                                <TableHead key={header.id}>
+                                    {header.isPlaceholder
+                                        ? null
+                                        : flexRender(
+                                              header.column.columnDef.header,
+                                              header.getContext()
+                                          )}
+                                </TableHead>
+                            ))}
                         </TableRow>
                     ))}
                 </TableHeader>
                 <TableBody>
                     {table.getRowModel().rows?.length ? (
                         table.getRowModel().rows.map((row) => (
-                            <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                                {row.getVisibleCells().map((cell) => (
-                                    <TableCell key={cell.id}>
-                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                    </TableCell>
-                                ))}
-                            </TableRow>
+                            <Fragment key={row.id}>
+                                <TableRow data-state={row.getIsSelected() && "selected"}>
+                                    {row.getVisibleCells().map((cell) => (
+                                        <TableCell key={cell.id}>
+                                            {flexRender(
+                                                cell.column.columnDef.cell,
+                                                cell.getContext()
+                                            )}
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                                {renderSubComponent && row.getIsExpanded() && (
+                                    <TableRow>
+                                        <TableCell colSpan={allColumns.length} className="p-0">
+                                            {renderSubComponent(row)}
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </Fragment>
                         ))
                     ) : (
                         <TableRow>
-                            <TableCell colSpan={columns.length} className="h-24 text-center">
+                            <TableCell colSpan={allColumns.length} className="h-24 text-center">
                                 No results.
                             </TableCell>
                         </TableRow>

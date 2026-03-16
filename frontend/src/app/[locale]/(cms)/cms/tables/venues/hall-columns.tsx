@@ -1,23 +1,21 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import type { Hall } from "./hall-columns";
 
-export type Venue = {
+export type Hall = {
     name: string;
-    city: string;
+    capacity: number;
     metadata_status: "partial" | "complete";
-    halls?: Hall[];
 };
 
-export const columns: ColumnDef<Venue>[] = [
+export const hallColumns: ColumnDef<Hall>[] = [
     {
         accessorKey: "name",
         header: "Name",
     },
     {
-        accessorKey: "city",
-        header: "City",
+        accessorKey: "capacity",
+        header: "Capacity",
     },
     {
         accessorKey: "metadata_status",

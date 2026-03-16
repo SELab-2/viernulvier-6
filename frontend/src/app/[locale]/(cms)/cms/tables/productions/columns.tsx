@@ -11,12 +11,14 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { ProductionEvent } from "./event-columns";
 
 export type Production = {
     title: string;
     tagline: string;
     performer: string;
     metadata_status: "partial" | "complete";
+    events?: ProductionEvent[];
 };
 
 export const columns: ColumnDef<Production>[] = [
