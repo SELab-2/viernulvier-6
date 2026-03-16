@@ -19,7 +19,7 @@ async fn get_all(db: PgPool) {
     assert_eq!(response.status(), StatusCode::OK);
 
     let data: Vec<HallPayload> = response.into_struct().await;
-    assert_eq!(data.len(), 3);
+    assert_eq!(data.len(), 4);
 }
 
 #[sqlx::test(fixtures("locations", "spaces", "halls"))]
