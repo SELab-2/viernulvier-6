@@ -5,24 +5,50 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "./tables/data-table";
 import { columns as productionColumns, type Production } from "./tables/productions/columns";
 import { eventColumns, type ProductionEvent } from "./tables/productions/event-columns";
-import { columns as articleColumns, type Article } from "./tables/articles/columns";
+import { type Article, columns as articleColumns } from "./tables/articles/columns";
 import { columns as venueColumns, type Venue } from "./tables/venues/columns";
-import { hallColumns, type Hall } from "./tables/venues/hall-columns";
+import { type Hall, hallColumns } from "./tables/venues/hall-columns";
 import { columns as performerColumns, type Performer } from "./tables/performers/columns";
 import { useSearchParams } from "next/navigation";
 import type { Row } from "@tanstack/react-table";
 
 const MOCK_PRODUCTIONS: Production[] = [
     {
+        title: "Cut op de set!",
+        metadata_status: "complete",
+        tagline:
+            "Een intieme theatershow als afsluiter van de rollercoaster die Droomvoeding was, voordat Brihang zich terugtrekt om nieuw materiaal aaneen te rijgen.",
+        performer: "Brihang",
+        events: [
+            {
+                date: "19/03/2026",
+                time: "20:00",
+                venue: "De Vooruit - Theaterzaal",
+                ticket_status: "sold_out",
+            },
+        ],
+    },
+    {
         title: "Nirvana!",
         metadata_status: "complete",
         tagline: "nevermind first time in vooruit",
         performer: "Nirvana",
         events: [
-            { date: "1991-11-25", time: "20:00", venue: "De Vooruit", ticket_status: "sold_out" },
-            { date: "1991-11-26", time: "20:00", venue: "De Vooruit", ticket_status: "sold_out" },
+            {
+                date: "1991-11-25",
+                time: "20:00",
+                venue: "De Vooruit",
+                ticket_status: "sold_out",
+            },
+            {
+                date: "1991-11-26",
+                time: "20:00",
+                venue: "De Vooruit",
+                ticket_status: "sold_out",
+            },
         ],
     },
+
     {
         title: "De Vooruit",
         metadata_status: "complete",
@@ -43,23 +69,66 @@ const MOCK_ARTICLES: Article[] = [
 
 const MOCK_VENUES: Venue[] = [
     {
+        id: "00000000-0000-0000-0000-000000000001",
         name: "De Vooruit",
-        city: "Ghent",
-        metadata_status: "complete",
+        code: "VOORUIT",
+        street: "Sint-Pietersnieuwstraat",
+        number: "23",
+        postal_code: "9000",
+        city: "Gent",
+        country: "BE",
+        phone_1: null,
+        phone_2: null,
+        is_owned_by_viernulvier: true,
+        uitdatabank_id: null,
         halls: [
-            { name: "Balzaal", capacity: 1000, metadata_status: "complete" },
-            { name: "Filmzaal", capacity: 200, metadata_status: "partial" },
+            {
+                id: "00000000-0000-0000-0000-000000000010",
+                name: "Balzaal",
+                slug: "balzaal",
+                vendor_id: null,
+                box_office_id: null,
+                seat_selection: false,
+                open_seating: true,
+                remark: null,
+                space_id: null,
+            },
+            {
+                id: "00000000-0000-0000-0000-000000000011",
+                name: "Filmzaal",
+                slug: "filmzaal",
+                vendor_id: null,
+                box_office_id: null,
+                seat_selection: true,
+                open_seating: false,
+                remark: null,
+                space_id: null,
+            },
         ],
     },
     {
+        id: "00000000-0000-0000-0000-000000000002",
         name: "Stadschouwburg",
-        city: "Ghent",
-        metadata_status: "partial",
+        code: null,
+        street: "Sint-Baafsplein",
+        number: "17",
+        postal_code: "9000",
+        city: "Gent",
+        country: "BE",
+        phone_1: null,
+        phone_2: null,
+        is_owned_by_viernulvier: false,
+        uitdatabank_id: null,
         halls: [],
     },
 ];
 
-const MOCK_PERFORMERS: Performer[] = [{ name: "Nirvana", metadata_status: "partial" }];
+const MOCK_PERFORMERS: Performer[] = [
+    {
+        name: "Nirvana",
+        metadata_status: "partial",
+    },
+];
 
 export type ContentType = "productions" | "articles" | "venues" | "performers";
 
@@ -94,7 +163,10 @@ function TableForType({ type }: { type: ContentType }) {
                     data={MOCK_PRODUCTIONS}
                     renderSubComponent={renderProductionEvents}
                     getRowCanExpand={(row) => (row.original.events?.length ?? 0) > 0}
-                    expanderLabels={{ show: "Show events", hide: "Hide events" }}
+                    expanderLabels={{
+                        show: "Show events",
+                        hide: "Hide events",
+                    }}
                 />
             );
         case "articles":
