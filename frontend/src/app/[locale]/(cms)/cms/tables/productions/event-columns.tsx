@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { makeActionsColumn } from "../actions-column";
 
 export type ProductionEvent = {
     date: string;
@@ -26,4 +27,5 @@ export const eventColumns: ColumnDef<ProductionEvent>[] = [
         accessorKey: "ticket_status",
         header: "Tickets",
     },
+    makeActionsColumn<ProductionEvent>({ label: "event", copyKey: "venue" }),
 ];
