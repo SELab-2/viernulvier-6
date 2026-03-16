@@ -139,7 +139,7 @@ function isValidContentType(value: string | null): value is ContentType {
 function renderProductionEvents(row: Row<Production>) {
     const events: ProductionEvent[] = row.original.events ?? [];
     return (
-        <div className="bg-muted/30 px-6 py-1">
+        <div className="bg-muted/30 py-1 pr-6 pl-12">
             <DataTable columns={eventColumns} data={events} compact />
         </div>
     );
@@ -148,7 +148,7 @@ function renderProductionEvents(row: Row<Production>) {
 function renderVenueHalls(row: Row<Venue>) {
     const halls: Hall[] = row.original.halls ?? [];
     return (
-        <div className="bg-muted/30 px-6 py-1">
+        <div className="bg-muted/30 py-1 pr-6 pl-12">
             <DataTable columns={hallColumns} data={halls} compact />
         </div>
     );
