@@ -2,29 +2,33 @@
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { columns, type TableEntity } from "@/app/table-entities/columns";
+import { columns, type ProductionEntity } from "@/app/table-entities/columns";
 import { DataTable } from "@/app/table-entities/data-table";
 
-const MOCK_DATA: TableEntity[] = [
+const MOCK_DATA: ProductionEntity[] = [
     {
-        name: "entity 1",
-        entity_type: "production",
+        title: "Nirvana!",
         metadata_status: "complete",
+        tagline: "nevermind first time in vooruit",
+        performer: "Nirvana",
     },
     {
-        name: "Article about viernulvier",
-        entity_type: "article",
+        title: "Article about viernulvier",
         metadata_status: "complete",
+        tagline: "nevermind first time in vooruit",
+        performer: "Nirvana",
     },
     {
-        name: "De Vooruit",
-        entity_type: "location",
+        title: "De Vooruit",
         metadata_status: "complete",
+        tagline: "nevermind first time in vooruit",
+        performer: "Nirvana",
     },
     {
-        name: "entity 4",
-        entity_type: "production",
+        title: "entity 4",
         metadata_status: "complete",
+        tagline: "nevermind first time in vooruit",
+        performer: "Nirvana",
     },
 ];
 

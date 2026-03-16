@@ -12,20 +12,25 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export type TableEntity = {
-    name: string;
-    entity_type: "production" | "article" | "location";
+export type ProductionEntity = {
+    title: string;
+    tagline: string;
+    performer: string; // TODO: make struct for tjis?
     metadata_status: "partial" | "complete";
 };
 
-export const columns: ColumnDef<TableEntity>[] = [
+export const columns: ColumnDef<ProductionEntity>[] = [
     {
-        accessorKey: "name",
-        header: "Name",
+        accessorKey: "title",
+        header: "Title",
     },
     {
-        accessorKey: "entity_type",
-        header: "Type",
+        accessorKey: "performer",
+        header: "Performer",
+    },
+    {
+        accessorKey: "tagline",
+        header: "Tagline",
     },
     {
         accessorKey: "metadata_status",
@@ -47,9 +52,9 @@ export const columns: ColumnDef<TableEntity>[] = [
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(entity.name)}
+                            onClick={() => navigator.clipboard.writeText(entity.title)}
                         >
-                            Copy name
+                            Copy title
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() => {
@@ -64,14 +69,14 @@ export const columns: ColumnDef<TableEntity>[] = [
                                 /* TODO: */
                             }}
                         >
-                            View {entity.entity_type}
+                            View production
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() => {
                                 /* TODO: */
                             }}
                         >
-                            Edit {entity.entity_type}
+                            Edit production
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
