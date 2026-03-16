@@ -82,10 +82,27 @@ export function DataTable<TData, TValue>({
         ? [expanderColumn as ColumnDef<TData, TValue>, ...columns]
         : columns;
 
+    const spacerColumn: ColumnDef<TData, TValue> = {
+        id: "spacer",
+        header: () => null,
+        cell: () => null,
+    };
+
+    const finalColumns: ColumnDef<TData, TValue>[] = (() => {
+        const actionsIdx = allColumns.findIndex((c) => c.id === "actions");
+        const cols = [...allColumns];
+        if (actionsIdx !== -1) {
+            cols.splice(actionsIdx, 0, spacerColumn);
+        } else {
+            cols.push(spacerColumn);
+        }
+        return cols;
+    })();
+
     // eslint-disable-next-line react-hooks/incompatible-library
     const table = useReactTable({
         data,
-        columns: allColumns,
+        columns: finalColumns,
         getCoreRowModel: getCoreRowModel(),
         ...(renderSubComponent && {
             getExpandedRowModel: getExpandedRowModel(),
@@ -108,7 +125,14 @@ export function DataTable<TData, TValue>({
                     {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id}>
                             {headerGroup.headers.map((header) => (
-                                <TableHead key={header.id}>
+                                <TableHead
+                                    key={header.id}
+                                    className={
+                                        header.column.id === "spacer"
+                                            ? "w-full"
+                                            : "w-px whitespace-nowrap"
+                                    }
+                                >
                                     {header.isPlaceholder
                                         ? null
                                         : flexRender(
@@ -126,7 +150,14 @@ export function DataTable<TData, TValue>({
                             <Fragment key={row.id}>
                                 <TableRow data-state={row.getIsSelected() && "selected"}>
                                     {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
+                                        <TableCell
+                                            key={cell.id}
+                                            className={
+                                                cell.column.id === "spacer"
+                                                    ? "w-full p-0"
+                                                    : "whitespace-nowrap"
+                                            }
+                                        >
                                             {flexRender(
                                                 cell.column.columnDef.cell,
                                                 cell.getContext()
@@ -136,7 +167,7 @@ export function DataTable<TData, TValue>({
                                 </TableRow>
                                 {renderSubComponent && row.getIsExpanded() && (
                                     <TableRow>
-                                        <TableCell colSpan={allColumns.length} className="p-0">
+                                        <TableCell colSpan={finalColumns.length} className="p-0">
                                             {renderSubComponent(row)}
                                         </TableCell>
                                     </TableRow>
@@ -145,7 +176,7 @@ export function DataTable<TData, TValue>({
                         ))
                     ) : (
                         <TableRow>
-                            <TableCell colSpan={allColumns.length} className="h-24 text-center">
+                            <TableCell colSpan={finalColumns.length} className="h-24 text-center">
                                 No results.
                             </TableCell>
                         </TableRow>
