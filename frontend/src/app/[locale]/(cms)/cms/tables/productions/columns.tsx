@@ -12,14 +12,14 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export type ProductionEntity = {
+export type Production = {
     title: string;
     tagline: string;
-    performer: string; // TODO: make struct for tjis?
+    performer: string;
     metadata_status: "partial" | "complete";
 };
 
-export const columns: ColumnDef<ProductionEntity>[] = [
+export const columns: ColumnDef<Production>[] = [
     {
         accessorKey: "title",
         header: "Title",
