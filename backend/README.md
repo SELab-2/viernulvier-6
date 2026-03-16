@@ -18,7 +18,7 @@ cp .env.example .env
 ```
 
 > [!CAUTION]
-> Make sure to add your api for the VierNulVier API, or the import will not work
+> Make sure to add your api key for the VierNulVier API, or the import will not work
 
 Setup your database container. Migrations happen automatically at startup.
 
