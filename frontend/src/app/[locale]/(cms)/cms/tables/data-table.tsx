@@ -99,7 +99,9 @@ export function DataTable<TData, TValue>({
         <div className={compact ? undefined : "overflow-hidden rounded-md border"}>
             <Table
                 className={
-                    compact ? "[&_tbody_tr]:border-0 [&_td]:py-1.5 [&_thead]:border-b" : undefined
+                    compact
+                        ? "text-xs [&_tbody_tr]:border-0 [&_td]:py-1.5 [&_thead]:border-b"
+                        : "text-sm"
                 }
             >
                 <TableHeader>
