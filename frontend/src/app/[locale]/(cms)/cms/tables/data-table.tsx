@@ -21,12 +21,20 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+export interface ExpanderLabels {
+    show: string;
+    hide: string;
+}
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
     renderSubComponent?: (row: Row<TData>) => ReactNode;
     getRowCanExpand?: (row: Row<TData>) => boolean;
+    expanderLabels?: ExpanderLabels;
+    compact?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -34,6 +42,8 @@ export function DataTable<TData, TValue>({
     data,
     renderSubComponent,
     getRowCanExpand,
+    expanderLabels,
+    compact = false,
 }: DataTableProps<TData, TValue>) {
     const [expanded, setExpanded] = useState<ExpandedState>({});
 
@@ -42,18 +52,29 @@ export function DataTable<TData, TValue>({
         header: () => null,
         cell: ({ row }) =>
             row.getCanExpand() ? (
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={row.getToggleExpandedHandler()}
-                    className="h-6 w-6 p-0"
-                >
-                    {row.getIsExpanded() ? (
-                        <ChevronDown className="h-4 w-4" />
-                    ) : (
-                        <ChevronRight className="h-4 w-4" />
-                    )}
-                </Button>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={row.getToggleExpandedHandler()}
+                                className="h-6 w-6 p-0"
+                            >
+                                {row.getIsExpanded() ? (
+                                    <ChevronDown className="h-4 w-4" />
+                                ) : (
+                                    <ChevronRight className="h-4 w-4" />
+                                )}
+                            </Button>
+                        </TooltipTrigger>
+                        {expanderLabels && (
+                            <TooltipContent>
+                                {row.getIsExpanded() ? expanderLabels.hide : expanderLabels.show}
+                            </TooltipContent>
+                        )}
+                    </Tooltip>
+                </TooltipProvider>
             ) : null,
     };
 
@@ -75,8 +96,12 @@ export function DataTable<TData, TValue>({
     });
 
     return (
-        <div className="overflow-hidden rounded-md border">
-            <Table>
+        <div className={compact ? undefined : "overflow-hidden rounded-md border"}>
+            <Table
+                className={
+                    compact ? "[&_tbody_tr]:border-0 [&_td]:py-1.5 [&_thead]:border-b" : undefined
+                }
+            >
                 <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id}>

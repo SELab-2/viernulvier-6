@@ -70,8 +70,8 @@ function isValidContentType(value: string | null): value is ContentType {
 function renderProductionEvents(row: Row<Production>) {
     const events: ProductionEvent[] = row.original.events ?? [];
     return (
-        <div className="bg-muted/30 px-8 py-3">
-            <DataTable columns={eventColumns} data={events} />
+        <div className="bg-muted/30 px-6 py-1">
+            <DataTable columns={eventColumns} data={events} compact />
         </div>
     );
 }
@@ -79,8 +79,8 @@ function renderProductionEvents(row: Row<Production>) {
 function renderVenueHalls(row: Row<Venue>) {
     const halls: Hall[] = row.original.halls ?? [];
     return (
-        <div className="bg-muted/30 px-8 py-3">
-            <DataTable columns={hallColumns} data={halls} />
+        <div className="bg-muted/30 px-6 py-1">
+            <DataTable columns={hallColumns} data={halls} compact />
         </div>
     );
 }
@@ -94,6 +94,7 @@ function TableForType({ type }: { type: ContentType }) {
                     data={MOCK_PRODUCTIONS}
                     renderSubComponent={renderProductionEvents}
                     getRowCanExpand={(row) => (row.original.events?.length ?? 0) > 0}
+                    expanderLabels={{ show: "Show events", hide: "Hide events" }}
                 />
             );
         case "articles":
@@ -105,6 +106,7 @@ function TableForType({ type }: { type: ContentType }) {
                     data={MOCK_VENUES}
                     renderSubComponent={renderVenueHalls}
                     getRowCanExpand={(row) => (row.original.halls?.length ?? 0) > 0}
+                    expanderLabels={{ show: "Show halls", hide: "Hide halls" }}
                 />
             );
         case "performers":
