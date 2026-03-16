@@ -46,10 +46,14 @@ impl<'a> SpaceRepo<'a> {
     }
 
     pub async fn delete(&self, id: Uuid) -> Result<(), DatabaseError> {
-        sqlx::query("DELETE FROM spaces WHERE id = $1")
+        let res = sqlx::query("DELETE FROM spaces WHERE id = $1")
             .bind(id)
             .execute(self.db)
             .await?;
+
+        if res.rows_affected() == 0 {
+            return Err(DatabaseError::NotFound);
+        }
 
         Ok(())
     }

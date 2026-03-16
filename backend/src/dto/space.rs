@@ -49,7 +49,7 @@ pub struct SpacePayload {
     pub location_id: Uuid,
 }
 
-#[derive(o2o, Deserialize, ToSchema)]
+#[derive(o2o, Serialize, Deserialize, ToSchema)]
 #[owned_into(SpaceCreate)]
 pub struct SpacePostPayload {
     pub source_id: Option<i32>,
