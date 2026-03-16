@@ -57,7 +57,7 @@ pub struct HallPayload {
     pub space_id: Option<Uuid>,
 }
 
-#[derive(o2o, Deserialize, ToSchema)]
+#[derive(o2o, Serialize, Deserialize, ToSchema)]
 #[owned_into(HallCreate)]
 pub struct HallPostPayload {
     pub source_id: Option<i32>,
