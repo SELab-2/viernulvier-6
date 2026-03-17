@@ -26,8 +26,8 @@ pub struct ApiEvent {
     pub intermission_at: Option<DateTime<Utc>>,
     pub doors_at: Option<DateTime<Utc>>,
 
-    pub box_office_id: String,
-    pub vendor_id: String,
+    pub box_office_id: Option<String>,
+    pub vendor_id: Option<String>,
     pub max_tickets_per_order: Option<u32>,
     pub uitdatabank_id: Option<String>,
     pub secure: bool,
@@ -53,12 +53,13 @@ impl ApiEvent {
 
     pub fn to_create(self, production_id: Uuid, hall_id: Option<Uuid>) -> EventCreate {
         EventCreate {
+            source_id: extract_source_id(&self.id),
             created_at: self.created_at,
             updated_at: self.updated_at,
             started_at: self.starts_at,
             ended_at: self.ends_at,
             intermission_at: self.intermission_at,
-            doors_at: self.doors_at,
+            doors_at: self.doors_at,    
             vendor_id: self.vendor_id,
             box_office_id: self.box_office_id,
             uitdatabank_id: self.uitdatabank_id,

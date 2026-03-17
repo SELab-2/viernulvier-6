@@ -7,6 +7,7 @@ use uuid::Uuid;
 #[ormlite(table = "events")]
 pub struct Event {
     pub id: Uuid,
+    pub source_id: Option<i32>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub started_at: DateTime<Utc>,
@@ -14,9 +15,9 @@ pub struct Event {
     pub intermission_at: Option<DateTime<Utc>>,
     pub doors_at: Option<DateTime<Utc>>,
 
-    pub vendor_id: String,
-    pub box_office_id: String,      // can we throw this out?
-    pub uitdatabank_id: Option<String>,     // can we throw this out?
+    pub vendor_id: Option<String>,
+    pub box_office_id: Option<String>,  // can we throw this out?
+    pub uitdatabank_id: Option<String>, // can we throw this out?
     pub max_tickets_per_order: Option<i32>, // can we throw this out?
 
     pub production_id: Uuid,
