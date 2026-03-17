@@ -11,25 +11,17 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useRouter, useSearchParams } from "next/navigation";
-import type { ContentType } from "@/app/[locale]/(cms)/cms/entity-table";
+import { Link, usePathname } from "@/i18n/routing";
 
-const ENTITY_TYPES: { value: ContentType; label: string }[] = [
-    { value: "productions", label: "Productions" },
-    { value: "articles", label: "Articles" },
-    { value: "venues", label: "Venues" },
-    { value: "performers", label: "Performers" },
+const ENTITY_TYPES: { slug: string; label: string }[] = [
+    { slug: "productions", label: "Productions" },
+    { slug: "articles", label: "Articles" },
+    { slug: "venues", label: "Venues" },
+    { slug: "performers", label: "Performers" },
 ];
 
-export function AppSidebar({ activeType }: { activeType: ContentType }) {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-
-    function handleTypeChange(type: ContentType) {
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("type", type);
-        router.replace(`?${params.toString()}`);
-    }
+export function AppSidebar() {
+    const pathname = usePathname();
 
     return (
         <Sidebar>
@@ -39,12 +31,12 @@ export function AppSidebar({ activeType }: { activeType: ContentType }) {
                     <SidebarGroupLabel>Content type</SidebarGroupLabel>
                     <SidebarMenu>
                         {ENTITY_TYPES.map((type) => (
-                            <SidebarMenuItem key={type.value}>
+                            <SidebarMenuItem key={type.slug}>
                                 <SidebarMenuButton
-                                    isActive={activeType === type.value}
-                                    onClick={() => handleTypeChange(type.value)}
+                                    asChild
+                                    isActive={pathname === `/cms/${type.slug}`}
                                 >
-                                    {type.label}
+                                    <Link href={`/cms/${type.slug}`}>{type.label}</Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                         ))}
