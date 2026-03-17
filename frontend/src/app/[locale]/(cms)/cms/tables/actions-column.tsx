@@ -12,17 +12,19 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface ActionsColumnOptions {
-    /** Label used in "View {label}" and "Edit {label}" menu items */
+interface ActionsColumnOptions<TData> {
+    // Label used in "View {label}" and "Edit {label}" menu items
     label: string;
-    /** Key of the row's field to copy as the identifier (e.g. "title", "name") */
+    // Key of the row's field to copy as the identifier (e.g. "title", "name")
     copyKey: string;
+    // called with the row's data when the user chooses "Edit {label}"
+    onEdit?: (entity: TData) => void;
 }
 
 export function makeActionsColumn<TData extends Record<string, unknown>>(
-    options: ActionsColumnOptions
+    options: ActionsColumnOptions<TData>
 ): ColumnDef<TData> {
-    const { label, copyKey } = options;
+    const { label, copyKey, onEdit } = options;
 
     return {
         id: "actions",
@@ -58,11 +60,7 @@ export function makeActionsColumn<TData extends Record<string, unknown>>(
                         >
                             View {label}
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                            onClick={() => {
-                                /* TODO: */
-                            }}
-                        >
+                        <DropdownMenuItem onClick={() => onEdit?.(entity)}>
                             Edit {label}
                         </DropdownMenuItem>
                     </DropdownMenuContent>
