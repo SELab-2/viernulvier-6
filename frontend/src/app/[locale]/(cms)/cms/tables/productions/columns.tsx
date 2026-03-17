@@ -2,6 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { makeActionsColumn } from "../actions-column";
+import type { FieldDef } from "../edit-sheet";
 import type { ProductionEvent } from "./event-columns";
 
 export type Production = {
@@ -12,22 +13,35 @@ export type Production = {
     events?: ProductionEvent[];
 };
 
-export const columns: ColumnDef<Production>[] = [
+export const productionFields: FieldDef<Production>[] = [
+    { key: "title", label: "Title", type: "text" },
+    { key: "performer", label: "Performer", type: "text" },
+    { key: "tagline", label: "Tagline", type: "text" },
     {
-        accessorKey: "title",
-        header: "Title",
+        key: "metadata_status",
+        label: "Status",
+        type: "select",
+        options: [
+            { value: "partial", label: "Partial" },
+            { value: "complete", label: "Complete" },
+        ],
     },
-    {
-        accessorKey: "performer",
-        header: "Performer",
-    },
-    {
-        accessorKey: "tagline",
-        header: "Tagline",
-    },
-    {
-        accessorKey: "metadata_status",
-        header: "Data",
-    },
-    makeActionsColumn<Production>({ label: "production", copyKey: "title" }),
 ];
+
+export function makeProductionColumns(
+    options: {
+        onEdit?: (entity: Production) => void;
+    } = {}
+): ColumnDef<Production>[] {
+    return [
+        { accessorKey: "title", header: "Title" },
+        { accessorKey: "performer", header: "Performer" },
+        { accessorKey: "tagline", header: "Tagline" },
+        { accessorKey: "metadata_status", header: "Data" },
+        makeActionsColumn<Production>({
+            label: "production",
+            copyKey: "title",
+            onEdit: options.onEdit,
+        }),
+    ];
+}
