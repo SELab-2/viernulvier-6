@@ -49,8 +49,6 @@ impl<'a> HallRepo<'a> {
 
         Ok(())
     }
-<<<<<<< HEAD
-=======
 
     pub async fn by_source_id(&self, source_id: i32) -> Result<Option<Hall>, DatabaseError> {
         Ok(Hall::select()
@@ -59,5 +57,4 @@ impl<'a> HallRepo<'a> {
             .fetch_optional(self.db)
             .await?)
     }
->>>>>>> ea6e6a4 (add by_source_id methods for halls and productions)
 }
