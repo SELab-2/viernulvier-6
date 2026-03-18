@@ -140,7 +140,7 @@ jobs:
           script: |
             const marker = "<!-- preview-env -->";
             const prNumber = context.payload.pull_request.number;
-            const previewUrl = `http://${process.env.PREVIEW_HOST}/pr-${prNumber}`;
+            const previewUrl = `https://${process.env.PREVIEW_HOST}/pr-${prNumber}`;
 
             const { data: comments } = await github.rest.issues.listComments({
               issue_number: prNumber,
