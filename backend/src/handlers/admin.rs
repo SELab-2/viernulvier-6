@@ -10,7 +10,7 @@ use crate::{
     AppState,
     error::AppError,
     error::ErrorResponse,
-    extractors::auth::{AuthUser, RequireSuperAdmin},
+    extractors::auth::{RequireSuperAdmin, RequireAdmin},
 };
 use database::Database;
 use database::models::user::{UserCreate, UserRole};
@@ -44,13 +44,13 @@ pub struct CreateAdminRequest {
     )
 )]
 pub async fn admin(
-    auth: AuthUser,
+    RequireAdmin(admin): RequireAdmin,
     _state: State<AppState>,
 ) -> Result<Json<AdminResponse>, AppError> {
     Ok(Json(AdminResponse {
-        id: auth.id.to_string(),
-        email: auth.email,
-        role: auth.role,
+        id: admin.id.to_string(),
+        email: admin.email,
+        role: admin.role,
     }))
 }
 

@@ -3,8 +3,10 @@ use database::Database;
 use uuid::Uuid;
 
 use crate::{
+    error::ErrorResponse,
     dto::production::{ProductionPayload, ProductionPostPayload},
     handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
+    extractors::auth::RequireAdmin,
 };
 
 #[utoipa::path(
@@ -17,7 +19,9 @@ use crate::{
         (status = 200, description = "Success", body = [ProductionPayload])
     )
 )]
-pub async fn get_all(db: Database) -> JsonResponse<Vec<ProductionPayload>> {
+pub async fn get_all(
+    db: Database
+) -> JsonResponse<Vec<ProductionPayload>> {
     ProductionPayload::all(&db, 10).await?.json()
 }
 
@@ -35,7 +39,10 @@ pub async fn get_all(db: Database) -> JsonResponse<Vec<ProductionPayload>> {
         (status = 404, description = "Not found")
     )
 )]
-pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<ProductionPayload> {
+pub async fn get_one(
+    db: Database,
+    Path(id): Path<Uuid>
+) -> JsonResponse<ProductionPayload> {
     ProductionPayload::by_id(&db, id).await?.json()
 }
 
@@ -46,10 +53,15 @@ pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<Product
     operation_id = "create_production",
     description = "Create a production",
     responses(
-        (status = 201, description = "Created", body = ProductionPayload)
+        (status = 201, description = "Created", body = ProductionPayload),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    ),
+    security(
+        ("cookie_auth" = [])
     )
 )]
 pub async fn post(
+    _admin: RequireAdmin,
     db: Database,
     Json(production): Json<ProductionPostPayload>,
 ) -> JsonStatusResponse<ProductionPayload> {
@@ -67,10 +79,18 @@ pub async fn post(
         ),
     responses(
         (status = 204, description = "No Content"),
-        (status = 404, description = "Not found")
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    ),
+    security(
+        ("cookie_auth" = [])
     )
 )]
-pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
+pub async fn delete(
+    _admin: RequireAdmin,
+    db: Database,
+    Path(id): Path<Uuid>
+) -> StatusResponse {
     ProductionPayload::delete(&db, id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -83,10 +103,15 @@ pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
     description = "Update the fields of a production",
     responses(
         (status = 200, description = "Success", body = ProductionPayload),
-        (status = 404, description = "Not found")
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    ),
+    security(
+        ("cookie_auth" = [])
     )
 )]
 pub async fn put(
+    _admin: RequireAdmin,
     db: Database,
     Json(production): Json<ProductionPayload>,
 ) -> JsonResponse<ProductionPayload> {

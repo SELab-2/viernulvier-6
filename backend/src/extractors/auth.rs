@@ -61,6 +61,22 @@ impl FromRequestParts<AppState> for RequireSuperAdmin {
     }
 }
 
+pub struct RequireAdmin(pub AuthUser);
+
+impl FromRequestParts<AppState> for RequireAdmin {
+    type Rejection = AppError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &AppState) -> Result<Self, AppError> {
+        let user = AuthUser::from_request_parts(parts, state).await?;
+
+        if user.role != UserRole::Admin && user.role != UserRole::Superadmin {
+            return Err(AppError::Unauthorized);
+        }
+
+        Ok(RequireAdmin(user))
+    }
+}
+
 // Special implementation for Option<AuthUser> to allow optional auth (like in logout)
 impl FromRequestParts<AppState> for Option<AuthUser> {
     type Rejection = AppError;
