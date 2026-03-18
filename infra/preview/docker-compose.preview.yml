@@ -81,6 +81,24 @@ services:
     networks:
       - internal
 
+  garage-init:
+    image: amazon/aws-cli:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_garage_init
+    environment:
+      - AWS_ACCESS_KEY_ID=${GARAGE_S3_ACCESS_KEY}
+      - AWS_SECRET_ACCESS_KEY=${GARAGE_S3_SECRET_KEY}
+      - AWS_DEFAULT_REGION=garage
+    networks:
+      - internal
+    depends_on:
+      garage:
+        condition: service_started
+    entrypoint: >
+      sh -c "
+      sleep 5 &&
+      aws --endpoint-url http://garage:3900 s3 mb s3://${GARAGE_S3_BUCKET} || true
+      "
+
 volumes:
   db_data:
   garage_meta:
