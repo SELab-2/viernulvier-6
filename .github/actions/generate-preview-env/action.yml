@@ -62,7 +62,7 @@ runs:
       run: |
         mkdir -p infra/preview
 
-        PREVIEW_DATABASE_URL="postgres://${PREVIEW_DB_USER}:${PREVIEW_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}_database:5432/${PREVIEW_DB_NAME}"
+        PREVIEW_DATABASE_URL="postgres://${PREVIEW_DB_USER}:${PREVIEW_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}_db:5432/${PREVIEW_DB_NAME}"
          {
           echo "PREVIEW_HOST=${PREVIEW_HOST}"
           echo "PREVIEW_NAME=${PREVIEW_NAME}"
