@@ -93,6 +93,8 @@ services:
       - GARAGE_S3_ACCESS_KEY=${GARAGE_S3_ACCESS_KEY}
       - GARAGE_S3_SECRET_KEY=${GARAGE_S3_SECRET_KEY}
       - GARAGE_S3_BUCKET=${GARAGE_S3_BUCKET}
+      - GARAGE_ZONE=${GARAGE_ZONE:-dc1}
+      - GARAGE_CAPACITY=${GARAGE_CAPACITY:-1GiB}
     volumes:
       - ./garage.toml:/etc/garage.toml:ro
       - garage_meta:/var/lib/garage/meta
@@ -123,6 +125,17 @@ services:
         
         [ -f /var/lib/garage/meta/node_key ] || { echo "Node key not found"; exit 1; }
         
+        # Get node ID and configure layout
+        NODE_ID=$$($$G node id -q)
+        echo "Node ID: $$NODE_ID"
+        
+        # Check if layout needs to be configured
+        if $$G status 2>&1 | grep -q "NO ROLE ASSIGNED"; then
+          echo "Configuring layout..."
+          $$G layout assign "$$NODE_ID" -z "$$GARAGE_ZONE" -c "$$GARAGE_CAPACITY"
+          $$G layout apply --version 1
+        fi
+        
         # Now wait for healthy status
         echo "Waiting for garage to be healthy..."
         for i in $$(seq 1 30); do
@@ -135,7 +148,7 @@ services:
         
         echo "Creating key..."
         $$G key info "$$GARAGE_S3_ACCESS_KEY" 2>/dev/null || \
-          $$G key new --name app-key --id "$$GARAGE_S3_ACCESS_KEY" --secret "$$GARAGE_S3_SECRET_KEY"
+          $$G key import "$$GARAGE_S3_ACCESS_KEY" "$$GARAGE_S3_SECRET_KEY" -n app-key --yes
         
         echo "Creating bucket..."
         $$G bucket info "$$GARAGE_S3_BUCKET" 2>/dev/null || \
