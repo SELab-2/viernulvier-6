@@ -95,6 +95,8 @@ services:
       - GARAGE_S3_BUCKET=${GARAGE_S3_BUCKET}
     volumes:
       - ./garage.toml:/etc/garage.toml:ro
+      - garage_meta:/var/lib/garage/meta
+      - garage_data:/var/lib/garage/data
     network_mode: service:garage
     pid: service:garage
     depends_on:
@@ -105,16 +107,27 @@ services:
       - -eu
       - -c
       - |
-        # Copy garage binary from garage container (shares PID namespace)
+        # Copy garage binary from garage container
         cp /proc/1/root/garage /usr/local/bin/garage
         chmod +x /usr/local/bin/garage
         
         G="garage -c /etc/garage.toml"
         
-        # Wait for garage to be ready
+        # Wait for garage to generate node key first
+        echo "Waiting for garage node key..."
+        for i in $$(seq 1 60); do
+          if [ -f /var/lib/garage/meta/node_key ]; then break; fi
+          echo "Waiting for node key... ($$i/60)"
+          sleep 2
+        done
+        
+        [ -f /var/lib/garage/meta/node_key ] || { echo "Node key not found"; exit 1; }
+        
+        # Now wait for healthy status
+        echo "Waiting for garage to be healthy..."
         for i in $$(seq 1 30); do
           if $$G status 2>/dev/null | grep -q "HEALTHY"; then break; fi
-          echo "Waiting for Garage... ($$i/30)"
+          echo "Waiting... ($$i/30)"
           sleep 2
         done
         
