@@ -22,6 +22,16 @@
         "emailLabel": "E-mail",
         "loading": "Admin dashboard laden...",
         "quickActions": "Snelle acties",
-        "comingSoon": "Meer functies binnenkort beschikbaar..."
+        "comingSoon": "Meer functies binnenkort beschikbaar...",
+        "CreateAdmin": {
+            "title": "Nieuwe Admin Registreren",
+            "username": "Gebruikersnaam",
+            "email": "E-mailadres",
+            "password": "Tijdelijk Wachtwoord",
+            "submit": "Admin Aanmaken",
+            "success": "Admin succesvol aangemaakt!",
+            "error": "Actie mislukt.",
+            "errorMessage": "Er is iets misgegaan bij het aanmaken van de admin."
+        }
     }
 }

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-client";
 import { useRouter } from "@/i18n/routing";
 import { LoginDTO } from "@/types/dto/auth.types";
 import { User } from "@/types/models/user.types";

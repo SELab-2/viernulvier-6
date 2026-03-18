@@ -6,6 +6,8 @@ import { useTranslations } from "next-intl";
 import { useUser } from "@/hooks/useAuth";
 import { useRouter } from "@/i18n/routing";
 import { DashboardCard, LoadingState, PageHeader } from "@/components/shared";
+import { UserRole } from "@/types/models/user.types";
+import CreateAdminForm from "@/components/admin/CreateAdminForm";
 
 export default function AdminPage() {
     const adminTranslations = useTranslations("Admin");
@@ -42,7 +44,15 @@ export default function AdminPage() {
             <div className="flex flex-col gap-8">
                 <PageHeader title={adminTranslations("title")} subtitle={userInfoSubtitle} />
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {user.role === UserRole.SUPER_ADMIN && (
+                        <div className="md:col-span-2 lg:col-span-2">
+                            <DashboardCard title={adminTranslations("CreateAdmin.title")}>
+                                <CreateAdminForm />
+                            </DashboardCard>
+                        </div>
+                    )}
+
                     <DashboardCard title={adminTranslations("quickActions")}>
                         <p className="text-muted-foreground text-sm italic">
                             {adminTranslations("comingSoon")}
