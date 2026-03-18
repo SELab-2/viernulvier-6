@@ -35,7 +35,8 @@ services:
       S3_BUCKET: ${GARAGE_S3_BUCKET}
       API_KEY_404: ${PREVIEW_API_KEY_404}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${PREVIEW_NAME}-api.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/api`)"

@@ -54,7 +54,7 @@ jobs:
       - name: Start preview stack
         run: |
           docker compose --env-file .env --env-file infra/preview/.env.preview \
-            -f infra/preview/docker-compose.preview.yml up -d --build --force-recreate
+            -f infra/preview/docker-compose.preview.yml up -d --build
 
       - name: Comment preview links (replace previous)
         uses: actions/github-script@v7
