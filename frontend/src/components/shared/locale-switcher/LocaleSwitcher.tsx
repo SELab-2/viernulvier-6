@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 
 export const LocaleSwitcher = () => {
-    const t = useTranslations("LocaleSwitcher");
+    const localeSwitcherTranslations = useTranslations("LocaleSwitcher");
     const locale = useLocale();
     const router = useRouter();
     const pathname = usePathname();
@@ -25,7 +25,7 @@ export const LocaleSwitcher = () => {
     return (
         <Select defaultValue={locale} onValueChange={onSelectChange}>
             <SelectTrigger className="w-30">
-                <SelectValue placeholder={t("label")} />
+                <SelectValue placeholder={localeSwitcherTranslations("label")} />
             </SelectTrigger>
             <SelectContent>
                 <SelectItem value="en">English</SelectItem>

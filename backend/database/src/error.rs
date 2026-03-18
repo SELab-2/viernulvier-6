@@ -9,8 +9,18 @@ pub enum DatabaseError {
     Migrate(#[from] sqlx::migrate::MigrateError),
 
     #[error("Ormlite error: {0}")]
-    Ormlist(#[from] ormlite::Error),
+    Ormlite(ormlite::Error),
 
     #[error("Query returned no rows")]
     NotFound,
+}
+
+impl From<ormlite::Error> for DatabaseError {
+    fn from(value: ormlite::Error) -> Self {
+        match value {
+            ormlite::Error::SqlxError(sqlx::Error::RowNotFound) => DatabaseError::NotFound,
+            ormlite::Error::SqlxError(e) => DatabaseError::Sqlx(e),
+            _ => DatabaseError::Ormlite(value),
+        }
+    }
 }

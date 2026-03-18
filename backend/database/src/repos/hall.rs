@@ -32,4 +32,21 @@ impl<'a> HallRepo<'a> {
     pub async fn insert(&self, hall: HallCreate) -> Result<Hall, DatabaseError> {
         Ok(hall.insert(self.db).await?)
     }
+
+    pub async fn update(&self, hall: Hall) -> Result<Hall, DatabaseError> {
+        Ok(hall.update_all_fields(self.db).await?)
+    }
+
+    pub async fn delete(&self, id: Uuid) -> Result<(), DatabaseError> {
+        let res = sqlx::query("DELETE FROM halls WHERE id = $1")
+            .bind(id)
+            .execute(self.db)
+            .await?;
+
+        if res.rows_affected() == 0 {
+            return Err(DatabaseError::NotFound);
+        }
+
+        Ok(())
+    }
 }
