@@ -25,7 +25,7 @@ export default function CreateAdminForm() {
             await createAdmin(formData);
             toast.success(t("success"));
             setFormData({ username: "", email: "", password: "" }); // Reset form
-        } catch (err) {
+        } catch {
             setError(t("errorMessage"));
             toast.error(t("error"));
         } finally {
@@ -35,7 +35,7 @@ export default function CreateAdminForm() {
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            {error && <FormError error={error} />}
+            {error && <FormError message={error} />}
 
             <InputField
                 label={t("username")}
