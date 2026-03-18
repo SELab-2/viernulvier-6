@@ -1,7 +1,7 @@
 ---
 name: Server issue
 about: Report a backend crash, API error, or downtime
-title: "[Server] <Short description>"
+title: "server(topic_of_issue): <Short description>"
 labels: 'server'
 assignees: ''
 ---

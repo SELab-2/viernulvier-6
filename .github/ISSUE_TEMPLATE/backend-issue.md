@@ -1,7 +1,7 @@
 ---
 name: Backend issue
 about: Report an API bug, database error, or business logic failure
-title: "[Backend] <Short description>"
+title: "backend(topic_of_issue): <Short description>"
 labels: 'backend'
 assignees: ''
 ---

@@ -1,7 +1,7 @@
 ---
 name: Frontend issue
 about: Report a UI glitch, styling error, or client-side bug
-title: "[Frontend] <Short description>"
+title: "frontend(topic_of_issue): <Short description>"
 labels: 'frontend'
 assignees: ''
 ---
