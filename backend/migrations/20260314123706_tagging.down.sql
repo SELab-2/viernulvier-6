@@ -1,6 +1,6 @@
-DROP VIEW IF EXISTS entity_tags;
+DROP VIEW entity_tags;
 
-DROP TABLE IF EXISTS taggings;
-DROP TABLE IF EXISTS tags;
-DROP TABLE IF EXISTS facet_entity_types;
-DROP TABLE IF EXISTS facets;
+DROP TABLE taggings;
+DROP TABLE tags;
+DROP TABLE facet_entity_types;
+DROP TABLE facets;
