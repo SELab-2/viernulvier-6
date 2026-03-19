@@ -19,6 +19,7 @@ import {
     SheetHeader,
     SheetTitle,
 } from "@/components/ui/sheet";
+import { Label } from "@/components/ui/label";
 
 // field configuration types
 export interface SelectOption {
@@ -65,6 +66,7 @@ interface FieldRowProps<TData> {
 }
 
 function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
+    const fieldId = `field-${String(field.key)}`;
     const stringValue = value === null || value === undefined ? "" : String(value);
 
     if (field.readOnly) {
@@ -81,8 +83,9 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
     if (field.type === "text") {
         return (
             <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">{field.label}</label>
+                <Label htmlFor={fieldId}>{field.label}</Label>
                 <Input
+                    id={fieldId}
                     value={stringValue}
                     onChange={(e) => onChange(e.target.value)}
                     className="h-8 text-sm"
@@ -102,7 +105,7 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
 
     return (
         <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">{field.label}</label>
+            <Label htmlFor={fieldId}>{field.label}</Label>
             <Select
                 value={selectValue}
                 onValueChange={(v) => {
@@ -113,7 +116,7 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
                     }
                 }}
             >
-                <SelectTrigger size="sm" className="w-full">
+                <SelectTrigger id={fieldId} size="sm" className="w-full">
                     <SelectValue placeholder="Select…" />
                 </SelectTrigger>
                 <SelectContent>
