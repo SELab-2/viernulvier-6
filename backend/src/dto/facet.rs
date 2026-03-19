@@ -23,7 +23,10 @@ pub struct FacetDto {
 
 impl FacetDto {
     pub async fn all(db: &Database, entity_type: Option<&str>) -> Result<Vec<Self>, AppError> {
-        let rows = db.tags().facets(entity_type).await?;
+        let rows = match entity_type {
+            Some(et) => db.tags().with_facets_for_entity(et).await?,
+            None => db.tags().with_facets().await?,
+        };
         Ok(group_into_facets(rows))
     }
 }

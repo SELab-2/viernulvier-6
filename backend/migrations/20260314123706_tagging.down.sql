@@ -1,5 +1,4 @@
 DROP VIEW IF EXISTS entity_tags;
-DROP VIEW IF EXISTS tags_with_facet;
 
 DROP TABLE IF EXISTS taggings;
 DROP TABLE IF EXISTS tags;

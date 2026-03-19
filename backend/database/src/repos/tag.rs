@@ -46,48 +46,49 @@ impl<'a> TagRepo<'a> {
         .await?)
     }
 
-    pub async fn facets(
+    pub async fn with_facets(&self) -> Result<Vec<TagWithFacet>, DatabaseError> {
+        Ok(sqlx::query_as!(
+            TagWithFacet,
+            r#"
+            SELECT
+                f.slug       AS facet_slug,
+                f.label      AS facet_label,
+                f.sort_order AS facet_sort_order,
+                t.slug       AS tag_slug,
+                t.label      AS tag_label,
+                t.sort_order AS tag_sort_order
+            FROM tags t
+            JOIN facets f ON f.id = t.facet_id
+            ORDER BY f.sort_order, t.sort_order
+            "#
+        )
+        .fetch_all(self.db)
+        .await?)
+    }
+
+    pub async fn with_facets_for_entity(
         &self,
-        entity_type: Option<&str>,
+        entity_type: &str,
     ) -> Result<Vec<TagWithFacet>, DatabaseError> {
-        match entity_type {
-            Some(et) => Ok(sqlx::query_as!(
-                TagWithFacet,
-                r#"
-                SELECT
-                    f.slug       AS facet_slug,
-                    f.label      AS facet_label,
-                    f.sort_order AS facet_sort_order,
-                    t.slug       AS tag_slug,
-                    t.label      AS tag_label,
-                    t.sort_order AS tag_sort_order
-                FROM tags t
-                JOIN facets f ON f.id = t.facet_id
-                JOIN facet_entity_types fet ON fet.facet_id = f.id
-                WHERE fet.entity_type = $1
-                ORDER BY f.sort_order, t.sort_order
-                "#,
-                et
-            )
-            .fetch_all(self.db)
-            .await?),
-            None => Ok(sqlx::query_as!(
-                TagWithFacet,
-                r#"
-                SELECT
-                    f.slug       AS facet_slug,
-                    f.label      AS facet_label,
-                    f.sort_order AS facet_sort_order,
-                    t.slug       AS tag_slug,
-                    t.label      AS tag_label,
-                    t.sort_order AS tag_sort_order
-                FROM tags t
-                JOIN facets f ON f.id = t.facet_id
-                ORDER BY f.sort_order, t.sort_order
-                "#
-            )
-            .fetch_all(self.db)
-            .await?),
-        }
+        Ok(sqlx::query_as!(
+            TagWithFacet,
+            r#"
+            SELECT
+                f.slug       AS facet_slug,
+                f.label      AS facet_label,
+                f.sort_order AS facet_sort_order,
+                t.slug       AS tag_slug,
+                t.label      AS tag_label,
+                t.sort_order AS tag_sort_order
+            FROM tags t
+            JOIN facets f ON f.id = t.facet_id
+            JOIN facet_entity_types fet ON fet.facet_id = f.id
+            WHERE fet.entity_type = $1
+            ORDER BY f.sort_order, t.sort_order
+            "#,
+            entity_type
+        )
+        .fetch_all(self.db)
+        .await?)
     }
 }

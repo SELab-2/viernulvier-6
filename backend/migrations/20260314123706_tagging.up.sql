@@ -144,20 +144,6 @@ WHERE f.slug = 'audience';
 
 -- Useful views
 
--- Flat view: tag with its facet info. For API serialisation
-CREATE VIEW tags_with_facet AS
-SELECT
-  t.id,
-  t.slug,
-  t.label,
-  t.description,
-  t.sort_order,
-  f.id   AS facet_id,
-  f.slug AS facet_slug,
-  f.label AS facet_label
-FROM tags t
-JOIN facets f ON f.id = t.facet_id;
-
 -- per-entity tag summary. for listing tags on entity pages
 CREATE VIEW entity_tags AS
 SELECT
