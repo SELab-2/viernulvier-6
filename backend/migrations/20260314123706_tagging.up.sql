@@ -13,7 +13,8 @@ CREATE TABLE facets (
   description  text,
   sort_order   int         NOT NULL DEFAULT 0,
   created_at   timestamptz NOT NULL DEFAULT now(),
-  updated_at   timestamptz NOT NULL DEFAULT now()
+  updated_at   timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (sort_order)
 );
 
 -- Which entity types a facet applies to.
@@ -36,7 +37,8 @@ CREATE TABLE tags (
   sort_order   int         NOT NULL DEFAULT 0,
   created_at   timestamptz NOT NULL DEFAULT now(),
   updated_at   timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (facet_id, slug)
+  UNIQUE (facet_id, slug),
+  UNIQUE (facet_id, sort_order)
 );
 
 
