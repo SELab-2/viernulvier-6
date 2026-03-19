@@ -63,9 +63,8 @@ impl ApiEvent {
             vendor_id: self.vendor_id,
             box_office_id: self.box_office_id,
             uitdatabank_id: self.uitdatabank_id,
-            max_tickets_per_order: self
-                .max_tickets_per_order
-                .map(|v| i32::try_from(v).expect("max_tickets_per_order out of range")),
+            max_tickets_per_order: self.max_tickets_per_order
+                .map(|v| v.try_into().expect("max_tickets_per_order out of range")),
             production_id,
             status: self.status,
             hall_id,
