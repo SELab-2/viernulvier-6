@@ -26,6 +26,8 @@ CREATE TABLE facet_entity_types (
   PRIMARY KEY (facet_id, entity_type)
 );
 
+CREATE INDEX ON facet_entity_types (entity_type, facet_id);
+
 
 -- tags: the controlled vocabulary. Each tag belongs to a facet.
 CREATE TABLE tags (
