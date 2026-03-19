@@ -10,7 +10,7 @@ use crate::{
     AppState,
     error::AppError,
     error::ErrorResponse,
-    extractors::auth::{RequireSuperAdmin, RequireAdmin},
+    extractors::auth::{RequireAdmin, RequireEditor},
 };
 use database::Database;
 use database::models::user::{UserCreate, UserRole};
@@ -23,7 +23,7 @@ pub struct AdminResponse {
 }
 
 #[derive(Deserialize, ToSchema)]
-pub struct CreateAdminRequest {
+pub struct CreateEditorRequest {
     pub username: String,
     pub email: String,
     pub password: String,
@@ -44,7 +44,7 @@ pub struct CreateAdminRequest {
     )
 )]
 pub async fn admin(
-    RequireAdmin(admin): RequireAdmin,
+    RequireEditor(admin): RequireEditor,
     _state: State<AppState>,
 ) -> Result<Json<AdminResponse>, AppError> {
     Ok(Json(AdminResponse {
@@ -57,23 +57,23 @@ pub async fn admin(
 #[utoipa::path(
     method(post),
     path = "/admin/create",
-    operation_id = "create_admin",
+    operation_id = "create_editor",
     tag = "Admin",
-    description = "Create a new admin user (Superadmin only)",
-    request_body = CreateAdminRequest,
+    description = "Create a new editor user (Admin only)",
+    request_body = CreateEditorRequest,
     responses(
-        (status = 200, description = "Admin created successfully", body = AdminResponse),
-        (status = 401, description = "Unauthorized - Not a superadmin", body = ErrorResponse),
+        (status = 200, description = "Editor created successfully", body = AdminResponse),
+        (status = 401, description = "Unauthorized - Not an admin", body = ErrorResponse),
         (status = 500, description = "Internal Server Error", body = ErrorResponse)
     ),
     security(
         ("cookie_auth" = [])
     )
 )]
-pub async fn create_admin(
-    _superadmin: RequireSuperAdmin,
+pub async fn create_editor(
+    _admin: RequireAdmin,
     db: Database,
-    Json(payload): Json<CreateAdminRequest>,
+    Json(payload): Json<CreateEditorRequest>,
 ) -> Result<Json<AdminResponse>, AppError> {
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
@@ -89,11 +89,11 @@ pub async fn create_admin(
             username: payload.username,
             email: payload.email,
             password_hash,
-            role: UserRole::Admin,
+            role: UserRole::Editor,
         })
         .await
         .map_err(|e| {
-            AppError::Internal(format!("Could not create admin: {}", e))
+            AppError::Internal(format!("Could not create editor: {}", e))
         })?;
 
     Ok(Json(AdminResponse {

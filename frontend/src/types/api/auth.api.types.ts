@@ -6,13 +6,13 @@ export type UserResponse = {
     role: UserRole;
 };
 
-export type CreateAdminRequest = {
+export type CreateEditorRequest = {
     username: string;
     email: string;
     password: string;
 };
 
-export type CreatedAdminResponse = {
+export type CreatedEditorResponse = {
     id: string;
     email: string;
     role: UserRole;

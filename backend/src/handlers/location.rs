@@ -6,7 +6,7 @@ use crate::{
     error::ErrorResponse,
     dto::location::{LocationPayload, LocationPostPayload},
     handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
-    extractors::auth::RequireAdmin,
+    extractors::auth::RequireEditor,
 };
 
 #[utoipa::path(
@@ -61,7 +61,7 @@ pub async fn get_one(
     )
 )]
 pub async fn post(
-    _admin: RequireAdmin,
+    _admin: RequireEditor,
     db: Database,
     Json(location): Json<LocationPostPayload>,
 ) -> JsonStatusResponse<LocationPayload> {
@@ -87,7 +87,7 @@ pub async fn post(
     )
 )]
 pub async fn delete(
-    _admin: RequireAdmin,
+    _admin: RequireEditor,
     db: Database,
     Path(id): Path<Uuid>
 ) -> StatusResponse {
@@ -111,7 +111,7 @@ pub async fn delete(
     )
 )]
 pub async fn put(
-    _admin: RequireAdmin,
+    _admin: RequireEditor,
     db: Database,
     Json(location): Json<LocationPayload>
 ) -> JsonResponse<LocationPayload> {

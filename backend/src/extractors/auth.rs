@@ -43,37 +43,37 @@ impl FromRequestParts<AppState> for AuthUser {
 }
 
 #[allow(dead_code)] // the Authuser isn't actually being used for now but the guard is.
-pub struct RequireSuperAdmin(pub AuthUser);
-
-impl FromRequestParts<AppState> for RequireSuperAdmin {
-    type Rejection = AppError;
-
-    async fn from_request_parts(parts: &mut Parts, state: &AppState) -> Result<Self, AppError> {
-        // Use the existing AuthUser extractor to verify the user
-        let user = AuthUser::from_request_parts(parts, state).await?;
-
-        // Check for Superadmin
-        if user.role != UserRole::Superadmin {
-            return Err(AppError::Unauthorized);
-        }
-
-        Ok(RequireSuperAdmin(user))
-    }
-}
-
 pub struct RequireAdmin(pub AuthUser);
 
 impl FromRequestParts<AppState> for RequireAdmin {
     type Rejection = AppError;
 
     async fn from_request_parts(parts: &mut Parts, state: &AppState) -> Result<Self, AppError> {
+        // Use the existing AuthUser extractor to verify the user
         let user = AuthUser::from_request_parts(parts, state).await?;
 
-        if user.role != UserRole::Admin && user.role != UserRole::Superadmin {
+        // Check for Admin
+        if user.role != UserRole::Admin {
             return Err(AppError::Unauthorized);
         }
 
         Ok(RequireAdmin(user))
+    }
+}
+
+pub struct RequireEditor(pub AuthUser);
+
+impl FromRequestParts<AppState> for RequireEditor {
+    type Rejection = AppError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &AppState) -> Result<Self, AppError> {
+        let user = AuthUser::from_request_parts(parts, state).await?;
+
+        if user.role != UserRole::Editor && user.role != UserRole::Admin {
+            return Err(AppError::Unauthorized);
+        }
+
+        Ok(RequireEditor(user))
     }
 }
 

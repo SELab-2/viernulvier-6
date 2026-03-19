@@ -24,14 +24,14 @@
         "quickActions": "Quick Actions",
         "comingSoon": "More features coming soon...",
         "CreateAdmin": {
-            "title": "Register New Admin",
+            "title": "Register New Editor",
             "username": "Username",
             "email": "Email Address",
             "password": "Temporary Password",
-            "submit": "Create Admin",
-            "success": "Admin successfully created!",
+            "submit": "Create Editor",
+            "success": "Editor successfully created!",
             "error": "Action failed.",
-            "errorMessage": "Something went wrong while creating the admin."
+            "errorMessage": "Something went wrong while creating the editor."
         }
     }
 }

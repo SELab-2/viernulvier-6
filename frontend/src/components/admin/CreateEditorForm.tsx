@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { createAdmin } from "@/lib/api";
+import { createEditor } from "@/lib/api";
 import { FormError, InputField, SubmitButton } from "@/components/form";
 
-export default function CreateAdminForm() {
+export default function CreateEditorForm() {
     const t = useTranslations("Admin.CreateAdmin");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -22,7 +22,7 @@ export default function CreateAdminForm() {
         setError(null);
 
         try {
-            await createAdmin(formData);
+            await createEditor(formData);
             toast.success(t("success"));
             setFormData({ username: "", email: "", password: "" }); // Reset form
         } catch {

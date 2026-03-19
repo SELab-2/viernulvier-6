@@ -6,7 +6,7 @@ use crate::{
     error::ErrorResponse,
     dto::hall::{HallPayload, HallPostPayload},
     handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
-    extractors::auth::{RequireAdmin},
+    extractors::auth::{RequireEditor},
 };
 
 #[utoipa::path(
@@ -56,7 +56,7 @@ pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<HallPay
     )
 )]
 pub async fn post(
-    _admin: RequireAdmin,
+    _admin: RequireEditor,
     db: Database,
     Json(hall): Json<HallPostPayload>,
 ) -> JsonStatusResponse<HallPayload> {
@@ -82,7 +82,7 @@ pub async fn post(
     )
 )]
 pub async fn delete(
-    _admin: RequireAdmin,
+    _admin: RequireEditor,
     db: Database,
     Path(id): Path<Uuid>
 ) -> StatusResponse {
@@ -106,7 +106,7 @@ pub async fn delete(
     )
 )]
 pub async fn put(
-    _admin: RequireAdmin,
+    _admin: RequireEditor,
     db: Database,
     Json(hall): Json<HallPayload>
 ) -> JsonResponse<HallPayload> {

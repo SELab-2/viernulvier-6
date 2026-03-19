@@ -6,8 +6,8 @@ use utoipa::ToSchema;
 #[derive(Debug, sqlx::Type, PartialEq, Clone, Serialize, Deserialize, ToSchema)]
 #[sqlx(type_name = "user_role", rename_all = "lowercase")]
 pub enum UserRole {
-    Superadmin,
     Admin,
+    Editor,
     User,
 }
 
