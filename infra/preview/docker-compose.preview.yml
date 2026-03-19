@@ -29,9 +29,17 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}_api
     environment:
       DATABASE_URL: postgres://${PREVIEW_DB_USER}:${PREVIEW_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}_db:5432/${PREVIEW_DB_NAME}
+      S3_ENDPOINT: http://${COMPOSE_PROJECT_NAME}_garage:3900
+      S3_REGION: garage
+      S3_ACCESS_KEY: ${GARAGE_S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${GARAGE_S3_SECRET_KEY}
+      S3_BUCKET: ${GARAGE_S3_BUCKET}
       JWT_SECRET: ${PREVIEW_JWT_SECRET}
       API_KEY_404: ${PREVIEW_API_KEY_404}
       ALLOWED_ORIGINS: ${NEXT_PUBLIC_SITE_URL}
+    depends_on:
+      db:
+        condition: service_healthy
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${PREVIEW_NAME}-api.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/api`)"
@@ -56,10 +64,103 @@ services:
       - db_data:/var/lib/postgresql
     networks:
       - internal
+    healthcheck:
+      test:
+        ["CMD-SHELL", "pg_isready -U ${PREVIEW_DB_USER} -d ${PREVIEW_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  garage:
+    image: dxflrs/garage:v2.2.0
+    container_name: ${COMPOSE_PROJECT_NAME}_garage
     restart: unless-stopped
+    environment:
+      - GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET}
+    volumes:
+      - ./garage.toml:/etc/garage.toml
+      - garage_meta:/var/lib/garage/meta
+      - garage_data:/var/lib/garage/data
+    networks:
+      - internal
+
+  garage-init:
+    image: alpine:3.21
+    container_name: ${COMPOSE_PROJECT_NAME}_garage_init
+    environment:
+      - GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET}
+      - GARAGE_S3_ACCESS_KEY=${GARAGE_S3_ACCESS_KEY}
+      - GARAGE_S3_SECRET_KEY=${GARAGE_S3_SECRET_KEY}
+      - GARAGE_S3_BUCKET=${GARAGE_S3_BUCKET}
+      - GARAGE_ZONE=${GARAGE_ZONE:-dc1}
+      - GARAGE_CAPACITY=${GARAGE_CAPACITY:-1GiB}
+    volumes:
+      - ./garage.toml:/etc/garage.toml:ro
+      - garage_meta:/var/lib/garage/meta
+      - garage_data:/var/lib/garage/data
+    network_mode: service:garage
+    pid: service:garage
+    depends_on:
+      garage:
+        condition: service_started
+    entrypoint:
+      - /bin/sh
+      - -eu
+      - -c
+      - |
+        # Copy garage binary from garage container
+        cp /proc/1/root/garage /usr/local/bin/garage
+        chmod +x /usr/local/bin/garage
+        
+        G="garage -c /etc/garage.toml"
+        
+        # Wait for garage to generate node key first
+        echo "Waiting for garage node key..."
+        for i in $$(seq 1 60); do
+          if [ -f /var/lib/garage/meta/node_key ]; then break; fi
+          echo "Waiting for node key... ($$i/60)"
+          sleep 2
+        done
+        
+        [ -f /var/lib/garage/meta/node_key ] || { echo "Node key not found"; exit 1; }
+        
+        # Get node ID and configure layout
+        NODE_ID=$$($$G node id -q)
+        echo "Node ID: $$NODE_ID"
+        
+        # Check if layout needs to be configured
+        if $$G status 2>&1 | grep -q "NO ROLE ASSIGNED"; then
+          echo "Configuring layout..."
+          $$G layout assign "$$NODE_ID" -z "$$GARAGE_ZONE" -c "$$GARAGE_CAPACITY"
+          $$G layout apply --version 1
+        fi
+        
+        # Now wait for healthy status
+        echo "Waiting for garage to be healthy..."
+        for i in $$(seq 1 30); do
+          if $$G status 2>/dev/null | grep -q "HEALTHY"; then break; fi
+          echo "Waiting... ($$i/30)"
+          sleep 2
+        done
+        
+        $$G status | grep -q "HEALTHY" || { echo "Garage not healthy"; exit 1; }
+        
+        echo "Creating key..."
+        $$G key info "$$GARAGE_S3_ACCESS_KEY" 2>/dev/null || \
+          $$G key import "$$GARAGE_S3_ACCESS_KEY" "$$GARAGE_S3_SECRET_KEY" -n app-key --yes
+        
+        echo "Creating bucket..."
+        $$G bucket info "$$GARAGE_S3_BUCKET" 2>/dev/null || \
+          $$G bucket create "$$GARAGE_S3_BUCKET"
+        $$G bucket allow "$$GARAGE_S3_BUCKET" --key "$$GARAGE_S3_ACCESS_KEY" --read --write || true
+        
+        echo "Init complete!"
 
 volumes:
   db_data:
+  garage_meta:
+  garage_data:
 
 networks:
   traefik:
