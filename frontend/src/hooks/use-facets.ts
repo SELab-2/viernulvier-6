@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
+import type { AxiosError } from "axios";
 import { api } from "@/lib/api";
 import type { FacetDto } from "@/types/dto/taxonomy.types";
 
 export const useFacets = (entityType: string | null) => {
-    return useQuery<FacetDto[]>({
+    return useQuery<FacetDto[], AxiosError>({
         queryKey: ["facets", entityType],
         queryFn: async () => {
             const { data } = await api.get<FacetDto[]>("/taxonomy/facets", {
@@ -12,6 +13,6 @@ export const useFacets = (entityType: string | null) => {
             return data;
         },
         enabled: !!entityType,
-        staleTime: 10 * 60_000,
+        staleTime: Infinity,
     });
 };
