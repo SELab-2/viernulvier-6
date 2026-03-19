@@ -4,7 +4,7 @@ use serde::Deserialize;
 use utoipa::IntoParams;
 
 use crate::{
-    dto::facet::FacetDto,
+    dto::facet::FacetResponse,
     handlers::{IntoApiResponse, JsonResponse},
 };
 
@@ -22,14 +22,14 @@ pub struct TaxonomyParams {
     description = "Get all facets with their tags",
     params(TaxonomyParams),
     responses(
-        (status = 200, description = "Success", body = [FacetDto])
+        (status = 200, description = "Success", body = [FacetResponse])
     )
 )]
 pub async fn get_facets(
     db: Database,
     Query(params): Query<TaxonomyParams>,
-) -> JsonResponse<Vec<FacetDto>> {
-    FacetDto::all(&db, params.entity_type.as_deref())
+) -> JsonResponse<Vec<FacetResponse>> {
+    FacetResponse::all(&db, params.entity_type.as_deref())
         .await?
         .json()
 }
