@@ -13,7 +13,7 @@ export const useUser = (options?: { enabled?: boolean }) => {
     return useQuery<User>({
         queryKey: ["user"],
         queryFn: async () => {
-            const { data } = await api.get<UserResponse>("/admin/me");
+            const { data } = await api.get<UserResponse>("/editor/me");
             return mapUser(data);
         },
         retry: false,
@@ -35,7 +35,7 @@ export const useLogin = () => {
         },
         onSuccess: async () => {
             queryClient.invalidateQueries({ queryKey: ["user"] });
-            router.push("/admin");
+            router.push("/editor");
         },
         onError: (error: AxiosError) => {
             if (error.response?.status === 401) {

@@ -53,7 +53,7 @@ api.interceptors.response.use(
                 processQueue(refreshError as AxiosError, null);
                 queryClient.removeQueries({ queryKey: ["user"] });
 
-                // Protected pages (e.g. /admin) already guard via useEffect and proxy.ts should redirect aswell.
+                // Protected pages (e.g. /editor) already guard via useEffect and proxy.ts should redirect aswell.
                 // Reloading here would cause an infinite loop on public pages.
 
                 return Promise.reject(refreshError);

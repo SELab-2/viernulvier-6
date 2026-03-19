@@ -1,12 +1,18 @@
 use std::str::FromStr;
 
 use axum::http::StatusCode;
+use database::{Database, models::user::UserRole};
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
+use viernulvier_api::config::AppConfig;
 use viernulvier_api::dto::production::{ProductionPayload, ProductionPostPayload};
 
-use crate::common::{into_struct::IntoStruct, router::TestRouter};
+use crate::common::{
+    into_struct::IntoStruct,
+    router::TestRouter,
+    user::{create_test_user, login_user},
+};
 
 mod common;
 
@@ -48,7 +54,12 @@ async fn get_one_not_found(db: PgPool) {
 #[sqlx::test]
 #[test_log::test]
 async fn post_success(db: PgPool) {
-    let app = TestRouter::new(db.clone());
+    let database = Database::new(db.clone());
+    let config = AppConfig::load().unwrap();
+    let editor_user = create_test_user(&database, "editor@test.com", UserRole::Editor).await;
+    let cookie = login_user(&database, &config, &editor_user).await;
+
+    let app = TestRouter::new(db.clone()).with_cookie(cookie);
     let payload = mock_post_payload();
 
     let response = app.post("/productions", &payload).await;
@@ -63,7 +74,12 @@ async fn post_success(db: PgPool) {
 #[sqlx::test(fixtures("productions"))]
 #[test_log::test]
 async fn put_success(db: PgPool) {
-    let app = TestRouter::new(db.clone());
+    let database = Database::new(db.clone());
+    let config = AppConfig::load().unwrap();
+    let editor_user = create_test_user(&database, "editor@test.com", UserRole::Editor).await;
+    let cookie = login_user(&database, &config, &editor_user).await;
+
+    let app = TestRouter::new(db.clone()).with_cookie(cookie);
     let target_id = Uuid::from_str("33333333-3333-3333-3333-333333333333").unwrap();
 
     let update_payload: ProductionPayload = serde_json::from_value(json!({
@@ -84,7 +100,12 @@ async fn put_success(db: PgPool) {
 #[sqlx::test]
 #[test_log::test]
 async fn put_not_found(db: PgPool) {
-    let app = TestRouter::new(db.clone());
+    let database = Database::new(db.clone());
+    let config = AppConfig::load().unwrap();
+    let editor_user = create_test_user(&database, "editor@test.com", UserRole::Editor).await;
+    let cookie = login_user(&database, &config, &editor_user).await;
+
+    let app = TestRouter::new(db.clone()).with_cookie(cookie);
 
     let missing_production: ProductionPayload = serde_json::from_value(json!({
         "id": Uuid::nil(),
@@ -99,7 +120,12 @@ async fn put_not_found(db: PgPool) {
 #[sqlx::test(fixtures("productions"))]
 #[test_log::test]
 async fn delete_success(db: PgPool) {
-    let app = TestRouter::new(db.clone());
+    let database = Database::new(db.clone());
+    let config = AppConfig::load().unwrap();
+    let editor_user = create_test_user(&database, "editor@test.com", UserRole::Editor).await;
+    let cookie = login_user(&database, &config, &editor_user).await;
+
+    let app = TestRouter::new(db.clone()).with_cookie(cookie);
     let target_id = Uuid::from_str("22222222-2222-2222-2222-222222222222").unwrap();
 
     let response = app.delete(&format!("/productions/{}", target_id)).await;
@@ -112,7 +138,12 @@ async fn delete_success(db: PgPool) {
 #[sqlx::test]
 #[test_log::test]
 async fn delete_not_found(db: PgPool) {
-    let app = TestRouter::new(db.clone());
+    let database = Database::new(db.clone());
+    let config = AppConfig::load().unwrap();
+    let editor_user = create_test_user(&database, "editor@test.com", UserRole::Editor).await;
+    let cookie = login_user(&database, &config, &editor_user).await;
+
+    let app = TestRouter::new(db.clone()).with_cookie(cookie);
 
     let response = app.delete(&format!("/productions/{}", Uuid::nil())).await;
     assert_eq!(response.status(), StatusCode::NOT_FOUND);

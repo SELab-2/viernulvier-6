@@ -16,7 +16,7 @@ use database::Database;
 use database::models::user::{UserCreate, UserRole};
 
 #[derive(Serialize, ToSchema)]
-pub struct AdminResponse {
+pub struct EditorResponse {
     pub id: String,
     pub email: String,
     pub role: UserRole,
@@ -31,38 +31,38 @@ pub struct CreateEditorRequest {
 
 #[utoipa::path(
     method(get),
-    path = "/admin/me",
-    operation_id = "get_admin_info",
-    tag = "Admin",
-    description = "Receive admin info of the logged in user",
+    path = "/editor/me",
+    operation_id = "get_editor_info",
+    tag = "Editor",
+    description = "Receive editor info of the logged in user",
     responses(
-        (status = 200, description = "Success", body = AdminResponse),
+        (status = 200, description = "Success", body = EditorResponse),
         (status = 401, description = "Unauthorized", body = ErrorResponse)
     ),
     security(
         ("cookie_auth" = [])
     )
 )]
-pub async fn admin(
-    RequireEditor(admin): RequireEditor,
+pub async fn editor_me(
+    RequireEditor(editor): RequireEditor,
     _state: State<AppState>,
-) -> Result<Json<AdminResponse>, AppError> {
-    Ok(Json(AdminResponse {
-        id: admin.id.to_string(),
-        email: admin.email,
-        role: admin.role,
+) -> Result<Json<EditorResponse>, AppError> {
+    Ok(Json(EditorResponse {
+        id: editor.id.to_string(),
+        email: editor.email,
+        role: editor.role,
     }))
 }
 
 #[utoipa::path(
     method(post),
-    path = "/admin/create",
+    path = "/editor/create",
     operation_id = "create_editor",
-    tag = "Admin",
+    tag = "Editor",
     description = "Create a new editor user (Admin only)",
     request_body = CreateEditorRequest,
     responses(
-        (status = 200, description = "Editor created successfully", body = AdminResponse),
+        (status = 200, description = "Editor created successfully", body = EditorResponse),
         (status = 401, description = "Unauthorized - Not an admin", body = ErrorResponse),
         (status = 500, description = "Internal Server Error", body = ErrorResponse)
     ),
@@ -74,7 +74,7 @@ pub async fn create_editor(
     _admin: RequireAdmin,
     db: Database,
     Json(payload): Json<CreateEditorRequest>,
-) -> Result<Json<AdminResponse>, AppError> {
+) -> Result<Json<EditorResponse>, AppError> {
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
 
@@ -96,7 +96,7 @@ pub async fn create_editor(
             AppError::Internal(format!("Could not create editor: {}", e))
         })?;
 
-    Ok(Json(AdminResponse {
+    Ok(Json(EditorResponse {
         id: user.id.to_string(),
         email: user.email,
         role: user.role,

@@ -13,6 +13,7 @@ use viernulvier_api::{AppState, config::AppConfig, router};
 
 pub struct TestRouter {
     router: axum::Router,
+    cookie: Option<String>,
 }
 
 impl TestRouter {
@@ -28,7 +29,13 @@ impl TestRouter {
 
         Self {
             router: router().with_state(state),
+            cookie: None,
         }
+    }
+
+    pub fn with_cookie(mut self, cookie: String) -> Self {
+        self.cookie = Some(cookie);
+        self
     }
 
     /// send a request to an endpoint on this router
@@ -75,7 +82,12 @@ impl TestRouter {
         path: &str,
         body: Option<T>,
     ) -> Response<Body> {
-        let request_builder = Request::builder().method(method).uri(path);
+        let mut request_builder = Request::builder().method(method).uri(path);
+
+        if let Some(cookie) = &self.cookie {
+            request_builder = request_builder.header(header::COOKIE, cookie);
+        }
+
         let request = match body {
             Some(body) => request_builder
                 .header(header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())

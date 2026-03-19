@@ -132,7 +132,7 @@ fn open_routes() -> OpenApiRouter<AppState> {
         .routes(routes!(auth::login))
         .routes(routes!(auth::refresh))
         .routes(routes!(auth::logout))
-        .routes(routes!(admin::admin))
+        .routes(routes!(admin::editor_me))
         .routes(routes!(admin::create_editor))
         // halls
         .routes(routes!(hall::get_all))
