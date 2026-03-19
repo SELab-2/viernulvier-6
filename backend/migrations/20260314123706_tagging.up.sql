@@ -36,6 +36,7 @@ CREATE TABLE tags (
   sort_order   int         NOT NULL DEFAULT 0,
   created_at   timestamptz NOT NULL DEFAULT now(),
   updated_at   timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (slug),
   UNIQUE (facet_id, slug)
 );
 
