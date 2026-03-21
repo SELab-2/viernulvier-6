@@ -9,7 +9,7 @@ export const mapUser = (response: UserResponse): User => {
         : UserRole.USER;
 
     return {
-        id: response.user_id,
+        id: response.id,
         email: response.email,
         role: role,
     };

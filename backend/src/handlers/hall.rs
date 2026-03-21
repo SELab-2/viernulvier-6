@@ -56,7 +56,7 @@ pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<HallPay
     )
 )]
 pub async fn post(
-    _admin: RequireEditor,
+    _editor: RequireEditor,
     db: Database,
     Json(hall): Json<HallPostPayload>,
 ) -> JsonStatusResponse<HallPayload> {
@@ -82,7 +82,7 @@ pub async fn post(
     )
 )]
 pub async fn delete(
-    _admin: RequireEditor,
+    _editor: RequireEditor,
     db: Database,
     Path(id): Path<Uuid>
 ) -> StatusResponse {
@@ -106,7 +106,7 @@ pub async fn delete(
     )
 )]
 pub async fn put(
-    _admin: RequireEditor,
+    _editor: RequireEditor,
     db: Database,
     Json(hall): Json<HallPayload>
 ) -> JsonResponse<HallPayload> {

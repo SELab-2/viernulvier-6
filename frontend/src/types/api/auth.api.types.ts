@@ -1,7 +1,7 @@
 import { UserRole } from "@/types/models/user.types";
 
 export type UserResponse = {
-    user_id: string;
+    id: string;
     email: string;
     role: UserRole;
 };

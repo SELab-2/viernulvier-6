@@ -61,7 +61,7 @@ pub async fn get_one(
     )
 )]
 pub async fn post(
-    _admin: RequireEditor,
+    _editor: RequireEditor,
     db: Database,
     Json(production): Json<ProductionPostPayload>,
 ) -> JsonStatusResponse<ProductionPayload> {
@@ -87,7 +87,7 @@ pub async fn post(
     )
 )]
 pub async fn delete(
-    _admin: RequireEditor,
+    _editor: RequireEditor,
     db: Database,
     Path(id): Path<Uuid>
 ) -> StatusResponse {
@@ -111,7 +111,7 @@ pub async fn delete(
     )
 )]
 pub async fn put(
-    _admin: RequireEditor,
+    _editor: RequireEditor,
     db: Database,
     Json(production): Json<ProductionPayload>,
 ) -> JsonResponse<ProductionPayload> {

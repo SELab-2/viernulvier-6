@@ -4,6 +4,7 @@ use uuid::Uuid;
 use utoipa::ToSchema;
 
 #[derive(Debug, sqlx::Type, PartialEq, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "lowercase")]
 #[sqlx(type_name = "user_role", rename_all = "lowercase")]
 pub enum UserRole {
     Admin,
