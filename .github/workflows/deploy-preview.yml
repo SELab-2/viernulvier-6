@@ -65,7 +65,9 @@ jobs:
           script: |
             const marker = "<!-- preview-env -->";
             const prNumber = context.payload.pull_request.number;
+
             const previewUrl = `https://${process.env.PREVIEW_HOST}/pr-${prNumber}`;
+            const docsUrl = `${previewUrl}/docs`;
             const apiUrl = `${previewUrl}/api`;
 
             // 1. Fetch all comments on the PR
@@ -92,6 +94,7 @@ jobs:
               marker +
               "\n## Preview Environment \n\n" +
               "- Frontend: [Open Preview](" + previewUrl + ")\n" +
+              "- Docs: [Open Docs](" + docsUrl + ")\n" +
               "- API: [Open API](" + apiUrl + ")\n";
 
             await github.rest.issues.createComment({
