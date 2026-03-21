@@ -1,0 +1,95 @@
+---
+title: Backend Architecture
+description: Comprehensive documentation of the core architecture, workspace structure, database connection handling, and design patterns for the viernulvier-archief backend.
+---
+
+# Backend Architecture
+
+The `viernulvier-archief` backend is a highly performant, type-safe REST API built in Rust. It serves as the core data engine for the application, handling everything from complex archive queries to administrative authentication.
+
+## Core Tech Stack
+
+- **Language**: [Rust](https://www.rust-lang.org/) (Strictly typed, memory-safe, fearless concurrency)
+- **Web Framework**: [Axum](https://github.com/tokio-rs/axum) (Ergonomic and modular web framework built with Tokio, Tower, and Hyper)
+- **Database**: PostgreSQL
+- **Database Toolkit**: [SQLx](https://github.com/launchbadge/sqlx) (Compile-time checked queries and async connection pooling)
+- **Environment & Config**: Custom environment extraction via `dotenv` / environment variables.
+
+---
+
+## Workspace Structure
+
+The backend utilizes a **Cargo Workspace** to enforce a strict separation of concerns. This modularity prevents circular dependencies and keeps domain logic isolated from HTTP transport logic.
+
+```text
+backend/
+├── api/                    # Shared core models and domain types
+│   ├── src/models/         # Domain structs (event, hall, location, production, etc.)
+│   └── Cargo.toml
+├── database/               # Data Access Layer (DAL)
+│   ├── src/models/         # Database-specific representations of data
+│   ├── src/repos/          # Repository Pattern implementations (user, space, production)
+│   ├── src/error.rs        # Database-specific error handling
+│   └── Cargo.toml
+├── migrations/             # SQLx migration files (up/down SQL scripts)
+├── src/                    # The Web/HTTP Layer (Axum)
+│   ├── dto/                # Data Transfer Objects (Payloads for requests/responses)
+│   ├── extractors/         # Axum Extractors (Auth, Config, DB Connections)
+│   ├── handlers/           # Route controllers (admin, auth, production)
+│   ├── config.rs           # Application configuration state
+│   ├── error.rs            # HTTP-level error handling
+│   └── main.rs             # Application entry point and router setup
+├── Dockerfile              # Containerization definition
+└── Cargo.toml              # Root workspace manifest
+```
+
+---
+
+## Key Foundations & Design Choices
+
+### 1. The HTTP Layer (Axum)
+
+We use **Axum** for routing and handling HTTP requests. The architecture within the `src/` directory is explicitly designed to keep handlers clean:
+
+- **Handlers (`src/handlers/`)**: Contain the core business logic for specific routes. They receive validated data, interact with the database repositories, and return standard HTTP responses.
+- **Extractors (`src/extractors/`)**: Axum extractors are used heavily to manage request state and validation _before_ hitting the handler.
+  - `database.rs`: Injects the SQLx database connection pool into handlers.
+  - `auth.rs`: Validates session tokens and injects the authenticated user context.
+  - `config.rs`: Injects application-level configuration state.
+
+### 2. Data Transfer Objects (DTOs)
+
+To prevent tight coupling between our internal database schema and our public API contracts, we use DTOs (`src/dto/`).
+
+- **Purpose**: Incoming JSON requests are deserialized into DTOs, and internal database models are mapped to DTOs before being serialized into JSON responses. This ensures that adding a private field to a database table does not accidentally leak it to the public API.
+
+### 3. Database & Repository Pattern
+
+All database interactions are abstracted behind the **Repository Pattern**, located in the `database/` crate.
+
+- **Compile-Time Checked Queries**: We use **SQLx** for database interactions. This allows us to write raw, optimized SQL queries (`operations/sql/script.sql` and within repos) that are verified against our actual database schema at compile time.
+- **Repositories (`database/src/repos/`)**: Modules like `user.rs`, `production.rs`, and `hall.rs` contain the specific CRUD operations. The HTTP handlers never write SQL directly; they only call repository methods.
+- **Migrations (`migrations/`)**: Database schema changes are strictly version-controlled using SQLx migrations. Every change has an `.up.sql` (apply) and `.down.sql` (rollback) script (e.g., `20260224000000_initial`).
+
+### 4. Authentication Strategy
+
+Authentication handles access to the administrative dashboard and protected resources.
+
+- **Sessions**: Session management is handled via the database (`database/src/models/session.rs` and `repos/sessions.rs`).
+- **Middleware/Extraction**: The `Auth` extractor (`src/extractors/auth.rs`) intercepts requests to protected routes, verifies the session token against the database, and either rejects the request with a `401 Unauthorized` or passes the `User` object down to the handler.
+
+### 5. Unified Error Handling
+
+Errors are strongly typed and handled gracefully across the stack to ensure safe and informative API responses.
+
+- **Database Errors (`database/src/error.rs`)**: Captures standard database faults (e.g., unique constraint violations, connection timeouts) and maps them to internal Rust enums.
+- **HTTP Errors (`src/error.rs`)**: The web layer maps internal errors and database errors to standard HTTP status codes and uniform JSON error payloads (e.g., turning a "Not Found" database error into a `404 Not Found` HTTP response).
+
+---
+
+## Deployment & Environments
+
+The backend is fully containerized for straightforward deployment across different environments.
+
+- **Containerization**: The `backend/Dockerfile` uses a multi-stage build process to compile the Rust binary in a heavy builder image and move the compiled artifact to a minimal runtime image, keeping the final container size extremely small.
+- **CI/CD Integration**: It is integrated into the shared `.github/workflows/` structure, deploying alongside the frontend using Docker Compose (`infra/production/docker-compose.prod.yml` and `infra/preview/docker-compose.preview.yml`). Traefik is used as the reverse proxy to route traffic securely.
