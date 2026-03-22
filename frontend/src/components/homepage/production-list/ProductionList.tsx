@@ -25,46 +25,45 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
         (t): t is string => Boolean(t)
     );
 
-    // TODO: derive display type from production data (uitdatabankType or similar field)
     const displayType = production.uitdatabankType ?? "Productie";
 
     return (
         <>
             <div
                 onClick={toggle}
-                className={`border-muted/35 hover:bg-muted/5 flex cursor-pointer items-start gap-4 border-b px-4 py-3.5 transition-colors sm:-mx-2.5 sm:gap-5 sm:px-2.5 ${
+                className={`border-muted/35 hover:bg-muted/5 flex cursor-pointer items-start gap-3 border-b px-4 py-3.5 transition-colors sm:gap-[18px] sm:px-7 ${
                     expanded ? "bg-muted/5" : ""
                 }`}
                 style={{ animation: "fadein 0.3s ease both" }}
             >
                 {/* TODO: replace with actual production image from API when available */}
-                <div className="bg-muted relative h-[56px] w-[72px] shrink-0 overflow-hidden sm:h-[66px] sm:w-[90px]">
+                <div className="bg-muted relative h-[52px] w-[68px] shrink-0 overflow-hidden sm:h-[62px] sm:w-[86px]">
                     <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
                 </div>
 
                 <div className="min-w-0 flex-1">
-                    <div className="font-display text-foreground mb-0.5 text-lg leading-[1.15] font-bold tracking-[-0.02em] sm:text-xl">
+                    <div className="font-display text-foreground mb-0.5 text-[16px] leading-[1.1] font-bold tracking-[-0.02em] sm:text-[18px]">
                         {title}
                     </div>
 
                     {artist && (
-                        <div className="font-display text-foreground/40 mb-1.5 text-lg font-bold tracking-[-0.02em] sm:text-xl">
+                        <div className="font-display text-foreground/38 mb-1.5 text-[16px] font-bold tracking-[-0.02em] sm:text-[18px]">
                             {artist}
                         </div>
                     )}
 
                     {tagline && (
-                        <p className="font-body text-muted-foreground mb-1.5 text-xs leading-relaxed">
+                        <p className="font-body text-muted-foreground mb-1 text-xs leading-relaxed">
                             {tagline}
                         </p>
                     )}
 
                     {tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5">
+                        <div className="flex flex-wrap gap-1">
                             {tags.map((tag) => (
                                 <span
                                     key={tag}
-                                    className="border-border text-muted-foreground border px-2 py-0.5 font-mono text-[9px] tracking-[1.2px] uppercase"
+                                    className="border-border text-muted-foreground border px-1.5 py-px font-mono text-[8px] tracking-[1.1px] uppercase sm:px-2 sm:py-0.5"
                                 >
                                     {tag}
                                 </span>
@@ -74,16 +73,15 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
                 </div>
 
                 <div className="flex shrink-0 flex-col items-end gap-2 pt-0.5">
-                    <span className="border-foreground text-foreground border-[1.2px] px-2 py-[4px] font-mono text-[8px] font-medium tracking-[1.4px] uppercase sm:px-2.5 sm:py-[5px] sm:text-[9px]">
+                    <span className="border-foreground text-foreground border px-2 py-1 font-mono text-[8px] font-medium tracking-[1.3px] uppercase sm:px-2 sm:py-1">
                         {displayType}
                     </span>
                 </div>
             </div>
 
-            {/* TODO: render actual event rows when events API is available */}
             {expanded && (
-                <div className="flex flex-col pb-3.5 pl-4 sm:pl-[110px]">
-                    <div className="border-muted/35 font-body text-muted-foreground border-t py-2.5 text-xs tracking-[0.08em]">
+                <div className="border-muted/35 bg-muted/4 flex flex-col border-b pl-4 sm:pl-[calc(28px+86px+18px)]">
+                    <div className="border-muted/35 font-body text-muted-foreground border-t px-4 py-2.5 text-xs tracking-[0.06em] sm:px-0">
                         Evenementen binnenkort beschikbaar
                     </div>
                 </div>
@@ -95,31 +93,12 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
 interface ProductionListProps {
     productions: Production[];
     locale: string;
-    searchQuery?: string;
 }
 
-export function ProductionList({ productions, locale, searchQuery }: ProductionListProps) {
-    const filtered = searchQuery
-        ? productions.filter((p) => {
-              const title = getLocalizedField(p, "title", locale) ?? p.slug;
-              const artist = getLocalizedField(p, "artist", locale) ?? "";
-              const text = `${title} ${artist} ${p.slug}`.toLowerCase();
-              return text.includes(searchQuery.toLowerCase());
-          })
-        : productions;
-
+export function ProductionList({ productions, locale }: ProductionListProps) {
     return (
-        <div>
-            <div className="border-muted/35 mb-0 flex items-baseline gap-4 border-b px-4 py-[18px] pb-2.5 sm:-mx-2.5 sm:px-2.5">
-                <h2 className="font-display text-[13px] font-medium tracking-[0.08em] uppercase">
-                    Producties
-                </h2>
-                <span className="text-muted-foreground font-mono text-[10px] tracking-wider">
-                    Toont {filtered.length} van {productions.length} resultaten
-                </span>
-            </div>
-
-            {filtered.map((production) => (
+        <div className="overflow-hidden">
+            {productions.map((production) => (
                 <ProductionItem key={production.id} production={production} locale={locale} />
             ))}
         </div>

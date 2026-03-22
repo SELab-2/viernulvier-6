@@ -5,22 +5,30 @@
     "LocaleSwitcher": {
         "label": "Taal selecteren"
     },
+    "ThemeSwitcher": {
+        "dark": "Donker",
+        "light": "Licht"
+    },
     "Masthead": {
-        "address": "Archief — Sint-Pietersnieuwstraat 23, Gent",
-        "subtitle": "Archief — De Vooruit, Gent — Opgericht 1883",
-        "genres": "Theater · Dans · Muziek · Performance · Nightlife",
-        "nav": {
-            "productions": "Producties",
-            "artists": "Artiesten",
-            "articles": "Artikels",
-            "posters": "Affiches",
-            "collection": "Collectie",
-            "about": "Over"
-        }
+        "address": "Sint-Pietersnieuwstraat 23, Gent",
+        "subtitle": "De Vooruit — Opgericht 1883",
+        "genres": "Theater · Dans · Muziek · Performance · Nightlife"
     },
     "Search": {
         "placeholder": "Zoeken in het archief...",
-        "hint": "↵ zoeken"
+        "hint": "↵ zoeken",
+        "heroEyebrow": "Archief — {count} producties",
+        "heroTitle": "Doorzoek het archief",
+        "heroTitleItalic": "van De Vooruit",
+        "heroPlaceholder": "Artiest, productie, jaar\u2026",
+        "quickSearch": "Snel zoeken:",
+        "tags": {
+            "dance": "Dans",
+            "theater": "Theater",
+            "concert": "Concert",
+            "nightlife": "Nightlife",
+            "performance": "Performance"
+        }
     },
     "Featured": {
         "label": "Uitgelicht uit het archief"
@@ -58,10 +66,30 @@
         "year": {
             "label": "Jaar"
         },
-        "clearAll": "Clear All"
+        "clearAll": "Wis alles"
     },
     "Home": {
-        "loading": "Archief laden..."
+        "loading": "Archief laden...",
+        "hero": {
+            "title": "Het verhaal van De Vooruit",
+            "subtitle": "Meer dan een eeuw theater, dans, muziek en nachtleven in het hart van Gent.",
+            "searchPlaceholder": "Zoek in het archief\u2026"
+        },
+        "tags": {
+            "theater": "Theater",
+            "dance": "Dans",
+            "concert": "Concert",
+            "nightlife": "Nightlife"
+        },
+        "about": {
+            "title": "Kunstencentrum VIERNULVIER",
+            "text": "Sinds 1883 is De Vooruit een broedplaats voor kunst, cultuur en samenleving. Van revolutionaire feesten tot hedendaagse performance \u2014 het archief bewaart het allemaal.",
+            "address": "Sint-Pietersnieuwstraat 23 \u00b7 9000 Gent"
+        },
+        "latest": {
+            "label": "Laatste producties",
+            "viewAll": "Bekijk alles"
+        }
     },
     "Productions": {
         "title": "Producties",

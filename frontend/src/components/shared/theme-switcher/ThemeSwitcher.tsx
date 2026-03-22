@@ -3,9 +3,11 @@
 import { useCallback } from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useTranslations } from "next-intl";
 
 export function ThemeSwitcher() {
     const { setTheme, theme } = useTheme();
+    const t = useTranslations("ThemeSwitcher");
 
     const toggleTheme = useCallback(() => {
         setTheme(theme === "dark" ? "light" : "dark");
@@ -18,8 +20,8 @@ export function ThemeSwitcher() {
         >
             <Sun className="hidden h-3 w-3 [html.dark_&]:block" />
             <Moon className="hidden h-3 w-3 [html.light_&]:block" />
-            <span className="hidden [html.dark_&]:inline">Licht</span>
-            <span className="hidden [html.light_&]:inline">Donker</span>
+            <span className="hidden [html.dark_&]:inline">{t("light")}</span>
+            <span className="hidden [html.light_&]:inline">{t("dark")}</span>
         </button>
     );
 }

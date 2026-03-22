@@ -1,81 +1,130 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 import { useGetProductions } from "@/hooks/api/useProductions";
-import { useGetLocations } from "@/hooks/api/useLocations";
-import { getLocalizedField } from "@/lib/locale";
 
-import { LoadingState } from "@/components/shared/loading-state";
-import { Masthead } from "@/components/homepage/masthead";
-import { SearchBar } from "@/components/homepage/search-bar";
+import { SearchHeader } from "@/components/homepage/search-header";
 import { FeaturedSection } from "@/components/homepage/featured-section";
-import { ArchiveSidebar } from "@/components/homepage/archive-sidebar";
-import { ProductionList } from "@/components/homepage/production-list";
-import { Pagination } from "@/components/homepage/pagination";
+import { ProductionItem } from "@/components/homepage/production-list";
 
 export default function HomePage() {
     const locale = useLocale();
     const t = useTranslations("Home");
-    const [searchQuery, setSearchQuery] = useState("");
+    const tSearch = useTranslations("Search");
+    const router = useRouter();
+    const [query, setQuery] = useState("");
 
-    const { data: productions, isLoading: productionsLoading } = useGetProductions();
-    const { data: locations, isLoading: locationsLoading } = useGetLocations();
+    const { data: productions } = useGetProductions();
 
-    const isLoading = productionsLoading || locationsLoading;
+    const handleSearch = useCallback(() => {
+        if (query.trim()) {
+            router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+        } else {
+            router.push("/search");
+        }
+    }, [query, router]);
 
-    // TODO: implement pagination with API (page/limit params) when backend supports it
-    const ITEMS_PER_PAGE = 20;
-    const [currentPage, setCurrentPage] = useState(1);
-
-    if (isLoading) {
-        return (
-            <>
-                <Masthead />
-                <LoadingState message={t("loading")} />
-            </>
-        );
-    }
-
-    const allProductions = productions ?? [];
-    const totalPages = Math.max(1, Math.ceil(allProductions.length / ITEMS_PER_PAGE));
-    const pagedProductions = allProductions.slice(
-        (currentPage - 1) * ITEMS_PER_PAGE,
-        currentPage * ITEMS_PER_PAGE
-    );
-
-    const filteredProductions = searchQuery
-        ? allProductions.filter((p) => {
-              const title = getLocalizedField(p, "title", locale) ?? p.slug;
-              const artist = getLocalizedField(p, "artist", locale) ?? "";
-              const text = `${title} ${artist} ${p.slug}`.toLowerCase();
-              return text.includes(searchQuery.toLowerCase());
-          })
-        : pagedProductions;
+    const latestProductions = (productions ?? []).slice(0, 4);
 
     return (
         <>
-            <Masthead />
-            <SearchBar onSearch={setSearchQuery} />
+            <SearchHeader
+                query=""
+                onQueryChange={() => {}}
+                searchPlaceholder={tSearch("placeholder")}
+                searchHint={tSearch("hint")}
+            />
 
-            <div className="px-4 pt-2 sm:px-[30px] sm:pt-4">
+            {/* Hero */}
+            <section className="border-muted/30 flex flex-col items-center gap-6 border-b px-4 py-16 text-center sm:px-10 sm:py-24">
+                <h1 className="font-display text-foreground text-[40px] leading-[1.05] font-bold tracking-[-0.03em] sm:text-[64px] md:text-[72px]">
+                    {t("hero.title")}
+                </h1>
+                <p className="text-muted-foreground font-body max-w-[480px] text-sm leading-relaxed sm:text-base">
+                    {t("hero.subtitle")}
+                </p>
+
+                {/* Search CTA */}
+                <div className="relative w-full max-w-[560px]">
+                    <input
+                        type="text"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") handleSearch();
+                        }}
+                        placeholder={t("hero.searchPlaceholder")}
+                        className="border-foreground font-body text-foreground placeholder:text-muted-foreground hover:bg-foreground/5 w-full cursor-pointer border-2 bg-transparent py-3.5 pr-12 pl-5 text-sm transition-colors outline-none sm:py-4 sm:pl-6 sm:text-base"
+                    />
+                    <button
+                        onClick={handleSearch}
+                        className="text-foreground hover:text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 cursor-pointer"
+                    >
+                        <ArrowRight className="h-4 w-4 stroke-2" />
+                    </button>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+                    {["theater", "dance", "concert", "nightlife"].map((tag) => (
+                        <Link
+                            key={tag}
+                            href={`/search?q=${t(`tags.${tag}`)}`}
+                            className="border-border text-muted-foreground hover:border-foreground hover:text-foreground border px-3 py-1.5 font-mono text-[9px] tracking-[1.1px] uppercase transition-all sm:text-[10px]"
+                        >
+                            {t(`tags.${tag}`)}
+                        </Link>
+                    ))}
+                </div>
+            </section>
+
+            {/* Featured */}
+            <section className="px-4 pt-8 sm:px-[30px] sm:pt-12">
                 <FeaturedSection />
-            </div>
+            </section>
 
-            <div className="flex min-h-[calc(100vh-200px)]">
-                <ArchiveSidebar locations={locations ?? []} />
-                <main className="min-w-0 flex-1 px-4 pb-20 sm:px-[30px] sm:pb-16">
-                    <ProductionList productions={filteredProductions} locale={locale} />
-                    {!searchQuery && totalPages > 1 && (
-                        <Pagination
-                            totalPages={totalPages}
-                            currentPage={currentPage}
-                            onPageChange={setCurrentPage}
-                        />
-                    )}
-                </main>
-            </div>
+            {/* Latest productions */}
+            {latestProductions.length > 0 && (
+                <section className="border-muted/30 border-t px-4 py-10 sm:px-[30px] sm:py-14">
+                    <div className="mb-6 flex items-baseline justify-between">
+                        <h3 className="font-display text-foreground text-[20px] font-bold tracking-[-0.02em] sm:text-[24px]">
+                            {t("latest.label")}
+                        </h3>
+                        <Link
+                            href="/search"
+                            className="text-muted-foreground hover:text-foreground font-mono text-[9px] tracking-[1.4px] uppercase transition-colors"
+                        >
+                            {t("latest.viewAll")}
+                        </Link>
+                    </div>
+                    <div className="border-muted/35 border">
+                        {latestProductions.map((production) => (
+                            <ProductionItem
+                                key={production.id}
+                                production={production}
+                                locale={locale}
+                            />
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {/* About */}
+            <section className="border-foreground/10 flex flex-col items-center gap-5 border-t px-4 py-14 text-center sm:px-10 sm:py-20">
+                <h3 className="font-display text-foreground text-[24px] leading-tight font-bold tracking-[-0.02em] sm:text-[32px]">
+                    {t("about.title")}
+                </h3>
+                <p className="text-muted-foreground font-body max-w-[480px] text-sm leading-relaxed">
+                    {t("about.text")}
+                </p>
+                <span className="text-muted-foreground font-mono text-[9px] tracking-[1.4px] uppercase sm:text-[10px]">
+                    {t("about.address")}
+                </span>
+            </section>
         </>
     );
 }

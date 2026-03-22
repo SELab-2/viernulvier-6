@@ -4,3 +4,6 @@ export * from "./masthead";
 export * from "./search-bar";
 export * from "./featured-section";
 export * from "./archive-sidebar";
+export * from "./search-header";
+export * from "./search-hero";
+export * from "./results-bar";
