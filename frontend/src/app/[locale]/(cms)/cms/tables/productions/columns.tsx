@@ -6,6 +6,7 @@ import type { FieldDef } from "../edit-sheet";
 import type { ProductionEvent } from "./event-columns";
 
 export type Production = {
+    id: string;
     title: string;
     tagline: string;
     performer: string;
