@@ -13,10 +13,11 @@ use crate::{
 pub mod models {
     pub mod artist;
     pub mod blogpost;
+    pub mod entity_type;
+    pub mod facet;
     pub mod collection;
     pub mod collection_item;
     pub mod event;
-    pub mod facet;
     pub mod hall;
     pub mod internal_state;
     pub mod location;
