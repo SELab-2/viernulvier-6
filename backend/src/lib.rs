@@ -17,9 +17,6 @@ use utoipa_axum::routes;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::config::AppConfig;
-use crate::dto::location::LocationPayload;
-use crate::dto::production::{ProductionPayload, ProductionPostPayload};
-use crate::dto::event::EventPayload;
 use crate::error::AppError;
 use crate::handlers::{admin, auth, event, hall, location, production, space, version};
 
@@ -175,12 +172,16 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // production
         .routes(routes!(production::get_all))
         .routes(routes!(production::get_one))
+        .routes(routes!(production::get_events))
         // hall
         .routes(routes!(hall::get_all))
         .routes(routes!(hall::get_one))
         // space
         .routes(routes!(space::get_all))
         .routes(routes!(space::get_one))
+        // event
+        .routes(routes!(event::get_all))
+        .routes(routes!(event::get_one))
 }
 
 // Only editors can edit data
@@ -205,6 +206,10 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(space::delete))
         .routes(routes!(space::put))
         .layer(from_extractor_with_state::<EditorUser, AppState>(state))
+        // Event
+        .routes(routes!(event::post))
+        .routes(routes!(event::delete))
+        .routes(routes!(event::put))
 }
 
 fn admin_routes(state: AppState) -> OpenApiRouter<AppState> {
