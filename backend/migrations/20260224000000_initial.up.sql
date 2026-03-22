@@ -102,8 +102,8 @@ CREATE TABLE events (
     source_id   INTEGER, -- id's coming from the viernulvier marketing website: https://www.viernulvier.gent/api/docs
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-    started_at       TIMESTAMPTZ NOT NULL,
-    ended_at         TIMESTAMPTZ NOT NULL,
+    starts_at       TIMESTAMPTZ NOT NULL,
+    ends_at         TIMESTAMPTZ NOT NULL,
     intermission_at TIMESTAMPTZ,
     doors_at        TIMESTAMPTZ,
     box_office_id TEXT,
