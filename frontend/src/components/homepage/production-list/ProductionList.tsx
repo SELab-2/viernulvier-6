@@ -1,25 +1,25 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useLocale } from "next-intl";
 
 import type { Production } from "@/types/models/production.types";
+import { getLocalizedField } from "@/lib/locale";
 
 interface ProductionItemProps {
     production: Production;
+    locale: string;
 }
 
-export function ProductionItem({ production }: ProductionItemProps) {
+export function ProductionItem({ production, locale }: ProductionItemProps) {
     const [expanded, setExpanded] = useState(false);
-    const locale = useLocale();
 
     const toggle = useCallback(() => {
         setExpanded((prev) => !prev);
     }, []);
 
-    const title = locale === "en" ? production.titleEn : production.titleNl;
-    const artist = locale === "en" ? production.artistEn : production.artistNl;
-    const tagline = locale === "en" ? production.taglineEn : production.taglineNl;
+    const title = getLocalizedField(production, "title", locale) ?? production.slug;
+    const artist = getLocalizedField(production, "artist", locale);
+    const tagline = getLocalizedField(production, "tagline", locale);
 
     const tags = [production.uitdatabankTheme, production.uitdatabankType].filter(
         (t): t is string => Boolean(t)
@@ -43,19 +43,8 @@ export function ProductionItem({ production }: ProductionItemProps) {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                    {/* TODO: replace with actual event date/venue when events API is available */}
-                    <div className="mb-1 flex items-center gap-2.5">
-                        <span className="font-body text-foreground text-[11px] font-medium tracking-[0.08em]">
-                            {production.slug}
-                        </span>
-                        <span className="bg-muted/50 h-3 w-px" />
-                        <span className="font-body text-muted-foreground text-[11px] font-medium tracking-[0.08em]">
-                            VIERNULVIER
-                        </span>
-                    </div>
-
                     <div className="font-display text-foreground mb-0.5 text-xl leading-[1.15] font-bold tracking-[-0.02em]">
-                        {title ?? production.slug}
+                        {title}
                     </div>
 
                     {artist && (
@@ -97,7 +86,7 @@ export function ProductionItem({ production }: ProductionItemProps) {
                 <div className="flex flex-col pb-3.5 pl-[110px]">
                     <div className="border-muted/35 font-body text-muted-foreground border-t py-2.5 text-xs tracking-[0.08em]">
                         {/* TODO: map production events from API */}
-                        Evenementen beschikbaar binnenkort
+                        Evenementen binnenkort beschikbaar
                     </div>
                 </div>
             )}
@@ -107,16 +96,15 @@ export function ProductionItem({ production }: ProductionItemProps) {
 
 interface ProductionListProps {
     productions: Production[];
+    locale: string;
     searchQuery?: string;
 }
 
-export function ProductionList({ productions, searchQuery }: ProductionListProps) {
-    const locale = useLocale();
-
+export function ProductionList({ productions, locale, searchQuery }: ProductionListProps) {
     const filtered = searchQuery
         ? productions.filter((p) => {
-              const title = (locale === "en" ? p.titleEn : p.titleNl) ?? "";
-              const artist = (locale === "en" ? p.artistEn : p.artistNl) ?? "";
+              const title = getLocalizedField(p, "title", locale) ?? p.slug;
+              const artist = getLocalizedField(p, "artist", locale) ?? "";
               const text = `${title} ${artist} ${p.slug}`.toLowerCase();
               return text.includes(searchQuery.toLowerCase());
           })
@@ -134,7 +122,7 @@ export function ProductionList({ productions, searchQuery }: ProductionListProps
             </div>
 
             {filtered.map((production) => (
-                <ProductionItem key={production.id} production={production} />
+                <ProductionItem key={production.id} production={production} locale={locale} />
             ))}
         </div>
     );

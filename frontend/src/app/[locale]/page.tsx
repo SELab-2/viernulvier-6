@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 
 import { useGetProductions } from "@/hooks/api/useProductions";
 import { useGetLocations } from "@/hooks/api/useLocations";
+import { getLocalizedField } from "@/lib/locale";
 
 import { LoadingState } from "@/components/shared/loading-state";
 import { Masthead } from "@/components/homepage/masthead";
@@ -14,6 +16,8 @@ import { ProductionList } from "@/components/homepage/production-list";
 import { Pagination } from "@/components/homepage/pagination";
 
 export default function HomePage() {
+    const locale = useLocale();
+    const t = useTranslations("Home");
     const [searchQuery, setSearchQuery] = useState("");
 
     const { data: productions, isLoading: productionsLoading } = useGetProductions();
@@ -29,7 +33,7 @@ export default function HomePage() {
         return (
             <>
                 <Masthead />
-                <LoadingState message="Archief laden..." />
+                <LoadingState message={t("loading")} />
             </>
         );
     }
@@ -40,6 +44,15 @@ export default function HomePage() {
         (currentPage - 1) * ITEMS_PER_PAGE,
         currentPage * ITEMS_PER_PAGE
     );
+
+    const filteredProductions = searchQuery
+        ? allProductions.filter((p) => {
+              const title = getLocalizedField(p, "title", locale) ?? p.slug;
+              const artist = getLocalizedField(p, "artist", locale) ?? "";
+              const text = `${title} ${artist} ${p.slug}`.toLowerCase();
+              return text.includes(searchQuery.toLowerCase());
+          })
+        : pagedProductions;
 
     return (
         <>
@@ -53,17 +66,7 @@ export default function HomePage() {
             <div className="flex min-h-[calc(100vh-200px)]">
                 <ArchiveSidebar locations={locations ?? []} />
                 <main className="min-w-0 flex-1 px-[30px] pb-16">
-                    <ProductionList
-                        productions={
-                            searchQuery
-                                ? allProductions.filter((p) => {
-                                      const text =
-                                          `${p.titleNl ?? ""} ${p.titleEn ?? ""} ${p.artistNl ?? ""} ${p.artistEn ?? ""} ${p.slug}`.toLowerCase();
-                                      return text.includes(searchQuery.toLowerCase());
-                                  })
-                                : pagedProductions
-                        }
-                    />
+                    <ProductionList productions={filteredProductions} locale={locale} />
                     {!searchQuery && totalPages > 1 && (
                         <Pagination
                             totalPages={totalPages}

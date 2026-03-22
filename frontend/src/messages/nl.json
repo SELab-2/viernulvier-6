@@ -60,6 +60,9 @@
         },
         "clearAll": "Clear All"
     },
+    "Home": {
+        "loading": "Archief laden..."
+    },
     "Productions": {
         "title": "Producties",
         "showing": "Toont {shown} van {total} resultaten",

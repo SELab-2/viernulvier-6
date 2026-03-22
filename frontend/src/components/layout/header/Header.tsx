@@ -1,8 +1,9 @@
 "use client";
-import { LocaleSwitcher, ThemeSwitcher } from "@/components/shared";
-import { Button } from "@/components/ui/button";
+
 import { useUser, useLogout } from "@/hooks/useAuth";
 import { usePathname } from "@/i18n/routing";
+import { ThemeSwitcher } from "@/components/shared/theme-switcher";
+import { LocaleSwitcher } from "@/components/shared/locale-switcher";
 
 export const Header = () => {
     const pathname = usePathname();
@@ -12,18 +13,17 @@ export const Header = () => {
     const { mutate: logout, isPending: isLoggingOut } = useLogout();
 
     return (
-        <header className="border-border/40 flex w-full items-center justify-end gap-2 border-b px-10 py-3">
+        <header className="border-border/40 flex w-full items-center justify-end gap-4 border-b px-10 py-3">
             <ThemeSwitcher />
             <LocaleSwitcher />
             {user && (
-                <Button
-                    variant="ghost"
+                <button
                     onClick={() => logout()}
                     disabled={isLoggingOut}
-                    className="text-muted-foreground hover:text-foreground font-mono text-[10px] tracking-[1.4px] uppercase"
+                    className="text-muted-foreground hover:text-foreground cursor-pointer font-mono text-[10px] tracking-[1.4px] uppercase transition-colors disabled:opacity-50"
                 >
                     {isLoggingOut ? "..." : "Logout"}
-                </Button>
+                </button>
             )}
         </header>
     );

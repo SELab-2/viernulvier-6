@@ -3,6 +3,9 @@
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 
+import { ThemeSwitcher } from "@/components/shared/theme-switcher";
+import { LocaleSwitcher } from "@/components/shared/locale-switcher";
+
 const NAV_LINKS = [
     { key: "productions", href: "/" },
     { key: "artists", href: "#" },
@@ -21,17 +24,22 @@ export function Masthead() {
                 <span className="text-muted-foreground font-mono text-[10px] tracking-[1.4px] uppercase">
                     {t("address")}
                 </span>
-                <nav className="flex items-center gap-7">
-                    {NAV_LINKS.map((link) => (
-                        <Link
-                            key={link.key}
-                            href={link.href}
-                            className="text-muted-foreground hover:text-foreground font-mono text-[10px] tracking-[1.4px] uppercase transition-colors"
-                        >
-                            {t(`nav.${link.key}`)}
-                        </Link>
-                    ))}
-                </nav>
+                <div className="flex items-center gap-5">
+                    <nav className="flex items-center gap-7">
+                        {NAV_LINKS.map((link) => (
+                            <Link
+                                key={link.key}
+                                href={link.href}
+                                className="text-muted-foreground hover:text-foreground font-mono text-[10px] tracking-[1.4px] uppercase transition-colors"
+                            >
+                                {t(`nav.${link.key}`)}
+                            </Link>
+                        ))}
+                    </nav>
+                    <span className="bg-border h-3 w-px" />
+                    <ThemeSwitcher />
+                    <LocaleSwitcher />
+                </div>
             </div>
 
             <div className="relative py-4 text-center">

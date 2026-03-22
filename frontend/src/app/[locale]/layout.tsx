@@ -12,7 +12,7 @@ import { routing } from "@/i18n/routing";
 
 import "../globals.css";
 
-import { Footer, Header } from "@/components/layout";
+import { Footer } from "@/components/layout";
 import { Providers } from "@/providers";
 
 const playfair = Playfair_Display({
@@ -74,7 +74,6 @@ export default async function RootLayout({
                 className={`${playfair.variable} ${dmMono.variable} ${inter.variable} font-body flex min-h-screen w-full flex-col antialiased`}
             >
                 <Providers messages={messages} locale={locale} timeZone={timeZone}>
-                    <Header />
                     <main className="flex-1">{children}</main>
                     <Footer />
                 </Providers>
