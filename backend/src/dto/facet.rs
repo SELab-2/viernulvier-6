@@ -1,19 +1,19 @@
 use std::collections::HashMap;
 
 use database::{Database, models::tag::TagWithFacet};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::error::AppError;
 
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct TagDto {
     pub slug: String,
     pub label: String,
     pub sort_order: i32,
 }
 
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct FacetDto {
     pub slug: String,
     pub label: String,
