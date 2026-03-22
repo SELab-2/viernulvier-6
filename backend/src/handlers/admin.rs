@@ -2,12 +2,11 @@ use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
 };
-use axum::{extract::State, Json};
+use axum::{Json};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::{
-    AppState,
     error::AppError,
     error::ErrorResponse,
     extractors::auth::{EditorUser},
@@ -45,7 +44,6 @@ pub struct CreateEditorRequest {
 )]
 pub async fn editor_me(
     EditorUser(editor): EditorUser,
-    _state: State<AppState>,
 ) -> Result<Json<EditorResponse>, AppError> {
     Ok(Json(EditorResponse {
         id: editor.id.to_string(),
