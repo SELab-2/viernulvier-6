@@ -80,6 +80,19 @@ The codebase strictly follows the Next.js App Router paradigm, housed entirely w
 
 ---
 
+## API Layer Convention
+
+Server-state code follows a strict separation to keep UI components decoupled from backend contracts:
+
+- **`src/types/api/`**: Backend DTO/response and request payload types (snake_case as returned by the API).
+- **`src/mappers/`**: Pure mapper functions that translate API DTOs to frontend domain models and map mutation inputs to API payloads.
+- **`src/types/models/`**: Frontend domain models consumed by components and feature logic.
+- **`src/hooks/api/`**: TanStack Query hooks (`useQuery`/`useMutation`) that call the API client, apply mappers, and expose only domain models.
+
+Use `@/hooks/api` barrel imports when consuming query hooks and query keys.
+
+---
+
 ## 🧩 Key Architecture Decisions
 
 - **React Compiler:** This project leverages the `babel-plugin-react-compiler`, reducing the need for manual `useMemo` and `useCallback` hooks.

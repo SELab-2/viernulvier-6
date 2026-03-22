@@ -1,7 +1,7 @@
 import axios, { AxiosError } from "axios";
 import { queryClient } from "./query-client";
 import { FailedRequest, CustomAxiosRequestConfig } from "@/types/api/api.types";
-import { queryKeys } from "@/hooks/api/query-keys";
+import { queryKeys } from "@/hooks/api";
 
 export const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL,

@@ -8,7 +8,7 @@ import { mapUser } from "@/mappers/user.mapper";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { queryKeys } from "@/hooks/api/query-keys";
+import { queryKeys } from "@/hooks/api";
 
 export const useUser = (options?: { enabled?: boolean }) => {
     return useQuery<User>({
