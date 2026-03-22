@@ -1,6 +1,8 @@
 /infra @tst-038
-/backend @hanneskt
-/backend @Kaya-Sem
+/backend @hanneskt 
+/backend/tests @jerjoen
 
-/frontend @tst-038
 /frontend @Thoosje
+/frontend/src/app/\[locale\]/(cms)/* @Kaya-Sem
+
+

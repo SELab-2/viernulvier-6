@@ -38,11 +38,23 @@ impl<'a> HallRepo<'a> {
     }
 
     pub async fn delete(&self, id: Uuid) -> Result<(), DatabaseError> {
-        sqlx::query("DELETE FROM halls WHERE id = $1")
+        let res = sqlx::query("DELETE FROM halls WHERE id = $1")
             .bind(id)
             .execute(self.db)
             .await?;
 
+        if res.rows_affected() == 0 {
+            return Err(DatabaseError::NotFound);
+        }
+
         Ok(())
+    }
+
+    pub async fn by_source_id(&self, source_id: i32) -> Result<Option<Hall>, DatabaseError> {
+        Ok(Hall::select()
+            .where_("source_id = $1")
+            .bind(source_id)
+            .fetch_optional(self.db)
+            .await?)
     }
 }
