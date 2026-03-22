@@ -1,6 +1,7 @@
 import axios, { AxiosError } from "axios";
 import { queryClient } from "./query-client";
 import { FailedRequest, CustomAxiosRequestConfig } from "@/types/api/api.types";
+import { queryKeys } from "@/hooks/api/query-keys";
 
 export const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -51,7 +52,7 @@ api.interceptors.response.use(
                 return api(originalRequest);
             } catch (refreshError) {
                 processQueue(refreshError as AxiosError, null);
-                queryClient.removeQueries({ queryKey: ["user"] });
+                queryClient.removeQueries({ queryKey: queryKeys.user });
 
                 // Protected pages (e.g. /admin) already guard via useEffect and proxy.ts should redirect aswell.
                 // Reloading here would cause an infinite loop on public pages.
