@@ -1,18 +1,20 @@
 import { HallCreateRequest, HallResponse, HallUpdateRequest } from "@/types/api/hall.api.types";
 import { Hall, HallCreateInput, HallUpdateInput } from "@/types/models/hall.types";
 
+const toNullable = <T>(value: T | null | undefined): T | null => value ?? null;
+
 export const mapHall = (response: HallResponse): Hall => {
     return {
         id: response.id,
-        sourceId: response.source_id,
-        vendorId: response.vendor_id,
-        boxOfficeId: response.box_office_id,
-        seatSelection: response.seat_selection,
-        openSeating: response.open_seating,
+        sourceId: toNullable(response.source_id),
+        vendorId: toNullable(response.vendor_id),
+        boxOfficeId: toNullable(response.box_office_id),
+        seatSelection: toNullable(response.seat_selection),
+        openSeating: toNullable(response.open_seating),
         name: response.name,
-        remark: response.remark,
+        remark: toNullable(response.remark),
         slug: response.slug,
-        spaceId: response.space_id,
+        spaceId: toNullable(response.space_id),
     };
 };
 

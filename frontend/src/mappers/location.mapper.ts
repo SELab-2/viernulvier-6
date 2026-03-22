@@ -2,6 +2,8 @@ import { LocationResponse } from "@/types/api/location.api.types";
 import { LocationCreateRequest, LocationUpdateRequest } from "@/types/api/location.api.types";
 import { Location, LocationCreateInput, LocationUpdateInput } from "@/types/models/location.types";
 
+const toNullable = <T>(value: T | null | undefined): T | null => value ?? null;
+
 const buildAddress = (
     location: Pick<Location, "street" | "number" | "postalCode" | "city" | "country">
 ): string => {
@@ -14,18 +16,18 @@ const buildAddress = (
 export const mapLocation = (response: LocationResponse): Location => {
     const location: Omit<Location, "address"> = {
         id: response.id,
-        sourceId: response.source_id,
-        name: response.name,
-        code: response.code,
-        street: response.street,
-        number: response.number,
-        postalCode: response.postal_code,
-        city: response.city,
-        country: response.country,
-        phone1: response.phone_1,
-        phone2: response.phone_2,
-        isOwnedByViernulvier: response.is_owned_by_viernulvier,
-        uitdatabankId: response.uitdatabank_id,
+        sourceId: toNullable(response.source_id),
+        name: toNullable(response.name),
+        code: toNullable(response.code),
+        street: toNullable(response.street),
+        number: toNullable(response.number),
+        postalCode: toNullable(response.postal_code),
+        city: toNullable(response.city),
+        country: toNullable(response.country),
+        phone1: toNullable(response.phone_1),
+        phone2: toNullable(response.phone_2),
+        isOwnedByViernulvier: toNullable(response.is_owned_by_viernulvier),
+        uitdatabankId: toNullable(response.uitdatabank_id),
     };
 
     return {

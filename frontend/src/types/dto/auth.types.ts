@@ -1,4 +1,3 @@
-export interface LoginDTO {
-    email: string;
-    password: string;
-}
+import { LoginRequest } from "@/types/api/auth.api.types";
+
+export type LoginDTO = LoginRequest;

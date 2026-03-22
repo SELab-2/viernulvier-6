@@ -1,10 +1,12 @@
 import { SpaceCreateRequest, SpaceResponse, SpaceUpdateRequest } from "@/types/api/space.api.types";
 import { Space, SpaceCreateInput, SpaceUpdateInput } from "@/types/models/space.types";
 
+const toNullable = <T>(value: T | null | undefined): T | null => value ?? null;
+
 export const mapSpace = (response: SpaceResponse): Space => {
     return {
         id: response.id,
-        sourceId: response.source_id,
+        sourceId: toNullable(response.source_id),
         nameNl: response.name_nl,
         locationId: response.location_id,
     };

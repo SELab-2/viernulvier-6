@@ -3,7 +3,7 @@ import { User } from "@/types/models/user.types";
 
 export const mapUser = (response: UserResponse): User => {
     return {
-        id: response.user_id,
+        id: response.id,
         email: response.email,
     };
 };

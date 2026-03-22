@@ -1,16 +1,5 @@
-export type SpaceResponse = {
-    id: string;
-    source_id: number | null;
-    name_nl: string;
-    location_id: string;
-};
+import { components } from "@/types/api/generated";
 
-export type SpaceCreateRequest = {
-    source_id?: number | null;
-    name_nl: string;
-    location_id: string;
-};
-
-export type SpaceUpdateRequest = SpaceCreateRequest & {
-    id: string;
-};
+export type SpaceResponse = components["schemas"]["SpacePayload"];
+export type SpaceCreateRequest = components["schemas"]["SpacePostPayload"];
+export type SpaceUpdateRequest = components["schemas"]["SpacePayload"];
