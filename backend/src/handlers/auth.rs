@@ -12,7 +12,7 @@ use time::Duration;
 use uuid::Uuid;
 
 use crate::{config::AppConfig, error::AppError, error::ErrorResponse, extractors::auth::AuthUser};
-use database::{Database, models::session::SessionCreate};
+use database::{Database, models::session::SessionCreate, models::user::UserRole};
 use utoipa::ToSchema;
 
 const ACCESS_TOKEN_COOKIE: &str = "access_token";
@@ -34,6 +34,7 @@ pub struct AuthResponse {
 pub struct Claims {
     pub sub: Uuid,
     pub email: String,
+    pub role: UserRole,
     pub sid: Uuid,
     pub exp: u64,
 }
@@ -48,6 +49,7 @@ fn generate_access_token(
     user_id: Uuid,
     email: &str,
     session_id: Uuid,
+    role: UserRole,
     secret: &str,
     expiry_minutes: i8,
 ) -> Result<String, AppError> {
@@ -61,6 +63,7 @@ fn generate_access_token(
         sub: user_id,
         email: email.to_string(),
         sid: session_id,
+        role,
         exp,
     };
 
@@ -144,6 +147,7 @@ pub async fn login(
         user.id,
         &user.email,
         session.id,
+        user.role.clone(),
         &config.jwt_secret,
         config.access_token_expiry_minutes
     )?;
@@ -207,6 +211,7 @@ pub async fn refresh(
         user.id,
         &user.email,
         session.id,
+        user.role.clone(),
         &config.jwt_secret,
         config.access_token_expiry_minutes
     )?;

@@ -48,8 +48,13 @@ async fn get_one_not_found(db: PgPool) {
 #[sqlx::test]
 #[test_log::test]
 async fn post_success(db: PgPool) {
-    let app = TestRouter::new(db.clone());
     let payload = mock_post_payload();
+
+    let unauth_app = TestRouter::new(db.clone());
+    let unauth_response = unauth_app.post("/productions", &payload).await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
+
+    let app = TestRouter::as_editor(db).await;
 
     let response = app.post("/productions", &payload).await;
     assert_eq!(response.status(), StatusCode::CREATED);
@@ -63,8 +68,9 @@ async fn post_success(db: PgPool) {
 #[sqlx::test(fixtures("productions"))]
 #[test_log::test]
 async fn put_success(db: PgPool) {
-    let app = TestRouter::new(db.clone());
     let target_id = Uuid::from_str("33333333-3333-3333-3333-333333333333").unwrap();
+    let unauth_app = TestRouter::new(db.clone());
+    let app = TestRouter::as_editor(db).await;
 
     let update_payload: ProductionPayload = serde_json::from_value(json!({
         "id": target_id,
@@ -72,6 +78,9 @@ async fn put_success(db: PgPool) {
         "title_nl": "Aangepaste Titel"
     }))
     .expect("Failed to deserialize mock ProductionPayload");
+
+    let unauth_response = unauth_app.put("/productions", &update_payload).await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
 
     let response = app.put("/productions", &update_payload).await;
     assert_eq!(response.status(), StatusCode::OK);
@@ -84,13 +93,17 @@ async fn put_success(db: PgPool) {
 #[sqlx::test]
 #[test_log::test]
 async fn put_not_found(db: PgPool) {
-    let app = TestRouter::new(db.clone());
+    let unauth_app = TestRouter::new(db.clone());
+    let app = TestRouter::as_editor(db).await;
 
     let missing_production: ProductionPayload = serde_json::from_value(json!({
         "id": Uuid::nil(),
         "slug": "ghost-production"
     }))
     .expect("Failed to deserialize mock ProductionPayload");
+
+    let unauth_response = unauth_app.put("/productions", &missing_production).await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
 
     let response = app.put("/productions", &missing_production).await;
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
@@ -99,8 +112,15 @@ async fn put_not_found(db: PgPool) {
 #[sqlx::test(fixtures("productions"))]
 #[test_log::test]
 async fn delete_success(db: PgPool) {
-    let app = TestRouter::new(db.clone());
     let target_id = Uuid::from_str("22222222-2222-2222-2222-222222222222").unwrap();
+
+    let unauth_app = TestRouter::new(db.clone());
+    let unauth_response = unauth_app
+        .delete(&format!("/productions/{}", target_id))
+        .await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
+
+    let app = TestRouter::as_editor(db).await;
 
     let response = app.delete(&format!("/productions/{}", target_id)).await;
     assert_eq!(response.status(), StatusCode::NO_CONTENT);
@@ -112,7 +132,11 @@ async fn delete_success(db: PgPool) {
 #[sqlx::test]
 #[test_log::test]
 async fn delete_not_found(db: PgPool) {
-    let app = TestRouter::new(db.clone());
+    let unauth_app = TestRouter::new(db.clone());
+    let unauth_response = unauth_app.delete(&format!("/productions/{}", Uuid::nil())).await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
+
+    let app = TestRouter::as_editor(db).await;
 
     let response = app.delete(&format!("/productions/{}", Uuid::nil())).await;
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
