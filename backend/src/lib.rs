@@ -10,8 +10,8 @@ use crate::extractors::auth::{EditorUser, AdminUser};
 use utoipa::{
     Modify, OpenApi,
     openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
+    openapi::Server,
 };
-
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
 use utoipa_swagger_ui::SwaggerUi;
@@ -60,6 +60,27 @@ impl Modify for SecurityAddon {
     }
 }
 
+struct PathPrefixAddon {
+    pub preview_name: String,
+}
+
+impl Modify for PathPrefixAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        let mut base_path = if self.preview_name.is_empty() {
+            "/api".to_string()
+        } else {
+            format!("/{}/api", self.preview_name)
+        };
+
+        base_path = base_path.replace("//", "/");
+        if !base_path.starts_with('/') {
+            base_path = format!("/{}", base_path);
+        }
+
+        openapi.servers = Some(vec![Server::new(base_path)]);
+    }
+}
+
 pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
     let db = Database::create_connect_migrate(&config.database_url).await?;
 
@@ -105,14 +126,34 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
 }
 
 pub fn router(state: AppState) -> Router<AppState> {
-    let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
+    let mut openapi = ApiDoc::openapi();
+
+    let base_path = if state.config.preview_name.is_empty() {
+        "/api".to_string()
+    } else {
+        format!("/{}/api", state.config.preview_name).replace("//", "/")
+    };
+
+    let modifier = PathPrefixAddon {
+        preview_name: state.config.preview_name.clone(),
+    };
+    modifier.modify(&mut openapi);
+
+    let (api_router, api_spec) = OpenApiRouter::with_openapi(openapi)
         .merge(public_routes())
         .merge(editor_routes(state.clone()))
         .merge(admin_routes(state.clone()))
         .split_for_parts();
 
-    router
-        .merge(SwaggerUi::new("/docs").url("/api-doc/openapi.json", api))
+    let docs_path = format!("{}/docs", base_path);
+    let openapi_json_path = format!("{}/openapi.json", base_path);
+
+    let swagger_ui = SwaggerUi::new(docs_path)
+        .url(openapi_json_path, api_spec);
+
+    Router::new()
+        .nest(&base_path, api_router)
+        .merge(swagger_ui)
         .fallback(get(|| async { AppError::NotFound }))
 }
 

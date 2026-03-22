@@ -36,6 +36,10 @@ jobs:
           db_password: ${{ secrets.PREVIEW_DB_PASSWORD }}
           db_name: ${{ secrets.PREVIEW_DB_NAME }}
           public_site_url: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          garage_rpc_secret: ${{ secrets.GARAGE_RPC_SECRET }}
+          garage_s3_access_key: ${{ secrets.GARAGE_S3_ACCESS_KEY }}
+          garage_s3_secret_key: ${{ secrets.GARAGE_S3_SECRET_KEY }}
+          garage_s3_bucket: media
           jwt_secret: ${{ secrets.JWT_SECRET }}
           api_key_404: ${{ secrets.API_KEY_404 }}
 
@@ -61,7 +65,9 @@ jobs:
           script: |
             const marker = "<!-- preview-env -->";
             const prNumber = context.payload.pull_request.number;
+
             const previewUrl = `https://${process.env.PREVIEW_HOST}/pr-${prNumber}`;
+            const docsUrl = `${previewUrl}/docs`;
             const apiUrl = `${previewUrl}/api`;
 
             // 1. Fetch all comments on the PR
@@ -88,6 +94,7 @@ jobs:
               marker +
               "\n## Preview Environment \n\n" +
               "- Frontend: [Open Preview](" + previewUrl + ")\n" +
+              "- Docs: [Open Docs](" + docsUrl + ")\n" +
               "- API: [Open API](" + apiUrl + ")\n";
 
             await github.rest.issues.createComment({
@@ -115,6 +122,10 @@ jobs:
           db_password: ${{ secrets.PREVIEW_DB_PASSWORD }}
           db_name: ${{ secrets.PREVIEW_DB_NAME }}
           public_site_url: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          garage_rpc_secret: ${{ secrets.GARAGE_RPC_SECRET }}
+          garage_s3_access_key: ${{ secrets.GARAGE_S3_ACCESS_KEY }}
+          garage_s3_secret_key: ${{ secrets.GARAGE_S3_SECRET_KEY }}
+          garage_s3_bucket: media
           jwt_secret: ${{ secrets.JWT_SECRET }}
           api_key_404: ${{ secrets.API_KEY_404 }}
 

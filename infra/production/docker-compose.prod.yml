@@ -8,6 +8,11 @@ services:
       JWT_SECRET: ${PROD_JWT_SECRET}
       API_KEY_404: ${PROD_API_KEY_404}
       LOG_LEVEL: ${PROD_LOG_LEVEL}
+      S3_ENDPOINT: http://${COMPOSE_PROJECT_NAME}_garage:3900
+      S3_REGION: garage
+      S3_ACCESS_KEY: ${GARAGE_S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${GARAGE_S3_SECRET_KEY}
+      S3_BUCKET: ${GARAGE_S3_BUCKET}
       ALLOWED_ORIGINS: ${NEXT_PUBLIC_SITE_URL}
     depends_on:
       database:
@@ -18,11 +23,11 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.main-api.rule=Host(`${PROD_HOST}`) && PathPrefix(`/api`)"
-      - "traefik.http.middlewares.api-strip.stripprefix.prefixes=/api"
-      - "traefik.http.routers.main-api.middlewares=api-strip"
+      #- "traefik.http.middlewares.api-strip.stripprefix.prefixes=/api"
+      #- "traefik.http.routers.main-api.middlewares=api-strip"
       - "traefik.http.routers.main-api.entrypoints=websecure"
       - "traefik.http.services.main-api.loadbalancer.server.port=3001"
-      - "traefik.http.routers.main-api.priority=10"
+      #- "traefik.http.routers.main-api.priority=20"
       - "traefik.http.routers.main-api.tls.certresolver=letsencrypt"
 
   frontend:
@@ -37,11 +42,27 @@ services:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_SITE_URL}/api
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.main.rule=Host(`${PROD_HOST}`) && PathPrefix(`/`)"
+      - "traefik.http.routers.main.rule=Host(`${PROD_HOST}`) && PathPrefix(`/`) && !PathPrefix(`/docs`) && !PathPrefix(`/api`)"
       - "traefik.http.routers.main.entrypoints=websecure"
       - "traefik.http.services.main.loadbalancer.server.port=3000"
-      - "traefik.http.routers.main.priority=1"
+      #- "traefik.http.routers.main.priority=10"
       - "traefik.http.routers.main.tls.certresolver=letsencrypt"
+
+  docs:
+    image: kayasem/${COMPOSE_PROJECT_NAME}-docs:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_docs
+    restart: always
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.main-docs.rule=Host(`${PROD_HOST}`) && PathPrefix(`/docs`)"
+      - "traefik.http.routers.main-docs.entrypoints=websecure"
+      - "traefik.http.services.main-docs.loadbalancer.server.port=3002"
+      #- "traefik.http.routers.main-docs.priority=20"
+      - "traefik.http.routers.main-docs.tls.certresolver=letsencrypt"
+      - "traefik.http.middlewares.prefix-docs.headers.customrequestheaders.X-Forwarded-Prefix=/docs"
+      - "traefik.http.routers.main-docs.middlewares=prefix-docs"
 
   database:
     image: postgres:18
@@ -61,8 +82,95 @@ services:
       timeout: 5s
       retries: 5
 
+  garage:
+    image: dxflrs/garage:v2.2.0
+    container_name: ${COMPOSE_PROJECT_NAME}_garage
+    restart: always
+    environment:
+      - GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET}
+    volumes:
+      - ./garage.toml:/etc/garage.toml
+      - garage_meta:/var/lib/garage/meta
+      - garage_data:/var/lib/garage/data
+    networks:
+      - app_network
+
+  garage-init:
+    image: alpine:3.21
+    container_name: ${COMPOSE_PROJECT_NAME}_garage_init
+    environment:
+      - GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET}
+      - GARAGE_S3_ACCESS_KEY=${GARAGE_S3_ACCESS_KEY}
+      - GARAGE_S3_SECRET_KEY=${GARAGE_S3_SECRET_KEY}
+      - GARAGE_S3_BUCKET=${GARAGE_S3_BUCKET}
+      - GARAGE_ZONE=${GARAGE_ZONE:-dc1}
+      - GARAGE_CAPACITY=${GARAGE_CAPACITY:-1GiB}
+    volumes:
+      - ./garage.toml:/etc/garage.toml:ro
+      - garage_meta:/var/lib/garage/meta
+      - garage_data:/var/lib/garage/data
+    network_mode: service:garage
+    pid: service:garage
+    depends_on:
+      garage:
+        condition: service_started
+    entrypoint:
+      - /bin/sh
+      - -eu
+      - -c
+      - |
+        # Copy garage binary from garage container
+        cp /proc/1/root/garage /usr/local/bin/garage
+        chmod +x /usr/local/bin/garage
+        
+        G="garage -c /etc/garage.toml"
+        
+        # Wait for garage to generate node key first
+        echo "Waiting for garage node key..."
+        for i in $$(seq 1 60); do
+          if [ -f /var/lib/garage/meta/node_key ]; then break; fi
+          echo "Waiting for node key... ($$i/60)"
+          sleep 2
+        done
+        
+        [ -f /var/lib/garage/meta/node_key ] || { echo "Node key not found"; exit 1; }
+        
+        # Get node ID and configure layout
+        NODE_ID=$$($$G node id -q)
+        echo "Node ID: $$NODE_ID"
+        
+        # Check if layout needs to be configured
+        if $$G status 2>&1 | grep -q "NO ROLE ASSIGNED"; then
+          echo "Configuring layout..."
+          $$G layout assign "$$NODE_ID" -z "$$GARAGE_ZONE" -c "$$GARAGE_CAPACITY"
+          $$G layout apply --version 1
+        fi
+        
+        # Now wait for healthy status
+        echo "Waiting for garage to be healthy..."
+        for i in $$(seq 1 30); do
+          if $$G status 2>/dev/null | grep -q "HEALTHY"; then break; fi
+          echo "Waiting... ($$i/30)"
+          sleep 2
+        done
+        
+        $$G status | grep -q "HEALTHY" || { echo "Garage not healthy"; exit 1; }
+        
+        echo "Creating key..."
+        $$G key info "$$GARAGE_S3_ACCESS_KEY" 2>/dev/null || \
+          $$G key import "$$GARAGE_S3_ACCESS_KEY" "$$GARAGE_S3_SECRET_KEY" -n app-key --yes
+        
+        echo "Creating bucket..."
+        $$G bucket info "$$GARAGE_S3_BUCKET" 2>/dev/null || \
+          $$G bucket create "$$GARAGE_S3_BUCKET"
+        $$G bucket allow "$$GARAGE_S3_BUCKET" --key "$$GARAGE_S3_ACCESS_KEY" --read --write || true
+        
+        echo "Init complete!"
+
 volumes:
   postgres_data:
+  garage_meta:
+  garage_data:
 
 networks:
   app_network:
