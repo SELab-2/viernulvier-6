@@ -22,6 +22,16 @@
         "emailLabel": "Email",
         "loading": "Loading admin dashboard...",
         "quickActions": "Quick Actions",
-        "comingSoon": "More features coming soon..."
+        "comingSoon": "More features coming soon...",
+        "CreateAdmin": {
+            "title": "Register New Editor",
+            "username": "Username",
+            "email": "Email Address",
+            "password": "Temporary Password",
+            "submit": "Create Editor",
+            "success": "Editor successfully created!",
+            "error": "Action failed.",
+            "errorMessage": "Something went wrong while creating the editor."
+        }
     }
 }
