@@ -5,56 +5,74 @@
 --   - "slug"  is the URL-safe version ("world-premiere")
 
 
--- facets: defines the available facet namespaces and which entity types they apply to.
-CREATE TABLE facets (
-  id           uuid        PRIMARY KEY DEFAULT uuidv7(),
-  slug         text        NOT NULL UNIQUE,   -- 'discipline', 'theme', …
-  label        text        NOT NULL,          -- 'Discipline', 'Theme', …
-  description  text,
-  sort_order   int         NOT NULL DEFAULT 0,
-  created_at   timestamptz NOT NULL DEFAULT now(),
-  updated_at   timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (sort_order)
-);
+-- facet enum: the fixed set of tag namespaces.
+-- declaration order IS the sort order.
+CREATE TYPE facet AS ENUM ('discipline', 'format', 'theme', 'audience');
 
--- Which entity types a facet applies to.
--- e.g. 'discipline' applies to 'production' and 'artist',
---      but not to 'location'.
+-- Entity type enum: the set of entity types that can carry tags.
+CREATE TYPE entity_type AS ENUM ('production', 'artist', 'article', 'media');
+
+-- Helper: human label for each facet value
+CREATE FUNCTION facet_label(f facet) RETURNS text
+LANGUAGE sql IMMUTABLE RETURNS NULL ON NULL INPUT AS $$
+  SELECT CASE f
+    WHEN 'discipline' THEN 'Discipline'
+    WHEN 'format'     THEN 'Format'
+    WHEN 'theme'      THEN 'Theme'
+    WHEN 'audience'   THEN 'Audience'
+  END
+$$;
+
+
+-- which entity types a facet applies to.
+-- example: 'discipline' applies to 'production' and 'artist', but not to 'location'.
 CREATE TABLE facet_entity_types (
-  facet_id     uuid  NOT NULL REFERENCES facets(id) ON DELETE CASCADE,
-  entity_type  text  NOT NULL,  -- 'production', 'article', 'artist', …
-  PRIMARY KEY (facet_id, entity_type)
+  facet        facet       NOT NULL,
+  entity_type  entity_type NOT NULL,
+  PRIMARY KEY (facet, entity_type)
 );
 
-CREATE INDEX ON facet_entity_types (entity_type, facet_id);
+CREATE INDEX ON facet_entity_types (entity_type, facet);
 
 
--- tags: the controlled vocabulary. Each tag belongs to a facet.
 CREATE TABLE tags (
   id           uuid        PRIMARY KEY DEFAULT uuidv7(),
-  facet_id     uuid        NOT NULL REFERENCES facets(id) ON DELETE RESTRICT,
+  facet        facet       NOT NULL,
   slug         text        NOT NULL,   -- 'world-premiere', 'memory', …
   label        text        NOT NULL,   -- 'World premiere', 'Memory', …
   description  text,
   sort_order   int         NOT NULL DEFAULT 0,
   created_at   timestamptz NOT NULL DEFAULT now(),
   updated_at   timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (facet_id, slug),
-  UNIQUE (facet_id, sort_order)
+  UNIQUE (facet, slug),
+  UNIQUE (facet, sort_order)
 );
 
 
--- taggings: Polymorphic join: any entity can be tagged. entity_type is the entity table name ('production', 'article', 'artist', 'picture').
+-- enforces that a tag's facet is applicable to the given entity type.
+-- CHECK constraints can't use subqueries directly, so wrap in a STABLE function.
+CREATE FUNCTION valid_tagging(p_tag_id uuid, p_entity_type entity_type) RETURNS boolean
+LANGUAGE sql STABLE AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM tags t
+    JOIN facet_entity_types fet ON fet.facet = t.facet
+    WHERE t.id = p_tag_id AND fet.entity_type = p_entity_type
+  )
+$$;
+
+-- taggings: any entity can be tagged.
 CREATE TABLE taggings (
   id           uuid        PRIMARY KEY DEFAULT uuidv7(),
   tag_id       uuid        NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
-  entity_type  text        NOT NULL,
+  entity_type  entity_type NOT NULL,
   entity_id    uuid        NOT NULL,
-  inherited    boolean     NOT NULL DEFAULT false,
+  inherited    boolean     NOT NULL DEFAULT true,
   -- true  = copied automatically from a linked entity
   -- false = set explicitly by an admin
   created_at   timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (tag_id, entity_type, entity_id)
+  UNIQUE (tag_id, entity_type, entity_id),
+  CONSTRAINT valid_facet_entity_type CHECK (valid_tagging(tag_id, entity_type))
 );
 
 CREATE INDEX ON taggings (entity_type, entity_id);
@@ -62,91 +80,59 @@ CREATE INDEX ON taggings (tag_id);
 CREATE INDEX ON taggings (entity_type, entity_id, inherited);
 
 
--- Seed data: facets
-INSERT INTO facets (slug, label, sort_order) VALUES
-  ('discipline', 'Discipline', 1),
-  ('format',     'Format',     2),
-  ('theme',      'Theme',      3),
-  ('audience',   'Audience',   4);
-
--- facet → entity type applicability
-INSERT INTO facet_entity_types (facet_id, entity_type)
-SELECT f.id, e.entity_type
-FROM facets f
-JOIN (VALUES
+-- seed: facet → entity type applicability.
+-- when deleting an entity, callers must DELETE FROM taggings WHERE entity_type = $1 AND entity_id = $2
+INSERT INTO facet_entity_types (facet, entity_type) VALUES
   ('discipline', 'production'),
   ('discipline', 'artist'),
   ('discipline', 'article'),
+  ('discipline', 'media'),
   ('format',     'production'),
   ('format',     'article'),
   ('theme',      'production'),
   ('theme',      'article'),
+  ('theme',      'media'),
   ('audience',   'production'),
-  ('audience',   'article')
-) AS e(facet_slug, entity_type) ON f.slug = e.facet_slug;
+  ('audience',   'article'),
+  ('audience',   'media');
 
 
--- Seed data: tags
 
--- discipline
-INSERT INTO tags (facet_id, slug, label, sort_order)
-SELECT f.id, v.slug, v.label, v.sort_order
-FROM facets f,
-(VALUES
-  ('theatre',         'Theatre',         1),
-  ('dance',           'Dance',           2),
-  ('music',           'Music',           3),
-  ('visual-art',      'Visual art',      4),
-  ('film',            'Film',            5),
-  ('opera',           'Opera',           6),
-  ('performance-art', 'Performance art', 7),
-  ('installation',    'Installation',    8)
-) AS v(slug, label, sort_order)
-WHERE f.slug = 'discipline';
+INSERT INTO tags (facet, slug, label, sort_order) VALUES
 
--- format
-INSERT INTO tags (facet_id, slug, label, sort_order)
-SELECT f.id, v.slug, v.label, v.sort_order
-FROM facets f,
-(VALUES
-  ('world-premiere', 'World premiere', 1),
-  ('co-production',  'Co-production',  2),
-  ('residency',      'Residency',      3),
-  ('workshop',       'Workshop',       4),
-  ('touring',        'Touring',        5),
-  ('commission',     'Commission',     6),
-  ('revival',        'Revival',        7),
-  ('festival',       'Festival',       8)
-) AS v(slug, label, sort_order)
-WHERE f.slug = 'format';
+  -- discipline
+  ('discipline', 'theatre',         'Theatre',         1),
+  ('discipline', 'dance',           'Dance',           2),
+  ('discipline', 'music',           'Music',           3),
+  ('discipline', 'visual-art',      'Visual art',      4),
+  ('discipline', 'film',            'Film',            5),
+  ('discipline', 'opera',           'Opera',           6),
+  ('discipline', 'performance-art', 'Performance art', 7),
+  ('discipline', 'installation',    'Installation',    8),
 
--- theme
-INSERT INTO tags (facet_id, slug, label, sort_order)
-SELECT f.id, v.slug, v.label, v.sort_order
-FROM facets f,
-(VALUES
-  ('identity', 'Identity', 1),
-  ('memory',   'Memory',   2),
-  ('politics', 'Politics', 3),
-  ('ecology',  'Ecology',  4),
-  ('diaspora', 'Diaspora', 5)
-) AS v(slug, label, sort_order)
-WHERE f.slug = 'theme';
+  -- format
+  ('format', 'world-premiere', 'World premiere', 1),
+  ('format', 'co-production',  'Co-production',  2),
+  ('format', 'residency',      'Residency',      3),
+  ('format', 'workshop',       'Workshop',       4),
+  ('format', 'touring',        'Touring',        5),
+  ('format', 'commission',     'Commission',     6),
+  ('format', 'revival',        'Revival',        7),
+  ('format', 'festival',       'Festival',       8),
 
--- audience
-INSERT INTO tags (facet_id, slug, label, sort_order)
-SELECT f.id, v.slug, v.label, v.sort_order
-FROM facets f,
-(VALUES
-  ('all-ages',     'All ages',     1),
-  ('children',     'Children',     2),
-  ('adult',        'Adult',        3),
-  ('professional', 'Professional', 4)
-) AS v(slug, label, sort_order)
-WHERE f.slug = 'audience';
+  -- theme
+  ('theme', 'identity', 'Identity', 1),
+  ('theme', 'memory',   'Memory',   2),
+  ('theme', 'politics', 'Politics', 3),
+  ('theme', 'ecology',  'Ecology',  4),
+  ('theme', 'diaspora', 'Diaspora', 5),
 
+  -- audience
+  ('audience', 'all-ages',     'All ages',     1),
+  ('audience', 'children',     'Children',     2),
+  ('audience', 'adult',        'Adult',        3),
+  ('audience', 'professional', 'Professional', 4);
 
--- Useful views
 
 -- per-entity tag summary. for listing tags on entity pages
 CREATE VIEW entity_tags AS
@@ -154,12 +140,11 @@ SELECT
   tg.entity_type,
   tg.entity_id,
   tg.inherited,
-  f.slug  AS facet_slug,
-  f.label AS facet_label,
-  t.slug  AS tag_slug,
-  t.label AS tag_label,
-  t.sort_order
+  t.facet::text        AS facet_slug,
+  facet_label(t.facet) AS facet_label,
+  t.slug               AS tag_slug,
+  t.label              AS tag_label,
+  t.sort_order         AS tag_sort_order
 FROM taggings tg
-JOIN tags    t ON t.id = tg.tag_id
-JOIN facets  f ON f.id = t.facet_id
-ORDER BY f.sort_order, t.sort_order;
+JOIN tags t ON t.id = tg.tag_id
+ORDER BY t.facet, t.sort_order;  -- enum declaration order, then tag sort_order
