@@ -43,7 +43,7 @@ export interface FieldDef<TData> {
 }
 
 // editSheet component
-export interface EditSheetProps<TData extends Record<string, unknown>> {
+export interface EditSheetProps<TData extends { id: string } & Record<string, unknown>> {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     entity: TData | null;
@@ -132,14 +132,14 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
 }
 
 // sheetFormBody. owns local editable state, remounts when entity changes
-interface SheetFormBodyProps<TData extends Record<string, unknown>> {
+interface SheetFormBodyProps<TData extends { id: string } & Record<string, unknown>> {
     entity: TData;
     fields: FieldDef<TData>[];
     onSave?: (data: TData) => void;
     onClose: () => void;
 }
 
-function SheetFormBody<TData extends Record<string, unknown>>({
+function SheetFormBody<TData extends { id: string } & Record<string, unknown>>({
     entity,
     fields,
     onSave,
@@ -181,7 +181,7 @@ function SheetFormBody<TData extends Record<string, unknown>>({
     );
 }
 
-export function EditSheet<TData extends Record<string, unknown>>({
+export function EditSheet<TData extends { id: string } & Record<string, unknown>>({
     open,
     onOpenChange,
     entity,
@@ -190,7 +190,7 @@ export function EditSheet<TData extends Record<string, unknown>>({
     description,
     onSave,
 }: EditSheetProps<TData>) {
-    const formKey = entity !== null ? JSON.stringify(entity) : null;
+    const formKey = entity !== null ? entity.id : null;
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>

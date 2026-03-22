@@ -5,6 +5,7 @@ import { makeActionsColumn } from "../actions-column";
 import type { FieldDef } from "../edit-sheet";
 
 export type ProductionEvent = {
+    id: string;
     date: string;
     time: string;
     venue: string;
