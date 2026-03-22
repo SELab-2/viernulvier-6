@@ -1,14 +1,7 @@
-# Title of PR
 **Description**
 
 **Related Issue**
 Fixes #
-
-**Type of change**
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that causes existing functionality to change)
-- [ ] ♻Refactor / Chore / Documentation
 
 **How Has This Been Tested?**
 - [ ] Local manual testing
