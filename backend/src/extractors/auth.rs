@@ -43,9 +43,9 @@ impl FromRequestParts<AppState> for AuthUser {
 }
 
 #[allow(dead_code)] // the Authuser isn't actually being used for now but the guard is.
-pub struct RequireAdmin(pub AuthUser);
+pub struct AdminUser(pub AuthUser);
 
-impl FromRequestParts<AppState> for RequireAdmin {
+impl FromRequestParts<AppState> for AdminUser {
     type Rejection = AppError;
 
     async fn from_request_parts(parts: &mut Parts, state: &AppState) -> Result<Self, AppError> {
@@ -57,13 +57,13 @@ impl FromRequestParts<AppState> for RequireAdmin {
             return Err(AppError::Unauthorized);
         }
 
-        Ok(RequireAdmin(user))
+        Ok(AdminUser(user))
     }
 }
 
-pub struct RequireEditor(pub AuthUser);
+pub struct EditorUser(pub AuthUser);
 
-impl FromRequestParts<AppState> for RequireEditor {
+impl FromRequestParts<AppState> for EditorUser {
     type Rejection = AppError;
 
     async fn from_request_parts(parts: &mut Parts, state: &AppState) -> Result<Self, AppError> {
@@ -73,7 +73,7 @@ impl FromRequestParts<AppState> for RequireEditor {
             return Err(AppError::Unauthorized);
         }
 
-        Ok(RequireEditor(user))
+        Ok(EditorUser(user))
     }
 }
 

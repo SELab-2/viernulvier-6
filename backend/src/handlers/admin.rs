@@ -10,7 +10,7 @@ use crate::{
     AppState,
     error::AppError,
     error::ErrorResponse,
-    extractors::auth::{RequireAdmin, RequireEditor},
+    extractors::auth::{EditorUser},
 };
 use database::Database;
 use database::models::user::{UserCreate, UserRole};
@@ -44,7 +44,7 @@ pub struct CreateEditorRequest {
     )
 )]
 pub async fn editor_me(
-    RequireEditor(editor): RequireEditor,
+    EditorUser(editor): EditorUser,
     _state: State<AppState>,
 ) -> Result<Json<EditorResponse>, AppError> {
     Ok(Json(EditorResponse {
@@ -71,7 +71,6 @@ pub async fn editor_me(
     )
 )]
 pub async fn create_editor(
-    _admin: RequireAdmin,
     db: Database,
     Json(payload): Json<CreateEditorRequest>,
 ) -> Result<Json<EditorResponse>, AppError> {

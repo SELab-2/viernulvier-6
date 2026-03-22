@@ -1,9 +1,11 @@
 use api::ApiImporter;
 use axum::http::{HeaderValue, Method};
 use axum::{Router, routing::get};
+use axum::middleware::from_extractor_with_state;
 use database::Database;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info};
+use crate::extractors::auth::{EditorUser, AdminUser};
 
 use utoipa::{
     Modify, OpenApi,
@@ -80,7 +82,7 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
         .collect();
 
     let app = Router::new()
-        .merge(router())
+        .merge(router(state.clone()))
         .layer(CompressionLayer::new())
         .layer(TraceLayer::new_for_http())
         .layer(
@@ -102,9 +104,11 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
     Ok(())
 }
 
-pub fn router() -> Router<AppState> {
+pub fn router(state: AppState) -> Router<AppState> {
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
-        .merge(open_routes())
+        .merge(public_routes())
+        .merge(editor_routes(state.clone()))
+        .merge(admin_routes(state.clone()))
         .split_for_parts();
 
     router
@@ -112,40 +116,57 @@ pub fn router() -> Router<AppState> {
         .fallback(get(|| async { AppError::NotFound }))
 }
 
-fn open_routes() -> OpenApiRouter<AppState> {
+// No security needed
+fn public_routes() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         // version
         .routes(routes!(version::get))
-        // locations
-        .routes(routes!(location::get_all))
-        .routes(routes!(location::get_one))
-        .routes(routes!(location::post))
-        .routes(routes!(location::delete))
-        .routes(routes!(location::put))
-        // productions
-        .routes(routes!(production::get_all))
-        .routes(routes!(production::get_one))
-        .routes(routes!(production::post))
-        .routes(routes!(production::delete))
-        .routes(routes!(production::put))
         // auth
         .routes(routes!(auth::login))
         .routes(routes!(auth::refresh))
         .routes(routes!(auth::logout))
-        .routes(routes!(admin::editor_me))
-        .routes(routes!(admin::create_editor))
-        // halls
+        // location
+        .routes(routes!(location::get_all))
+        .routes(routes!(location::get_one))
+        // production
+        .routes(routes!(production::get_all))
+        .routes(routes!(production::get_one))
+        // hall
         .routes(routes!(hall::get_all))
         .routes(routes!(hall::get_one))
+        // space
+        .routes(routes!(space::get_all))
+        .routes(routes!(space::get_one))
+}
+
+// Only editors can edit data
+fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
+    OpenApiRouter::new()
+        // Editor/Admin
+        .routes(routes!(admin::editor_me))
+        // Location
+        .routes(routes!(location::post))
+        .routes(routes!(location::delete))
+        .routes(routes!(location::put))
+        // Production
+        .routes(routes!(production::post))
+        .routes(routes!(production::delete))
+        .routes(routes!(production::put))
+        // Hall
         .routes(routes!(hall::post))
         .routes(routes!(hall::delete))
         .routes(routes!(hall::put))
-        // spaces
-        .routes(routes!(space::get_all))
-        .routes(routes!(space::get_one))
+        // Space
         .routes(routes!(space::post))
         .routes(routes!(space::delete))
         .routes(routes!(space::put))
+        .layer(from_extractor_with_state::<EditorUser, AppState>(state))
+}
+
+fn admin_routes(state: AppState) -> OpenApiRouter<AppState> {
+    OpenApiRouter::new()
+        .routes(routes!(admin::create_editor))
+        .layer(from_extractor_with_state::<AdminUser, AppState>(state))
 }
 
 #[allow(clippy::expect_used)]
