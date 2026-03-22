@@ -16,8 +16,8 @@ services:
       - "traefik.http.routers.${PREVIEW_NAME}.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}`) && !PathPrefix(`/${PREVIEW_NAME}/docs`) && !PathPrefix(`/${PREVIEW_NAME}/api`)"
       - "traefik.http.routers.${PREVIEW_NAME}.entrypoints=websecure"
       - "traefik.http.services.${PREVIEW_NAME}.loadbalancer.server.port=3000"
-      #- "traefik.http.routers.${PREVIEW_NAME}.priority=1"
       - "traefik.http.routers.${PREVIEW_NAME}.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${PREVIEW_NAME}.priority=200"
       - "traefik.http.middlewares.${PREVIEW_NAME}-prefix.headers.customrequestheaders.X-Forwarded-Prefix=/${PREVIEW_NAME}"
       - "traefik.http.routers.${PREVIEW_NAME}.middlewares=${PREVIEW_NAME}-prefix"
     networks:
@@ -40,8 +40,8 @@ services:
       - "traefik.http.routers.${PREVIEW_NAME}-docs.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/docs`)"
       - "traefik.http.routers.${PREVIEW_NAME}-docs.entrypoints=websecure"
       - "traefik.http.services.${PREVIEW_NAME}-docs.loadbalancer.server.port=3002"
-      #- "traefik.http.routers.${PREVIEW_NAME}-docs.priority=2"
       - "traefik.http.routers.${PREVIEW_NAME}-docs.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${PREVIEW_NAME}-docs.priority=200"
       - "traefik.http.middlewares.${PREVIEW_NAME}-prefix-docs.headers.customrequestheaders.X-Forwarded-Prefix=/${PREVIEW_NAME}/docs"
       - "traefik.http.routers.${PREVIEW_NAME}-docs.middlewares=${PREVIEW_NAME}-prefix-docs"
     networks:
@@ -74,7 +74,7 @@ services:
       - "traefik.http.routers.${PREVIEW_NAME}-api.entrypoints=websecure"
       - "traefik.http.services.${PREVIEW_NAME}-api.loadbalancer.server.port=3001"
       - "traefik.http.routers.${PREVIEW_NAME}-api.tls.certresolver=letsencrypt"
-      #- "traefik.http.routers.${PREVIEW_NAME}-docs.priority=3"
+      - "traefik.http.routers.${PREVIEW_NAME}-api.priority=200"
     networks:
       - traefik
       - internal
@@ -139,9 +139,9 @@ services:
         # Copy garage binary from garage container
         cp /proc/1/root/garage /usr/local/bin/garage
         chmod +x /usr/local/bin/garage
-        
+
         G="garage -c /etc/garage.toml"
-        
+
         # Wait for garage to generate node key first
         echo "Waiting for garage node key..."
         for i in $$(seq 1 60); do
@@ -149,20 +149,20 @@ services:
           echo "Waiting for node key... ($$i/60)"
           sleep 2
         done
-        
+
         [ -f /var/lib/garage/meta/node_key ] || { echo "Node key not found"; exit 1; }
-        
+
         # Get node ID and configure layout
         NODE_ID=$$($$G node id -q)
         echo "Node ID: $$NODE_ID"
-        
+
         # Check if layout needs to be configured
         if $$G status 2>&1 | grep -q "NO ROLE ASSIGNED"; then
           echo "Configuring layout..."
           $$G layout assign "$$NODE_ID" -z "$$GARAGE_ZONE" -c "$$GARAGE_CAPACITY"
           $$G layout apply --version 1
         fi
-        
+
         # Now wait for healthy status
         echo "Waiting for garage to be healthy..."
         for i in $$(seq 1 30); do
@@ -170,18 +170,18 @@ services:
           echo "Waiting... ($$i/30)"
           sleep 2
         done
-        
+
         $$G status | grep -q "HEALTHY" || { echo "Garage not healthy"; exit 1; }
-        
+
         echo "Creating key..."
         $$G key info "$$GARAGE_S3_ACCESS_KEY" 2>/dev/null || \
           $$G key import "$$GARAGE_S3_ACCESS_KEY" "$$GARAGE_S3_SECRET_KEY" -n app-key --yes
-        
+
         echo "Creating bucket..."
         $$G bucket info "$$GARAGE_S3_BUCKET" 2>/dev/null || \
           $$G bucket create "$$GARAGE_S3_BUCKET"
         $$G bucket allow "$$GARAGE_S3_BUCKET" --key "$$GARAGE_S3_ACCESS_KEY" --read --write || true
-        
+
         echo "Init complete!"
 
 volumes:
