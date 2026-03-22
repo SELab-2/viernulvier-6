@@ -48,8 +48,13 @@ async fn get_one_not_found(db: PgPool) {
 #[sqlx::test(fixtures("locations"))]
 #[test_log::test]
 async fn post_success(db: PgPool) {
-    let app = TestRouter::new(db);
     let payload = mock_post_payload();
+
+    let unauth_app = TestRouter::new(db.clone());
+    let unauth_response = unauth_app.post("/spaces", &payload).await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
+
+    let app = TestRouter::as_editor(db).await;
 
     let response = app.post("/spaces", &payload).await;
     assert_eq!(response.status(), StatusCode::CREATED);
@@ -62,9 +67,10 @@ async fn post_success(db: PgPool) {
 #[sqlx::test(fixtures("locations", "spaces"))]
 #[test_log::test]
 async fn put_success(db: PgPool) {
-    let app = TestRouter::new(db);
     let target_id = Uuid::from_str("20000000-0000-0000-0000-000000000003").unwrap();
     let location_id = Uuid::from_str("10000000-0000-0000-0000-000000000002").unwrap();
+    let unauth_app = TestRouter::new(db.clone());
+    let app = TestRouter::as_editor(db).await;
 
     let update_payload: SpacePayload = serde_json::from_value(json!({
         "id": target_id,
@@ -72,6 +78,9 @@ async fn put_success(db: PgPool) {
         "location_id": location_id
     }))
     .expect("Failed to deserialize mock SpacePayload");
+
+    let unauth_response = unauth_app.put("/spaces", &update_payload).await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
 
     let response = app.put("/spaces", &update_payload).await;
     assert_eq!(response.status(), StatusCode::OK);
@@ -84,7 +93,8 @@ async fn put_success(db: PgPool) {
 #[sqlx::test(fixtures("locations"))]
 #[test_log::test]
 async fn put_not_found(db: PgPool) {
-    let app = TestRouter::new(db);
+    let unauth_app = TestRouter::new(db.clone());
+    let app = TestRouter::as_editor(db).await;
     let location_id = Uuid::from_str("10000000-0000-0000-0000-000000000001").unwrap();
 
     let missing_space: SpacePayload = serde_json::from_value(json!({
@@ -94,6 +104,9 @@ async fn put_not_found(db: PgPool) {
     }))
     .expect("Failed to deserialize mock SpacePayload");
 
+    let unauth_response = unauth_app.put("/spaces", &missing_space).await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
+
     let response = app.put("/spaces", &missing_space).await;
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
@@ -101,8 +114,13 @@ async fn put_not_found(db: PgPool) {
 #[sqlx::test(fixtures("locations", "spaces"))]
 #[test_log::test]
 async fn delete_success(db: PgPool) {
-    let app = TestRouter::new(db);
     let target_id = Uuid::from_str("20000000-0000-0000-0000-000000000002").unwrap();
+
+    let unauth_app = TestRouter::new(db.clone());
+    let unauth_response = unauth_app.delete(&format!("/spaces/{}", target_id)).await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
+
+    let app = TestRouter::as_editor(db).await;
 
     let response = app.delete(&format!("/spaces/{}", target_id)).await;
     assert_eq!(response.status(), StatusCode::NO_CONTENT);
@@ -114,7 +132,11 @@ async fn delete_success(db: PgPool) {
 #[sqlx::test]
 #[test_log::test]
 async fn delete_not_found(db: PgPool) {
-    let app = TestRouter::new(db);
+    let unauth_app = TestRouter::new(db.clone());
+    let unauth_response = unauth_app.delete(&format!("/spaces/{}", Uuid::nil())).await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
+
+    let app = TestRouter::as_editor(db).await;
 
     let response = app.delete(&format!("/spaces/{}", Uuid::nil())).await;
     assert_eq!(response.status(), StatusCode::NOT_FOUND);

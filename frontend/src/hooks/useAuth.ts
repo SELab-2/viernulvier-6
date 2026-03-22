@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-client";
 import { useRouter } from "@/i18n/routing";
 import { LoginDTO } from "@/types/dto/auth.types";
 import { User } from "@/types/models/user.types";
@@ -14,7 +14,7 @@ export const useUser = (options?: { enabled?: boolean }) => {
     return useQuery<User>({
         queryKey: queryKeys.user,
         queryFn: async () => {
-            const { data } = await api.get<UserResponse>("/admin/me");
+            const { data } = await api.get<UserResponse>("/editor/me");
             return mapUser(data);
         },
         retry: false,
@@ -36,7 +36,7 @@ export const useLogin = () => {
         },
         onSuccess: async () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.user });
-            router.push("/admin");
+            router.push("/editor");
         },
         onError: (error: AxiosError) => {
             if (error.response?.status === 401) {
