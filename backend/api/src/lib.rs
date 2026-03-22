@@ -7,12 +7,12 @@ use reqwest::Client;
 use serde::de::DeserializeOwned;
 use tracing::{info, warn};
 
-use crate::models::{
-    collection::ApiCollection, hall::ApiHall, location::ApiLocation, production::ApiProduction,
-    space::ApiSpace,
-};
-
 use crate::helper::extract_source_id;
+use crate::models::space::ApiSpace;
+use crate::models::{
+    collection::ApiCollection, event::ApiEvent, hall::ApiHall, location::ApiLocation,
+    production::ApiProduction,
+};
 
 mod helper;
 pub mod models {
@@ -87,6 +87,7 @@ impl ApiImporter {
             self.update_spaces(&last_update_ts).await?;
             self.update_halls(&last_update_ts).await?;
             self.update_productions(&last_update_ts).await?;
+            self.update_events(&last_update_ts).await?;
             Ok::<(), reqwest::Error>(())
         }
         .await;
@@ -258,6 +259,55 @@ impl ApiImporter {
         }
 
         info!("Halls: finished importing");
+        Ok(())
+    }
+
+    pub async fn update_events(&self, updated_after: &str) -> Result<(), reqwest::Error> {
+        info!("Events: start updating");
+
+        let mut stream = pin!(self.paginated_collection::<ApiEvent>("/events", updated_after));
+
+        while let Some(batch_result) = stream.next().await {
+            let events = batch_result?;
+            let amt = events.len();
+            info!("Events: got {amt} from api");
+            for event in events {
+                let production_id = match event.production_source_id() {
+                    Some(id) => {
+                        match self.db.productions().by_source_id(id).await.unwrap() {
+                            Some(p) => p.id,
+                            None => {
+                                warn!("Events: production source_id {id} not found in db, skipping");
+                                continue;
+                            }
+                        }
+                    }
+                    None => {
+                        warn!("Events: event has no production source_id, skipping");
+                        continue;
+                    }
+                };
+
+                let hall_uuid = match event.hall_source_id() {
+                    Some(id) => {
+                        let uuid = self.db.halls().by_source_id(id).await
+                            .unwrap()
+                            .map(|h| h.id);
+                        if uuid.is_none() {
+                            warn!("Events: hall source_id {id} not found in db");
+                        }
+                        uuid
+                    }
+                    None => None,
+                };
+
+                let event_create = event.to_create(production_id, hall_uuid);
+                self.db.events().insert(event_create).await.unwrap();
+            }
+            info!("Events: inserted {amt} into db");
+        }
+
+        info!("Events: finished importing");
         Ok(())
     }
 }

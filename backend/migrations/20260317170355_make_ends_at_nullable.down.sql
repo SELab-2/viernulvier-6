@@ -1,0 +1,2 @@
+ALTER TABLE events
+ALTER COLUMN ends_at SET NOT NULL;
