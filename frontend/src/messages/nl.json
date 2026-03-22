@@ -5,6 +5,66 @@
     "LocaleSwitcher": {
         "label": "Taal selecteren"
     },
+    "Masthead": {
+        "address": "Archief — Sint-Pietersnieuwstraat 23, Gent",
+        "subtitle": "Archief — De Vooruit, Gent — Opgericht 1883",
+        "genres": "Theater · Dans · Muziek · Performance · Nightlife",
+        "nav": {
+            "productions": "Producties",
+            "artists": "Artiesten",
+            "articles": "Artikels",
+            "posters": "Affiches",
+            "collection": "Collectie",
+            "about": "Over"
+        }
+    },
+    "Search": {
+        "placeholder": "Zoeken in het archief...",
+        "hint": "↵ zoeken"
+    },
+    "Featured": {
+        "label": "Uitgelicht uit het archief"
+    },
+    "Sidebar": {
+        "title": "Filters",
+        "categories": {
+            "label": "Categorie",
+            "artists": "Artiesten",
+            "productions": "Producties",
+            "articles": "Artikels",
+            "posters": "Affiches"
+        },
+        "tags": {
+            "label": "Tags",
+            "theater": "Theater",
+            "dance": "Dans",
+            "concert": "Concert",
+            "nightlife": "Nightlife",
+            "performance": "Performance",
+            "comedy": "Comedy",
+            "circus": "Circus",
+            "music": "Muziek",
+            "spokenWord": "Spoken Word",
+            "talks": "Talks",
+            "monument": "Monument"
+        },
+        "locations": {
+            "label": "Locatie",
+            "deVooruit": "De Vooruit",
+            "domzaal": "Domzaal",
+            "balzaal": "Balzaal",
+            "plantentuin": "Plantentuin"
+        },
+        "year": {
+            "label": "Jaar"
+        },
+        "clearAll": "Clear All"
+    },
+    "Productions": {
+        "title": "Producties",
+        "showing": "Toont {shown} van {total} resultaten",
+        "seeEvents": "zie events"
+    },
     "Login": {
         "title": "Welkom terug",
         "subtitle": "Vul je gegevens in om in te loggen",

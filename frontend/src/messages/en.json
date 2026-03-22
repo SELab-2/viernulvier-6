@@ -5,6 +5,66 @@
     "LocaleSwitcher": {
         "label": "Select language"
     },
+    "Masthead": {
+        "address": "Archive — Sint-Pietersnieuwstraat 23, Ghent",
+        "subtitle": "Archive — De Vooruit, Ghent — Founded 1883",
+        "genres": "Theatre · Dance · Music · Performance · Nightlife",
+        "nav": {
+            "productions": "Productions",
+            "artists": "Artists",
+            "articles": "Articles",
+            "posters": "Posters",
+            "collection": "Collection",
+            "about": "About"
+        }
+    },
+    "Search": {
+        "placeholder": "Search the archive...",
+        "hint": "↵ search"
+    },
+    "Featured": {
+        "label": "Featured from the archive"
+    },
+    "Sidebar": {
+        "title": "Filters",
+        "categories": {
+            "label": "Category",
+            "artists": "Artists",
+            "productions": "Productions",
+            "articles": "Articles",
+            "posters": "Posters"
+        },
+        "tags": {
+            "label": "Tags",
+            "theater": "Theatre",
+            "dance": "Dance",
+            "concert": "Concert",
+            "nightlife": "Nightlife",
+            "performance": "Performance",
+            "comedy": "Comedy",
+            "circus": "Circus",
+            "music": "Music",
+            "spokenWord": "Spoken Word",
+            "talks": "Talks",
+            "monument": "Monument"
+        },
+        "locations": {
+            "label": "Location",
+            "deVooruit": "De Vooruit",
+            "domzaal": "Domzaal",
+            "balzaal": "Balzaal",
+            "plantentuin": "Botanical Garden"
+        },
+        "year": {
+            "label": "Year"
+        },
+        "clearAll": "Clear All"
+    },
+    "Productions": {
+        "title": "Productions",
+        "showing": "Showing {shown} of {total} results",
+        "seeEvents": "see events"
+    },
     "Login": {
         "title": "Welcome back",
         "subtitle": "Enter your credentials to sign in",

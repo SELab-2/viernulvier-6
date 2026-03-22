@@ -12,21 +12,19 @@ export const Header = () => {
     const { mutate: logout, isPending: isLoggingOut } = useLogout();
 
     return (
-        <header className="flex w-full items-center justify-center gap-4 py-8">
-            <div className="flex items-center gap-2">
-                <ThemeSwitcher />
-                <LocaleSwitcher />
-                {user && (
-                    <Button
-                        variant="ghost"
-                        onClick={() => logout()}
-                        disabled={isLoggingOut}
-                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    >
-                        {isLoggingOut ? "..." : "Logout"}
-                    </Button>
-                )}
-            </div>
+        <header className="border-border/40 flex w-full items-center justify-end gap-2 border-b px-10 py-3">
+            <ThemeSwitcher />
+            <LocaleSwitcher />
+            {user && (
+                <Button
+                    variant="ghost"
+                    onClick={() => logout()}
+                    disabled={isLoggingOut}
+                    className="text-muted-foreground hover:text-foreground font-mono text-[10px] tracking-[1.4px] uppercase"
+                >
+                    {isLoggingOut ? "..." : "Logout"}
+                </Button>
+            )}
         </header>
     );
 };
