@@ -3,8 +3,8 @@
 import { useState, useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { Search } from "lucide-react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 
 import { useGetProductions } from "@/hooks/api/useProductions";
 
@@ -19,9 +19,19 @@ export default function HomePage() {
     const router = useRouter();
     const [query, setQuery] = useState("");
 
-    const { data: productions } = useGetProductions();
+    // Sync search header with hero input
+    const handleHeaderSearch = useCallback(
+        (value: string) => {
+            if (value.trim()) {
+                router.push(`/search?q=${encodeURIComponent(value.trim())}`);
+            } else {
+                router.push("/search");
+            }
+        },
+        [router]
+    );
 
-    const handleSearch = useCallback(() => {
+    const handleHeroSearch = useCallback(() => {
         if (query.trim()) {
             router.push(`/search?q=${encodeURIComponent(query.trim())}`);
         } else {
@@ -29,13 +39,14 @@ export default function HomePage() {
         }
     }, [query, router]);
 
+    const { data: productions } = useGetProductions();
     const latestProductions = (productions ?? []).slice(0, 4);
 
     return (
         <>
             <SearchHeader
                 query=""
-                onQueryChange={() => {}}
+                onQueryChange={handleHeaderSearch}
                 searchPlaceholder={tSearch("placeholder")}
                 searchHint={tSearch("hint")}
             />
@@ -49,23 +60,28 @@ export default function HomePage() {
                     {t("hero.subtitle")}
                 </p>
 
-                {/* Search CTA */}
-                <div className="relative w-full max-w-[560px]">
+                {/* Search CTA — same style as search page hero */}
+                <div className="relative w-full max-w-[680px]">
+                    <Search className="stroke-foreground pointer-events-none absolute top-1/2 left-0 h-5 w-5 -translate-y-1/2 fill-none stroke-[1.5]" />
                     <input
                         type="text"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         onKeyDown={(e) => {
-                            if (e.key === "Enter") handleSearch();
+                            if (e.key === "Enter") handleHeroSearch();
                         }}
                         placeholder={t("hero.searchPlaceholder")}
-                        className="border-foreground font-body text-foreground placeholder:text-muted-foreground hover:bg-foreground/5 w-full cursor-pointer border-2 bg-transparent py-3.5 pr-12 pl-5 text-sm transition-colors outline-none sm:py-4 sm:pl-6 sm:text-base"
+                        autoComplete="off"
+                        className="border-foreground font-display text-foreground placeholder:text-muted-foreground w-full border-b-2 bg-transparent pr-24 pb-3 pl-[34px] text-[18px] font-normal outline-none placeholder:italic sm:pr-28 sm:text-[22px]"
                     />
                     <button
-                        onClick={handleSearch}
-                        className="text-foreground hover:text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 cursor-pointer"
+                        onClick={handleHeroSearch}
+                        className="text-muted-foreground hover:text-foreground absolute top-1/2 right-0 flex -translate-y-1/2 cursor-pointer items-center gap-1.5 font-mono text-[9px] tracking-[1.2px] uppercase"
                     >
-                        <ArrowRight className="h-4 w-4 stroke-2" />
+                        enter{" "}
+                        <kbd className="border-border text-muted-foreground flex items-center justify-center border px-[5px] py-0.5 font-mono text-[9px]">
+                            ↵
+                        </kbd>
                     </button>
                 </div>
 

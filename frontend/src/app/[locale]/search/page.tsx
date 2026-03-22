@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
 
 import { useGetProductions } from "@/hooks/api/useProductions";
 import { useGetLocations } from "@/hooks/api/useLocations";
@@ -19,7 +20,9 @@ export default function SearchPage() {
     const locale = useLocale();
     const t = useTranslations("Search");
     const tHome = useTranslations("Home");
-    const [searchQuery, setSearchQuery] = useState("");
+    const searchParams = useSearchParams();
+
+    const [searchQuery, setSearchQuery] = useState(() => searchParams.get("q") ?? "");
 
     const { data: productions, isLoading: productionsLoading } = useGetProductions();
     const { data: locations, isLoading: locationsLoading } = useGetLocations();
