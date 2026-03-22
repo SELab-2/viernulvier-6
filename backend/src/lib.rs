@@ -205,11 +205,11 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(space::post))
         .routes(routes!(space::delete))
         .routes(routes!(space::put))
-        .layer(from_extractor_with_state::<EditorUser, AppState>(state))
         // Event
         .routes(routes!(event::post))
         .routes(routes!(event::delete))
         .routes(routes!(event::put))
+        .layer(from_extractor_with_state::<EditorUser, AppState>(state))
 }
 
 fn admin_routes(state: AppState) -> OpenApiRouter<AppState> {

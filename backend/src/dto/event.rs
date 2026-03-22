@@ -69,7 +69,7 @@ pub struct EventPayload {
 
 
 
-#[derive(o2o, Deserialize, ToSchema)]
+#[derive(o2o, Serialize, Deserialize, ToSchema)]
 #[owned_into(EventCreate)]
 pub struct EventPostPayload {
     pub source_id: Option<i32>,
