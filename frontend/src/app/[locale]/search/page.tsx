@@ -10,11 +10,11 @@ import { getLocalizedField } from "@/lib/locale";
 
 import { LoadingState } from "@/components/shared/loading-state";
 import { SearchHeader } from "@/components/homepage/search-header";
-import { SearchHero } from "@/components/homepage/search-hero";
-import { ResultsBar } from "@/components/homepage/results-bar";
-import { ArchiveSidebar } from "@/components/homepage/archive-sidebar";
-import { ProductionList } from "@/components/homepage/production-list";
-import { Pagination } from "@/components/homepage/pagination";
+import { SearchHero } from "@/components/searchpage/search-hero";
+import { ResultsBar } from "@/components/searchpage/results-bar";
+import { ArchiveSidebar } from "@/components/searchpage/archive-sidebar";
+import { ProductionList } from "@/components/searchpage/production-list";
+import { Pagination } from "@/components/searchpage/pagination";
 
 export default function SearchPage() {
     const locale = useLocale();

@@ -10,7 +10,7 @@ import { useGetProductions } from "@/hooks/api/useProductions";
 
 import { SearchHeader } from "@/components/homepage/search-header";
 import { FeaturedSection } from "@/components/homepage/featured-section";
-import { ProductionItem } from "@/components/homepage/production-list";
+import { ProductionItem } from "@/components/searchpage/production-list";
 
 export default function HomePage() {
     const locale = useLocale();
