@@ -2,11 +2,11 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { useUser } from "@/hooks/useAuth";
 import { queryKeys } from "@/hooks/api";
-import { server } from "../msw/server";
-import { apiUrl } from "../utils/env";
-import { createQueryClientWrapper } from "../utils/query-client";
+import { useUser } from "@/hooks/useAuth";
+import { server } from "../../msw/server";
+import { apiUrl } from "../../utils/env";
+import { createQueryClientWrapper } from "../../utils/query-client";
 
 const { pushMock, toastErrorMock, toastSuccessMock } = vi.hoisted(() => {
     return {

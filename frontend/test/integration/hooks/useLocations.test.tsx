@@ -1,8 +1,8 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { useGetLocations } from "@/hooks/api/useLocations";
 import { queryKeys } from "@/hooks/api/query-keys";
+import { useGetLocations } from "@/hooks/api/useLocations";
 import { createQueryClientWrapper } from "../../utils/query-client";
 
 describe("useGetLocations", () => {
