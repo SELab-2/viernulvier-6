@@ -12,11 +12,15 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+type CopyableKeys<TData> = {
+    [K in keyof TData]: TData[K] extends string | number | null | undefined ? K : never;
+}[keyof TData];
+
 interface ActionsColumnOptions<TData> {
     // Label used in "View {label}" and "Edit {label}" menu items
     label: string;
     // Key of the row's field to copy as the identifier (e.g. "title", "name")
-    copyKey: string;
+    copyKey: CopyableKeys<TData>;
     // called with the row's data when the user chooses "Edit {label}"
     onEdit?: (entity: TData) => void;
 }
