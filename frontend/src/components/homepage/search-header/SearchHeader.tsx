@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import { Search, Menu, X } from "lucide-react";
-import { usePathname } from "next/navigation";
 import { useLocale } from "next-intl";
 
-import { Link } from "@/i18n/routing";
+import { Link, usePathname } from "@/i18n/routing";
 import { ThemeSwitcher } from "@/components/shared/theme-switcher";
 
 interface SearchHeaderProps {
@@ -24,9 +23,8 @@ export function SearchHeader({
     const [menuOpen, setMenuOpen] = useState(false);
     const pathname = usePathname();
     const locale = useLocale();
-    const isHome = pathname === `/${locale}` || pathname === `/${locale}/`;
-    const isSearch = pathname.startsWith(`/${locale}/search`);
-    const otherLocale = locale === "nl" ? "en" : "nl";
+    const isHome = pathname === "/" || pathname === "";
+    const isSearch = pathname.startsWith("/search");
 
     const navLinkClass = (active: boolean) =>
         `font-mono text-[9px] tracking-[1.4px] uppercase transition-colors ${
@@ -34,6 +32,34 @@ export function SearchHeader({
                 ? "text-foreground border-b border-foreground pb-0.5"
                 : "text-muted-foreground hover:text-foreground"
         }`;
+
+    const localeSwitcher = (
+        <span className="flex items-center gap-1 font-mono text-[10px] tracking-[1.4px] uppercase">
+            <Link
+                href={pathname}
+                locale="nl"
+                className={`transition-colors ${
+                    locale === "nl"
+                        ? "text-foreground font-medium"
+                        : "text-muted-foreground hover:text-foreground"
+                }`}
+            >
+                NL
+            </Link>
+            <span className="text-muted-foreground text-[8px]">/</span>
+            <Link
+                href={pathname}
+                locale="en"
+                className={`transition-colors ${
+                    locale === "en"
+                        ? "text-foreground font-medium"
+                        : "text-muted-foreground hover:text-foreground"
+                }`}
+            >
+                EN
+            </Link>
+        </span>
+    );
 
     return (
         <header className="border-foreground border-b-2">
@@ -77,13 +103,7 @@ export function SearchHeader({
                     </Link>
                     <span className="bg-border h-3 w-px" />
                     <ThemeSwitcher />
-                    <Link
-                        href={pathname}
-                        locale={otherLocale}
-                        className="text-muted-foreground hover:text-foreground font-mono text-[10px] tracking-[1.4px] uppercase transition-colors"
-                    >
-                        {otherLocale.toUpperCase()}
-                    </Link>
+                    {localeSwitcher}
                 </div>
             </div>
 
@@ -97,13 +117,7 @@ export function SearchHeader({
                 </Link>
                 <div className="flex items-center gap-3">
                     <ThemeSwitcher />
-                    <Link
-                        href={pathname}
-                        locale={otherLocale}
-                        className="text-muted-foreground hover:text-foreground font-mono text-[10px] tracking-[1.4px] uppercase transition-colors"
-                    >
-                        {otherLocale.toUpperCase()}
-                    </Link>
+                    {localeSwitcher}
                     <button
                         onClick={() => setMenuOpen(!menuOpen)}
                         className="text-foreground cursor-pointer p-1"
