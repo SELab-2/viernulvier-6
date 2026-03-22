@@ -59,13 +59,13 @@ export default function HomePage() {
             <Masthead />
             <SearchBar onSearch={setSearchQuery} />
 
-            <div className="px-[30px]">
+            <div className="px-4 pt-2 sm:px-[30px] sm:pt-4">
                 <FeaturedSection />
             </div>
 
             <div className="flex min-h-[calc(100vh-200px)]">
                 <ArchiveSidebar locations={locations ?? []} />
-                <main className="min-w-0 flex-1 px-[30px] pb-16">
+                <main className="min-w-0 flex-1 px-4 pb-20 sm:px-[30px] sm:pb-16">
                     <ProductionList productions={filteredProductions} locale={locale} />
                     {!searchQuery && totalPages > 1 && (
                         <Pagination

@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { SlidersHorizontal, X } from "lucide-react";
 
 import type { Location } from "@/types/models/location.types";
 
@@ -22,7 +23,6 @@ const TAGS = [
 
 interface ArchiveSidebarProps {
     locations?: Location[];
-    // TODO: wire up onFilterChange to actually filter productions in the parent
     onFilterChange?: (filters: {
         categories: Set<string>;
         tags: Set<string>;
@@ -32,6 +32,7 @@ interface ArchiveSidebarProps {
 
 export function ArchiveSidebar({ locations = [] }: ArchiveSidebarProps) {
     const t = useTranslations("Sidebar");
+    const [mobileOpen, setMobileOpen] = useState(false);
     const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
     const [checkedCategories, setCheckedCategories] = useState<Set<string>>(
         new Set(["productions"])
@@ -41,11 +42,8 @@ export function ArchiveSidebar({ locations = [] }: ArchiveSidebarProps) {
     const toggleTag = useCallback((tag: string) => {
         setActiveTags((prev) => {
             const next = new Set(prev);
-            if (next.has(tag)) {
-                next.delete(tag);
-            } else {
-                next.add(tag);
-            }
+            if (next.has(tag)) next.delete(tag);
+            else next.add(tag);
             return next;
         });
     }, []);
@@ -53,11 +51,8 @@ export function ArchiveSidebar({ locations = [] }: ArchiveSidebarProps) {
     const toggleCategory = useCallback((cat: string) => {
         setCheckedCategories((prev) => {
             const next = new Set(prev);
-            if (next.has(cat)) {
-                next.delete(cat);
-            } else {
-                next.add(cat);
-            }
+            if (next.has(cat)) next.delete(cat);
+            else next.add(cat);
             return next;
         });
     }, []);
@@ -65,11 +60,8 @@ export function ArchiveSidebar({ locations = [] }: ArchiveSidebarProps) {
     const toggleLocation = useCallback((locId: string) => {
         setCheckedLocations((prev) => {
             const next = new Set(prev);
-            if (next.has(locId)) {
-                next.delete(locId);
-            } else {
-                next.add(locId);
-            }
+            if (next.has(locId)) next.delete(locId);
+            else next.add(locId);
             return next;
         });
     }, []);
@@ -80,11 +72,21 @@ export function ArchiveSidebar({ locations = [] }: ArchiveSidebarProps) {
         setCheckedLocations(new Set());
     }, []);
 
-    return (
-        <aside className="border-border w-[290px] shrink-0 border-r py-5 pb-10">
-            <div className="mb-1 px-4 py-3">
-                <h2 className="font-display text-2xl leading-relaxed font-medium">{t("title")}</h2>
-                <div className="bg-foreground mt-1 h-0.5 w-10" />
+    const sidebarContent = (
+        <>
+            <div className="mb-1 flex items-center justify-between px-4 py-3">
+                <div>
+                    <h2 className="font-display text-2xl leading-relaxed font-medium">
+                        {t("title")}
+                    </h2>
+                    <div className="bg-foreground mt-1 h-0.5 w-10" />
+                </div>
+                <button
+                    onClick={() => setMobileOpen(false)}
+                    className="text-muted-foreground hover:text-foreground cursor-pointer p-1 lg:hidden"
+                >
+                    <X className="h-5 w-5" />
+                </button>
             </div>
 
             <FilterGroup label={t("categories.label")}>
@@ -130,7 +132,6 @@ export function ArchiveSidebar({ locations = [] }: ArchiveSidebarProps) {
                             />
                         ))
                     ) : (
-                        // TODO: remove fallback locations once API has data
                         <CheckboxItem
                             label="De Vooruit"
                             checked={checkedLocations.has("deVooruit")}
@@ -153,11 +154,43 @@ export function ArchiveSidebar({ locations = [] }: ArchiveSidebarProps) {
 
             <button
                 onClick={clearAll}
-                className="border-foreground text-foreground hover:bg-foreground hover:text-background mx-auto mt-4 block w-[230px] cursor-pointer border bg-transparent px-4 py-[9px] font-mono text-[10px] font-medium tracking-[1.4px] uppercase transition-all"
+                className="border-foreground text-foreground hover:bg-foreground hover:text-background mx-auto mt-4 block w-[calc(100%-40px)] max-w-[230px] cursor-pointer border bg-transparent px-4 py-[9px] font-mono text-[10px] font-medium tracking-[1.4px] uppercase transition-all"
             >
                 {t("clearAll")}
             </button>
-        </aside>
+        </>
+    );
+
+    return (
+        <>
+            {/* Mobile filter toggle */}
+            <button
+                onClick={() => setMobileOpen(true)}
+                className="border-border text-muted-foreground hover:text-foreground bg-background fixed bottom-4 left-4 z-40 flex cursor-pointer items-center gap-2 border px-4 py-2.5 font-mono text-[10px] tracking-[1.4px] uppercase shadow-lg transition-colors lg:hidden"
+            >
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                {t("title")}
+            </button>
+
+            {/* Mobile overlay */}
+            {mobileOpen && (
+                <div
+                    className="fixed inset-0 z-40 bg-black/30 lg:hidden"
+                    onClick={() => setMobileOpen(false)}
+                />
+            )}
+
+            {/* Sidebar */}
+            <aside
+                className={`border-border shrink-0 border-r py-5 pb-10 ${
+                    mobileOpen
+                        ? "bg-background fixed inset-y-0 left-0 z-50 w-[290px] shadow-xl"
+                        : "hidden lg:block lg:w-[290px]"
+                }`}
+            >
+                {sidebarContent}
+            </aside>
+        </>
     );
 }
 

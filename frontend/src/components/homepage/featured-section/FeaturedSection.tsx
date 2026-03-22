@@ -47,7 +47,7 @@ export function FeaturedSection() {
                 <span className="bg-muted/40 h-px flex-1" />
             </div>
 
-            <div className="bg-muted border-muted -mx-[30px] grid grid-cols-[1.6fr_1fr_1fr] gap-px border">
+            <div className="bg-muted border-muted -mx-4 grid grid-cols-1 gap-px border sm:-mx-[30px] sm:grid-cols-[1.6fr_1fr_1fr]">
                 {FEATURED_ITEMS.map((item, index) => (
                     <FeaturedCard key={item.title} item={item} isFirst={index === 0} />
                 ))}
@@ -58,10 +58,10 @@ export function FeaturedSection() {
 
 function FeaturedCard({ item, isFirst }: { item: FeaturedItem; isFirst: boolean }) {
     return (
-        <div className="bg-background hover:bg-muted/5 relative cursor-pointer p-5 pb-5 transition-colors">
+        <div className="bg-background hover:bg-muted/5 relative cursor-pointer p-4 pb-5 transition-colors sm:p-5">
             {/* TODO: replace with actual featured image from API/CMS when available */}
             <div
-                className={`w-full ${isFirst ? "h-[200px]" : "h-[140px]"} relative mb-3 overflow-hidden bg-[#CCC6BC]`}
+                className={`relative mb-3 h-[160px] w-full overflow-hidden bg-[#CCC6BC] sm:${isFirst ? "h-[200px]" : "h-[140px]"}`}
             >
                 <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
             </div>
@@ -72,7 +72,7 @@ function FeaturedCard({ item, isFirst }: { item: FeaturedItem; isFirst: boolean 
 
             <div
                 className={`font-display text-foreground mb-0.5 leading-[1.15] font-bold tracking-[-0.02em] ${
-                    isFirst ? "text-[30px]" : "text-[22px]"
+                    isFirst ? "text-[24px] sm:text-[30px]" : "text-[20px] sm:text-[22px]"
                 }`}
             >
                 {item.title}
@@ -80,7 +80,7 @@ function FeaturedCard({ item, isFirst }: { item: FeaturedItem; isFirst: boolean 
 
             <div
                 className={`font-display text-foreground/40 mb-2.5 font-bold ${
-                    isFirst ? "text-[30px]" : "text-[22px]"
+                    isFirst ? "text-[24px] sm:text-[30px]" : "text-[20px] sm:text-[22px]"
                 }`}
             >
                 {item.subtitle}
