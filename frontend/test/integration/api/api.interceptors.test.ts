@@ -2,7 +2,7 @@ import { HttpResponse, http } from "msw";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { queryKeys } from "@/hooks/api";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-client";
 import { queryClient } from "@/lib/query-client";
 import { server } from "../../msw/server";
 import { apiUrl } from "../../utils/env";

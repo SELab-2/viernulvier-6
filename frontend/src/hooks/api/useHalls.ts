@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-client";
 import { mapCreateHallInput, mapHall, mapHalls, mapUpdateHallInput } from "@/mappers/hall.mapper";
 import { HallResponse } from "@/types/api/hall.api.types";
 import { Hall, HallCreateInput, HallUpdateInput } from "@/types/models/hall.types";

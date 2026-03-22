@@ -52,6 +52,7 @@ describe("useUser", () => {
         expect(result.current.data).toEqual({
             id: "4c4d5a6b-5e2a-4e59-aaf4-f8b432dbf0a0",
             email: "admin@viernulvier.be",
+            role: "admin",
         });
 
         const cachedUser = queryClient.getQueryData(queryKeys.user);
@@ -60,7 +61,7 @@ describe("useUser", () => {
 
     it("returns error state for unauthorized user requests", async () => {
         server.use(
-            http.get(apiUrl("/admin/me"), () => {
+            http.get(apiUrl("/editor/me"), () => {
                 return HttpResponse.json(
                     {
                         success: false,
