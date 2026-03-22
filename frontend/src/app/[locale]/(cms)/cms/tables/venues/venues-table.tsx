@@ -6,92 +6,62 @@ import { DataTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
 import { makeVenueColumns, venueFields, type Venue } from "./columns";
 import { makeHallColumns, hallFields, type Hall } from "./hall-columns";
+import { useLocations } from "@/hooks/use-locations";
+import { useHalls } from "@/hooks/use-halls";
+import { useSpaces } from "@/hooks/use-spaces";
+import { useUpdateLocation } from "@/hooks/use-update-location";
+import { useUpdateHall } from "@/hooks/use-update-hall";
 
-const MOCK_VENUES: Venue[] = [
-    {
-        id: "00000000-0000-0000-0000-000000000001",
-        name: "De Vooruit",
-        code: "VOORUIT",
-        street: "Sint-Pietersnieuwstraat",
-        number: "23",
-        postal_code: "9000",
-        city: "Gent",
-        country: "BE",
-        phone_1: null,
-        phone_2: null,
-        is_owned_by_viernulvier: true,
-        uitdatabank_id: null,
-        halls: [
-            {
-                id: "00000000-0000-0000-0000-000000000010",
-                name: "Balzaal",
-                slug: "balzaal",
-                vendor_id: null,
-                box_office_id: null,
-                seat_selection: false,
-                open_seating: true,
-                remark: null,
-                space_id: null,
-            },
-            {
-                id: "00000000-0000-0000-0000-000000000011",
-                name: "Filmzaal",
-                slug: "filmzaal",
-                vendor_id: null,
-                box_office_id: null,
-                seat_selection: true,
-                open_seating: false,
-                remark: null,
-                space_id: null,
-            },
-        ],
-    },
-    {
-        id: "00000000-0000-0000-0000-000000000002",
-        name: "Stadschouwburg",
-        code: null,
-        street: "Sint-Baafsplein",
-        number: "17",
-        postal_code: "9000",
-        city: "Gent",
-        country: "BE",
-        phone_1: null,
-        phone_2: null,
-        is_owned_by_viernulvier: false,
-        uitdatabank_id: null,
-        halls: [],
-    },
-];
+export function VenuesTable() {
+    const { data: locations = [], isLoading: loadingLocations } = useLocations();
+    const { data: halls = [], isLoading: loadingHalls } = useHalls();
+    const { data: spaces = [], isLoading: loadingSpaces } = useSpaces();
 
-interface VenuesTableProps {
-    data?: Venue[];
-}
+    const updateLocation = useUpdateLocation();
+    const updateHall = useUpdateHall();
 
-export function VenuesTable({ data = MOCK_VENUES }: VenuesTableProps) {
     const [editVenue, setEditVenue] = useState<Venue | null>(null);
     const [editHall, setEditHall] = useState<Hall | null>(null);
 
-    const venueCols = useMemo(() => makeVenueColumns({ onEdit: setEditVenue }), []);
+    // Join: group halls under their parent location via the space relationship
+    const venues: Venue[] = useMemo(() => {
+        return locations.map((location) => {
+            const locationSpaceIds = spaces
+                .filter((s) => s.location_id === location.id)
+                .map((s) => s.id);
+            const nestedHalls = halls.filter(
+                (h) => h.space_id !== null && locationSpaceIds.includes(h.space_id)
+            );
+            return { ...location, halls: nestedHalls };
+        });
+    }, [locations, halls, spaces]);
 
+    const venueCols = useMemo(() => makeVenueColumns({ onEdit: setEditVenue }), []);
     const hallCols = useMemo(() => makeHallColumns({ onEdit: setEditHall }), []);
 
     const renderHalls = useCallback(
         (row: Row<Venue>) => {
-            const halls: Hall[] = row.original.halls ?? [];
+            const nestedHalls: Hall[] = row.original.halls ?? [];
             return (
                 <div className="bg-muted/30 py-1 pr-6 pl-12">
-                    <DataTable columns={hallCols} data={halls} compact />
+                    <DataTable columns={hallCols} data={nestedHalls} compact />
                 </div>
             );
         },
         [hallCols]
     );
 
+    const isLoading = loadingLocations || loadingHalls || loadingSpaces;
+
+    if (isLoading) {
+        return <div className="text-muted-foreground p-4 text-sm">Loading venues…</div>;
+    }
+
     return (
         <>
             <DataTable
                 columns={venueCols}
-                data={data}
+                data={venues}
                 renderSubComponent={renderHalls}
                 getRowCanExpand={(row) => (row.original.halls?.length ?? 0) > 0}
                 expanderLabels={{ show: "Show halls", hide: "Hide halls" }}
@@ -102,6 +72,7 @@ export function VenuesTable({ data = MOCK_VENUES }: VenuesTableProps) {
                 entity={editVenue}
                 fields={venueFields}
                 title="Edit venue"
+                onSave={(updated) => updateLocation.mutate(updated)}
             />
             <EditSheet
                 open={!!editHall}
@@ -109,6 +80,7 @@ export function VenuesTable({ data = MOCK_VENUES }: VenuesTableProps) {
                 entity={editHall}
                 fields={hallFields}
                 title="Edit hall"
+                onSave={(updated) => updateHall.mutate(updated)}
             />
         </>
     );

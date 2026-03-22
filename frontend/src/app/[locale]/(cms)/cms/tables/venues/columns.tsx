@@ -7,6 +7,7 @@ import type { Hall } from "./hall-columns";
 
 export type Venue = {
     id: string;
+    source_id: number | null;
     name: string | null;
     code: string | null;
     street: string | null;
@@ -18,7 +19,7 @@ export type Venue = {
     phone_2: string | null;
     is_owned_by_viernulvier: boolean | null;
     uitdatabank_id: string | null;
-    /** Halls are related via spaces; included when fetched with sub-resources */
+    /** Halls are related via spaces; joined client-side */
     halls?: Hall[];
 };
 

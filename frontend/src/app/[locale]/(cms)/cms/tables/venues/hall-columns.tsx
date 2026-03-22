@@ -6,6 +6,7 @@ import type { FieldDef } from "../edit-sheet";
 
 export type Hall = {
     id: string;
+    source_id: number | null;
     name: string;
     slug: string;
     vendor_id: string | null;
