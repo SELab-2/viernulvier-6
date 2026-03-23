@@ -430,102 +430,49 @@ impl ApiImporter {
         let cdn_url = flatten_single(Some(item.link));
         let now = Utc::now();
 
-        // skip if already imported by source_id
-        if let Some(sid) = source_id
-            && self.db.media().by_source_id(sid).await.is_ok_and(|m| m.is_some())
+        // skip if already imported by source URI (stable idempotency)
+        if self
+            .db
+            .media()
+            .by_source_uri("viernulvier", item_url)
+            .await
+            .is_ok_and(|m| m.is_some())
         {
             return Ok(());
         }
 
-        // try to download and upload to S3
-        let (s3_key, checksum, file_size) = if let (Some(s3_client), Some(s3_bucket), Some(url)) =
+        // importer policy: all imported media must be uploaded to S3; no external URL fallback
+        let (Some(s3_client), Some(s3_bucket), Some(url)) =
             (&self.s3_client, &self.s3_bucket, &cdn_url)
-        {
-            match self.download_and_upload(s3_client, s3_bucket, url, production_source_id, gallery_type, &item.format).await {
-                Ok(result) => result,
-                Err(e) => {
-                    warn!("Media: download/upload failed for {url}: {e}");
-                    // fall back to storing just the external URL
-                    let media_create = MediaCreate {
-                        s3_key: None,
-                        external_url: cdn_url,
-                        mime_type,
-                        file_size: None,
-                        width: Some(item.width as i32),
-                        height: Some(item.height as i32),
-                        checksum: None,
-                        alt_text: title,
-                        description,
-                        credit,
-                        geo_latitude: None,
-                        geo_longitude: None,
-                        parent_id: None,
-                        derivative_type: None,
-                        gallery_type: Some(gallery_type.to_string()),
-                        source_id,
-                        created_at: now,
-                        updated_at: now,
-                    };
-
-                    if let Ok(media) = self.db.media().insert(media_create).await {
-                        let _ = self
-                            .db
-                            .media()
-                            .link_to_entity(
-                                EntityType::Production,
-                                production_id,
-                                media.id,
-                                item.position as i32,
-                                false,
-                            )
-                            .await;
-                    }
-                    return Ok(());
-                }
-            }
-        } else {
-            // no S3 configured, store external URL
-            let media_create = MediaCreate {
-                s3_key: None,
-                external_url: cdn_url,
-                mime_type,
-                file_size: None,
-                width: Some(item.width as i32),
-                height: Some(item.height as i32),
-                checksum: None,
-                alt_text: title,
-                description,
-                credit,
-                geo_latitude: None,
-                geo_longitude: None,
-                parent_id: None,
-                derivative_type: None,
-                gallery_type: Some(gallery_type.to_string()),
-                source_id,
-                created_at: now,
-                updated_at: now,
-            };
-
-            if let Ok(media) = self.db.media().insert(media_create).await {
-                let _ = self
-                    .db
-                    .media()
-                    .link_to_entity(
-                        EntityType::Production,
-                        production_id,
-                        media.id,
-                        item.position as i32,
-                        false,
-                    )
-                    .await;
-            }
+        else {
+            warn!(
+                "Media: skipping import for {item_url} because S3 config or source URL is missing"
+            );
             return Ok(());
         };
 
+        let (s3_key, checksum, file_size) =
+            match self
+                .download_and_upload(
+                    s3_client,
+                    s3_bucket,
+                    url,
+                    production_source_id,
+                    gallery_type,
+                    &item.format,
+                )
+                .await
+            {
+                Ok(result) => result,
+                Err(e) => {
+                    warn!("Media: download/upload failed for {url}: {e}");
+                    return Ok(());
+                }
+            };
+
         // store with s3_key
         let media_create = MediaCreate {
-            s3_key: Some(s3_key),
-            external_url: None,
+            s3_key,
             mime_type,
             file_size: Some(file_size),
             width: Some(item.width as i32),
@@ -540,6 +487,9 @@ impl ApiImporter {
             derivative_type: None,
             gallery_type: Some(gallery_type.to_string()),
             source_id,
+            source_system: "viernulvier".to_string(),
+            source_uri: Some(item_url.to_string()),
+            source_updated_at: Some(item.updated_at),
             created_at: now,
             updated_at: now,
         };

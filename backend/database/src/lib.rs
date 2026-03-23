@@ -23,6 +23,7 @@ pub mod models {
     pub mod internal_state;
     pub mod location;
     pub mod media;
+    pub mod media_variant;
     pub mod production;
     pub mod space;
     pub mod tag;

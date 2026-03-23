@@ -69,6 +69,19 @@ impl<'a> MediaRepo<'a> {
             .await?)
     }
 
+    pub async fn by_source_uri(
+        &self,
+        source_system: &str,
+        source_uri: &str,
+    ) -> Result<Option<Media>, DatabaseError> {
+        Ok(Media::select()
+            .where_("source_system = $1 AND source_uri = $2")
+            .bind(source_system)
+            .bind(source_uri)
+            .fetch_optional(self.db)
+            .await?)
+    }
+
     pub async fn derivatives(&self, parent_id: Uuid) -> Result<Vec<Media>, DatabaseError> {
         Ok(Media::select()
             .where_("parent_id = $1")
@@ -138,11 +151,12 @@ impl<'a> MediaRepo<'a> {
             r#"
             SELECT
                 m.id, m.created_at, m.updated_at,
-                m.s3_key, m.external_url, m.mime_type, m.file_size,
+                m.s3_key, m.mime_type, m.file_size,
                 m.width, m.height, m.checksum,
                 m.alt_text, m.description, m.credit,
                 m.geo_latitude, m.geo_longitude,
-                m.parent_id, m.derivative_type, m.gallery_type, m.source_id
+                m.parent_id, m.derivative_type, m.gallery_type, m.source_id,
+                m.source_system, m.source_uri, m.source_updated_at
             FROM media m
             JOIN entity_media em ON em.media_id = m.id
             WHERE em.entity_type = $1 AND em.entity_id = $2
@@ -161,11 +175,12 @@ impl<'a> MediaRepo<'a> {
             r#"
             SELECT
                 m.id, m.created_at, m.updated_at,
-                m.s3_key, m.external_url, m.mime_type, m.file_size,
+                m.s3_key, m.mime_type, m.file_size,
                 m.width, m.height, m.checksum,
                 m.alt_text, m.description, m.credit,
                 m.geo_latitude, m.geo_longitude,
-                m.parent_id, m.derivative_type, m.gallery_type, m.source_id
+                m.parent_id, m.derivative_type, m.gallery_type, m.source_id,
+                m.source_system, m.source_uri, m.source_updated_at
             FROM media m
             LEFT JOIN entity_media em ON em.media_id = m.id
             WHERE em.id IS NULL AND m.parent_id IS NULL
@@ -184,13 +199,9 @@ impl<'a> MediaRepo<'a> {
             // collect s3_keys from derivatives first
             let derivatives = self.derivatives(orphan.id).await?;
             for d in &derivatives {
-                if let Some(ref key) = d.s3_key {
-                    s3_keys.push(key.clone());
-                }
+                s3_keys.push(d.s3_key.clone());
             }
-            if let Some(ref key) = orphan.s3_key {
-                s3_keys.push(key.clone());
-            }
+            s3_keys.push(orphan.s3_key.clone());
         }
 
         // delete derivatives first, then orphans (parent_id cascade handles this, but be explicit)

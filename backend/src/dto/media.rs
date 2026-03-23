@@ -10,17 +10,7 @@ impl MediaPayload {
     /// Build a MediaPayload from a database model, computing the public URL.
     /// `base_url` is the S3_PUBLIC_URL (e.g. "https://s3.example.com/bucket").
     pub fn from_model(m: Media, base_url: Option<&str>) -> Self {
-        let url = m
-            .external_url
-            .clone()
-            .or_else(|| {
-                match (&m.s3_key, base_url) {
-                    (Some(key), Some(base)) => {
-                        Some(format!("{}/{}", base.trim_end_matches('/'), key))
-                    }
-                    _ => None,
-                }
-            });
+        let url = base_url.map(|base| format!("{}/{}", base.trim_end_matches('/'), m.s3_key));
 
         Self {
             id: m.id,
@@ -40,6 +30,8 @@ impl MediaPayload {
             parent_id: m.parent_id,
             derivative_type: m.derivative_type,
             gallery_type: m.gallery_type,
+            source_system: m.source_system,
+            source_uri: m.source_uri,
         }
     }
 
@@ -83,6 +75,8 @@ pub struct MediaPayload {
     pub parent_id: Option<Uuid>,
     pub derivative_type: Option<String>,
     pub gallery_type: Option<String>,
+    pub source_system: String,
+    pub source_uri: Option<String>,
 }
 
 impl From<MediaPayload> for Media {
@@ -93,8 +87,7 @@ impl From<MediaPayload> for Media {
             updated_at: p.updated_at,
             // Keep existing storage linkage on updates by leaving these untouched in handler logic.
             // This conversion is only safe when merged with the current DB record.
-            s3_key: None,
-            external_url: None,
+            s3_key: String::new(),
             mime_type: p.mime_type,
             file_size: p.file_size,
             width: p.width,
@@ -109,6 +102,9 @@ impl From<MediaPayload> for Media {
             derivative_type: p.derivative_type,
             gallery_type: p.gallery_type,
             source_id: None,
+            source_system: p.source_system,
+            source_uri: p.source_uri,
+            source_updated_at: None,
         }
     }
 }
@@ -120,7 +116,6 @@ impl MediaPayload {
             created_at: existing.created_at,
             updated_at: self.updated_at,
             s3_key: existing.s3_key,
-            external_url: existing.external_url,
             mime_type: self.mime_type,
             file_size: self.file_size,
             width: self.width,
@@ -135,6 +130,9 @@ impl MediaPayload {
             derivative_type: self.derivative_type,
             gallery_type: self.gallery_type,
             source_id: existing.source_id,
+            source_system: existing.source_system,
+            source_uri: existing.source_uri,
+            source_updated_at: existing.source_updated_at,
         }
     }
 }

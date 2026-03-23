@@ -128,8 +128,7 @@ pub async fn save(
 ) -> JsonStatusResponse<MediaPayload> {
     let now = Utc::now();
     let media_create = database::models::media::MediaCreate {
-        s3_key: Some(req.s3_key),
-        external_url: None,
+        s3_key: req.s3_key,
         mime_type: req.mime_type,
         file_size: req.file_size,
         width: req.width,
@@ -144,6 +143,9 @@ pub async fn save(
         derivative_type: req.derivative_type,
         gallery_type: None,
         source_id: None,
+        source_system: "cms".to_string(),
+        source_uri: None,
+        source_updated_at: None,
         created_at: now,
         updated_at: now,
     };
@@ -202,13 +204,11 @@ pub async fn delete(
     let media = db.media().by_id(id).await?;
 
     // delete from S3 if there's a key
-    if let (Some(s3_key), Some(s3_config), Some(s3_client)) =
-        (&media.s3_key, &state.config.s3, &state.s3_client)
-    {
+    if let (Some(s3_config), Some(s3_client)) = (&state.config.s3, &state.s3_client) {
         let _ = s3_client
             .delete_object()
             .bucket(&s3_config.bucket)
-            .key(s3_key)
+            .key(&media.s3_key)
             .send()
             .await;
     }

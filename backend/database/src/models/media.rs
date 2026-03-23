@@ -10,8 +10,7 @@ pub struct Media {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 
-    pub s3_key: Option<String>,
-    pub external_url: Option<String>,
+    pub s3_key: String,
 
     pub mime_type: String,
     pub file_size: Option<i64>,
@@ -30,4 +29,7 @@ pub struct Media {
     pub derivative_type: Option<String>,
     pub gallery_type: Option<String>,
     pub source_id: Option<i32>,
+    pub source_system: String,
+    pub source_uri: Option<String>,
+    pub source_updated_at: Option<DateTime<Utc>>,
 }

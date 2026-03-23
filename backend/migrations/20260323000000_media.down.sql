@@ -1,2 +1,3 @@
+DROP TABLE IF EXISTS media_variant;
 DROP TABLE IF EXISTS entity_media;
 DROP TABLE IF EXISTS media;
