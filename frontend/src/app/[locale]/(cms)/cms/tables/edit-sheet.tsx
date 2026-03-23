@@ -51,6 +51,8 @@ const BOOLEAN_OPTIONS: SelectOption[] = [
     { value: "false", label: "No" },
 ];
 
+const NULL_SENTINEL = "__null__";
+
 interface FieldRowProps<TData> {
     field: FieldDef<TData>;
     value: unknown;
@@ -87,31 +89,47 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
     }
 
     const options = field.type === "boolean" ? BOOLEAN_OPTIONS : (field.options ?? []);
-    const selectValue =
-        field.type === "boolean"
-            ? value === null || value === undefined
-                ? ""
-                : String(value)
-            : stringValue;
+
+    if (field.type === "boolean") {
+        const selectValue = value === null || value === undefined ? NULL_SENTINEL : String(value);
+
+        return (
+            <div className="flex flex-col gap-1.5">
+                <Label htmlFor={fieldId}>{field.label}</Label>
+                <Select
+                    value={selectValue}
+                    onValueChange={(v) => {
+                        if (v === NULL_SENTINEL) {
+                            onChange(null);
+                        } else {
+                            onChange(v === "true");
+                        }
+                    }}
+                >
+                    <SelectTrigger id={fieldId} size="sm" className="w-full">
+                        <SelectValue placeholder="Select…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value={NULL_SENTINEL}>—</SelectItem>
+                        {options.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col gap-1.5">
             <Label htmlFor={fieldId}>{field.label}</Label>
-            <Select
-                value={selectValue}
-                onValueChange={(v) => {
-                    if (field.type === "boolean") {
-                        onChange(v === "true" ? true : v === "false" ? false : null);
-                    } else {
-                        onChange(v);
-                    }
-                }}
-            >
+            <Select value={stringValue} onValueChange={onChange}>
                 <SelectTrigger id={fieldId} size="sm" className="w-full">
                     <SelectValue placeholder="Select…" />
                 </SelectTrigger>
                 <SelectContent>
-                    {field.type === "boolean" && <SelectItem value="">—</SelectItem>}
                     {options.map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>
                             {opt.label}

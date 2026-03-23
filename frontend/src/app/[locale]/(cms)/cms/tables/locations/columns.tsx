@@ -45,8 +45,9 @@ export function makeLocationColumns(
 ): ColumnDef<Location>[] {
     return [
         { accessorKey: "name", header: "Name" },
-        { accessorKey: "city", header: "City" },
-        { accessorKey: "country", header: "Country" },
+        { accessorKey: "code", header: "Code" },
+        { accessorKey: "address", header: "Address" },
+        { accessorKey: "phone1", header: "Phone" },
         {
             accessorKey: "isOwnedByViernulvier",
             header: "Owned",
