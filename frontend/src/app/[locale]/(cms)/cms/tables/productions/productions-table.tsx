@@ -4,51 +4,31 @@ import { useCallback, useMemo, useState } from "react";
 import type { Row } from "@tanstack/react-table";
 import { DataTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
-import { makeProductionColumns, productionFields, type Production } from "./columns";
-import { makeEventColumns, eventFields, type ProductionEvent } from "./event-columns";
+import { makeProductionColumns, productionFields } from "./columns";
+import { makeEventColumns, eventFields } from "./event-columns";
+import { useGetProductions, useUpdateProduction } from "@/hooks/api/useProductions";
+import { useGetEvents, useUpdateEvent } from "@/hooks/api/useEvents";
+import type { Production } from "@/types/models/production.types";
+import type { Event } from "@/types/models/event.types";
 
-const MOCK_PRODUCTIONS: Production[] = [
-    {
-        title: "Cut op de set!",
-        metadata_status: "complete",
-        tagline:
-            "Een intieme theatershow als afsluiter van de rollercoaster die Droomvoeding was, voordat Brihang zich terugtrekt om nieuw materiaal aaneen te rijgen.",
-        performer: "Brihang",
-        events: [
-            {
-                date: "19/03/2026",
-                time: "20:00",
-                venue: "De Vooruit - Theaterzaal",
-                ticket_status: "sold_out",
-            },
-        ],
-    },
-    {
-        title: "Nirvana!",
-        metadata_status: "complete",
-        tagline: "nevermind first time in vooruit",
-        performer: "Nirvana",
-        events: [
-            { date: "1991-11-25", time: "20:00", venue: "De Vooruit", ticket_status: "sold_out" },
-            { date: "1991-11-26", time: "20:00", venue: "De Vooruit", ticket_status: "sold_out" },
-        ],
-    },
-    {
-        title: "De Vooruit",
-        metadata_status: "complete",
-        tagline: "nevermind first time in vooruit",
-        performer: "Nirvana",
-        events: [],
-    },
-];
+export function ProductionsTable() {
+    const { data: productions = [], isLoading: productionsLoading } = useGetProductions();
+    const { data: allEvents = [], isLoading: eventsLoading } = useGetEvents();
+    const updateProduction = useUpdateProduction();
+    const updateEvent = useUpdateEvent();
 
-interface ProductionsTableProps {
-    data?: Production[];
-}
-
-export function ProductionsTable({ data = MOCK_PRODUCTIONS }: ProductionsTableProps) {
     const [editProduction, setEditProduction] = useState<Production | null>(null);
-    const [editEvent, setEditEvent] = useState<ProductionEvent | null>(null);
+    const [editEvent, setEditEvent] = useState<Event | null>(null);
+
+    const eventsByProduction = useMemo(() => {
+        const map = new Map<string, Event[]>();
+        for (const event of allEvents) {
+            const list = map.get(event.productionId) ?? [];
+            list.push(event);
+            map.set(event.productionId, list);
+        }
+        return map;
+    }, [allEvents]);
 
     const productionCols = useMemo(() => makeProductionColumns({ onEdit: setEditProduction }), []);
 
@@ -56,23 +36,31 @@ export function ProductionsTable({ data = MOCK_PRODUCTIONS }: ProductionsTablePr
 
     const renderEvents = useCallback(
         (row: Row<Production>) => {
-            const events: ProductionEvent[] = row.original.events ?? [];
+            const events = eventsByProduction.get(row.original.id) ?? [];
             return (
                 <div className="bg-muted/30 py-1 pr-6 pl-12">
                     <DataTable columns={eventCols} data={events} compact />
                 </div>
             );
         },
-        [eventCols]
+        [eventCols, eventsByProduction]
     );
+
+    const isLoading = productionsLoading || eventsLoading;
+
+    if (isLoading) {
+        return <p className="text-muted-foreground text-sm">Loading productions...</p>;
+    }
 
     return (
         <>
             <DataTable
                 columns={productionCols}
-                data={data}
+                data={productions}
                 renderSubComponent={renderEvents}
-                getRowCanExpand={(row) => (row.original.events?.length ?? 0) > 0}
+                getRowCanExpand={(row) =>
+                    (eventsByProduction.get(row.original.id)?.length ?? 0) > 0
+                }
                 expanderLabels={{ show: "Show events", hide: "Hide events" }}
             />
             <EditSheet
@@ -81,6 +69,7 @@ export function ProductionsTable({ data = MOCK_PRODUCTIONS }: ProductionsTablePr
                 entity={editProduction}
                 fields={productionFields}
                 title="Edit production"
+                onSave={(data) => updateProduction.mutate(data)}
             />
             <EditSheet
                 open={!!editEvent}
@@ -88,6 +77,7 @@ export function ProductionsTable({ data = MOCK_PRODUCTIONS }: ProductionsTablePr
                 entity={editEvent}
                 fields={eventFields}
                 title="Edit event"
+                onSave={(data) => updateEvent.mutate(data)}
             />
         </>
     );

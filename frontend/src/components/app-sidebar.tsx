@@ -17,25 +17,25 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Link, usePathname } from "@/i18n/routing";
-import { useFacets } from "@/hooks/use-facets";
-import type { FacetDto } from "@/types/dto/taxonomy.types";
+import { useGetFacets } from "@/hooks/api/useTaxonomy";
+import type { Facet, EntityType } from "@/types/models/taxonomy.types";
 
 const ENTITY_TYPES: { slug: string; label: string }[] = [
     { slug: "productions", label: "Productions" },
     { slug: "articles", label: "Articles" },
-    { slug: "venues", label: "Venues" },
+    { slug: "locations", label: "Locations" },
     { slug: "performers", label: "Performers" },
 ];
 
-const ENTITY_TYPE_MAP: Record<string, string | null> = {
+const ENTITY_TYPE_MAP: Record<string, EntityType | null> = {
     "/cms/productions": "production",
     "/cms/articles": "article",
     "/cms/performers": "artist",
-    "/cms/venues": null,
+    "/cms/locations": null,
 };
 
 interface FacetFiltersProps {
-    facets: FacetDto[];
+    facets: Facet[];
     activeTags: Set<string>;
     onToggle: (slug: string) => void;
     onClear: () => void;
@@ -90,7 +90,7 @@ export function AppSidebar() {
     const searchParams = useSearchParams();
 
     const entityType = ENTITY_TYPE_MAP[pathname] ?? null;
-    const { data: facets, isLoading } = useFacets(entityType);
+    const { data: facets, isLoading } = useGetFacets({ entityType: entityType ?? undefined });
 
     const activeTags = useMemo(() => {
         const raw = searchParams.get("tags");

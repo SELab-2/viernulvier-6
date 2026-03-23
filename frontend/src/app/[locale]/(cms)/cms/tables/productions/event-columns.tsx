@@ -3,44 +3,53 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { makeActionsColumn } from "../actions-column";
 import type { FieldDef } from "../edit-sheet";
+import type { Event } from "@/types/models/event.types";
 
-export type ProductionEvent = {
-    id: string;
-    date: string;
-    time: string;
-    venue: string;
-    ticket_status: "available" | "sold_out" | "cancelled";
-};
-
-export const eventFields: FieldDef<ProductionEvent>[] = [
-    { key: "date", label: "Date", type: "text" },
-    { key: "time", label: "Time", type: "text" },
-    { key: "venue", label: "Venue", type: "text" },
-    {
-        key: "ticket_status",
-        label: "Ticket status",
-        type: "select",
-        options: [
-            { value: "available", label: "Available" },
-            { value: "sold_out", label: "Sold out" },
-            { value: "cancelled", label: "Cancelled" },
-        ],
-    },
+export const eventFields: FieldDef<Event>[] = [
+    { key: "id", label: "ID", type: "text", readOnly: true },
+    { key: "startsAt", label: "Starts at", type: "text" },
+    { key: "endsAt", label: "Ends at", type: "text" },
+    { key: "doorsAt", label: "Doors at", type: "text" },
+    { key: "intermissionAt", label: "Intermission at", type: "text" },
+    { key: "status", label: "Status", type: "text" },
+    { key: "hallId", label: "Hall ID", type: "text" },
+    { key: "maxTicketsPerOrder", label: "Max tickets per order", type: "text" },
+    { key: "vendorId", label: "Vendor ID", type: "text" },
+    { key: "boxOfficeId", label: "Box office ID", type: "text" },
+    { key: "uitdatabankId", label: "UiTdatabank ID", type: "text" },
 ];
 
 export function makeEventColumns(
     options: {
-        onEdit?: (entity: ProductionEvent) => void;
+        onEdit?: (entity: Event) => void;
     } = {}
-): ColumnDef<ProductionEvent>[] {
+): ColumnDef<Event>[] {
     return [
-        { accessorKey: "date", header: "Date" },
-        { accessorKey: "time", header: "Time" },
-        { accessorKey: "venue", header: "Venue" },
-        { accessorKey: "ticket_status", header: "Tickets" },
-        makeActionsColumn<ProductionEvent>({
+        {
+            accessorKey: "startsAt",
+            header: "Start",
+            cell: ({ getValue }) => {
+                const val = getValue<string>();
+                if (!val) return "—";
+                const d = new Date(val);
+                return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+            },
+        },
+        {
+            accessorKey: "endsAt",
+            header: "End",
+            cell: ({ getValue }) => {
+                const val = getValue<string | null>();
+                if (!val) return "—";
+                const d = new Date(val);
+                return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+            },
+        },
+        { accessorKey: "status", header: "Status" },
+        { accessorKey: "hallId", header: "Hall" },
+        makeActionsColumn<Event>({
             label: "event",
-            copyKey: "venue",
+            copyKey: "id",
             onEdit: options.onEdit,
         }),
     ];

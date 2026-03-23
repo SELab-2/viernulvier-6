@@ -12,7 +12,7 @@ cms/
   (content)/
     layout.tsx            sidebar (AppSidebar), wraps entity routes
     productions/page.tsx  /cms/productions
-    venues/page.tsx       /cms/venues
+    locations/page.tsx    /cms/locations
     articles/page.tsx     /cms/articles
     performers/page.tsx   /cms/performers
 
@@ -32,28 +32,29 @@ edit-sheet.tsx          generic EditSheet<TData> + FieldDef<TData> type
 productions/
   columns.tsx           makeProductionColumns({ onEdit? }) + productionFields
   event-columns.tsx     makeEventColumns({ onEdit? }) + eventFields
-  productions-table.tsx data + sheet state for productions and their events
+  productions-table.tsx data via useGetProductions + useGetEvents, wired to mutations
 
-venues/
-  columns.tsx           makeVenueColumns({ onEdit? }) + venueFields
+locations/
+  columns.tsx           makeLocationColumns({ onEdit? }) + locationFields
   hall-columns.tsx      makeHallColumns({ onEdit? }) + hallFields
-  venues-table.tsx      data + sheet state for venues and their halls
+  locations-table.tsx   data via useGetLocations + useGetHalls, wired to mutations
 
 articles/
-  columns.tsx           static column definitions
-  articles-table.tsx    data, no edit yet
+  columns.tsx           static column definitions (API not yet available)
+  articles-table.tsx    empty state placeholder
 
 performers/
-  columns.tsx           static column definitions
-  performers-table.tsx  data, no edit yet
+  columns.tsx           static column definitions (API not yet available)
+  performers-table.tsx  empty state placeholder
 ```
 
 ## Adding a new editable entity
 
-1. Define the type and export `make*Columns({ onEdit? })` + `*Fields: FieldDef[]` from a `columns.tsx`.
-2. Create a `*-table.tsx` that holds `useState` for the entity being edited, passes `onEdit` into the column factory, and renders `<EditSheet>`.
-3. Add a `page.tsx` under `(content)/[entity]/` that renders the table component.
-4. Add the route to `AppSidebar` and `CmsTabBar` if needed.
+1. Define the type in `@/types/models/` and create hooks in `@/hooks/api/`.
+2. Export `make*Columns({ onEdit? })` + `*Fields: FieldDef[]` from a `columns.tsx`, using the canonical model type.
+3. Create a `*-table.tsx` that fetches data via hooks, holds `useState` for editing, passes `onEdit` into the column factory, and renders `<EditSheet>` with `onSave` wired to the update mutation.
+4. Add a `page.tsx` under `(content)/[entity]/` that renders the table component.
+5. Add the route to `AppSidebar` and `CmsTabBar` if needed.
 
 ## EditSheet
 

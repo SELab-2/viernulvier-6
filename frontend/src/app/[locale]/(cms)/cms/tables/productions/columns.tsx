@@ -3,30 +3,33 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { makeActionsColumn } from "../actions-column";
 import type { FieldDef } from "../edit-sheet";
-import type { ProductionEvent } from "./event-columns";
-
-export type Production = {
-    id: string;
-    title: string;
-    tagline: string;
-    performer: string;
-    metadata_status: "partial" | "complete";
-    events?: ProductionEvent[];
-};
+import type { Production } from "@/types/models/production.types";
 
 export const productionFields: FieldDef<Production>[] = [
-    { key: "title", label: "Title", type: "text" },
-    { key: "performer", label: "Performer", type: "text" },
-    { key: "tagline", label: "Tagline", type: "text" },
-    {
-        key: "metadata_status",
-        label: "Status",
-        type: "select",
-        options: [
-            { value: "partial", label: "Partial" },
-            { value: "complete", label: "Complete" },
-        ],
-    },
+    { key: "slug", label: "Slug", type: "text" },
+    { key: "titleNl", label: "Title (NL)", type: "text" },
+    { key: "titleEn", label: "Title (EN)", type: "text" },
+    { key: "artistNl", label: "Artist (NL)", type: "text" },
+    { key: "artistEn", label: "Artist (EN)", type: "text" },
+    { key: "supertitleNl", label: "Supertitle (NL)", type: "text" },
+    { key: "supertitleEn", label: "Supertitle (EN)", type: "text" },
+    { key: "taglineNl", label: "Tagline (NL)", type: "text" },
+    { key: "taglineEn", label: "Tagline (EN)", type: "text" },
+    { key: "teaserNl", label: "Teaser (NL)", type: "text" },
+    { key: "teaserEn", label: "Teaser (EN)", type: "text" },
+    { key: "descriptionShortNl", label: "Short desc (NL)", type: "text" },
+    { key: "descriptionShortEn", label: "Short desc (EN)", type: "text" },
+    { key: "descriptionNl", label: "Description (NL)", type: "text" },
+    { key: "descriptionEn", label: "Description (EN)", type: "text" },
+    { key: "quoteNl", label: "Quote (NL)", type: "text" },
+    { key: "quoteEn", label: "Quote (EN)", type: "text" },
+    { key: "quoteSourceNl", label: "Quote source (NL)", type: "text" },
+    { key: "quoteSourceEn", label: "Quote source (EN)", type: "text" },
+    { key: "video1", label: "Video 1", type: "text" },
+    { key: "video2", label: "Video 2", type: "text" },
+    { key: "eticketInfo", label: "E-ticket info", type: "text" },
+    { key: "uitdatabankTheme", label: "UiTdatabank theme", type: "text" },
+    { key: "uitdatabankType", label: "UiTdatabank type", type: "text" },
 ];
 
 export function makeProductionColumns(
@@ -35,13 +38,13 @@ export function makeProductionColumns(
     } = {}
 ): ColumnDef<Production>[] {
     return [
-        { accessorKey: "title", header: "Title" },
-        { accessorKey: "performer", header: "Performer" },
-        { accessorKey: "tagline", header: "Tagline" },
-        { accessorKey: "metadata_status", header: "Data" },
+        { accessorKey: "titleNl", header: "Title (NL)" },
+        { accessorKey: "titleEn", header: "Title (EN)" },
+        { accessorKey: "artistNl", header: "Artist" },
+        { accessorKey: "slug", header: "Slug" },
         makeActionsColumn<Production>({
             label: "production",
-            copyKey: "title",
+            copyKey: "slug",
             onEdit: options.onEdit,
         }),
     ];
