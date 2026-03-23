@@ -1,0 +1,44 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                t.facet::text        AS \"facet_slug!\",\n                facet_label(t.facet) AS \"facet_label!\",\n                t.slug               AS tag_slug,\n                t.label              AS tag_label,\n                t.sort_order         AS tag_sort_order\n            FROM tags t\n            ORDER BY t.facet, t.sort_order\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "facet_slug!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "facet_label!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "tag_slug",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "tag_label",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "tag_sort_order",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "02abf53b4b08ad9502b0d3943619b02ad79d2903cee42f1aaef9995961fe98f6"
+}
