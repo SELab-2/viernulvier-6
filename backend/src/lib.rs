@@ -219,6 +219,7 @@ fn public_routes() -> OpenApiRouter<AppState> {
         .routes(routes!(media::get_all))
         .routes(routes!(media::get_one))
         .routes(routes!(media::get_entity_media))
+        .routes(routes!(media::get_entity_cover_media))
 }
 
 // Only editors can edit data

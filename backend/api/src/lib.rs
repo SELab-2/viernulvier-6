@@ -495,6 +495,7 @@ impl ApiImporter {
         };
 
         if let Ok(media) = self.db.media().insert(media_create).await {
+            let role = media_role_from_gallery_type(gallery_type);
             let is_cover = item.position == 0;
             let _ = self
                 .db
@@ -503,7 +504,7 @@ impl ApiImporter {
                     EntityType::Production,
                     production_id,
                     media.id,
-                    gallery_type,
+                    role,
                     item.position as i32,
                     is_cover,
                 )
@@ -635,4 +636,13 @@ fn format_to_mime(format: &str) -> String {
         _ => "application/octet-stream",
     }
     .to_string()
+}
+
+fn media_role_from_gallery_type(gallery_type: &str) -> &str {
+    match gallery_type {
+        "media" => "gallery",
+        "poster" => "poster",
+        "review" => "review",
+        other => other,
+    }
 }

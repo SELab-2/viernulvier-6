@@ -65,6 +65,9 @@ CREATE TABLE entity_media (
 CREATE INDEX idx_entity_media_entity ON entity_media(entity_type, entity_id);
 CREATE INDEX idx_entity_media_media ON entity_media(media_id);
 CREATE INDEX idx_entity_media_role ON entity_media(entity_type, entity_id, role, sort_order);
+CREATE UNIQUE INDEX idx_entity_media_one_cover_per_role
+    ON entity_media(entity_type, entity_id, role)
+    WHERE is_cover_image = true;
 CREATE INDEX idx_media_parent ON media(parent_id) WHERE parent_id IS NOT NULL;
 CREATE UNIQUE INDEX idx_media_s3_key_unique ON media(s3_key);
 CREATE UNIQUE INDEX idx_media_source_uri_unique ON media(source_system, source_uri)

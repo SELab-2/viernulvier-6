@@ -244,9 +244,10 @@ pub async fn get_entity_media(
     Query(params): Query<GetEntityMediaQuery>,
 ) -> JsonResponse<Vec<MediaPayload>> {
     let et = parse_entity_type(&entity_type)?;
+    let role = normalize_media_role_opt(params.role)?;
     let media = db
         .media()
-        .for_entity_filtered(et, entity_id, params.role.as_deref(), params.cover_only.unwrap_or(false))
+        .for_entity_filtered(et, entity_id, role.as_deref(), params.cover_only.unwrap_or(false))
         .await?;
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
     let include_crops = params.include_crops.unwrap_or(false);
@@ -265,6 +266,43 @@ pub async fn get_entity_media(
     }
 
     Ok(Json(payloads))
+}
+
+#[utoipa::path(
+    method(get),
+    path = "/media/entity/{entity_type}/{entity_id}/cover",
+    tag = "Media",
+    operation_id = "get_entity_cover_media",
+    description = "Get the cover media for an entity (optional role filter)",
+    params(
+        ("entity_type" = String, Path, description = "Entity type (production, event, blogpost, media, artist)"),
+        ("entity_id" = Uuid, Path, description = "Entity UUID"),
+        ("role" = Option<String>, Query, description = "Optional media role filter (e.g. gallery, poster, review)")
+    ),
+    responses(
+        (status = 200, description = "Success", body = Option<MediaPayload>)
+    )
+)]
+pub async fn get_entity_cover_media(
+    State(state): State<AppState>,
+    db: Database,
+    Path((entity_type, entity_id)): Path<(String, Uuid)>,
+    Query(params): Query<GetEntityMediaQuery>,
+) -> JsonResponse<Option<MediaPayload>> {
+    let et = parse_entity_type(&entity_type)?;
+    let role = normalize_media_role_opt(params.role)?;
+    let media = db
+        .media()
+        .for_entity_filtered(et, entity_id, role.as_deref(), true)
+        .await?;
+
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    let cover = media
+        .into_iter()
+        .next()
+        .map(|m| MediaPayload::from_model(m, public_url));
+
+    Ok(Json(cover))
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -296,12 +334,13 @@ pub async fn link_to_entity(
     Json(req): Json<LinkMediaRequest>,
 ) -> StatusResponse {
     let et = parse_entity_type(&entity_type)?;
+    let role = normalize_media_role_opt(req.role)?.unwrap_or_else(|| "gallery".to_string());
     db.media()
         .link_to_entity(
             et,
             entity_id,
             req.media_id,
-            req.role.as_deref().unwrap_or("gallery"),
+            &role,
             req.sort_order.unwrap_or(0),
             req.is_cover_image.unwrap_or(false),
         )
@@ -400,5 +439,41 @@ fn parse_entity_type(s: &str) -> Result<EntityType, AppError> {
         _ => Err(AppError::PayloadError(format!(
             "invalid entity type: {s}"
         ))),
+    }
+}
+
+fn normalize_media_role_opt(role: Option<String>) -> Result<Option<String>, AppError> {
+    role.map(|r| normalize_media_role(&r)).transpose()
+}
+
+fn normalize_media_role(role: &str) -> Result<String, AppError> {
+    let normalized = role.trim().to_lowercase();
+    let valid = matches!(
+        normalized.as_str(),
+        "gallery" | "cover" | "poster" | "review" | "hero" | "thumbnail" | "inline" | "media"
+    );
+
+    if valid {
+        Ok(normalized)
+    } else {
+        Err(AppError::PayloadError(format!(
+            "invalid media role: {role}"
+        )))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::normalize_media_role;
+
+    #[test]
+    fn valid_roles_are_normalized() {
+        assert_eq!(normalize_media_role("  Poster ").unwrap(), "poster");
+        assert_eq!(normalize_media_role("gallery").unwrap(), "gallery");
+    }
+
+    #[test]
+    fn invalid_role_is_rejected() {
+        assert!(normalize_media_role("unknown-role").is_err());
     }
 }
