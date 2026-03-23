@@ -3,7 +3,10 @@ use uuid::Uuid;
 
 use crate::{
     error::DatabaseError,
-    models::{entity_type::EntityType, tag::{EntityTag, TaxonomyTag}},
+    models::{
+        entity_type::EntityType,
+        tag::{EntityTag, TaxonomyTag},
+    },
 };
 
 pub struct TagRepo<'a> {

@@ -149,7 +149,7 @@ pub async fn login(
         session.id,
         user.role.clone(),
         &config.jwt_secret,
-        config.access_token_expiry_minutes
+        config.access_token_expiry_minutes,
     )?;
 
     let access_cookie = access_cookie(access_token, config.access_token_expiry_minutes);
@@ -213,7 +213,7 @@ pub async fn refresh(
         session.id,
         user.role.clone(),
         &config.jwt_secret,
-        config.access_token_expiry_minutes
+        config.access_token_expiry_minutes,
     )?;
 
     let access_cookie = access_cookie(new_access_token, config.access_token_expiry_minutes);
