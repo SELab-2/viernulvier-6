@@ -1,16 +1,16 @@
+use crate::extractors::auth::{AdminUser, EditorUser};
 use api::ApiImporter;
 use axum::http::{HeaderValue, Method};
-use axum::{Router, routing::get};
 use axum::middleware::from_extractor_with_state;
+use axum::{Router, routing::get};
 use database::Database;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info};
-use crate::extractors::auth::{EditorUser, AdminUser};
 
 use utoipa::{
     Modify, OpenApi,
-    openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
     openapi::Server,
+    openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
 };
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
@@ -18,7 +18,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::config::AppConfig;
 use crate::error::AppError;
-use crate::handlers::{admin, auth, event, hall, location, production, space, version};
+use crate::handlers::{admin, auth, event, hall, location, production, space, taxonomy, version};
 
 pub mod config;
 pub mod dto;
@@ -148,8 +148,7 @@ pub fn router(state: AppState) -> Router<AppState> {
     let docs_path = format!("{}/docs", base_path);
     let openapi_json_path = format!("{}/openapi.json", base_path);
 
-    let swagger_ui = SwaggerUi::new(docs_path)
-        .url(openapi_json_path, api_spec);
+    let swagger_ui = SwaggerUi::new(docs_path).url(openapi_json_path, api_spec);
 
     Router::new()
         .nest(&base_path, api_router)
@@ -182,6 +181,8 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // event
         .routes(routes!(event::get_all))
         .routes(routes!(event::get_one))
+        // taxonomies
+        .routes(routes!(taxonomy::get_facets))
 }
 
 // Only editors can edit data
