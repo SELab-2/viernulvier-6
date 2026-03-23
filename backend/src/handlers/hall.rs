@@ -3,8 +3,9 @@ use database::Database;
 use uuid::Uuid;
 
 use crate::{
+    error::ErrorResponse,
     dto::hall::{HallPayload, HallPostPayload},
-    handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
+    handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse}
 };
 
 #[utoipa::path(
@@ -46,7 +47,11 @@ pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<HallPay
     operation_id = "create_hall",
     description = "Create a hall",
     responses(
-        (status = 201, description = "Created", body = HallPayload)
+        (status = 201, description = "Created", body = HallPayload),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    ),
+    security(
+        ("cookie_auth" = [])
     )
 )]
 pub async fn post(
@@ -67,10 +72,17 @@ pub async fn post(
         ),
     responses(
         (status = 204, description = "No Content"),
-        (status = 404, description = "Not found")
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    ),
+    security(
+        ("cookie_auth" = [])
     )
 )]
-pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
+pub async fn delete(
+    db: Database,
+    Path(id): Path<Uuid>
+) -> StatusResponse {
     HallPayload::delete(&db, id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -83,9 +95,16 @@ pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
     description = "Update the fields of a hall",
     responses(
         (status = 200, description = "Success", body = HallPayload),
-        (status = 404, description = "Not found")
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    ),
+    security(
+        ("cookie_auth" = [])
     )
 )]
-pub async fn put(db: Database, Json(hall): Json<HallPayload>) -> JsonResponse<HallPayload> {
+pub async fn put(
+    db: Database,
+    Json(hall): Json<HallPayload>
+) -> JsonResponse<HallPayload> {
     Ok(Json(hall.update(&db).await?))
 }
