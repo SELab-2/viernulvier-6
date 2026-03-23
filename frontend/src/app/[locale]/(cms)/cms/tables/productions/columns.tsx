@@ -3,10 +3,10 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { makeActionsColumn } from "../actions-column";
 import type { FieldDef } from "../edit-sheet";
-import type { Production } from "@/types/models/production.types";
+import type { Production, ProductionUpdateInput } from "@/types/models/production.types";
 
 export const productionFields: FieldDef<Production>[] = [
-    { key: "slug", label: "Slug", type: "text" },
+    { key: "slug", label: "Slug", type: "text", readOnly: true },
     { key: "titleNl", label: "Title (NL)", type: "text" },
     { key: "titleEn", label: "Title (EN)", type: "text" },
     { key: "artistNl", label: "Artist (NL)", type: "text" },
@@ -31,6 +31,49 @@ export const productionFields: FieldDef<Production>[] = [
     { key: "uitdatabankTheme", label: "UiTdatabank theme", type: "text" },
     { key: "uitdatabankType", label: "UiTdatabank type", type: "text" },
 ];
+
+export function toProductionUpdateInput(entity: Production): ProductionUpdateInput {
+    return {
+        id: entity.id,
+        slug: entity.slug,
+        sourceId: entity.sourceId,
+        supertitleNl: entity.supertitleNl,
+        supertitleEn: entity.supertitleEn,
+        titleNl: entity.titleNl,
+        titleEn: entity.titleEn,
+        artistNl: entity.artistNl,
+        artistEn: entity.artistEn,
+        metaTitleNl: entity.metaTitleNl,
+        metaTitleEn: entity.metaTitleEn,
+        metaDescriptionNl: entity.metaDescriptionNl,
+        metaDescriptionEn: entity.metaDescriptionEn,
+        taglineNl: entity.taglineNl,
+        taglineEn: entity.taglineEn,
+        teaserNl: entity.teaserNl,
+        teaserEn: entity.teaserEn,
+        descriptionNl: entity.descriptionNl,
+        descriptionEn: entity.descriptionEn,
+        descriptionExtraNl: entity.descriptionExtraNl,
+        descriptionExtraEn: entity.descriptionExtraEn,
+        description2Nl: entity.description2Nl,
+        description2En: entity.description2En,
+        video1: entity.video1,
+        video2: entity.video2,
+        quoteNl: entity.quoteNl,
+        quoteEn: entity.quoteEn,
+        quoteSourceNl: entity.quoteSourceNl,
+        quoteSourceEn: entity.quoteSourceEn,
+        programmeNl: entity.programmeNl,
+        programmeEn: entity.programmeEn,
+        infoNl: entity.infoNl,
+        infoEn: entity.infoEn,
+        descriptionShortNl: entity.descriptionShortNl,
+        descriptionShortEn: entity.descriptionShortEn,
+        eticketInfo: entity.eticketInfo,
+        uitdatabankTheme: entity.uitdatabankTheme,
+        uitdatabankType: entity.uitdatabankType,
+    };
+}
 
 export function makeProductionColumns(
     options: {

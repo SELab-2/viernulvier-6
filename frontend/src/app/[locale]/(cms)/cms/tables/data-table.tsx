@@ -97,6 +97,7 @@ export function DataTable<TData, TValue>({
         return cols;
     })();
 
+    // @tanstack/react-table peer dep mismatch triggers this rule
     // eslint-disable-next-line react-hooks/incompatible-library
     const table = useReactTable({
         data,
@@ -147,7 +148,9 @@ export function DataTable<TData, TValue>({
                         {table.getRowModel().rows?.length ? (
                             table.getRowModel().rows.map((row) => (
                                 <Fragment key={row.id}>
-                                    <TableRow data-state={row.getIsSelected() && "selected"}>
+                                    <TableRow
+                                        data-state={row.getIsSelected() ? "selected" : undefined}
+                                    >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell
                                                 key={cell.id}
@@ -165,7 +168,7 @@ export function DataTable<TData, TValue>({
                                         ))}
                                     </TableRow>
                                     {renderSubComponent && row.getIsExpanded() && (
-                                        <TableRow>
+                                        <TableRow key={`${row.id}-expanded`}>
                                             <TableCell
                                                 colSpan={finalColumns.length}
                                                 className="p-0"

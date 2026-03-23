@@ -4,8 +4,8 @@ import { useCallback, useMemo, useState } from "react";
 import type { Row } from "@tanstack/react-table";
 import { DataTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
-import { makeLocationColumns, locationFields } from "./columns";
-import { makeHallColumns, hallFields } from "./hall-columns";
+import { makeLocationColumns, locationFields, toLocationUpdateInput } from "./columns";
+import { makeHallColumns, hallFields, toHallUpdateInput } from "./hall-columns";
 import { useGetLocations, useUpdateLocation } from "@/hooks/api/useLocations";
 import { useGetHalls, useUpdateHall } from "@/hooks/api/useHalls";
 import type { Location } from "@/types/models/location.types";
@@ -68,7 +68,7 @@ export function LocationsTable() {
                 entity={editLocation}
                 fields={locationFields}
                 title="Edit location"
-                onSave={(data) => updateLocation.mutate(data)}
+                onSave={(data) => updateLocation.mutate(toLocationUpdateInput(data))}
             />
             <EditSheet
                 open={!!editHall}
@@ -76,7 +76,7 @@ export function LocationsTable() {
                 entity={editHall}
                 fields={hallFields}
                 title="Edit hall"
-                onSave={(data) => updateHall.mutate(data)}
+                onSave={(data) => updateHall.mutate(toHallUpdateInput(data))}
             />
         </>
     );

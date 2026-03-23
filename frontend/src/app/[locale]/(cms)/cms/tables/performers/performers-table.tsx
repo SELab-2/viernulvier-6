@@ -1,5 +1,3 @@
-"use client";
-
 export function PerformersTable() {
     return (
         <div className="text-muted-foreground text-sm">

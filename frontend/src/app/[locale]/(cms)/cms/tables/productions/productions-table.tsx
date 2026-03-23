@@ -4,8 +4,8 @@ import { useCallback, useMemo, useState } from "react";
 import type { Row } from "@tanstack/react-table";
 import { DataTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
-import { makeProductionColumns, productionFields } from "./columns";
-import { makeEventColumns, eventFields } from "./event-columns";
+import { makeProductionColumns, productionFields, toProductionUpdateInput } from "./columns";
+import { makeEventColumns, eventFields, toEventUpdateInput } from "./event-columns";
 import { useGetProductions, useUpdateProduction } from "@/hooks/api/useProductions";
 import { useGetEvents, useUpdateEvent } from "@/hooks/api/useEvents";
 import type { Production } from "@/types/models/production.types";
@@ -69,7 +69,7 @@ export function ProductionsTable() {
                 entity={editProduction}
                 fields={productionFields}
                 title="Edit production"
-                onSave={(data) => updateProduction.mutate(data)}
+                onSave={(data) => updateProduction.mutate(toProductionUpdateInput(data))}
             />
             <EditSheet
                 open={!!editEvent}
@@ -77,7 +77,7 @@ export function ProductionsTable() {
                 entity={editEvent}
                 fields={eventFields}
                 title="Edit event"
-                onSave={(data) => updateEvent.mutate(data)}
+                onSave={(data) => updateEvent.mutate(toEventUpdateInput(data))}
             />
         </>
     );

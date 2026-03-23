@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { makeActionsColumn } from "../actions-column";
 import type { FieldDef } from "../edit-sheet";
-import type { Location } from "@/types/models/location.types";
+import type { Location, LocationUpdateInput } from "@/types/models/location.types";
 
 export const locationFields: FieldDef<Location>[] = [
     { key: "id", label: "ID", type: "text", readOnly: true },
@@ -19,6 +19,24 @@ export const locationFields: FieldDef<Location>[] = [
     { key: "isOwnedByViernulvier", label: "Owned by Viernulvier", type: "boolean" },
     { key: "uitdatabankId", label: "UiTdatabank ID", type: "text" },
 ];
+
+export function toLocationUpdateInput(entity: Location): LocationUpdateInput {
+    return {
+        id: entity.id,
+        sourceId: entity.sourceId,
+        name: entity.name,
+        code: entity.code,
+        street: entity.street,
+        number: entity.number,
+        postalCode: entity.postalCode,
+        city: entity.city,
+        country: entity.country,
+        phone1: entity.phone1,
+        phone2: entity.phone2,
+        isOwnedByViernulvier: entity.isOwnedByViernulvier,
+        uitdatabankId: entity.uitdatabankId,
+    };
+}
 
 export function makeLocationColumns(
     options: {

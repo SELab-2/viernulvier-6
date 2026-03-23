@@ -8,7 +8,6 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -17,11 +16,8 @@ type CopyableKeys<TData> = {
 }[keyof TData];
 
 interface ActionsColumnOptions<TData> {
-    // Label used in "View {label}" and "Edit {label}" menu items
     label: string;
-    // Key of the row's field to copy as the identifier (e.g. "title", "name")
     copyKey: CopyableKeys<TData>;
-    // called with the row's data when the user chooses "Edit {label}"
     onEdit?: (entity: TData) => void;
 }
 
@@ -48,21 +44,6 @@ export function makeActionsColumn<TData extends Record<string, unknown>>(
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => navigator.clipboard.writeText(copyValue)}>
                             Copy {label}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            onClick={() => {
-                                /* TODO: copy entity URL */
-                            }}
-                        >
-                            Copy link
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                            onClick={() => {
-                                /* TODO: */
-                            }}
-                        >
-                            View {label}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onEdit?.(entity)}>
                             Edit {label}

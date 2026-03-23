@@ -3,7 +3,7 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePathname, useRouter } from "@/i18n/routing";
 
-const CONTENT_SEGMENTS = ["productions", "articles", "venues", "performers"];
+const CONTENT_SEGMENTS = ["productions", "articles", "locations", "performers"];
 
 type Tab = "overview" | "content" | "ingest" | "import";
 
@@ -15,10 +15,11 @@ const TABS: { value: Tab; label: string; href: string }[] = [
 ];
 
 function getActiveTab(pathname: string): Tab {
-    const segment = pathname.split("/").pop() ?? "";
-    if (CONTENT_SEGMENTS.includes(segment)) return "content";
-    if (segment === "ingest") return "ingest";
-    if (segment === "import") return "import";
+    const segments = pathname.split("/");
+    const lastSegment = segments[segments.length - 1] ?? "";
+    if (CONTENT_SEGMENTS.includes(lastSegment)) return "content";
+    if (lastSegment === "ingest") return "ingest";
+    if (lastSegment === "import") return "import";
     return "overview";
 }
 

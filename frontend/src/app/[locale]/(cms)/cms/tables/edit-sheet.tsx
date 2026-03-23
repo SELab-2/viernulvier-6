@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 
-// field configuration types
 export interface SelectOption {
     value: string;
     label: string;
@@ -30,19 +29,13 @@ export interface SelectOption {
 export type FieldType = "text" | "boolean" | "select";
 
 export interface FieldDef<TData> {
-    // key in data object
     key: keyof TData;
-    // human readable label shown above input
     label: string;
-    // Determines which input control to render
     type: FieldType;
-    // Required when type="select". defines the available options
     options?: SelectOption[];
-    // render as a read-only display value (for IDs, etc.)
     readOnly?: boolean;
 }
 
-// editSheet component
 export interface EditSheetProps<TData extends { id: string } & Record<string, unknown>> {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -58,7 +51,6 @@ const BOOLEAN_OPTIONS: SelectOption[] = [
     { value: "false", label: "No" },
 ];
 
-// internal field row. rendered once per FieldDef entry
 interface FieldRowProps<TData> {
     field: FieldDef<TData>;
     value: unknown;
@@ -94,7 +86,6 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
         );
     }
 
-    // "boolean" and "select" both render a Select control
     const options = field.type === "boolean" ? BOOLEAN_OPTIONS : (field.options ?? []);
     const selectValue =
         field.type === "boolean"
@@ -120,6 +111,7 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
                     <SelectValue placeholder="Select…" />
                 </SelectTrigger>
                 <SelectContent>
+                    {field.type === "boolean" && <SelectItem value="">—</SelectItem>}
                     {options.map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>
                             {opt.label}
@@ -131,7 +123,6 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
     );
 }
 
-// sheetFormBody. owns local editable state, remounts when entity changes
 interface SheetFormBodyProps<TData extends { id: string } & Record<string, unknown>> {
     entity: TData;
     fields: FieldDef<TData>[];
@@ -190,7 +181,7 @@ export function EditSheet<TData extends { id: string } & Record<string, unknown>
     description,
     onSave,
 }: EditSheetProps<TData>) {
-    const formKey = entity !== null ? entity.id : null;
+    const formKey = entity?.id ?? null;
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
