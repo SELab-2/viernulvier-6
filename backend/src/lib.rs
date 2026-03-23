@@ -18,7 +18,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::config::AppConfig;
 use crate::error::AppError;
-use crate::handlers::{admin, auth, event, hall, location, production, space, version};
+use crate::handlers::{admin, auth, event, hall, location, production, space, taxonomy, version};
 
 pub mod config;
 pub mod dto;
@@ -182,6 +182,8 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // event
         .routes(routes!(event::get_all))
         .routes(routes!(event::get_one))
+        // taxonomies
+        .routes(routes!(taxonomy::get_facets))
 }
 
 // Only editors can edit data
