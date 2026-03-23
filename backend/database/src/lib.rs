@@ -104,7 +104,7 @@ impl Database {
     pub fn tags<'a>(&'a self) -> TagRepo<'a> {
         TagRepo::new(&self.db)
     }
-  
+
     pub fn events<'a>(&'a self) -> EventRepo<'a> {
         EventRepo::new(&self.db)
     }

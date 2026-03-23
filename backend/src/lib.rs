@@ -1,17 +1,19 @@
-use crate::extractors::auth::{AdminUser, EditorUser};
 use api::ApiImporter;
 use aws_sdk_s3::config::{Builder as S3Builder, Credentials, Region};
 use axum::http::{HeaderValue, Method};
-use axum::middleware::from_extractor_with_state;
 use axum::{Router, routing::get};
+use axum::middleware::from_extractor_with_state;
 use database::Database;
+use database::models::entity_type::EntityType;
+use database::models::facet::Facet;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info};
+use crate::extractors::auth::{EditorUser, AdminUser};
 
 use utoipa::{
     Modify, OpenApi,
-    openapi::Server,
     openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
+    openapi::Server,
 };
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
@@ -37,6 +39,7 @@ pub struct AppState {
 #[derive(OpenApi)]
 #[openapi(
     modifiers(&SecurityAddon),
+    components(schemas(EntityType, Facet)),
     tags(
         (name = "viernulvier_api", description = "API Endpoints")
     )
@@ -180,7 +183,8 @@ pub fn router(state: AppState) -> Router<AppState> {
     let docs_path = format!("{}/docs", base_path);
     let openapi_json_path = format!("{}/openapi.json", base_path);
 
-    let swagger_ui = SwaggerUi::new(docs_path).url(openapi_json_path, api_spec);
+    let swagger_ui = SwaggerUi::new(docs_path)
+        .url(openapi_json_path, api_spec);
 
     Router::new()
         .nest(&base_path, api_router)
