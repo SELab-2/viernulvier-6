@@ -1,6 +1,7 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import { components, operations } from "@/types/api/generated";
+import { EventCreateRequest, EventResponse, EventUpdateRequest } from "@/types/api/event.api.types";
 import { HallCreateRequest, HallResponse, HallUpdateRequest } from "@/types/api/hall.api.types";
 import {
     LocationCreateRequest,
@@ -34,6 +35,12 @@ describe("OpenAPI type contract", () => {
             components["schemas"]["ProductionPayload"]
         >();
 
+        expectTypeOf<EventResponse>().toEqualTypeOf<components["schemas"]["EventPayload"]>();
+        expectTypeOf<EventCreateRequest>().toEqualTypeOf<
+            components["schemas"]["EventPostPayload"]
+        >();
+        expectTypeOf<EventUpdateRequest>().toEqualTypeOf<components["schemas"]["EventPayload"]>();
+
         expectTypeOf<HallResponse>().toEqualTypeOf<components["schemas"]["HallPayload"]>();
         expectTypeOf<HallCreateRequest>().toEqualTypeOf<components["schemas"]["HallPostPayload"]>();
         expectTypeOf<HallUpdateRequest>().toEqualTypeOf<components["schemas"]["HallPayload"]>();
@@ -52,5 +59,11 @@ describe("OpenAPI type contract", () => {
         expectTypeOf<
             operations["create_production"]["requestBody"]["content"]["application/json"]
         >().toEqualTypeOf<components["schemas"]["ProductionPostPayload"]>();
+        expectTypeOf<
+            operations["get_all_events"]["responses"][200]["content"]["application/json"]
+        >().toEqualTypeOf<components["schemas"]["EventPayload"][]>();
+        expectTypeOf<
+            operations["create_event"]["requestBody"]["content"]["application/json"]
+        >().toEqualTypeOf<components["schemas"]["EventPostPayload"]>();
     });
 });
