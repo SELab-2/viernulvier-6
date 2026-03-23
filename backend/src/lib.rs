@@ -87,14 +87,16 @@ impl Modify for PathPrefixAddon {
 pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
     let db = Database::create_connect_migrate(&config.database_url).await?;
 
-    // start api importer
-    let api_importer = ApiImporter::new(db.clone(), config.api_key_404.clone());
-    tokio::spawn(async move {
-        match api_importer.update_since_last().await {
-            Ok(()) => info!("API importer finished successfully"),
-            Err(e) => error!("API imported ended with error: {e:?}"),
-        }
-    });
+    // start api importer only if api_key_404 is configured
+    if let Some(api_key) = &config.api_key_404 {
+        let api_importer = ApiImporter::new(db.clone(), api_key.clone());
+        tokio::spawn(async move {
+            match api_importer.update_since_last().await {
+                Ok(()) => info!("API importer finished successfully"),
+                Err(e) => error!("API imported ended with error: {e:?}"),
+            }
+        });
+    }
 
     let state = AppState { db, config };
 
