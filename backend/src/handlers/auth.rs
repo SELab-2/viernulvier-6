@@ -4,7 +4,7 @@ use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
 use base64::Engine;
 use chrono::Utc;
 use jsonwebtoken::{EncodingKey, Header, encode};
-use rand::RngCore;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -128,7 +128,7 @@ pub async fn login(
         .map_err(|_| AppError::Unauthorized)?;
 
     let mut random_bytes = [0u8; 32];
-    rand::thread_rng().fill_bytes(&mut random_bytes);
+    rand::rng().fill_bytes(&mut random_bytes);
     let refresh_token = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(random_bytes);
 
     let expiry_date = Utc::now() + chrono::Duration::days(config.refresh_token_expiry_days as i64);
