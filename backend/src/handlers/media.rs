@@ -6,6 +6,7 @@ use axum::{
 use aws_sdk_s3::presigning::PresigningConfig;
 use chrono::Utc;
 use database::{Database, models::entity_type::EntityType};
+use std::collections::HashSet;
 use std::time::Duration;
 use uuid::Uuid;
 
@@ -14,7 +15,7 @@ use crate::{
     config::S3Config,
     dto::media::{
         LinkMediaRequest, MediaPayload, MediaVariantPayload, SaveMediaRequest, UploadUrlRequest,
-        UploadUrlResponse,
+        UploadUrlResponse, AttachMediaRequest, ReconcileResponse,
     },
     error::AppError,
     handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
@@ -349,6 +350,71 @@ pub async fn link_to_entity(
 }
 
 #[utoipa::path(
+    method(post),
+    path = "/media/entity/{entity_type}/{entity_id}/attach",
+    tag = "Media",
+    operation_id = "attach_media_to_entity",
+    description = "Create or update media metadata and link it to an entity in one transactional operation",
+    params(
+        ("entity_type" = String, Path, description = "Entity type (production, event, blogpost, media, artist)"),
+        ("entity_id" = Uuid, Path, description = "Entity UUID")
+    ),
+    request_body = AttachMediaRequest,
+    responses(
+        (status = 201, description = "Created", body = MediaPayload),
+        (status = 400, description = "Bad request")
+    )
+)]
+pub async fn attach_to_entity(
+    State(state): State<AppState>,
+    db: Database,
+    Path((entity_type, entity_id)): Path<(String, Uuid)>,
+    Json(req): Json<AttachMediaRequest>,
+) -> JsonStatusResponse<MediaPayload> {
+    let et = parse_entity_type(&entity_type)?;
+    let role = normalize_media_role_opt(req.role)?.unwrap_or_else(|| "gallery".to_string());
+    let now = Utc::now();
+
+    let media_create = database::models::media::MediaCreate {
+        s3_key: req.s3_key,
+        mime_type: req.mime_type,
+        file_size: req.file_size,
+        width: req.width,
+        height: req.height,
+        checksum: req.checksum,
+        alt_text: req.alt_text,
+        description: req.description,
+        credit: req.credit,
+        geo_latitude: req.geo_latitude,
+        geo_longitude: req.geo_longitude,
+        parent_id: req.parent_id,
+        derivative_type: req.derivative_type,
+        gallery_type: req.gallery_type,
+        source_id: None,
+        source_system: "cms".to_string(),
+        source_uri: None,
+        source_updated_at: None,
+        created_at: now,
+        updated_at: now,
+    };
+
+    let media = db
+        .media()
+        .create_or_attach(
+            et,
+            entity_id,
+            &role,
+            req.sort_order.unwrap_or(0),
+            req.is_cover_image.unwrap_or(false),
+            media_create,
+        )
+        .await?;
+
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    MediaPayload::from_model(media, public_url).json_created()
+}
+
+#[utoipa::path(
     method(delete),
     path = "/media/entity/{entity_type}/{entity_id}/{media_id}",
     tag = "Media",
@@ -404,6 +470,68 @@ pub async fn cleanup_orphans(
     Ok(Json(CleanupResponse {
         deleted_count: s3_keys.len(),
         s3_keys,
+    }))
+}
+
+#[utoipa::path(
+    method(post),
+    path = "/media/reconcile",
+    tag = "Media",
+    operation_id = "reconcile_media_storage",
+    description = "Reconcile DB media rows with S3 objects. Deletes DB rows whose S3 key is missing.",
+    responses(
+        (status = 200, description = "Reconciliation complete", body = ReconcileResponse)
+    )
+)]
+pub async fn reconcile_storage(
+    State(state): State<AppState>,
+    db: Database,
+) -> JsonResponse<ReconcileResponse> {
+    let (s3_client, s3_config) = s3_client_and_config(&state)?;
+
+    let db_keys = db.media().all_s3_keys().await?;
+    let db_set: HashSet<String> = db_keys.iter().cloned().collect();
+
+    let mut s3_keys = Vec::<String>::new();
+    let mut token: Option<String> = None;
+    loop {
+        let mut req = s3_client.list_objects_v2().bucket(&s3_config.bucket);
+        if let Some(ref t) = token {
+            req = req.continuation_token(t);
+        }
+
+        let resp = req
+            .send()
+            .await
+            .map_err(|e| AppError::Internal(format!("failed to list S3 objects: {e}")))?;
+
+        if let Some(contents) = resp.contents {
+            for obj in contents {
+                if let Some(key) = obj.key {
+                    s3_keys.push(key);
+                }
+            }
+        }
+
+        token = resp.next_continuation_token;
+        if token.is_none() {
+            break;
+        }
+    }
+
+    let s3_set: HashSet<String> = s3_keys.iter().cloned().collect();
+
+    let missing_in_s3: Vec<String> = db_set.difference(&s3_set).cloned().collect();
+    let missing_in_db: Vec<String> = s3_set.difference(&db_set).cloned().collect();
+
+    let deleted_missing_in_s3_count = db.media().delete_by_s3_keys(&missing_in_s3).await?;
+
+    Ok(Json(ReconcileResponse {
+        db_key_count: db_keys.len(),
+        s3_key_count: s3_keys.len(),
+        missing_in_s3,
+        missing_in_db,
+        deleted_missing_in_s3_count,
     }))
 }
 

@@ -214,6 +214,36 @@ pub struct SaveMediaRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct AttachMediaRequest {
+    pub s3_key: String,
+    pub mime_type: String,
+    pub role: Option<String>,
+    pub sort_order: Option<i32>,
+    pub is_cover_image: Option<bool>,
+    pub alt_text: Option<String>,
+    pub description: Option<String>,
+    pub credit: Option<String>,
+    pub width: Option<i32>,
+    pub height: Option<i32>,
+    pub file_size: Option<i64>,
+    pub checksum: Option<String>,
+    pub geo_latitude: Option<f64>,
+    pub geo_longitude: Option<f64>,
+    pub parent_id: Option<Uuid>,
+    pub derivative_type: Option<String>,
+    pub gallery_type: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct ReconcileResponse {
+    pub db_key_count: usize,
+    pub s3_key_count: usize,
+    pub missing_in_s3: Vec<String>,
+    pub missing_in_db: Vec<String>,
+    pub deleted_missing_in_s3_count: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct LinkMediaRequest {
     pub media_id: Uuid,
     pub role: Option<String>,

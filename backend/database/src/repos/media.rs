@@ -36,6 +36,106 @@ impl<'a> MediaRepo<'a> {
         Ok(media.insert(self.db).await?)
     }
 
+    pub async fn create_or_attach(
+        &self,
+        entity_type: EntityType,
+        entity_id: Uuid,
+        role: &str,
+        sort_order: i32,
+        is_cover_image: bool,
+        media: MediaCreate,
+    ) -> Result<Media, DatabaseError> {
+        let mut tx = self.db.begin().await?;
+
+        let media_row: Media = sqlx::query_as(
+            r#"
+            INSERT INTO media (
+                s3_key, mime_type, file_size, width, height, checksum,
+                alt_text, description, credit,
+                geo_latitude, geo_longitude,
+                parent_id, derivative_type, gallery_type,
+                source_id, source_system, source_uri, source_updated_at,
+                created_at, updated_at
+            )
+            VALUES (
+                $1, $2, $3, $4, $5, $6,
+                $7, $8, $9,
+                $10, $11,
+                $12, $13, $14,
+                $15, $16, $17, $18,
+                $19, $20
+            )
+            ON CONFLICT (s3_key)
+            DO UPDATE SET
+                mime_type = EXCLUDED.mime_type,
+                file_size = EXCLUDED.file_size,
+                width = EXCLUDED.width,
+                height = EXCLUDED.height,
+                checksum = EXCLUDED.checksum,
+                alt_text = EXCLUDED.alt_text,
+                description = EXCLUDED.description,
+                credit = EXCLUDED.credit,
+                geo_latitude = EXCLUDED.geo_latitude,
+                geo_longitude = EXCLUDED.geo_longitude,
+                parent_id = EXCLUDED.parent_id,
+                derivative_type = EXCLUDED.derivative_type,
+                gallery_type = EXCLUDED.gallery_type,
+                updated_at = NOW()
+            RETURNING
+                id, created_at, updated_at,
+                s3_key, mime_type, file_size,
+                width, height, checksum,
+                alt_text, description, credit,
+                geo_latitude, geo_longitude,
+                parent_id, derivative_type, gallery_type, source_id,
+                source_system, source_uri, source_updated_at
+            "#,
+        )
+        .bind(media.s3_key)
+        .bind(media.mime_type)
+        .bind(media.file_size)
+        .bind(media.width)
+        .bind(media.height)
+        .bind(media.checksum)
+        .bind(media.alt_text)
+        .bind(media.description)
+        .bind(media.credit)
+        .bind(media.geo_latitude)
+        .bind(media.geo_longitude)
+        .bind(media.parent_id)
+        .bind(media.derivative_type)
+        .bind(media.gallery_type)
+        .bind(media.source_id)
+        .bind(media.source_system)
+        .bind(media.source_uri)
+        .bind(media.source_updated_at)
+        .bind(media.created_at)
+        .bind(media.updated_at)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        sqlx::query(
+            r#"
+            INSERT INTO entity_media (entity_type, entity_id, media_id, role, sort_order, is_cover_image)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (entity_type, entity_id, media_id)
+            DO UPDATE SET role = $4, sort_order = $5, is_cover_image = $6
+            "#,
+        )
+        .bind(entity_type as EntityType)
+        .bind(entity_id)
+        .bind(media_row.id)
+        .bind(role)
+        .bind(sort_order)
+        .bind(is_cover_image)
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+
+        Ok(media_row)
+    }
+
     pub async fn update(&self, media: Media) -> Result<Media, DatabaseError> {
         Ok(media.update_all_fields(self.db).await?)
     }
@@ -279,5 +379,25 @@ impl<'a> MediaRepo<'a> {
         .await?;
 
         Ok(s3_keys)
+    }
+
+    pub async fn all_s3_keys(&self) -> Result<Vec<String>, DatabaseError> {
+        let rows = sqlx::query_as::<_, (String,)>("SELECT s3_key FROM media")
+            .fetch_all(self.db)
+            .await?;
+        Ok(rows.into_iter().map(|r| r.0).collect())
+    }
+
+    pub async fn delete_by_s3_keys(&self, keys: &[String]) -> Result<u64, DatabaseError> {
+        if keys.is_empty() {
+            return Ok(0);
+        }
+
+        let res = sqlx::query("DELETE FROM media WHERE s3_key = ANY($1)")
+            .bind(keys)
+            .execute(self.db)
+            .await?;
+
+        Ok(res.rows_affected())
     }
 }
