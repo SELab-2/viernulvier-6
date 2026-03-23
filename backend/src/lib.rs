@@ -177,6 +177,7 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // space
         .routes(routes!(space::get_all))
         .routes(routes!(space::get_one))
+        // taxonomies
         .routes(routes!(taxonomy::get_facets))
 }
 
