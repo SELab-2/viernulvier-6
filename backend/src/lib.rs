@@ -18,7 +18,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::config::AppConfig;
 use crate::error::AppError;
-use crate::handlers::{admin, auth, hall, location, production, space, taxonomy, version};
+use crate::handlers::{admin, auth, event, hall, location, production, space, taxonomy, version};
 
 pub mod config;
 pub mod dto;
@@ -171,12 +171,16 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // production
         .routes(routes!(production::get_all))
         .routes(routes!(production::get_one))
+        .routes(routes!(production::get_events))
         // hall
         .routes(routes!(hall::get_all))
         .routes(routes!(hall::get_one))
         // space
         .routes(routes!(space::get_all))
         .routes(routes!(space::get_one))
+        // event
+        .routes(routes!(event::get_all))
+        .routes(routes!(event::get_one))
         // taxonomies
         .routes(routes!(taxonomy::get_facets))
 }
@@ -202,6 +206,10 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(space::post))
         .routes(routes!(space::delete))
         .routes(routes!(space::put))
+        // Event
+        .routes(routes!(event::post))
+        .routes(routes!(event::delete))
+        .routes(routes!(event::put))
         .layer(from_extractor_with_state::<EditorUser, AppState>(state))
 }
 
