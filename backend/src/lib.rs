@@ -1,5 +1,7 @@
+use crate::extractors::auth::{AdminUser, EditorUser};
 use api::ApiImporter;
 use axum::http::{HeaderValue, Method};
+use axum::middleware::from_extractor_with_state;
 use axum::{Router, routing::get};
 use database::Database;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
@@ -7,8 +9,8 @@ use tracing::{error, info};
 
 use utoipa::{
     Modify, OpenApi,
-    openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
     openapi::Server,
+    openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
 };
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
@@ -138,14 +140,15 @@ pub fn router(state: AppState) -> Router<AppState> {
     modifier.modify(&mut openapi);
 
     let (api_router, api_spec) = OpenApiRouter::with_openapi(openapi)
-        .merge(open_routes())
+        .merge(public_routes())
+        .merge(editor_routes(state.clone()))
+        .merge(admin_routes(state.clone()))
         .split_for_parts();
 
     let docs_path = format!("{}/docs", base_path);
     let openapi_json_path = format!("{}/openapi.json", base_path);
 
-    let swagger_ui = SwaggerUi::new(docs_path)
-        .url(openapi_json_path, api_spec);
+    let swagger_ui = SwaggerUi::new(docs_path).url(openapi_json_path, api_spec);
 
     Router::new()
         .nest(&base_path, api_router)
@@ -153,41 +156,58 @@ pub fn router(state: AppState) -> Router<AppState> {
         .fallback(get(|| async { AppError::NotFound }))
 }
 
-fn open_routes() -> OpenApiRouter<AppState> {
+// No security needed
+fn public_routes() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         // version
         .routes(routes!(version::get))
-        // locations
-        .routes(routes!(location::get_all))
-        .routes(routes!(location::get_one))
-        .routes(routes!(location::post))
-        .routes(routes!(location::delete))
-        .routes(routes!(location::put))
-        // productions
-        .routes(routes!(production::get_all))
-        .routes(routes!(production::get_one))
-        .routes(routes!(production::post))
-        .routes(routes!(production::delete))
-        .routes(routes!(production::put))
         // auth
         .routes(routes!(auth::login))
         .routes(routes!(auth::refresh))
         .routes(routes!(auth::logout))
-        .routes(routes!(admin::admin))
-        // halls
+        // location
+        .routes(routes!(location::get_all))
+        .routes(routes!(location::get_one))
+        // production
+        .routes(routes!(production::get_all))
+        .routes(routes!(production::get_one))
+        // hall
         .routes(routes!(hall::get_all))
         .routes(routes!(hall::get_one))
+        // space
+        .routes(routes!(space::get_all))
+        .routes(routes!(space::get_one))
+        .routes(routes!(taxonomy::get_facets))
+}
+
+// Only editors can edit data
+fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
+    OpenApiRouter::new()
+        // Editor/Admin
+        .routes(routes!(admin::editor_me))
+        // Location
+        .routes(routes!(location::post))
+        .routes(routes!(location::delete))
+        .routes(routes!(location::put))
+        // Production
+        .routes(routes!(production::post))
+        .routes(routes!(production::delete))
+        .routes(routes!(production::put))
+        // Hall
         .routes(routes!(hall::post))
         .routes(routes!(hall::delete))
         .routes(routes!(hall::put))
-        // spaces
-        .routes(routes!(space::get_all))
-        .routes(routes!(space::get_one))
+        // Space
         .routes(routes!(space::post))
         .routes(routes!(space::delete))
         .routes(routes!(space::put))
-        // taxonomies
-        .routes(routes!(taxonomy::get_facets))
+        .layer(from_extractor_with_state::<EditorUser, AppState>(state))
+}
+
+fn admin_routes(state: AppState) -> OpenApiRouter<AppState> {
+    OpenApiRouter::new()
+        .routes(routes!(admin::create_editor))
+        .layer(from_extractor_with_state::<AdminUser, AppState>(state))
 }
 
 #[allow(clippy::expect_used)]

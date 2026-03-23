@@ -4,6 +4,7 @@ use database::Database;
 use uuid::Uuid;
 
 use crate::{
+    error::ErrorResponse,
     dto::space::{SpacePayload, SpacePostPayload},
     handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
 };
@@ -18,7 +19,9 @@ use crate::{
         (status = 200, description = "Success", body = [SpacePayload])
     )
 )]
-pub async fn get_all(db: Database) -> JsonResponse<Vec<SpacePayload>> {
+pub async fn get_all(
+    db: Database
+) -> JsonResponse<Vec<SpacePayload>> {
     SpacePayload::all(&db, 10).await?.json()
 }
 
@@ -36,7 +39,10 @@ pub async fn get_all(db: Database) -> JsonResponse<Vec<SpacePayload>> {
         (status = 404, description = "Not found")
     )
 )]
-pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<SpacePayload> {
+pub async fn get_one(
+    db: Database,
+    Path(id): Path<Uuid>
+) -> JsonResponse<SpacePayload> {
     SpacePayload::by_id(&db, id).await?.json()
 }
 
@@ -47,7 +53,11 @@ pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<SpacePa
     operation_id = "create_space",
     description = "Create a space",
     responses(
-        (status = 201, description = "Created", body = SpacePayload)
+        (status = 201, description = "Created", body = SpacePayload),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    ),
+    security(
+        ("cookie_auth" = [])
     )
 )]
 pub async fn post(
@@ -68,10 +78,17 @@ pub async fn post(
         ),
     responses(
         (status = 204, description = "No Content"),
-        (status = 404, description = "Not found")
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    ),
+    security(
+        ("cookie_auth" = [])
     )
 )]
-pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
+pub async fn delete(
+    db: Database,
+    Path(id): Path<Uuid>
+) -> StatusResponse {
     SpacePayload::delete(&db, id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -84,10 +101,17 @@ pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
     description = "Update the fields of a space",
     responses(
         (status = 200, description = "Success", body = SpacePayload),
-        (status = 404, description = "Not found")
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    ),
+    security(
+        ("cookie_auth" = [])
     )
 )]
-pub async fn put(db: Database, Json(space): Json<SpacePayload>) -> JsonResponse<SpacePayload> {
+pub async fn put(
+    db: Database,
+    Json(space): Json<SpacePayload>
+) -> JsonResponse<SpacePayload> {
     Ok(Json(space.update(&db).await?))
 }
 
