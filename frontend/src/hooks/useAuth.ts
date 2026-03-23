@@ -8,10 +8,11 @@ import { mapUser } from "@/mappers/user.mapper";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { queryKeys } from "@/hooks/api";
 
 export const useUser = (options?: { enabled?: boolean }) => {
     return useQuery<User>({
-        queryKey: ["user"],
+        queryKey: queryKeys.user,
         queryFn: async () => {
             const { data } = await api.get<UserResponse>("/editor/me");
             return mapUser(data);
@@ -34,7 +35,7 @@ export const useLogin = () => {
             return data;
         },
         onSuccess: async () => {
-            queryClient.invalidateQueries({ queryKey: ["user"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.user });
             router.push("/cms");
         },
         onError: (error: AxiosError) => {
@@ -57,13 +58,13 @@ export const useLogout = () => {
             await api.post("/auth/logout");
         },
         onSuccess: () => {
-            queryClient.removeQueries({ queryKey: ["user"] });
+            queryClient.removeQueries({ queryKey: queryKeys.user });
             router.push("/login");
             toast.success(t("loggedOut"));
         },
         onError: () => {
             toast.error(t("errorGeneric"));
-            queryClient.removeQueries({ queryKey: ["user"] });
+            queryClient.removeQueries({ queryKey: queryKeys.user });
 
             router.push("/login");
         },

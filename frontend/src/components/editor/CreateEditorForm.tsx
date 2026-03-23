@@ -3,22 +3,21 @@
 import { useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { createEditor } from "@/lib/api";
+import { useCreateEditor } from "@/hooks/api";
 import { FormError, InputField, SubmitButton } from "@/components/form";
 
 export default function CreateEditorForm() {
     const t = useTranslations("Admin.CreateAdmin");
-    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         username: "",
         email: "",
         password: "",
     });
+    const { mutateAsync: createEditor, isPending: isLoading } = useCreateEditor();
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        setIsLoading(true);
         setError(null);
 
         try {
@@ -28,8 +27,6 @@ export default function CreateEditorForm() {
         } catch {
             setError(t("errorMessage"));
             toast.error(t("error"));
-        } finally {
-            setIsLoading(false);
         }
     };
 

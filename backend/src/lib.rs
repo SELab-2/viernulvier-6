@@ -4,6 +4,8 @@ use axum::http::{HeaderValue, Method};
 use axum::middleware::from_extractor_with_state;
 use axum::{Router, routing::get};
 use database::Database;
+use database::models::entity_type::EntityType;
+use database::models::facet::Facet;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info};
 
@@ -18,7 +20,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::config::AppConfig;
 use crate::error::AppError;
-use crate::handlers::{admin, auth, hall, location, production, space, taxonomy, version};
+use crate::handlers::{admin, auth, event, hall, location, production, space, taxonomy, version};
 
 pub mod config;
 pub mod dto;
@@ -35,6 +37,7 @@ pub struct AppState {
 #[derive(OpenApi)]
 #[openapi(
     modifiers(&SecurityAddon),
+    components(schemas(EntityType, Facet)),
     tags(
         (name = "viernulvier_api", description = "API Endpoints")
     )
@@ -148,7 +151,8 @@ pub fn router(state: AppState) -> Router<AppState> {
     let docs_path = format!("{}/docs", base_path);
     let openapi_json_path = format!("{}/openapi.json", base_path);
 
-    let swagger_ui = SwaggerUi::new(docs_path).url(openapi_json_path, api_spec);
+    let swagger_ui = SwaggerUi::new(docs_path)
+        .url(openapi_json_path, api_spec);
 
     Router::new()
         .nest(&base_path, api_router)
@@ -171,12 +175,16 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // production
         .routes(routes!(production::get_all))
         .routes(routes!(production::get_one))
+        .routes(routes!(production::get_events))
         // hall
         .routes(routes!(hall::get_all))
         .routes(routes!(hall::get_one))
         // space
         .routes(routes!(space::get_all))
         .routes(routes!(space::get_one))
+        // event
+        .routes(routes!(event::get_all))
+        .routes(routes!(event::get_one))
         // taxonomies
         .routes(routes!(taxonomy::get_facets))
 }
@@ -202,8 +210,10 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(space::post))
         .routes(routes!(space::delete))
         .routes(routes!(space::put))
-        // taxonomies
-        .routes(routes!(taxonomy::get_facets))
+        // Event
+        .routes(routes!(event::post))
+        .routes(routes!(event::delete))
+        .routes(routes!(event::put))
         .layer(from_extractor_with_state::<EditorUser, AppState>(state))
 }
 
