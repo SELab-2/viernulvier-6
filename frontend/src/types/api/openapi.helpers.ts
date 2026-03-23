@@ -3,6 +3,8 @@ import { operations, paths } from "@/types/api/generated";
 export type PathKey = keyof paths;
 export type OperationKey = keyof operations;
 
+export type HttpMethod = "get" | "put" | "post" | "delete" | "options" | "head" | "patch" | "trace";
+
 type JsonContent<T> = T extends { content: { "application/json": infer R } } ? R : never;
 
 type FirstSuccessResponse<TResponses> = 200 extends keyof TResponses
@@ -29,5 +31,5 @@ export type OperationSuccessResponse<TOperation extends OperationKey> = JsonCont
 
 export type PathOperation<
     TPath extends PathKey,
-    TMethod extends keyof paths[TPath],
+    TMethod extends Extract<keyof paths[TPath], HttpMethod>,
 > = paths[TPath][TMethod];

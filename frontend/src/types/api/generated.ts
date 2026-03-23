@@ -4,23 +4,6 @@
  */
 
 export interface paths {
-    "/admin/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Receive admin info of the logged in user */
-        get: operations["get_admin_info"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -66,6 +49,40 @@ export interface paths {
         put?: never;
         /** @description Refresh the access token using the refresh cookie */
         post: operations["refresh_access_token"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/editor/create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Create a new editor user (Admin only) */
+        post: operations["create_editor"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/editor/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Receive editor info of the logged in user */
+        get: operations["get_editor_info"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -241,13 +258,19 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        AdminResponse: {
-            email: string;
-            id: string;
-        };
         AuthResponse: {
             message: string;
             success: boolean;
+        };
+        CreateEditorRequest: {
+            email: string;
+            password: string;
+            username: string;
+        };
+        EditorResponse: {
+            email: string;
+            id: string;
+            role: components["schemas"]["UserRole"];
         };
         ErrorResponse: {
             /** @example An error occurred during processing */
@@ -416,6 +439,8 @@ export interface components {
             /** Format: int32 */
             source_id?: number | null;
         };
+        /** @enum {string} */
+        UserRole: "admin" | "editor" | "user";
     };
     responses: never;
     parameters: never;
@@ -425,35 +450,6 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    get_admin_info: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AdminResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
     auth_login: {
         parameters: {
             query?: never;
@@ -545,6 +541,77 @@ export interface operations {
             };
         };
     };
+    create_editor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateEditorRequest"];
+            };
+        };
+        responses: {
+            /** @description Editor created successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorResponse"];
+                };
+            };
+            /** @description Unauthorized - Not an admin */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_editor_info: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     get_all_halls: {
         parameters: {
             query?: never;
@@ -587,6 +654,15 @@ export interface operations {
                     "application/json": components["schemas"]["HallPayload"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -616,6 +692,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HallPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -669,6 +754,15 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -720,6 +814,15 @@ export interface operations {
                     "application/json": components["schemas"]["LocationPayload"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -749,6 +852,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LocationPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -802,6 +914,15 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -853,6 +974,15 @@ export interface operations {
                     "application/json": components["schemas"]["ProductionPayload"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -882,6 +1012,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProductionPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -935,6 +1074,15 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -986,6 +1134,15 @@ export interface operations {
                     "application/json": components["schemas"]["SpacePayload"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -1015,6 +1172,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SpacePayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -1067,6 +1233,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
             };
             /** @description Not found */
             404: {

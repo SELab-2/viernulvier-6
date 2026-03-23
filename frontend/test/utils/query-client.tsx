@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 
 export const createTestQueryClient = () => {
     return new QueryClient({
@@ -17,7 +18,7 @@ export const createTestQueryClient = () => {
 export const createQueryClientWrapper = () => {
     const queryClient = createTestQueryClient();
 
-    const wrapper = ({ children }: { children: React.ReactNode }) => {
+    const wrapper = ({ children }: { children: ReactNode }) => {
         return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
     };
 
