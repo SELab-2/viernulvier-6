@@ -51,3 +51,15 @@ cargo test --all
 ```
 
 This requires a running database.
+
+## sqlx offline mode
+
+The Docker build uses `SQLX_OFFLINE=true`, so sqlx checks queries at compile time using the cached metadata in `.sqlx/` instead of connecting to a live database.
+
+Whenever you add or modify a `query!` or `query_as!` macro, regenerate the cache and commit it:
+
+```sh
+cargo sqlx prepare --workspace
+```
+
+This requires a running database and `DATABASE_URL` set in your `.env`.
