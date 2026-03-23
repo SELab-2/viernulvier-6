@@ -14,7 +14,7 @@ use crate::{
     AppState,
     config::S3Config,
     dto::media::{
-        LinkMediaRequest, MediaPayload, MediaVariantPayload, SaveMediaRequest, UploadUrlRequest,
+        MediaPayload, MediaVariantPayload, UploadUrlRequest,
         UploadUrlResponse, AttachMediaRequest, ReconcileResponse,
     },
     error::AppError,
@@ -26,7 +26,7 @@ use crate::{
     path = "/media",
     tag = "Media",
     operation_id = "get_all_media",
-    description = "Get all media",
+    description = "List media records with pagination for CMS browsing.",
     responses(
         (status = 200, description = "Success", body = [MediaPayload])
     )
@@ -58,7 +58,7 @@ pub struct GetMediaListQuery {
     path = "/media/{id}",
     tag = "Media",
     operation_id = "get_media_by_id",
-    description = "Get a media item by id",
+    description = "Get a single media record by media ID.",
     params(
         ("id" = Uuid, Path, description = "Media UUID")
     ),
@@ -82,7 +82,7 @@ pub async fn get_one(
     path = "/media/upload-url",
     tag = "Media",
     operation_id = "generate_upload_url",
-    description = "Generate a presigned S3 upload URL for direct file upload",
+    description = "Generate a short-lived presigned S3/Garage PUT URL. Frontend uploads the file directly; backend credentials remain private.",
     request_body = UploadUrlRequest,
     responses(
         (status = 200, description = "Success", body = UploadUrlResponse),
@@ -123,58 +123,11 @@ pub async fn generate_upload_url(
 }
 
 #[utoipa::path(
-    method(post),
-    path = "/media",
-    tag = "Media",
-    operation_id = "save_media",
-    description = "Save media metadata after file has been uploaded to S3",
-    request_body = SaveMediaRequest,
-    responses(
-        (status = 201, description = "Created", body = MediaPayload),
-        (status = 400, description = "Bad request")
-    )
-)]
-pub async fn save(
-    State(state): State<AppState>,
-    db: Database,
-    Json(req): Json<SaveMediaRequest>,
-) -> JsonStatusResponse<MediaPayload> {
-    let now = Utc::now();
-    let media_create = database::models::media::MediaCreate {
-        s3_key: req.s3_key,
-        mime_type: req.mime_type,
-        file_size: req.file_size,
-        width: req.width,
-        height: req.height,
-        checksum: req.checksum,
-        alt_text: req.alt_text,
-        description: req.description,
-        credit: req.credit,
-        geo_latitude: req.geo_latitude,
-        geo_longitude: req.geo_longitude,
-        parent_id: req.parent_id,
-        derivative_type: req.derivative_type,
-        gallery_type: None,
-        source_id: None,
-        source_system: "cms".to_string(),
-        source_uri: None,
-        source_updated_at: None,
-        created_at: now,
-        updated_at: now,
-    };
-
-    let media = db.media().insert(media_create).await?;
-    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
-    let payload = MediaPayload::from_model(media, public_url);
-    payload.json_created()
-}
-
-#[utoipa::path(
     method(put),
     path = "/media/{id}",
     tag = "Media",
     operation_id = "update_media",
-    description = "Update media metadata",
+    description = "Update media metadata fields only. Storage location (s3_key) remains unchanged.",
     params(
         ("id" = Uuid, Path, description = "Media UUID")
     ),
@@ -199,7 +152,7 @@ pub async fn put(
     path = "/media/{id}",
     tag = "Media",
     operation_id = "delete_media",
-    description = "Delete a media item and its S3 object",
+    description = "Delete a media record and attempt to delete its S3 object.",
     params(
         ("id" = Uuid, Path, description = "Media UUID")
     ),
@@ -235,12 +188,12 @@ pub async fn delete(
     path = "/media/entity/{entity_type}/{entity_id}",
     tag = "Media",
     operation_id = "get_entity_media",
-    description = "Get all media linked to an entity",
+    description = "Get media linked to an entity. Use role/pagination filters. If cover_only=true and no explicit cover is set, the first item by ordering is returned.",
     params(
         ("entity_type" = String, Path, description = "Entity type (production, event, blogpost, media, artist)"),
         ("entity_id" = Uuid, Path, description = "Entity UUID"),
         ("role" = Option<String>, Query, description = "Optional media role filter (e.g. gallery, poster, review, cover)"),
-        ("cover_only" = Option<bool>, Query, description = "If true, only return cover media"),
+        ("cover_only" = Option<bool>, Query, description = "If true, return one cover item; falls back to first ordered item when no explicit cover exists"),
         ("include_crops" = Option<bool>, Query, description = "If true, include imported crop variants"),
         ("limit" = Option<u32>, Query, description = "Pagination size, default 50, max 200"),
         ("offset" = Option<u32>, Query, description = "Pagination offset")
@@ -259,11 +212,25 @@ pub async fn get_entity_media(
     let role = normalize_media_role_opt(params.role)?;
     let media = db
         .media()
-        .for_entity_filtered(et, entity_id, role.as_deref(), params.cover_only.unwrap_or(false))
+        .for_entity_filtered(et, entity_id, role.as_deref(), false)
         .await?;
     let limit = params.limit.unwrap_or(50).clamp(1, 200) as usize;
     let offset = params.offset.unwrap_or(0) as usize;
-    let media = media.into_iter().skip(offset).take(limit).collect::<Vec<_>>();
+    let media = if params.cover_only.unwrap_or(false) {
+        // If an explicit cover exists, use it; otherwise default to the first item by sort order.
+        let explicit_cover = db
+            .media()
+            .for_entity_filtered(et, entity_id, role.as_deref(), true)
+            .await?;
+
+        if explicit_cover.is_empty() {
+            media.into_iter().take(1).collect::<Vec<_>>()
+        } else {
+            explicit_cover.into_iter().take(1).collect::<Vec<_>>()
+        }
+    } else {
+        media.into_iter().skip(offset).take(limit).collect::<Vec<_>>()
+    };
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
     let include_crops = params.include_crops.unwrap_or(false);
 
@@ -283,43 +250,6 @@ pub async fn get_entity_media(
     Ok(Json(payloads))
 }
 
-#[utoipa::path(
-    method(get),
-    path = "/media/entity/{entity_type}/{entity_id}/cover",
-    tag = "Media",
-    operation_id = "get_entity_cover_media",
-    description = "Get the cover media for an entity (optional role filter)",
-    params(
-        ("entity_type" = String, Path, description = "Entity type (production, event, blogpost, media, artist)"),
-        ("entity_id" = Uuid, Path, description = "Entity UUID"),
-        ("role" = Option<String>, Query, description = "Optional media role filter (e.g. gallery, poster, review)")
-    ),
-    responses(
-        (status = 200, description = "Success", body = Option<MediaPayload>)
-    )
-)]
-pub async fn get_entity_cover_media(
-    State(state): State<AppState>,
-    db: Database,
-    Path((entity_type, entity_id)): Path<(String, Uuid)>,
-    Query(params): Query<GetEntityMediaQuery>,
-) -> JsonResponse<Option<MediaPayload>> {
-    let et = parse_entity_type(&entity_type)?;
-    let role = normalize_media_role_opt(params.role)?;
-    let media = db
-        .media()
-        .for_entity_filtered(et, entity_id, role.as_deref(), true)
-        .await?;
-
-    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
-    let cover = media
-        .into_iter()
-        .next()
-        .map(|m| MediaPayload::from_model(m, public_url));
-
-    Ok(Json(cover))
-}
-
 #[derive(Debug, serde::Deserialize)]
 pub struct GetEntityMediaQuery {
     pub role: Option<String>,
@@ -331,46 +261,10 @@ pub struct GetEntityMediaQuery {
 
 #[utoipa::path(
     method(post),
-    path = "/media/entity/{entity_type}/{entity_id}",
-    tag = "Media",
-    operation_id = "link_media_to_entity",
-    description = "Link a media item to an entity",
-    params(
-        ("entity_type" = String, Path, description = "Entity type (production, event, blogpost, media, artist)"),
-        ("entity_id" = Uuid, Path, description = "Entity UUID")
-    ),
-    request_body = LinkMediaRequest,
-    responses(
-        (status = 201, description = "Linked"),
-        (status = 404, description = "Not found")
-    )
-)]
-pub async fn link_to_entity(
-    db: Database,
-    Path((entity_type, entity_id)): Path<(String, Uuid)>,
-    Json(req): Json<LinkMediaRequest>,
-) -> StatusResponse {
-    let et = parse_entity_type(&entity_type)?;
-    let role = normalize_media_role_opt(req.role)?.unwrap_or_else(|| "gallery".to_string());
-    db.media()
-        .link_to_entity(
-            et,
-            entity_id,
-            req.media_id,
-            &role,
-            req.sort_order.unwrap_or(0),
-            req.is_cover_image.unwrap_or(false),
-        )
-        .await?;
-    Ok(StatusCode::CREATED)
-}
-
-#[utoipa::path(
-    method(post),
     path = "/media/entity/{entity_type}/{entity_id}/attach",
     tag = "Media",
     operation_id = "attach_media_to_entity",
-    description = "Create or update media metadata and link it to an entity in one transactional operation",
+    description = "Primary CMS write endpoint: create/update media metadata by s3_key and link it to an entity in one transaction.",
     params(
         ("entity_type" = String, Path, description = "Entity type (production, event, blogpost, media, artist)"),
         ("entity_id" = Uuid, Path, description = "Entity UUID")
@@ -435,7 +329,7 @@ pub async fn attach_to_entity(
     path = "/media/entity/{entity_type}/{entity_id}/{media_id}",
     tag = "Media",
     operation_id = "unlink_media_from_entity",
-    description = "Unlink a media item from an entity. If the media has no remaining links, it will be cleaned up on the next orphan sweep.",
+    description = "Unlink media from an entity only (does not directly delete media row/object). Orphans are handled by cleanup/reconcile flows.",
     params(
         ("entity_type" = String, Path, description = "Entity type (production, event, blogpost, media, artist)"),
         ("entity_id" = Uuid, Path, description = "Entity UUID"),
@@ -460,7 +354,7 @@ pub async fn unlink_from_entity(
     path = "/media/cleanup",
     tag = "Media",
     operation_id = "cleanup_orphaned_media",
-    description = "Delete orphaned media that has no entity links, and remove their S3 objects",
+    description = "Business cleanup: remove media rows with no entity links (orphans) and attempt to delete their S3 objects.",
     responses(
         (status = 200, description = "Cleanup complete", body = CleanupResponse)
     )
@@ -471,7 +365,6 @@ pub async fn cleanup_orphans(
 ) -> JsonResponse<CleanupResponse> {
     let s3_keys = db.media().delete_orphans().await?;
 
-    // delete from S3
     if let (Some(s3_config), Some(s3_client)) = (&state.config.s3, &state.s3_client) {
         for key in &s3_keys {
             let _ = s3_client
@@ -494,7 +387,7 @@ pub async fn cleanup_orphans(
     path = "/media/reconcile",
     tag = "Media",
     operation_id = "reconcile_media_storage",
-    description = "Reconcile DB media rows with S3 objects. Dry-run by default; use apply=true to delete missing-in-S3 DB rows.",
+    description = "Storage drift check: compare DB media keys vs S3 objects. Dry-run by default; use apply=true to delete DB rows whose S3 object is missing.",
     params(
         ("apply" = Option<bool>, Query, description = "Apply destructive cleanup when true (default false)")
     ),

@@ -29,20 +29,20 @@ async fn get_entity_media_with_role_filter(db: PgPool) {
 
 #[sqlx::test(fixtures("productions", "media"))]
 #[test_log::test]
-async fn get_entity_cover_media(db: PgPool) {
+async fn get_entity_cover_media_via_filter(db: PgPool) {
     let app = TestRouter::new(db);
     let production_id = Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap();
 
     let response = app
         .get(&format!(
-            "/media/entity/production/{production_id}/cover?role=gallery"
+            "/media/entity/production/{production_id}?role=gallery&cover_only=true"
         ))
         .await;
 
     assert_eq!(response.status(), StatusCode::OK);
-    let data: Option<MediaPayload> = response.into_struct().await;
-    assert!(data.is_some());
-    let media = data.unwrap();
+    let data: Vec<MediaPayload> = response.into_struct().await;
+    assert_eq!(data.len(), 1);
+    let media = &data[0];
     assert_eq!(media.alt_text.as_deref(), Some("Cover image"));
 }
 

@@ -219,7 +219,6 @@ fn public_routes() -> OpenApiRouter<AppState> {
         .routes(routes!(media::get_all))
         .routes(routes!(media::get_one))
         .routes(routes!(media::get_entity_media))
-        .routes(routes!(media::get_entity_cover_media))
 }
 
 // Only editors can edit data
@@ -249,10 +248,8 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(event::put))
         // Media
         .routes(routes!(media::generate_upload_url))
-        .routes(routes!(media::save))
         .routes(routes!(media::put))
         .routes(routes!(media::delete))
-        .routes(routes!(media::link_to_entity))
         .routes(routes!(media::attach_to_entity))
         .routes(routes!(media::unlink_from_entity))
         .routes(routes!(media::cleanup_orphans))
