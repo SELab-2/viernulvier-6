@@ -32,6 +32,28 @@ impl<'a> MediaRepo<'a> {
         Ok(Media::select().limit(limit).fetch_all(self.db).await?)
     }
 
+    pub async fn paginated(&self, limit: usize, offset: usize) -> Result<Vec<Media>, DatabaseError> {
+        Ok(sqlx::query_as::<_, Media>(
+            r#"
+            SELECT
+                id, created_at, updated_at,
+                s3_key, mime_type, file_size,
+                width, height, checksum,
+                alt_text, description, credit,
+                geo_latitude, geo_longitude,
+                parent_id, derivative_type, gallery_type, source_id,
+                source_system, source_uri, source_updated_at
+            FROM media
+            ORDER BY created_at DESC
+            LIMIT $1 OFFSET $2
+            "#,
+        )
+        .bind(limit as i64)
+        .bind(offset as i64)
+        .fetch_all(self.db)
+        .await?)
+    }
+
     pub async fn insert(&self, media: MediaCreate) -> Result<Media, DatabaseError> {
         Ok(media.insert(self.db).await?)
     }

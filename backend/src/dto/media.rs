@@ -236,6 +236,7 @@ pub struct AttachMediaRequest {
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ReconcileResponse {
+    pub applied: bool,
     pub db_key_count: usize,
     pub s3_key_count: usize,
     pub missing_in_s3: Vec<String>,

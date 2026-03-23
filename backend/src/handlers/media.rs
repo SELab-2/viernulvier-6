@@ -34,14 +34,23 @@ use crate::{
 pub async fn get_all(
     State(state): State<AppState>,
     db: Database,
+    Query(params): Query<GetMediaListQuery>,
 ) -> JsonResponse<Vec<MediaPayload>> {
-    let media = db.media().all(50).await?;
+    let limit = params.limit.unwrap_or(50).clamp(1, 200);
+    let offset = params.offset.unwrap_or(0);
+    let media = db.media().paginated(limit as usize, offset as usize).await?;
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
     let payloads: Vec<MediaPayload> = media
         .into_iter()
         .map(|m| MediaPayload::from_model(m, public_url))
         .collect();
     Ok(Json(payloads))
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct GetMediaListQuery {
+    pub limit: Option<u32>,
+    pub offset: Option<u32>,
 }
 
 #[utoipa::path(
@@ -232,7 +241,9 @@ pub async fn delete(
         ("entity_id" = Uuid, Path, description = "Entity UUID"),
         ("role" = Option<String>, Query, description = "Optional media role filter (e.g. gallery, poster, review, cover)"),
         ("cover_only" = Option<bool>, Query, description = "If true, only return cover media"),
-        ("include_crops" = Option<bool>, Query, description = "If true, include imported crop variants")
+        ("include_crops" = Option<bool>, Query, description = "If true, include imported crop variants"),
+        ("limit" = Option<u32>, Query, description = "Pagination size, default 50, max 200"),
+        ("offset" = Option<u32>, Query, description = "Pagination offset")
     ),
     responses(
         (status = 200, description = "Success", body = [MediaPayload])
@@ -250,6 +261,9 @@ pub async fn get_entity_media(
         .media()
         .for_entity_filtered(et, entity_id, role.as_deref(), params.cover_only.unwrap_or(false))
         .await?;
+    let limit = params.limit.unwrap_or(50).clamp(1, 200) as usize;
+    let offset = params.offset.unwrap_or(0) as usize;
+    let media = media.into_iter().skip(offset).take(limit).collect::<Vec<_>>();
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
     let include_crops = params.include_crops.unwrap_or(false);
 
@@ -311,6 +325,8 @@ pub struct GetEntityMediaQuery {
     pub role: Option<String>,
     pub cover_only: Option<bool>,
     pub include_crops: Option<bool>,
+    pub limit: Option<u32>,
+    pub offset: Option<u32>,
 }
 
 #[utoipa::path(
@@ -478,7 +494,10 @@ pub async fn cleanup_orphans(
     path = "/media/reconcile",
     tag = "Media",
     operation_id = "reconcile_media_storage",
-    description = "Reconcile DB media rows with S3 objects. Deletes DB rows whose S3 key is missing.",
+    description = "Reconcile DB media rows with S3 objects. Dry-run by default; use apply=true to delete missing-in-S3 DB rows.",
+    params(
+        ("apply" = Option<bool>, Query, description = "Apply destructive cleanup when true (default false)")
+    ),
     responses(
         (status = 200, description = "Reconciliation complete", body = ReconcileResponse)
     )
@@ -486,6 +505,7 @@ pub async fn cleanup_orphans(
 pub async fn reconcile_storage(
     State(state): State<AppState>,
     db: Database,
+    Query(params): Query<ReconcileQuery>,
 ) -> JsonResponse<ReconcileResponse> {
     let (s3_client, s3_config) = s3_client_and_config(&state)?;
 
@@ -524,15 +544,26 @@ pub async fn reconcile_storage(
     let missing_in_s3: Vec<String> = db_set.difference(&s3_set).cloned().collect();
     let missing_in_db: Vec<String> = s3_set.difference(&db_set).cloned().collect();
 
-    let deleted_missing_in_s3_count = db.media().delete_by_s3_keys(&missing_in_s3).await?;
+    let applied = params.apply.unwrap_or(false);
+    let deleted_missing_in_s3_count = if applied {
+        db.media().delete_by_s3_keys(&missing_in_s3).await?
+    } else {
+        0
+    };
 
     Ok(Json(ReconcileResponse {
+        applied,
         db_key_count: db_keys.len(),
         s3_key_count: s3_keys.len(),
         missing_in_s3,
         missing_in_db,
         deleted_missing_in_s3_count,
     }))
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct ReconcileQuery {
+    pub apply: Option<bool>,
 }
 
 #[derive(Debug, serde::Serialize, utoipa::ToSchema)]

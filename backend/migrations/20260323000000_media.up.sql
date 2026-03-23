@@ -59,6 +59,10 @@ CREATE TABLE entity_media (
     is_cover_image BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
+    CONSTRAINT entity_media_role_valid CHECK (
+        role IN ('gallery', 'cover', 'poster', 'review', 'hero', 'thumbnail', 'inline', 'media')
+    ),
+
     UNIQUE(entity_type, entity_id, media_id)
 );
 
