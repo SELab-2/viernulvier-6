@@ -473,7 +473,7 @@ impl ApiImporter {
         // store with s3_key
         let media_create = MediaCreate {
             s3_key,
-            mime_type,
+            mime_type: mime_type.clone(),
             file_size: Some(file_size),
             width: Some(item.width as i32),
             height: Some(item.height as i32),
@@ -506,6 +506,50 @@ impl ApiImporter {
                     false,
                 )
                 .await;
+
+            // import crop variants as media_variant records
+            for crop in item.crops {
+                let crop_name = slug::slugify(&crop.name);
+                let crop_key = format!(
+                    "media/production/{production_source_id}/{gallery_type}/crops/{}/{}.{}",
+                    media.id,
+                    crop_name,
+                    item.format.to_lowercase()
+                );
+
+                let (crop_checksum, crop_file_size) = match self
+                    .download_and_upload_to_key(
+                        s3_client,
+                        s3_bucket,
+                        &crop.url,
+                        &crop_key,
+                        &item.format,
+                    )
+                    .await
+                {
+                    Ok(res) => res,
+                    Err(e) => {
+                        warn!("Media crop: failed to import crop {} from {}: {e}", crop.name, crop.url);
+                        continue;
+                    }
+                };
+
+                let _ = self
+                    .db
+                    .media_variants()
+                    .upsert_crop(database::repos::media_variant::CropVariantUpsert {
+                        media_id: media.id,
+                        crop_name,
+                        s3_key: crop_key,
+                        mime_type: Some(mime_type.clone()),
+                        file_size: Some(crop_file_size),
+                        width: None,
+                        height: None,
+                        checksum: Some(crop_checksum),
+                        source_uri: Some(crop.url),
+                    })
+                    .await;
+            }
         }
 
         Ok(())
@@ -520,10 +564,31 @@ impl ApiImporter {
         gallery_type: &str,
         format: &str,
     ) -> Result<(String, String, i64), String> {
+        let ext = format.to_lowercase();
+        let file_uuid = Uuid::now_v7();
+        let s3_key = format!(
+            "media/production/{production_source_id}/{gallery_type}/{file_uuid}.{ext}"
+        );
+
+        let (checksum, file_size) = self
+            .download_and_upload_to_key(s3_client, s3_bucket, cdn_url, &s3_key, format)
+            .await?;
+
+        Ok((s3_key, checksum, file_size))
+    }
+
+    async fn download_and_upload_to_key(
+        &self,
+        s3_client: &aws_sdk_s3::Client,
+        s3_bucket: &str,
+        source_url: &str,
+        s3_key: &str,
+        format: &str,
+    ) -> Result<(String, i64), String> {
         // download from CDN
         let response = self
             .client
-            .get(cdn_url)
+            .get(source_url)
             .send()
             .await
             .map_err(|e| e.to_string())?
@@ -536,18 +601,11 @@ impl ApiImporter {
         hasher.update(&bytes);
         let checksum = hex::encode(hasher.finalize());
 
-        // build S3 key with gallery-type prefix
-        let ext = format.to_lowercase();
-        let file_uuid = Uuid::now_v7();
-        let s3_key = format!(
-            "media/production/{production_source_id}/{gallery_type}/{file_uuid}.{ext}"
-        );
-
         // upload to S3
         s3_client
             .put_object()
             .bucket(s3_bucket)
-            .key(&s3_key)
+            .key(s3_key)
             .body(bytes.to_vec().into())
             .content_type(format_to_mime(format))
             .send()
@@ -559,7 +617,7 @@ impl ApiImporter {
 
         let file_size = bytes.len() as i64;
 
-        Ok((s3_key, checksum, file_size))
+        Ok((checksum, file_size))
     }
 }
 

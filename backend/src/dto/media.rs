@@ -1,5 +1,8 @@
 use chrono::{DateTime, Utc};
-use database::{Database, models::media::Media};
+use database::{
+    Database,
+    models::{media::Media, media_variant::MediaVariant},
+};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -32,6 +35,7 @@ impl MediaPayload {
             gallery_type: m.gallery_type,
             source_system: m.source_system,
             source_uri: m.source_uri,
+            crops: Vec::new(),
         }
     }
 
@@ -77,6 +81,42 @@ pub struct MediaPayload {
     pub gallery_type: Option<String>,
     pub source_system: String,
     pub source_uri: Option<String>,
+    pub crops: Vec<MediaVariantPayload>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct MediaVariantPayload {
+    pub id: Uuid,
+    pub media_id: Uuid,
+    pub variant_kind: String,
+    pub crop_name: Option<String>,
+    pub url: Option<String>,
+    pub mime_type: Option<String>,
+    pub file_size: Option<i64>,
+    pub width: Option<i32>,
+    pub height: Option<i32>,
+    pub checksum: Option<String>,
+    pub source_uri: Option<String>,
+}
+
+impl MediaVariantPayload {
+    pub fn from_model(v: MediaVariant, base_url: Option<&str>) -> Self {
+        let url = base_url.map(|base| format!("{}/{}", base.trim_end_matches('/'), v.s3_key));
+
+        Self {
+            id: v.id,
+            media_id: v.media_id,
+            variant_kind: v.variant_kind,
+            crop_name: v.crop_name,
+            url,
+            mime_type: v.mime_type,
+            file_size: v.file_size,
+            width: v.width,
+            height: v.height,
+            checksum: v.checksum,
+            source_uri: v.source_uri,
+        }
+    }
 }
 
 impl From<MediaPayload> for Media {

@@ -41,4 +41,12 @@ pub struct ApiMediaItem {
     pub description: ApiLocalizedText,
     pub credits: ApiLocalizedText,
     pub link: ApiLocalizedText,
+    #[serde(default)]
+    pub crops: Vec<ApiMediaItemCrop>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ApiMediaItemCrop {
+    pub name: String,
+    pub url: String,
 }

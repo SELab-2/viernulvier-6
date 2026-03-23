@@ -5,7 +5,7 @@ use crate::{
     error::DatabaseError,
     repos::{
         hall::HallRepo, internal_state::InternalStateRepo, location::LocationRepo, event::EventRepo,
-        media::MediaRepo, production::ProductionRepo, space::SpaceRepo, user::UserRepo, sessions::SessionRepo,
+        media::MediaRepo, media_variant::MediaVariantRepo, production::ProductionRepo, space::SpaceRepo, user::UserRepo, sessions::SessionRepo,
         tag::TagRepo,
     },
 };
@@ -38,6 +38,7 @@ pub mod repos {
     pub mod internal_state;
     pub mod location;
     pub mod media;
+    pub mod media_variant;
     pub mod production;
     pub mod space;
     pub mod tag;
@@ -110,5 +111,9 @@ impl Database {
 
     pub fn media<'a>(&'a self) -> MediaRepo<'a> {
         MediaRepo::new(&self.db)
+    }
+
+    pub fn media_variants<'a>(&'a self) -> MediaVariantRepo<'a> {
+        MediaVariantRepo::new(&self.db)
     }
 }

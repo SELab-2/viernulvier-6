@@ -169,6 +169,51 @@ impl<'a> MediaRepo<'a> {
         .await?)
     }
 
+    /// Get media for an entity with optional role/galler type and cover-only filtering
+    pub async fn for_entity_filtered(
+        &self,
+        entity_type: EntityType,
+        entity_id: Uuid,
+        gallery_type: Option<&str>,
+        cover_only: bool,
+    ) -> Result<Vec<Media>, DatabaseError> {
+        let mut query = String::from(
+            r#"
+            SELECT
+                m.id, m.created_at, m.updated_at,
+                m.s3_key, m.mime_type, m.file_size,
+                m.width, m.height, m.checksum,
+                m.alt_text, m.description, m.credit,
+                m.geo_latitude, m.geo_longitude,
+                m.parent_id, m.derivative_type, m.gallery_type, m.source_id,
+                m.source_system, m.source_uri, m.source_updated_at
+            FROM media m
+            JOIN entity_media em ON em.media_id = m.id
+            WHERE em.entity_type = $1 AND em.entity_id = $2
+            "#,
+        );
+
+        if gallery_type.is_some() {
+            query.push_str(" AND m.gallery_type = $3");
+        }
+
+        if cover_only {
+            query.push_str(" AND em.is_cover_image = true");
+        }
+
+        query.push_str(" ORDER BY em.sort_order");
+
+        let mut q = sqlx::query_as::<_, Media>(&query)
+            .bind(entity_type as EntityType)
+            .bind(entity_id);
+
+        if let Some(gt) = gallery_type {
+            q = q.bind(gt);
+        }
+
+        Ok(q.fetch_all(self.db).await?)
+    }
+
     /// Find media that has no remaining entity links (orphans)
     pub async fn orphaned(&self) -> Result<Vec<Media>, DatabaseError> {
         Ok(sqlx::query_as(

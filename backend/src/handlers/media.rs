@@ -1,6 +1,6 @@
 use axum::{
     Json,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
 };
 use aws_sdk_s3::presigning::PresigningConfig;
@@ -12,7 +12,10 @@ use uuid::Uuid;
 use crate::{
     AppState,
     config::S3Config,
-    dto::media::{LinkMediaRequest, MediaPayload, SaveMediaRequest, UploadUrlRequest, UploadUrlResponse},
+    dto::media::{
+        LinkMediaRequest, MediaPayload, MediaVariantPayload, SaveMediaRequest, UploadUrlRequest,
+        UploadUrlResponse,
+    },
     error::AppError,
     handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
 };
@@ -225,7 +228,10 @@ pub async fn delete(
     description = "Get all media linked to an entity",
     params(
         ("entity_type" = String, Path, description = "Entity type (production, event, blogpost, media, artist)"),
-        ("entity_id" = Uuid, Path, description = "Entity UUID")
+        ("entity_id" = Uuid, Path, description = "Entity UUID"),
+        ("gallery_type" = Option<String>, Query, description = "Optional media gallery type filter (e.g. media, poster, review)"),
+        ("cover_only" = Option<bool>, Query, description = "If true, only return cover media"),
+        ("include_crops" = Option<bool>, Query, description = "If true, include imported crop variants")
     ),
     responses(
         (status = 200, description = "Success", body = [MediaPayload])
@@ -235,15 +241,42 @@ pub async fn get_entity_media(
     State(state): State<AppState>,
     db: Database,
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
+    Query(params): Query<GetEntityMediaQuery>,
 ) -> JsonResponse<Vec<MediaPayload>> {
     let et = parse_entity_type(&entity_type)?;
-    let media = db.media().for_entity(et, entity_id).await?;
+    let media = db
+        .media()
+        .for_entity_filtered(
+            et,
+            entity_id,
+            params.gallery_type.as_deref(),
+            params.cover_only.unwrap_or(false),
+        )
+        .await?;
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
-    let payloads: Vec<MediaPayload> = media
-        .into_iter()
-        .map(|m| MediaPayload::from_model(m, public_url))
-        .collect();
+    let include_crops = params.include_crops.unwrap_or(false);
+
+    let mut payloads: Vec<MediaPayload> = Vec::with_capacity(media.len());
+    for m in media {
+        let mut payload = MediaPayload::from_model(m, public_url);
+        if include_crops {
+            let variants = db.media_variants().for_media_kind(payload.id, "crop").await?;
+            payload.crops = variants
+                .into_iter()
+                .map(|v| MediaVariantPayload::from_model(v, public_url))
+                .collect();
+        }
+        payloads.push(payload);
+    }
+
     Ok(Json(payloads))
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct GetEntityMediaQuery {
+    pub gallery_type: Option<String>,
+    pub cover_only: Option<bool>,
+    pub include_crops: Option<bool>,
 }
 
 #[utoipa::path(
