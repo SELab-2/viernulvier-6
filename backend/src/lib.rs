@@ -1,5 +1,6 @@
 use crate::extractors::auth::{AdminUser, EditorUser};
 use api::ApiImporter;
+use aws_sdk_s3::config::{Builder as S3Builder, Credentials, Region};
 use axum::http::{HeaderValue, Method};
 use axum::middleware::from_extractor_with_state;
 use axum::{Router, routing::get};
@@ -18,7 +19,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::config::AppConfig;
 use crate::error::AppError;
-use crate::handlers::{admin, auth, event, hall, location, production, space, taxonomy, version};
+use crate::handlers::{admin, auth, event, hall, location, media, production, space, taxonomy, version};
 
 pub mod config;
 pub mod dto;
@@ -30,6 +31,7 @@ mod handlers;
 pub struct AppState {
     pub db: Database,
     pub config: AppConfig,
+    pub s3_client: Option<aws_sdk_s3::Client>,
 }
 
 #[derive(OpenApi)]
@@ -84,8 +86,38 @@ impl Modify for PathPrefixAddon {
 pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
     let db = Database::create_connect_migrate(&config.database_url).await?;
 
-    // start api importer
-    let api_importer = ApiImporter::new(db.clone(), config.api_key_404.clone());
+    // initialize S3 client if config is present
+    let s3_client = if let Some(ref s3_config) = config.s3 {
+        info!("initializing S3 client for {}", s3_config.endpoint);
+        let creds = Credentials::new(
+            &s3_config.access_key,
+            &s3_config.secret_key,
+            None,
+            None,
+            "garage",
+        );
+
+        let s3_conf = S3Builder::new()
+            .region(Region::new(s3_config.region.clone()))
+            .endpoint_url(&s3_config.endpoint)
+            .credentials_provider(creds)
+            .force_path_style(true)
+            .build();
+
+        Some(aws_sdk_s3::Client::from_conf(s3_conf))
+    } else {
+        None
+    };
+
+    // start api importer (with S3 access for media import)
+    let importer_s3_client = s3_client.clone();
+    let importer_s3_bucket = config.s3.as_ref().map(|s| s.bucket.clone());
+    let api_importer = ApiImporter::new(
+        db.clone(),
+        config.api_key_404.clone(),
+        importer_s3_client,
+        importer_s3_bucket,
+    );
     tokio::spawn(async move {
         match api_importer.update_since_last().await {
             Ok(()) => info!("API importer finished successfully"),
@@ -93,7 +125,7 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
         }
     });
 
-    let state = AppState { db, config };
+    let state = AppState { db, config, s3_client };
 
     let allowed_origins: Vec<HeaderValue> = state
         .config
@@ -109,7 +141,7 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
         .layer(
             CorsLayer::new()
                 .allow_origin(allowed_origins)
-                .allow_methods([Method::GET, Method::POST])
+                .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
                 .allow_headers([axum::http::header::CONTENT_TYPE])
                 .allow_credentials(true),
         )
@@ -183,6 +215,10 @@ fn public_routes() -> OpenApiRouter<AppState> {
         .routes(routes!(event::get_one))
         // taxonomies
         .routes(routes!(taxonomy::get_facets))
+        // media
+        .routes(routes!(media::get_all))
+        .routes(routes!(media::get_one))
+        .routes(routes!(media::get_entity_media))
 }
 
 // Only editors can edit data
@@ -210,6 +246,14 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(event::post))
         .routes(routes!(event::delete))
         .routes(routes!(event::put))
+        // Media
+        .routes(routes!(media::generate_upload_url))
+        .routes(routes!(media::save))
+        .routes(routes!(media::put))
+        .routes(routes!(media::delete))
+        .routes(routes!(media::link_to_entity))
+        .routes(routes!(media::unlink_from_entity))
+        .routes(routes!(media::cleanup_orphans))
         .layer(from_extractor_with_state::<EditorUser, AppState>(state))
 }
 

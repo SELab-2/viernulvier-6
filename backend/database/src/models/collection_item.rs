@@ -18,4 +18,5 @@ pub enum CollectionContentType {
     Production,
     Event,
     Blogpost,
+    Media,
 }

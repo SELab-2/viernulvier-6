@@ -52,6 +52,8 @@ sha2 = "0.10.9"
 hex = "0.4.3"
 chrono = "0.4.44"
 time = "0.3.47"
+aws-sdk-s3 = "1"
+aws-config = "1"
 
 [dev-dependencies]
 http-body-util = "0.1.2"

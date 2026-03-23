@@ -13,6 +13,17 @@ pub struct AppConfig {
     pub refresh_token_expiry_days: i8,
     pub allowed_origins: Vec<String>,
     pub preview_name: String,
+    pub s3: Option<S3Config>,
+}
+
+#[derive(Debug, Clone)]
+pub struct S3Config {
+    pub endpoint: String,
+    pub region: String,
+    pub access_key: String,
+    pub secret_key: String,
+    pub bucket: String,
+    pub public_url: String,
 }
 
 impl AppConfig {
@@ -23,6 +34,30 @@ impl AppConfig {
             .map(|s| s.trim().to_string())
             .collect();
 
+        let s3 = match (
+            env::var("S3_ENDPOINT"),
+            env::var("S3_ACCESS_KEY"),
+            env::var("S3_SECRET_KEY"),
+            env::var("S3_BUCKET"),
+        ) {
+            (Ok(endpoint), Ok(access_key), Ok(secret_key), Ok(bucket)) => {
+                info!("S3 config loaded");
+                Some(S3Config {
+                    endpoint,
+                    region: env::var("S3_REGION").unwrap_or_else(|_| "garage".to_string()),
+                    access_key,
+                    secret_key,
+                    bucket,
+                    public_url: env::var("S3_PUBLIC_URL")
+                        .unwrap_or_else(|_| "http://localhost:3900".to_string()),
+                })
+            }
+            _ => {
+                info!("S3 config not set, media upload disabled");
+                None
+            }
+        };
+
         Ok(Self {
             database_url: get_env_var("DATABASE_URL")?,
             api_key_404: get_env_var("API_KEY_404")?,
@@ -31,6 +66,7 @@ impl AppConfig {
             refresh_token_expiry_days: 7,
             allowed_origins,
             preview_name: env::var("PREVIEW_NAME").unwrap_or_default(),
+            s3,
         })
     }
 }

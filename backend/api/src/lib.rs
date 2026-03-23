@@ -1,13 +1,16 @@
 use std::pin::pin;
 
 use chrono::Utc;
-use database::{Database, models::internal_state::InternalStateKey};
+use database::{Database, models::{entity_type::EntityType, internal_state::InternalStateKey, media::MediaCreate}};
 use futures::{Stream, StreamExt, stream};
 use reqwest::Client;
 use serde::de::DeserializeOwned;
+use sha2::{Digest, Sha256};
 use tracing::{info, warn};
 
-use crate::helper::extract_source_id;
+use crate::helper::{extract_source_id, flatten_single};
+use uuid::Uuid;
+use crate::models::media::{ApiMediaGallery, ApiMediaItem};
 use crate::models::space::ApiSpace;
 use crate::models::{
     collection::ApiCollection, event::ApiEvent, hall::ApiHall, location::ApiLocation,
@@ -33,10 +36,17 @@ pub struct ApiImporter {
     db: Database,
     auth_token: String,
     client: Client,
+    s3_client: Option<aws_sdk_s3::Client>,
+    s3_bucket: Option<String>,
 }
 
 impl ApiImporter {
-    pub fn new(db: Database, auth_token: String) -> Self {
+    pub fn new(
+        db: Database,
+        auth_token: String,
+        s3_client: Option<aws_sdk_s3::Client>,
+        s3_bucket: Option<String>,
+    ) -> Self {
         let client = reqwest::Client::builder()
             .user_agent("selab6")
             .build()
@@ -46,6 +56,8 @@ impl ApiImporter {
             db,
             auth_token,
             client,
+            s3_client,
+            s3_bucket,
         }
     }
 
@@ -155,11 +167,44 @@ impl ApiImporter {
             let amt = productions.len();
             info!("Productions: got {amt} from api");
             for production in productions {
+                let production_source_id = production
+                    .id
+                    .split('/')
+                    .next_back()
+                    .and_then(|s| s.parse::<i32>().ok());
+
+                let media_gallery = production.media_gallery.clone();
+                let review_gallery = production.review_gallery.clone();
+                let poster_gallery = production.poster_gallery.clone();
+
                 self.db
                     .productions()
                     .insert(production.into())
                     .await
                     .unwrap();
+
+                let Some(source_id) = production_source_id else {
+                    continue;
+                };
+
+                // import all gallery types
+                let galleries = [
+                    (media_gallery, "media"),
+                    (review_gallery, "review"),
+                    (poster_gallery, "poster"),
+                ];
+
+                for (gallery_url, gallery_type) in galleries {
+                    if let Some(url) = gallery_url
+                        && let Err(e) = self
+                            .import_gallery_for_production(&url, source_id, gallery_type)
+                            .await
+                    {
+                        warn!(
+                            "Productions: failed to import {gallery_type} gallery for source_id {source_id}: {e}"
+                        );
+                    }
+                }
             }
             info!("Productions: inserted {amt} into db");
         }
@@ -310,4 +355,274 @@ impl ApiImporter {
         info!("Events: finished importing");
         Ok(())
     }
+
+    async fn import_gallery_for_production(
+        &self,
+        gallery_url: &str,
+        production_source_id: i32,
+        gallery_type: &str,
+    ) -> Result<(), reqwest::Error> {
+        let gallery: ApiMediaGallery = self
+            .client
+            .get(gallery_url)
+            .header("X-AUTH-TOKEN", &self.auth_token)
+            .send()
+            .await?
+            .error_for_status()?
+            .json()
+            .await?;
+
+        let production = match self
+            .db
+            .productions()
+            .by_source_id(production_source_id)
+            .await
+        {
+            Ok(Some(p)) => p,
+            _ => {
+                warn!("Media: production source_id {production_source_id} not found");
+                return Ok(());
+            }
+        };
+
+        let mut count = 0;
+        for item_url in &gallery.items {
+            match self
+                .import_media_item(item_url, production.id, production_source_id, gallery_type)
+                .await
+            {
+                Ok(()) => count += 1,
+                Err(e) => warn!("Media: failed to import item {item_url}: {e}"),
+            }
+        }
+
+        if count > 0 {
+            info!(
+                "Media: imported {count} {gallery_type} items for production source_id {production_source_id}"
+            );
+        }
+
+        Ok(())
+    }
+
+    async fn import_media_item(
+        &self,
+        item_url: &str,
+        production_id: Uuid,
+        production_source_id: i32,
+        gallery_type: &str,
+    ) -> Result<(), reqwest::Error> {
+        let item: ApiMediaItem = self
+            .client
+            .get(item_url)
+            .header("X-AUTH-TOKEN", &self.auth_token)
+            .send()
+            .await?
+            .error_for_status()?
+            .json()
+            .await?;
+
+        let source_id = extract_source_id(item_url);
+        let title = flatten_single(Some(item.title));
+        let description = flatten_single(Some(item.description));
+        let credit = flatten_single(Some(item.credits));
+        let mime_type = format_to_mime(&item.format);
+        let cdn_url = flatten_single(Some(item.link));
+        let now = Utc::now();
+
+        // skip if already imported by source_id
+        if let Some(sid) = source_id
+            && self.db.media().by_source_id(sid).await.is_ok_and(|m| m.is_some())
+        {
+            return Ok(());
+        }
+
+        // try to download and upload to S3
+        let (s3_key, checksum, file_size) = if let (Some(s3_client), Some(s3_bucket), Some(url)) =
+            (&self.s3_client, &self.s3_bucket, &cdn_url)
+        {
+            match self.download_and_upload(s3_client, s3_bucket, url, production_source_id, gallery_type, &item.format).await {
+                Ok(result) => result,
+                Err(e) => {
+                    warn!("Media: download/upload failed for {url}: {e}");
+                    // fall back to storing just the external URL
+                    let media_create = MediaCreate {
+                        s3_key: None,
+                        external_url: cdn_url,
+                        mime_type,
+                        file_size: None,
+                        width: Some(item.width as i32),
+                        height: Some(item.height as i32),
+                        checksum: None,
+                        alt_text: title,
+                        description,
+                        credit,
+                        geo_latitude: None,
+                        geo_longitude: None,
+                        parent_id: None,
+                        derivative_type: None,
+                        gallery_type: Some(gallery_type.to_string()),
+                        source_id,
+                        created_at: now,
+                        updated_at: now,
+                    };
+
+                    if let Ok(media) = self.db.media().insert(media_create).await {
+                        let _ = self
+                            .db
+                            .media()
+                            .link_to_entity(
+                                EntityType::Production,
+                                production_id,
+                                media.id,
+                                item.position as i32,
+                                false,
+                            )
+                            .await;
+                    }
+                    return Ok(());
+                }
+            }
+        } else {
+            // no S3 configured, store external URL
+            let media_create = MediaCreate {
+                s3_key: None,
+                external_url: cdn_url,
+                mime_type,
+                file_size: None,
+                width: Some(item.width as i32),
+                height: Some(item.height as i32),
+                checksum: None,
+                alt_text: title,
+                description,
+                credit,
+                geo_latitude: None,
+                geo_longitude: None,
+                parent_id: None,
+                derivative_type: None,
+                gallery_type: Some(gallery_type.to_string()),
+                source_id,
+                created_at: now,
+                updated_at: now,
+            };
+
+            if let Ok(media) = self.db.media().insert(media_create).await {
+                let _ = self
+                    .db
+                    .media()
+                    .link_to_entity(
+                        EntityType::Production,
+                        production_id,
+                        media.id,
+                        item.position as i32,
+                        false,
+                    )
+                    .await;
+            }
+            return Ok(());
+        };
+
+        // store with s3_key
+        let media_create = MediaCreate {
+            s3_key: Some(s3_key),
+            external_url: None,
+            mime_type,
+            file_size: Some(file_size),
+            width: Some(item.width as i32),
+            height: Some(item.height as i32),
+            checksum: Some(checksum),
+            alt_text: title,
+            description,
+            credit,
+            geo_latitude: None,
+            geo_longitude: None,
+            parent_id: None,
+            derivative_type: None,
+            gallery_type: Some(gallery_type.to_string()),
+            source_id,
+            created_at: now,
+            updated_at: now,
+        };
+
+        if let Ok(media) = self.db.media().insert(media_create).await {
+            let _ = self
+                .db
+                .media()
+                .link_to_entity(
+                    EntityType::Production,
+                    production_id,
+                    media.id,
+                    item.position as i32,
+                    false,
+                )
+                .await;
+        }
+
+        Ok(())
+    }
+
+    async fn download_and_upload(
+        &self,
+        s3_client: &aws_sdk_s3::Client,
+        s3_bucket: &str,
+        cdn_url: &str,
+        production_source_id: i32,
+        gallery_type: &str,
+        format: &str,
+    ) -> Result<(String, String, i64), String> {
+        // download from CDN
+        let response = self
+            .client
+            .get(cdn_url)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?
+            .error_for_status()
+            .map_err(|e| e.to_string())?;
+        let bytes = response.bytes().await.map_err(|e| e.to_string())?;
+
+        // compute SHA256 checksum
+        let mut hasher = Sha256::new();
+        hasher.update(&bytes);
+        let checksum = hex::encode(hasher.finalize());
+
+        // build S3 key with gallery-type prefix
+        let ext = format.to_lowercase();
+        let file_uuid = Uuid::now_v7();
+        let s3_key = format!(
+            "media/production/{production_source_id}/{gallery_type}/{file_uuid}.{ext}"
+        );
+
+        // upload to S3
+        s3_client
+            .put_object()
+            .bucket(s3_bucket)
+            .key(&s3_key)
+            .body(bytes.to_vec().into())
+            .content_type(format_to_mime(format))
+            .send()
+            .await
+            .map_err(|e| {
+                warn!("S3 upload failed for {s3_key}: {e:?}");
+                format!("s3 upload failed: {e}")
+            })?;
+
+        let file_size = bytes.len() as i64;
+
+        Ok((s3_key, checksum, file_size))
+    }
+}
+
+fn format_to_mime(format: &str) -> String {
+    match format.to_lowercase().as_str() {
+        "jpg" | "jpeg" => "image/jpeg",
+        "png" => "image/png",
+        "gif" => "image/gif",
+        "webp" => "image/webp",
+        "svg" => "image/svg+xml",
+        "mp4" => "video/mp4",
+        "pdf" => "application/pdf",
+        _ => "application/octet-stream",
+    }
+    .to_string()
 }

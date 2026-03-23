@@ -5,7 +5,7 @@ use crate::{
     error::DatabaseError,
     repos::{
         hall::HallRepo, internal_state::InternalStateRepo, location::LocationRepo, event::EventRepo,
-        production::ProductionRepo, space::SpaceRepo, user::UserRepo, sessions::SessionRepo,
+        media::MediaRepo, production::ProductionRepo, space::SpaceRepo, user::UserRepo, sessions::SessionRepo,
         tag::TagRepo,
     },
 };
@@ -13,6 +13,7 @@ use crate::{
 pub mod models {
     pub mod artist;
     pub mod blogpost;
+    pub mod entity_media;
     pub mod entity_type;
     pub mod facet;
     pub mod collection;
@@ -21,6 +22,7 @@ pub mod models {
     pub mod hall;
     pub mod internal_state;
     pub mod location;
+    pub mod media;
     pub mod production;
     pub mod space;
     pub mod tag;
@@ -34,6 +36,7 @@ pub mod repos {
     pub mod hall;
     pub mod internal_state;
     pub mod location;
+    pub mod media;
     pub mod production;
     pub mod space;
     pub mod tag;
@@ -102,5 +105,9 @@ impl Database {
   
     pub fn events<'a>(&'a self) -> EventRepo<'a> {
         EventRepo::new(&self.db)
+    }
+
+    pub fn media<'a>(&'a self) -> MediaRepo<'a> {
+        MediaRepo::new(&self.db)
     }
 }
