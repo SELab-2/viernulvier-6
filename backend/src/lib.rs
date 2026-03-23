@@ -1,16 +1,16 @@
+use crate::extractors::auth::{AdminUser, EditorUser};
 use api::ApiImporter;
 use axum::http::{HeaderValue, Method};
-use axum::{Router, routing::get};
 use axum::middleware::from_extractor_with_state;
+use axum::{Router, routing::get};
 use database::Database;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info};
-use crate::extractors::auth::{EditorUser, AdminUser};
 
 use utoipa::{
     Modify, OpenApi,
-    openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
     openapi::Server,
+    openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
 };
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
@@ -148,8 +148,7 @@ pub fn router(state: AppState) -> Router<AppState> {
     let docs_path = format!("{}/docs", base_path);
     let openapi_json_path = format!("{}/openapi.json", base_path);
 
-    let swagger_ui = SwaggerUi::new(docs_path)
-        .url(openapi_json_path, api_spec);
+    let swagger_ui = SwaggerUi::new(docs_path).url(openapi_json_path, api_spec);
 
     Router::new()
         .nest(&base_path, api_router)
@@ -178,6 +177,8 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // space
         .routes(routes!(space::get_all))
         .routes(routes!(space::get_one))
+        // taxonomies
+        .routes(routes!(taxonomy::get_facets))
 }
 
 // Only editors can edit data
@@ -201,10 +202,8 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(space::post))
         .routes(routes!(space::delete))
         .routes(routes!(space::put))
-
         // taxonomies
         .routes(routes!(taxonomy::get_facets))
-
         .layer(from_extractor_with_state::<EditorUser, AppState>(state))
 }
 
