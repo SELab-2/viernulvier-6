@@ -1,3 +1,3 @@
 set -e
-cd frontend && npm run typecheck && npm run lint:ci
+cd frontend && npm run generate:api-types && npm run typecheck && npm run lint:ci
 cd ../docs && npm run typecheck && npm run lint:ci

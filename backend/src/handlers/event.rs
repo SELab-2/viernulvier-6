@@ -47,6 +47,9 @@ pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<EventPa
     description = "Create an event",
     responses(
         (status = 201, description = "Created", body = EventPayload)
+    ),
+    security(
+        ("cookie_auth" = [])
     )
 )]
 pub async fn post(
@@ -68,6 +71,9 @@ pub async fn post(
     responses(
         (status = 204, description = "No Content"),
         (status = 404, description = "Not found")
+    ),
+    security(
+        ("cookie_auth" = [])
     )
 )]
 pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
@@ -84,6 +90,9 @@ pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
     responses(
         (status = 200, description = "Success", body = EventPayload),
         (status = 404, description = "Not found")
+    ),
+    security(
+        ("cookie_auth" = [])
     )
 )]
 pub async fn put(db: Database, Json(event): Json<EventPayload>) -> JsonResponse<EventPayload> {
