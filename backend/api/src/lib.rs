@@ -495,6 +495,7 @@ impl ApiImporter {
         };
 
         if let Ok(media) = self.db.media().insert(media_create).await {
+            let is_cover = item.position == 0;
             let _ = self
                 .db
                 .media()
@@ -502,8 +503,9 @@ impl ApiImporter {
                     EntityType::Production,
                     production_id,
                     media.id,
+                    gallery_type,
                     item.position as i32,
-                    false,
+                    is_cover,
                 )
                 .await;
 

@@ -10,6 +10,7 @@ pub struct EntityMedia {
     pub entity_type: EntityType,
     pub entity_id: Uuid,
     pub media_id: Uuid,
+    pub role: String,
     pub sort_order: i32,
     pub is_cover_image: bool,
     pub created_at: DateTime<Utc>,

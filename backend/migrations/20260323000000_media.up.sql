@@ -54,6 +54,7 @@ CREATE TABLE entity_media (
     entity_type entity_type NOT NULL,
     entity_id UUID NOT NULL,
     media_id UUID NOT NULL REFERENCES media(id) ON DELETE CASCADE,
+    role VARCHAR NOT NULL DEFAULT 'gallery',
     sort_order INTEGER NOT NULL DEFAULT 0,
     is_cover_image BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -63,6 +64,7 @@ CREATE TABLE entity_media (
 
 CREATE INDEX idx_entity_media_entity ON entity_media(entity_type, entity_id);
 CREATE INDEX idx_entity_media_media ON entity_media(media_id);
+CREATE INDEX idx_entity_media_role ON entity_media(entity_type, entity_id, role, sort_order);
 CREATE INDEX idx_media_parent ON media(parent_id) WHERE parent_id IS NOT NULL;
 CREATE UNIQUE INDEX idx_media_s3_key_unique ON media(s3_key);
 CREATE UNIQUE INDEX idx_media_source_uri_unique ON media(source_system, source_uri)

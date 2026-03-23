@@ -229,7 +229,7 @@ pub async fn delete(
     params(
         ("entity_type" = String, Path, description = "Entity type (production, event, blogpost, media, artist)"),
         ("entity_id" = Uuid, Path, description = "Entity UUID"),
-        ("gallery_type" = Option<String>, Query, description = "Optional media gallery type filter (e.g. media, poster, review)"),
+        ("role" = Option<String>, Query, description = "Optional media role filter (e.g. gallery, poster, review, cover)"),
         ("cover_only" = Option<bool>, Query, description = "If true, only return cover media"),
         ("include_crops" = Option<bool>, Query, description = "If true, include imported crop variants")
     ),
@@ -246,12 +246,7 @@ pub async fn get_entity_media(
     let et = parse_entity_type(&entity_type)?;
     let media = db
         .media()
-        .for_entity_filtered(
-            et,
-            entity_id,
-            params.gallery_type.as_deref(),
-            params.cover_only.unwrap_or(false),
-        )
+        .for_entity_filtered(et, entity_id, params.role.as_deref(), params.cover_only.unwrap_or(false))
         .await?;
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
     let include_crops = params.include_crops.unwrap_or(false);
@@ -274,7 +269,7 @@ pub async fn get_entity_media(
 
 #[derive(Debug, serde::Deserialize)]
 pub struct GetEntityMediaQuery {
-    pub gallery_type: Option<String>,
+    pub role: Option<String>,
     pub cover_only: Option<bool>,
     pub include_crops: Option<bool>,
 }
@@ -306,6 +301,7 @@ pub async fn link_to_entity(
             et,
             entity_id,
             req.media_id,
+            req.role.as_deref().unwrap_or("gallery"),
             req.sort_order.unwrap_or(0),
             req.is_cover_image.unwrap_or(false),
         )

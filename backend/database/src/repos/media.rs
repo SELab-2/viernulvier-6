@@ -96,20 +96,22 @@ impl<'a> MediaRepo<'a> {
         entity_type: EntityType,
         entity_id: Uuid,
         media_id: Uuid,
+        role: &str,
         sort_order: i32,
         is_cover_image: bool,
     ) -> Result<(), DatabaseError> {
         sqlx::query(
             r#"
-            INSERT INTO entity_media (entity_type, entity_id, media_id, sort_order, is_cover_image)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO entity_media (entity_type, entity_id, media_id, role, sort_order, is_cover_image)
+            VALUES ($1, $2, $3, $4, $5, $6)
             ON CONFLICT (entity_type, entity_id, media_id)
-            DO UPDATE SET sort_order = $4, is_cover_image = $5
+            DO UPDATE SET role = $4, sort_order = $5, is_cover_image = $6
             "#,
         )
         .bind(entity_type as EntityType)
         .bind(entity_id)
         .bind(media_id)
+        .bind(role)
         .bind(sort_order)
         .bind(is_cover_image)
         .execute(self.db)
@@ -174,7 +176,7 @@ impl<'a> MediaRepo<'a> {
         &self,
         entity_type: EntityType,
         entity_id: Uuid,
-        gallery_type: Option<&str>,
+        role: Option<&str>,
         cover_only: bool,
     ) -> Result<Vec<Media>, DatabaseError> {
         let mut query = String::from(
@@ -193,8 +195,8 @@ impl<'a> MediaRepo<'a> {
             "#,
         );
 
-        if gallery_type.is_some() {
-            query.push_str(" AND m.gallery_type = $3");
+        if role.is_some() {
+            query.push_str(" AND em.role = $3");
         }
 
         if cover_only {
@@ -207,8 +209,8 @@ impl<'a> MediaRepo<'a> {
             .bind(entity_type as EntityType)
             .bind(entity_id);
 
-        if let Some(gt) = gallery_type {
-            q = q.bind(gt);
+        if let Some(role) = role {
+            q = q.bind(role);
         }
 
         Ok(q.fetch_all(self.db).await?)

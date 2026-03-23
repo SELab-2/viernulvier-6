@@ -216,6 +216,7 @@ pub struct SaveMediaRequest {
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct LinkMediaRequest {
     pub media_id: Uuid,
+    pub role: Option<String>,
     pub sort_order: Option<i32>,
     pub is_cover_image: Option<bool>,
 }
