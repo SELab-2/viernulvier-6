@@ -1,0 +1,56 @@
+name: Backend Tests
+
+# This workflow runs on PRs and is required by branch protection rules.
+# To configure: GitHub Settings > Branches > main > Require status checks to pass
+# Search for "Backend Tests" and enable it.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-tests.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# DATABASE_URL is set in container env, points to 'postgres' service
+
+jobs:
+  test:
+    runs-on: self-hosted
+    container:
+      image: rust:1.88-bookworm
+      env:
+        DATABASE_URL: postgres://test:test@postgres:5432/test
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: apt-get update && apt-get install -y pkg-config libssl-dev postgresql-client
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend
+
+      - name: Run tests
+        run: |
+          cd backend
+          cargo test --workspace
