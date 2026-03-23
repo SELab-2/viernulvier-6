@@ -3,6 +3,8 @@ use axum::http::{HeaderValue, Method};
 use axum::{Router, routing::get};
 use axum::middleware::from_extractor_with_state;
 use database::Database;
+use database::models::entity_type::EntityType;
+use database::models::facet::Facet;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info};
 use crate::extractors::auth::{EditorUser, AdminUser};
@@ -35,6 +37,7 @@ pub struct AppState {
 #[derive(OpenApi)]
 #[openapi(
     modifiers(&SecurityAddon),
+    components(schemas(EntityType, Facet)),
     tags(
         (name = "viernulvier_api", description = "API Endpoints")
     )

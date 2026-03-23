@@ -291,6 +291,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/taxonomy/facets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get all facets with their tags */
+        get: operations["get_facets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/version": {
         parameters: {
             query?: never;
@@ -326,6 +343,8 @@ export interface components {
             id: string;
             role: components["schemas"]["UserRole"];
         };
+        /** @enum {string} */
+        EntityType: "production" | "artist" | "article" | "media";
         ErrorResponse: {
             /** @example An error occurred during processing */
             message: string;
@@ -384,6 +403,13 @@ export interface components {
             /** Format: date-time */
             updated_at: string;
             vendor_id?: string | null;
+        };
+        /** @enum {string} */
+        Facet: "discipline" | "format" | "theme" | "audience";
+        FacetResponse: {
+            label: string;
+            slug: string;
+            tags: components["schemas"]["TagResponse"][];
         };
         HallPayload: {
             box_office_id?: string | null;
@@ -546,6 +572,12 @@ export interface components {
             name_nl: string;
             /** Format: int32 */
             source_id?: number | null;
+        };
+        TagResponse: {
+            label: string;
+            slug: string;
+            /** Format: int32 */
+            sort_order: number;
         };
         /** @enum {string} */
         UserRole: "admin" | "editor" | "user";
@@ -1520,6 +1552,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    get_facets: {
+        parameters: {
+            query?: {
+                /** @description Filter facets by entity type */
+                entity_type?: null | components["schemas"]["EntityType"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacetResponse"][];
+                };
             };
         };
     };

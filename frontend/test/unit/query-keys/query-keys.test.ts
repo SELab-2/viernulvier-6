@@ -24,4 +24,13 @@ describe("queryKeys", () => {
     it("builds production events keys", () => {
         expect(queryKeys.productions.events("prod-1")).toEqual(["productions", "prod-1", "events"]);
     });
+
+    it("builds taxonomy facet keys", () => {
+        expect(queryKeys.taxonomy.facets()).toEqual(["taxonomy", "facets"]);
+        expect(queryKeys.taxonomy.facets("production")).toEqual([
+            "taxonomy",
+            "facets",
+            "production",
+        ]);
+    });
 });

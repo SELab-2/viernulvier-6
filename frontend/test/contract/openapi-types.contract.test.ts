@@ -14,6 +14,7 @@ import {
     ProductionUpdateRequest,
 } from "@/types/api/production.api.types";
 import { SpaceCreateRequest, SpaceResponse, SpaceUpdateRequest } from "@/types/api/space.api.types";
+import { FacetResponse, TagResponse, EntityType, Facet } from "@/types/api/taxonomy.api.types";
 
 describe("OpenAPI type contract", () => {
     it("keeps resource aliases tied to generated schemas", () => {
@@ -50,6 +51,11 @@ describe("OpenAPI type contract", () => {
             components["schemas"]["SpacePostPayload"]
         >();
         expectTypeOf<SpaceUpdateRequest>().toEqualTypeOf<components["schemas"]["SpacePayload"]>();
+
+        expectTypeOf<FacetResponse>().toEqualTypeOf<components["schemas"]["FacetResponse"]>();
+        expectTypeOf<TagResponse>().toEqualTypeOf<components["schemas"]["TagResponse"]>();
+        expectTypeOf<EntityType>().toEqualTypeOf<components["schemas"]["EntityType"]>();
+        expectTypeOf<Facet>().toEqualTypeOf<components["schemas"]["Facet"]>();
     });
 
     it("keeps key operation schemas available", () => {
@@ -65,5 +71,8 @@ describe("OpenAPI type contract", () => {
         expectTypeOf<
             operations["create_event"]["requestBody"]["content"]["application/json"]
         >().toEqualTypeOf<components["schemas"]["EventPostPayload"]>();
+        expectTypeOf<
+            operations["get_facets"]["responses"][200]["content"]["application/json"]
+        >().toEqualTypeOf<components["schemas"]["FacetResponse"][]>();
     });
 });

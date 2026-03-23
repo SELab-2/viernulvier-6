@@ -4,6 +4,7 @@ import { hallHandlers } from "./halls.handlers";
 import { locationHandlers } from "./locations.handlers";
 import { productionHandlers } from "./productions.handlers";
 import { spaceHandlers } from "./spaces.handlers";
+import { taxonomyHandlers } from "./taxonomy.handlers";
 
 export const handlers = [
     ...authHandlers,
@@ -12,4 +13,5 @@ export const handlers = [
     ...productionHandlers,
     ...hallHandlers,
     ...spaceHandlers,
+    ...taxonomyHandlers,
 ];

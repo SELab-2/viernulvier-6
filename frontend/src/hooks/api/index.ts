@@ -5,4 +5,5 @@ export * from "./useHalls";
 export * from "./useLocations";
 export * from "./useProductions";
 export * from "./useSpaces";
+export * from "./useTaxonomy";
 export * from "./useVersion";
