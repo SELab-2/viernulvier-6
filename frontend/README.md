@@ -80,6 +80,36 @@ The codebase strictly follows the Next.js App Router paradigm, housed entirely w
 
 ---
 
+## API Layer Convention
+
+Server-state code follows a strict separation to keep UI components decoupled from backend contracts:
+
+- **`src/types/api/generated.ts`**: Auto-generated OpenAPI types from the local backend (`openapi-typescript`).
+- **`src/types/api/`**: Aliases around generated schema types (no manual schema duplication).
+- **`src/mappers/`**: Pure mapper functions that translate API DTOs to frontend domain models and map mutation inputs to API payloads.
+- **`src/types/models/`**: Frontend domain models consumed by components and feature logic.
+- **`src/hooks/api/`**: TanStack Query hooks (`useQuery`/`useMutation`) that call the API client, apply mappers, and expose only domain models.
+
+Use `@/hooks/api` barrel imports when consuming query hooks and query keys.
+
+### OpenAPI Type Generation
+
+- Generate latest API types with:
+
+```bash
+npm run generate:api-types
+```
+
+- Types are generated from `NEXT_PUBLIC_API_URL/openapi.json` (defaults to `http://localhost:3001/api/openapi.json`).
+- The pre-push hook automatically regenerates types before typecheck/lint to catch backend/frontend contract drift.
+
+### Testing Note (MSW)
+
+- For upcoming tests, prefer MSW handlers that are typed against generated OpenAPI response/request aliases from `src/types/api/`.
+- Keep tests asserting domain model behavior by mocking DTOs and validating mapper output.
+
+---
+
 ## 🧩 Key Architecture Decisions
 
 - **React Compiler:** This project leverages the `babel-plugin-react-compiler`, reducing the need for manual `useMemo` and `useCallback` hooks.

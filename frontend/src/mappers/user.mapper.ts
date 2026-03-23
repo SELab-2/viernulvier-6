@@ -1,16 +1,22 @@
 import { UserResponse } from "@/types/api/auth.api.types";
 import { User, UserRole } from "@/types/models/user.types";
 
-export const mapUser = (response: UserResponse): User => {
-    const roleString = response.role?.toLowerCase();
+const normalizeRole = (role: UserResponse["role"]): UserRole => {
+    const roleString = role?.toString().toLowerCase();
 
-    const role = Object.values(UserRole).includes(roleString as UserRole)
+    if (!roleString) {
+        return UserRole.USER;
+    }
+
+    return Object.values(UserRole).includes(roleString as UserRole)
         ? (roleString as UserRole)
         : UserRole.USER;
+};
 
+export const mapUser = (response: UserResponse): User => {
     return {
         id: response.id,
         email: response.email,
-        role: role,
+        role: normalizeRole(response.role),
     };
 };
