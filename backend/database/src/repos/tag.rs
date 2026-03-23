@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::{
     error::DatabaseError,
-    models::{entity_type::EntityType, tag::{EntityTag, TagWithFacet}},
+    models::{entity_type::EntityType, tag::{EntityTag, TaxonomyTag}},
 };
 
 pub struct TagRepo<'a> {
@@ -46,9 +46,9 @@ impl<'a> TagRepo<'a> {
         .await?)
     }
 
-    pub async fn with_facets(&self) -> Result<Vec<TagWithFacet>, DatabaseError> {
+    pub async fn with_facets(&self) -> Result<Vec<TaxonomyTag>, DatabaseError> {
         Ok(sqlx::query_as!(
-            TagWithFacet,
+            TaxonomyTag,
             r#"
             SELECT
                 t.facet::text        AS "facet_slug!",
@@ -67,9 +67,9 @@ impl<'a> TagRepo<'a> {
     pub async fn with_facets_for_entity(
         &self,
         entity_type: EntityType,
-    ) -> Result<Vec<TagWithFacet>, DatabaseError> {
+    ) -> Result<Vec<TaxonomyTag>, DatabaseError> {
         Ok(sqlx::query_as!(
-            TagWithFacet,
+            TaxonomyTag,
             r#"
             SELECT
                 t.facet::text        AS "facet_slug!",

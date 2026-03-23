@@ -1,4 +1,4 @@
-use database::{Database, models::{entity_type::EntityType, tag::TagWithFacet}};
+use database::{Database, models::{entity_type::EntityType, tag::TaxonomyTag}};
 use serde::Serialize;
 use utoipa::ToSchema;
 
@@ -28,7 +28,7 @@ impl FacetResponse {
     }
 }
 
-fn group_into_facets(rows: Vec<TagWithFacet>) -> Vec<FacetResponse> {
+fn group_into_facets(rows: Vec<TaxonomyTag>) -> Vec<FacetResponse> {
     let mut facets: Vec<FacetResponse> = Vec::new();
 
     for row in rows {

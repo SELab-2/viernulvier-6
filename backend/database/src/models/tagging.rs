@@ -3,6 +3,7 @@ use uuid::Uuid;
 
 use crate::models::entity_type::EntityType;
 
+/// Raw join between a tag and an entity, mapped to the `taggings` table. Use `EntityTag` for reads with resolved labels.
 #[derive(Debug, Model)]
 #[ormlite(insert = "TaggingCreate")]
 #[ormlite(table = "taggings")]
