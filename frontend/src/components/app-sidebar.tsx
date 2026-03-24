@@ -36,12 +36,14 @@ const ENTITY_TYPE_MAP: Record<string, EntityType | null> = {
 
 interface FacetFiltersProps {
     facets: Facet[];
-    activeTags: Set<string>;
-    onToggle: (slug: string) => void;
+    activeFacets: Record<string, Set<string>>;
+    onToggle: (facetSlug: string, tagSlug: string) => void;
     onClear: () => void;
 }
 
-function FacetFilters({ facets, activeTags, onToggle, onClear }: FacetFiltersProps) {
+function FacetFilters({ facets, activeFacets, onToggle, onClear }: FacetFiltersProps) {
+    const hasActiveFilters = Object.values(activeFacets).some((s) => s.size > 0);
+
     return (
         <SidebarGroup>
             <SidebarGroupLabel>Filters</SidebarGroupLabel>
@@ -60,8 +62,8 @@ function FacetFilters({ facets, activeTags, onToggle, onClear }: FacetFiltersPro
                             <li key={tag.slug} className="flex items-center gap-2 px-2 py-0.5">
                                 <Checkbox
                                     id={`tag-${tag.slug}`}
-                                    checked={activeTags.has(tag.slug)}
-                                    onCheckedChange={() => onToggle(tag.slug)}
+                                    checked={activeFacets[facet.slug]?.has(tag.slug) ?? false}
+                                    onCheckedChange={() => onToggle(facet.slug, tag.slug)}
                                 />
                                 <Label
                                     htmlFor={`tag-${tag.slug}`}
@@ -75,7 +77,7 @@ function FacetFilters({ facets, activeTags, onToggle, onClear }: FacetFiltersPro
                 </div>
             ))}
 
-            {activeTags.size > 0 && (
+            {hasActiveFilters && (
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton onClick={onClear} className="text-muted-foreground">
@@ -96,36 +98,44 @@ export function AppSidebar() {
     const entityType = ENTITY_TYPE_MAP[pathname] ?? null;
     const { data: facets, isLoading } = useGetFacets({ entityType: entityType ?? undefined });
 
-    const activeTags = useMemo(() => {
-        const raw = searchParams.get("tags");
-        return new Set(raw ? raw.split(",").filter(Boolean) : []);
-    }, [searchParams]);
+    const activeFacets = useMemo(() => {
+        const result: Record<string, Set<string>> = {};
+        for (const facet of facets ?? []) {
+            const raw = searchParams.get(facet.slug);
+            if (raw) result[facet.slug] = new Set(raw.split(",").filter(Boolean));
+        }
+        return result;
+    }, [searchParams, facets]);
 
     const toggleTag = useCallback(
-        (slug: string) => {
-            const next = new Set(activeTags);
-            if (next.has(slug)) {
-                next.delete(slug);
+        (facetSlug: string, tagSlug: string) => {
+            // window.location instead of searchParams: router.replace updates the URL synchronously
+            // but React re-renders on the next tick, so rapid toggles would overwrite each other.
+            const params = new URLSearchParams(window.location.search);
+            const raw = params.get(facetSlug);
+            const next = new Set(raw ? raw.split(",").filter(Boolean) : []);
+            if (next.has(tagSlug)) {
+                next.delete(tagSlug);
             } else {
-                next.add(slug);
+                next.add(tagSlug);
             }
-            const params = new URLSearchParams(searchParams.toString());
             if (next.size > 0) {
-                params.set("tags", [...next].join(","));
+                params.set(facetSlug, [...next].join(","));
             } else {
-                params.delete("tags");
+                params.delete(facetSlug);
             }
-            router.replace(`${pathname}?${params.toString()}`);
+            const qs = params.toString();
+            router.replace(qs ? `${pathname}?${qs}` : pathname);
         },
-        [activeTags, searchParams, pathname, router]
+        [pathname, router]
     );
 
     const clearFilters = useCallback(() => {
-        const params = new URLSearchParams(searchParams.toString());
-        params.delete("tags");
+        const params = new URLSearchParams(window.location.search);
+        for (const facet of facets ?? []) params.delete(facet.slug);
         const qs = params.toString();
         router.replace(qs ? `${pathname}?${qs}` : pathname);
-    }, [searchParams, pathname, router]);
+    }, [facets, pathname, router]);
 
     return (
         <Sidebar>
@@ -162,7 +172,7 @@ export function AppSidebar() {
                         {facets && (
                             <FacetFilters
                                 facets={facets}
-                                activeTags={activeTags}
+                                activeFacets={activeFacets}
                                 onToggle={toggleTag}
                                 onClear={clearFilters}
                             />
