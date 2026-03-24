@@ -5,18 +5,52 @@ import { apiUrl } from "../../utils/env";
 const facets = [
     {
         slug: "discipline",
-        label: "Discipline",
+        translations: {
+            nl: { label: "Discipline" },
+            en: { label: "Discipline" },
+        },
         tags: [
-            { slug: "theater", label: "Theater", sort_order: 1 },
-            { slug: "music", label: "Music", sort_order: 2 },
+            {
+                slug: "theatre",
+                sort_order: 1,
+                translations: {
+                    nl: { label: "Theater", description: null },
+                    en: { label: "Theatre", description: null },
+                },
+            },
+            {
+                slug: "music",
+                sort_order: 2,
+                translations: {
+                    nl: { label: "Muziek", description: null },
+                    en: { label: "Music", description: null },
+                },
+            },
         ],
     },
     {
         slug: "format",
-        label: "Format",
+        translations: {
+            nl: { label: "Formaat" },
+            en: { label: "Format" },
+        },
         tags: [
-            { slug: "concert", label: "Concert", sort_order: 1 },
-            { slug: "exhibition", label: "Exhibition", sort_order: 2 },
+            {
+                slug: "world-premiere",
+                sort_order: 1,
+                translations: {
+                    nl: { label: "Wereldpremière", description: null },
+                    en: { label: "World premiere", description: null },
+                },
+            },
+            {
+                slug: "festival",
+                sort_order: 2,
+                translations: {
+                    nl: { label: "Festival", description: null },
+                    en: { label: "Festival", description: null },
+                },
+            },
         ],
     },
 ];

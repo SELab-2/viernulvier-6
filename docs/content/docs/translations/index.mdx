@@ -1,0 +1,280 @@
+---
+title: Translations
+description: How translatable content is stored in the database, served through the API, and consumed in the frontend.
+---
+
+# Translations
+
+Content in this archive is available in two languages: Dutch (`nl`) and English (`en`). This page describes how translated content is stored, how the API exposes it, and how the frontend consumes it.
+
+The same pattern is used across all translatable entities: a shared `languages` table holds the supported language codes, and a dedicated translations table holds the content per entity per language. The API always returns all languages in one response, so the frontend never needs to refetch when the user switches locale.
+
+---
+
+## Database
+
+### Languages table
+
+A single `languages` table is the source of truth for supported language codes. All translation tables reference it via a foreign key.
+
+```sql
+CREATE TABLE languages (
+    code TEXT PRIMARY KEY  -- 'nl', 'en', ...
+);
+```
+
+Adding a new language is one `INSERT INTO languages` row. No schema changes are needed anywhere else.
+
+### Productions
+
+The `productions` table previously stored translations as flat columns with language suffixes (`title_nl`, `title_en`, and 28 more). These have been replaced by `production_translations`.
+
+```sql
+CREATE TABLE production_translations (
+    id               UUID PRIMARY KEY DEFAULT uuidv7(),
+    production_id    UUID NOT NULL REFERENCES productions(id) ON DELETE CASCADE,
+    language_code    TEXT NOT NULL REFERENCES languages(code),
+    supertitle       TEXT,
+    title            TEXT,
+    artist           TEXT,
+    meta_title       TEXT,
+    meta_description TEXT,
+    tagline          TEXT,
+    teaser           TEXT,
+    description      TEXT,
+    description_extra TEXT,
+    description_2    TEXT,
+    quote            TEXT,
+    quote_source     TEXT,
+    programme        TEXT,
+    info             TEXT,
+    description_short TEXT,
+    UNIQUE (production_id, language_code)
+);
+```
+
+A row only exists when at least one field for that language has a value. A production with no Dutch content has no `nl` row.
+
+The following fields stay directly on `productions` because they do not vary by language: `slug`, `video_1`, `video_2`, `eticket_info`, `uitdatabank_theme`, `uitdatabank_type`, and the scheduling/metadata fields.
+
+### Tags
+
+Tags previously had a single `label` and `description` column (English only). These have been removed and replaced by `tag_translations`.
+
+```sql
+CREATE TABLE tag_translations (
+    tag_id        UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+    language_code TEXT NOT NULL REFERENCES languages(code),
+    label         TEXT NOT NULL,
+    description   TEXT,
+    PRIMARY KEY (tag_id, language_code)
+);
+```
+
+The `slug` and `sort_order` columns remain on `tags` because they are language-neutral. The slug is used for filtering and routing; only `label` and `description` need translation.
+
+### Facets
+
+Facets are a Postgres enum (`discipline`, `format`, `theme`, `audience`). Their display labels previously came from a hardcoded SQL function `facet_label()`. That function has been dropped and replaced by `facet_labels`.
+
+```sql
+CREATE TABLE facet_labels (
+    facet         facet NOT NULL,
+    language_code TEXT  NOT NULL REFERENCES languages(code),
+    label         TEXT  NOT NULL,
+    PRIMARY KEY (facet, language_code)
+);
+```
+
+The seeded values are:
+
+| Facet      | nl         | en         |
+| ---------- | ---------- | ---------- |
+| discipline | Discipline | Discipline |
+| format     | Formaat    | Format     |
+| theme      | Thema      | Theme      |
+| audience   | Publiek    | Audience   |
+
+---
+
+## Backend
+
+### Productions
+
+The `Production` struct contains only the non-translatable fields. Translated content lives in `ProductionTranslation`, and the two are combined in `ProductionWithTranslations` which all repository read methods return.
+
+```rust
+pub struct Production {
+    pub id: Uuid,
+    pub slug: String,
+    pub video_1: Option<String>,
+    // ...
+}
+
+pub struct ProductionTranslation {
+    pub production_id: Uuid,
+    pub language_code: String,
+    pub title: Option<String>,
+    pub description: Option<String>,
+    // ... all 15 translatable fields
+}
+
+pub struct ProductionWithTranslations {
+    pub production: Production,
+    pub translations: Vec<ProductionTranslation>,
+}
+```
+
+Reading a list fetches all production rows first, then fetches all matching translations in one batched query (`WHERE production_id = ANY($1)`) and groups them in Rust. Reading a single production uses two sequential queries.
+
+Writing translations uses `ON CONFLICT (production_id, language_code) DO UPDATE SET ...` so that re-running the importer updates existing content rather than failing.
+
+The `ProductionPayload` DTO exposes translations as a map keyed by language code:
+
+```json
+{
+  "id": "...",
+  "slug": "some-production",
+  "translations": {
+    "nl": { "title": "Een voorstelling", "description": "..." },
+    "en": { "title": "A production", "description": null }
+  }
+}
+```
+
+### Tags and facets
+
+The `Tag` struct no longer contains `label` or `description`. The tag repository reads translations via a JOIN across `tags`, `tag_translations`, and `facet_labels`. Because one row is returned per tag per language, the result is a flat list that the DTO groups into the nested response structure.
+
+```rust
+// one row from the JOIN query — one record per (tag × language)
+pub struct TaxonomyRow {
+    pub facet_slug: String,
+    pub tag_slug: String,
+    pub tag_sort_order: i32,
+    pub language_code: String,
+    pub tag_label: String,
+    pub tag_description: Option<String>,
+    pub facet_label: String,
+}
+```
+
+The `GET /taxonomy/facets` response groups these rows into facets, each with a `translations` map:
+
+```json
+[
+  {
+    "slug": "discipline",
+    "translations": {
+      "nl": { "label": "Discipline" },
+      "en": { "label": "Discipline" }
+    },
+    "tags": [
+      {
+        "slug": "theatre",
+        "sort_order": 1,
+        "translations": {
+          "nl": { "label": "Theater", "description": null },
+          "en": { "label": "Theatre", "description": null }
+        }
+      }
+    ]
+  }
+]
+```
+
+---
+
+## Frontend
+
+### Domain types
+
+Productions (`frontend/src/types/models/production.types.ts`):
+
+```typescript
+type ProductionTranslation = {
+  title: string | null;
+  description: string | null;
+  // ... all 15 fields without language suffix
+};
+
+type Production = {
+  id: string;
+  slug: string;
+  translations: Record<string, ProductionTranslation>;
+  // ... non-translatable fields
+};
+```
+
+Tags and facets (`frontend/src/types/models/taxonomy.types.ts`):
+
+```typescript
+type TagTranslation = { label: string; description: string | null };
+type FacetTranslation = { label: string };
+
+type Tag = {
+  slug: string;
+  sortOrder: number;
+  translations: Record<string, TagTranslation>;
+};
+
+type Facet = {
+  slug: FacetSlug;
+  translations: Record<string, FacetTranslation>;
+  tags: Tag[];
+};
+```
+
+### Reading a translation in a component
+
+Use `useLocale()` from `next-intl` to get the active locale, then index into `translations`:
+
+```tsx
+import { useLocale } from 'next-intl';
+
+export function ProductionTitle({ production }: { production: Production }) {
+  const locale = useLocale();
+  const t = production.translations[locale];
+  return <h1>{t?.title}</h1>;
+}
+
+export function FacetLabel({ facet }: { facet: Facet }) {
+  const locale = useLocale();
+  return <span>{facet.translations[locale]?.label}</span>;
+}
+```
+
+Because the API returns all languages at once, switching locale does not trigger a new API request. TanStack Query does not need the locale in the query key.
+
+### Mappers
+
+Both `production.mapper.ts` and `taxonomy.mapper.ts` convert the snake_case API response into camelCase domain types by iterating `Object.entries(response.translations)` and mapping each language entry.
+
+No changes to the TanStack Query hooks were needed in either case. Query keys, cache invalidation, and mutation logic are all unaffected.
+
+---
+
+## Regenerating OpenAPI types
+
+When the backend DTO changes, the generated TypeScript types in `frontend/src/types/api/generated.ts` must be refreshed.
+
+The backend must be running locally with the migrations applied. Run this from the `frontend/` directory:
+
+```bash
+npm run generate:api-types
+```
+
+This fetches the OpenAPI schema from `http://localhost:3001/api/openapi.json` and writes the updated types to `frontend/src/types/api/generated.ts`. Commit the updated file alongside the backend changes.
+
+---
+
+## Adding a new language
+
+1. Insert a row into the `languages` table:
+   ```sql
+   INSERT INTO languages (code) VALUES ('fr');
+   ```
+2. Add rows to `production_translations` and `tag_translations` for the new language code.
+3. Add a row to `facet_labels` for each of the four facets.
+4. The API responses will automatically include the new language in the `translations` maps.
+5. No changes to the frontend types, mappers, or hooks are needed.
