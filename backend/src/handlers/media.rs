@@ -1,9 +1,9 @@
+use aws_sdk_s3::presigning::PresigningConfig;
 use axum::{
     Json,
     extract::{Path, Query, State},
     http::StatusCode,
 };
-use aws_sdk_s3::presigning::PresigningConfig;
 use chrono::Utc;
 use database::{Database, models::entity_type::EntityType};
 use std::collections::HashSet;
@@ -14,8 +14,8 @@ use crate::{
     AppState,
     config::S3Config,
     dto::media::{
-        MediaPayload, MediaVariantPayload, UploadUrlRequest,
-        UploadUrlResponse, AttachMediaRequest, ReconcileResponse,
+        AttachMediaRequest, MediaPayload, MediaVariantPayload, ReconcileResponse, UploadUrlRequest,
+        UploadUrlResponse,
     },
     error::AppError,
     handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
@@ -38,7 +38,10 @@ pub async fn get_all(
 ) -> JsonResponse<Vec<MediaPayload>> {
     let limit = params.limit.unwrap_or(50).clamp(1, 200);
     let offset = params.offset.unwrap_or(0);
-    let media = db.media().paginated(limit as usize, offset as usize).await?;
+    let media = db
+        .media()
+        .paginated(limit as usize, offset as usize)
+        .await?;
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
     let payloads: Vec<MediaPayload> = media
         .into_iter()
@@ -142,7 +145,10 @@ pub async fn put(
     Json(payload): Json<MediaPayload>,
 ) -> JsonResponse<MediaPayload> {
     let existing = db.media().by_id(payload.id).await?;
-    let media = db.media().update(payload.merge_into_existing(existing)).await?;
+    let media = db
+        .media()
+        .update(payload.merge_into_existing(existing))
+        .await?;
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
     Ok(Json(MediaPayload::from_model(media, public_url)))
 }
@@ -229,7 +235,11 @@ pub async fn get_entity_media(
             explicit_cover.into_iter().take(1).collect::<Vec<_>>()
         }
     } else {
-        media.into_iter().skip(offset).take(limit).collect::<Vec<_>>()
+        media
+            .into_iter()
+            .skip(offset)
+            .take(limit)
+            .collect::<Vec<_>>()
     };
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
     let include_crops = params.include_crops.unwrap_or(false);
@@ -238,7 +248,10 @@ pub async fn get_entity_media(
     for m in media {
         let mut payload = MediaPayload::from_model(m, public_url);
         if include_crops {
-            let variants = db.media_variants().for_media_kind(payload.id, "crop").await?;
+            let variants = db
+                .media_variants()
+                .for_media_kind(payload.id, "crop")
+                .await?;
             payload.crops = variants
                 .into_iter()
                 .map(|v| MediaVariantPayload::from_model(v, public_url))
@@ -345,7 +358,9 @@ pub async fn unlink_from_entity(
     Path((entity_type, entity_id, media_id)): Path<(String, Uuid, Uuid)>,
 ) -> StatusResponse {
     let et = parse_entity_type(&entity_type)?;
-    db.media().unlink_from_entity(et, entity_id, media_id).await?;
+    db.media()
+        .unlink_from_entity(et, entity_id, media_id)
+        .await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -488,9 +503,7 @@ fn parse_entity_type(s: &str) -> Result<EntityType, AppError> {
         "blogpost" => Ok(EntityType::Article),
         "media" => Ok(EntityType::Media),
         "event" => Ok(EntityType::Event),
-        _ => Err(AppError::PayloadError(format!(
-            "invalid entity type: {s}"
-        ))),
+        _ => Err(AppError::PayloadError(format!("invalid entity type: {s}"))),
     }
 }
 

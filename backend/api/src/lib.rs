@@ -1,7 +1,10 @@
 use std::pin::pin;
 
 use chrono::Utc;
-use database::{Database, models::{entity_type::EntityType, internal_state::InternalStateKey, media::MediaCreate}};
+use database::{
+    Database,
+    models::{entity_type::EntityType, internal_state::InternalStateKey, media::MediaCreate},
+};
 use futures::{Stream, StreamExt, stream};
 use reqwest::Client;
 use serde::de::DeserializeOwned;
@@ -9,13 +12,13 @@ use sha2::{Digest, Sha256};
 use tracing::{info, warn};
 
 use crate::helper::{extract_source_id, flatten_single};
-use uuid::Uuid;
 use crate::models::media::{ApiMediaGallery, ApiMediaItem};
 use crate::models::space::ApiSpace;
 use crate::models::{
     collection::ApiCollection, event::ApiEvent, hall::ApiHall, location::ApiLocation,
     production::ApiProduction,
 };
+use uuid::Uuid;
 
 mod helper;
 pub mod models {
@@ -31,7 +34,7 @@ pub mod models {
 }
 
 const API_BASE_URL: &str = "https://www.viernulvier.gent/api/v1";
-const BASE_URL: &str = "https://www.viernulvier.gent/";
+const BASE_URL: &str = "https://www.viernulvier.gent";
 
 pub struct ApiImporter {
     db: Database,
@@ -456,24 +459,24 @@ impl ApiImporter {
             return Ok(());
         };
 
-        let (s3_key, checksum, file_size) =
-            match self
-                .download_and_upload(
-                    s3_client,
-                    s3_bucket,
-                    url,
-                    production_source_id,
-                    gallery_type,
-                    &item.format,
-                )
-                .await
-            {
-                Ok(result) => result,
-                Err(e) => {
-                    warn!("Media: download/upload failed for {url}: {e}");
-                    return Ok(());
-                }
-            };
+        let (s3_key, checksum, file_size) = match self
+            .download_and_upload(
+                s3_client,
+                s3_bucket,
+                url,
+                production_source_id,
+                gallery_type,
+                &item.format,
+            )
+            .await
+        {
+            Ok(result) => result,
+            Err(e) => {
+                warn!("Media: download/upload failed for {url}: {e}");
+                // return Ok so we continue to process the next items, it just won't be in the DB
+                return Ok(());
+            }
+        };
 
         // store with s3_key
         let media_create = MediaCreate {
@@ -515,49 +518,10 @@ impl ApiImporter {
                 )
                 .await;
 
-            // import crop variants as media_variant records
-            for crop in item.crops {
-                let crop_name = slug::slugify(&crop.name);
-                let crop_key = format!(
-                    "media/production/{production_source_id}/{gallery_type}/crops/{}/{}.{}",
-                    media.id,
-                    crop_name,
-                    item.format.to_lowercase()
-                );
-
-                let (crop_checksum, crop_file_size) = match self
-                    .download_and_upload_to_key(
-                        s3_client,
-                        s3_bucket,
-                        &crop.url,
-                        &crop_key,
-                        &item.format,
-                    )
-                    .await
-                {
-                    Ok(res) => res,
-                    Err(e) => {
-                        warn!("Media crop: failed to import crop {} from {}: {e}", crop.name, crop.url);
-                        continue;
-                    }
-                };
-
-                let _ = self
-                    .db
-                    .media_variants()
-                    .upsert_crop(database::repos::media_variant::CropVariantUpsert {
-                        media_id: media.id,
-                        crop_name,
-                        s3_key: crop_key,
-                        mime_type: Some(mime_type.clone()),
-                        file_size: Some(crop_file_size),
-                        width: None,
-                        height: None,
-                        checksum: Some(crop_checksum),
-                        source_uri: Some(crop.url),
-                    })
-                    .await;
-            }
+            // Note: We skip downloading the pre-calculated crop variants from the image proxy
+            // to avoid extreme rate limits and massive storage duplication.
+            // As an archive, we only store the original high-resolution image in S3,
+            // and we rely on dynamic on-the-fly image resizing in our frontend or own proxy.
         }
 
         Ok(())
@@ -574,9 +538,8 @@ impl ApiImporter {
     ) -> Result<(String, String, i64), String> {
         let ext = format.to_lowercase();
         let file_uuid = Uuid::now_v7();
-        let s3_key = format!(
-            "media/production/{production_source_id}/{gallery_type}/{file_uuid}.{ext}"
-        );
+        let s3_key =
+            format!("media/production/{production_source_id}/{gallery_type}/{file_uuid}.{ext}");
 
         let (checksum, file_size) = self
             .download_and_upload_to_key(s3_client, s3_bucket, cdn_url, &s3_key, format)
@@ -602,30 +565,58 @@ impl ApiImporter {
             .map_err(|e| e.to_string())?
             .error_for_status()
             .map_err(|e| e.to_string())?;
-        let bytes = response.bytes().await.map_err(|e| e.to_string())?;
 
-        // compute SHA256 checksum
+        // Create a temporary file to avoid loading the whole file in memory
+        let temp_dir = std::env::temp_dir();
+        let temp_file_path = temp_dir.join(format!("viernulvier_import_{}", Uuid::now_v7()));
+
+        let mut file = tokio::fs::File::create(&temp_file_path)
+            .await
+            .map_err(|e| format!("failed to create temp file: {e}"))?;
+
         let mut hasher = Sha256::new();
-        hasher.update(&bytes);
+        let mut file_size = 0i64;
+        let mut stream = response.bytes_stream();
+
+        use tokio::io::AsyncWriteExt;
+        while let Some(chunk) = stream.next().await {
+            let chunk = chunk.map_err(|e| format!("error downloading chunk: {e}"))?;
+            file.write_all(&chunk)
+                .await
+                .map_err(|e| format!("error writing chunk to temp file: {e}"))?;
+            hasher.update(&chunk);
+            file_size += chunk.len() as i64;
+        }
+
+        file.flush()
+            .await
+            .map_err(|e| format!("error flushing temp file: {e}"))?;
         let checksum = hex::encode(hasher.finalize());
 
-        // upload to S3
-        s3_client
+        // upload to S3 using ByteStream from the temp file
+        let byte_stream = aws_sdk_s3::primitives::ByteStream::from_path(&temp_file_path)
+            .await
+            .map_err(|e| format!("failed to create ByteStream from temp file: {e}"))?;
+
+        let upload_result = s3_client
             .put_object()
             .bucket(s3_bucket)
             .key(s3_key)
-            .body(bytes.to_vec().into())
+            .body(byte_stream)
             .content_type(format_to_mime(format))
             .send()
-            .await
-            .map_err(|e| {
+            .await;
+
+        // Clean up the temporary file
+        let _ = tokio::fs::remove_file(&temp_file_path).await;
+
+        match upload_result {
+            Ok(_) => Ok((checksum, file_size)),
+            Err(e) => {
                 warn!("S3 upload failed for {s3_key}: {e:?}");
-                format!("s3 upload failed: {e}")
-            })?;
-
-        let file_size = bytes.len() as i64;
-
-        Ok((checksum, file_size))
+                Err(format!("s3 upload failed: {e}"))
+            }
+        }
     }
 }
 

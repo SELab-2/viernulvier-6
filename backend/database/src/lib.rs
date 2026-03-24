@@ -4,18 +4,19 @@ use tracing::info;
 use crate::{
     error::DatabaseError,
     repos::{
-        hall::HallRepo, internal_state::InternalStateRepo, location::LocationRepo, event::EventRepo,
-        media::MediaRepo, media_variant::MediaVariantRepo, production::ProductionRepo, space::SpaceRepo, user::UserRepo, sessions::SessionRepo,
-        tag::TagRepo,
+        event::EventRepo, hall::HallRepo, internal_state::InternalStateRepo,
+        location::LocationRepo, media::MediaRepo, media_variant::MediaVariantRepo,
+        production::ProductionRepo, sessions::SessionRepo, space::SpaceRepo, tag::TagRepo,
+        user::UserRepo,
     },
 };
 
 pub mod models {
     pub mod artist;
     pub mod blogpost;
-    pub mod entity_media;
     pub mod collection;
     pub mod collection_item;
+    pub mod entity_media;
     pub mod entity_type;
     pub mod event;
     pub mod facet;

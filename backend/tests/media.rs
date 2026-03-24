@@ -112,13 +112,19 @@ async fn attach_media_transactional_success(db: PgPool) {
 
     let unauth_app = TestRouter::new(db.clone());
     let unauth_response = unauth_app
-        .post(&format!("/media/entity/production/{production_id}/attach"), &payload)
+        .post(
+            &format!("/media/entity/production/{production_id}/attach"),
+            &payload,
+        )
         .await;
     assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
 
     let app = TestRouter::as_editor(db).await;
     let response = app
-        .post(&format!("/media/entity/production/{production_id}/attach"), &payload)
+        .post(
+            &format!("/media/entity/production/{production_id}/attach"),
+            &payload,
+        )
         .await;
     assert_eq!(response.status(), StatusCode::CREATED);
 
@@ -126,7 +132,9 @@ async fn attach_media_transactional_success(db: PgPool) {
     assert_eq!(attached.alt_text.as_deref(), Some("Attached from CMS"));
 
     let list_response = app
-        .get(&format!("/media/entity/production/{production_id}?role=gallery&cover_only=true"))
+        .get(&format!(
+            "/media/entity/production/{production_id}?role=gallery&cover_only=true"
+        ))
         .await;
     assert_eq!(list_response.status(), StatusCode::OK);
     let listed: Vec<MediaPayload> = list_response.into_struct().await;

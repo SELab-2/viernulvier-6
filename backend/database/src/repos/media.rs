@@ -32,7 +32,11 @@ impl<'a> MediaRepo<'a> {
         Ok(Media::select().limit(limit).fetch_all(self.db).await?)
     }
 
-    pub async fn paginated(&self, limit: usize, offset: usize) -> Result<Vec<Media>, DatabaseError> {
+    pub async fn paginated(
+        &self,
+        limit: usize,
+        offset: usize,
+    ) -> Result<Vec<Media>, DatabaseError> {
         Ok(sqlx::query_as::<_, Media>(
             r#"
             SELECT

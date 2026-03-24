@@ -50,8 +50,10 @@ dependencies = [
  "ormlite",
  "reqwest",
  "serde",
+ "serde_json",
  "sha2",
  "slug",
+ "tokio",
  "tracing",
  "uuid",
 ]
