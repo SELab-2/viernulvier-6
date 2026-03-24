@@ -53,7 +53,7 @@ hex = "0.4.3"
 chrono = "0.4.44"
 time = "0.3.47"
 aws-sdk-s3 = "1"
-aws-config = "1"
+aws-config = { version = "1", features = ["behavior-version-latest"] }
 
 [dev-dependencies]
 http-body-util = "0.1.2"
