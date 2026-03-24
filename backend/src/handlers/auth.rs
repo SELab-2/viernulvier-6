@@ -81,7 +81,7 @@ fn access_cookie(token: String, expiry_minutes: i8) -> Cookie<'static> {
         .secure(true)
         .same_site(SameSite::Strict)
         .path("/")
-        .max_age(Duration::minutes(expiry_minutes as i64))
+        .max_age(Duration::minutes(expiry_minutes.into()))
         .build()
 }
 
@@ -91,7 +91,7 @@ fn refresh_cookie(token: String, expiry_days: i8) -> Cookie<'static> {
         .secure(true)
         .same_site(SameSite::Strict)
         .path("/auth/refresh")
-        .max_age(Duration::days(expiry_days as i64)) // Cast to i64
+        .max_age(Duration::days(expiry_days.into()))
         .build()
 }
 
@@ -131,7 +131,7 @@ pub async fn login(
     rand::rng().fill_bytes(&mut random_bytes);
     let refresh_token = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(random_bytes);
 
-    let expiry_date = Utc::now() + chrono::Duration::days(config.refresh_token_expiry_days as i64);
+    let expiry_date = Utc::now() + chrono::Duration::days(config.refresh_token_expiry_days.into());
     let hashed_token = hash_token(&refresh_token);
 
     let session = db
