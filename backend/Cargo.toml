@@ -11,6 +11,10 @@ path = "src/main.rs"
 unused_async = "warn"
 indexing_slicing = "warn"
 dbg_macro = "warn"
+future_not_send = "warn"
+await_holding_lock = "warn"
+format_push_string = "warn"
+cloned_instead_of_copied = "warn"
 # pedantic
 ignored_unit_patterns = "warn"
 uninlined_format_args = "warn"
@@ -20,6 +24,7 @@ needless_pass_by_value = "warn"
 trivially_copy_pass_by_ref = "warn"
 # nursery
 use_self = "warn"
+redundant_clone = "warn"
 
 [lints]
 workspace = true
