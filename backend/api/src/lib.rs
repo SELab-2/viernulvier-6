@@ -31,6 +31,7 @@ pub mod models {
 }
 
 const API_BASE_URL: &str = "https://www.viernulvier.gent/api/v1";
+const BASE_URL: &str = "https://www.viernulvier.gent/";
 
 pub struct ApiImporter {
     db: Database,
@@ -364,7 +365,7 @@ impl ApiImporter {
         production_source_id: i32,
         gallery_type: &str,
     ) -> Result<(), reqwest::Error> {
-        let url = format!("{API_BASE_URL}{gallery_url}");
+        let url = format!("{BASE_URL}{gallery_url}");
         let gallery: ApiMediaGallery = self
             .client
             .get(url)
@@ -415,7 +416,7 @@ impl ApiImporter {
         production_source_id: i32,
         gallery_type: &str,
     ) -> Result<(), reqwest::Error> {
-        let url = format!("{API_BASE_URL}{item_url}");
+        let url = format!("{BASE_URL}{item_url}");
         let item: ApiMediaItem = self
             .client
             .get(url)
