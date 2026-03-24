@@ -36,6 +36,7 @@ export const MemoSubTable = memo(
 
 import { memo } from "react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
     Table,
     TableBody,
@@ -54,6 +55,11 @@ export interface ExpanderLabels {
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
+    // useSuspenseQuery would normally handle this, but it suspends at the hook
+    // call site, so primary + secondary queries (locations + halls, productions +
+    // events) in the same component would both need to settle before anything
+    // renders. This prop keeps the primary table visible while secondary data loads.
+    loading?: boolean;
     renderSubComponent?: (row: Row<TData>) => ReactNode;
     getRowCanExpand?: (row: Row<TData>) => boolean;
     expanderLabels?: ExpanderLabels;
@@ -63,6 +69,7 @@ interface DataTableProps<TData, TValue> {
 export function DataTable<TData, TValue>({
     columns,
     data,
+    loading = false,
     renderSubComponent,
     getRowCanExpand,
     expanderLabels,
@@ -201,6 +208,16 @@ export function DataTable<TData, TValue>({
                                         </TableRow>
                                     )}
                                 </Fragment>
+                            ))
+                        ) : loading ? (
+                            Array.from({ length: 5 }).map((_, i) => (
+                                <TableRow key={`skeleton-${i}`}>
+                                    {table.getVisibleLeafColumns().map((col) => (
+                                        <TableCell key={col.id}>
+                                            <Skeleton className="h-4 w-full" />
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
                             ))
                         ) : (
                             <TableRow>

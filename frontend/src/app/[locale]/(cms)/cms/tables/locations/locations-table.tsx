@@ -6,6 +6,7 @@ import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
 import { makeLocationColumns, locationFields, toLocationUpdateInput } from "./columns";
 import { makeHallColumns, hallFields, toHallUpdateInput } from "./hall-columns";
+import { Spinner } from "@/components/ui/spinner";
 import { useGetLocations, useUpdateLocation } from "@/hooks/api/useLocations";
 import { useGetHalls, useUpdateHall } from "@/hooks/api/useHalls";
 import type { Location } from "@/types/models/location.types";
@@ -37,23 +38,25 @@ export function LocationsTable() {
 
     const renderHalls = useCallback(
         (row: Row<Location>) => {
+            if (hallsLoading) {
+                return (
+                    <div className="bg-muted/30 flex items-center py-1 pr-6 pl-12">
+                        <Spinner className="text-muted-foreground size-3" />
+                    </div>
+                );
+            }
             const halls = hallsBySpace.get(row.original.id) ?? [];
             return <MemoSubTable items={halls} columns={hallCols} />;
         },
-        [hallCols, hallsBySpace]
+        [hallCols, hallsBySpace, hallsLoading]
     );
-
-    const isLoading = locationsLoading || hallsLoading;
-
-    if (isLoading) {
-        return <p className="text-muted-foreground text-sm">Loading locations...</p>;
-    }
 
     return (
         <>
             <DataTable
                 columns={locationCols}
                 data={locations}
+                loading={locationsLoading}
                 renderSubComponent={renderHalls}
                 getRowCanExpand={(row) => (hallsBySpace.get(row.original.id)?.length ?? 0) > 0}
                 expanderLabels={{ show: "Show halls", hide: "Hide halls" }}

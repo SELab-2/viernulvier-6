@@ -6,6 +6,7 @@ import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
 import { makeProductionColumns, productionFields, toProductionUpdateInput } from "./columns";
 import { makeEventColumns, eventFields, toEventUpdateInput } from "./event-columns";
+import { Spinner } from "@/components/ui/spinner";
 import { useGetProductions, useUpdateProduction } from "@/hooks/api/useProductions";
 import { useGetEvents, useUpdateEvent } from "@/hooks/api/useEvents";
 import type { Production } from "@/types/models/production.types";
@@ -36,23 +37,25 @@ export function ProductionsTable() {
 
     const renderEvents = useCallback(
         (row: Row<Production>) => {
+            if (eventsLoading) {
+                return (
+                    <div className="bg-muted/30 flex items-center py-1 pr-6 pl-12">
+                        <Spinner className="text-muted-foreground size-3" />
+                    </div>
+                );
+            }
             const events = eventsByProduction.get(row.original.id) ?? [];
             return <MemoSubTable items={events} columns={eventCols} />;
         },
-        [eventCols, eventsByProduction]
+        [eventCols, eventsByProduction, eventsLoading]
     );
-
-    const isLoading = productionsLoading || eventsLoading;
-
-    if (isLoading) {
-        return <p className="text-muted-foreground text-sm">Loading productions...</p>;
-    }
 
     return (
         <>
             <DataTable
                 columns={productionCols}
                 data={productions}
+                loading={productionsLoading}
                 renderSubComponent={renderEvents}
                 getRowCanExpand={(row) =>
                     (eventsByProduction.get(row.original.id)?.length ?? 0) > 0
