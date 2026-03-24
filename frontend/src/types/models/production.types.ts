@@ -1,4 +1,5 @@
 export type ProductionTranslation = {
+    languageCode: string;
     supertitle: string | null;
     title: string | null;
     artist: string | null;
@@ -25,11 +26,11 @@ export type Production = {
     eticketInfo: string | null;
     uitdatabankTheme: string | null;
     uitdatabankType: string | null;
-    /** Translations keyed by language code, e.g. "nl" or "en". */
-    translations: Record<string, ProductionTranslation>;
+    translations: ProductionTranslation[];
 };
 
 export type ProductionTranslationInput = {
+    languageCode: string;
     supertitle?: string | null;
     title?: string | null;
     artist?: string | null;
@@ -55,7 +56,7 @@ export type ProductionCreateInput = {
     eticketInfo?: string | null;
     uitdatabankTheme?: string | null;
     uitdatabankType?: string | null;
-    translations?: Record<string, ProductionTranslationInput>;
+    translations?: ProductionTranslationInput[];
 };
 
 export type ProductionUpdateInput = ProductionCreateInput & {

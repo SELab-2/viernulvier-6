@@ -17,8 +17,9 @@ describe("production mapper", () => {
             eticket_info: undefined,
             uitdatabank_theme: undefined,
             uitdatabank_type: undefined,
-            translations: {
-                nl: {
+            translations: [
+                {
+                    language_code: "nl",
                     supertitle: undefined,
                     title: "NL",
                     artist: undefined,
@@ -35,7 +36,8 @@ describe("production mapper", () => {
                     info: undefined,
                     description_short: undefined,
                 },
-                en: {
+                {
+                    language_code: "en",
                     supertitle: null,
                     title: "EN",
                     artist: undefined,
@@ -52,25 +54,26 @@ describe("production mapper", () => {
                     info: undefined,
                     description_short: undefined,
                 },
-            },
+            ],
         });
 
         expect(mapped.sourceId).toBeNull();
-        expect(mapped.translations.nl?.supertitle).toBeNull();
-        expect(mapped.translations.nl?.title).toBe("NL");
-        expect(mapped.translations.en?.title).toBe("EN");
+        const nl = mapped.translations.find((t) => t.languageCode === "nl");
+        const en = mapped.translations.find((t) => t.languageCode === "en");
+        expect(nl?.supertitle).toBeNull();
+        expect(nl?.title).toBe("NL");
+        expect(en?.title).toBe("EN");
     });
 
     it("maps create/update input to api payload", () => {
         const createPayload = mapCreateProductionInput({
             slug: "new",
-            translations: {
-                nl: { title: "Titel" },
-            },
+            translations: [{ languageCode: "nl", title: "Titel" }],
         });
 
         expect(createPayload.slug).toBe("new");
-        expect(createPayload.translations.nl?.title).toBe("Titel");
+        expect(createPayload.translations[0]?.language_code).toBe("nl");
+        expect(createPayload.translations[0]?.title).toBe("Titel");
 
         const updatePayload = mapUpdateProductionInput({ id: "id-1", slug: "updated" });
         expect(updatePayload.id).toBe("id-1");

@@ -18,6 +18,7 @@ const toNullable = <T>(value: T | null | undefined): T | null => value ?? null;
 // Until then, `generated.ts` still contains the old flat schema.
 
 type ApiTranslation = {
+    language_code: string;
     supertitle?: string | null;
     title?: string | null;
     artist?: string | null;
@@ -36,6 +37,7 @@ type ApiTranslation = {
 };
 
 const mapTranslation = (t: ApiTranslation): ProductionTranslation => ({
+    languageCode: t.language_code,
     supertitle: toNullable(t.supertitle),
     title: toNullable(t.title),
     artist: toNullable(t.artist),
@@ -64,21 +66,15 @@ export const mapProduction = (response: ProductionResponse | any): Production =>
         eticketInfo: toNullable(response.eticket_info),
         uitdatabankTheme: toNullable(response.uitdatabank_theme),
         uitdatabankType: toNullable(response.uitdatabank_type),
-        translations: Object.fromEntries(
-            Object.entries(response.translations ?? {}).map(([lang, t]) => [
-                lang,
-                mapTranslation(t as ApiTranslation),
-            ])
-        ),
+        translations: (response.translations ?? []).map((t: ApiTranslation) => mapTranslation(t)),
     };
 };
 
 export const mapProductions = (response: (ProductionResponse | any)[]): Production[] =>
     response.map(mapProduction);
 
-const mapTranslationInput = (
-    t: ProductionTranslationInput
-): Record<string, string | null | undefined> => ({
+const mapTranslationInput = (t: ProductionTranslationInput): ApiTranslation => ({
+    language_code: t.languageCode,
     supertitle: t.supertitle,
     title: t.title,
     artist: t.artist,
@@ -96,7 +92,6 @@ const mapTranslationInput = (
     description_short: t.descriptionShort,
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const mapCreateProductionInput = (
     input: ProductionCreateInput
 ): ProductionCreateRequest | any => {
@@ -108,16 +103,10 @@ export const mapCreateProductionInput = (
         eticket_info: input.eticketInfo,
         uitdatabank_theme: input.uitdatabankTheme,
         uitdatabank_type: input.uitdatabankType,
-        translations: Object.fromEntries(
-            Object.entries(input.translations ?? {}).map(([lang, t]) => [
-                lang,
-                mapTranslationInput(t),
-            ])
-        ),
+        translations: (input.translations ?? []).map(mapTranslationInput),
     };
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const mapUpdateProductionInput = (
     input: ProductionUpdateInput
 ): ProductionUpdateRequest | any => {

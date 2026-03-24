@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use database::{
     Database,
     models::production::{
@@ -46,12 +44,11 @@ impl ProductionPostPayload {
     }
 }
 
-fn translations_to_data(
-    map: &HashMap<String, ProductionTranslationPayload>,
-) -> Vec<ProductionTranslationData> {
-    map.iter()
-        .map(|(lang, t)| ProductionTranslationData {
-            language_code: lang.clone(),
+fn translations_to_data(translations: &[ProductionTranslationPayload]) -> Vec<ProductionTranslationData> {
+    translations
+        .iter()
+        .map(|t| ProductionTranslationData {
+            language_code: t.language_code.clone(),
             supertitle: t.supertitle.clone(),
             title: t.title.clone(),
             artist: t.artist.clone(),
@@ -74,6 +71,7 @@ fn translations_to_data(
 /// The per-language content for a production.
 #[derive(Serialize, Deserialize, ToSchema, Clone)]
 pub struct ProductionTranslationPayload {
+    pub language_code: String,
     pub supertitle: Option<String>,
     pub title: Option<String>,
     pub artist: Option<String>,
@@ -104,9 +102,7 @@ pub struct ProductionPayload {
     pub uitdatabank_theme: Option<String>,
     pub uitdatabank_type: Option<String>,
 
-    /// Translations keyed by language code (e.g. "nl", "en").
-    #[schema(additional_properties)]
-    pub translations: HashMap<String, ProductionTranslationPayload>,
+    pub translations: Vec<ProductionTranslationPayload>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -121,9 +117,7 @@ pub struct ProductionPostPayload {
     pub uitdatabank_theme: Option<String>,
     pub uitdatabank_type: Option<String>,
 
-    /// Translations keyed by language code (e.g. "nl", "en").
-    #[schema(additional_properties)]
-    pub translations: HashMap<String, ProductionTranslationPayload>,
+    pub translations: Vec<ProductionTranslationPayload>,
 }
 
 impl From<ProductionWithTranslations> for ProductionPayload {
@@ -131,27 +125,23 @@ impl From<ProductionWithTranslations> for ProductionPayload {
         let translations = pwt
             .translations
             .into_iter()
-            .map(|t| {
-                (
-                    t.language_code,
-                    ProductionTranslationPayload {
-                        supertitle: t.supertitle,
-                        title: t.title,
-                        artist: t.artist,
-                        meta_title: t.meta_title,
-                        meta_description: t.meta_description,
-                        tagline: t.tagline,
-                        teaser: t.teaser,
-                        description: t.description,
-                        description_extra: t.description_extra,
-                        description_2: t.description_2,
-                        quote: t.quote,
-                        quote_source: t.quote_source,
-                        programme: t.programme,
-                        info: t.info,
-                        description_short: t.description_short,
-                    },
-                )
+            .map(|t| ProductionTranslationPayload {
+                language_code: t.language_code,
+                supertitle: t.supertitle,
+                title: t.title,
+                artist: t.artist,
+                meta_title: t.meta_title,
+                meta_description: t.meta_description,
+                tagline: t.tagline,
+                teaser: t.teaser,
+                description: t.description,
+                description_extra: t.description_extra,
+                description_2: t.description_2,
+                quote: t.quote,
+                quote_source: t.quote_source,
+                programme: t.programme,
+                info: t.info,
+                description_short: t.description_short,
             })
             .collect();
 
