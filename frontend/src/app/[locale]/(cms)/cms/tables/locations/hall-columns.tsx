@@ -1,9 +1,15 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
 import type { FieldDef } from "../edit-sheet";
 import type { Hall, HallUpdateInput } from "@/types/models/hall.types";
+
+function BooleanCell({ value }: { value: boolean | null }) {
+    const t = useTranslations("Cms.EditSheet");
+    return value === null ? "—" : value ? t("yes") : t("no");
+}
 
 export const hallFields: FieldDef<Hall>[] = [
     { key: "id", label: "ID", type: "text", readOnly: true },
@@ -42,18 +48,12 @@ export function makeHallColumns(
         {
             accessorKey: "seatSelection",
             header: "Seat selection",
-            cell: ({ getValue }) => {
-                const v = getValue<boolean | null>();
-                return v === null ? "—" : v ? "Yes" : "No";
-            },
+            cell: ({ getValue }) => <BooleanCell value={getValue<boolean | null>()} />,
         },
         {
             accessorKey: "openSeating",
             header: "Open seating",
-            cell: ({ getValue }) => {
-                const v = getValue<boolean | null>();
-                return v === null ? "—" : v ? "Yes" : "No";
-            },
+            cell: ({ getValue }) => <BooleanCell value={getValue<boolean | null>()} />,
         },
         makeActionsColumn<Hall>({ label: "hall", copyKey: "name", onEdit: options.onEdit }),
     ];
