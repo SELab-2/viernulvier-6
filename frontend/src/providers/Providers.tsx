@@ -2,7 +2,7 @@
 
 import { type AbstractIntlMessages } from "next-intl";
 
-import { IntlProvider, QueryProvider, ThemeProvider } from "@/providers";
+import { IntlProvider, QueryProvider } from "@/providers";
 import { Toaster } from "@/components/ui/sonner";
 
 export function Providers({
@@ -17,13 +17,11 @@ export function Providers({
     timeZone?: string;
 }) {
     return (
-        <ThemeProvider>
-            <IntlProvider messages={messages} locale={locale} timeZone={timeZone}>
-                <QueryProvider>
-                    {children}
-                    <Toaster richColors />
-                </QueryProvider>
-            </IntlProvider>
-        </ThemeProvider>
+        <IntlProvider messages={messages} locale={locale} timeZone={timeZone}>
+            <QueryProvider>
+                {children}
+                <Toaster richColors />
+            </QueryProvider>
+        </IntlProvider>
     );
 }

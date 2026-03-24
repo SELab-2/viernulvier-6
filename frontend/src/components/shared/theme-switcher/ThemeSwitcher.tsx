@@ -1,21 +1,17 @@
 "use client";
 
-import { useCallback } from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 
 export function ThemeSwitcher() {
-    const { setTheme, theme } = useTheme();
+    const { setTheme, resolvedTheme } = useTheme();
     const t = useTranslations("ThemeSwitcher");
-
-    const toggleTheme = useCallback(() => {
-        setTheme(theme === "dark" ? "light" : "dark");
-    }, [setTheme, theme]);
+    const isDark = resolvedTheme === "dark";
 
     return (
         <button
-            onClick={toggleTheme}
+            onClick={() => setTheme(isDark ? "light" : "dark")}
             className="text-muted-foreground hover:text-foreground flex cursor-pointer items-center gap-1.5 font-mono text-[10px] tracking-[1.4px] uppercase transition-colors"
         >
             <Sun className="hidden h-3 w-3 [html.dark_&]:block" />
