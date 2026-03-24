@@ -42,8 +42,11 @@ export function makeActionsColumn<TData extends Record<string, unknown>>(
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => navigator.clipboard.writeText(copyValue)}>
-                            Copy {label}
+                        <DropdownMenuItem
+                            disabled={copyValue === ""}
+                            onClick={() => navigator.clipboard.writeText(copyValue)}
+                        >
+                            Copy {String(copyKey)}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onEdit?.(entity)}>
                             Edit {label}
