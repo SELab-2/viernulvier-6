@@ -1,7 +1,7 @@
 use serde::{Deserialize, Deserializer};
 use serde_json::Value;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ApiLocalizedText {
     pub en: Option<String>,
     pub fr: Option<String>,

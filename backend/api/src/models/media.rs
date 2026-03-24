@@ -5,41 +5,46 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize)]
 pub struct ApiMediaGallery {
     #[serde(rename = "@context")]
-    pub context: String,
+    pub context: Option<String>,
     #[serde(rename = "@id")]
-    pub id: String,
+    pub id: Option<String>,
     #[serde(rename = "@type")]
-    pub r#type: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub name: String,
-    pub items: Vec<String>,
+    pub r#type: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
+    pub name: Option<String>,
+    #[serde(default)]
+    pub items: Vec<ApiMediaItem>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct ApiMediaItem {
     #[serde(rename = "@context")]
-    pub context: String,
+    pub context: Option<String>,
     #[serde(rename = "@id")]
-    pub id: String,
+    pub id: Option<String>,
     #[serde(rename = "@type")]
-    pub jsonld_type: String,
+    pub jsonld_type: Option<String>,
 
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     #[serde(rename = "type")]
-    pub r#type: String,
-    pub original_filename: String,
-    pub position: u32,
-    pub width: u32,
-    pub height: u32,
-    pub format: String,
-    pub gallery: String,
+    pub r#type: Option<String>,
+    pub original_filename: Option<String>,
+    pub position: Option<u32>,
+    pub width: Option<u32>,
+    pub height: Option<u32>,
+    pub format: Option<String>,
+    pub gallery: Option<String>,
 
+    #[serde(default)]
     pub title: ApiLocalizedText,
+    #[serde(default)]
     pub description: ApiLocalizedText,
+    #[serde(default)]
     pub credits: ApiLocalizedText,
+    #[serde(default)]
     pub link: ApiLocalizedText,
     #[serde(default)]
     pub crops: Vec<ApiMediaItemCrop>,
@@ -47,6 +52,6 @@ pub struct ApiMediaItem {
 
 #[derive(Debug, Deserialize)]
 pub struct ApiMediaItemCrop {
-    pub name: String,
-    pub url: String,
+    pub name: Option<String>,
+    pub url: Option<String>,
 }

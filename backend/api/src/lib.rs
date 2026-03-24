@@ -1,5 +1,6 @@
 use std::pin::pin;
 
+use base64::{Engine as _, engine::general_purpose};
 use chrono::Utc;
 use database::{
     Database,
@@ -11,7 +12,7 @@ use serde::de::DeserializeOwned;
 use sha2::{Digest, Sha256};
 use tracing::{info, warn};
 
-use crate::helper::{extract_source_id, flatten_single};
+use crate::helper::{extract_source_id};
 use crate::models::media::{ApiMediaGallery, ApiMediaItem};
 use crate::models::space::ApiSpace;
 use crate::models::{
@@ -393,14 +394,17 @@ impl ApiImporter {
         };
 
         let mut count = 0;
-        for item_url in &gallery.items {
-            match self
-                .import_media_item(item_url, production.id, production_source_id, gallery_type)
-                .await
-            {
-                Ok(()) => count += 1,
-                Err(e) => warn!("Media: failed to import item {item_url}: {e}"),
-            }
+        for item in gallery.items {
+            let item_url = item.id.clone().unwrap_or_default();
+            self.import_media_item(
+                item,
+                &item_url,
+                production.id,
+                production_source_id,
+                gallery_type,
+            )
+            .await;
+            count += 1;
         }
 
         if count > 0 {
@@ -414,28 +418,51 @@ impl ApiImporter {
 
     async fn import_media_item(
         &self,
+        item: ApiMediaItem,
         item_url: &str,
         production_id: Uuid,
         production_source_id: i32,
         gallery_type: &str,
-    ) -> Result<(), reqwest::Error> {
-        let url = format!("{BASE_URL}{item_url}");
-        let item: ApiMediaItem = self
-            .client
-            .get(url)
-            .header("X-AUTH-TOKEN", &self.auth_token)
-            .send()
-            .await?
-            .error_for_status()?
-            .json()
-            .await?;
-
+    ) {
         let source_id = extract_source_id(item_url);
-        let title = flatten_single(Some(item.title));
-        let description = flatten_single(Some(item.description));
-        let credit = flatten_single(Some(item.credits));
-        let mime_type = format_to_mime(&item.format);
-        let cdn_url = flatten_single(Some(item.link));
+
+        let title_nl = item.title.nl;
+        let title_en = item.title.en;
+        let title_fr = item.title.fr;
+
+        let description_nl = item.description.nl;
+        let description_en = item.description.en;
+        let description_fr = item.description.fr;
+
+        let credit_nl = item.credits.nl;
+        let credit_en = item.credits.en;
+        let credit_fr = item.credits.fr;
+
+        let mime_type = format_to_mime(item.format.as_deref().unwrap_or(""));
+
+        let mut cdn_url = item.link.nl.or(item.link.en).or(item.link.fr);
+        if cdn_url.is_none() {
+            // try to decode the original URL from the end of a crop url
+            for crop in &item.crops {
+                if let Some(url) = &crop.url {
+                    if let Some(decoded) = decode_url_from_crop(url) {
+                        cdn_url = Some(decoded);
+                        break;
+                    }
+                }
+            }
+            
+            if cdn_url.is_none() {
+                // TODO: Decide which crops we want to keep: we can only use hd_ready and scale down in the rust API or select a few crops
+                if let Some(hd_crop) = item.crops.iter().find(|c| {
+                    c.name.as_deref() == Some("hd_ready") || c.name.as_deref() == Some("FE3_header")
+                }) {
+                    cdn_url = hd_crop.url.clone();
+                } else if let Some(first_crop) = item.crops.first() {
+                    cdn_url = first_crop.url.clone();
+                }
+            }
+        }
         let now = Utc::now();
 
         // skip if already imported by source URI (stable idempotency)
@@ -446,7 +473,7 @@ impl ApiImporter {
             .await
             .is_ok_and(|m| m.is_some())
         {
-            return Ok(());
+            return;
         }
 
         // importer policy: all imported media must be uploaded to S3; no external URL fallback
@@ -456,7 +483,7 @@ impl ApiImporter {
             warn!(
                 "Media: skipping import for {item_url} because S3 config or source URL is missing"
             );
-            return Ok(());
+            return;
         };
 
         let (s3_key, checksum, file_size) = match self
@@ -466,7 +493,7 @@ impl ApiImporter {
                 url,
                 production_source_id,
                 gallery_type,
-                &item.format,
+                item.format.as_deref().unwrap_or(""),
             )
             .await
         {
@@ -474,7 +501,7 @@ impl ApiImporter {
             Err(e) => {
                 warn!("Media: download/upload failed for {url}: {e}");
                 // return Ok so we continue to process the next items, it just won't be in the DB
-                return Ok(());
+                return;
             }
         };
 
@@ -483,12 +510,18 @@ impl ApiImporter {
             s3_key,
             mime_type: mime_type.clone(),
             file_size: Some(file_size),
-            width: Some(item.width as i32),
-            height: Some(item.height as i32),
+            width: item.width.map(|w| w as i32),
+            height: item.height.map(|h| h as i32),
             checksum: Some(checksum),
-            alt_text: title,
-            description,
-            credit,
+            alt_text_nl: title_nl,
+            alt_text_en: title_en,
+            alt_text_fr: title_fr,
+            description_nl,
+            description_en,
+            description_fr,
+            credit_nl,
+            credit_en,
+            credit_fr,
             geo_latitude: None,
             geo_longitude: None,
             parent_id: None,
@@ -497,14 +530,14 @@ impl ApiImporter {
             source_id,
             source_system: "viernulvier".to_string(),
             source_uri: Some(item_url.to_string()),
-            source_updated_at: Some(item.updated_at),
+            source_updated_at: item.updated_at,
             created_at: now,
             updated_at: now,
         };
 
         if let Ok(media) = self.db.media().insert(media_create).await {
             let role = media_role_from_gallery_type(gallery_type);
-            let is_cover = item.position == 0;
+            let is_cover = item.position == Some(0);
             let _ = self
                 .db
                 .media()
@@ -513,18 +546,59 @@ impl ApiImporter {
                     production_id,
                     media.id,
                     role,
-                    item.position as i32,
+                    item.position.unwrap_or(999) as i32,
                     is_cover,
                 )
                 .await;
 
-            // Note: We skip downloading the pre-calculated crop variants from the image proxy
-            // to avoid extreme rate limits and massive storage duplication.
-            // As an archive, we only store the original high-resolution image in S3,
-            // and we rely on dynamic on-the-fly image resizing in our frontend or own proxy.
-        }
+            // Download a single high-res crop to S3, save the others as external URLs
+            for crop in item.crops {
+                if let (Some(name), Some(url)) = (crop.name, crop.url) {
+                    let mut variant_s3_key = String::new();
+                    let mut variant_mime_type = None;
+                    let mut variant_file_size = None;
+                    let mut variant_checksum = None;
 
-        Ok(())
+                    // Only download high-res variants
+                    if name == "hd_ready" || name == "FE3_header" {
+                        if let Some(s3_client) = &self.s3_client {
+                            if let Some(s3_bucket) = &self.s3_bucket {
+                                let format = item.format.as_deref().unwrap_or("");
+                                let ext = format_to_extension(format);
+                                let file_uuid = Uuid::now_v7();
+                                let crop_s3_key = format!("media/production/{production_source_id}/{gallery_type}/crop_{name}_{file_uuid}.{ext}");
+                                
+                                if let Ok((checksum, file_size)) = self.download_and_upload_to_key(
+                                    s3_client,
+                                    s3_bucket,
+                                    &url,
+                                    &crop_s3_key,
+                                    format,
+                                ).await {
+                                    variant_s3_key = crop_s3_key;
+                                    variant_mime_type = Some(format_to_mime(format));
+                                    variant_file_size = Some(file_size);
+                                    variant_checksum = Some(checksum);
+                                }
+                            }
+                        }
+                    }
+
+                    let upsert = database::repos::media_variant::CropVariantUpsert {
+                        media_id: media.id,
+                        crop_name: name,
+                        s3_key: variant_s3_key,
+                        mime_type: variant_mime_type,
+                        file_size: variant_file_size,
+                        width: None,
+                        height: None,
+                        checksum: variant_checksum,
+                        source_uri: Some(url),
+                    };
+                    let _ = self.db.media_variants().upsert_crop(upsert).await;
+                }
+            }
+        }
     }
 
     async fn download_and_upload(
@@ -536,7 +610,7 @@ impl ApiImporter {
         gallery_type: &str,
         format: &str,
     ) -> Result<(String, String, i64), String> {
-        let ext = format.to_lowercase();
+        let ext = format_to_extension(format);
         let file_uuid = Uuid::now_v7();
         let s3_key =
             format!("media/production/{production_source_id}/{gallery_type}/{file_uuid}.{ext}");
@@ -620,18 +694,66 @@ impl ApiImporter {
     }
 }
 
-fn format_to_mime(format: &str) -> String {
-    match format.to_lowercase().as_str() {
-        "jpg" | "jpeg" => "image/jpeg",
-        "png" => "image/png",
-        "gif" => "image/gif",
-        "webp" => "image/webp",
-        "svg" => "image/svg+xml",
-        "mp4" => "video/mp4",
-        "pdf" => "application/pdf",
-        _ => "application/octet-stream",
+fn decode_url_from_crop(crop_url: &str) -> Option<String> {
+    if let Some(last_slash_idx) = crop_url.rfind('/') {
+        let b64_part = &crop_url[last_slash_idx + 1..];
+        
+        let decoded = general_purpose::URL_SAFE_NO_PAD.decode(b64_part)
+            .or_else(|_| general_purpose::URL_SAFE.decode(b64_part))
+            .or_else(|_| general_purpose::STANDARD_NO_PAD.decode(b64_part))
+            .or_else(|_| general_purpose::STANDARD.decode(b64_part));
+            
+        if let Ok(bytes) = decoded {
+            if let Ok(url) = String::from_utf8(bytes) {
+                if url.starts_with("http") {
+                    return Some(url);
+                }
+            }
+        }
     }
-    .to_string()
+    None
+}
+
+fn format_to_mime(format: &str) -> String {
+    let fmt = format.to_lowercase();
+    if fmt.contains("jpeg") || fmt.contains("jpg") {
+        "image/jpeg".to_string()
+    } else if fmt.contains("png") {
+        "image/png".to_string()
+    } else if fmt.contains("gif") {
+        "image/gif".to_string()
+    } else if fmt.contains("webp") {
+        "image/webp".to_string()
+    } else if fmt.contains("svg") {
+        "image/svg+xml".to_string()
+    } else if fmt.contains("mp4") {
+        "video/mp4".to_string()
+    } else if fmt.contains("pdf") {
+        "application/pdf".to_string()
+    } else {
+        "application/octet-stream".to_string()
+    }
+}
+
+fn format_to_extension(format: &str) -> String {
+    let fmt = format.to_lowercase();
+    if fmt.contains("jpeg") || fmt.contains("jpg") {
+        "jpg".to_string()
+    } else if fmt.contains("png") {
+        "png".to_string()
+    } else if fmt.contains("gif") {
+        "gif".to_string()
+    } else if fmt.contains("webp") {
+        "webp".to_string()
+    } else if fmt.contains("svg") {
+        "svg".to_string()
+    } else if fmt.contains("mp4") {
+        "mp4".to_string()
+    } else if fmt.contains("pdf") {
+        "pdf".to_string()
+    } else {
+        "bin".to_string()
+    }
 }
 
 fn media_role_from_gallery_type(gallery_type: &str) -> &str {

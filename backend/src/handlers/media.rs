@@ -43,10 +43,16 @@ pub async fn get_all(
         .paginated(limit as usize, offset as usize)
         .await?;
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
-    let payloads: Vec<MediaPayload> = media
-        .into_iter()
-        .map(|m| MediaPayload::from_model(m, public_url))
-        .collect();
+    let mut payloads: Vec<MediaPayload> = Vec::with_capacity(media.len());
+    for m in media {
+        let mut payload = MediaPayload::from_model(m, public_url);
+        let variants = db.media_variants().for_media(payload.id).await?;
+        payload.crops = variants
+            .into_iter()
+            .map(|v| MediaVariantPayload::from_model(v, public_url))
+            .collect();
+        payloads.push(payload);
+    }
     Ok(Json(payloads))
 }
 
@@ -77,7 +83,15 @@ pub async fn get_one(
 ) -> JsonResponse<MediaPayload> {
     let media = db.media().by_id(id).await?;
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
-    Ok(Json(MediaPayload::from_model(media, public_url)))
+    let mut payload = MediaPayload::from_model(media, public_url);
+
+    let variants = db.media_variants().for_media(id).await?;
+    payload.crops = variants
+        .into_iter()
+        .map(|v| MediaVariantPayload::from_model(v, public_url))
+        .collect();
+
+    Ok(Json(payload))
 }
 
 #[utoipa::path(
@@ -305,9 +319,15 @@ pub async fn attach_to_entity(
         width: req.width,
         height: req.height,
         checksum: req.checksum,
-        alt_text: req.alt_text,
-        description: req.description,
-        credit: req.credit,
+        alt_text_nl: req.alt_text_nl,
+        alt_text_en: req.alt_text_en,
+        alt_text_fr: req.alt_text_fr,
+        description_nl: req.description_nl,
+        description_en: req.description_en,
+        description_fr: req.description_fr,
+        credit_nl: req.credit_nl,
+        credit_en: req.credit_en,
+        credit_fr: req.credit_fr,
         geo_latitude: req.geo_latitude,
         geo_longitude: req.geo_longitude,
         parent_id: req.parent_id,

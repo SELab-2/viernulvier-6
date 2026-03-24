@@ -13,7 +13,11 @@ impl MediaPayload {
     /// Build a MediaPayload from a database model, computing the public URL.
     /// `base_url` is the S3_PUBLIC_URL (e.g. "https://s3.example.com/bucket").
     pub fn from_model(m: Media, base_url: Option<&str>) -> Self {
-        let url = base_url.map(|base| format!("{}/{}", base.trim_end_matches('/'), m.s3_key));
+        let url = if m.s3_key.is_empty() {
+            m.source_uri.clone()
+        } else {
+            base_url.map(|base| format!("{}/{}", base.trim_end_matches('/'), m.s3_key))
+        };
 
         Self {
             id: m.id,
@@ -25,9 +29,15 @@ impl MediaPayload {
             width: m.width,
             height: m.height,
             checksum: m.checksum,
-            alt_text: m.alt_text,
-            description: m.description,
-            credit: m.credit,
+            alt_text_nl: m.alt_text_nl,
+            alt_text_en: m.alt_text_en,
+            alt_text_fr: m.alt_text_fr,
+            description_nl: m.description_nl,
+            description_en: m.description_en,
+            description_fr: m.description_fr,
+            credit_nl: m.credit_nl,
+            credit_en: m.credit_en,
+            credit_fr: m.credit_fr,
             geo_latitude: m.geo_latitude,
             geo_longitude: m.geo_longitude,
             parent_id: m.parent_id,
@@ -69,9 +79,17 @@ pub struct MediaPayload {
     pub height: Option<i32>,
     pub checksum: Option<String>,
 
-    pub alt_text: Option<String>,
-    pub description: Option<String>,
-    pub credit: Option<String>,
+    pub alt_text_nl: Option<String>,
+    pub alt_text_en: Option<String>,
+    pub alt_text_fr: Option<String>,
+
+    pub description_nl: Option<String>,
+    pub description_en: Option<String>,
+    pub description_fr: Option<String>,
+
+    pub credit_nl: Option<String>,
+    pub credit_en: Option<String>,
+    pub credit_fr: Option<String>,
 
     pub geo_latitude: Option<f64>,
     pub geo_longitude: Option<f64>,
@@ -101,7 +119,11 @@ pub struct MediaVariantPayload {
 
 impl MediaVariantPayload {
     pub fn from_model(v: MediaVariant, base_url: Option<&str>) -> Self {
-        let url = base_url.map(|base| format!("{}/{}", base.trim_end_matches('/'), v.s3_key));
+        let url = if v.s3_key.is_empty() {
+            v.source_uri.clone()
+        } else {
+            base_url.map(|base| format!("{}/{}", base.trim_end_matches('/'), v.s3_key))
+        };
 
         Self {
             id: v.id,
@@ -133,9 +155,15 @@ impl From<MediaPayload> for Media {
             width: p.width,
             height: p.height,
             checksum: p.checksum,
-            alt_text: p.alt_text,
-            description: p.description,
-            credit: p.credit,
+            alt_text_nl: p.alt_text_nl,
+            alt_text_en: p.alt_text_en,
+            alt_text_fr: p.alt_text_fr,
+            description_nl: p.description_nl,
+            description_en: p.description_en,
+            description_fr: p.description_fr,
+            credit_nl: p.credit_nl,
+            credit_en: p.credit_en,
+            credit_fr: p.credit_fr,
             geo_latitude: p.geo_latitude,
             geo_longitude: p.geo_longitude,
             parent_id: p.parent_id,
@@ -161,9 +189,15 @@ impl MediaPayload {
             width: self.width,
             height: self.height,
             checksum: self.checksum,
-            alt_text: self.alt_text,
-            description: self.description,
-            credit: self.credit,
+            alt_text_nl: self.alt_text_nl,
+            alt_text_en: self.alt_text_en,
+            alt_text_fr: self.alt_text_fr,
+            description_nl: self.description_nl,
+            description_en: self.description_en,
+            description_fr: self.description_fr,
+            credit_nl: self.credit_nl,
+            credit_en: self.credit_en,
+            credit_fr: self.credit_fr,
             geo_latitude: self.geo_latitude,
             geo_longitude: self.geo_longitude,
             parent_id: self.parent_id,
@@ -202,9 +236,17 @@ pub struct AttachMediaRequest {
     pub role: Option<String>,
     pub sort_order: Option<i32>,
     pub is_cover_image: Option<bool>,
-    pub alt_text: Option<String>,
-    pub description: Option<String>,
-    pub credit: Option<String>,
+    pub alt_text_nl: Option<String>,
+    pub alt_text_en: Option<String>,
+    pub alt_text_fr: Option<String>,
+
+    pub description_nl: Option<String>,
+    pub description_en: Option<String>,
+    pub description_fr: Option<String>,
+
+    pub credit_nl: Option<String>,
+    pub credit_en: Option<String>,
+    pub credit_fr: Option<String>,
     pub width: Option<i32>,
     pub height: Option<i32>,
     pub file_size: Option<i64>,

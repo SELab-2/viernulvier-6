@@ -14,7 +14,8 @@
                 "production",
                 "artist",
                 "article",
-                "media"
+                "media",
+                "event"
               ]
             }
           }
@@ -66,7 +67,8 @@
                 "production",
                 "artist",
                 "article",
-                "media"
+                "media",
+                "event"
               ]
             }
           }

@@ -43,7 +43,9 @@ impl<'a> MediaRepo<'a> {
                 id, created_at, updated_at,
                 s3_key, mime_type, file_size,
                 width, height, checksum,
-                alt_text, description, credit,
+                alt_text_nl, alt_text_en, alt_text_fr, 
+                description_nl, description_en, description_fr, 
+                credit_nl, credit_en, credit_fr,
                 geo_latitude, geo_longitude,
                 parent_id, derivative_type, gallery_type, source_id,
                 source_system, source_uri, source_updated_at
@@ -77,7 +79,9 @@ impl<'a> MediaRepo<'a> {
             r#"
             INSERT INTO media (
                 s3_key, mime_type, file_size, width, height, checksum,
-                alt_text, description, credit,
+                alt_text_nl, alt_text_en, alt_text_fr, 
+                description_nl, description_en, description_fr, 
+                credit_nl, credit_en, credit_fr,
                 geo_latitude, geo_longitude,
                 parent_id, derivative_type, gallery_type,
                 source_id, source_system, source_uri, source_updated_at,
@@ -98,9 +102,15 @@ impl<'a> MediaRepo<'a> {
                 width = EXCLUDED.width,
                 height = EXCLUDED.height,
                 checksum = EXCLUDED.checksum,
-                alt_text = EXCLUDED.alt_text,
-                description = EXCLUDED.description,
-                credit = EXCLUDED.credit,
+                alt_text_nl = EXCLUDED.alt_text_nl,
+                alt_text_en = EXCLUDED.alt_text_en,
+                alt_text_fr = EXCLUDED.alt_text_fr,
+                description_nl = EXCLUDED.description_nl,
+                description_en = EXCLUDED.description_en,
+                description_fr = EXCLUDED.description_fr,
+                credit_nl = EXCLUDED.credit_nl,
+                credit_en = EXCLUDED.credit_en,
+                credit_fr = EXCLUDED.credit_fr,
                 geo_latitude = EXCLUDED.geo_latitude,
                 geo_longitude = EXCLUDED.geo_longitude,
                 parent_id = EXCLUDED.parent_id,
@@ -111,7 +121,9 @@ impl<'a> MediaRepo<'a> {
                 id, created_at, updated_at,
                 s3_key, mime_type, file_size,
                 width, height, checksum,
-                alt_text, description, credit,
+                alt_text_nl, alt_text_en, alt_text_fr, 
+                description_nl, description_en, description_fr, 
+                credit_nl, credit_en, credit_fr,
                 geo_latitude, geo_longitude,
                 parent_id, derivative_type, gallery_type, source_id,
                 source_system, source_uri, source_updated_at
@@ -123,9 +135,15 @@ impl<'a> MediaRepo<'a> {
         .bind(media.width)
         .bind(media.height)
         .bind(media.checksum)
-        .bind(media.alt_text)
-        .bind(media.description)
-        .bind(media.credit)
+        .bind(media.alt_text_nl)
+        .bind(media.alt_text_en)
+        .bind(media.alt_text_fr)
+        .bind(media.description_nl)
+        .bind(media.description_en)
+        .bind(media.description_fr)
+        .bind(media.credit_nl)
+        .bind(media.credit_en)
+        .bind(media.credit_fr)
         .bind(media.geo_latitude)
         .bind(media.geo_longitude)
         .bind(media.parent_id)

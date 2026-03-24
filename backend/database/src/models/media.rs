@@ -18,9 +18,17 @@ pub struct Media {
     pub height: Option<i32>,
     pub checksum: Option<String>,
 
-    pub alt_text: Option<String>,
-    pub description: Option<String>,
-    pub credit: Option<String>,
+    pub alt_text_nl: Option<String>,
+    pub alt_text_en: Option<String>,
+    pub alt_text_fr: Option<String>,
+
+    pub description_nl: Option<String>,
+    pub description_en: Option<String>,
+    pub description_fr: Option<String>,
+
+    pub credit_nl: Option<String>,
+    pub credit_en: Option<String>,
+    pub credit_fr: Option<String>,
 
     pub geo_latitude: Option<f64>,
     pub geo_longitude: Option<f64>,

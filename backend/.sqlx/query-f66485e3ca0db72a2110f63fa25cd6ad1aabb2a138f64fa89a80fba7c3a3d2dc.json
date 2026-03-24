@@ -39,7 +39,8 @@
                 "production",
                 "artist",
                 "article",
-                "media"
+                "media",
+                "event"
               ]
             }
           }
