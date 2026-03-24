@@ -8,6 +8,9 @@ publish = false
 name = "database"
 path = "src/lib.rs"
 
+[lints]
+workspace = true
+
 [dependencies]
 tracing = { workspace = true }
 serde = { workspace = true }
