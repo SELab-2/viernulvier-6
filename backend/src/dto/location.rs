@@ -1,6 +1,6 @@
 use database::{Database, models::location::Location};
 use o2o::o2o;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -57,11 +57,7 @@ impl LocationPayload {
             .collect())
     }
     pub async fn by_id(db: &Database, id: Uuid) -> Result<Self, AppError> {
-        Ok(Self::from(
-            db.locations()
-                .by_id(id)
-                .await?
-        ))
+        Ok(Self::from(db.locations().by_id(id).await?))
     }
 
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {
