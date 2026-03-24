@@ -407,9 +407,11 @@ export interface components {
         /** @enum {string} */
         Facet: "discipline" | "format" | "theme" | "audience";
         FacetResponse: {
-            label: string;
             slug: string;
             tags: components["schemas"]["TagResponse"][];
+            translations: {
+                [key: string]: unknown;
+            };
         };
         HallPayload: {
             box_office_id?: string | null;
@@ -476,86 +478,47 @@ export interface components {
             password: string;
         };
         ProductionPayload: {
-            artist_en?: string | null;
-            artist_nl?: string | null;
-            description_2_en?: string | null;
-            description_2_nl?: string | null;
-            description_en?: string | null;
-            description_extra_en?: string | null;
-            description_extra_nl?: string | null;
-            description_nl?: string | null;
-            description_short_en?: string | null;
-            description_short_nl?: string | null;
             eticket_info?: string | null;
             /** Format: uuid */
             id: string;
-            info_en?: string | null;
-            info_nl?: string | null;
-            meta_description_en?: string | null;
-            meta_description_nl?: string | null;
-            meta_title_en?: string | null;
-            meta_title_nl?: string | null;
-            programme_en?: string | null;
-            programme_nl?: string | null;
-            quote_en?: string | null;
-            quote_nl?: string | null;
-            quote_source_en?: string | null;
-            quote_source_nl?: string | null;
             slug: string;
             /** Format: int32 */
             source_id?: number | null;
-            supertitle_en?: string | null;
-            supertitle_nl?: string | null;
-            tagline_en?: string | null;
-            tagline_nl?: string | null;
-            teaser_en?: string | null;
-            teaser_nl?: string | null;
-            title_en?: string | null;
-            title_nl?: string | null;
+            translations: components["schemas"]["ProductionTranslationPayload"][];
             uitdatabank_theme?: string | null;
             uitdatabank_type?: string | null;
             video_1?: string | null;
             video_2?: string | null;
         };
         ProductionPostPayload: {
-            artist_en?: string | null;
-            artist_nl?: string | null;
-            description_2_en?: string | null;
-            description_2_nl?: string | null;
-            description_en?: string | null;
-            description_extra_en?: string | null;
-            description_extra_nl?: string | null;
-            description_nl?: string | null;
-            description_short_en?: string | null;
-            description_short_nl?: string | null;
             eticket_info?: string | null;
-            info_en?: string | null;
-            info_nl?: string | null;
-            meta_description_en?: string | null;
-            meta_description_nl?: string | null;
-            meta_title_en?: string | null;
-            meta_title_nl?: string | null;
-            programme_en?: string | null;
-            programme_nl?: string | null;
-            quote_en?: string | null;
-            quote_nl?: string | null;
-            quote_source_en?: string | null;
-            quote_source_nl?: string | null;
             slug: string;
             /** Format: int32 */
             source_id?: number | null;
-            supertitle_en?: string | null;
-            supertitle_nl?: string | null;
-            tagline_en?: string | null;
-            tagline_nl?: string | null;
-            teaser_en?: string | null;
-            teaser_nl?: string | null;
-            title_en?: string | null;
-            title_nl?: string | null;
+            translations: components["schemas"]["ProductionTranslationPayload"][];
             uitdatabank_theme?: string | null;
             uitdatabank_type?: string | null;
             video_1?: string | null;
             video_2?: string | null;
+        };
+        /** @description The per-language content for a production. */
+        ProductionTranslationPayload: {
+            artist?: string | null;
+            description?: string | null;
+            description_2?: string | null;
+            description_extra?: string | null;
+            description_short?: string | null;
+            info?: string | null;
+            language_code: string;
+            meta_description?: string | null;
+            meta_title?: string | null;
+            programme?: string | null;
+            quote?: string | null;
+            quote_source?: string | null;
+            supertitle?: string | null;
+            tagline?: string | null;
+            teaser?: string | null;
+            title?: string | null;
         };
         SpacePayload: {
             /** Format: uuid */
@@ -574,10 +537,12 @@ export interface components {
             source_id?: number | null;
         };
         TagResponse: {
-            label: string;
             slug: string;
             /** Format: int32 */
             sort_order: number;
+            translations: {
+                [key: string]: unknown;
+            };
         };
         /** @enum {string} */
         UserRole: "admin" | "editor" | "user";
