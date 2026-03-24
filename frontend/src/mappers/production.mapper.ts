@@ -13,10 +13,6 @@ import {
 
 const toNullable = <T>(value: T | null | undefined): T | null => value ?? null;
 
-// NOTE: The shape of ProductionResponse will reflect the new API after running
-// `cargo sqlx prepare` and then `npm run generate-openapi-types`.
-// Until then, `generated.ts` still contains the old flat schema.
-
 type ApiTranslation = {
     language_code: string;
     supertitle?: string | null;
@@ -55,8 +51,7 @@ const mapTranslation = (t: ApiTranslation): ProductionTranslation => ({
     descriptionShort: toNullable(t.description_short),
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const mapProduction = (response: ProductionResponse | any): Production => {
+export const mapProduction = (response: ProductionResponse): Production => {
     return {
         id: response.id,
         sourceId: toNullable(response.source_id),
@@ -70,7 +65,7 @@ export const mapProduction = (response: ProductionResponse | any): Production =>
     };
 };
 
-export const mapProductions = (response: (ProductionResponse | any)[]): Production[] =>
+export const mapProductions = (response: ProductionResponse[]): Production[] =>
     response.map(mapProduction);
 
 const mapTranslationInput = (t: ProductionTranslationInput): ApiTranslation => ({
@@ -92,9 +87,7 @@ const mapTranslationInput = (t: ProductionTranslationInput): ApiTranslation => (
     description_short: t.descriptionShort,
 });
 
-export const mapCreateProductionInput = (
-    input: ProductionCreateInput
-): ProductionCreateRequest | any => {
+export const mapCreateProductionInput = (input: ProductionCreateInput): ProductionCreateRequest => {
     return {
         source_id: input.sourceId,
         slug: input.slug,
@@ -107,9 +100,7 @@ export const mapCreateProductionInput = (
     };
 };
 
-export const mapUpdateProductionInput = (
-    input: ProductionUpdateInput
-): ProductionUpdateRequest | any => {
+export const mapUpdateProductionInput = (input: ProductionUpdateInput): ProductionUpdateRequest => {
     return {
         ...mapCreateProductionInput(input),
         id: input.id,

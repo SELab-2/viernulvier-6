@@ -5,51 +5,51 @@ import { apiUrl } from "../../utils/env";
 const facets = [
     {
         slug: "discipline",
-        translations: {
-            nl: { label: "Discipline" },
-            en: { label: "Discipline" },
-        },
+        translations: [
+            { language_code: "nl", label: "Discipline" },
+            { language_code: "en", label: "Discipline" },
+        ],
         tags: [
             {
                 slug: "theatre",
                 sort_order: 1,
-                translations: {
-                    nl: { label: "Theater", description: null },
-                    en: { label: "Theatre", description: null },
-                },
+                translations: [
+                    { language_code: "nl", label: "Theater", description: null },
+                    { language_code: "en", label: "Theatre", description: null },
+                ],
             },
             {
                 slug: "music",
                 sort_order: 2,
-                translations: {
-                    nl: { label: "Muziek", description: null },
-                    en: { label: "Music", description: null },
-                },
+                translations: [
+                    { language_code: "nl", label: "Muziek", description: null },
+                    { language_code: "en", label: "Music", description: null },
+                ],
             },
         ],
     },
     {
         slug: "format",
-        translations: {
-            nl: { label: "Formaat" },
-            en: { label: "Format" },
-        },
+        translations: [
+            { language_code: "nl", label: "Formaat" },
+            { language_code: "en", label: "Format" },
+        ],
         tags: [
             {
                 slug: "world-premiere",
                 sort_order: 1,
-                translations: {
-                    nl: { label: "Wereldpremière", description: null },
-                    en: { label: "World premiere", description: null },
-                },
+                translations: [
+                    { language_code: "nl", label: "Wereldpremière", description: null },
+                    { language_code: "en", label: "World premiere", description: null },
+                ],
             },
             {
                 slug: "festival",
                 sort_order: 2,
-                translations: {
-                    nl: { label: "Festival", description: null },
-                    en: { label: "Festival", description: null },
-                },
+                translations: [
+                    { language_code: "nl", label: "Festival", description: null },
+                    { language_code: "en", label: "Festival", description: null },
+                ],
             },
         ],
     },

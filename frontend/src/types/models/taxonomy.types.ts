@@ -3,24 +3,24 @@ export type EntityType = "production" | "artist" | "article" | "media";
 export type FacetSlug = "discipline" | "format" | "theme" | "audience";
 
 export type TagTranslation = {
+    languageCode: string;
     label: string;
     description: string | null;
 };
 
 export type FacetTranslation = {
+    languageCode: string;
     label: string;
 };
 
 export type Tag = {
     slug: string;
     sortOrder: number;
-    /** Translations keyed by language code, e.g. "nl" or "en". */
-    translations: Record<string, TagTranslation>;
+    translations: TagTranslation[];
 };
 
 export type Facet = {
     slug: FacetSlug;
-    /** Translations keyed by language code, e.g. "nl" or "en". */
-    translations: Record<string, FacetTranslation>;
+    translations: FacetTranslation[];
     tags: Tag[];
 };

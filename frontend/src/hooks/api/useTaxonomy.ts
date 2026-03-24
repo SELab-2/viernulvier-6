@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api-client";
 import { mapFacets } from "@/mappers/taxonomy.mapper";
-import { FacetResponse, EntityType } from "@/types/api/taxonomy.api.types";
+import { EntityType } from "@/types/api/taxonomy.api.types";
 import { Facet } from "@/types/models/taxonomy.types";
 
 import { queryKeys } from "./query-keys";
