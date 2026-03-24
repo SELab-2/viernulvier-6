@@ -364,9 +364,10 @@ impl ApiImporter {
         production_source_id: i32,
         gallery_type: &str,
     ) -> Result<(), reqwest::Error> {
+        let url = format!("{API_BASE_URL}{gallery_url}");
         let gallery: ApiMediaGallery = self
             .client
-            .get(gallery_url)
+            .get(url)
             .header("X-AUTH-TOKEN", &self.auth_token)
             .send()
             .await?
@@ -414,9 +415,10 @@ impl ApiImporter {
         production_source_id: i32,
         gallery_type: &str,
     ) -> Result<(), reqwest::Error> {
+        let url = format!("{API_BASE_URL}{item_url}");
         let item: ApiMediaItem = self
             .client
-            .get(item_url)
+            .get(url)
             .header("X-AUTH-TOKEN", &self.auth_token)
             .send()
             .await?
