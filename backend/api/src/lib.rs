@@ -444,12 +444,11 @@ impl ApiImporter {
         if cdn_url.is_none() {
             // try to decode the original URL from the end of a crop url
             for crop in &item.crops {
-                if let Some(url) = &crop.url {
-                    if let Some(decoded) = decode_url_from_crop(url) {
+                if let Some(url) = &crop.url
+                    && let Some(decoded) = decode_url_from_crop(url) {
                         cdn_url = Some(decoded);
                         break;
                     }
-                }
             }
             
             if cdn_url.is_none() {
@@ -560,9 +559,9 @@ impl ApiImporter {
                     let mut variant_checksum = None;
 
                     // Only download high-res variants
-                    if name == "hd_ready" || name == "FE3_header" {
-                        if let Some(s3_client) = &self.s3_client {
-                            if let Some(s3_bucket) = &self.s3_bucket {
+                    if (name == "hd_ready" || name == "FE3_header")
+                        && let Some(s3_client) = &self.s3_client
+                            && let Some(s3_bucket) = &self.s3_bucket {
                                 let format = item.format.as_deref().unwrap_or("");
                                 let ext = format_to_extension(format);
                                 let file_uuid = Uuid::now_v7();
@@ -581,8 +580,6 @@ impl ApiImporter {
                                     variant_checksum = Some(checksum);
                                 }
                             }
-                        }
-                    }
 
                     let upsert = database::repos::media_variant::CropVariantUpsert {
                         media_id: media.id,
@@ -703,13 +700,11 @@ fn decode_url_from_crop(crop_url: &str) -> Option<String> {
             .or_else(|_| general_purpose::STANDARD_NO_PAD.decode(b64_part))
             .or_else(|_| general_purpose::STANDARD.decode(b64_part));
             
-        if let Ok(bytes) = decoded {
-            if let Ok(url) = String::from_utf8(bytes) {
-                if url.starts_with("http") {
+        if let Ok(bytes) = decoded
+            && let Ok(url) = String::from_utf8(bytes)
+                && url.starts_with("http") {
                     return Some(url);
                 }
-            }
-        }
     }
     None
 }

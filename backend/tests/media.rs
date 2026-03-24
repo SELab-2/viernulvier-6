@@ -43,7 +43,7 @@ async fn get_entity_cover_media_via_filter(db: PgPool) {
     let data: Vec<MediaPayload> = response.into_struct().await;
     assert_eq!(data.len(), 1);
     let media = &data[0];
-    assert_eq!(media.alt_text.as_deref(), Some("Cover image"));
+    assert_eq!(media.alt_text_nl.as_deref(), Some("Cover image"));
 }
 
 #[sqlx::test(fixtures("productions", "media"))]
@@ -107,7 +107,7 @@ async fn attach_media_transactional_success(db: PgPool) {
         "role": "gallery",
         "sort_order": 0,
         "is_cover_image": true,
-        "alt_text": "Attached from CMS"
+        "alt_text_nl": "Attached from CMS"
     });
 
     let unauth_app = TestRouter::new(db.clone());
@@ -129,7 +129,7 @@ async fn attach_media_transactional_success(db: PgPool) {
     assert_eq!(response.status(), StatusCode::CREATED);
 
     let attached: MediaPayload = response.into_struct().await;
-    assert_eq!(attached.alt_text.as_deref(), Some("Attached from CMS"));
+    assert_eq!(attached.alt_text_nl.as_deref(), Some("Attached from CMS"));
 
     let list_response = app
         .get(&format!(

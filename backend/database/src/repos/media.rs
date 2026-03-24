@@ -90,10 +90,12 @@ impl<'a> MediaRepo<'a> {
             VALUES (
                 $1, $2, $3, $4, $5, $6,
                 $7, $8, $9,
-                $10, $11,
-                $12, $13, $14,
-                $15, $16, $17, $18,
-                $19, $20
+                $10, $11, $12,
+                $13, $14, $15,
+                $16, $17,
+                $18, $19, $20,
+                $21, $22, $23, $24,
+                $25, $26
             )
             ON CONFLICT (s3_key)
             DO UPDATE SET
@@ -299,7 +301,7 @@ impl<'a> MediaRepo<'a> {
                 m.id, m.created_at, m.updated_at,
                 m.s3_key, m.mime_type, m.file_size,
                 m.width, m.height, m.checksum,
-                m.alt_text, m.description, m.credit,
+                m.alt_text_nl, m.alt_text_en, m.alt_text_fr, m.description_nl, m.description_en, m.description_fr, m.credit_nl, m.credit_en, m.credit_fr,
                 m.geo_latitude, m.geo_longitude,
                 m.parent_id, m.derivative_type, m.gallery_type, m.source_id,
                 m.source_system, m.source_uri, m.source_updated_at
@@ -329,7 +331,7 @@ impl<'a> MediaRepo<'a> {
                 m.id, m.created_at, m.updated_at,
                 m.s3_key, m.mime_type, m.file_size,
                 m.width, m.height, m.checksum,
-                m.alt_text, m.description, m.credit,
+                m.alt_text_nl, m.alt_text_en, m.alt_text_fr, m.description_nl, m.description_en, m.description_fr, m.credit_nl, m.credit_en, m.credit_fr,
                 m.geo_latitude, m.geo_longitude,
                 m.parent_id, m.derivative_type, m.gallery_type, m.source_id,
                 m.source_system, m.source_uri, m.source_updated_at
@@ -368,7 +370,7 @@ impl<'a> MediaRepo<'a> {
                 m.id, m.created_at, m.updated_at,
                 m.s3_key, m.mime_type, m.file_size,
                 m.width, m.height, m.checksum,
-                m.alt_text, m.description, m.credit,
+                m.alt_text_nl, m.alt_text_en, m.alt_text_fr, m.description_nl, m.description_en, m.description_fr, m.credit_nl, m.credit_en, m.credit_fr,
                 m.geo_latitude, m.geo_longitude,
                 m.parent_id, m.derivative_type, m.gallery_type, m.source_id,
                 m.source_system, m.source_uri, m.source_updated_at
