@@ -46,6 +46,10 @@ function FacetFilters({ facets, activeTags, onToggle, onClear }: FacetFiltersPro
         <SidebarGroup>
             <SidebarGroupLabel>Filters</SidebarGroupLabel>
 
+            {facets.length === 0 && (
+                <p className="text-muted-foreground px-2 py-1 text-xs">No filters available.</p>
+            )}
+
             {facets.map((facet) => (
                 <div key={facet.slug} className="mb-3">
                     <p className="text-muted-foreground px-2 pb-1 text-xs font-medium">
