@@ -3,8 +3,8 @@ use database::Database;
 use uuid::Uuid;
 
 use crate::{
-    error::ErrorResponse,
     dto::location::{LocationPayload, LocationPostPayload},
+    error::ErrorResponse,
     handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
 };
 
@@ -18,9 +18,7 @@ use crate::{
         (status = 200, description = "Success", body = [LocationPayload])
     )
 )]
-pub async fn get_all(
-    db: Database
-) -> JsonResponse<Vec<LocationPayload>> {
+pub async fn get_all(db: Database) -> JsonResponse<Vec<LocationPayload>> {
     LocationPayload::all(&db, 10).await?.json()
 }
 
@@ -38,10 +36,7 @@ pub async fn get_all(
         (status = 404, description = "Not found")
     )
 )]
-pub async fn get_one(
-    db: Database,
-    Path(id): Path<Uuid>
-) -> JsonResponse<LocationPayload> {
+pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<LocationPayload> {
     LocationPayload::by_id(&db, id).await?.json()
 }
 
@@ -84,10 +79,7 @@ pub async fn post(
         ("cookie_auth" = [])
     )
 )]
-pub async fn delete(
-    db: Database,
-    Path(id): Path<Uuid>
-) -> StatusResponse {
+pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
     LocationPayload::delete(&db, id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -109,7 +101,7 @@ pub async fn delete(
 )]
 pub async fn put(
     db: Database,
-    Json(location): Json<LocationPayload>
+    Json(location): Json<LocationPayload>,
 ) -> JsonResponse<LocationPayload> {
     Ok(Json(location.update(&db).await?))
 }
