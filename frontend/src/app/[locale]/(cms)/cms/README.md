@@ -26,7 +26,7 @@ The tab bar (`cms-tab-bar.tsx`) reads `usePathname` to set the active tab and na
 
 ```
 data-table.tsx          reusable TanStack Table wrapper, handles expand/collapse
-actions-column.tsx      factory: makeActionsColumn({ label, copyKey, onEdit? })
+actions-column.tsx      factory: makeActionsColumn({ label, copyKey, onEdit })
 edit-sheet.tsx          generic EditSheet<TData> + FieldDef<TData> type
 
 productions/

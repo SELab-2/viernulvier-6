@@ -18,7 +18,7 @@ type CopyableKeys<TData> = {
 interface ActionsColumnOptions<TData> {
     label: string;
     copyKey: CopyableKeys<TData>;
-    onEdit?: (entity: TData) => void;
+    onEdit: (entity: TData) => void;
 }
 
 export function makeActionsColumn<TData extends Record<string, unknown>>(
@@ -48,7 +48,7 @@ export function makeActionsColumn<TData extends Record<string, unknown>>(
                         >
                             Copy {String(copyKey)}
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onEdit?.(entity)}>
+                        <DropdownMenuItem onClick={() => onEdit(entity)}>
                             Edit {label}
                         </DropdownMenuItem>
                     </DropdownMenuContent>
