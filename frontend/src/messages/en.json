@@ -94,7 +94,16 @@
     "Productions": {
         "title": "Productions",
         "showing": "Showing {shown} of {total} results",
-        "seeEvents": "see events"
+        "seeEvents": "see events",
+        "eventsAvailableSoon": "Events available soon"
+    },
+    "Events": {
+        "title": "Events",
+        "upcoming": "Upcoming",
+        "past": "Past",
+        "date": "Date",
+        "status": "Status",
+        "noEvents": "No events available"
     },
     "Login": {
         "title": "Welcome back",

@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 
 import { useGetProductions } from "@/hooks/api/useProductions";
+import { useGetEvents } from "@/hooks/api/useEvents";
 import { useGetLocations } from "@/hooks/api/useLocations";
+import { useGetFacets } from "@/hooks/api/useTaxonomy";
+import type { Event } from "@/types/models/event.types";
 import { getLocalizedField } from "@/lib/locale";
 
 import { LoadingState } from "@/components/shared/loading-state";
@@ -25,12 +28,26 @@ export default function SearchPage() {
     const [searchQuery, setSearchQuery] = useState(() => searchParams.get("q") ?? "");
 
     const { data: productions, isLoading: productionsLoading } = useGetProductions();
+    const { data: events, isLoading: eventsLoading } = useGetEvents();
     const { data: locations, isLoading: locationsLoading } = useGetLocations();
+    const { data: facets, isLoading: facetsLoading } = useGetFacets({
+        entityType: "production",
+    });
 
-    const isLoading = productionsLoading || locationsLoading;
+    const isLoading = productionsLoading || eventsLoading || locationsLoading || facetsLoading;
 
     const ITEMS_PER_PAGE = 20;
     const [currentPage, setCurrentPage] = useState(1);
+
+    const eventsByProduction = useMemo(() => {
+        const map = new Map<string, Event[]>();
+        (events ?? []).forEach((event) => {
+            const existing = map.get(event.productionId) ?? [];
+            existing.push(event);
+            map.set(event.productionId, existing);
+        });
+        return map;
+    }, [events]);
 
     if (isLoading) {
         return (
@@ -82,9 +99,13 @@ export default function SearchPage() {
             <ResultsBar shownCount={filteredProductions.length} totalCount={totalCount} />
 
             <div className="flex min-h-[calc(100vh-300px)] overflow-hidden">
-                <ArchiveSidebar locations={locations ?? []} />
+                <ArchiveSidebar locations={locations ?? []} facets={facets ?? []} />
                 <main className="min-w-0 flex-1 overflow-hidden">
-                    <ProductionList productions={filteredProductions} locale={locale} />
+                    <ProductionList
+                        productions={filteredProductions}
+                        locale={locale}
+                        eventsByProduction={eventsByProduction}
+                    />
                     {!searchQuery && totalPages > 1 && (
                         <Pagination
                             totalPages={totalPages}

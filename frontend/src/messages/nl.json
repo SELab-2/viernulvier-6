@@ -94,7 +94,16 @@
     "Productions": {
         "title": "Producties",
         "showing": "Toont {shown} van {total} resultaten",
-        "seeEvents": "zie events"
+        "seeEvents": "zie events",
+        "eventsAvailableSoon": "Evenementen binnenkort beschikbaar"
+    },
+    "Events": {
+        "title": "Evenementen",
+        "upcoming": "Aankomend",
+        "past": "Voorbij",
+        "date": "Datum",
+        "status": "Status",
+        "noEvents": "Geen evenementen beschikbaar"
     },
     "Login": {
         "title": "Welkom terug",

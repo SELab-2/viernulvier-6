@@ -5,24 +5,13 @@ import { useTranslations } from "next-intl";
 import { SlidersHorizontal, X } from "lucide-react";
 
 import type { Location } from "@/types/models/location.types";
+import type { Facet } from "@/types/models/taxonomy.types";
 
 const CATEGORIES = ["artists", "productions", "articles", "posters"] as const;
-const TAGS = [
-    "theater",
-    "dance",
-    "concert",
-    "nightlife",
-    "performance",
-    "comedy",
-    "circus",
-    "music",
-    "spokenWord",
-    "talks",
-    "monument",
-] as const;
 
 interface ArchiveSidebarProps {
     locations?: Location[];
+    facets?: Facet[];
     onFilterChange?: (filters: {
         categories: Set<string>;
         tags: Set<string>;
@@ -30,7 +19,7 @@ interface ArchiveSidebarProps {
     }) => void;
 }
 
-export function ArchiveSidebar({ locations = [] }: ArchiveSidebarProps) {
+export function ArchiveSidebar({ locations = [], facets = [] }: ArchiveSidebarProps) {
     const t = useTranslations("Sidebar");
     const [mobileOpen, setMobileOpen] = useState(false);
     const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
@@ -102,23 +91,25 @@ export function ArchiveSidebar({ locations = [] }: ArchiveSidebarProps) {
                 </CheckboxList>
             </FilterGroup>
 
-            <FilterGroup label={t("tags.label")}>
-                <div className="flex flex-wrap gap-2 pb-2.5">
-                    {TAGS.map((tag) => (
-                        <button
-                            key={tag}
-                            onClick={() => toggleTag(tag)}
-                            className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase transition-all ${
-                                activeTags.has(tag)
-                                    ? "bg-foreground text-background border-foreground"
-                                    : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
-                            }`}
-                        >
-                            {t(`tags.${tag}`)}
-                        </button>
-                    ))}
-                </div>
-            </FilterGroup>
+            {facets.map((facet) => (
+                <FilterGroup key={facet.slug} label={facet.label}>
+                    <div className="flex flex-wrap gap-2 pb-2.5">
+                        {facet.tags.map((tag) => (
+                            <button
+                                key={tag.slug}
+                                onClick={() => toggleTag(tag.slug)}
+                                className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase transition-all ${
+                                    activeTags.has(tag.slug)
+                                        ? "bg-foreground text-background border-foreground"
+                                        : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                                }`}
+                            >
+                                {tag.label}
+                            </button>
+                        ))}
+                    </div>
+                </FilterGroup>
+            ))}
 
             <FilterGroup label={t("locations.label")}>
                 <CheckboxList>

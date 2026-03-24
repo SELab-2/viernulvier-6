@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import Link from "next/link";
 
 import { useGetProductions } from "@/hooks/api/useProductions";
+import { useGetEvents } from "@/hooks/api/useEvents";
+import type { Event } from "@/types/models/event.types";
 
 import { SearchHeader } from "@/components/homepage/search-header";
 import { FeaturedSection } from "@/components/homepage/featured-section";
@@ -19,7 +21,6 @@ export default function HomePage() {
     const router = useRouter();
     const [query, setQuery] = useState("");
 
-    // Sync search header with hero input
     const handleHeaderSearch = useCallback(
         (value: string) => {
             if (value.trim()) {
@@ -40,7 +41,18 @@ export default function HomePage() {
     }, [query, router]);
 
     const { data: productions } = useGetProductions();
+    const { data: events } = useGetEvents();
     const latestProductions = (productions ?? []).slice(0, 4);
+
+    const eventsByProduction = useMemo(() => {
+        const map = new Map<string, Event[]>();
+        (events ?? []).forEach((event) => {
+            const existing = map.get(event.productionId) ?? [];
+            existing.push(event);
+            map.set(event.productionId, existing);
+        });
+        return map;
+    }, [events]);
 
     return (
         <>
@@ -123,6 +135,7 @@ export default function HomePage() {
                                 key={production.id}
                                 production={production}
                                 locale={locale}
+                                events={eventsByProduction.get(production.id)}
                             />
                         ))}
                     </div>
