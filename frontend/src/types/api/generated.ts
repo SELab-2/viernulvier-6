@@ -409,9 +409,11 @@ export interface components {
         FacetResponse: {
             slug: string;
             tags: components["schemas"]["TagResponse"][];
-            translations: {
-                [key: string]: unknown;
-            };
+            translations: components["schemas"]["FacetTranslationPayload"][];
+        };
+        FacetTranslationPayload: {
+            label: string;
+            language_code: string;
         };
         HallPayload: {
             box_office_id?: string | null;
@@ -540,9 +542,12 @@ export interface components {
             slug: string;
             /** Format: int32 */
             sort_order: number;
-            translations: {
-                [key: string]: unknown;
-            };
+            translations: components["schemas"]["TagTranslationPayload"][];
+        };
+        TagTranslationPayload: {
+            description?: string | null;
+            label: string;
+            language_code: string;
         };
         /** @enum {string} */
         UserRole: "admin" | "editor" | "user";
