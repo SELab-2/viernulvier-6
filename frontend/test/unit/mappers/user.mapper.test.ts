@@ -20,6 +20,7 @@ describe("mapUser", () => {
 
     it("falls back to user role when missing/unknown", () => {
         expect(
+            // @ts-expect-error: Testing runtime fallback for missing role
             mapUser({
                 id: "id-1",
                 email: "a@b.com",
@@ -30,6 +31,7 @@ describe("mapUser", () => {
             mapUser({
                 id: "id-2",
                 email: "c@d.com",
+                // @ts-expect-error: Testing runtime fallback for invalid role
                 role: "super-admin",
             }).role
         ).toBe(UserRole.USER);

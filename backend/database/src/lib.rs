@@ -4,8 +4,9 @@ use tracing::info;
 use crate::{
     error::DatabaseError,
     repos::{
-        event::EventRepo, hall::HallRepo, internal_state::InternalStateRepo, location::LocationRepo,
-        production::ProductionRepo, space::SpaceRepo, user::UserRepo, sessions::SessionRepo
+        event::EventRepo, hall::HallRepo, internal_state::InternalStateRepo,
+        location::LocationRepo, production::ProductionRepo, sessions::SessionRepo,
+        space::SpaceRepo, tag::TagRepo, user::UserRepo,
     },
 };
 
@@ -14,14 +15,18 @@ pub mod models {
     pub mod blogpost;
     pub mod collection;
     pub mod collection_item;
+    pub mod entity_type;
     pub mod event;
+    pub mod facet;
     pub mod hall;
     pub mod internal_state;
     pub mod location;
     pub mod production;
-    pub mod space;
-    pub mod user;
     pub mod session;
+    pub mod space;
+    pub mod tag;
+    pub mod tagging;
+    pub mod user;
 }
 
 pub mod repos {
@@ -30,9 +35,10 @@ pub mod repos {
     pub mod internal_state;
     pub mod location;
     pub mod production;
-    pub mod space;
-    pub mod user;
     pub mod sessions;
+    pub mod space;
+    pub mod tag;
+    pub mod user;
 }
 
 pub mod error;
@@ -88,6 +94,10 @@ impl Database {
 
     pub fn spaces<'a>(&'a self) -> SpaceRepo<'a> {
         SpaceRepo::new(&self.db)
+    }
+
+    pub fn tags<'a>(&'a self) -> TagRepo<'a> {
+        TagRepo::new(&self.db)
     }
 
     pub fn events<'a>(&'a self) -> EventRepo<'a> {

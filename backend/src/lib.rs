@@ -3,6 +3,8 @@ use axum::http::{HeaderValue, Method};
 use axum::{Router, routing::get};
 use axum::middleware::from_extractor_with_state;
 use database::Database;
+use database::models::entity_type::EntityType;
+use database::models::facet::Facet;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info};
 use crate::extractors::auth::{EditorUser, AdminUser};
@@ -18,7 +20,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::config::AppConfig;
 use crate::error::AppError;
-use crate::handlers::{admin, auth, hall, location, production, space, version};
+use crate::handlers::{admin, auth, event, hall, location, production, space, taxonomy, version};
 
 pub mod config;
 pub mod dto;
@@ -35,6 +37,7 @@ pub struct AppState {
 #[derive(OpenApi)]
 #[openapi(
     modifiers(&SecurityAddon),
+    components(schemas(EntityType, Facet)),
     tags(
         (name = "viernulvier_api", description = "API Endpoints")
     )
@@ -172,12 +175,18 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // production
         .routes(routes!(production::get_all))
         .routes(routes!(production::get_one))
+        .routes(routes!(production::get_events))
         // hall
         .routes(routes!(hall::get_all))
         .routes(routes!(hall::get_one))
         // space
         .routes(routes!(space::get_all))
         .routes(routes!(space::get_one))
+        // event
+        .routes(routes!(event::get_all))
+        .routes(routes!(event::get_one))
+        // taxonomies
+        .routes(routes!(taxonomy::get_facets))
 }
 
 // Only editors can edit data
@@ -201,6 +210,10 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(space::post))
         .routes(routes!(space::delete))
         .routes(routes!(space::put))
+        // Event
+        .routes(routes!(event::post))
+        .routes(routes!(event::delete))
+        .routes(routes!(event::put))
         .layer(from_extractor_with_state::<EditorUser, AppState>(state))
 }
 

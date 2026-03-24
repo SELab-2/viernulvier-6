@@ -47,7 +47,9 @@ impl TestRouter {
     }
 
     pub async fn as_editor(db: PgPool) -> Self {
-        Self::new(db).login("editor@test.com", UserRole::Editor).await
+        Self::new(db)
+            .login("editor@test.com", UserRole::Editor)
+            .await
     }
 
     pub async fn as_admin(db: PgPool) -> Self {
@@ -102,7 +104,9 @@ impl TestRouter {
         path: &str,
         body: Option<T>,
     ) -> Response<Body> {
-        let mut request_builder = Request::builder().method(method).uri(path);
+        let path = path.trim_start_matches('/');
+        let uri = format!("/api/{path}");
+        let mut request_builder = Request::builder().method(method).uri(uri);
 
         if let Some(cookie) = &self.cookie {
             request_builder = request_builder.header(header::COOKIE, cookie);

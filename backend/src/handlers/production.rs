@@ -3,8 +3,11 @@ use database::Database;
 use uuid::Uuid;
 
 use crate::{
+    dto::{
+        event::EventPayload,
+        production::{ProductionPayload, ProductionPostPayload},
+    },
     error::ErrorResponse,
-    dto::production::{ProductionPayload, ProductionPostPayload},
     handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
 };
 
@@ -18,9 +21,7 @@ use crate::{
         (status = 200, description = "Success", body = [ProductionPayload])
     )
 )]
-pub async fn get_all(
-    db: Database
-) -> JsonResponse<Vec<ProductionPayload>> {
+pub async fn get_all(db: Database) -> JsonResponse<Vec<ProductionPayload>> {
     ProductionPayload::all(&db, 10).await?.json()
 }
 
@@ -38,11 +39,26 @@ pub async fn get_all(
         (status = 404, description = "Not found")
     )
 )]
-pub async fn get_one(
-    db: Database,
-    Path(id): Path<Uuid>
-) -> JsonResponse<ProductionPayload> {
+pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<ProductionPayload> {
     ProductionPayload::by_id(&db, id).await?.json()
+}
+
+#[utoipa::path(
+    method(get),
+    path = "/productions/{id}/events",
+    tag = "Productions",
+    operation_id = "get_events_by_production_id",
+    description = "Get all events for a production",
+    params(
+        ("id" = Uuid, Path, description = "Production UUID")
+    ),
+    responses(
+        (status = 200, description = "Success", body = [EventPayload]),
+        (status = 404, description = "Not found")
+    )
+)]
+pub async fn get_events(db: Database, Path(id): Path<Uuid>) -> JsonResponse<Vec<EventPayload>> {
+    EventPayload::by_production(&db, id).await?.json()
 }
 
 #[utoipa::path(
@@ -84,10 +100,7 @@ pub async fn post(
         ("cookie_auth" = [])
     )
 )]
-pub async fn delete(
-    db: Database,
-    Path(id): Path<Uuid>
-) -> StatusResponse {
+pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
     ProductionPayload::delete(&db, id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
