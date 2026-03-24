@@ -2,6 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -44,7 +45,14 @@ export function makeActionsColumn<TData extends Record<string, unknown>>(
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem
                             disabled={copyValue === ""}
-                            onClick={() => navigator.clipboard.writeText(copyValue)}
+                            onClick={async () => {
+                                try {
+                                    await navigator.clipboard.writeText(copyValue);
+                                    toast.success(`Copied ${String(copyKey)}`);
+                                } catch {
+                                    toast.error("Failed to copy to clipboard");
+                                }
+                            }}
                         >
                             Copy {String(copyKey)}
                         </DropdownMenuItem>
