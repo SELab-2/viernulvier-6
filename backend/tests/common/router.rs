@@ -47,7 +47,9 @@ impl TestRouter {
     }
 
     pub async fn as_editor(db: PgPool) -> Self {
-        Self::new(db).login("editor@test.com", UserRole::Editor).await
+        Self::new(db)
+            .login("editor@test.com", UserRole::Editor)
+            .await
     }
 
     pub async fn as_admin(db: PgPool) -> Self {

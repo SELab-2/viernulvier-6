@@ -1,12 +1,14 @@
 use chrono::{DateTime, Utc};
-use database::{Database, models::event::{Event, EventCreate}};
+use database::{
+    Database,
+    models::event::{Event, EventCreate},
+};
 use o2o::o2o;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::error::AppError;
-
 
 impl EventPayload {
     pub async fn all(db: &Database, limit: usize) -> Result<Vec<Self>, AppError> {
@@ -24,7 +26,13 @@ impl EventPayload {
     }
 
     pub async fn by_production(db: &Database, id: Uuid) -> Result<Vec<Self>, AppError> {
-        Ok(db.events().by_production(id).await?.into_iter().map(Self::from).collect())
+        Ok(db
+            .events()
+            .by_production(id)
+            .await?
+            .into_iter()
+            .map(Self::from)
+            .collect())
     }
 
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {
@@ -41,7 +49,6 @@ impl EventPostPayload {
         Ok(db.events().insert(self.into()).await?.into())
     }
 }
-
 
 #[derive(o2o, Serialize, Deserialize, ToSchema)]
 #[map_owned(Event)]
@@ -66,8 +73,6 @@ pub struct EventPayload {
     pub status: String,
     pub hall_id: Option<Uuid>,
 }
-
-
 
 #[derive(o2o, Serialize, Deserialize, ToSchema)]
 #[owned_into(EventCreate)]

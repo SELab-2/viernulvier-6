@@ -133,7 +133,9 @@ async fn delete_success(db: PgPool) {
 #[test_log::test]
 async fn delete_not_found(db: PgPool) {
     let unauth_app = TestRouter::new(db.clone());
-    let unauth_response = unauth_app.delete(&format!("/productions/{}", Uuid::nil())).await;
+    let unauth_response = unauth_app
+        .delete(&format!("/productions/{}", Uuid::nil()))
+        .await;
     assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
 
     let app = TestRouter::as_editor(db).await;

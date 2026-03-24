@@ -1,8 +1,8 @@
 use std::io::Error as IoError;
 use thiserror::Error;
 
-use utoipa::ToSchema;
 use serde::Serialize;
+use utoipa::ToSchema;
 
 use axum::{
     http::StatusCode,
@@ -50,7 +50,14 @@ impl IntoResponse for AppError {
 
         let (status, msg) = self.error_details();
 
-        (status, axum::Json(ErrorResponse { message: msg.to_string(), success: false })).into_response()
+        (
+            status,
+            axum::Json(ErrorResponse {
+                message: msg.to_string(),
+                success: false,
+            }),
+        )
+            .into_response()
     }
 }
 
