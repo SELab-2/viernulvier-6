@@ -18,6 +18,8 @@ cast_lossless = "warn"
 single_match_else = "warn"
 needless_pass_by_value = "warn"
 trivially_copy_pass_by_ref = "warn"
+# nursery
+use_self = "warn"
 
 [lints]
 workspace = true
