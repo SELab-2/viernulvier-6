@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import type { Row } from "@tanstack/react-table";
-import { DataTable } from "../data-table";
+import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
 import { makeLocationColumns, locationFields, toLocationUpdateInput } from "./columns";
 import { makeHallColumns, hallFields, toHallUpdateInput } from "./hall-columns";
@@ -38,11 +38,7 @@ export function LocationsTable() {
     const renderHalls = useCallback(
         (row: Row<Location>) => {
             const halls = hallsBySpace.get(row.original.id) ?? [];
-            return (
-                <div className="bg-muted/30 py-1 pr-6 pl-12">
-                    <DataTable columns={hallCols} data={halls} compact />
-                </div>
-            );
+            return <MemoSubTable items={halls} columns={hallCols} />;
         },
         [hallCols, hallsBySpace]
     );

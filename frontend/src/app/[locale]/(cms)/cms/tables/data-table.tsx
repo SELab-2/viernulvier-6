@@ -12,6 +12,29 @@ import {
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Fragment, ReactNode, useState } from "react";
 
+// Generic memoized subtable that only rerenders when its own row items change.
+// TanStack Query structural sharing ensures unchanged items keep their reference,
+// so the element-level comparator correctly skips rerenders for unaffected rows.
+function MemoSubTableInner<T>({ items, columns }: { items: T[]; columns: ColumnDef<T>[] }) {
+    return (
+        <div className="bg-muted/30 py-1 pr-6 pl-12">
+            <DataTable columns={columns} data={items} compact />
+        </div>
+    );
+}
+MemoSubTableInner.displayName = "MemoSubTable";
+export const MemoSubTable = memo(
+    MemoSubTableInner,
+    <T,>(
+        prev: { items: T[]; columns: ColumnDef<T>[] },
+        next: { items: T[]; columns: ColumnDef<T>[] }
+    ) =>
+        prev.columns === next.columns &&
+        prev.items.length === next.items.length &&
+        prev.items.every((item, i) => item === next.items[i])
+) as <T>(props: { items: T[]; columns: ColumnDef<T>[] }) => ReactNode;
+
+import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import {
     Table,

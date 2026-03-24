@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import type { Row } from "@tanstack/react-table";
-import { DataTable } from "../data-table";
+import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
 import { makeProductionColumns, productionFields, toProductionUpdateInput } from "./columns";
 import { makeEventColumns, eventFields, toEventUpdateInput } from "./event-columns";
@@ -37,11 +37,7 @@ export function ProductionsTable() {
     const renderEvents = useCallback(
         (row: Row<Production>) => {
             const events = eventsByProduction.get(row.original.id) ?? [];
-            return (
-                <div className="bg-muted/30 py-1 pr-6 pl-12">
-                    <DataTable columns={eventCols} data={events} compact />
-                </div>
-            );
+            return <MemoSubTable items={events} columns={eventCols} />;
         },
         [eventCols, eventsByProduction]
     );
