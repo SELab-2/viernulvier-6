@@ -48,10 +48,26 @@ This keeps metadata and linking consistent for CMS operations.
 
 ## Importer Behavior (Viernulvier API)
 
-- Imports production galleries (`media`, `poster`, `review`)
-- Downloads source images, uploads them to Garage
-- Stores metadata in `media` and links in `entity_media`
-- Imports `crops` into `media_variant`
+The external API importer retrieves media galleries related to productions and automatically ingests them into our S3 backend.
+
+### Extracting the Hidden Original Source URLs
+
+Many Legacy external API payloads do not expose a direct `link` field to the original image. Instead, they provide an array of `crops` processed by an external image service (like imgproxy).
+
+Here is an example crop from the external API:
+`https://img.viernulvier.gent/.../c:3939:2215:fp:0.5:0.33/s:1920:1080:1/aHR0cHM6Ly93d3cudmllcm51bHZpZXIuZ2VudC8vY21zX2ZpbGVzL3N5c3RlbS9pbWFnZXMvaW1nNzMwM19vcmlnLmpwZw`
+
+If you take the trailing URL segment (`aHR0cHM...`) and Base64-decode it, it reveals the original, uncompressed, and uncropped source URL:
+`https://www.viernulvier.gent/cms_files/system/images/img7303_orig.jpg`
+
+**Why we extract this:**
+If we simply downloaded the `hd_ready` crop as the main image, we would permanently lose the high-resolution original image (e.g., a 4K 3939x3085 master image) because the crop URL applies a scale filter (`s:1920:1080`) and a crop filter (`c:3939:2215`).
+
+To retain maximum fidelity for potential future redesigns or print uses, the Rust importer:
+
+1. Iterates over all crop URLs to locate and decode the Base64 segment.
+2. Downloads the **original master image** and saves it to S3, tying it to the main `media` row in the database.
+3. Downloads specific high-res crops (like `hd_ready` or `FE3_header`) and saves them to S3, tied to the `media_variant` table.
 
 ## Maintenance Endpoints
 
