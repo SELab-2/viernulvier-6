@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -46,11 +47,6 @@ export interface EditSheetProps<TData extends { id: string } & Record<string, un
     onSave?: (data: TData) => void;
 }
 
-const BOOLEAN_OPTIONS: SelectOption[] = [
-    { value: "true", label: "Yes" },
-    { value: "false", label: "No" },
-];
-
 const NULL_SENTINEL = "__null__";
 
 interface FieldRowProps<TData> {
@@ -60,6 +56,7 @@ interface FieldRowProps<TData> {
 }
 
 function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
+    const t = useTranslations("Cms.EditSheet");
     const fieldId = `field-${String(field.key)}`;
     const stringValue = value === null || value === undefined ? "" : String(value);
 
@@ -88,10 +85,12 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
         );
     }
 
-    const options = field.type === "boolean" ? BOOLEAN_OPTIONS : (field.options ?? []);
-
     if (field.type === "boolean") {
         const selectValue = value === null || value === undefined ? NULL_SENTINEL : String(value);
+        const booleanOptions: SelectOption[] = [
+            { value: "true", label: t("yes") },
+            { value: "false", label: t("no") },
+        ];
 
         return (
             <div className="flex flex-col gap-1.5">
@@ -107,11 +106,11 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
                     }}
                 >
                     <SelectTrigger id={fieldId} size="sm" className="w-full">
-                        <SelectValue placeholder="Select…" />
+                        <SelectValue placeholder={t("selectPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value={NULL_SENTINEL}>—</SelectItem>
-                        {options.map((opt) => (
+                        {booleanOptions.map((opt) => (
                             <SelectItem key={opt.value} value={opt.value}>
                                 {opt.label}
                             </SelectItem>
@@ -122,12 +121,14 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
         );
     }
 
+    const options = field.options ?? [];
+
     return (
         <div className="flex flex-col gap-1.5">
             <Label htmlFor={fieldId}>{field.label}</Label>
             <Select value={stringValue} onValueChange={onChange}>
                 <SelectTrigger id={fieldId} size="sm" className="w-full">
-                    <SelectValue placeholder="Select…" />
+                    <SelectValue placeholder={t("selectPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                     {options.map((opt) => (
@@ -154,6 +155,7 @@ function SheetFormBody<TData extends { id: string } & Record<string, unknown>>({
     onSave,
     onClose,
 }: SheetFormBodyProps<TData>) {
+    const t = useTranslations("Cms.EditSheet");
     const [values, setValues] = useState<Partial<TData>>(() => ({ ...entity }));
 
     const handleChange = (key: keyof TData, value: unknown) => {
@@ -180,10 +182,10 @@ function SheetFormBody<TData extends { id: string } & Record<string, unknown>>({
             <Separator />
             <SheetFooter className="flex-row justify-end gap-2 px-6 py-4">
                 <Button variant="outline" size="sm" onClick={onClose}>
-                    Cancel
+                    {t("cancel")}
                 </Button>
                 <Button size="sm" onClick={handleSave}>
-                    Save changes
+                    {t("saveChanges")}
                 </Button>
             </SheetFooter>
         </>

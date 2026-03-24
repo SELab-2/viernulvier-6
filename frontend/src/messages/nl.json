@@ -20,7 +20,7 @@
         "TabBar": {
             "overview": "CMS Overzicht",
             "content": "Inhoud beheren",
-            "ingest": "Importeren",
+            "ingest": "Ingest",
             "import": "Automatische import"
         },
         "Sidebar": {
