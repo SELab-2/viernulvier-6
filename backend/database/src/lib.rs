@@ -14,22 +14,22 @@ pub mod models {
     pub mod artist;
     pub mod blogpost;
     pub mod entity_media;
-    pub mod entity_type;
-    pub mod facet;
     pub mod collection;
     pub mod collection_item;
+    pub mod entity_type;
     pub mod event;
+    pub mod facet;
     pub mod hall;
     pub mod internal_state;
     pub mod location;
     pub mod media;
     pub mod media_variant;
     pub mod production;
+    pub mod session;
     pub mod space;
     pub mod tag;
     pub mod tagging;
     pub mod user;
-    pub mod session;
 }
 
 pub mod repos {
@@ -40,10 +40,10 @@ pub mod repos {
     pub mod media;
     pub mod media_variant;
     pub mod production;
+    pub mod sessions;
     pub mod space;
     pub mod tag;
     pub mod user;
-    pub mod sessions;
 }
 
 pub mod error;

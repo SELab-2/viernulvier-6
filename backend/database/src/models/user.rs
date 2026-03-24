@@ -1,7 +1,7 @@
 use ormlite::Model;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use utoipa::ToSchema;
+use uuid::Uuid;
 
 #[derive(Debug, sqlx::Type, PartialEq, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "lowercase")]

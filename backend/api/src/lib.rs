@@ -318,15 +318,13 @@ impl ApiImporter {
             info!("Events: got {amt} from api");
             for event in events {
                 let production_id = match event.production_source_id() {
-                    Some(id) => {
-                        match self.db.productions().by_source_id(id).await.unwrap() {
-                            Some(p) => p.id,
-                            None => {
-                                warn!("Events: production source_id {id} not found in db, skipping");
-                                continue;
-                            }
+                    Some(id) => match self.db.productions().by_source_id(id).await.unwrap() {
+                        Some(p) => p.id,
+                        None => {
+                            warn!("Events: production source_id {id} not found in db, skipping");
+                            continue;
                         }
-                    }
+                    },
                     None => {
                         warn!("Events: event has no production source_id, skipping");
                         continue;
@@ -335,7 +333,11 @@ impl ApiImporter {
 
                 let hall_uuid = match event.hall_source_id() {
                     Some(id) => {
-                        let uuid = self.db.halls().by_source_id(id).await
+                        let uuid = self
+                            .db
+                            .halls()
+                            .by_source_id(id)
+                            .await
                             .unwrap()
                             .map(|h| h.id);
                         if uuid.is_none() {
