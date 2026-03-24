@@ -3,8 +3,11 @@ use database::Database;
 use uuid::Uuid;
 
 use crate::{
+    dto::{
+        event::EventPayload,
+        production::{ProductionPayload, ProductionPostPayload},
+    },
     error::ErrorResponse,
-    dto::{event::EventPayload, production::{ProductionPayload, ProductionPostPayload}},
     handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
 };
 
@@ -18,9 +21,7 @@ use crate::{
         (status = 200, description = "Success", body = [ProductionPayload])
     )
 )]
-pub async fn get_all(
-    db: Database
-) -> JsonResponse<Vec<ProductionPayload>> {
+pub async fn get_all(db: Database) -> JsonResponse<Vec<ProductionPayload>> {
     ProductionPayload::all(&db, 10).await?.json()
 }
 
@@ -38,10 +39,7 @@ pub async fn get_all(
         (status = 404, description = "Not found")
     )
 )]
-pub async fn get_one(
-    db: Database,
-    Path(id): Path<Uuid>
-) -> JsonResponse<ProductionPayload> {
+pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<ProductionPayload> {
     ProductionPayload::by_id(&db, id).await?.json()
 }
 
@@ -102,10 +100,7 @@ pub async fn post(
         ("cookie_auth" = [])
     )
 )]
-pub async fn delete(
-    db: Database,
-    Path(id): Path<Uuid>
-) -> StatusResponse {
+pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
     ProductionPayload::delete(&db, id).await?;
     Ok(StatusCode::NO_CONTENT)
 }

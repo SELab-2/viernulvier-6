@@ -9,11 +9,12 @@ name = "database"
 path = "src/lib.rs"
 
 [dependencies]
-thiserror = { version = "2.0.16", default-features = false }
-tracing = { version = "=0.1", default-features = false }
-serde = { version = "1.0.219", default-features = false, features = ["derive"] }
-chrono = { version = "0.4.44", features = ["serde"] }
-uuid = { version = "1", features = ["v7"] }
+tracing = { workspace = true }
+serde = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+
 sqlx = { version = "0.8.6", default-features = false, features = [
     "runtime-tokio",
     "postgres",

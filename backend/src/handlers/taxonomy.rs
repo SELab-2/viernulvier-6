@@ -29,7 +29,5 @@ pub async fn get_facets(
     db: Database,
     Query(params): Query<TaxonomyParams>,
 ) -> JsonResponse<Vec<FacetResponse>> {
-    FacetResponse::all(&db, params.entity_type)
-        .await?
-        .json()
+    FacetResponse::all(&db, params.entity_type).await?.json()
 }

@@ -56,4 +56,3 @@ pub struct SpacePostPayload {
     pub name_nl: String,
     pub location_id: Uuid,
 }
-

@@ -16,8 +16,8 @@ pub struct Event {
     pub doors_at: Option<DateTime<Utc>>,
 
     pub vendor_id: Option<String>,
-    pub box_office_id: Option<String>,      // can we throw this out?
-    pub uitdatabank_id: Option<String>,     // can we throw this out?
+    pub box_office_id: Option<String>,  // can we throw this out?
+    pub uitdatabank_id: Option<String>, // can we throw this out?
     pub max_tickets_per_order: Option<i32>, // can we throw this out?
 
     pub production_id: Uuid,

@@ -102,7 +102,9 @@ async fn put_not_found(db: PgPool) {
     }))
     .expect("Failed to deserialize mock LocationPayload");
 
-    let unauthenticated_response = unauthenticated_app.put("/locations", &missing_location).await;
+    let unauthenticated_response = unauthenticated_app
+        .put("/locations", &missing_location)
+        .await;
     assert_eq!(unauthenticated_response.status(), StatusCode::UNAUTHORIZED);
 
     let response = app.put("/locations", &missing_location).await;
