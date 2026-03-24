@@ -31,7 +31,7 @@ impl TestRouter {
         };
 
         Self {
-            router: router(state.clone()).with_state(state),
+            router: router(&state).with_state(state),
             db,
             cookie: None,
         }

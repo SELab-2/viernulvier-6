@@ -28,7 +28,7 @@ async fn get_one_success(db: PgPool) {
     let app = TestRouter::new(db);
     let target_id = Uuid::from_str("11111111-1111-1111-1111-111111111111").unwrap();
 
-    let response = app.get(&format!("/productions/{}", target_id)).await;
+    let response = app.get(&format!("/productions/{target_id}")).await;
     assert_eq!(response.status(), StatusCode::OK);
 
     let data: ProductionPayload = response.into_struct().await;
@@ -116,16 +116,16 @@ async fn delete_success(db: PgPool) {
 
     let unauth_app = TestRouter::new(db.clone());
     let unauth_response = unauth_app
-        .delete(&format!("/productions/{}", target_id))
+        .delete(&format!("/productions/{target_id}"))
         .await;
     assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
 
     let app = TestRouter::as_editor(db).await;
 
-    let response = app.delete(&format!("/productions/{}", target_id)).await;
+    let response = app.delete(&format!("/productions/{target_id}")).await;
     assert_eq!(response.status(), StatusCode::NO_CONTENT);
 
-    let verify_res = app.get(&format!("/productions/{}", target_id)).await;
+    let verify_res = app.get(&format!("/productions/{target_id}")).await;
     assert_eq!(verify_res.status(), StatusCode::NOT_FOUND);
 }
 

@@ -7,8 +7,20 @@ edition = "2024"
 name = "viernulvier_api"
 path = "src/main.rs"
 
-[lints.clippy]
+[workspace.lints.clippy]
 unused_async = "warn"
+indexing_slicing = "warn"
+dbg_macro = "warn"
+# pedantic
+ignored_unit_patterns = "warn"
+uninlined_format_args = "warn"
+cast_lossless = "warn"
+single_match_else = "warn"
+needless_pass_by_value = "warn"
+trivially_copy_pass_by_ref = "warn"
+
+[lints]
+workspace = true
 
 [workspace]
 members = ["database", "api"]

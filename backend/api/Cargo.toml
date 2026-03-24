@@ -8,6 +8,9 @@ publish = false
 name = "api"
 path = "src/lib.rs"
 
+[lints]
+workspace = true
+
 [dependencies]
 database = { path = "../database" }
 
