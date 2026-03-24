@@ -76,5 +76,5 @@ pub async fn login_user(db: &Database, config: &AppConfig, user: &User) -> Strin
     )
     .unwrap();
 
-    format!("access_token={}", token)
+    format!("access_token={token}")
 }
