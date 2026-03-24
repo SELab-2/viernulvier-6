@@ -20,4 +20,4 @@ sha2 = "0.10"
 hex = "0.4"
 ormlite = { version = "0.24.3", default-features = false, features = ["sqlite"] }
 uuid = { version = "1", features = ["v7"] }
-aws-sdk-s3 = "1"
+aws-sdk-s3 = { version = "1", features = ["behavior-version-latest"] }
