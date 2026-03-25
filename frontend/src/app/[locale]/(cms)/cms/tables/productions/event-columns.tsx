@@ -43,11 +43,7 @@ export function toEventUpdateInput(entity: Event): EventUpdateInput {
     };
 }
 
-export function makeEventColumns(
-    options: {
-        onEdit?: (entity: Event) => void;
-    } = {}
-): ColumnDef<Event>[] {
+export function makeEventColumns(options: { onEdit: (entity: Event) => void }): ColumnDef<Event>[] {
     return [
         {
             accessorKey: "startsAt",
