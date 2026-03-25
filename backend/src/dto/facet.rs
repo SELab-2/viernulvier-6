@@ -2,19 +2,19 @@ use database::{
     Database,
     models::{entity_type::EntityType, tag::TaxonomyTag},
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::error::AppError;
 
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct TagResponse {
     pub slug: String,
     pub label: String,
     pub sort_order: i32,
 }
 
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct FacetResponse {
     pub slug: String,
     pub label: String,
