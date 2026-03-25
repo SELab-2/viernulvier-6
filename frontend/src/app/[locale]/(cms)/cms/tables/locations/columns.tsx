@@ -1,15 +1,10 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
+import { BooleanCell } from "../boolean-cell";
 import type { FieldDef } from "../edit-sheet";
 import type { Location, LocationUpdateInput } from "@/types/models/location.types";
-
-function BooleanCell({ value }: { value: boolean | null }) {
-    const t = useTranslations("Cms.EditSheet");
-    return value === null ? "—" : value ? t("yes") : t("no");
-}
 
 export const locationFields: FieldDef<Location>[] = [
     { key: "id", label: "ID", type: "text", readOnly: true },
