@@ -66,8 +66,5 @@ async fn get_filtered_by_unknown_entity_type(db: PgPool) {
     let app = TestRouter::new(db);
     let response = app.get("/taxonomy/facets?entity_type=nonexistent").await;
 
-    assert_eq!(response.status(), StatusCode::OK);
-
-    let data: Vec<FacetResponse> = response.into_struct().await;
-    assert_eq!(data.len(), 0);
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
