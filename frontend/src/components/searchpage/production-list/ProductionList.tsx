@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
 
 import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
@@ -82,9 +83,13 @@ export function ProductionItem({ production, locale, events = [] }: ProductionIt
                 </div>
 
                 <div className="min-w-0 flex-1">
-                    <div className="font-display text-foreground mb-0.5 text-[16px] leading-[1.1] font-bold tracking-[-0.02em] sm:text-[18px]">
+                    <Link
+                        href={`/productions/${production.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="font-display text-foreground mb-0.5 block text-[16px] leading-[1.1] font-bold tracking-[-0.02em] hover:underline sm:text-[18px]"
+                    >
                         {title}
-                    </div>
+                    </Link>
 
                     {artist && (
                         <div className="font-display text-foreground/38 mb-1.5 text-[16px] font-bold tracking-[-0.02em] sm:text-[18px]">
