@@ -1,9 +1,5 @@
 name: Backend Tests
 
-# This workflow runs on PRs and is required by branch protection rules.
-# To configure: GitHub Settings > Branches > main > Require status checks to pass
-# Search for "Backend Tests" and enable it.
-
 on:
   pull_request:
     branches: [main]
@@ -15,13 +11,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# DATABASE_URL is set in container env, points to 'postgres' service
-
 jobs:
   test:
     runs-on: self-hosted
     container:
-      image: rust:1.88-bookworm
+      image: rust:1.94-bookworm
       env:
         DATABASE_URL: postgres://test:test@postgres:5432/test
 
@@ -50,7 +44,18 @@ jobs:
         with:
           workspaces: backend
 
-      - name: Run tests
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Run tests and generate coverage
         run: |
           cd backend
-          cargo test --workspace
+          cargo llvm-cov --workspace --lcov --output-path lcov.info
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: backend/lcov.info
+          flags: backend
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
