@@ -24,3 +24,17 @@ yarn-error.log*
 .env*.local
 .vercel
 next-env.d.ts
+
+# fumadocs
+/.source/
+
+# next.js
+/.next/
+/out/
+
+# dependencies
+/node_modules
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts

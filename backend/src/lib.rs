@@ -112,7 +112,7 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
         .layer(
             CorsLayer::new()
                 .allow_origin(allowed_origins)
-                .allow_methods([Method::GET, Method::POST])
+                .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
                 .allow_headers([axum::http::header::CONTENT_TYPE])
                 .allow_credentials(true),
         )

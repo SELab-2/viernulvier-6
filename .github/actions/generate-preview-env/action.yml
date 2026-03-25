@@ -65,7 +65,7 @@ runs:
         mkdir -p infra/preview
 
         PREVIEW_DATABASE_URL="postgres://${PREVIEW_DB_USER}:${PREVIEW_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}_db:5432/${PREVIEW_DB_NAME}"
-   
+
         cat > infra/preview/.env.preview <<EOF
         PREVIEW_HOST=$PREVIEW_HOST
         PREVIEW_NAME=$PREVIEW_NAME
