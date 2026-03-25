@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
 
+concurrency:
+  group: preview-${{ github.ref }}
+  cancel-in-progress: true
+
 # Explicit permissions needed for Dependabot and fork PRs to post comments
 permissions:
   contents: read
@@ -15,10 +19,29 @@ jobs:
     if: github.event.action != 'closed'
     runs-on: self-hosted
     environment: preview
+    needs: []
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+
+      - name: Wait for backend tests
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          check-regexp: ^Backend Tests.*$
+          allowed-conclusions: success
+          wait-interval: 10
+
+      - name: Wait for frontend tests
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          check-regexp: ^Frontend Tests.*$
+          allowed-conclusions: success
+          wait-interval: 10
 
       - name: Check Docker availability
         run: |
