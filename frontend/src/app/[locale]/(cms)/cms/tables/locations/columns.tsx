@@ -1,16 +1,10 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
 import { BooleanCell } from "../boolean-cell";
 import type { FieldDef } from "../edit-sheet";
 import type { Location, LocationUpdateInput } from "@/types/models/location.types";
-
-function BooleanCell({ value }: { value: boolean | null }) {
-    const t = useTranslations("Cms.EditSheet");
-    return value === null ? "—" : value ? t("yes") : t("no");
-}
 
 export const locationFields: FieldDef<Location>[] = [
     { key: "id", label: "ID", type: "text", readOnly: true },
@@ -23,7 +17,11 @@ export const locationFields: FieldDef<Location>[] = [
     { key: "country", label: "Country", type: "text" },
     { key: "phone1", label: "Phone 1", type: "text" },
     { key: "phone2", label: "Phone 2", type: "text" },
-    { key: "isOwnedByViernulvier", label: "Owned by Viernulvier", type: "boolean" },
+    {
+        key: "isOwnedByViernulvier",
+        label: "Owned by Viernulvier",
+        type: "boolean",
+    },
     { key: "uitdatabankId", label: "UiTdatabank ID", type: "text" },
 ];
 
@@ -58,6 +56,10 @@ export function makeLocationColumns(options: {
             header: "Owned",
             cell: ({ getValue }) => <BooleanCell value={getValue<boolean | null>()} />,
         },
-        makeActionsColumn<Location>({ label: "location", copyKey: "name", onEdit: options.onEdit }),
+        makeActionsColumn<Location>({
+            label: "location",
+            copyKey: "name",
+            onEdit: options.onEdit,
+        }),
     ];
 }
