@@ -38,11 +38,9 @@ export function toLocationUpdateInput(entity: Location): LocationUpdateInput {
     };
 }
 
-export function makeLocationColumns(
-    options: {
-        onEdit?: (entity: Location) => void;
-    } = {}
-): ColumnDef<Location>[] {
+export function makeLocationColumns(options: {
+    onEdit: (entity: Location) => void;
+}): ColumnDef<Location>[] {
     return [
         { accessorKey: "name", header: "Name" },
         { accessorKey: "code", header: "Code" },
