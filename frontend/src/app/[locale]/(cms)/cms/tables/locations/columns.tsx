@@ -2,6 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { makeActionsColumn } from "../actions-column";
+import { BooleanCell } from "../boolean-cell";
 import type { FieldDef } from "../edit-sheet";
 import type { Location, LocationUpdateInput } from "@/types/models/location.types";
 
