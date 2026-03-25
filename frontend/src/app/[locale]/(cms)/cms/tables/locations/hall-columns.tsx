@@ -32,11 +32,7 @@ export function toHallUpdateInput(entity: Hall): HallUpdateInput {
     };
 }
 
-export function makeHallColumns(
-    options: {
-        onEdit?: (entity: Hall) => void;
-    } = {}
-): ColumnDef<Hall>[] {
+export function makeHallColumns(options: { onEdit: (entity: Hall) => void }): ColumnDef<Hall>[] {
     return [
         { accessorKey: "name", header: "Name" },
         {

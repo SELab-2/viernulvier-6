@@ -75,11 +75,9 @@ export function toProductionUpdateInput(entity: Production): ProductionUpdateInp
     };
 }
 
-export function makeProductionColumns(
-    options: {
-        onEdit?: (entity: Production) => void;
-    } = {}
-): ColumnDef<Production>[] {
+export function makeProductionColumns(options: {
+    onEdit: (entity: Production) => void;
+}): ColumnDef<Production>[] {
     return [
         { accessorKey: "titleNl", header: "Title (NL)" },
         { accessorKey: "titleEn", header: "Title (EN)" },
