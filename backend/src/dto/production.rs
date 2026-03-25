@@ -10,10 +10,10 @@ use uuid::Uuid;
 use crate::error::AppError;
 
 impl ProductionPayload {
-    pub async fn all(db: &Database, limit: usize) -> Result<Vec<Self>, AppError> {
+    pub async fn all(db: &Database, limit: u32) -> Result<Vec<Self>, AppError> {
         Ok(db
             .productions()
-            .all(limit)
+            .all(limit as usize)
             .await?
             .into_iter()
             .map(Self::from)

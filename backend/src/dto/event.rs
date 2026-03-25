@@ -11,10 +11,10 @@ use uuid::Uuid;
 use crate::error::AppError;
 
 impl EventPayload {
-    pub async fn all(db: &Database, limit: usize) -> Result<Vec<Self>, AppError> {
+    pub async fn all(db: &Database, limit: u32) -> Result<Vec<Self>, AppError> {
         Ok(db
             .events()
-            .all(limit)
+            .all(limit as usize)
             .await?
             .into_iter()
             .map(Self::from)
