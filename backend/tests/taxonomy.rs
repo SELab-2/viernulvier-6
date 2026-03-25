@@ -1,6 +1,7 @@
+#![allow(clippy::indexing_slicing)]
 use axum::http::StatusCode;
 use sqlx::PgPool;
-use viernulvier_api::dto::facet::FacetDto;
+use viernulvier_api::dto::facet::FacetResponse;
 
 use crate::common::{into_struct::IntoStruct, router::TestRouter};
 
@@ -14,7 +15,7 @@ async fn get_all(db: PgPool) {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let data: Vec<FacetDto> = response.into_struct().await;
+    let data: Vec<FacetResponse> = response.into_struct().await;
     assert_eq!(data.len(), 4);
 
     assert_eq!(data[0].slug, "discipline");
@@ -39,7 +40,7 @@ async fn get_filtered_by_production(db: PgPool) {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let data: Vec<FacetDto> = response.into_struct().await;
+    let data: Vec<FacetResponse> = response.into_struct().await;
     assert_eq!(data.len(), 4);
     assert_eq!(data[0].slug, "discipline");
     assert_eq!(data[3].slug, "audience");
@@ -53,7 +54,7 @@ async fn get_filtered_by_artist(db: PgPool) {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let data: Vec<FacetDto> = response.into_struct().await;
+    let data: Vec<FacetResponse> = response.into_struct().await;
     assert_eq!(data.len(), 1);
     assert_eq!(data[0].slug, "discipline");
     assert_eq!(data[0].tags.len(), 8);
@@ -65,8 +66,5 @@ async fn get_filtered_by_unknown_entity_type(db: PgPool) {
     let app = TestRouter::new(db);
     let response = app.get("/taxonomy/facets?entity_type=nonexistent").await;
 
-    assert_eq!(response.status(), StatusCode::OK);
-
-    let data: Vec<FacetDto> = response.into_struct().await;
-    assert_eq!(data.len(), 0);
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
