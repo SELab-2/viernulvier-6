@@ -127,7 +127,7 @@ pub struct ProductionWithTranslations {
 
 Reading a list fetches all production rows first, then fetches all matching translations in one batched query (`WHERE production_id = ANY($1)`) and groups them in Rust. Reading a single production uses two sequential queries.
 
-Writing translations uses `ON CONFLICT (production_id, language_code) DO UPDATE SET ...` so that re-running the importer updates existing content rather than failing.
+Writing translations uses a single batched `UNNEST`-based `INSERT ... ON CONFLICT (production_id, language_code) DO UPDATE SET ...` — all translations for one production are written in one query, so re-running the importer updates existing content without N round-trips per production.
 
 The `ProductionPayload` DTO exposes translations as an array of objects, each with a `language_code` field:
 
@@ -228,22 +228,25 @@ type Facet = {
 
 ### Reading a translation in a component
 
-Use `useLocale()` from `next-intl` to get the active locale, then find the matching entry:
+Use `useLocale()` from `next-intl` to get the active locale, then use `getTranslation` from `@/lib/utils` to find the matching entry:
 
 ```tsx
 import { useLocale } from 'next-intl';
+import { getTranslation } from '@/lib/utils';
 
 export function ProductionTitle({ production }: { production: Production }) {
   const locale = useLocale();
-  const t = production.translations.find((t) => t.languageCode === locale);
+  const t = getTranslation(production.translations, locale);
   return <h1>{t?.title}</h1>;
 }
 
 export function FacetLabel({ facet }: { facet: Facet }) {
   const locale = useLocale();
-  return <span>{facet.translations.find((t) => t.languageCode === locale)?.label}</span>;
+  return <span>{getTranslation(facet.translations, locale)?.label}</span>;
 }
 ```
+
+`getTranslation` is generic over any `{ languageCode: string }` type, so it works the same way for `ProductionTranslation`, `TagTranslation`, and `FacetTranslation`.
 
 Because the API returns all languages at once, switching locale does not trigger a new API request. TanStack Query does not need the locale in the query key.
 
