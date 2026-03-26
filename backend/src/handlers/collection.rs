@@ -154,8 +154,8 @@ pub async fn post_item(
 )]
 pub async fn delete_item(
     db: Database,
-    Path((_id, item_id)): Path<(Uuid, Uuid)>,
+    Path((collection_id, item_id)): Path<(Uuid, Uuid)>,
 ) -> StatusResponse {
-    db.collections().delete_item(item_id).await?;
+    db.collections().delete_item(collection_id, item_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
