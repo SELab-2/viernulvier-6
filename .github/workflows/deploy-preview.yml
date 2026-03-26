@@ -22,6 +22,10 @@ jobs:
     needs: []
 
     steps:
+      - name: Clean up runner directories
+        run: sudo chown -R $USER:$USER /opt/hostedtoolcache || true
+        continue-on-error: true
+
       - name: Clean up workspace
         run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
       - name: Checkout repo
