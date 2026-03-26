@@ -11,9 +11,6 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Fix workspace permissions
-        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -47,3 +44,7 @@ jobs:
           flags: frontend
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
+
+      - name: Clean up workspace
+        if: always()
+        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true

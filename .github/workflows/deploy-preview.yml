@@ -22,9 +22,6 @@ jobs:
     needs: []
 
     steps:
-      - name: Fix workspace permissions
-        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
-
       - name: Checkout repo
         uses: actions/checkout@v4
 
@@ -135,9 +132,6 @@ jobs:
     runs-on: self-hosted
     environment: preview
     steps:
-      - name: Fix workspace permissions
-        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
-
       - name: Checkout repo
         uses: actions/checkout@v4
 
