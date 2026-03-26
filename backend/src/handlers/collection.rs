@@ -21,6 +21,7 @@ use crate::{
     )
 )]
 pub async fn get_all(db: Database) -> JsonResponse<Vec<CollectionPayload>> {
+    // TODO: hard-coded limit of 10 will silently truncate results once there are >10 collections; add pagination
     CollectionPayload::all(&db, 10).await?.json()
 }
 
