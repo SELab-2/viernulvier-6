@@ -2,6 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { makeActionsColumn } from "../actions-column";
+import { BooleanCell } from "../boolean-cell";
 import type { FieldDef } from "../edit-sheet";
 import type { Hall, HallUpdateInput } from "@/types/models/hall.types";
 
@@ -38,18 +39,12 @@ export function makeHallColumns(options: { onEdit: (entity: Hall) => void }): Co
         {
             accessorKey: "seatSelection",
             header: "Seat selection",
-            cell: ({ getValue }) => {
-                const v = getValue<boolean | null>();
-                return v === null ? "—" : v ? "Yes" : "No";
-            },
+            cell: ({ getValue }) => <BooleanCell value={getValue<boolean | null>()} />,
         },
         {
             accessorKey: "openSeating",
             header: "Open seating",
-            cell: ({ getValue }) => {
-                const v = getValue<boolean | null>();
-                return v === null ? "—" : v ? "Yes" : "No";
-            },
+            cell: ({ getValue }) => <BooleanCell value={getValue<boolean | null>()} />,
         },
         makeActionsColumn<Hall>({ label: "hall", copyKey: "name", onEdit: options.onEdit }),
     ];
