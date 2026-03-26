@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
     Sidebar,
@@ -20,12 +21,8 @@ import { Link, usePathname } from "@/i18n/routing";
 import { useGetFacets } from "@/hooks/api/useTaxonomy";
 import type { Facet, EntityType } from "@/types/models/taxonomy.types";
 
-const ENTITY_TYPES: { slug: string; label: string }[] = [
-    { slug: "productions", label: "Productions" },
-    { slug: "articles", label: "Articles" },
-    { slug: "locations", label: "Locations" },
-    { slug: "performers", label: "Performers" },
-];
+const ENTITY_TYPE_SLUGS = ["productions", "articles", "locations", "performers"] as const;
+type EntityTypeSlug = (typeof ENTITY_TYPE_SLUGS)[number];
 
 const ENTITY_TYPE_MAP: Record<string, EntityType | null> = {
     "/cms/productions": "production",
@@ -42,14 +39,15 @@ interface FacetFiltersProps {
 }
 
 function FacetFilters({ facets, activeFacets, onToggle, onClear }: FacetFiltersProps) {
+    const t = useTranslations("Cms.Sidebar");
     const hasActiveFilters = Object.values(activeFacets).some((s) => s.size > 0);
 
     return (
         <SidebarGroup>
-            <SidebarGroupLabel>Filters</SidebarGroupLabel>
+            <SidebarGroupLabel>{t("filters")}</SidebarGroupLabel>
 
             {facets.length === 0 && (
-                <p className="text-muted-foreground px-2 py-1 text-xs">No filters available.</p>
+                <p className="text-muted-foreground px-2 py-1 text-xs">{t("noFilters")}</p>
             )}
 
             {facets.map((facet) => (
@@ -81,7 +79,7 @@ function FacetFilters({ facets, activeFacets, onToggle, onClear }: FacetFiltersP
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton onClick={onClear} className="text-muted-foreground">
-                            Clear filters
+                            {t("clearFilters")}
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
@@ -91,6 +89,7 @@ function FacetFilters({ facets, activeFacets, onToggle, onClear }: FacetFiltersP
 }
 
 export function AppSidebar() {
+    const t = useTranslations("Cms.Sidebar");
     const pathname = usePathname();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -142,15 +141,12 @@ export function AppSidebar() {
             <SidebarHeader />
             <SidebarContent>
                 <SidebarGroup>
-                    <SidebarGroupLabel>Content type</SidebarGroupLabel>
+                    <SidebarGroupLabel>{t("contentType")}</SidebarGroupLabel>
                     <SidebarMenu>
-                        {ENTITY_TYPES.map((type) => (
-                            <SidebarMenuItem key={type.slug}>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={pathname === `/cms/${type.slug}`}
-                                >
-                                    <Link href={`/cms/${type.slug}`}>{type.label}</Link>
+                        {ENTITY_TYPE_SLUGS.map((slug) => (
+                            <SidebarMenuItem key={slug}>
+                                <SidebarMenuButton asChild isActive={pathname === `/cms/${slug}`}>
+                                    <Link href={`/cms/${slug}`}>{t(slug as EntityTypeSlug)}</Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                         ))}
@@ -161,7 +157,7 @@ export function AppSidebar() {
                     <>
                         {isLoading && (
                             <SidebarGroup>
-                                <SidebarGroupLabel>Filters</SidebarGroupLabel>
+                                <SidebarGroupLabel>{t("filters")}</SidebarGroupLabel>
                                 <div className="space-y-3 px-2">
                                     <Skeleton className="h-4 w-full" />
                                     <Skeleton className="h-4 w-full" />

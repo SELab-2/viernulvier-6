@@ -16,6 +16,60 @@
         "errorGeneric": "Something went wrong. Please try again later.",
         "loggedOut": "Logged out successfully"
     },
+    "Cms": {
+        "TabBar": {
+            "overview": "CMS Overview",
+            "content": "Manage content",
+            "ingest": "Ingest",
+            "import": "Automatic import"
+        },
+        "Sidebar": {
+            "contentType": "Content type",
+            "filters": "Filters",
+            "noFilters": "No filters available.",
+            "clearFilters": "Clear filters",
+            "productions": "Productions",
+            "articles": "Articles",
+            "locations": "Locations",
+            "performers": "Performers"
+        },
+        "DataTable": {
+            "noResults": "No results."
+        },
+        "ActionsColumn": {
+            "openMenu": "Open menu",
+            "actions": "Actions",
+            "copy": "Copy {key}",
+            "copied": "Copied {key}",
+            "copyFailed": "Failed to copy to clipboard",
+            "edit": "Edit {label}"
+        },
+        "EditSheet": {
+            "yes": "Yes",
+            "no": "No",
+            "selectPlaceholder": "Select\u2026",
+            "cancel": "Cancel",
+            "saveChanges": "Save changes"
+        },
+        "Productions": {
+            "showEvents": "Show events",
+            "hideEvents": "Hide events",
+            "editProduction": "Edit production",
+            "editEvent": "Edit event"
+        },
+        "Locations": {
+            "showHalls": "Show halls",
+            "hideHalls": "Hide halls",
+            "editLocation": "Edit location",
+            "editHall": "Edit hall"
+        },
+        "Articles": {
+            "notAvailable": "Articles API is not yet available. No data to display."
+        },
+        "Performers": {
+            "notAvailable": "Performers API is not yet available. No data to display."
+        }
+    },
     "Admin": {
         "title": "Admin Dashboard",
         "welcomeBack": "Welcome back!",

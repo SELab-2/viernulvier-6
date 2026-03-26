@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import type { Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
@@ -13,6 +14,7 @@ import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
 
 export function ProductionsTable() {
+    const t = useTranslations("Cms.Productions");
     const { data: productions = [], isLoading: productionsLoading } = useGetProductions();
     const { data: allEvents = [], isLoading: eventsLoading } = useGetEvents();
     const updateProduction = useUpdateProduction();
@@ -60,14 +62,14 @@ export function ProductionsTable() {
                 getRowCanExpand={(row) =>
                     (eventsByProduction.get(row.original.id)?.length ?? 0) > 0
                 }
-                expanderLabels={{ show: "Show events", hide: "Hide events" }}
+                expanderLabels={{ show: t("showEvents"), hide: t("hideEvents") }}
             />
             <EditSheet
                 open={!!editProduction}
                 onOpenChange={(open) => !open && setEditProduction(null)}
                 entity={editProduction}
                 fields={productionFields}
-                title="Edit production"
+                title={t("editProduction")}
                 onSave={(data) => updateProduction.mutate(toProductionUpdateInput(data))}
             />
             <EditSheet
@@ -75,7 +77,7 @@ export function ProductionsTable() {
                 onOpenChange={(open) => !open && setEditEvent(null)}
                 entity={editEvent}
                 fields={eventFields}
-                title="Edit event"
+                title={t("editEvent")}
                 onSave={(data) => updateEvent.mutate(toEventUpdateInput(data))}
             />
         </>

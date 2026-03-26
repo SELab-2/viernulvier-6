@@ -2,6 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { makeActionsColumn } from "../actions-column";
+import { BooleanCell } from "../boolean-cell";
 import type { FieldDef } from "../edit-sheet";
 import type { Location, LocationUpdateInput } from "@/types/models/location.types";
 
@@ -16,7 +17,11 @@ export const locationFields: FieldDef<Location>[] = [
     { key: "country", label: "Country", type: "text" },
     { key: "phone1", label: "Phone 1", type: "text" },
     { key: "phone2", label: "Phone 2", type: "text" },
-    { key: "isOwnedByViernulvier", label: "Owned by Viernulvier", type: "boolean" },
+    {
+        key: "isOwnedByViernulvier",
+        label: "Owned by Viernulvier",
+        type: "boolean",
+    },
     { key: "uitdatabankId", label: "UiTdatabank ID", type: "text" },
 ];
 
@@ -49,11 +54,12 @@ export function makeLocationColumns(options: {
         {
             accessorKey: "isOwnedByViernulvier",
             header: "Owned",
-            cell: ({ getValue }) => {
-                const v = getValue<boolean | null>();
-                return v === null ? "—" : v ? "Yes" : "No";
-            },
+            cell: ({ getValue }) => <BooleanCell value={getValue<boolean | null>()} />,
         },
-        makeActionsColumn<Location>({ label: "location", copyKey: "name", onEdit: options.onEdit }),
+        makeActionsColumn<Location>({
+            label: "location",
+            copyKey: "name",
+            onEdit: options.onEdit,
+        }),
     ];
 }
