@@ -3,6 +3,7 @@
 import { useCallback, useMemo } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
+import { getLabel } from "@/lib/utils";
 import {
     Sidebar,
     SidebarContent,
@@ -36,12 +37,6 @@ interface FacetFiltersProps {
     activeFacets: Record<string, Set<string>>;
     onToggle: (facetSlug: string, tagSlug: string) => void;
     onClear: () => void;
-}
-
-function getLabel(translations: { languageCode: string; label: string }[], locale: string): string {
-    return (
-        translations.find((t) => t.languageCode === locale)?.label ?? translations[0]?.label ?? ""
-    );
 }
 
 function FacetFilters({ facets, activeFacets, onToggle, onClear }: FacetFiltersProps) {

@@ -11,3 +11,10 @@ export function getTranslation<T extends { languageCode: string }>(
 ): T | undefined {
     return translations.find((t) => t.languageCode === languageCode);
 }
+
+export function getLabel(
+    translations: { languageCode: string; label: string }[],
+    locale: string
+): string {
+    return getTranslation(translations, locale)?.label ?? translations[0]?.label ?? "";
+}
