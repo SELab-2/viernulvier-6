@@ -64,11 +64,6 @@ impl<'a> CollectionRepo<'a> {
     }
 
     pub async fn delete(&self, id: Uuid) -> Result<(), DatabaseError> {
-        sqlx::query("DELETE FROM collection_items WHERE collection_id = $1")
-            .bind(id)
-            .execute(self.db)
-            .await?;
-
         let res = sqlx::query("DELETE FROM collections WHERE id = $1")
             .bind(id)
             .execute(self.db)
