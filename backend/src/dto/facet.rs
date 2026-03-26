@@ -2,7 +2,7 @@ use database::{
     Database,
     models::{entity_type::EntityType, tag::TaxonomyRow},
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::error::AppError;
@@ -27,7 +27,7 @@ pub struct TagResponse {
     pub translations: Vec<TagTranslationPayload>,
 }
 
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct FacetResponse {
     pub slug: String,
     pub translations: Vec<FacetTranslationPayload>,

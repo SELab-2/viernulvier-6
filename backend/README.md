@@ -52,6 +52,25 @@ cargo test --all
 
 This requires a running database.
 
+## Test coverage
+
+Install `cargo-llvm-cov`:
+```sh
+cargo install cargo-llvm-cov
+```
+
+Run coverage:
+```sh
+# Quick overview in terminal
+cargo llvm-cov
+
+# Detailed HTML report (saved to target/llvm-cov/html/index.html)
+cargo llvm-cov --html
+
+# As text file
+cargo llvm-cov --text
+```
+
 ## sqlx offline mode
 
 The Docker build uses `SQLX_OFFLINE=true`, so sqlx checks queries at compile time using the cached metadata in `.sqlx/` instead of connecting to a live database.
