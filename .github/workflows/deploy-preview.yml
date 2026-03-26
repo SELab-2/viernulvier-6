@@ -22,10 +22,11 @@ jobs:
     needs: []
 
     steps:
+      - name: Fix workspace permissions
+        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+
       - name: Checkout repo
         uses: actions/checkout@v4
-        with:
-          clean: false
 
       - name: Wait for backend tests
         uses: lewagon/wait-on-check-action@v1.3.4
@@ -134,10 +135,11 @@ jobs:
     runs-on: self-hosted
     environment: preview
     steps:
+      - name: Fix workspace permissions
+        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+
       - name: Checkout repo
         uses: actions/checkout@v4
-        with:
-          clean: false
 
       - name: Generate env files (composite action)
         uses: ./.github/actions/generate-preview-env

@@ -31,10 +31,11 @@ jobs:
           --health-retries 5
 
     steps:
+      - name: Fix workspace permissions
+        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          clean: false
 
       - name: Install dependencies
         run: apt-get update && apt-get install -y pkg-config libssl-dev postgresql-client

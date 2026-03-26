@@ -11,10 +11,11 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      - name: Fix workspace permissions
+        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          clean: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
