@@ -1,4 +1,3 @@
--- Step 1: create tag_translations table
 CREATE TABLE tag_translations (
     tag_id        UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
     language_code TEXT NOT NULL REFERENCES languages(code),
@@ -7,7 +6,6 @@ CREATE TABLE tag_translations (
     PRIMARY KEY (tag_id, language_code)
 );
 
--- Step 2: create facet_labels table
 CREATE TABLE facet_labels (
     facet         facet NOT NULL,
     language_code TEXT  NOT NULL REFERENCES languages(code),
@@ -15,11 +13,9 @@ CREATE TABLE facet_labels (
     PRIMARY KEY (facet, language_code)
 );
 
--- Step 3: backfill English labels from the existing tags.label / tags.description columns
 INSERT INTO tag_translations (tag_id, language_code, label, description)
 SELECT id, 'en', label, description FROM tags;
 
--- Step 4: seed Dutch tag translations
 INSERT INTO tag_translations (tag_id, language_code, label) VALUES
     -- discipline
     ((SELECT id FROM tags WHERE facet = 'discipline' AND slug = 'theatre'),         'nl', 'Theater'),
@@ -51,7 +47,6 @@ INSERT INTO tag_translations (tag_id, language_code, label) VALUES
     ((SELECT id FROM tags WHERE facet = 'audience' AND slug = 'adult'),        'nl', 'Volwassenen'),
     ((SELECT id FROM tags WHERE facet = 'audience' AND slug = 'professional'), 'nl', 'Professioneel');
 
--- Step 5: seed facet labels for both languages
 INSERT INTO facet_labels (facet, language_code, label) VALUES
     ('discipline', 'en', 'Discipline'),
     ('format',     'en', 'Format'),
@@ -62,13 +57,10 @@ INSERT INTO facet_labels (facet, language_code, label) VALUES
     ('theme',      'nl', 'Thema'),
     ('audience',   'nl', 'Publiek');
 
--- Step 6: drop entity_tags view (depends on facet_label() and tags.label)
 DROP VIEW entity_tags;
 
--- Step 7: drop facet_label() helper function
 DROP FUNCTION facet_label(facet);
 
--- Step 8: drop the now-redundant label and description columns from tags
 ALTER TABLE tags
     DROP COLUMN label,
     DROP COLUMN description;
