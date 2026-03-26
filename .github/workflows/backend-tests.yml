@@ -31,9 +31,6 @@ jobs:
           --health-retries 5
 
     steps:
-      - name: Fix workspace permissions
-        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
-
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -66,3 +63,7 @@ jobs:
           flags: backend
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
+
+      - name: Fix workspace permissions
+        if: always()
+        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
