@@ -7,20 +7,20 @@ use utoipa::ToSchema;
 
 use crate::error::AppError;
 
-#[derive(Serialize, ToSchema, Clone)]
+#[derive(Serialize, Deserialize, ToSchema, Clone)]
 pub struct TagTranslationPayload {
     pub language_code: String,
     pub label: String,
     pub description: Option<String>,
 }
 
-#[derive(Serialize, ToSchema, Clone)]
+#[derive(Serialize, Deserialize, ToSchema, Clone)]
 pub struct FacetTranslationPayload {
     pub language_code: String,
     pub label: String,
 }
 
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct TagResponse {
     pub slug: String,
     pub sort_order: i32,
