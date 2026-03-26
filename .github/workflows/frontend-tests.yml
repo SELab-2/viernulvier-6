@@ -36,7 +36,7 @@ jobs:
       - name: Run tests and generate coverage
         run: |
           cd frontend
-          npm run test:coverage
+          npm run test:coverage -- --reporter=default --reporter=junit --outputFile=junit.xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -46,6 +46,13 @@ jobs:
           flags: frontend
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: frontend
 
       - name: Clean up workspace
         if: always()
