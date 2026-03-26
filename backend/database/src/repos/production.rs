@@ -151,51 +151,76 @@ impl<'a> ProductionRepo<'a> {
         production_id: Uuid,
         translations: &[ProductionTranslationData],
     ) -> Result<(), DatabaseError> {
-        for t in translations {
-            sqlx::query(
-                "INSERT INTO production_translations (
-                    production_id, language_code,
-                    supertitle, title, artist, meta_title, meta_description,
-                    tagline, teaser, description, description_extra, description_2,
-                    quote, quote_source, programme, info, description_short
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-                ON CONFLICT (production_id, language_code) DO UPDATE SET
-                    supertitle        = EXCLUDED.supertitle,
-                    title             = EXCLUDED.title,
-                    artist            = EXCLUDED.artist,
-                    meta_title        = EXCLUDED.meta_title,
-                    meta_description  = EXCLUDED.meta_description,
-                    tagline           = EXCLUDED.tagline,
-                    teaser            = EXCLUDED.teaser,
-                    description       = EXCLUDED.description,
-                    description_extra = EXCLUDED.description_extra,
-                    description_2     = EXCLUDED.description_2,
-                    quote             = EXCLUDED.quote,
-                    quote_source      = EXCLUDED.quote_source,
-                    programme         = EXCLUDED.programme,
-                    info              = EXCLUDED.info,
-                    description_short = EXCLUDED.description_short",
-            )
-            .bind(production_id)
-            .bind(&t.language_code)
-            .bind(&t.supertitle)
-            .bind(&t.title)
-            .bind(&t.artist)
-            .bind(&t.meta_title)
-            .bind(&t.meta_description)
-            .bind(&t.tagline)
-            .bind(&t.teaser)
-            .bind(&t.description)
-            .bind(&t.description_extra)
-            .bind(&t.description_2)
-            .bind(&t.quote)
-            .bind(&t.quote_source)
-            .bind(&t.programme)
-            .bind(&t.info)
-            .bind(&t.description_short)
-            .execute(self.db)
-            .await?;
+        if translations.is_empty() {
+            return Ok(());
         }
+
+        let language_codes: Vec<&str> = translations.iter().map(|t| t.language_code.as_str()).collect();
+        let supertitles: Vec<Option<&str>> = translations.iter().map(|t| t.supertitle.as_deref()).collect();
+        let titles: Vec<Option<&str>> = translations.iter().map(|t| t.title.as_deref()).collect();
+        let artists: Vec<Option<&str>> = translations.iter().map(|t| t.artist.as_deref()).collect();
+        let meta_titles: Vec<Option<&str>> = translations.iter().map(|t| t.meta_title.as_deref()).collect();
+        let meta_descriptions: Vec<Option<&str>> = translations.iter().map(|t| t.meta_description.as_deref()).collect();
+        let taglines: Vec<Option<&str>> = translations.iter().map(|t| t.tagline.as_deref()).collect();
+        let teasers: Vec<Option<&str>> = translations.iter().map(|t| t.teaser.as_deref()).collect();
+        let descriptions: Vec<Option<&str>> = translations.iter().map(|t| t.description.as_deref()).collect();
+        let description_extras: Vec<Option<&str>> = translations.iter().map(|t| t.description_extra.as_deref()).collect();
+        let description_2s: Vec<Option<&str>> = translations.iter().map(|t| t.description_2.as_deref()).collect();
+        let quotes: Vec<Option<&str>> = translations.iter().map(|t| t.quote.as_deref()).collect();
+        let quote_sources: Vec<Option<&str>> = translations.iter().map(|t| t.quote_source.as_deref()).collect();
+        let programmes: Vec<Option<&str>> = translations.iter().map(|t| t.programme.as_deref()).collect();
+        let infos: Vec<Option<&str>> = translations.iter().map(|t| t.info.as_deref()).collect();
+        let description_shorts: Vec<Option<&str>> = translations.iter().map(|t| t.description_short.as_deref()).collect();
+
+        sqlx::query(
+            "INSERT INTO production_translations (
+                production_id, language_code,
+                supertitle, title, artist, meta_title, meta_description,
+                tagline, teaser, description, description_extra, description_2,
+                quote, quote_source, programme, info, description_short
+            )
+            SELECT $1, * FROM UNNEST(
+                $2::text[], $3::text[], $4::text[], $5::text[], $6::text[],
+                $7::text[], $8::text[], $9::text[], $10::text[], $11::text[],
+                $12::text[], $13::text[], $14::text[], $15::text[], $16::text[],
+                $17::text[]
+            )
+            ON CONFLICT (production_id, language_code) DO UPDATE SET
+                supertitle        = EXCLUDED.supertitle,
+                title             = EXCLUDED.title,
+                artist            = EXCLUDED.artist,
+                meta_title        = EXCLUDED.meta_title,
+                meta_description  = EXCLUDED.meta_description,
+                tagline           = EXCLUDED.tagline,
+                teaser            = EXCLUDED.teaser,
+                description       = EXCLUDED.description,
+                description_extra = EXCLUDED.description_extra,
+                description_2     = EXCLUDED.description_2,
+                quote             = EXCLUDED.quote,
+                quote_source      = EXCLUDED.quote_source,
+                programme         = EXCLUDED.programme,
+                info              = EXCLUDED.info,
+                description_short = EXCLUDED.description_short",
+        )
+        .bind(production_id)
+        .bind(&language_codes[..])
+        .bind(&supertitles[..])
+        .bind(&titles[..])
+        .bind(&artists[..])
+        .bind(&meta_titles[..])
+        .bind(&meta_descriptions[..])
+        .bind(&taglines[..])
+        .bind(&teasers[..])
+        .bind(&descriptions[..])
+        .bind(&description_extras[..])
+        .bind(&description_2s[..])
+        .bind(&quotes[..])
+        .bind(&quote_sources[..])
+        .bind(&programmes[..])
+        .bind(&infos[..])
+        .bind(&description_shorts[..])
+        .execute(self.db)
+        .await?;
 
         Ok(())
     }
