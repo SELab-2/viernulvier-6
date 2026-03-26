@@ -11,6 +11,8 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      - name: Clean up workspace
+        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
       - name: Checkout repository
         uses: actions/checkout@v4
 

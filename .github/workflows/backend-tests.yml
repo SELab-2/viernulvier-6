@@ -31,6 +31,8 @@ jobs:
           --health-retries 5
 
     steps:
+      - name: Clean up workspace
+        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
       - name: Checkout
         uses: actions/checkout@v4
 
