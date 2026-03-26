@@ -56,27 +56,33 @@ jobs:
       - name: Install cargo-nextest
         uses: taiki-e/install-action@nextest
 
+      - name: Configure Nextest
+        run: |
+          mkdir -p backend/.config
+          echo '[profile.default]' > backend/.config/nextest.toml
+          echo 'junit = { path = "junit.xml" }' >> backend/.config/nextest.toml
+
       - name: Run tests and generate coverage
-        env:
-          NEXTEST_PROFILE_DEFAULT_JUNIT_PATH: junit.xml
         run: |
           cd backend
           cargo llvm-cov nextest --workspace --lcov --output-path lcov.info
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
-          file: backend/lcov.info
+          files: backend/lcov.info
           flags: backend
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v1
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: backend
+          files: backend/target/nextest/default/junit.xml
+          report_type: test_results
 
       - name: Clean up workspace permissions
         if: always()

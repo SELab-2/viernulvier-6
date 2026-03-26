@@ -39,20 +39,22 @@ jobs:
           npm run test:coverage -- --reporter=default --reporter=junit --outputFile=junit.xml
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           # Codecov automatically merges backend and frontend coverage
-          file: frontend/coverage/lcov.info
+          files: frontend/coverage/lcov.info
           flags: frontend
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v1
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: frontend
+          files: frontend/junit.xml
+          report_type: test_results
 
       - name: Clean up workspace
         if: always()
