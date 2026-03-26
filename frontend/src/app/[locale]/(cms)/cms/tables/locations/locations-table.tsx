@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import type { Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
@@ -13,6 +14,7 @@ import type { Location } from "@/types/models/location.types";
 import type { Hall } from "@/types/models/hall.types";
 
 export function LocationsTable() {
+    const t = useTranslations("Cms.Locations");
     const { data: locations = [], isLoading: locationsLoading } = useGetLocations();
     const { data: allHalls = [], isLoading: hallsLoading } = useGetHalls();
     const updateLocation = useUpdateLocation();
@@ -59,14 +61,14 @@ export function LocationsTable() {
                 loading={locationsLoading}
                 renderSubComponent={renderHalls}
                 getRowCanExpand={(row) => (hallsBySpace.get(row.original.id)?.length ?? 0) > 0}
-                expanderLabels={{ show: "Show halls", hide: "Hide halls" }}
+                expanderLabels={{ show: t("showHalls"), hide: t("hideHalls") }}
             />
             <EditSheet
                 open={!!editLocation}
                 onOpenChange={(open) => !open && setEditLocation(null)}
                 entity={editLocation}
                 fields={locationFields}
-                title="Edit location"
+                title={t("editLocation")}
                 onSave={(data) => updateLocation.mutate(toLocationUpdateInput(data))}
             />
             <EditSheet
@@ -74,7 +76,7 @@ export function LocationsTable() {
                 onOpenChange={(open) => !open && setEditHall(null)}
                 entity={editHall}
                 fields={hallFields}
-                title="Edit hall"
+                title={t("editHall")}
                 onSave={(data) => updateHall.mutate(toHallUpdateInput(data))}
             />
         </>

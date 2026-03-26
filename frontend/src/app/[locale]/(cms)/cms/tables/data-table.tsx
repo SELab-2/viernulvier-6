@@ -35,6 +35,7 @@ export const MemoSubTable = memo(
 ) as <T>(props: { items: T[]; columns: ColumnDef<T>[] }) => ReactNode;
 
 import { memo } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -75,6 +76,7 @@ export function DataTable<TData, TValue>({
     expanderLabels,
     compact = false,
 }: DataTableProps<TData, TValue>) {
+    const t = useTranslations("Cms.DataTable");
     const [expanded, setExpanded] = useState<ExpandedState>({});
 
     const expanderColumn: ColumnDef<TData> = {
@@ -225,7 +227,7 @@ export function DataTable<TData, TValue>({
                                     colSpan={finalColumns.length}
                                     className="h-24 text-center"
                                 >
-                                    No results.
+                                    {t("noResults")}
                                 </TableCell>
                             </TableRow>
                         )}
