@@ -1,6 +1,6 @@
 name: Frontend Tests
 
-on: pull_request
+on: workflow_call
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -9,7 +9,6 @@ concurrency:
 jobs:
   test:
     runs-on: self-hosted
-
     steps:
       - name: Clean up workspace
         run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true

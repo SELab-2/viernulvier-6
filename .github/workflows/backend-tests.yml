@@ -1,6 +1,6 @@
 name: Backend Tests
 
-on: pull_request
+on: workflow_call
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

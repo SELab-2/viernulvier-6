@@ -6,9 +6,19 @@ on:
       - main
 
 jobs:
+  run_backend_tests:
+    if: github.event.action != 'closed'
+    uses: ./.github/workflows/backend-tests.yml
+
+  run_frontend_tests:
+    if: github.event.action != 'closed'
+    uses: ./.github/workflows/frontend-tests.yml
+
   build-push:
     runs-on: self-hosted
     environment: production
+    needs: [run_backend_tests, run_frontend_tests]
+
     steps:
       - name: Clean up workspace
         run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
