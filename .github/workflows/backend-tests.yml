@@ -64,6 +64,6 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
 
-      - name: Fix workspace permissions
+      - name: Clean up workspace permissions
         if: always()
-        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+        run: chmod -R a+w $GITHUB_WORKSPACE || true
