@@ -1,5 +1,6 @@
 "use client";
 
+import type { ComponentType } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { Eye, MoreHorizontal, SquarePen } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -18,7 +19,8 @@ type CopyableKeys<TData> = {
 }[keyof TData];
 
 export interface PromotedAction<TData> {
-    icon: React.ComponentType<{ className?: string }>;
+    key: string;
+    icon: ComponentType<{ className?: string }>;
     label: string;
     onClick: (entity: TData) => void;
 }
@@ -58,9 +60,9 @@ function ActionsCell<TData extends Record<string, unknown>>({
                 <span className="sr-only">{t("view", { label })}</span>
                 <Eye className="h-4 w-4" />
             </Button>
-            {promotedActions?.map((action, i) => (
+            {promotedActions?.map((action) => (
                 <Button
-                    key={i}
+                    key={action.key}
                     variant="ghost"
                     className="h-8 w-8 p-0"
                     onClick={() => action.onClick(entity)}
