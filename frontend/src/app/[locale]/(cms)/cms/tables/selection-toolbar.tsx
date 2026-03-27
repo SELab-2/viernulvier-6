@@ -64,7 +64,7 @@ export function SelectionToolbar({ groups, onClear }: SelectionToolbarProps) {
                     {group.overflowActions.length > 0 && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm">
+                                <Button variant="outline" size="sm" aria-label={t("moreActions")}>
                                     <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                             </DropdownMenuTrigger>

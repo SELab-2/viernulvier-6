@@ -12,7 +12,7 @@ import {
     useReactTable,
 } from "@tanstack/react-table";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { Fragment, ReactNode, useState } from "react";
+import { Fragment, ReactNode, memo, useState } from "react";
 
 // Generic memoized subtable that only rerenders when its own row items or selection changes.
 // TanStack Query structural sharing ensures unchanged items keep their reference,
@@ -57,7 +57,6 @@ function shallowEqual(
     return aKeys.every((k) => a[k] === b[k]);
 }
 
-import { memo } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -151,16 +150,7 @@ export function DataTable<TData, TValue>({
 
     const selectColumn: ColumnDef<TData> = {
         id: "select",
-        header: ({ table }) => (
-            <Checkbox
-                checked={
-                    table.getIsAllRowsSelected() ||
-                    (table.getIsSomeRowsSelected() ? "indeterminate" : false)
-                }
-                onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-                aria-label="Select all"
-            />
-        ),
+        header: () => null,
         cell: ({ row }) => (
             <Checkbox
                 checked={row.getIsSelected()}

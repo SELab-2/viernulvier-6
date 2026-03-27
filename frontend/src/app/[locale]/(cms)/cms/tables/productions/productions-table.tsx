@@ -65,31 +65,7 @@ export function ProductionsTable() {
     const selectColumn = useMemo<ColumnDef<Production>>(
         () => ({
             id: "select",
-            header: ({ table }) => (
-                <Checkbox
-                    checked={
-                        table.getIsAllRowsSelected() ||
-                        (table.getIsSomeRowsSelected() ? "indeterminate" : false)
-                    }
-                    onCheckedChange={(value) => {
-                        table.toggleAllRowsSelected(!!value);
-                        if (value) {
-                            const next = new Map<string, RowSelectionState>();
-                            for (const production of productions) {
-                                const events = eventsByProduction.get(production.id) ?? [];
-                                next.set(
-                                    production.id,
-                                    Object.fromEntries(events.map((e) => [e.id, true]))
-                                );
-                            }
-                            setChildSelection(next);
-                        } else {
-                            setChildSelection(new Map());
-                        }
-                    }}
-                    aria-label="Select all"
-                />
-            ),
+            header: () => null,
             cell: ({ row }) => {
                 const productionId = row.original.id;
                 const childSel = childSelection.get(productionId) ?? {};
@@ -120,7 +96,7 @@ export function ProductionsTable() {
             enableSorting: false,
             enableHiding: false,
         }),
-        [childSelection, eventsByProduction, getChildHandler, productions]
+        [childSelection, eventsByProduction, getChildHandler]
     );
 
     const productionCols = useMemo(

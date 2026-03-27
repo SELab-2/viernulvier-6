@@ -66,31 +66,7 @@ export function LocationsTable() {
     const selectColumn = useMemo<ColumnDef<Location>>(
         () => ({
             id: "select",
-            header: ({ table }) => (
-                <Checkbox
-                    checked={
-                        table.getIsAllRowsSelected() ||
-                        (table.getIsSomeRowsSelected() ? "indeterminate" : false)
-                    }
-                    onCheckedChange={(value) => {
-                        table.toggleAllRowsSelected(!!value);
-                        if (value) {
-                            const next = new Map<string, RowSelectionState>();
-                            for (const location of locations) {
-                                const halls = hallsBySpace.get(location.id) ?? [];
-                                next.set(
-                                    location.id,
-                                    Object.fromEntries(halls.map((h) => [h.id, true]))
-                                );
-                            }
-                            setChildSelection(next);
-                        } else {
-                            setChildSelection(new Map());
-                        }
-                    }}
-                    aria-label="Select all"
-                />
-            ),
+            header: () => null,
             cell: ({ row }) => {
                 const locationId = row.original.id;
                 const childSel = childSelection.get(locationId) ?? {};
@@ -121,7 +97,7 @@ export function LocationsTable() {
             enableSorting: false,
             enableHiding: false,
         }),
-        [childSelection, getChildHandler, hallsBySpace, locations]
+        [childSelection, getChildHandler, hallsBySpace]
     );
 
     const locationCols = useMemo(
@@ -131,6 +107,7 @@ export function LocationsTable() {
 
     const hallCols = useMemo(() => makeHallColumns({ onEdit: setEditHall }), []);
 
+    const getLocationRowId = useCallback((row: Location) => row.id, []);
     const getHallRowId = useCallback((row: Hall) => row.id, []);
 
     const renderHalls = useCallback(
@@ -198,6 +175,7 @@ export function LocationsTable() {
                 }
                 rowSelection={parentSelection}
                 onRowSelectionChange={setParentSelection}
+                getRowId={getLocationRowId}
             />
             <EditSheet
                 open={!!editLocation}
