@@ -167,7 +167,8 @@
             "copy": "Copy {key}",
             "copied": "Copied {key}",
             "copyFailed": "Failed to copy to clipboard",
-            "edit": "Edit {label}"
+            "edit": "Edit {label}",
+            "view": "View {label}"
         },
         "EditSheet": {
             "yes": "Yes",

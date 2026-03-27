@@ -167,7 +167,8 @@
             "copy": "{key} kopi\u00ebren",
             "copied": "{key} gekopieerd",
             "copyFailed": "Kopi\u00ebren naar klembord mislukt",
-            "edit": "{label} bewerken"
+            "edit": "{label} bewerken",
+            "view": "{label} bekijken"
         },
         "EditSheet": {
             "yes": "Ja",
