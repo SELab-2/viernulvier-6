@@ -48,6 +48,7 @@ jobs:
           build-args: |
             "NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}"
             "NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}/api"
+            "CODECOV_TOKEN=${{ secrets.CODECOV_TOKEN }}"
           tags: |
             kayasem/${{ vars.PROJECT_NAME }}-frontend:latest
             kayasem/${{ vars.PROJECT_NAME }}-frontend:${{ github.sha }}
