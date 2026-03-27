@@ -5,13 +5,13 @@ use crate::error::AppError;
 
 pub mod admin;
 pub mod auth;
+pub mod event;
 pub mod hall;
 pub mod location;
 pub mod production;
 pub mod space;
 pub mod taxonomy;
 pub mod version;
-pub mod event;
 
 pub type JsonResponse<T> = Result<Json<T>, AppError>;
 pub type JsonStatusResponse<T> = Result<(StatusCode, Json<T>), AppError>;

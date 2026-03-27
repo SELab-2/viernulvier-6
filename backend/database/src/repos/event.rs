@@ -49,12 +49,12 @@ impl<'a> EventRepo<'a> {
 
         Ok(())
     }
-    
+
     pub async fn by_production(&self, production_id: Uuid) -> Result<Vec<Event>, DatabaseError> {
         Ok(Event::select()
-        .where_("production_id = $1")
-        .bind(production_id)
-        .fetch_all(self.db)
-        .await?)
+            .where_("production_id = $1")
+            .bind(production_id)
+            .fetch_all(self.db)
+            .await?)
     }
 }

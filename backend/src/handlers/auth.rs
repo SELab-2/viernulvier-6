@@ -4,7 +4,7 @@ use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
 use base64::Engine;
 use chrono::Utc;
 use jsonwebtoken::{EncodingKey, Header, encode};
-use rand::RngCore;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -81,7 +81,7 @@ fn access_cookie(token: String, expiry_minutes: i8) -> Cookie<'static> {
         .secure(true)
         .same_site(SameSite::Strict)
         .path("/")
-        .max_age(Duration::minutes(expiry_minutes as i64))
+        .max_age(Duration::minutes(expiry_minutes.into()))
         .build()
 }
 
@@ -91,7 +91,7 @@ fn refresh_cookie(token: String, expiry_days: i8) -> Cookie<'static> {
         .secure(true)
         .same_site(SameSite::Strict)
         .path("/auth/refresh")
-        .max_age(Duration::days(expiry_days as i64)) // Cast to i64
+        .max_age(Duration::days(expiry_days.into()))
         .build()
 }
 
@@ -128,10 +128,10 @@ pub async fn login(
         .map_err(|_| AppError::Unauthorized)?;
 
     let mut random_bytes = [0u8; 32];
-    rand::thread_rng().fill_bytes(&mut random_bytes);
+    rand::rng().fill_bytes(&mut random_bytes);
     let refresh_token = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(random_bytes);
 
-    let expiry_date = Utc::now() + chrono::Duration::days(config.refresh_token_expiry_days as i64);
+    let expiry_date = Utc::now() + chrono::Duration::days(config.refresh_token_expiry_days.into());
     let hashed_token = hash_token(&refresh_token);
 
     let session = db
@@ -149,7 +149,7 @@ pub async fn login(
         session.id,
         user.role.clone(),
         &config.jwt_secret,
-        config.access_token_expiry_minutes
+        config.access_token_expiry_minutes,
     )?;
 
     let access_cookie = access_cookie(access_token, config.access_token_expiry_minutes);
@@ -213,7 +213,7 @@ pub async fn refresh(
         session.id,
         user.role.clone(),
         &config.jwt_secret,
-        config.access_token_expiry_minutes
+        config.access_token_expiry_minutes,
     )?;
 
     let access_cookie = access_cookie(new_access_token, config.access_token_expiry_minutes);

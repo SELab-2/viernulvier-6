@@ -1,16 +1,12 @@
 use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
+    password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
 };
-use axum::{Json};
+use axum::Json;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::{
-    error::AppError,
-    error::ErrorResponse,
-    extractors::auth::{EditorUser},
-};
+use crate::{error::AppError, error::ErrorResponse, extractors::auth::EditorUser};
 use database::Database;
 use database::models::user::{UserCreate, UserRole};
 
@@ -42,9 +38,7 @@ pub struct CreateEditorRequest {
         ("cookie_auth" = [])
     )
 )]
-pub async fn editor_me(
-    EditorUser(editor): EditorUser,
-) -> Result<Json<EditorResponse>, AppError> {
+pub async fn editor_me(EditorUser(editor): EditorUser) -> Result<Json<EditorResponse>, AppError> {
     Ok(Json(EditorResponse {
         id: editor.id.to_string(),
         email: editor.email,
@@ -89,9 +83,7 @@ pub async fn create_editor(
             role: UserRole::Editor,
         })
         .await
-        .map_err(|e| {
-            AppError::Internal(format!("Could not create editor: {}", e))
-        })?;
+        .map_err(|e| AppError::Internal(format!("Could not create editor: {e}")))?;
 
     Ok(Json(EditorResponse {
         id: user.id.to_string(),

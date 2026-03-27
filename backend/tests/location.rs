@@ -28,7 +28,7 @@ async fn get_one_success(db: PgPool) {
     let app = TestRouter::new(db);
     let target_id = Uuid::from_str("10000000-0000-0000-0000-000000000001").unwrap();
 
-    let response = app.get(&format!("/locations/{}", target_id)).await;
+    let response = app.get(&format!("/locations/{target_id}")).await;
     assert_eq!(response.status(), StatusCode::OK);
 
     let data: LocationPayload = response.into_struct().await;
@@ -102,7 +102,9 @@ async fn put_not_found(db: PgPool) {
     }))
     .expect("Failed to deserialize mock LocationPayload");
 
-    let unauthenticated_response = unauthenticated_app.put("/locations", &missing_location).await;
+    let unauthenticated_response = unauthenticated_app
+        .put("/locations", &missing_location)
+        .await;
     assert_eq!(unauthenticated_response.status(), StatusCode::UNAUTHORIZED);
 
     let response = app.put("/locations", &missing_location).await;
@@ -116,16 +118,16 @@ async fn delete_success(db: PgPool) {
 
     let unauthenticated_app = TestRouter::new(db.clone());
     let unauthenticated_response = unauthenticated_app
-        .delete(&format!("/locations/{}", target_id))
+        .delete(&format!("/locations/{target_id}"))
         .await;
     assert_eq!(unauthenticated_response.status(), StatusCode::UNAUTHORIZED);
 
     let app = TestRouter::as_editor(db).await;
 
-    let response = app.delete(&format!("/locations/{}", target_id)).await;
+    let response = app.delete(&format!("/locations/{target_id}")).await;
     assert_eq!(response.status(), StatusCode::NO_CONTENT);
 
-    let verify_res = app.get(&format!("/locations/{}", target_id)).await;
+    let verify_res = app.get(&format!("/locations/{target_id}")).await;
     assert_eq!(verify_res.status(), StatusCode::NOT_FOUND);
 }
 
