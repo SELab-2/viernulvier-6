@@ -3,48 +3,11 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { makeActionsColumn } from "../actions-column";
 import type { FieldDef } from "../edit-sheet";
-import type { Production, ProductionUpdateInput } from "@/types/models/production.types";
-
-export type ProductionRow = {
-    id: string;
-    slug: string;
-    sourceId: number | null;
-    video1: string | null;
-    video2: string | null;
-    eticketInfo: string | null;
-    uitdatabankTheme: string | null;
-    uitdatabankType: string | null;
-    supertitleNl: string | null;
-    supertitleEn: string | null;
-    titleNl: string | null;
-    titleEn: string | null;
-    artistNl: string | null;
-    artistEn: string | null;
-    metaTitleNl: string | null;
-    metaTitleEn: string | null;
-    metaDescriptionNl: string | null;
-    metaDescriptionEn: string | null;
-    taglineNl: string | null;
-    taglineEn: string | null;
-    teaserNl: string | null;
-    teaserEn: string | null;
-    descriptionNl: string | null;
-    descriptionEn: string | null;
-    descriptionExtraNl: string | null;
-    descriptionExtraEn: string | null;
-    description2Nl: string | null;
-    description2En: string | null;
-    quoteNl: string | null;
-    quoteEn: string | null;
-    quoteSourceNl: string | null;
-    quoteSourceEn: string | null;
-    programmeNl: string | null;
-    programmeEn: string | null;
-    infoNl: string | null;
-    infoEn: string | null;
-    descriptionShortNl: string | null;
-    descriptionShortEn: string | null;
-};
+import type {
+    Production,
+    ProductionRow,
+    ProductionUpdateInput,
+} from "@/types/models/production.types";
 
 export const productionFields: FieldDef<ProductionRow>[] = [
     { key: "slug", label: "Slug", type: "text", readOnly: true },
