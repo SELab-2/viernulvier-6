@@ -1,17 +1,18 @@
 import React from "react";
-import Image from "next/image";
+import Image, { StaticImageData } from "next/image";
+import defaultImage from "@/assets/de_vooruit_decaying.png";
 
 interface VintageEmptyStateProps {
     title: string;
     description: string;
-    imagePath?: string;
+    imagePath?: string | StaticImageData;
     action?: React.ReactNode;
 }
 
 export function VintageEmptyState({
     title,
     description,
-    imagePath = "/de_vooruit_decaying.png",
+    imagePath = defaultImage,
     action,
 }: VintageEmptyStateProps) {
     return (
@@ -56,8 +57,8 @@ export function VintageEmptyState({
                                 <Image
                                     src={imagePath}
                                     alt="Archiefbeeld"
-                                    width={300}
-                                    height={400}
+                                    width={typeof imagePath === "string" ? 300 : undefined}
+                                    height={typeof imagePath === "string" ? 400 : undefined}
                                     className="h-auto w-full object-cover"
                                     priority
                                 />
