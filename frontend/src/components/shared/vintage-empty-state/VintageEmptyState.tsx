@@ -19,6 +19,10 @@ export function VintageEmptyState({
 }: VintageEmptyStateProps) {
     const t = useTranslations("NewsArticleComponent");
 
+    // For some scuffed reason basePath doesn't actually work on images and you have to add it yourself
+    // https://nextjs.org/docs/app/api-reference/config/next-config-js/basePath#images
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
     return (
         <div className="flex flex-col items-center justify-center px-4 py-12">
             <article className="border-foreground mx-auto w-full max-w-[650px] border-x border-t-4 border-b p-6 sm:p-8">
@@ -59,7 +63,7 @@ export function VintageEmptyState({
                                 style={{ filter: "grayscale(1) contrast(1.15) sepia(0.1)" }}
                             >
                                 <Image
-                                    src={imagePath}
+                                    src={`${basePath}${typeof imagePath === "string" ? imagePath : ""}`}
                                     alt="Article Image"
                                     width={typeof imagePath === "string" ? 300 : undefined}
                                     height={typeof imagePath === "string" ? 400 : undefined}
