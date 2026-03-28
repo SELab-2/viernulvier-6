@@ -1,0 +1,85 @@
+name: Backend Tests
+
+on: workflow_call
+
+jobs:
+  test:
+    runs-on: self-hosted
+    container:
+      image: rust:1.94-bookworm
+      env:
+        DATABASE_URL: postgres://test:test@postgres:5432/test
+        ALLOWED_ORIGINS: "http://localhost:3000"
+        API_KEY_404: "test-api-key"
+        JWT_SECRET: "test-jwt-secret-that-is-long-enough-for-hs256"
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Clean up workspace
+        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: apt-get update && apt-get install -y pkg-config libssl-dev postgresql-client
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend
+
+      - name: Install sqlx-cli
+        run: cargo install sqlx-cli --no-default-features --features native-tls,postgres
+
+      - name: Run migrations
+        run: cd backend && sqlx migrate run
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@nextest
+
+      - name: Configure Nextest
+        run: |
+          mkdir -p backend/.config
+          echo '[profile.default]' > backend/.config/nextest.toml
+          echo 'junit = { path = "junit.xml" }' >> backend/.config/nextest.toml
+
+      - name: Run tests and generate coverage
+        run: |
+          cd backend
+          cargo llvm-cov nextest --workspace --lcov --output-path lcov.info
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: backend/lcov.info
+          flags: backend
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: backend
+          files: backend/target/nextest/default/junit.xml
+          report_type: test_results
+
+      - name: Clean up workspace permissions
+        if: always()
+        run: chmod -R a+w $GITHUB_WORKSPACE || true

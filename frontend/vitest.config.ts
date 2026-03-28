@@ -7,6 +7,10 @@ export default defineConfig({
         setupFiles: ["./test/setup.ts"],
         clearMocks: true,
         restoreMocks: true,
+        coverage: {
+            provider: "v8", // or 'istanbul'
+            reporter: ["text", "lcov"],
+        },
     },
     resolve: {
         alias: {
