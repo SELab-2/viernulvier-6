@@ -11,7 +11,7 @@ interface VintageEmptyStateProps {
 export function VintageEmptyState({
     title,
     description,
-    imagePath, // Without /public
+    imagePath = "/images/de_vooruit_decaying.png", // Without /public
     action,
 }: VintageEmptyStateProps) {
     return (
@@ -54,6 +54,7 @@ export function VintageEmptyState({
                                 style={{ filter: "grayscale(1) contrast(1.15) sepia(0.1)" }}
                             >
                                 <Image
+                                    unoptimized={typeof imagePath === "string"}
                                     src={imagePath}
                                     alt="Archiefbeeld"
                                     width={typeof imagePath === "string" ? 300 : undefined}
