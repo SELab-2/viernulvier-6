@@ -18,6 +18,7 @@ import { ResultsBar } from "@/components/searchpage/results-bar";
 import { ArchiveSidebar } from "@/components/searchpage/archive-sidebar";
 import { ProductionList } from "@/components/searchpage/production-list";
 import { Pagination } from "@/components/searchpage/pagination";
+import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
 
 export default function SearchPage() {
     const locale = useLocale();
@@ -99,19 +100,11 @@ export default function SearchPage() {
                 <ArchiveSidebar locations={locations ?? []} facets={facets ?? []} />
                 <main className="min-w-0 flex-1 overflow-hidden">
                     {hasNoResults ? (
-                        <div className="flex flex-col items-center justify-center px-4 py-20 text-center">
-                            <h3 className="font-display text-foreground mb-2 text-[20px] font-bold tracking-[-0.02em] sm:text-[24px]">
-                                {t("noResultsTitle")}
-                            </h3>
-                            <p className="text-muted-foreground font-body max-w-[360px] text-sm leading-relaxed">
-                                {t("noResultsText", { query: searchQuery })}
-                            </p>
-                            <img
-                                src="/de_vooruit_decaying.png"
-                                alt=""
-                                className="mb-6 h-auto w-[500px] opacity-80 sm:w-[500px]"
-                            />
-                        </div>
+                        <VintageEmptyState
+                            title={t("noResultsTitle")}
+                            description={t("noResultsText", { query: searchQuery })}
+                            imagePath="/de_vooruit_decaying.png"
+                        />
                     ) : (
                         <>
                             <ProductionList
