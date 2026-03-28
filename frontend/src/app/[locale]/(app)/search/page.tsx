@@ -104,6 +104,7 @@ export default function SearchPage() {
                             title={t("noResultsTitle")}
                             description={t("noResultsText", { query: searchQuery })}
                             imagePath="/images/de_vooruit_decaying.png"
+                            caption={t("articleImageCaption")}
                         />
                     ) : (
                         <>

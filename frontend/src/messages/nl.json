@@ -24,6 +24,7 @@
         "quickSearch": "Snel zoeken:",
         "noResultsTitle": "Hier hangen enkel spinnenwebben",
         "noResultsText": "Geen producties gevonden voor \"{query}\". Probeer een andere zoekopdracht.",
+        "articleImageCaption": "Het vergeten Vooruit gebouw...",
         "tags": {
             "dance": "Dans",
             "theater": "Theater",
@@ -135,5 +136,17 @@
             "error": "Actie mislukt.",
             "errorMessage": "Er is iets misgegaan bij het aanmaken van de editor."
         }
+    },
+    "PageNotFound": {
+        "title": "404 - Pagina niet gevonden",
+        "description": "De pagina die u zoekt bestaat niet (meer) in ons archief of is verplaatst.",
+        "backToHome": "Terug naar het archief",
+        "articleImageCaption": "Het vergeten Vooruit gebouw..."
+    },
+    "NewsArticleComponent": {
+        "subTitle": "Vooruit Archief",
+        "edition": "Editie 404",
+        "articleBrand": "Archiefdienst",
+        "price": "Prijs: Onschatbaar"
     }
 }

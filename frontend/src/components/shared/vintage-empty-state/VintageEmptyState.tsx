@@ -1,11 +1,13 @@
 import React from "react";
 import Image, { StaticImageData } from "next/image";
+import { useTranslations } from "next-intl";
 
 interface VintageEmptyStateProps {
     title: string;
     description: string;
     imagePath?: string | StaticImageData;
     action?: React.ReactNode;
+    caption?: string;
 }
 
 export function VintageEmptyState({
@@ -13,14 +15,17 @@ export function VintageEmptyState({
     description,
     imagePath = "/images/de_vooruit_decaying.png", // Without /public
     action,
+    caption,
 }: VintageEmptyStateProps) {
+    const t = useTranslations("NewsArticleComponent");
+
     return (
         <div className="flex flex-col items-center justify-center px-4 py-12">
             <article className="border-foreground mx-auto w-full max-w-[650px] border-x border-t-4 border-b p-6 sm:p-8">
                 {/* Newspaper Header */}
                 <header className="border-foreground mb-6 flex flex-col items-center border-b-[3px] pb-6 text-center">
                     <span className="text-foreground mb-3 font-mono text-[10px] font-bold tracking-[4px] uppercase">
-                        Vooruit Archief
+                        {t("subTitle")}
                     </span>
                     <h2 className="font-display text-foreground max-w-full text-[32px] leading-[1.1] font-black tracking-tight break-words uppercase sm:text-[46px]">
                         {title}
@@ -28,9 +33,9 @@ export function VintageEmptyState({
 
                     {/* Newspaper Dateline */}
                     <div className="border-foreground text-foreground mt-6 flex w-full items-center justify-between border-y py-1.5 font-mono text-[9px] tracking-widest uppercase sm:text-[10px]">
-                        <span>Editie 404</span>
-                        <span>Archiefdienst</span>
-                        <span>Prijs: Onschatbaar</span>
+                        <span>{t("edition")}</span>
+                        <span>{t("articleBrand")}</span>
+                        <span>{t("price")}</span>
                     </div>
                 </header>
 
@@ -54,18 +59,19 @@ export function VintageEmptyState({
                                 style={{ filter: "grayscale(1) contrast(1.15) sepia(0.1)" }}
                             >
                                 <Image
-                                    unoptimized={typeof imagePath === "string"}
                                     src={imagePath}
-                                    alt="Archiefbeeld"
+                                    alt="Article Image"
                                     width={typeof imagePath === "string" ? 300 : undefined}
                                     height={typeof imagePath === "string" ? 400 : undefined}
                                     className="h-auto w-full object-cover"
                                     priority
                                 />
                             </div>
-                            <figcaption className="border-foreground text-muted-foreground mt-1 border-t pt-1 text-center font-mono text-[9px] tracking-wider uppercase">
-                                Beeld uit het archief
-                            </figcaption>
+                            {caption && (
+                                <figcaption className="border-foreground text-muted-foreground mt-1 border-t pt-1 text-center font-mono text-[9px] tracking-wider uppercase">
+                                    {caption}
+                                </figcaption>
+                            )}
                         </figure>
                     </div>
                 </div>
