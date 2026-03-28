@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { ChevronDown } from "lucide-react";
 
 import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
@@ -114,10 +115,15 @@ export function ProductionItem({ production, locale, events = [] }: ProductionIt
                     )}
                 </div>
 
-                <div className="flex shrink-0 flex-col items-end gap-2 pt-0.5">
+                <div className="flex shrink-0 items-center gap-2 pt-0.5">
                     <span className="border-foreground text-foreground border px-2 py-1 font-mono text-[8px] font-medium tracking-[1.3px] uppercase sm:px-2 sm:py-1">
                         {displayType}
                     </span>
+                    <ChevronDown
+                        className={`text-muted-foreground h-4 w-4 shrink-0 transition-transform duration-200 ${
+                            expanded ? "rotate-180" : ""
+                        }`}
+                    />
                 </div>
             </div>
 
