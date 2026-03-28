@@ -12,6 +12,7 @@ function formatDate(date: string | null): string {
         year: "numeric",
         month: "short",
         day: "numeric",
+        timeZone: "Europe/Brussels",
     });
 }
 
