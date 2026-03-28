@@ -8,10 +8,9 @@ const QUICK_TAGS = ["dance", "theater", "concert", "nightlife", "performance"] a
 interface SearchHeroProps {
     query: string;
     onQueryChange: (query: string) => void;
-    productionCount: number;
 }
 
-export function SearchHero({ query, onQueryChange, productionCount }: SearchHeroProps) {
+export function SearchHero({ query, onQueryChange }: SearchHeroProps) {
     const t = useTranslations("Search");
 
     return (

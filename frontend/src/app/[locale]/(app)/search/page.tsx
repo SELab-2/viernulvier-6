@@ -90,11 +90,7 @@ export default function SearchPage() {
                 searchHint={t("hint")}
             />
 
-            <SearchHero
-                query={searchQuery}
-                onQueryChange={setSearchQuery}
-                productionCount={allProductions.length}
-            />
+            <SearchHero query={searchQuery} onQueryChange={setSearchQuery} />
 
             <ResultsBar shownCount={filteredProductions.length} totalCount={totalCount} />
 
