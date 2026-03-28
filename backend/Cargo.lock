@@ -1067,6 +1067,7 @@ dependencies = [
  "chrono",
  "ormlite",
  "serde",
+ "serde_json",
  "sqlx",
  "thiserror 2.0.18",
  "tracing",

@@ -189,7 +189,22 @@
             "editHall": "Edit hall"
         },
         "Articles": {
-            "notAvailable": "Articles API is not yet available. No data to display."
+            "notAvailable": "Articles API is not yet available. No data to display.",
+            "newArticle": "New article",
+            "createFailed": "Failed to create article.",
+            "save": "Save",
+            "saving": "Saving…",
+            "saveSuccess": "Article saved.",
+            "saveFailed": "Failed to save article.",
+            "backToList": "Back to articles",
+            "statusLabel": "Status",
+            "slug": "Slug",
+            "subjectPeriod": "Subject period",
+            "titleNl": "Title",
+            "relatedProductions": "Related productions",
+            "relatedArtists": "Related artists",
+            "relatedLocations": "Related locations",
+            "relatedEvents": "Related events"
         },
         "Performers": {
             "notAvailable": "Performers API is not yet available. No data to display."

@@ -1,3 +1,4 @@
+pub mod article;
 pub mod collection;
 pub mod event;
 pub mod facet;
