@@ -71,8 +71,10 @@ export function ProductionItem({ production, locale, events = [] }: ProductionIt
         <>
             <div
                 onClick={toggle}
-                className={`border-muted/35 hover:bg-muted/5 flex cursor-pointer items-start gap-3 border-b px-4 py-3.5 transition-colors sm:gap-[18px] sm:px-7 ${
-                    expanded ? "bg-muted/5" : ""
+                className={`border-muted/35 hover:bg-muted/5 flex cursor-pointer items-start gap-3 border-b px-4 py-3.5 transition-all sm:gap-[18px] sm:px-7 ${
+                    expanded
+                        ? "bg-muted/10 border-l-primary border-l-[3px]"
+                        : "border-l-[3px] border-l-transparent"
                 }`}
                 style={{ animation: "fadein 0.3s ease both" }}
             >
