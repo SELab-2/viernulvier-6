@@ -71,7 +71,7 @@ pub async fn get_all(
     )
 )]
 pub async fn get_one(db: Database, Path(slug): Path<String>) -> JsonResponse<ArticlePayload> {
-    ArticlePayload::by_slug(&db, &slug).await?.json()
+    ArticlePayload::by_slug_published(&db, &slug).await?.json()
 }
 
 // ─── CMS/editor routes ────────────────────────────────────────────────────────

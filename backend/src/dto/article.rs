@@ -46,8 +46,8 @@ impl ArticlePayload {
         Ok(db.articles().by_id(id).await?.into())
     }
 
-    pub async fn by_slug(db: &Database, slug: &str) -> Result<Self, AppError> {
-        Ok(db.articles().by_slug(slug).await?.into())
+    pub async fn by_slug_published(db: &Database, slug: &str) -> Result<Self, AppError> {
+        Ok(db.articles().by_slug_published(slug).await?.into())
     }
 
     pub async fn delete(db: &Database, id: Uuid) -> Result<(), AppError> {

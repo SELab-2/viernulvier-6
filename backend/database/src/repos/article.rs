@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::{
     error::DatabaseError,
-    models::article::{Article, ArticleCreate, ArticleRelations},
+    models::article::{Article, ArticleCreate, ArticleRelations, ArticleStatus},
 };
 
 pub struct ArticleRepo<'a> {
@@ -37,6 +37,16 @@ impl<'a> ArticleRepo<'a> {
         Article::select()
             .where_("slug = $1")
             .bind(slug)
+            .fetch_optional(self.db)
+            .await?
+            .ok_or(DatabaseError::NotFound)
+    }
+
+    pub async fn by_slug_published(&self, slug: &str) -> Result<Article, DatabaseError> {
+        Article::select()
+            .where_("slug = $1 AND status = $2")
+            .bind(slug)
+            .bind(ArticleStatus::Published)
             .fetch_optional(self.db)
             .await?
             .ok_or(DatabaseError::NotFound)
