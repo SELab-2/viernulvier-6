@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
 
+concurrency:
+  group: preview-${{ github.ref }}
+  cancel-in-progress: true
+
 # Explicit permissions needed for Dependabot and fork PRs to post comments
 permissions:
   contents: read
@@ -11,12 +15,31 @@ permissions:
   issues: write
 
 jobs:
+  run_backend_tests:
+    name: Backend tests
+    if: github.event.action != 'closed'
+    uses: ./.github/workflows/backend-tests.yml
+    secrets: inherit
+
+  run_frontend_tests:
+    name: Frontend tests
+    if: github.event.action != 'closed'
+    uses: ./.github/workflows/frontend-tests.yml
+    secrets: inherit
+
   preview:
     if: github.event.action != 'closed'
     runs-on: self-hosted
     environment: preview
+    needs: [run_backend_tests, run_frontend_tests]
 
     steps:
+      - name: Clean up runner directories
+        run: sudo chown -R $USER:$USER /opt/hostedtoolcache || true
+        continue-on-error: true
+
+      - name: Clean up workspace
+        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
       - name: Checkout repo
         uses: actions/checkout@v4
 
@@ -53,6 +76,8 @@ jobs:
           fi
 
       - name: Start preview stack
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
           docker compose --env-file .env --env-file infra/preview/.env.preview \
             -f infra/preview/docker-compose.preview.yml up -d --build
@@ -109,6 +134,8 @@ jobs:
     runs-on: self-hosted
     environment: preview
     steps:
+      - name: Clean up workspace
+        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
       - name: Checkout repo
         uses: actions/checkout@v4
 

@@ -1,3 +1,4 @@
+[![codecov](https://codecov.io/gh/SELab-2/viernulvier-6/graph/badge.svg?token=Z5Fi36Jin3)](https://codecov.io/gh/SELab-2/viernulvier-6)
 # viernulvier-6
 
 | Service | Status | Uptime (30d) | Avg Response | Cert Expiry |
