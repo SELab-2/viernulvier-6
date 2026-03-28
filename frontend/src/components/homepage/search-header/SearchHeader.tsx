@@ -79,25 +79,27 @@ export function SearchHeader({
 
                 {/* Search */}
                 <div className="flex flex-1 items-center">
-                    <div className="border-foreground relative flex w-full max-w-[500px] items-center border-b-[1.5px] pb-1.5">
-                        <Search className="stroke-foreground h-[15px] w-[15px] flex-shrink-0 fill-none stroke-[1.5]" />
-                        <input
-                            type="text"
-                            value={query}
-                            onChange={(e) => onQueryChange(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter" && onSearch) {
-                                    onSearch(query);
-                                }
-                            }}
-                            placeholder={searchPlaceholder}
-                            autoComplete="off"
-                            className="font-body text-foreground placeholder:text-muted-foreground w-full bg-transparent pl-2 text-[13px] outline-none"
-                        />
-                        <span className="text-muted-foreground flex-shrink-0 font-mono text-[9px] tracking-[1.2px] uppercase">
-                            {searchHint}
-                        </span>
-                    </div>
+                    {!isSearch && (
+                        <div className="border-foreground relative flex w-full max-w-[500px] items-center border-b-[1.5px] pb-1.5">
+                            <Search className="stroke-foreground h-[15px] w-[15px] flex-shrink-0 fill-none stroke-[1.5]" />
+                            <input
+                                type="text"
+                                value={query}
+                                onChange={(e) => onQueryChange(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" && onSearch) {
+                                        onSearch(query);
+                                    }
+                                }}
+                                placeholder={searchPlaceholder}
+                                autoComplete="off"
+                                className="font-body text-foreground placeholder:text-muted-foreground w-full bg-transparent pl-2 text-[13px] outline-none"
+                            />
+                            <span className="text-muted-foreground flex-shrink-0 font-mono text-[9px] tracking-[1.2px] uppercase">
+                                {searchHint}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Nav + utilities */}
