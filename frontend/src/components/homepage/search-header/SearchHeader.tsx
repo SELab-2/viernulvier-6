@@ -79,7 +79,7 @@ export function SearchHeader({
 
                 {/* Search */}
                 <div className="flex flex-1 items-center">
-                    {!isSearch && (
+                    {!isSearch && !isHome && (
                         <div className="border-foreground relative flex w-full max-w-[500px] items-center border-b-[1.5px] pb-1.5">
                             <Search className="stroke-foreground h-[15px] w-[15px] flex-shrink-0 fill-none stroke-[1.5]" />
                             <input
