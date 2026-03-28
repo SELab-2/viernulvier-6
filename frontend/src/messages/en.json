@@ -36,6 +36,14 @@
         "DataTable": {
             "noResults": "No results."
         },
+        "SelectionToolbar": {
+            "clearSelection": "Clear selection",
+            "productionsSelected": "{count, plural, one {# production} other {# productions}}",
+            "eventsSelected": "{count, plural, one {# event} other {# events}}",
+            "locationsSelected": "{count, plural, one {# location} other {# locations}}",
+            "hallsSelected": "{count, plural, one {# hall} other {# halls}}",
+            "moreActions": "More actions"
+        },
         "ActionsColumn": {
             "openMenu": "Open menu",
             "actions": "Actions",

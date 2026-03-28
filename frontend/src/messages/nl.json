@@ -36,6 +36,14 @@
         "DataTable": {
             "noResults": "Geen resultaten."
         },
+        "SelectionToolbar": {
+            "clearSelection": "Selectie wissen",
+            "productionsSelected": "{count, plural, one {# productie} other {# producties}}",
+            "eventsSelected": "{count, plural, one {# voorstelling} other {# voorstellingen}}",
+            "locationsSelected": "{count, plural, one {# locatie} other {# locaties}}",
+            "hallsSelected": "{count, plural, one {# zaal} other {# zalen}}",
+            "moreActions": "Meer acties"
+        },
         "ActionsColumn": {
             "openMenu": "Menu openen",
             "actions": "Acties",
