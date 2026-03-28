@@ -1,0 +1,2 @@
+So it does not get removed by github -> But actually I think we might not even need the public folder
+Dockerfile: COPY --from=builder /app/public ./public
