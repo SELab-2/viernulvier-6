@@ -22,6 +22,8 @@
         "heroTitleItalic": "van De Vooruit",
         "heroPlaceholder": "Artiest, productie, jaar\u2026",
         "quickSearch": "Snel zoeken:",
+        "noResultsTitle": "Hier hangen enkel spinnenwebben",
+        "noResultsText": "Geen producties gevonden voor \"{query}\". Probeer een andere zoekopdracht.",
         "tags": {
             "dance": "Dans",
             "theater": "Theater",

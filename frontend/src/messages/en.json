@@ -22,6 +22,8 @@
         "heroTitleItalic": "of De Vooruit",
         "heroPlaceholder": "Artist, production, year\u2026",
         "quickSearch": "Quick search:",
+        "noResultsTitle": "Nothing here but cobwebs",
+        "noResultsText": "No productions found for \"{query}\". Try a different search.",
         "tags": {
             "dance": "Dance",
             "theater": "Theatre",

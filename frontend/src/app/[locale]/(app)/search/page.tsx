@@ -80,6 +80,7 @@ export default function SearchPage() {
         : pagedProductions;
 
     const totalCount = searchQuery ? filteredProductions.length : allProductions.length;
+    const hasNoResults = searchQuery && filteredProductions.length === 0;
 
     return (
         <>
@@ -97,17 +98,35 @@ export default function SearchPage() {
             <div className="flex min-h-[calc(100vh-300px)] overflow-hidden">
                 <ArchiveSidebar locations={locations ?? []} facets={facets ?? []} />
                 <main className="min-w-0 flex-1 overflow-hidden">
-                    <ProductionList
-                        productions={filteredProductions}
-                        locale={locale}
-                        eventsByProduction={eventsByProduction}
-                    />
-                    {!searchQuery && totalPages > 1 && (
-                        <Pagination
-                            totalPages={totalPages}
-                            currentPage={currentPage}
-                            onPageChange={setCurrentPage}
-                        />
+                    {hasNoResults ? (
+                        <div className="flex flex-col items-center justify-center px-4 py-20 text-center">
+                            <h3 className="font-display text-foreground mb-2 text-[20px] font-bold tracking-[-0.02em] sm:text-[24px]">
+                                {t("noResultsTitle")}
+                            </h3>
+                            <p className="text-muted-foreground font-body max-w-[360px] text-sm leading-relaxed">
+                                {t("noResultsText", { query: searchQuery })}
+                            </p>
+                            <img
+                                src="/de_vooruit_decaying.png"
+                                alt=""
+                                className="mb-6 h-auto w-[500px] opacity-80 sm:w-[500px]"
+                            />
+                        </div>
+                    ) : (
+                        <>
+                            <ProductionList
+                                productions={filteredProductions}
+                                locale={locale}
+                                eventsByProduction={eventsByProduction}
+                            />
+                            {!searchQuery && totalPages > 1 && (
+                                <Pagination
+                                    totalPages={totalPages}
+                                    currentPage={currentPage}
+                                    onPageChange={setCurrentPage}
+                                />
+                            )}
+                        </>
                     )}
                 </main>
             </div>
