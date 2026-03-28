@@ -17,11 +17,14 @@ export function ArticlesTable() {
     const { data: articles = [], isLoading } = useGetArticlesCms();
     const createArticle = useCreateArticle();
 
-    const columns = useMemo(() => makeArticleColumns(), []);
+    const columns = useMemo(
+        () => makeArticleColumns((article) => router.push(`/cms/articles/${article.id}/edit`)),
+        [router]
+    );
 
     const handleNew = () => {
         createArticle.mutate(
-            { titleNl: undefined },
+            { title: undefined },
             {
                 onSuccess: (article) => {
                     router.push(`/cms/articles/${article.id}/edit`);

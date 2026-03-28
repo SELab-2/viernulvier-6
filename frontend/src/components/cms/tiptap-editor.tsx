@@ -1,10 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
-import { useEffect } from "react";
+
+import { EditorToolbar } from "./editor-toolbar";
 
 interface TiptapEditorProps {
     content: Record<string, unknown> | null;
@@ -21,19 +22,22 @@ export function TiptapEditor({
 }: TiptapEditorProps) {
     const editor = useEditor({
         extensions: [
-            StarterKit,
-            Link.configure({ openOnClick: false }),
+            StarterKit.configure({
+                link: { openOnClick: false },
+                code: false,
+                codeBlock: false,
+            }),
             Placeholder.configure({ placeholder }),
         ],
         content: content ?? undefined,
         immediatelyRender: false,
         editable,
-        onUpdate: ({ editor: e }) => {
-            onChange(e.getJSON() as Record<string, unknown>);
+        onUpdate({ editor }) {
+            onChange(editor.getJSON() as Record<string, unknown>);
         },
     });
 
-    // Sync content when it changes externally (e.g. after initial fetch)
+    // Sync external content changes (e.g. initial fetch arriving)
     useEffect(() => {
         if (!editor) return;
         const incoming = JSON.stringify(content ?? null);
@@ -44,11 +48,14 @@ export function TiptapEditor({
     }, [editor, content]);
 
     return (
-        <div className="focus-within:ring-ring min-h-48 rounded-md border px-3 py-2 text-sm focus-within:ring-1">
-            <EditorContent
-                editor={editor}
-                className="prose prose-sm dark:prose-invert max-w-none"
-            />
+        <div className="focus-within:ring-ring flex h-full flex-col overflow-hidden rounded-md border text-sm focus-within:ring-1">
+            {editable && <EditorToolbar editor={editor} />}
+            <div className="flex-1 overflow-y-auto px-4 py-3">
+                <EditorContent
+                    editor={editor}
+                    className="prose prose-sm dark:prose-invert max-w-none focus:outline-none [&_.tiptap]:min-h-full [&_.tiptap]:outline-none"
+                />
+            </div>
         </div>
     );
 }

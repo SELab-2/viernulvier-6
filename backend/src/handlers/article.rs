@@ -12,6 +12,7 @@ use uuid::Uuid;
 use crate::{
     dto::article::{
         ArticleListPayload, ArticlePayload, ArticlePostPayload, ArticleRelationsPayload,
+        ArticleUpdatePayload,
     },
     error::ErrorResponse,
     handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
@@ -132,10 +133,13 @@ pub async fn post(
 
 #[utoipa::path(
     method(put),
-    path = "/articles",
+    path = "/articles/{id}",
     tag = "Articles",
     operation_id = "update_article",
     description = "Update an article",
+    params(
+        ("id" = Uuid, Path, description = "Article UUID")
+    ),
     responses(
         (status = 200, description = "Success", body = ArticlePayload),
         (status = 404, description = "Not found"),
@@ -145,9 +149,10 @@ pub async fn post(
 )]
 pub async fn put(
     db: Database,
-    Json(article): Json<ArticlePayload>,
+    Path(id): Path<Uuid>,
+    Json(article): Json<ArticleUpdatePayload>,
 ) -> JsonResponse<ArticlePayload> {
-    Ok(Json(article.update(&db).await?))
+    article.update(&db, id).await?.json()
 }
 
 #[utoipa::path(

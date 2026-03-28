@@ -85,7 +85,7 @@ export const useUpdateArticle = () => {
     return useMutation({
         mutationFn: async (payload: ArticleUpdateInput) => {
             const { data } = await api.put<ArticleResponse>(
-                "/articles",
+                `/articles/${payload.id}`,
                 mapUpdateArticleInput(payload)
             );
             return mapArticle(data);

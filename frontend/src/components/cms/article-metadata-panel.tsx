@@ -2,7 +2,6 @@
 
 import { useTranslations } from "next-intl";
 
-import { StatusBadge } from "./status-badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -12,10 +11,18 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { useGetArtists } from "@/hooks/api/useArtists";
 import { useGetProductions } from "@/hooks/api/useProductions";
 import { useGetLocations } from "@/hooks/api/useLocations";
 import { useGetEvents } from "@/hooks/api/useEvents";
 import { Article, ArticleRelations, ArticleStatus } from "@/types/models/article.types";
+import { cn } from "@/lib/utils";
+
+const statusTriggerStyles: Record<ArticleStatus, string> = {
+    published: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+    draft: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+    archived: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+};
 
 interface RelationMultiSelectProps {
     label: string;
@@ -71,6 +78,7 @@ export function ArticleMetadataPanel({
 }: ArticleMetadataPanelProps) {
     const t = useTranslations("Cms.Articles");
     const { data: productions = [] } = useGetProductions();
+    const { data: artists = [] } = useGetArtists();
     const { data: locations = [] } = useGetLocations();
     const { data: events = [] } = useGetEvents();
 
@@ -79,22 +87,24 @@ export function ArticleMetadataPanel({
             {/* Status */}
             <div className="space-y-1">
                 <Label className="text-xs font-medium">{t("statusLabel")}</Label>
-                <div className="flex items-center gap-2">
-                    <StatusBadge status={article.status} />
-                    <Select
-                        value={article.status}
-                        onValueChange={(v) => onArticleChange({ status: v as ArticleStatus })}
+                <Select
+                    value={article.status}
+                    onValueChange={(v) => onArticleChange({ status: v as ArticleStatus })}
+                >
+                    <SelectTrigger
+                        className={cn(
+                            "h-8 text-xs font-medium capitalize",
+                            statusTriggerStyles[article.status]
+                        )}
                     >
-                        <SelectTrigger className="h-8 text-xs">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="published">Published</SelectItem>
-                            <SelectItem value="archived">Archived</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="published">Published</SelectItem>
+                        <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
 
             {/* Slug */}
@@ -113,7 +123,7 @@ export function ArticleMetadataPanel({
             {/* Subject period */}
             <div className="space-y-1">
                 <Label className="text-xs font-medium">{t("subjectPeriod")}</Label>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-1">
                     <Input
                         type="date"
                         value={article.subjectPeriodStart ?? ""}
@@ -122,7 +132,6 @@ export function ArticleMetadataPanel({
                         }
                         className="h-8 text-xs"
                     />
-                    <span className="text-muted-foreground flex items-center text-xs">–</span>
                     <Input
                         type="date"
                         value={article.subjectPeriodEnd ?? ""}
@@ -140,9 +149,20 @@ export function ArticleMetadataPanel({
                 ids={relations.productionIds}
                 options={productions.map((p) => ({
                     id: p.id,
-                    label: p.titleNl ?? p.titleEn ?? p.slug,
+                    label: p.titleNl ?? p.slug,
                 }))}
                 onChange={(productionIds) => onRelationsChange({ ...relations, productionIds })}
+            />
+
+            {/* Related artists */}
+            <RelationMultiSelect
+                label={t("relatedArtists")}
+                ids={relations.artistIds}
+                options={artists.map((a) => ({
+                    id: a.id,
+                    label: a.name,
+                }))}
+                onChange={(artistIds) => onRelationsChange({ ...relations, artistIds })}
             />
 
             {/* Related locations */}
@@ -162,7 +182,7 @@ export function ArticleMetadataPanel({
                 ids={relations.eventIds}
                 options={events.map((e) => ({
                     id: e.id,
-                    label: e.startsAt ?? e.id,
+                    label: e.startsAt ?? "Untitled event",
                 }))}
                 onChange={(eventIds) => onRelationsChange({ ...relations, eventIds })}
             />

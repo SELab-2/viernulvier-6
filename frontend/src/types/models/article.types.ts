@@ -4,8 +4,7 @@ export type Article = {
     id: string;
     slug: string;
     status: ArticleStatus;
-    titleNl: string | null;
-    titleEn: string | null;
+    title: string | null;
     content: Record<string, unknown> | null;
     publishedAt: string | null;
     createdAt: string;
@@ -16,14 +15,21 @@ export type Article = {
 
 export type ArticleListItem = Pick<
     Article,
-    "id" | "slug" | "status" | "titleNl" | "titleEn" | "publishedAt" | "updatedAt"
+    | "id"
+    | "slug"
+    | "status"
+    | "title"
+    | "publishedAt"
+    | "updatedAt"
+    | "subjectPeriodStart"
+    | "subjectPeriodEnd"
 >;
 
 export type ArticleCreateInput = {
-    titleNl?: string | null;
+    title?: string | null;
 };
 
-export type ArticleUpdateInput = Article;
+export type ArticleUpdateInput = Omit<Article, "createdAt" | "updatedAt">;
 
 export type ArticleRelations = {
     productionIds: string[];

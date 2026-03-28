@@ -12,15 +12,13 @@ import {
     ArticleRelations,
     ArticleUpdateInput,
 } from "@/types/models/article.types";
-
-const toNullable = <T>(value: T | null | undefined): T | null => value ?? null;
+import { toNullable } from "./utils";
 
 export const mapArticle = (response: ArticleResponse): Article => ({
     id: response.id,
     slug: response.slug,
     status: response.status,
-    titleNl: toNullable(response.title_nl),
-    titleEn: toNullable(response.title_en),
+    title: toNullable(response.title),
     content: toNullable(response.content),
     publishedAt: toNullable(response.published_at),
     createdAt: response.created_at,
@@ -33,10 +31,11 @@ export const mapArticleListItem = (response: ArticleListResponse): ArticleListIt
     id: response.id,
     slug: response.slug,
     status: response.status,
-    titleNl: toNullable(response.title_nl),
-    titleEn: toNullable(response.title_en),
+    title: toNullable(response.title),
     publishedAt: toNullable(response.published_at),
     updatedAt: response.updated_at,
+    subjectPeriodStart: toNullable(response.subject_period_start),
+    subjectPeriodEnd: toNullable(response.subject_period_end),
 });
 
 export const mapArticleListItems = (responses: ArticleListResponse[]): ArticleListItem[] =>
@@ -50,19 +49,15 @@ export const mapArticleRelations = (response: ArticleRelationsResponse): Article
 });
 
 export const mapCreateArticleInput = (input: ArticleCreateInput): ArticleCreateRequest => ({
-    title_nl: input.titleNl,
+    title: input.title,
 });
 
 export const mapUpdateArticleInput = (input: ArticleUpdateInput): ArticleUpdateRequest => ({
-    id: input.id,
     slug: input.slug,
     status: input.status,
-    title_nl: input.titleNl,
-    title_en: input.titleEn,
+    title: input.title,
     content: input.content,
     published_at: input.publishedAt,
-    created_at: input.createdAt,
-    updated_at: input.updatedAt,
     subject_period_start: input.subjectPeriodStart,
     subject_period_end: input.subjectPeriodEnd,
 });

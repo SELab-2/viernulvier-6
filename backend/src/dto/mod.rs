@@ -1,4 +1,5 @@
 pub mod article;
+pub mod artist;
 pub mod collection;
 pub mod event;
 pub mod facet;

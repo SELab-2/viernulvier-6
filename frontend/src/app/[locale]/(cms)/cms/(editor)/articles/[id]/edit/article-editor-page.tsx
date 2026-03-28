@@ -7,11 +7,10 @@ import { toast } from "sonner";
 
 import { ArticleMetadataPanel } from "@/components/cms/article-metadata-panel";
 import { TiptapEditor } from "@/components/cms/tiptap-editor";
-import { StatusBadge } from "@/components/cms/status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link, useRouter } from "@/i18n/routing";
+import { Link } from "@/i18n/routing";
 import {
     useGetArticle,
     useGetArticleRelations,
@@ -26,7 +25,6 @@ interface ArticleEditorPageProps {
 
 export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
     const t = useTranslations("Cms.Articles");
-    const router = useRouter();
     const { data: fetchedArticle, isLoading: articleLoading } = useGetArticle(id);
     const { data: fetchedRelations, isLoading: relationsLoading } = useGetArticleRelations(id);
     const updateArticle = useUpdateArticle();
@@ -53,7 +51,6 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                 updateRelations.mutateAsync(relations),
             ]);
             toast.success(t("saveSuccess"));
-            router.push("/cms/articles");
         } catch {
             toast.error(t("saveFailed"));
         }
@@ -86,7 +83,6 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                     {t("backToList")}
                 </Link>
                 <div className="flex-1" />
-                <StatusBadge status={article.status} />
                 <Button onClick={handleSave} disabled={isSaving} size="sm">
                     <Save className="mr-2 h-4 w-4" />
                     {isSaving ? t("saving") : t("save")}
@@ -96,9 +92,9 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
             {/* Title input */}
             <div className="border-b px-4 py-3">
                 <Input
-                    value={article.titleNl ?? ""}
-                    onChange={(e) => patchArticle({ titleNl: e.target.value || null })}
-                    placeholder={t("titleNl")}
+                    value={article.title ?? ""}
+                    onChange={(e) => patchArticle({ title: e.target.value || null })}
+                    placeholder={t("title")}
                     className="h-9 max-w-xl"
                 />
             </div>
@@ -106,7 +102,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
             {/* Main content area */}
             <div className="flex flex-1 overflow-hidden">
                 {/* Editor */}
-                <div className="flex flex-1 flex-col overflow-y-auto p-4">
+                <div className="flex flex-1 flex-col overflow-hidden p-4">
                     <TiptapEditor
                         content={article.content}
                         onChange={(json) => patchArticle({ content: json })}

@@ -22,8 +22,8 @@ use utoipa_swagger_ui::{Config, SwaggerUi};
 use crate::config::AppConfig;
 use crate::error::AppError;
 use crate::handlers::{
-    admin, article, auth, collection, event, hall, location, media, production, space, taxonomy,
-    version,
+    admin, article, artist, auth, collection, event, hall, location, media, production, space,
+    taxonomy, version,
 };
 
 pub mod config;
@@ -31,6 +31,7 @@ pub mod dto;
 mod error;
 mod extractors;
 mod handlers;
+mod utils;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -243,6 +244,8 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // collections
         .routes(routes!(collection::get_all))
         .routes(routes!(collection::get_one))
+        // artists
+        .routes(routes!(artist::get_all))
         // articles (public: published only, filterable)
         .routes(routes!(article::get_all))
         .routes(routes!(article::get_one))
