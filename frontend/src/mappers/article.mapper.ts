@@ -14,12 +14,18 @@ import {
 } from "@/types/models/article.types";
 import { toNullable } from "./utils";
 
+function toArticleContent(value: unknown): Record<string, unknown> | null {
+    if (value == null) return null;
+    if (typeof value === "object" && !Array.isArray(value)) return value as Record<string, unknown>;
+    throw new Error(`Unexpected article content shape: ${typeof value}`);
+}
+
 export const mapArticle = (response: ArticleResponse): Article => ({
     id: response.id,
     slug: response.slug,
     status: response.status,
     title: toNullable(response.title),
-    content: toNullable(response.content) as Record<string, unknown> | null,
+    content: toArticleContent(response.content),
     publishedAt: toNullable(response.published_at),
     createdAt: response.created_at,
     updatedAt: response.updated_at,

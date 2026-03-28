@@ -1,5 +1,3 @@
-export type ArtistResponse = {
-    id: string;
-    slug: string;
-    name: string;
-};
+import type { components } from "./generated";
+
+export type ArtistResponse = components["schemas"]["ArtistPayload"];
