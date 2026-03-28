@@ -45,15 +45,6 @@ export function makeArticleColumns(
                 );
             },
         },
-        {
-            accessorKey: "publishedAt",
-            header: "Published",
-            cell: ({ row }) => (
-                <span className={row.original.publishedAt ? undefined : "text-muted-foreground"}>
-                    {formatDate(row.original.publishedAt)}
-                </span>
-            ),
-        },
         makeActionsColumn({ label: "article", copyKey: "slug", onEdit }),
     ];
 }

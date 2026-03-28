@@ -6,7 +6,6 @@ export type Article = {
     status: ArticleStatus;
     title: string | null;
     content: Record<string, unknown> | null;
-    publishedAt: string | null;
     createdAt: string;
     updatedAt: string;
     subjectPeriodStart: string | null;
@@ -15,14 +14,7 @@ export type Article = {
 
 export type ArticleListItem = Pick<
     Article,
-    | "id"
-    | "slug"
-    | "status"
-    | "title"
-    | "publishedAt"
-    | "updatedAt"
-    | "subjectPeriodStart"
-    | "subjectPeriodEnd"
+    "id" | "slug" | "status" | "title" | "updatedAt" | "subjectPeriodStart" | "subjectPeriodEnd"
 >;
 
 export type ArticleCreateInput = {

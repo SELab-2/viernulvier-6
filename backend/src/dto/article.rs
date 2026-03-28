@@ -17,7 +17,6 @@ pub struct ArticlePayload {
     pub status: ArticleStatus,
     pub title: Option<String>,
     pub content: Option<Value>,
-    pub published_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub subject_period_start: Option<NaiveDate>,
@@ -32,7 +31,6 @@ impl From<Article> for ArticlePayload {
             status: a.status,
             title: a.title,
             content: a.content,
-            published_at: a.published_at,
             created_at: a.created_at,
             updated_at: a.updated_at,
             subject_period_start: a.subject_period_start,
@@ -61,7 +59,6 @@ pub struct ArticleUpdatePayload {
     pub status: ArticleStatus,
     pub title: Option<String>,
     pub content: Option<Value>,
-    pub published_at: Option<DateTime<Utc>>,
     pub subject_period_start: Option<NaiveDate>,
     pub subject_period_end: Option<NaiveDate>,
 }
@@ -77,7 +74,6 @@ impl ArticleUpdatePayload {
             status: self.status,
             title: self.title,
             content: self.content,
-            published_at: self.published_at,
             subject_period_start: self.subject_period_start,
             subject_period_end: self.subject_period_end,
         };
@@ -91,7 +87,6 @@ pub struct ArticleListPayload {
     pub slug: String,
     pub status: ArticleStatus,
     pub title: Option<String>,
-    pub published_at: Option<DateTime<Utc>>,
     pub updated_at: DateTime<Utc>,
     pub subject_period_start: Option<NaiveDate>,
     pub subject_period_end: Option<NaiveDate>,
@@ -104,7 +99,6 @@ impl From<Article> for ArticleListPayload {
             slug: a.slug,
             status: a.status,
             title: a.title,
-            published_at: a.published_at,
             updated_at: a.updated_at,
             subject_period_start: a.subject_period_start,
             subject_period_end: a.subject_period_end,
@@ -182,7 +176,6 @@ impl ArticlePostPayload {
             subject_period_end: None,
             created_at: now,
             updated_at: now,
-            published_at: None,
         };
 
         Ok(db.articles().insert(create).await?.into())

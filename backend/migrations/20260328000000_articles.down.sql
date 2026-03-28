@@ -1,6 +1,4 @@
-DROP TRIGGER IF EXISTS articles_published_at ON articles;
 DROP TRIGGER IF EXISTS articles_updated_at ON articles;
-DROP FUNCTION IF EXISTS articles_set_published_at();
 
 DROP INDEX IF EXISTS articles_status_idx;
 DROP INDEX IF EXISTS articles_subject_period_start_subject_period_end_idx;

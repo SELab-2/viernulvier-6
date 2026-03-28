@@ -133,7 +133,7 @@ impl<'a> ArticleRepo<'a> {
             }
         }
 
-        builder.push(" ORDER BY a.published_at DESC");
+        builder.push(" ORDER BY a.updated_at DESC");
 
         Ok(builder
             .build_query_as::<Article>()

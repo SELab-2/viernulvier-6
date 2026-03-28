@@ -26,7 +26,6 @@ export const mapArticle = (response: ArticleResponse): Article => ({
     status: response.status,
     title: toNullable(response.title),
     content: toArticleContent(response.content),
-    publishedAt: toNullable(response.published_at),
     createdAt: response.created_at,
     updatedAt: response.updated_at,
     subjectPeriodStart: toNullable(response.subject_period_start),
@@ -38,7 +37,6 @@ export const mapArticleListItem = (response: ArticleListResponse): ArticleListIt
     slug: response.slug,
     status: response.status,
     title: toNullable(response.title),
-    publishedAt: toNullable(response.published_at),
     updatedAt: response.updated_at,
     subjectPeriodStart: toNullable(response.subject_period_start),
     subjectPeriodEnd: toNullable(response.subject_period_end),
@@ -63,7 +61,6 @@ export const mapUpdateArticleInput = (input: ArticleUpdateInput): ArticleUpdateR
     status: input.status,
     title: input.title,
     content: input.content,
-    published_at: input.publishedAt,
     subject_period_start: input.subjectPeriodStart,
     subject_period_end: input.subjectPeriodEnd,
 });

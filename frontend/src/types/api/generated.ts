@@ -647,8 +647,6 @@ export interface components {
         ArticleListPayload: {
             /** Format: uuid */
             id: string;
-            /** Format: date-time */
-            published_at?: string | null;
             slug: string;
             status: components["schemas"]["ArticleStatus"];
             /** Format: date */
@@ -665,8 +663,6 @@ export interface components {
             created_at: string;
             /** Format: uuid */
             id: string;
-            /** Format: date-time */
-            published_at?: string | null;
             slug: string;
             status: components["schemas"]["ArticleStatus"];
             /** Format: date */
@@ -690,8 +686,6 @@ export interface components {
         ArticleStatus: "draft" | "published" | "archived";
         ArticleUpdatePayload: {
             content?: unknown;
-            /** Format: date-time */
-            published_at?: string | null;
             slug: string;
             status: components["schemas"]["ArticleStatus"];
             /** Format: date */
