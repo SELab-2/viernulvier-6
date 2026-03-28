@@ -77,17 +77,17 @@ export function SearchHeader({
 
                 {/* Search */}
                 <div className="flex flex-1 items-center">
-                    <div className="relative w-full max-w-[500px]">
-                        <Search className="stroke-foreground pointer-events-none absolute top-1/2 left-0 h-[15px] w-[15px] -translate-y-1/2 fill-none stroke-[1.5]" />
+                    <div className="border-foreground relative flex w-full max-w-[500px] items-center border-b-[1.5px] pb-1.5">
+                        <Search className="stroke-foreground h-[15px] w-[15px] flex-shrink-0 fill-none stroke-[1.5]" />
                         <input
                             type="text"
                             value={query}
                             onChange={(e) => onQueryChange(e.target.value)}
                             placeholder={searchPlaceholder}
                             autoComplete="off"
-                            className="border-foreground font-body text-foreground placeholder:text-muted-foreground w-full border-b-[1.5px] bg-transparent pr-16 pb-1.5 pl-[26px] text-[13px] outline-none"
+                            className="font-body text-foreground placeholder:text-muted-foreground w-full bg-transparent pl-2 text-[13px] outline-none"
                         />
-                        <span className="text-muted-foreground absolute top-1/2 right-0 -translate-y-1/2 font-mono text-[9px] tracking-[1.2px] uppercase">
+                        <span className="text-muted-foreground flex-shrink-0 font-mono text-[9px] tracking-[1.2px] uppercase">
                             {searchHint}
                         </span>
                     </div>
