@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
     reactCompiler: true,
 
     basePath: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}` : "",
-    //assetPrefix: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}` : "", // Breaks react image optimizer?
+    assetPrefix: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}` : "",
 
     async redirects() {
         return [
