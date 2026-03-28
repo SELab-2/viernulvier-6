@@ -133,7 +133,7 @@ pub async fn post(
 
 #[utoipa::path(
     method(put),
-    path = "/articles/{id}",
+    path = "/articles/cms/{id}",
     tag = "Articles",
     operation_id = "update_article",
     description = "Update an article",

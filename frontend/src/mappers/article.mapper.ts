@@ -19,7 +19,7 @@ export const mapArticle = (response: ArticleResponse): Article => ({
     slug: response.slug,
     status: response.status,
     title: toNullable(response.title),
-    content: toNullable(response.content),
+    content: toNullable(response.content) as Record<string, unknown> | null,
     publishedAt: toNullable(response.published_at),
     createdAt: response.created_at,
     updatedAt: response.updated_at,

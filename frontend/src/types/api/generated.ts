@@ -13,8 +13,7 @@ export interface paths {
         };
         /** @description Get published articles with optional filters */
         get: operations["get_all_articles"];
-        /** @description Update an article */
-        put: operations["update_article"];
+        put?: never;
         /** @description Create a new draft article */
         post: operations["create_article"];
         delete?: never;
@@ -49,7 +48,8 @@ export interface paths {
         };
         /** @description Get a single article by UUID — editor only */
         get: operations["get_article_by_id_cms"];
-        put?: never;
+        /** @description Update an article */
+        put: operations["update_article"];
         post?: never;
         /** @description Delete an article */
         delete: operations["delete_article"];
@@ -85,6 +85,23 @@ export interface paths {
         };
         /** @description Get a published article by slug */
         get: operations["get_article_by_slug"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/artists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get all artists */
+        get: operations["get_all_artists"];
         put?: never;
         post?: never;
         delete?: never;
@@ -634,8 +651,11 @@ export interface components {
             published_at?: string | null;
             slug: string;
             status: components["schemas"]["ArticleStatus"];
-            title_en?: string | null;
-            title_nl?: string | null;
+            /** Format: date */
+            subject_period_end?: string | null;
+            /** Format: date */
+            subject_period_start?: string | null;
+            title?: string | null;
             /** Format: date-time */
             updated_at: string;
         };
@@ -653,13 +673,12 @@ export interface components {
             subject_period_end?: string | null;
             /** Format: date */
             subject_period_start?: string | null;
-            title_en?: string | null;
-            title_nl?: string | null;
+            title?: string | null;
             /** Format: date-time */
             updated_at: string;
         };
         ArticlePostPayload: {
-            title_nl?: string | null;
+            title?: string | null;
         };
         ArticleRelationsPayload: {
             artist_ids: string[];
@@ -669,6 +688,24 @@ export interface components {
         };
         /** @enum {string} */
         ArticleStatus: "draft" | "published" | "archived";
+        ArticleUpdatePayload: {
+            content?: unknown;
+            /** Format: date-time */
+            published_at?: string | null;
+            slug: string;
+            status: components["schemas"]["ArticleStatus"];
+            /** Format: date */
+            subject_period_end?: string | null;
+            /** Format: date */
+            subject_period_start?: string | null;
+            title?: string | null;
+        };
+        ArtistPayload: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            slug: string;
+        };
         AttachMediaRequest: {
             alt_text_en?: string | null;
             alt_text_fr?: string | null;
@@ -1230,46 +1267,6 @@ export interface operations {
             };
         };
     };
-    update_article: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ArticlePayload"];
-            };
-        };
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ArticlePayload"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
     create_article: {
         parameters: {
             query?: never;
@@ -1343,6 +1340,49 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticlePayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_article: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Article UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArticleUpdatePayload"];
+            };
+        };
         responses: {
             /** @description Success */
             200: {
@@ -1517,6 +1557,26 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    get_all_artists: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtistPayload"][];
+                };
             };
         };
     };
