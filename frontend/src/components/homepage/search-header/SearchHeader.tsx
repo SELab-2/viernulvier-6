@@ -10,6 +10,7 @@ import { ThemeSwitcher } from "@/components/shared/theme-switcher";
 interface SearchHeaderProps {
     query: string;
     onQueryChange: (query: string) => void;
+    onSearch?: (query: string) => void;
     searchPlaceholder: string;
     searchHint: string;
 }
@@ -17,6 +18,7 @@ interface SearchHeaderProps {
 export function SearchHeader({
     query,
     onQueryChange,
+    onSearch,
     searchPlaceholder,
     searchHint,
 }: SearchHeaderProps) {
@@ -83,6 +85,11 @@ export function SearchHeader({
                             type="text"
                             value={query}
                             onChange={(e) => onQueryChange(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" && onSearch) {
+                                    onSearch(query);
+                                }
+                            }}
                             placeholder={searchPlaceholder}
                             autoComplete="off"
                             className="font-body text-foreground placeholder:text-muted-foreground w-full bg-transparent pl-2 text-[13px] outline-none"
