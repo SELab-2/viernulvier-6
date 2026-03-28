@@ -1,6 +1,5 @@
 import React from "react";
 import Image, { StaticImageData } from "next/image";
-import defaultImage from "@/assets/de_vooruit_decaying.png";
 
 interface VintageEmptyStateProps {
     title: string;
@@ -12,7 +11,7 @@ interface VintageEmptyStateProps {
 export function VintageEmptyState({
     title,
     description,
-    imagePath = defaultImage,
+    imagePath, // Without /public
     action,
 }: VintageEmptyStateProps) {
     return (

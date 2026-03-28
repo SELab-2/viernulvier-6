@@ -103,7 +103,7 @@ export default function SearchPage() {
                         <VintageEmptyState
                             title={t("noResultsTitle")}
                             description={t("noResultsText", { query: searchQuery })}
-                            imagePath="/de_vooruit_decaying.png"
+                            imagePath="/images/de_vooruit_decaying.png"
                         />
                     ) : (
                         <>

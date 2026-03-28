@@ -7,7 +7,7 @@ export default function NotFound() {
             <VintageEmptyState
                 title="404 - Pagina niet gevonden"
                 description="De pagina die u zoekt bestaat niet (meer) in ons archief of is verplaatst."
-                imagePath="/de_vooruit_decaying.png"
+                imagePath="/images/de_vooruit_decaying.png"
                 action={
                     <Link
                         href="/"
