@@ -43,8 +43,8 @@ function EventRow({ event, locale }: { event: Event; locale: string }) {
                     {isPast ? t("past") : t("upcoming")}
                 </span>
             </div>
-            <span className="border-border text-muted-foreground border px-1.5 py-px font-mono text-[8px] tracking-[1px] uppercase">
-                {event.status}
+            <span className="border-border text-muted-foreground mx-2 border px-1.5 py-px font-mono text-[8px] tracking-[1px] uppercase">
+                {isPast ? t("past") : t("upcoming")}
             </span>
         </div>
     );
