@@ -692,7 +692,7 @@ impl ApiImporter {
 }
 
 fn decode_url_from_crop(crop_url: &str) -> Option<String> {
-    let b64_part = crop_url.split('/').last()?;
+    let b64_part = crop_url.split('/').next_back()?;
 
     let engines = [
         general_purpose::URL_SAFE_NO_PAD,
@@ -702,12 +702,11 @@ fn decode_url_from_crop(crop_url: &str) -> Option<String> {
     ];
 
     for engine in engines {
-        if let Ok(bytes) = engine.decode(b64_part) {
-            if let Ok(url) = String::from_utf8(bytes) {
-                if url.starts_with("http") {
-                    return Some(url);
-                }
-            }
+        if let Ok(bytes) = engine.decode(b64_part)
+            && let Ok(url) = String::from_utf8(bytes)
+            && url.starts_with("http")
+        {
+            return Some(url);
         }
     }
     None

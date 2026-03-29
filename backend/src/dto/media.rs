@@ -57,7 +57,7 @@ impl MediaPayload {
         Ok(db.media().all(limit).await?)
     }
 
-    pub async fn delete(db: &Database, id: Uuid) -> Result<(), AppError> {
+    pub async fn delete(db: &Database, id: Uuid) -> Result<Vec<String>, AppError> {
         Ok(db.media().delete(id).await?)
     }
 }

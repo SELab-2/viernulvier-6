@@ -182,17 +182,67 @@ impl<'a> MediaRepo<'a> {
         Ok(media.update_all_fields(self.db).await?)
     }
 
-    pub async fn delete(&self, id: Uuid) -> Result<(), DatabaseError> {
-        let res = sqlx::query("DELETE FROM media WHERE id = $1")
+    pub async fn delete(&self, id: Uuid) -> Result<Vec<String>, DatabaseError> {
+        let mut s3_keys = Vec::new();
+        let mut tx = self.db.begin().await?;
+
+        // 1. Get the main media item
+        let media = sqlx::query_as::<_, Media>("SELECT * FROM media WHERE id = $1")
             .bind(id)
-            .execute(self.db)
+            .fetch_optional(&mut *tx)
             .await?;
 
-        if res.rows_affected() == 0 {
-            return Err(DatabaseError::NotFound);
+        let media = match media {
+            Some(m) => m,
+            None => return Err(DatabaseError::NotFound),
+        };
+        s3_keys.push(media.s3_key.clone());
+
+        // 2. Get derivatives
+        let derivatives = sqlx::query_as::<_, Media>("SELECT * FROM media WHERE parent_id = $1")
+            .bind(id)
+            .fetch_all(&mut *tx)
+            .await?;
+
+        let mut all_ids = vec![id];
+        for d in &derivatives {
+            s3_keys.push(d.s3_key.clone());
+            all_ids.push(d.id);
         }
 
-        Ok(())
+        // 3. Get variants for all IDs
+        let variants: Vec<String> = sqlx::query_scalar(
+            "SELECT s3_key FROM media_variant WHERE media_id = ANY($1)"
+        )
+        .bind(&all_ids)
+        .fetch_all(&mut *tx)
+        .await?;
+        
+        s3_keys.extend(variants);
+
+        // 4. Delete variants
+        sqlx::query("DELETE FROM media_variant WHERE media_id = ANY($1)")
+            .bind(&all_ids)
+            .execute(&mut *tx)
+            .await?;
+
+        // 5. Delete derivatives
+        if all_ids.len() > 1 {
+            sqlx::query("DELETE FROM media WHERE parent_id = $1")
+                .bind(id)
+                .execute(&mut *tx)
+                .await?;
+        }
+
+        // 6. Delete the main media
+        sqlx::query("DELETE FROM media WHERE id = $1")
+            .bind(id)
+            .execute(&mut *tx)
+            .await?;
+
+        tx.commit().await?;
+
+        Ok(s3_keys)
     }
 
     pub async fn by_s3_key(&self, s3_key: &str) -> Result<Option<Media>, DatabaseError> {
@@ -384,41 +434,58 @@ impl<'a> MediaRepo<'a> {
         let orphans = self.orphaned().await?;
         let mut s3_keys = Vec::new();
 
-        for orphan in &orphans {
-            // collect s3_keys from derivatives first
-            let derivatives = self.derivatives(orphan.id).await?;
-            for d in &derivatives {
-                s3_keys.push(d.s3_key.clone());
-            }
-            s3_keys.push(orphan.s3_key.clone());
+        if orphans.is_empty() {
+            return Ok(s3_keys);
         }
 
-        // delete derivatives first, then orphans (parent_id cascade handles this, but be explicit)
-        sqlx::query(
-            r#"
-            DELETE FROM media
-            WHERE parent_id IN (
-                SELECT m.id FROM media m
-                LEFT JOIN entity_media em ON em.media_id = m.id
-                WHERE em.id IS NULL AND m.parent_id IS NULL
-            )
-            "#,
+        let mut tx = self.db.begin().await?;
+        let mut all_ids = Vec::new();
+
+        for orphan in &orphans {
+            all_ids.push(orphan.id);
+            s3_keys.push(orphan.s3_key.clone());
+
+            // collect s3_keys from derivatives first
+            let derivatives = sqlx::query_as::<_, Media>("SELECT * FROM media WHERE parent_id = $1")
+                .bind(orphan.id)
+                .fetch_all(&mut *tx)
+                .await?;
+                
+            for d in derivatives {
+                all_ids.push(d.id);
+                s3_keys.push(d.s3_key);
+            }
+        }
+
+        // Get all variants for all collected IDs
+        let variants: Vec<String> = sqlx::query_scalar(
+            "SELECT s3_key FROM media_variant WHERE media_id = ANY($1)"
         )
-        .execute(self.db)
+        .bind(&all_ids)
+        .fetch_all(&mut *tx)
         .await?;
 
-        sqlx::query(
-            r#"
-            DELETE FROM media
-            WHERE id IN (
-                SELECT m.id FROM media m
-                LEFT JOIN entity_media em ON em.media_id = m.id
-                WHERE em.id IS NULL AND m.parent_id IS NULL
-            )
-            "#,
-        )
-        .execute(self.db)
-        .await?;
+        s3_keys.extend(variants);
+
+        // Delete variants
+        sqlx::query("DELETE FROM media_variant WHERE media_id = ANY($1)")
+            .bind(&all_ids)
+            .execute(&mut *tx)
+            .await?;
+
+        // Delete derivatives
+        sqlx::query("DELETE FROM media WHERE parent_id = ANY($1)")
+            .bind(&all_ids)
+            .execute(&mut *tx)
+            .await?;
+
+        // Delete orphans
+        sqlx::query("DELETE FROM media WHERE id = ANY($1)")
+            .bind(&all_ids)
+            .execute(&mut *tx)
+            .await?;
+
+        tx.commit().await?;
 
         Ok(s3_keys)
     }
@@ -435,10 +502,48 @@ impl<'a> MediaRepo<'a> {
             return Ok(0);
         }
 
-        let res = sqlx::query("DELETE FROM media WHERE s3_key = ANY($1)")
+        let mut tx = self.db.begin().await?;
+
+        // 1. Find the IDs to be deleted
+        let media_ids: Vec<Uuid> = sqlx::query_scalar("SELECT id FROM media WHERE s3_key = ANY($1)")
             .bind(keys)
-            .execute(self.db)
+            .fetch_all(&mut *tx)
             .await?;
+
+        if media_ids.is_empty() {
+            return Ok(0);
+        }
+
+        // 2. We need to collect all derivative IDs
+        let derivative_ids: Vec<Uuid> = sqlx::query_scalar("SELECT id FROM media WHERE parent_id = ANY($1)")
+            .bind(&media_ids)
+            .fetch_all(&mut *tx)
+            .await?;
+
+        let mut all_ids = media_ids.clone();
+        all_ids.extend(derivative_ids);
+
+        // 3. Delete variants
+        sqlx::query("DELETE FROM media_variant WHERE media_id = ANY($1)")
+            .bind(&all_ids)
+            .execute(&mut *tx)
+            .await?;
+
+        // 4. Delete derivatives
+        if !media_ids.is_empty() {
+            sqlx::query("DELETE FROM media WHERE parent_id = ANY($1)")
+                .bind(&media_ids)
+                .execute(&mut *tx)
+                .await?;
+        }
+
+        // 5. Delete main media
+        let res = sqlx::query("DELETE FROM media WHERE id = ANY($1)")
+            .bind(&media_ids)
+            .execute(&mut *tx)
+            .await?;
+
+        tx.commit().await?;
 
         Ok(res.rows_affected())
     }

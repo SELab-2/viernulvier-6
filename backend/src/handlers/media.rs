@@ -4,7 +4,6 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
 };
-use chrono::Utc;
 use database::{Database, models::entity_type::EntityType};
 use std::collections::HashSet;
 use std::time::Duration;
@@ -186,20 +185,24 @@ pub async fn delete(
     db: Database,
     Path(id): Path<Uuid>,
 ) -> StatusResponse {
-    // get the media first to know the s3_key
-    let media = db.media().by_id(id).await?;
+    // get the media first to verify it exists
+    let _ = db.media().by_id(id).await?;
 
-    // delete from S3 if there's a key
+    // delete from db and get all associated s3 keys (including derivatives and variants)
+    let s3_keys = db.media().delete(id).await?;
+
+    // delete from S3
     if let (Some(s3_config), Some(s3_client)) = (&state.config.s3, &state.s3_client) {
-        let _ = s3_client
-            .delete_object()
-            .bucket(&s3_config.bucket)
-            .key(&media.s3_key)
-            .send()
-            .await;
+        for key in &s3_keys {
+            let _ = s3_client
+                .delete_object()
+                .bucket(&s3_config.bucket)
+                .key(key)
+                .send()
+                .await;
+        }
     }
 
-    db.media().delete(id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -310,7 +313,6 @@ pub async fn attach_to_entity(
 ) -> JsonStatusResponse<MediaPayload> {
     let et = parse_entity_type(&entity_type)?;
     let role = normalize_media_role_opt(req.role)?.unwrap_or_else(|| "gallery".to_string());
-    let now = Utc::now();
 
     let media_create = database::models::media::MediaCreate {
         s3_key: req.s3_key,
@@ -337,8 +339,6 @@ pub async fn attach_to_entity(
         source_system: "cms".to_string(),
         source_uri: None,
         source_updated_at: None,
-        created_at: now,
-        updated_at: now,
     };
 
     let media = db
