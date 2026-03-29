@@ -1,0 +1,24 @@
+# Bacon configuration for dev auto-reload
+# Docs: https://dystroy.org/bacon/config/
+
+default_job = "run"
+
+[jobs.run]
+command = ["cargo", "run"]
+need_stdout = true
+allow_warnings = true
+background = false
+on_change_strategy = "kill_then_restart"
+kill = ["pkill", "-f", "viernulvier_api"]
+
+[jobs.check]
+command = ["cargo", "check"]
+need_stdout = false
+
+[jobs.test]
+command = ["cargo", "test"]
+need_stdout = true
+
+[jobs.clippy]
+command = ["cargo", "clippy"]
+need_stdout = false

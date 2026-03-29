@@ -1,0 +1,148 @@
+---
+title: Preview / Production Setup
+description: Docker-based deployment for preview and production environments.
+---
+
+# Preview / Production Setup
+
+This setup runs the entire stack in Docker containers, suitable for staging and production.
+
+## Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/)
+- A server with ports 80 and 443 exposed
+
+## Quick Start
+
+### 1. Environment Files
+
+Create the environment files:
+
+```bash
+# Root config (domain, SSL)
+cp .env.example .env
+
+# For preview/staging:
+cp infra/preview/.env.preview.example infra/preview/.env
+
+# For production, create:
+# infra/production/.env
+```
+
+**`.env`** (root):
+
+- `DOMAIN` — Your domain (e.g., `archief.404.be`)
+- `ACME_EMAIL` — Let's Encrypt email for SSL
+- `PROJECT_NAME` — Project name for containers
+
+**Service environment variables** (`infra/preview/.env` or `infra/production/.env`):
+
+| Variable                                   | Description              |
+| ------------------------------------------ | ------------------------ |
+| `PREVIEW_NAME` / `PROD_NAME`               | `pr-123` or `production` |
+| `PREVIEW_HOST` / `PROD_HOST`               | Server IP/hostname       |
+| `NEXT_PUBLIC_SITE_URL`                     | Public URL               |
+| `PREVIEW_DB_USER` / `PROD_DB_USER`         | PostgreSQL username      |
+| `PREVIEW_DB_PASSWORD` / `PROD_DB_PASSWORD` | PostgreSQL password      |
+| `PREVIEW_DB_NAME` / `PROD_DB_NAME`         | PostgreSQL database      |
+| `PREVIEW_JWT_SECRET` / `PROD_JWT_SECRET`   | JWT signing secret       |
+| `PREVIEW_API_KEY_404` / `PROD_API_KEY_404` | API key (optional)       |
+| `GARAGE_RPC_SECRET`                        | S3 RPC secret            |
+| `GARAGE_S3_ACCESS_KEY`                     | S3 access key            |
+| `GARAGE_S3_SECRET_KEY`                     | S3 secret key            |
+| `GARAGE_S3_BUCKET`                         | S3 bucket name           |
+
+<Callout type="info">
+  Replace `PREVIEW_` with `PROD_` for production deployments. For example: `PREVIEW_DB_USER` becomes
+  `PROD_DB_USER`.
+</Callout>
+
+### 2. Start Environment
+
+**For preview/staging:**
+
+```bash
+npm run preview
+```
+
+**For production:**
+
+```bash
+docker compose -f infra/production/docker-compose.prod.yml --env-file infra/production/.env up -d
+```
+
+This starts:
+
+- Traefik (SSL, routing)
+- Frontend (:3000)
+- Docs (:3002)
+- Backend API (:3001)
+- PostgreSQL (:5432)
+- Garage S3 (:3900)
+
+### 3. Stop Environment
+
+**Preview:**
+
+```bash
+npm run preview:stop
+```
+
+**Production:**
+
+```bash
+docker compose -f infra/production/docker-compose.prod.yml down
+```
+
+## Architecture
+
+```
+                    ┌─────────────┐
+                    │   Traefik   │
+                    │   :80, :443 │
+                    └──────┬──────┘
+                           │
+           ┌───────────────┼──────────────┐
+           │               │              │
+     ┌─────▼─────┐  ┌──────▼──────┐  ┌────▼────┐
+     │ Frontend  │  │    Docs     │  │   API   │
+     │  :3000    │  │    :3002    │  │  :3001  │
+     └───────────┘  └─────────────┘  └─────────┘
+                                          │
+                          ┌───────────────┴─────┐
+                          │                     │
+                   ┌──────▼──────┐      ┌───────▼──────┐
+                   │ PostgreSQL  │      │ Garage S3    │
+                   │   :5432     │      │   :3900      │
+                   └─────────────┘      └──────────────┘
+```
+
+## SSL / HTTPS
+
+Traefik automatically handles SSL certificates via Let's Encrypt.
+
+## Troubleshooting
+
+**Containers not starting?**
+
+```bash
+# Preview:
+docker compose -f infra/preview/docker-compose.preview.yml logs
+
+# Production:
+docker compose -f infra/production/docker-compose.prod.yml logs
+```
+
+**SSL issues?**
+Ensure `ACME_EMAIL` is set and domain points to server.
+
+**Database migrations?**
+
+```bash
+# Preview:
+docker compose -f infra/preview/docker-compose.preview.yml exec backend ./migrate
+
+# Production:
+docker compose -f infra/production/docker-compose.prod.yml exec backend ./migrate
+```
