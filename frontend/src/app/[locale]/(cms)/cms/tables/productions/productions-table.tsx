@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import type { Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
+import { SelectionToolbar } from "../selection-toolbar";
+import { useParentChildSelection } from "../use-parent-child-selection";
 import { makeProductionColumns, productionFields, toProductionUpdateInput } from "./columns";
 import { makeEventColumns, eventFields, toEventUpdateInput } from "./event-columns";
 import { Spinner } from "@/components/ui/spinner";
@@ -13,6 +16,7 @@ import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
 
 export function ProductionsTable() {
+    const t = useTranslations("Cms.Productions");
     const { data: productions = [], isLoading: productionsLoading } = useGetProductions();
     const { data: allEvents = [], isLoading: eventsLoading } = useGetEvents();
     const updateProduction = useUpdateProduction();
@@ -31,9 +35,25 @@ export function ProductionsTable() {
         return map;
     }, [allEvents]);
 
-    const productionCols = useMemo(() => makeProductionColumns({ onEdit: setEditProduction }), []);
+    const {
+        parentSelection,
+        setParentSelection,
+        childSelection,
+        getChildHandler,
+        selectColumn,
+        selectedParentCount: selectedProductionCount,
+        selectedChildCount: selectedEventCount,
+        clearSelection,
+    } = useParentChildSelection<Production>(eventsByProduction);
+
+    const productionCols = useMemo(
+        () => [selectColumn, ...makeProductionColumns({ onEdit: setEditProduction })],
+        [selectColumn]
+    );
 
     const eventCols = useMemo(() => makeEventColumns({ onEdit: setEditEvent }), []);
+
+    const getEventRowId = useCallback((row: Event) => row.id, []);
 
     const renderEvents = useCallback(
         (row: Row<Production>) => {
@@ -44,10 +64,26 @@ export function ProductionsTable() {
                     </div>
                 );
             }
-            const events = eventsByProduction.get(row.original.id) ?? [];
-            return <MemoSubTable items={events} columns={eventCols} />;
+            const productionId = row.original.id;
+            const events = eventsByProduction.get(productionId) ?? [];
+            return (
+                <MemoSubTable
+                    items={events}
+                    columns={eventCols}
+                    rowSelection={childSelection.get(productionId)}
+                    onRowSelectionChange={getChildHandler(productionId)}
+                    getRowId={getEventRowId}
+                />
+            );
         },
-        [eventCols, eventsByProduction, eventsLoading]
+        [
+            childSelection,
+            eventCols,
+            eventsByProduction,
+            eventsLoading,
+            getChildHandler,
+            getEventRowId,
+        ]
     );
 
     return (
@@ -60,14 +96,35 @@ export function ProductionsTable() {
                 getRowCanExpand={(row) =>
                     (eventsByProduction.get(row.original.id)?.length ?? 0) > 0
                 }
-                expanderLabels={{ show: "Show events", hide: "Hide events" }}
+                expanderLabels={{ show: t("showEvents"), hide: t("hideEvents") }}
+                toolbar={
+                    <SelectionToolbar
+                        groups={[
+                            {
+                                countKey: "productionsSelected",
+                                count: selectedProductionCount,
+                                inlineActions: [],
+                                overflowActions: [],
+                            },
+                            {
+                                countKey: "eventsSelected",
+                                count: selectedEventCount,
+                                inlineActions: [],
+                                overflowActions: [],
+                            },
+                        ]}
+                        onClear={clearSelection}
+                    />
+                }
+                rowSelection={parentSelection}
+                onRowSelectionChange={setParentSelection}
             />
             <EditSheet
                 open={!!editProduction}
                 onOpenChange={(open) => !open && setEditProduction(null)}
                 entity={editProduction}
                 fields={productionFields}
-                title="Edit production"
+                title={t("editProduction")}
                 onSave={(data) => updateProduction.mutate(toProductionUpdateInput(data))}
             />
             <EditSheet
@@ -75,7 +132,7 @@ export function ProductionsTable() {
                 onOpenChange={(open) => !open && setEditEvent(null)}
                 entity={editEvent}
                 fields={eventFields}
-                title="Edit event"
+                title={t("editEvent")}
                 onSave={(data) => updateEvent.mutate(toEventUpdateInput(data))}
             />
         </>

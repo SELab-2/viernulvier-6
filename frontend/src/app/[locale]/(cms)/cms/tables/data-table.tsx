@@ -3,39 +3,63 @@
 import {
     ColumnDef,
     ExpandedState,
+    OnChangeFn,
     Row,
+    RowSelectionState,
     flexRender,
     getCoreRowModel,
     getExpandedRowModel,
     useReactTable,
 } from "@tanstack/react-table";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { Fragment, ReactNode, useState } from "react";
+import { Fragment, ReactNode, memo, useState } from "react";
 
-// Generic memoized subtable that only rerenders when its own row items change.
+// Generic memoized subtable that only rerenders when its own row items or selection changes.
 // TanStack Query structural sharing ensures unchanged items keep their reference,
 // so the element-level comparator correctly skips rerenders for unaffected rows.
-function MemoSubTableInner<T>({ items, columns }: { items: T[]; columns: ColumnDef<T>[] }) {
+function MemoSubTableInner<T>({
+    items,
+    columns,
+    rowSelection,
+    onRowSelectionChange,
+    getRowId,
+}: {
+    items: T[];
+    columns: ColumnDef<T>[];
+    rowSelection?: RowSelectionState;
+    onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+    getRowId?: (row: T) => string;
+}) {
     return (
         <div className="bg-muted/30 py-1 pr-6 pl-12">
-            <DataTable columns={columns} data={items} compact />
+            <DataTable
+                columns={columns}
+                data={items}
+                compact
+                rowSelection={rowSelection}
+                onRowSelectionChange={onRowSelectionChange}
+                getRowId={getRowId}
+            />
         </div>
     );
 }
 MemoSubTableInner.displayName = "MemoSubTable";
-export const MemoSubTable = memo(
-    MemoSubTableInner,
-    <T,>(
-        prev: { items: T[]; columns: ColumnDef<T>[] },
-        next: { items: T[]; columns: ColumnDef<T>[] }
-    ) =>
-        prev.columns === next.columns &&
-        prev.items.length === next.items.length &&
-        prev.items.every((item, i) => item === next.items[i])
-) as <T>(props: { items: T[]; columns: ColumnDef<T>[] }) => ReactNode;
 
-import { memo } from "react";
+function shallowEqual(
+    a: Record<string, boolean> | undefined,
+    b: Record<string, boolean> | undefined
+): boolean {
+    if (a === b) return true;
+    if (!a || !b) return false;
+    const aKeys = Object.keys(a);
+    const bKeys = Object.keys(b);
+    if (aKeys.length !== bKeys.length) return false;
+    return aKeys.every((k) => a[k] === b[k]);
+}
+
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
     Table,
@@ -46,6 +70,38 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+export const MemoSubTable = memo(
+    MemoSubTableInner,
+    <T,>(
+        prev: {
+            items: T[];
+            columns: ColumnDef<T>[];
+            rowSelection?: RowSelectionState;
+            onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+            getRowId?: (row: T) => string;
+        },
+        next: {
+            items: T[];
+            columns: ColumnDef<T>[];
+            rowSelection?: RowSelectionState;
+            onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+            getRowId?: (row: T) => string;
+        }
+    ) =>
+        prev.columns === next.columns &&
+        prev.items.length === next.items.length &&
+        prev.items.every((item, i) => item === next.items[i]) &&
+        shallowEqual(prev.rowSelection, next.rowSelection) &&
+        prev.onRowSelectionChange === next.onRowSelectionChange &&
+        prev.getRowId === next.getRowId
+) as <T>(props: {
+    items: T[];
+    columns: ColumnDef<T>[];
+    rowSelection?: RowSelectionState;
+    onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+    getRowId?: (row: T) => string;
+}) => ReactNode;
 
 export interface ExpanderLabels {
     show: string;
@@ -64,6 +120,10 @@ interface DataTableProps<TData, TValue> {
     getRowCanExpand?: (row: Row<TData>) => boolean;
     expanderLabels?: ExpanderLabels;
     compact?: boolean;
+    toolbar?: ReactNode;
+    rowSelection?: RowSelectionState;
+    onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+    getRowId?: (row: TData) => string;
 }
 
 export function DataTable<TData, TValue>({
@@ -74,8 +134,33 @@ export function DataTable<TData, TValue>({
     getRowCanExpand,
     expanderLabels,
     compact = false,
+    toolbar,
+    rowSelection,
+    onRowSelectionChange,
+    getRowId,
 }: DataTableProps<TData, TValue>) {
+    const t = useTranslations("Cms.DataTable");
     const [expanded, setExpanded] = useState<ExpandedState>({});
+
+    // onRowSelectionChange alone determines whether selection is enabled.
+    // rowSelection may be undefined when no items are selected yet (treated as {}).
+    const hasSelection = onRowSelectionChange !== undefined;
+    const effectiveRowSelection = rowSelection ?? {};
+    const hasCustomSelectColumn = columns.some((c) => c.id === "select");
+
+    const selectColumn: ColumnDef<TData> = {
+        id: "select",
+        header: () => null,
+        cell: ({ row }) => (
+            <Checkbox
+                checked={row.getIsSelected()}
+                onCheckedChange={(value) => row.toggleSelected(!!value)}
+                aria-label="Select row"
+            />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+    };
 
     const expanderColumn: ColumnDef<TData> = {
         id: "expander",
@@ -106,9 +191,22 @@ export function DataTable<TData, TValue>({
             ) : null,
     };
 
-    const allColumns: ColumnDef<TData, TValue>[] = renderSubComponent
-        ? [expanderColumn as ColumnDef<TData, TValue>, ...columns]
-        : columns;
+    // Build column list with correct ordering: [select] [expander] [data...]
+    // When a custom select column is provided, the expander is inserted right after it.
+    const allColumns: ColumnDef<TData, TValue>[] = (() => {
+        const withSelect =
+            hasSelection && !hasCustomSelectColumn
+                ? [selectColumn as ColumnDef<TData, TValue>, ...columns]
+                : [...columns];
+
+        if (!renderSubComponent) return withSelect;
+
+        const selectIdx = withSelect.findIndex((c) => c.id === "select");
+        const insertAt = selectIdx !== -1 ? selectIdx + 1 : 0;
+        const result = [...withSelect];
+        result.splice(insertAt, 0, expanderColumn as ColumnDef<TData, TValue>);
+        return result;
+    })();
 
     const spacerColumn: ColumnDef<TData, TValue> = {
         id: "spacer",
@@ -133,17 +231,26 @@ export function DataTable<TData, TValue>({
         data,
         columns: finalColumns,
         getCoreRowModel: getCoreRowModel(),
+        ...(getRowId && { getRowId }),
+        state: {
+            ...(renderSubComponent && { expanded }),
+            ...(hasSelection && { rowSelection: effectiveRowSelection }),
+        },
         ...(renderSubComponent && {
             getExpandedRowModel: getExpandedRowModel(),
             getRowCanExpand,
-            state: { expanded },
             onExpandedChange: setExpanded,
+        }),
+        ...(hasSelection && {
+            onRowSelectionChange,
+            enableRowSelection: true,
         }),
     });
 
     return (
         <TooltipProvider>
             <div className={compact ? undefined : "overflow-hidden rounded-md border"}>
+                {toolbar !== undefined && <div className="border-b px-4 py-2">{toolbar}</div>}
                 <Table
                     className={
                         compact
@@ -225,7 +332,7 @@ export function DataTable<TData, TValue>({
                                     colSpan={finalColumns.length}
                                     className="h-24 text-center"
                                 >
-                                    No results.
+                                    {t("noResults")}
                                 </TableCell>
                             </TableRow>
                         )}

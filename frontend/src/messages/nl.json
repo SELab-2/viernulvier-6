@@ -134,6 +134,68 @@
         "errorGeneric": "Er is iets misgegaan. Probeer het later opnieuw.",
         "loggedOut": "Succesvol uitgelogd."
     },
+    "Cms": {
+        "TabBar": {
+            "overview": "CMS Overzicht",
+            "content": "Inhoud beheren",
+            "ingest": "Importeren",
+            "import": "Automatische import"
+        },
+        "Sidebar": {
+            "contentType": "Inhoudstype",
+            "filters": "Filters",
+            "noFilters": "Geen filters beschikbaar.",
+            "clearFilters": "Filters wissen",
+            "productions": "Producties",
+            "articles": "Artikelen",
+            "locations": "Locaties",
+            "performers": "Uitvoerders"
+        },
+        "DataTable": {
+            "noResults": "Geen resultaten."
+        },
+        "SelectionToolbar": {
+            "clearSelection": "Selectie wissen",
+            "productionsSelected": "{count, plural, one {# productie} other {# producties}}",
+            "eventsSelected": "{count, plural, one {# voorstelling} other {# voorstellingen}}",
+            "locationsSelected": "{count, plural, one {# locatie} other {# locaties}}",
+            "hallsSelected": "{count, plural, one {# zaal} other {# zalen}}",
+            "moreActions": "Meer acties"
+        },
+        "ActionsColumn": {
+            "openMenu": "Menu openen",
+            "actions": "Acties",
+            "copy": "{key} kopi\u00ebren",
+            "copied": "{key} gekopieerd",
+            "copyFailed": "Kopi\u00ebren naar klembord mislukt",
+            "edit": "{label} bewerken"
+        },
+        "EditSheet": {
+            "yes": "Ja",
+            "no": "Nee",
+            "selectPlaceholder": "Selecteer\u2026",
+            "cancel": "Annuleren",
+            "saveChanges": "Wijzigingen opslaan"
+        },
+        "Productions": {
+            "showEvents": "Voorstellingen tonen",
+            "hideEvents": "Voorstellingen verbergen",
+            "editProduction": "Productie bewerken",
+            "editEvent": "Voorstelling bewerken"
+        },
+        "Locations": {
+            "showHalls": "Zalen tonen",
+            "hideHalls": "Zalen verbergen",
+            "editLocation": "Locatie bewerken",
+            "editHall": "Zaal bewerken"
+        },
+        "Articles": {
+            "notAvailable": "Artikelen-API is nog niet beschikbaar. Geen gegevens om weer te geven."
+        },
+        "Performers": {
+            "notAvailable": "Uitvoerders-API is nog niet beschikbaar. Geen gegevens om weer te geven."
+        }
+    },
     "Admin": {
         "title": "Admin Dashboard",
         "welcomeBack": "Welkom terug!",

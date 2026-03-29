@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import type { Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
+import { SelectionToolbar } from "../selection-toolbar";
+import { useParentChildSelection } from "../use-parent-child-selection";
 import { makeLocationColumns, locationFields, toLocationUpdateInput } from "./columns";
 import { makeHallColumns, hallFields, toHallUpdateInput } from "./hall-columns";
 import { Spinner } from "@/components/ui/spinner";
@@ -13,6 +16,7 @@ import type { Location } from "@/types/models/location.types";
 import type { Hall } from "@/types/models/hall.types";
 
 export function LocationsTable() {
+    const t = useTranslations("Cms.Locations");
     const { data: locations = [], isLoading: locationsLoading } = useGetLocations();
     const { data: allHalls = [], isLoading: hallsLoading } = useGetHalls();
     const updateLocation = useUpdateLocation();
@@ -32,9 +36,26 @@ export function LocationsTable() {
         return map;
     }, [allHalls]);
 
-    const locationCols = useMemo(() => makeLocationColumns({ onEdit: setEditLocation }), []);
+    const {
+        parentSelection,
+        setParentSelection,
+        childSelection,
+        getChildHandler,
+        selectColumn,
+        selectedParentCount: selectedLocationCount,
+        selectedChildCount: selectedHallCount,
+        clearSelection,
+    } = useParentChildSelection<Location>(hallsBySpace);
+
+    const locationCols = useMemo(
+        () => [selectColumn, ...makeLocationColumns({ onEdit: setEditLocation })],
+        [selectColumn]
+    );
 
     const hallCols = useMemo(() => makeHallColumns({ onEdit: setEditHall }), []);
+
+    const getLocationRowId = useCallback((row: Location) => row.id, []);
+    const getHallRowId = useCallback((row: Hall) => row.id, []);
 
     const renderHalls = useCallback(
         (row: Row<Location>) => {
@@ -45,10 +66,19 @@ export function LocationsTable() {
                     </div>
                 );
             }
-            const halls = hallsBySpace.get(row.original.id) ?? [];
-            return <MemoSubTable items={halls} columns={hallCols} />;
+            const locationId = row.original.id;
+            const halls = hallsBySpace.get(locationId) ?? [];
+            return (
+                <MemoSubTable
+                    items={halls}
+                    columns={hallCols}
+                    rowSelection={childSelection.get(locationId)}
+                    onRowSelectionChange={getChildHandler(locationId)}
+                    getRowId={getHallRowId}
+                />
+            );
         },
-        [hallCols, hallsBySpace, hallsLoading]
+        [childSelection, getChildHandler, getHallRowId, hallCols, hallsBySpace, hallsLoading]
     );
 
     return (
@@ -59,14 +89,36 @@ export function LocationsTable() {
                 loading={locationsLoading}
                 renderSubComponent={renderHalls}
                 getRowCanExpand={(row) => (hallsBySpace.get(row.original.id)?.length ?? 0) > 0}
-                expanderLabels={{ show: "Show halls", hide: "Hide halls" }}
+                expanderLabels={{ show: t("showHalls"), hide: t("hideHalls") }}
+                toolbar={
+                    <SelectionToolbar
+                        groups={[
+                            {
+                                countKey: "locationsSelected",
+                                count: selectedLocationCount,
+                                inlineActions: [],
+                                overflowActions: [],
+                            },
+                            {
+                                countKey: "hallsSelected",
+                                count: selectedHallCount,
+                                inlineActions: [],
+                                overflowActions: [],
+                            },
+                        ]}
+                        onClear={clearSelection}
+                    />
+                }
+                rowSelection={parentSelection}
+                onRowSelectionChange={setParentSelection}
+                getRowId={getLocationRowId}
             />
             <EditSheet
                 open={!!editLocation}
                 onOpenChange={(open) => !open && setEditLocation(null)}
                 entity={editLocation}
                 fields={locationFields}
-                title="Edit location"
+                title={t("editLocation")}
                 onSave={(data) => updateLocation.mutate(toLocationUpdateInput(data))}
             />
             <EditSheet
@@ -74,7 +126,7 @@ export function LocationsTable() {
                 onOpenChange={(open) => !open && setEditHall(null)}
                 entity={editHall}
                 fields={hallFields}
-                title="Edit hall"
+                title={t("editHall")}
                 onSave={(data) => updateHall.mutate(toHallUpdateInput(data))}
             />
         </>

@@ -1,7 +1,8 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 export function PerformersTable() {
-    return (
-        <div className="text-muted-foreground text-sm">
-            Performers API is not yet available. No data to display.
-        </div>
-    );
+    const t = useTranslations("Cms.Performers");
+    return <div className="text-muted-foreground text-sm">{t("notAvailable")}</div>;
 }

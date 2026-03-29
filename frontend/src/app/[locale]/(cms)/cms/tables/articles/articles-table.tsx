@@ -1,7 +1,8 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 export function ArticlesTable() {
-    return (
-        <div className="text-muted-foreground text-sm">
-            Articles API is not yet available. No data to display.
-        </div>
-    );
+    const t = useTranslations("Cms.Articles");
+    return <div className="text-muted-foreground text-sm">{t("notAvailable")}</div>;
 }
