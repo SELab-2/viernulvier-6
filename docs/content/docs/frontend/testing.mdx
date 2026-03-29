@@ -1,0 +1,126 @@
+---
+title: Frontend Testing
+description: Overview of the testing strategy, tools, and conventions used in the Next.js frontend.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Our frontend testing strategy is divided into two primary areas: **Unit/Integration Tests** for isolated component and hook logic, and **End-to-End (E2E) Tests** for validating critical user flows across the entire application.
+
+## Core Testing Stack
+
+- **Vitest**: The test runner for all unit and integration tests. It is fast, native to ESM, and integrates well with our tooling.
+- **React Testing Library**: Used alongside Vitest to render React components and assert on their DOM nodes.
+- **Playwright**: Used for End-to-End (E2E) testing. It launches a real Chromium browser, clicks through the application, and verifies complete flows.
+- **Mock Service Worker (MSW)**: Used in integration tests to mock the Rust backend API, allowing us to test how the frontend handles different API responses (success, 404, 500) without needing a running backend.
+
+---
+
+## 1. Unit & Integration Tests (Vitest)
+
+Unit and integration tests are located in `frontend/test/`. We try to isolate our pure logic (components, custom hooks, API mappers) and test them thoroughly.
+
+### Running the tests
+
+```bash
+cd frontend
+
+# Run tests in watch mode (best for active development)
+npm run test
+
+# Run tests once
+npm run test:run
+
+# Run tests and generate Codecov coverage
+npm run test:coverage
+```
+
+### Writing Component Tests
+
+When writing component tests, we use a custom render wrapper (`test-utils.tsx`) that automatically wraps your component in the necessary providers (`NextIntlClientProvider`, `QueryClientProvider`, `ThemeProvider`).
+
+**Example: Testing a UI Component**
+
+```tsx title="frontend/test/unit/components/searchpage/ResultsBar.test.tsx"
+import { describe, expect, it } from 'vitest';
+import { render, screen } from '../../../../test/utils/test-utils';
+import userEvent from '@testing-library/user-event';
+import { ResultsBar } from '@/components/searchpage/results-bar/ResultsBar';
+
+describe('ResultsBar component', () => {
+  it('displays the correct shown and total counts', () => {
+    // The custom 'render' automatically wraps this in our Providers
+    render(<ResultsBar shownCount={20} totalCount={1000} />);
+
+    expect(screen.getByText('20')).toBeInTheDocument();
+    expect(screen.getByText('1,000')).toBeInTheDocument();
+  });
+});
+```
+
+<Callout type="info">
+  **Mocking Translations:** If the component relies heavily on `useTranslations`, ensure you pass
+  mock messages to the `NextIntlClientProvider` within your test file.
+</Callout>
+
+### Mocking the API (MSW)
+
+If you are testing a feature that fetches data using TanStack Query, the network request will be intercepted by MSW.
+
+1. Define your mock API endpoints in `frontend/test/msw/handlers/`.
+2. The `setup.ts` file automatically starts the MSW server before the tests run.
+
+---
+
+## 2. End-to-End Tests (Playwright)
+
+E2E tests ensure that the entire application works correctly from the user's perspective. They spin up the Next.js dev server and execute actions inside a real browser.
+
+### Running E2E Tests
+
+```bash
+cd frontend
+
+# Run E2E tests in the background (headless)
+npm run test:e2e
+
+# Open the Playwright UI (highly recommended for debugging)
+npm run test:e2e:ui
+```
+
+### Writing E2E Tests
+
+E2E tests are located in `frontend/test/e2e/`. They should focus on critical user journeys (e.g., searching for an archive, clicking a filter, and verifying the URL changes).
+
+**Example: Basic E2E Flow**
+
+```typescript title="frontend/test/e2e/home.spec.ts"
+import { test, expect } from '@playwright/test';
+
+test.describe('Homepage', () => {
+  test('should load the homepage without hydration errors', async ({ page }) => {
+    // Navigate to the localized route
+    await page.goto('/nl');
+
+    // Wait for network requests to settle
+    await page.waitForLoadState('networkidle');
+
+    // Assert that a core element is visible
+    const body = page.locator('body');
+    await expect(body).toBeVisible();
+  });
+});
+```
+
+---
+
+## Code Coverage
+
+We use **Vitest** to generate our code coverage (`lcov.info`), which is then automatically uploaded to **Codecov** via GitHub Actions.
+
+<Callout type="warning">
+  **Note on Playwright Coverage:** We do not track code coverage for Playwright E2E tests.
+  Instrumenting Next.js code for E2E coverage is complex and often leads to inflated "false
+  confidence" metrics. We rely on Vitest to provide an accurate line-by-line coverage percentage,
+  while Playwright acts purely as a behavioral safety net.
+</Callout>
