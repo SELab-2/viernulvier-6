@@ -2,6 +2,14 @@
     "General": {
         "projectName": "Viernulvier Archive"
     },
+    "Footer": {
+        "address": "Kunstencentrum VIERNULVIER vzw · Sint-Pietersnieuwstraat 23 · 9000 Ghent",
+        "contact": "T. 09 267 28 20 · info@viernulvier.gent · BTW BE 0423.063.619"
+    },
+    "Header": {
+        "logout": "Logout",
+        "loggingOut": "..."
+    },
     "LocaleSwitcher": {
         "label": "Select language"
     },

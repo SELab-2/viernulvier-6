@@ -1,11 +1,13 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useUser, useLogout } from "@/hooks/useAuth";
 import { usePathname } from "@/i18n/routing";
 import { ThemeSwitcher } from "@/components/shared/theme-switcher";
 import { LocaleSwitcher } from "@/components/shared/locale-switcher";
 
 export const Header = () => {
+    const t = useTranslations("Header");
     const pathname = usePathname();
     const isLoginPage = pathname === "/login";
 
@@ -22,7 +24,7 @@ export const Header = () => {
                     disabled={isLoggingOut}
                     className="text-muted-foreground hover:text-foreground cursor-pointer font-mono text-[10px] tracking-[1.4px] uppercase transition-colors disabled:opacity-50"
                 >
-                    {isLoggingOut ? "..." : "Logout"}
+                    {isLoggingOut ? t("loggingOut") : t("logout")}
                 </button>
             )}
         </header>
