@@ -25,6 +25,9 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV PREVIEW_NAME=$PREVIEW_NAME
 ENV CODECOV_TOKEN=$CODECOV_TOKEN
 
+# Expose base path to access inside of browser: needed for images
+ENV NEXT_PUBLIC_BASE_PATH=/$PREVIEW_NAME
+
 RUN npm run build
 
 
