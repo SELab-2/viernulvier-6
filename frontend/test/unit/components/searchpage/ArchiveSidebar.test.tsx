@@ -1,8 +1,9 @@
-import { describe, expect, it, vi, afterEach } from "vitest";
+import { describe, expect, it, afterEach } from "vitest";
 import { render, screen, cleanup } from "../../../../test/utils/test-utils";
 import userEvent from "@testing-library/user-event";
 import { ArchiveSidebar } from "@/components/searchpage/archive-sidebar/ArchiveSidebar";
 import { NextIntlClientProvider } from "next-intl";
+import type { Facet } from "@/types/models/taxonomy.types";
 
 const messages = {
     Sidebar: {
@@ -42,23 +43,18 @@ describe("ArchiveSidebar component", () => {
         cleanup();
     });
 
-    const mockLocations = [
-        { id: "1", title: { nl: "Location 1" } } as any,
-        { id: "2", title: { nl: "Location 2" } } as any,
-    ];
-
-    const mockFacets = [
+    const mockFacets: Facet[] = [
         {
             slug: "f1",
             label: "Facet 1",
             tags: [{ slug: "t1", label: "Tag 1" }],
-        } as any,
+        },
         {
             slug: "f2",
             label: "Facet 2",
             tags: [{ slug: "t2", label: "Tag 2" }],
-        } as any,
-    ];
+        },
+    ] as Facet[];
 
     it("renders categories based on translations", () => {
         renderWithIntl(<ArchiveSidebar />);

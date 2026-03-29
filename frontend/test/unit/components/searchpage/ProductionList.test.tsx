@@ -2,6 +2,7 @@ import { describe, expect, it, afterEach } from "vitest";
 import { render, screen, cleanup } from "../../../../test/utils/test-utils";
 import { ProductionList } from "@/components/searchpage/production-list/ProductionList";
 import { NextIntlClientProvider } from "next-intl";
+import type { Production } from "@/types/models/production.types";
 
 const messages = {
     Events: {
@@ -25,21 +26,25 @@ describe("ProductionList component", () => {
         cleanup();
     });
 
-    const mockProductions = [
+    const mockProductions: Production[] = [
         {
             id: "1",
             title: { nl: "Production 1 Title", en: "Production 1 Title" },
             slug: "prod-1",
             createdAt: "2024-01-01T00:00:00Z",
             updatedAt: "2024-01-01T00:00:00Z",
-        } as any,
+            status: "draft",
+            sourceId: 1,
+        } as unknown as Production,
         {
             id: "2",
             title: { nl: "Production 2 Title", en: "Production 2 Title" },
             slug: "prod-2",
             createdAt: "2024-01-02T00:00:00Z",
             updatedAt: "2024-01-02T00:00:00Z",
-        } as any,
+            status: "draft",
+            sourceId: 2,
+        } as unknown as Production,
     ];
 
     it("renders empty state when no productions provided", () => {
@@ -50,7 +55,6 @@ describe("ProductionList component", () => {
     it("renders a list of productions using fallback slug if title fails", () => {
         renderWithIntl(<ProductionList productions={mockProductions} locale="en" />);
 
-        // Let's test what's actually rendered which is the slug based on the output
         expect(screen.getByText("prod-1")).toBeInTheDocument();
         expect(screen.getByText("prod-2")).toBeInTheDocument();
     });
