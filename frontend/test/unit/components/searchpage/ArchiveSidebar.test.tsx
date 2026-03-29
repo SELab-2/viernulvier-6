@@ -45,16 +45,16 @@ describe("ArchiveSidebar component", () => {
 
     const mockFacets: Facet[] = [
         {
-            slug: "f1",
+            slug: "discipline",
             label: "Facet 1",
-            tags: [{ slug: "t1", label: "Tag 1" }],
+            tags: [{ slug: "t1", label: "Tag 1", sortOrder: 0 }],
         },
         {
-            slug: "f2",
+            slug: "format",
             label: "Facet 2",
-            tags: [{ slug: "t2", label: "Tag 2" }],
+            tags: [{ slug: "t2", label: "Tag 2", sortOrder: 1 }],
         },
-    ] as Facet[];
+    ];
 
     it("renders categories based on translations", () => {
         renderWithIntl(<ArchiveSidebar />);
