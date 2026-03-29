@@ -5,6 +5,8 @@ on: workflow_call
 jobs:
   test:
     runs-on: self-hosted
+    container:
+      image: mcr.microsoft.com/playwright:v1.58.2-jammy
     steps:
       - name: Clean up workspace
         run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
@@ -49,14 +51,6 @@ jobs:
           flags: frontend
           files: frontend/junit.xml
           report_type: test_results
-
-      - name: Install Playwright System Dependencies
-        run: sudo npx playwright install-deps chromium
-        working-directory: frontend
-
-      - name: Install Playwright Browser
-        run: npx playwright install chromium
-        working-directory: frontend
 
       - name: Run Playwright E2E tests
         run: npm run test:e2e
