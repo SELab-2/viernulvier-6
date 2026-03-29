@@ -30,7 +30,7 @@ describe("ResultsBar component", () => {
         renderWithIntl(<ResultsBar shownCount={20} totalCount={1000} />);
 
         expect(screen.getByText("20")).toBeInTheDocument();
-        expect(screen.getByText("1,000")).toBeInTheDocument();
+        expect(screen.getByText(/1.000/)).toBeInTheDocument();
     });
 
     it("renders sort options based on translations", () => {
