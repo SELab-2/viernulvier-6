@@ -2,7 +2,7 @@
 
 import type { ComponentType } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { Eye, MoreHorizontal, SquarePen } from "lucide-react";
+import { MoreHorizontal, SquarePen } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -55,10 +55,6 @@ function ActionsCell<TData extends Record<string, unknown>>({
             <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => onEdit(entity)}>
                 <span className="sr-only">{t("edit", { label })}</span>
                 <SquarePen className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" className="h-8 w-8 p-0" disabled>
-                <span className="sr-only">{t("view", { label })}</span>
-                <Eye className="h-4 w-4" />
             </Button>
             {promotedActions?.map((action) => (
                 <Button
