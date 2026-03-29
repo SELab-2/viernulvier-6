@@ -2,13 +2,25 @@
   "devDependencies": {
     "@commitlint/cli": "^20.4.2",
     "@commitlint/config-conventional": "^20.4.2",
+    "concurrently": "^9.1.2",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "prettier": "^3.8.1",
-    "prettier-plugin-tailwindcss": "^0.7.2"
+    "prettier-plugin-tailwindcss": "^0.7.2",
+    "wait-on": "^8.0.3"
   },
   "scripts": {
     "prepare": "husky",
-    "dev": "docker network create traefik 2>/dev/null || true && docker compose -f infra/traefik/docker-compose.yml up -d && docker compose -f infra/preview/docker-compose.preview.yml --env-file .env --env-file infra/preview/.env up -d"
+    "dev": "npm run dev:services && concurrently --names 'DB,GARAGE,FRONTEND,BACKEND,DOCS' --prefix-colors 'blue,green,magenta,cyan,yellow' 'docker compose -f infra/dev/docker-compose.dev.yml logs -f db' 'docker compose -f infra/dev/docker-compose.dev.yml logs -f garage' 'npm run dev:frontend' 'npm run dev:backend' 'npm run dev:docs'",
+    "dev:services": "docker compose -f infra/dev/docker-compose.dev.yml --env-file infra/dev/.env up -d && echo 'Waiting for services to be ready...' && sleep 15 && npm run dev:db:migrate",
+    "dev:db:migrate": "./infra/dev/db-migrate.sh",
+    "dev:frontend": "wait-on tcp:5432 tcp:3900 && cd frontend && npm run dev",
+    "dev:docs": "cd docs && PORT=3002 npm run dev",
+    "install:all": "npm install && concurrently --names 'FRONTEND,DOCS' --prefix-colors 'magenta,yellow' 'cd frontend && npm install' 'cd docs && npm install'",
+    "dev:backend": "wait-on tcp:5432 tcp:3900 && ./infra/dev/backend-dev.sh",
+    "dev:stop": "docker compose -f infra/dev/docker-compose.dev.yml --env-file infra/dev/.env down",
+    "dev:cleanup": "docker compose -f infra/dev/docker-compose.dev.yml --env-file infra/dev/.env down -v --remove-orphans",
+    "preview": "docker network create traefik 2>/dev/null || true && docker compose -f infra/traefik/docker-compose.yml --env-file .env up -d && docker compose -f infra/preview/docker-compose.preview.yml --env-file .env --env-file infra/preview/.env up -d",
+    "preview:stop": "docker compose -f infra/preview/docker-compose.preview.yml --env-file .env --env-file infra/preview/.env down && docker compose -f infra/traefik/docker-compose.yml --env-file .env down"
   }
 }
