@@ -52,8 +52,21 @@ impl AppConfig {
                         .unwrap_or_else(|_| "http://localhost:3900".to_string()),
                 })
             }
-            _ => {
-                info!("S3 config not set, media upload disabled");
+            (endpoint, access_key, secret_key, bucket) => {
+                let mut missing = Vec::new();
+                if endpoint.is_err() {
+                    missing.push("S3_ENDPOINT");
+                }
+                if access_key.is_err() {
+                    missing.push("S3_ACCESS_KEY");
+                }
+                if secret_key.is_err() {
+                    missing.push("S3_SECRET_KEY");
+                }
+                if bucket.is_err() {
+                    missing.push("S3_BUCKET");
+                }
+                info!("S3 config not fully set. Missing variables: {:?}", missing);
                 None
             }
         };

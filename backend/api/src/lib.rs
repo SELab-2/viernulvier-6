@@ -20,7 +20,9 @@ use crate::models::{
     production::ApiProduction,
 };
 use uuid::Uuid;
+use crate::error::ImporterError;
 
+pub mod error;
 mod helper;
 pub mod models {
     pub mod collection;
@@ -364,6 +366,10 @@ impl ApiImporter {
         production_source_id: i32,
         gallery_type: &str,
     ) -> Result<(), reqwest::Error> {
+        if self.s3_client.is_none() || self.s3_bucket.is_none() {
+            return Ok(());
+        }
+
         let url = format!("{BASE_URL}{gallery_url}");
         let gallery: ApiMediaGallery = self
             .client
@@ -375,17 +381,14 @@ impl ApiImporter {
             .json()
             .await?;
 
-        let production = match self
+        let Ok(Some(production)) = self
             .db
             .productions()
             .by_source_id(production_source_id)
             .await
-        {
-            Ok(Some(p)) => p,
-            _ => {
-                warn!("Media: production source_id {production_source_id} not found");
-                return Ok(());
-            }
+        else {
+            warn!("Media: production source_id {production_source_id} not found");
+            return Ok(());
         };
 
         let mut count = 0;
@@ -471,14 +474,14 @@ impl ApiImporter {
         }
 
         // importer policy: all imported media must be uploaded to S3; no external URL fallback
-        let (Some(s3_client), Some(s3_bucket), Some(url)) =
-            (&self.s3_client, &self.s3_bucket, &cdn_url)
-        else {
-            warn!(
-                "Media: skipping import for {item_url} because S3 config or source URL is missing"
-            );
+        let Some(url) = &cdn_url else {
+            warn!("Media: skipping import for {item_url} because source URL is missing");
             return;
         };
+
+        // We already checked these are some in import_gallery_for_production
+        let s3_client = self.s3_client.as_ref().unwrap();
+        let s3_bucket = self.s3_bucket.as_ref().unwrap();
 
         let (s3_key, checksum, file_size) = match self
             .download_and_upload(
@@ -552,28 +555,26 @@ impl ApiImporter {
                     let mut variant_checksum = None;
 
                     // Only download high-res variants
-                    if (name == "hd_ready" || name == "FE3_header")
-                        && let Some(s3_client) = &self.s3_client
-                            && let Some(s3_bucket) = &self.s3_bucket {
-                                let format = item.format.as_deref().unwrap_or("");
-                                let format_info = get_format_info(format);
-                                let ext = format_info.extension;
-                                let file_uuid = Uuid::now_v7();
-                                let crop_s3_key = format!("media/production/{production_source_id}/{gallery_type}/crop_{name}_{file_uuid}.{ext}");
-                                
-                                if let Ok((checksum, file_size)) = self.download_and_upload_to_key(
-                                    s3_client,
-                                    s3_bucket,
-                                    &url,
-                                    &crop_s3_key,
-                                    format,
-                                ).await {
-                                    variant_s3_key = crop_s3_key;
-                                    variant_mime_type = Some(format_info.mime.to_string());
-                                    variant_file_size = Some(file_size);
-                                    variant_checksum = Some(checksum);
-                                }
-                            }
+                    if name == "hd_ready" || name == "FE3_header" {
+                        let format = item.format.as_deref().unwrap_or("");
+                        let format_info = get_format_info(format);
+                        let ext = format_info.extension;
+                        let file_uuid = Uuid::now_v7();
+                        let crop_s3_key = format!("media/production/{production_source_id}/{gallery_type}/crop_{name}_{file_uuid}.{ext}");
+                        
+                        if let Ok((checksum, file_size)) = self.download_and_upload_to_key(
+                            s3_client,
+                            s3_bucket,
+                            &url,
+                            &crop_s3_key,
+                            format,
+                        ).await {
+                            variant_s3_key = crop_s3_key;
+                            variant_mime_type = Some(format_info.mime.to_string());
+                            variant_file_size = Some(file_size);
+                            variant_checksum = Some(checksum);
+                        }
+                    }
 
                     let upsert = database::repos::media_variant::CropVariantUpsert {
                         media_id: media.id,
@@ -600,7 +601,7 @@ impl ApiImporter {
         production_source_id: i32,
         gallery_type: &str,
         format: &str,
-    ) -> Result<(String, String, i64), String> {
+    ) -> Result<(String, String, i64), ImporterError> {
         let format_info = get_format_info(format);
         let ext = format_info.extension;
         let file_uuid = Uuid::now_v7();
@@ -621,29 +622,21 @@ impl ApiImporter {
         source_url: &str,
         s3_key: &str,
         format: &str,
-    ) -> Result<(String, i64), String> {
+    ) -> Result<(String, i64), ImporterError> {
         // download from CDN
         let response = self
             .client
             .get(source_url)
             .send()
-            .await
-            .map_err(|e| e.to_string())?
-            .error_for_status()
-            .map_err(|e| e.to_string())?;
+            .await?
+            .error_for_status()?;
 
         // Create a temporary file to avoid loading the whole file in memory
         let temp_file = tempfile::Builder::new()
             .prefix("viernulvier_import_")
-            .tempfile()
-            .map_err(|e| format!("failed to create temp file: {e}"))?;
+            .tempfile()?;
 
-        let mut file = tokio::fs::File::from_std(
-            temp_file
-                .as_file()
-                .try_clone()
-                .map_err(|e| format!("failed to clone temp file handle: {e}"))?,
-        );
+        let mut file = tokio::fs::File::from_std(temp_file.as_file().try_clone()?);
 
         let mut hasher = Sha256::new();
         let mut file_size = 0i64;
@@ -651,43 +644,34 @@ impl ApiImporter {
 
         use tokio::io::AsyncWriteExt;
         while let Some(chunk) = stream.next().await {
-            let chunk = chunk.map_err(|e| format!("error downloading chunk: {e}"))?;
-            file.write_all(&chunk)
-                .await
-                .map_err(|e| format!("error writing chunk to temp file: {e}"))?;
+            let chunk = chunk?;
+            file.write_all(&chunk).await?;
             hasher.update(&chunk);
             file_size += chunk.len() as i64;
         }
 
-        file.flush()
-            .await
-            .map_err(|e| format!("error flushing temp file: {e}"))?;
+        file.flush().await?;
         drop(file);
         let checksum = hex::encode(hasher.finalize());
 
         // upload to S3 using ByteStream from the temp file
         let byte_stream = aws_sdk_s3::primitives::ByteStream::from_path(temp_file.path())
             .await
-            .map_err(|e| format!("failed to create ByteStream from temp file: {e}"))?;
+            .map_err(|e| ImporterError::S3(e.to_string()))?;
 
-        let upload_result = s3_client
+        s3_client
             .put_object()
             .bucket(s3_bucket)
             .key(s3_key)
             .body(byte_stream)
             .content_type(get_format_info(format).mime)
             .send()
-            .await;
+            .await
+            .map_err(|e| ImporterError::S3(e.to_string()))?;
 
         // The temp_file will be automatically deleted here when it goes out of scope
 
-        match upload_result {
-            Ok(_) => Ok((checksum, file_size)),
-            Err(e) => {
-                warn!("S3 upload failed for {s3_key}: {e:?}");
-                Err(format!("s3 upload failed: {e}"))
-            }
-        }
+        Ok((checksum, file_size))
     }
 }
 

@@ -92,7 +92,7 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
     let db = Database::create_connect_migrate(&config.database_url).await?;
 
     // initialize S3 client if config is present
-    let s3_client = if let Some(ref s3_config) = config.s3 {
+    let s3_client = config.s3.as_ref().map(|s3_config| {
         info!("initializing S3 client for {}", s3_config.endpoint);
         let creds = Credentials::new(
             &s3_config.access_key,
@@ -109,10 +109,12 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
             .force_path_style(true)
             .build();
 
-        Some(aws_sdk_s3::Client::from_conf(s3_conf))
-    } else {
-        None
-    };
+        aws_sdk_s3::Client::from_conf(s3_conf)
+    });
+
+    if s3_client.is_none() {
+        info!("S3 config not set, media upload disabled");
+    }
 
     // start api importer (with S3 access for media import)
     let importer_s3_client = s3_client.clone();
