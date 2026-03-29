@@ -50,8 +50,12 @@ jobs:
           files: frontend/junit.xml
           report_type: test_results
 
-      - name: Install Playwright Chromium & System Deps
-        run: npx playwright install --with-deps chromium
+      - name: Install Playwright System Dependencies
+        run: sudo npx playwright install-deps chromium
+        working-directory: frontend
+
+      - name: Install Playwright Browser
+        run: npx playwright install chromium
         working-directory: frontend
 
       - name: Run Playwright E2E tests
