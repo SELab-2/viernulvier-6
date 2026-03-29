@@ -92,6 +92,13 @@ npm run test:e2e:ui
 
 E2E tests are located in `frontend/test/e2e/`. They should focus on critical user journeys (e.g., searching for an archive, clicking a filter, and verifying the URL changes).
 
+<Callout type="info">
+  **API Mocking:** Currently, our frontend E2E tests isolate the UI by mocking the Rust backend API
+  responses using Playwright's `page.route()` (see `frontend/test/e2e/utils/mockApi.ts`).
+  Eventually, we plan to test against the real Rust API backend by spinning up the database and
+  backend in a dedicated full-stack CI workflow.
+</Callout>
+
 **Example: Basic E2E Flow**
 
 ```typescript title="frontend/test/e2e/home.spec.ts"

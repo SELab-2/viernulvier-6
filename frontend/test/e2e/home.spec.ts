@@ -1,6 +1,11 @@
 import { test, expect } from "@playwright/test";
+import { mockApi } from "./utils/mockApi";
 
 test.describe("Homepage", () => {
+    test.beforeEach(async ({ page }) => {
+        await mockApi(page);
+    });
+
     test("should load the homepage and check basic elements", async ({ page }) => {
         await page.goto("/nl");
 
