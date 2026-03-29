@@ -2,8 +2,126 @@
     "General": {
         "projectName": "Viernulvier Archief"
     },
+    "Footer": {
+        "address": "Kunstencentrum VIERNULVIER vzw · Sint-Pietersnieuwstraat 23 · 9000 Gent",
+        "contact": "T. 09 267 28 20 · info@viernulvier.gent · BTW BE 0423.063.619"
+    },
+    "Header": {
+        "logout": "Uitloggen",
+        "loggingOut": "..."
+    },
     "LocaleSwitcher": {
         "label": "Taal selecteren"
+    },
+    "ThemeSwitcher": {
+        "dark": "Donker",
+        "light": "Licht"
+    },
+    "Masthead": {
+        "address": "Sint-Pietersnieuwstraat 23, Gent",
+        "subtitle": "De Vooruit — Opgericht 1883",
+        "genres": "Theater · Dans · Muziek · Performance · Nightlife"
+    },
+    "Search": {
+        "placeholder": "Zoeken in het archief...",
+        "hint": "↵ zoeken",
+        "heroEyebrow": "Archief — {count} producties",
+        "heroTitle": "Doorzoek het archief",
+        "heroTitleItalic": "van De Vooruit",
+        "heroPlaceholder": "Artiest, productie, jaar\u2026",
+        "quickSearch": "Snel zoeken:",
+        "enter": "enter",
+        "noResultsTitle": "Hier hangen enkel spinnenwebben",
+        "noResultsText": "Geen producties gevonden voor \"{query}\". Probeer een andere zoekopdracht.",
+        "articleImageCaption": "Het vergeten Vooruit gebouw...",
+        "tags": {
+            "dance": "Dans",
+            "theater": "Theater",
+            "concert": "Concert",
+            "nightlife": "Nightlife",
+            "performance": "Performance"
+        }
+    },
+    "ResultsBar": {
+        "sortBy": "Sorteren:",
+        "recent": "Meest recent",
+        "oldest": "Oudste eerst",
+        "az": "A–Z"
+    },
+    "Featured": {
+        "label": "Uitgelicht uit het archief"
+    },
+    "Sidebar": {
+        "title": "Filters",
+        "categories": {
+            "label": "Categorie",
+            "artists": "Artiesten",
+            "productions": "Producties",
+            "articles": "Artikels",
+            "posters": "Affiches"
+        },
+        "tags": {
+            "label": "Tags",
+            "theater": "Theater",
+            "dance": "Dans",
+            "concert": "Concert",
+            "nightlife": "Nightlife",
+            "performance": "Performance",
+            "comedy": "Comedy",
+            "circus": "Circus",
+            "music": "Muziek",
+            "spokenWord": "Spoken Word",
+            "talks": "Talks",
+            "monument": "Monument"
+        },
+        "locations": {
+            "label": "Locatie",
+            "deVooruit": "De Vooruit",
+            "domzaal": "Domzaal",
+            "balzaal": "Balzaal",
+            "plantentuin": "Plantentuin"
+        },
+        "year": {
+            "label": "Jaar"
+        },
+        "clearAll": "Wis alles"
+    },
+    "Home": {
+        "loading": "Archief laden...",
+        "hero": {
+            "title": "Het verhaal van De Vooruit",
+            "subtitle": "Meer dan een eeuw theater, dans, muziek en nachtleven in het hart van Gent.",
+            "searchPlaceholder": "Zoek in het archief\u2026"
+        },
+        "tags": {
+            "theater": "Theater",
+            "dance": "Dans",
+            "concert": "Concert",
+            "nightlife": "Nightlife"
+        },
+        "about": {
+            "title": "Kunstencentrum VIERNULVIER",
+            "text": "Sinds 1883 is De Vooruit een broedplaats voor kunst, cultuur en samenleving. Van revolutionaire feesten tot hedendaagse performance \u2014 het archief bewaart het allemaal.",
+            "address": "Sint-Pietersnieuwstraat 23 \u00b7 9000 Gent"
+        },
+        "latest": {
+            "label": "Laatste producties",
+            "viewAll": "Bekijk alles"
+        }
+    },
+    "Productions": {
+        "title": "Producties",
+        "showing": "Toont {shown} van {total} resultaten",
+        "seeEvents": "zie events",
+        "eventsAvailableSoon": "Evenementen binnenkort beschikbaar"
+    },
+    "Events": {
+        "title": "Evenementen",
+        "upcoming": "Aankomend",
+        "past": "Voorbij",
+        "date": "Datum",
+        "status": "Status",
+        "noEvents": "Geen evenementen beschikbaar"
     },
     "Login": {
         "title": "Welkom terug",
@@ -95,5 +213,17 @@
             "error": "Actie mislukt.",
             "errorMessage": "Er is iets misgegaan bij het aanmaken van de editor."
         }
+    },
+    "PageNotFound": {
+        "title": "404 - Pagina niet gevonden",
+        "description": "De pagina die u zoekt bestaat niet (meer) in ons archief of is verplaatst.",
+        "backToHome": "Terug naar het archief",
+        "articleImageCaption": "Het vergeten Vooruit gebouw..."
+    },
+    "NewsArticleComponent": {
+        "subTitle": "Vooruit Archief",
+        "edition": "Editie 404",
+        "articleBrand": "Archiefdienst",
+        "price": "Prijs: Onschatbaar"
     }
 }
