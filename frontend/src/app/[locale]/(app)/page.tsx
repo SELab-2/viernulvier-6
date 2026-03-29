@@ -9,7 +9,7 @@ import { useGetProductions } from "@/hooks/api/useProductions";
 import { useGetEvents } from "@/hooks/api/useEvents";
 import type { Event } from "@/types/models/event.types";
 
-import { SearchHeader } from "@/components/homepage/search-header";
+import { UnifiedHeader } from "@/components/layout/header";
 import { SearchBar } from "@/components/homepage/search-bar";
 import { FeaturedSection } from "@/components/homepage/featured-section";
 import { ProductionItem } from "@/components/searchpage/production-list";
@@ -60,7 +60,7 @@ export default function HomePage() {
 
     return (
         <>
-            <SearchHeader
+            <UnifiedHeader
                 query={headerQuery}
                 onQueryChange={setHeaderQuery}
                 onSearch={handleHeaderSearch}

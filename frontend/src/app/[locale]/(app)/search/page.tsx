@@ -12,7 +12,7 @@ import type { Event } from "@/types/models/event.types";
 import { getLocalizedField } from "@/lib/locale";
 
 import { LoadingState } from "@/components/shared/loading-state";
-import { SearchHeader } from "@/components/homepage/search-header";
+import { UnifiedHeader } from "@/components/layout/header";
 import { SearchHero } from "@/components/searchpage/search-hero";
 import { ResultsBar } from "@/components/searchpage/results-bar";
 import { ArchiveSidebar } from "@/components/searchpage/archive-sidebar";
@@ -53,7 +53,7 @@ export default function SearchPage() {
     if (isLoading) {
         return (
             <>
-                <SearchHeader
+                <UnifiedHeader
                     query=""
                     onQueryChange={() => {}}
                     searchPlaceholder={t("placeholder")}
@@ -85,7 +85,7 @@ export default function SearchPage() {
 
     return (
         <>
-            <SearchHeader
+            <UnifiedHeader
                 query={searchQuery}
                 onQueryChange={setSearchQuery}
                 searchPlaceholder={t("placeholder")}

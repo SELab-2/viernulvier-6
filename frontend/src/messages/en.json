@@ -8,7 +8,19 @@
     },
     "Header": {
         "logout": "Logout",
-        "loggingOut": "..."
+        "loggingOut": "...",
+        "login": "Sign in",
+        "nav": {
+            "home": "Home",
+            "archive": "Archive"
+        },
+        "cms": {
+            "overview": "Overview",
+            "content": "Content",
+            "ingest": "Ingest",
+            "import": "Import",
+            "admin": "Admin"
+        }
     },
     "LocaleSwitcher": {
         "label": "Select language"
@@ -28,7 +40,7 @@
         "heroEyebrow": "Archive — {count} productions",
         "heroTitle": "Search the archive",
         "heroTitleItalic": "of De Vooruit",
-        "heroPlaceholder": "Artist, production, year\u2026",
+        "heroPlaceholder": "Artist, production, year…",
         "quickSearch": "Quick search:",
         "enter": "enter",
         "noResultsTitle": "Nothing here but cobwebs",
@@ -91,7 +103,7 @@
         "hero": {
             "title": "The VIERNULVIER archive",
             "subtitle": "Over 40 years of theatre, dance, music and nightlife in Ghent.",
-            "searchPlaceholder": "Search the archive\u2026"
+            "searchPlaceholder": "Search the archive…"
         },
         "tags": {
             "theater": "Theatre",
@@ -101,7 +113,8 @@
         },
         "about": {
             "title": "Arts Centre VIERNULVIER",
-            "text": "Since 1883, De Vooruit has been a breeding ground for art, culture and society. From revolutionary parties to contemporary performance. The archive preserves it all."
+            "text": "Since 1883, De Vooruit has been a breeding ground for art, culture and society. From revolutionary parties to contemporary performance — the archive preserves it all.",
+            "address": "Sint-Pietersnieuwstraat 23 · 9000 Ghent"
         },
         "latest": {
             "label": "Latest productions",
@@ -134,70 +147,113 @@
         "loggedOut": "Logged out successfully"
     },
     "Cms": {
-        "TabBar": {
-            "overview": "CMS Overview",
-            "content": "Manage content",
-            "ingest": "Ingest",
-            "import": "Automatic import"
-        },
-        "Sidebar": {
-            "contentType": "Content type",
-            "filters": "Filters",
-            "noFilters": "No filters available.",
-            "clearFilters": "Clear filters",
+        "overview": "Overview",
+        "productions": "Productions",
+        "locations": "Locations",
+        "articles": "Articles",
+        "performers": "Performers",
+        "ingest": "Ingest",
+        "import": "Import",
+        "Overview": {
+            "title": "CMS Overview",
+            "subtitle": "Manage content and settings",
             "productions": "Productions",
+            "productionsDescription": "Manage productions and events",
             "articles": "Articles",
+            "articlesDescription": "Manage news articles",
             "locations": "Locations",
-            "performers": "Performers"
-        },
-        "DataTable": {
-            "noResults": "No results."
-        },
-        "SelectionToolbar": {
-            "clearSelection": "Clear selection",
-            "productionsSelected": "{count, plural, one {# production} other {# productions}}",
-            "eventsSelected": "{count, plural, one {# event} other {# events}}",
-            "locationsSelected": "{count, plural, one {# location} other {# locations}}",
-            "hallsSelected": "{count, plural, one {# hall} other {# halls}}",
-            "moreActions": "More actions"
-        },
-        "ActionsColumn": {
-            "openMenu": "Open menu",
-            "actions": "Actions",
-            "copy": "Copy {key}",
-            "copied": "Copied {key}",
-            "copyFailed": "Failed to copy to clipboard",
-            "edit": "Edit {label}"
-        },
-        "EditSheet": {
-            "yes": "Yes",
-            "no": "No",
-            "selectPlaceholder": "Select\u2026",
-            "cancel": "Cancel",
-            "saveChanges": "Save changes"
+            "locationsDescription": "Manage locations and halls",
+            "performers": "Performers",
+            "performersDescription": "Manage artists and performers",
+            "items": "items",
+            "openSection": "Open section"
         },
         "Productions": {
+            "title": "Productions",
+            "subtitle": "Manage all productions and scheduled events",
+            "items": "items",
             "showEvents": "Show events",
             "hideEvents": "Hide events",
             "editProduction": "Edit production",
             "editEvent": "Edit event"
         },
         "Locations": {
+            "title": "Locations",
+            "subtitle": "Manage venues, theaters and their individual halls",
+            "items": "locations",
             "showHalls": "Show halls",
             "hideHalls": "Hide halls",
             "editLocation": "Edit location",
             "editHall": "Edit hall"
         },
         "Articles": {
+            "title": "Articles",
+            "subtitle": "Manage news articles",
+            "comingSoon": "Coming soon",
             "notAvailable": "Articles API is not yet available. No data to display."
         },
         "Performers": {
+            "title": "Performers",
+            "subtitle": "Manage artists",
+            "comingSoon": "Coming soon",
             "notAvailable": "Performers API is not yet available. No data to display."
+        },
+        "Ingest": {
+            "title": "Ingest",
+            "subtitle": "Bulk media import"
+        },
+        "Import": {
+            "title": "Import",
+            "subtitle": "Automatic import status"
+        },
+        "DataTable": {
+            "noResults": "No items found"
+        },
+        "Sidebar": {
+            "archiveIndex": "Archive Index",
+            "contentType": "Content Type",
+            "filters": "Filters",
+            "noFilters": "No filters available",
+            "clearFilters": "Clear",
+            "productions": "Productions",
+            "articles": "Articles",
+            "locations": "Locations",
+            "performers": "Performers"
+        },
+        "SelectionToolbar": {
+            "clearSelection": "Clear selection",
+            "selectItems": "Select items to perform bulk actions",
+            "productionsSelected": "{count, plural, one {# production} other {# productions}}",
+            "eventsSelected": "{count, plural, one {# event} other {# events}}",
+            "locationsSelected": "{count, plural, one {# location} other {# locations}}",
+            "hallsSelected": "{count, plural, one {# hall} other {# halls}}",
+            "moreActions": "More actions"
+        },
+        "TabBar": {
+            "overview": "Overview",
+            "content": "Content",
+            "ingest": "Ingest",
+            "import": "Import"
+        },
+        "ActionsColumn": {
+            "openMenu": "Open menu",
+            "actions": "Actions",
+            "copy": "Copy",
+            "copied": "Copied",
+            "copyFailed": "Failed to copy",
+            "edit": "Edit"
+        },
+        "EditSheet": {
+            "yes": "Yes",
+            "no": "No",
+            "selectPlaceholder": "Select…",
+            "cancel": "Cancel",
+            "saveChanges": "Save changes"
         }
     },
     "Admin": {
         "title": "Admin Dashboard",
-        "welcomeBack": "Welcome back!",
+        "welcomeBack": "Welcome back",
         "emailLabel": "Email",
         "loading": "Loading admin dashboard...",
         "quickActions": "Quick Actions",
