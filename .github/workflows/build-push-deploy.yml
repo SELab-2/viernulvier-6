@@ -7,12 +7,12 @@ on:
 
 jobs:
   run_backend_tests:
-    if: github.event.action != 'closed'
     uses: ./.github/workflows/backend-tests.yml
+    secrets: inherit
 
   run_frontend_tests:
-    if: github.event.action != 'closed'
     uses: ./.github/workflows/frontend-tests.yml
+    secrets: inherit
 
   build-push:
     runs-on: self-hosted
