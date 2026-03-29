@@ -1,3 +1,4 @@
+use base64::{Engine, prelude::BASE64_URL_SAFE};
 use database::{Database, models::location::Location};
 use o2o::o2o;
 use serde::{Deserialize, Serialize};
@@ -6,7 +7,7 @@ use uuid::Uuid;
 
 use database::models::location::LocationCreate;
 
-use crate::error::AppError;
+use crate::{dto::paginated::PaginatedResponse, error::AppError};
 
 #[derive(o2o, Serialize, Deserialize, ToSchema)]
 #[map_owned(Location)]
@@ -47,15 +48,35 @@ pub struct LocationPostPayload {
 }
 
 impl LocationPayload {
-    pub async fn all(db: &Database, limit: u32) -> Result<Vec<Self>, AppError> {
-        Ok(db
+    pub async fn all(
+        db: &Database,
+        id_cursor: Option<String>,
+        limit: usize,
+    ) -> Result<PaginatedResponse<Self>, AppError> {
+        let id_cursor: Option<Uuid> = id_cursor.and_then(|b64| {
+            let bytes: [u8; 16] = BASE64_URL_SAFE.decode(b64).ok()?.try_into().ok()?;
+            Some(Uuid::from_bytes(bytes))
+        });
+
+        let mut data: Vec<_> = db
             .locations()
-            .all(limit as usize)
+            .all(limit + 1, id_cursor)
             .await?
             .into_iter()
             .map(Self::from)
-            .collect())
+            .collect();
+
+        // only return a cursor if there are more items
+        let next_cursor = if data.len() == limit + 1 {
+            data.pop();
+            data.last().map(|l| BASE64_URL_SAFE.encode(l.id))
+        } else {
+            None
+        };
+
+        Ok(PaginatedResponse { data, next_cursor })
     }
+
     pub async fn by_id(db: &Database, id: Uuid) -> Result<Self, AppError> {
         Ok(Self::from(db.locations().by_id(id).await?))
     }
