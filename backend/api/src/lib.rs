@@ -178,9 +178,11 @@ impl ApiImporter {
                     .next_back()
                     .and_then(|s| s.parse::<i32>().ok());
 
-                let media_gallery = production.media_gallery.clone();
-                let review_gallery = production.review_gallery.clone();
-                let poster_gallery = production.poster_gallery.clone();
+                let galleries = [
+                    (production.media_gallery.clone(), "media"),
+                    (production.review_gallery.clone(), "review"),
+                    (production.poster_gallery.clone(), "poster"),
+                ];
 
                 self.db
                     .productions()
@@ -191,13 +193,6 @@ impl ApiImporter {
                 let Some(source_id) = production_source_id else {
                     continue;
                 };
-
-                // import all gallery types
-                let galleries = [
-                    (media_gallery, "media"),
-                    (review_gallery, "review"),
-                    (poster_gallery, "poster"),
-                ];
 
                 for (gallery_url, gallery_type) in galleries {
                     if let Some(url) = gallery_url
@@ -438,7 +433,8 @@ impl ApiImporter {
         let credit_en = item.credits.en;
         let credit_fr = item.credits.fr;
 
-        let mime_type = format_to_mime(item.format.as_deref().unwrap_or(""));
+        let format_info = get_format_info(item.format.as_deref().unwrap_or(""));
+        let mime_type = format_info.mime.to_string();
 
         let mut cdn_url = item.link.nl.or(item.link.en).or(item.link.fr);
         if cdn_url.is_none() {
@@ -462,7 +458,6 @@ impl ApiImporter {
                 }
             }
         }
-        let now = Utc::now();
 
         // skip if already imported by source URI (stable idempotency)
         if self
@@ -530,8 +525,6 @@ impl ApiImporter {
             source_system: "viernulvier".to_string(),
             source_uri: Some(item_url.to_string()),
             source_updated_at: item.updated_at,
-            created_at: now,
-            updated_at: now,
         };
 
         if let Ok(media) = self.db.media().insert(media_create).await {
@@ -563,7 +556,8 @@ impl ApiImporter {
                         && let Some(s3_client) = &self.s3_client
                             && let Some(s3_bucket) = &self.s3_bucket {
                                 let format = item.format.as_deref().unwrap_or("");
-                                let ext = format_to_extension(format);
+                                let format_info = get_format_info(format);
+                                let ext = format_info.extension;
                                 let file_uuid = Uuid::now_v7();
                                 let crop_s3_key = format!("media/production/{production_source_id}/{gallery_type}/crop_{name}_{file_uuid}.{ext}");
                                 
@@ -575,7 +569,7 @@ impl ApiImporter {
                                     format,
                                 ).await {
                                     variant_s3_key = crop_s3_key;
-                                    variant_mime_type = Some(format_to_mime(format));
+                                    variant_mime_type = Some(format_info.mime.to_string());
                                     variant_file_size = Some(file_size);
                                     variant_checksum = Some(checksum);
                                 }
@@ -607,7 +601,8 @@ impl ApiImporter {
         gallery_type: &str,
         format: &str,
     ) -> Result<(String, String, i64), String> {
-        let ext = format_to_extension(format);
+        let format_info = get_format_info(format);
+        let ext = format_info.extension;
         let file_uuid = Uuid::now_v7();
         let s3_key =
             format!("media/production/{production_source_id}/{gallery_type}/{file_uuid}.{ext}");
@@ -638,12 +633,17 @@ impl ApiImporter {
             .map_err(|e| e.to_string())?;
 
         // Create a temporary file to avoid loading the whole file in memory
-        let temp_dir = std::env::temp_dir();
-        let temp_file_path = temp_dir.join(format!("viernulvier_import_{}", Uuid::now_v7()));
-
-        let mut file = tokio::fs::File::create(&temp_file_path)
-            .await
+        let temp_file = tempfile::Builder::new()
+            .prefix("viernulvier_import_")
+            .tempfile()
             .map_err(|e| format!("failed to create temp file: {e}"))?;
+
+        let mut file = tokio::fs::File::from_std(
+            temp_file
+                .as_file()
+                .try_clone()
+                .map_err(|e| format!("failed to clone temp file handle: {e}"))?,
+        );
 
         let mut hasher = Sha256::new();
         let mut file_size = 0i64;
@@ -662,10 +662,11 @@ impl ApiImporter {
         file.flush()
             .await
             .map_err(|e| format!("error flushing temp file: {e}"))?;
+        drop(file);
         let checksum = hex::encode(hasher.finalize());
 
         // upload to S3 using ByteStream from the temp file
-        let byte_stream = aws_sdk_s3::primitives::ByteStream::from_path(&temp_file_path)
+        let byte_stream = aws_sdk_s3::primitives::ByteStream::from_path(temp_file.path())
             .await
             .map_err(|e| format!("failed to create ByteStream from temp file: {e}"))?;
 
@@ -674,12 +675,11 @@ impl ApiImporter {
             .bucket(s3_bucket)
             .key(s3_key)
             .body(byte_stream)
-            .content_type(format_to_mime(format))
+            .content_type(get_format_info(format).mime)
             .send()
             .await;
 
-        // Clean up the temporary file
-        let _ = tokio::fs::remove_file(&temp_file_path).await;
+        // The temp_file will be automatically deleted here when it goes out of scope
 
         match upload_result {
             Ok(_) => Ok((checksum, file_size)),
@@ -692,62 +692,44 @@ impl ApiImporter {
 }
 
 fn decode_url_from_crop(crop_url: &str) -> Option<String> {
-    if let Some(last_slash_idx) = crop_url.rfind('/') {
-        let b64_part = &crop_url[last_slash_idx + 1..];
-        
-        let decoded = general_purpose::URL_SAFE_NO_PAD.decode(b64_part)
-            .or_else(|_| general_purpose::URL_SAFE.decode(b64_part))
-            .or_else(|_| general_purpose::STANDARD_NO_PAD.decode(b64_part))
-            .or_else(|_| general_purpose::STANDARD.decode(b64_part));
-            
-        if let Ok(bytes) = decoded
-            && let Ok(url) = String::from_utf8(bytes)
-                && url.starts_with("http") {
+    let b64_part = crop_url.split('/').last()?;
+
+    let engines = [
+        general_purpose::URL_SAFE_NO_PAD,
+        general_purpose::URL_SAFE,
+        general_purpose::STANDARD_NO_PAD,
+        general_purpose::STANDARD,
+    ];
+
+    for engine in engines {
+        if let Ok(bytes) = engine.decode(b64_part) {
+            if let Ok(url) = String::from_utf8(bytes) {
+                if url.starts_with("http") {
                     return Some(url);
                 }
+            }
+        }
     }
     None
 }
 
-fn format_to_mime(format: &str) -> String {
-    let fmt = format.to_lowercase();
-    if fmt.contains("jpeg") || fmt.contains("jpg") {
-        "image/jpeg".to_string()
-    } else if fmt.contains("png") {
-        "image/png".to_string()
-    } else if fmt.contains("gif") {
-        "image/gif".to_string()
-    } else if fmt.contains("webp") {
-        "image/webp".to_string()
-    } else if fmt.contains("svg") {
-        "image/svg+xml".to_string()
-    } else if fmt.contains("mp4") {
-        "video/mp4".to_string()
-    } else if fmt.contains("pdf") {
-        "application/pdf".to_string()
-    } else {
-        "application/octet-stream".to_string()
-    }
+#[derive(Copy, Clone)]
+struct FormatInfo {
+    extension: &'static str,
+    mime: &'static str,
 }
 
-fn format_to_extension(format: &str) -> String {
-    let fmt = format.to_lowercase();
-    if fmt.contains("jpeg") || fmt.contains("jpg") {
-        "jpg".to_string()
-    } else if fmt.contains("png") {
-        "png".to_string()
-    } else if fmt.contains("gif") {
-        "gif".to_string()
-    } else if fmt.contains("webp") {
-        "webp".to_string()
-    } else if fmt.contains("svg") {
-        "svg".to_string()
-    } else if fmt.contains("mp4") {
-        "mp4".to_string()
-    } else if fmt.contains("pdf") {
-        "pdf".to_string()
-    } else {
-        "bin".to_string()
+fn get_format_info(format: &str) -> FormatInfo {
+    let fmt = format.to_ascii_lowercase();
+    match () {
+        _ if fmt.contains("jpeg") || fmt.contains("jpg") => FormatInfo { extension: "jpg", mime: "image/jpeg" },
+        _ if fmt.contains("png") => FormatInfo { extension: "png", mime: "image/png" },
+        _ if fmt.contains("gif") => FormatInfo { extension: "gif", mime: "image/gif" },
+        _ if fmt.contains("webp") => FormatInfo { extension: "webp", mime: "image/webp" },
+        _ if fmt.contains("svg") => FormatInfo { extension: "svg", mime: "image/svg+xml" },
+        _ if fmt.contains("mp4") => FormatInfo { extension: "mp4", mime: "video/mp4" },
+        _ if fmt.contains("pdf") => FormatInfo { extension: "pdf", mime: "application/pdf" },
+        _ => FormatInfo { extension: "bin", mime: "application/octet-stream" },
     }
 }
 

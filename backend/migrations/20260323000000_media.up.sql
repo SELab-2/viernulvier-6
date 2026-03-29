@@ -30,7 +30,7 @@ CREATE TABLE media (
     geo_longitude DOUBLE PRECISION,
 
     -- Derivative tracking: null = original/master file
-    parent_id UUID REFERENCES media(id) ON DELETE CASCADE,
+    parent_id UUID REFERENCES media(id) ON DELETE RESTRICT,
     derivative_type VARCHAR,
 
     -- Gallery type for imported media (media, review, poster)
@@ -80,7 +80,7 @@ CREATE UNIQUE INDEX idx_media_source_uri_unique ON media(source_system, source_u
 -- Variants / crops for a media item (thumbnails, named crops, generated derivatives)
 CREATE TABLE media_variant (
     id UUID PRIMARY KEY DEFAULT uuidv7(),
-    media_id UUID NOT NULL REFERENCES media(id) ON DELETE CASCADE,
+    media_id UUID NOT NULL REFERENCES media(id) ON DELETE RESTRICT,
     variant_kind VARCHAR NOT NULL,
     crop_name VARCHAR,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

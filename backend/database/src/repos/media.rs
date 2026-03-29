@@ -84,8 +84,7 @@ impl<'a> MediaRepo<'a> {
                 credit_nl, credit_en, credit_fr,
                 geo_latitude, geo_longitude,
                 parent_id, derivative_type, gallery_type,
-                source_id, source_system, source_uri, source_updated_at,
-                created_at, updated_at
+                source_id, source_system, source_uri, source_updated_at
             )
             VALUES (
                 $1, $2, $3, $4, $5, $6,
@@ -94,8 +93,7 @@ impl<'a> MediaRepo<'a> {
                 $13, $14, $15,
                 $16, $17,
                 $18, $19, $20,
-                $21, $22, $23, $24,
-                $25, $26
+                $21, $22, $23, $24
             )
             ON CONFLICT (s3_key)
             DO UPDATE SET
@@ -155,8 +153,6 @@ impl<'a> MediaRepo<'a> {
         .bind(media.source_system)
         .bind(media.source_uri)
         .bind(media.source_updated_at)
-        .bind(media.created_at)
-        .bind(media.updated_at)
         .fetch_one(&mut *tx)
         .await?;
 

@@ -7,7 +7,9 @@ use uuid::Uuid;
 #[ormlite(table = "media")]
 pub struct Media {
     pub id: Uuid,
+    #[ormlite(default)]
     pub created_at: DateTime<Utc>,
+    #[ormlite(default)]
     pub updated_at: DateTime<Utc>,
 
     pub s3_key: String,

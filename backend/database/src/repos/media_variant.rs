@@ -1,4 +1,3 @@
-use chrono::Utc;
 use ormlite::{Insert, Model};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -51,13 +50,10 @@ impl<'a> MediaVariantRepo<'a> {
     }
 
     pub async fn upsert_crop(&self, upsert: CropVariantUpsert) -> Result<(), DatabaseError> {
-        let now = Utc::now();
         let create = MediaVariantCreate {
             media_id: upsert.media_id,
             variant_kind: "crop".to_string(),
             crop_name: Some(upsert.crop_name.clone()),
-            created_at: now,
-            updated_at: now,
             s3_key: upsert.s3_key.clone(),
             mime_type: upsert.mime_type.clone(),
             file_size: upsert.file_size,

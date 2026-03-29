@@ -10,7 +10,9 @@ pub struct MediaVariant {
     pub media_id: Uuid,
     pub variant_kind: String,
     pub crop_name: Option<String>,
+    #[ormlite(default)]
     pub created_at: DateTime<Utc>,
+    #[ormlite(default)]
     pub updated_at: DateTime<Utc>,
 
     pub s3_key: String,
