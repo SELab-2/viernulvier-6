@@ -30,6 +30,7 @@
         "heroTitleItalic": "of De Vooruit",
         "heroPlaceholder": "Artist, production, year\u2026",
         "quickSearch": "Quick search:",
+        "enter": "enter",
         "noResultsTitle": "Nothing here but cobwebs",
         "noResultsText": "No productions found for \"{query}\". Try a different search.",
         "articleImageCaption": "The forgotten Vooruit building...",
@@ -40,6 +41,12 @@
             "nightlife": "Nightlife",
             "performance": "Performance"
         }
+    },
+    "ResultsBar": {
+        "sortBy": "Sort by:",
+        "recent": "Most recent",
+        "oldest": "Oldest first",
+        "az": "A–Z"
     },
     "Featured": {
         "label": "Featured from the archive"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 
 interface ResultsBarProps {
     shownCount: number;
@@ -10,6 +11,7 @@ interface ResultsBarProps {
 const SORT_OPTIONS = ["recent", "oldest", "az"] as const;
 
 export function ResultsBar({ shownCount, totalCount }: ResultsBarProps) {
+    const t = useTranslations("ResultsBar");
     const [activeSort, setActiveSort] = useState<string>("recent");
 
     const handleSort = useCallback((option: string) => {
@@ -25,7 +27,7 @@ export function ResultsBar({ shownCount, totalCount }: ResultsBarProps) {
             </span>
             <div className="hidden items-center gap-4 sm:flex">
                 <span className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
-                    Sorteren:
+                    {t("sortBy")}
                 </span>
                 {SORT_OPTIONS.map((option) => (
                     <button
@@ -37,9 +39,7 @@ export function ResultsBar({ shownCount, totalCount }: ResultsBarProps) {
                                 : "text-muted-foreground hover:text-foreground border-transparent"
                         }`}
                     >
-                        {option === "recent" && "Meest recent"}
-                        {option === "oldest" && "Oudste eerst"}
-                        {option === "az" && "A\u2013Z"}
+                        {t(option)}
                     </button>
                 ))}
             </div>

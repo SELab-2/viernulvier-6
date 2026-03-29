@@ -30,6 +30,7 @@
         "heroTitleItalic": "van De Vooruit",
         "heroPlaceholder": "Artiest, productie, jaar\u2026",
         "quickSearch": "Snel zoeken:",
+        "enter": "enter",
         "noResultsTitle": "Hier hangen enkel spinnenwebben",
         "noResultsText": "Geen producties gevonden voor \"{query}\". Probeer een andere zoekopdracht.",
         "articleImageCaption": "Het vergeten Vooruit gebouw...",
@@ -40,6 +41,12 @@
             "nightlife": "Nightlife",
             "performance": "Performance"
         }
+    },
+    "ResultsBar": {
+        "sortBy": "Sorteren:",
+        "recent": "Meest recent",
+        "oldest": "Oudste eerst",
+        "az": "A–Z"
     },
     "Featured": {
         "label": "Uitgelicht uit het archief"
