@@ -7,9 +7,18 @@ export default defineConfig({
         setupFiles: ["./test/setup.ts"],
         clearMocks: true,
         restoreMocks: true,
+        exclude: [
+            "**/node_modules/**",
+            "**/dist/**",
+            "**/cypress/**",
+            "**/.{idea,git,cache,output,temp}/**",
+            "**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*",
+            "./test/e2e/**",
+        ],
         coverage: {
             provider: "v8", // or 'istanbul'
             reporter: ["text", "lcov"],
+            exclude: ["./test/e2e/**", "**/*.config.*", "**/*.d.ts"],
         },
     },
     resolve: {
