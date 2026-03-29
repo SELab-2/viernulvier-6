@@ -363,7 +363,7 @@ impl<'a> MediaRepo<'a> {
         .await?)
     }
 
-    /// Get media for an entity with optional role/galler type and cover-only filtering
+    /// Get media for an entity with optional role/gallery type and cover-only filtering
     pub async fn for_entity_filtered(
         &self,
         entity_type: EntityType,

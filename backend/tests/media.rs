@@ -141,3 +141,58 @@ async fn attach_media_transactional_success(db: PgPool) {
     assert!(!listed.is_empty());
     assert!(listed.iter().any(|m| m.id == attached.id));
 }
+
+#[sqlx::test(fixtures("productions", "media"))]
+#[test_log::test]
+async fn delete_media_cascades_properly(db: PgPool) {
+    let app = TestRouter::as_editor(db.clone()).await;
+    // We know 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' exists in fixtures/media.sql
+    // and has a variant 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+    let media_id = Uuid::parse_str("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa").unwrap();
+    let variant_id = Uuid::parse_str("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee").unwrap();
+
+    // 1. Verify it exists
+    let response = app.get(&format!("/media/{media_id}")).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // 2. Delete it
+    let response = app.delete(&format!("/media/{media_id}")).await;
+    assert_eq!(response.status(), StatusCode::NO_CONTENT);
+
+    // 3. Verify it is gone
+    let response = app.get(&format!("/media/{media_id}")).await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+
+    // 4. Verify variant is gone from DB
+    let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM media_variant WHERE id = $1")
+        .bind(variant_id)
+        .fetch_one(&db)
+        .await
+        .unwrap();
+    assert_eq!(count, 0, "Variant should be manually cascaded away");
+}
+
+#[sqlx::test(fixtures("productions", "media"))]
+#[test_log::test]
+async fn cleanup_orphans(db: PgPool) {
+    let app = TestRouter::as_editor(db.clone()).await;
+    // Both 'aaaaaaaa' and 'bbbbbbbb' are currently linked to the production in the fixture.
+    
+    // Unlink 'aaaaaaaa' from production
+    let media_id = Uuid::parse_str("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa").unwrap();
+    let prod_id = Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap();
+    
+    let unlink_res = app.delete(&format!("/media/entity/production/{prod_id}/{media_id}")).await;
+    assert_eq!(unlink_res.status(), StatusCode::NO_CONTENT);
+    
+    // Now trigger cleanup
+    let cleanup_res = app.post("/media/cleanup", &json!({})).await;
+    assert_eq!(cleanup_res.status(), StatusCode::OK);
+    
+    let cleanup_data: serde_json::Value = cleanup_res.into_struct().await;
+    assert!(cleanup_data["deleted_count"].as_i64().unwrap() > 0);
+    
+    // 'aaaaaaaa' should be gone because it became an orphan
+    let response = app.get(&format!("/media/{media_id}")).await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
