@@ -15,43 +15,69 @@ use crate::error::AppError;
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct CollectionPayload {
+    /// Unique identifier for the collection (UUIDv7).
     pub id: Uuid,
+    /// URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections.
     pub slug: String,
+    /// Title of the collection in Dutch.
     pub title_nl: String,
+    /// Title of the collection in English.
     pub title_en: String,
+    /// Optional curator's note about this collection in Dutch.
     pub description_nl: String,
+    /// Optional curator's note about this collection in English.
     pub description_en: String,
+    /// Ordered list of items in this collection.
     pub items: Vec<CollectionItemPayload>,
+    /// ISO 8601 creation timestamp.
     pub created_at: DateTime<Utc>,
+    /// ISO 8601 last-updated timestamp.
     pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct CollectionPostPayload {
+    /// URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections.
     pub slug: String,
+    /// Title of the collection in Dutch.
     pub title_nl: String,
+    /// Title of the collection in English.
     pub title_en: String,
+    /// Optional curator's note about this collection in Dutch.
     pub description_nl: String,
+    /// Optional curator's note about this collection in English.
     pub description_en: String,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct CollectionItemPayload {
+    /// Unique identifier for this collection item.
     pub id: Uuid,
+    /// UUID of the referenced archive entity (production, event, artist, …).
     pub content_id: Uuid,
+    /// Type of the referenced entity.
     pub content_type: CollectionContentType,
+    /// Zero-based display order within the collection.
     pub position: i32,
+    /// Optional curator's annotation for this specific item in Dutch, shown on the collection page.
     pub comment_nl: Option<String>,
+    /// Optional curator's annotation for this specific item in English, shown on the collection page.
     pub comment_en: Option<String>,
+    /// ISO 8601 timestamp when the item was added to the collection.
     pub created_at: DateTime<Utc>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct CollectionItemPostPayload {
+    /// UUID of the referenced archive entity (production, event, artist, …).
     pub content_id: Uuid,
+    /// Type of the referenced entity.
     pub content_type: CollectionContentType,
+    /// Zero-based display order within the collection.
     pub position: i32,
+    /// Optional curator's annotation for this specific item in Dutch, shown on the collection page.
     pub comment_nl: Option<String>,
+    /// Optional curator's annotation for this specific item in English, shown on the collection page.
     pub comment_en: Option<String>,
 }
 
@@ -84,8 +110,8 @@ fn build_payload(collection: Collection, items: Vec<CollectionItem>) -> Collecti
 }
 
 impl CollectionPayload {
-    pub async fn all(db: &Database, limit: usize) -> Result<Vec<Self>, AppError> {
-        let collections = db.collections().all(limit).await?;
+    pub async fn all(db: &Database) -> Result<Vec<Self>, AppError> {
+        let collections = db.collections().all().await?;
         let ids: Vec<Uuid> = collections.iter().map(|c| c.id).collect();
         let all_items = db.collections().items_for_collections(&ids).await?;
 

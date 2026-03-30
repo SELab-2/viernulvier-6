@@ -18,11 +18,10 @@ impl<'a> CollectionRepo<'a> {
         Self { db }
     }
 
-    pub async fn all(&self, limit: usize) -> Result<Vec<Collection>, DatabaseError> {
+    pub async fn all(&self) -> Result<Vec<Collection>, DatabaseError> {
         Ok(sqlx::query_as::<_, Collection>(
-            "SELECT * FROM collections ORDER BY created_at DESC LIMIT $1",
+            "SELECT * FROM collections ORDER BY created_at DESC",
         )
-        .bind(limit as i64)
         .fetch_all(self.db)
         .await?)
     }

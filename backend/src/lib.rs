@@ -16,7 +16,7 @@ use utoipa::{
 };
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
-use utoipa_swagger_ui::SwaggerUi;
+use utoipa_swagger_ui::{Config, SwaggerUi};
 
 use crate::config::AppConfig;
 use crate::error::AppError;
@@ -39,7 +39,8 @@ pub struct AppState {
     modifiers(&SecurityAddon),
     components(schemas(EntityType, Facet)),
     tags(
-        (name = "viernulvier_api", description = "API Endpoints")
+        (name = "viernulvier_api", description = "API Endpoints"),
+        (name = "Collections", description = "A saved, titled selection of archive items with a shareable URL. No login required to view.")
     )
 )]
 pub struct ApiDoc;
@@ -155,7 +156,9 @@ pub fn router(state: &AppState) -> Router<AppState> {
     let docs_path = format!("{base_path}/docs");
     let openapi_json_path = format!("{base_path}/openapi.json");
 
-    let swagger_ui = SwaggerUi::new(docs_path).url(openapi_json_path, api_spec);
+    let swagger_ui = SwaggerUi::new(docs_path)
+        .url(openapi_json_path, api_spec)
+        .config(Config::default().doc_expansion("none").filter(true));
 
     Router::new()
         .nest(&base_path, api_router)

@@ -15,14 +15,13 @@ use crate::{
     path = "/collections",
     tag = "Collections",
     operation_id = "get_all_collections",
-    description = "Get all collections",
+    description = "Return all collections with their items. Public endpoint, no authentication required. Each collection contains the full list of its items in position order.",
     responses(
         (status = 200, description = "Success", body = [CollectionPayload])
     )
 )]
 pub async fn get_all(db: Database) -> JsonResponse<Vec<CollectionPayload>> {
-    // TODO: hard-coded limit of 10 will silently truncate results once there are >10 collections; add pagination
-    CollectionPayload::all(&db, 10).await?.json()
+    CollectionPayload::all(&db).await?.json()
 }
 
 #[utoipa::path(
@@ -30,7 +29,7 @@ pub async fn get_all(db: Database) -> JsonResponse<Vec<CollectionPayload>> {
     path = "/collections/{id}",
     tag = "Collections",
     operation_id = "get_one_collection",
-    description = "Get collection by id",
+    description = "Return a single collection by its UUID, including all its items in position order. Public endpoint, no authentication required. Use this to render the shareable collection page for a recipient.",
     params(
         ("id" = Uuid, Path, description = "Collection UUID")
     ),
@@ -48,7 +47,7 @@ pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<Collect
     path = "/collections",
     tag = "Collections",
     operation_id = "create_collection",
-    description = "Create a collection",
+    description = "Create a new collection. Requires editor authentication. Supply a human-readable slug that will appear in the shareable URL (e.g. `videodroom-candidates-2026`), bilingual titles, and optional bilingual descriptions. Items are added separately via POST /collections/{id}/items.",
     responses(
         (status = 201, description = "Created", body = CollectionPayload),
         (status = 401, description = "Unauthorized", body = ErrorResponse)
@@ -69,7 +68,7 @@ pub async fn post(
     path = "/collections",
     tag = "Collections",
     operation_id = "update_collection",
-    description = "Update the fields of a collection",
+    description = "Update the metadata (slug, titles, descriptions) of an existing collection. Requires editor authentication. Does not affect items — use the items sub-resource for that.",
     responses(
         (status = 200, description = "Success", body = CollectionPayload),
         (status = 404, description = "Not found"),
@@ -91,7 +90,7 @@ pub async fn put(
     path = "/collections/{id}",
     tag = "Collections",
     operation_id = "delete_collection",
-    description = "Delete a collection",
+    description = "Permanently delete a collection and all its items (cascade). Requires editor authentication. This action is irreversible and invalidates any shared URLs pointing to this collection.",
     params(
         ("id" = Uuid, Path, description = "Collection UUID")
     ),
@@ -114,7 +113,7 @@ pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
     path = "/collections/{id}/items",
     tag = "Collections",
     operation_id = "add_collection_item",
-    description = "Add an item to a collection",
+    description = "Add an item to a collection. Requires editor authentication. An item links a content_id (UUID of the referenced entity) and a content_type (Production, Event, Blogpost, Artist, or Location) with an optional bilingual curator comment and an explicit position for ordering.",
     params(
         ("id" = Uuid, Path, description = "Collection UUID")
     ),
@@ -139,7 +138,7 @@ pub async fn post_item(
     path = "/collections/{id}/items/{item_id}",
     tag = "Collections",
     operation_id = "delete_collection_item",
-    description = "Remove an item from a collection",
+    description = "Remove a single item from a collection. Requires editor authentication. Does not affect the other items or the collection itself.",
     params(
         ("id" = Uuid, Path, description = "Collection UUID"),
         ("item_id" = Uuid, Path, description = "Collection item UUID")
