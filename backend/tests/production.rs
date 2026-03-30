@@ -101,7 +101,8 @@ async fn post_success(db: PgPool) {
 
     let data: ProductionPayload = response.into_struct().await;
     assert_eq!(data.slug, "test-post-production");
-    assert_eq!(data.title_nl.as_deref(), Some("Nieuwe Test Productie"));
+    let nl = data.translations.iter().find(|t| t.language_code == "nl").unwrap();
+    assert_eq!(nl.title.as_deref(), Some("Nieuwe Test Productie"));
     assert!(!data.id.is_nil());
 }
 
@@ -115,7 +116,9 @@ async fn put_success(db: PgPool) {
     let update_payload: ProductionPayload = serde_json::from_value(json!({
         "id": target_id,
         "slug": "minimal-event-test",
-        "title_nl": "Aangepaste Titel"
+        "translations": [
+            { "language_code": "nl", "title": "Aangepaste Titel" }
+        ]
     }))
     .expect("Failed to deserialize mock ProductionPayload");
 
@@ -127,7 +130,8 @@ async fn put_success(db: PgPool) {
 
     let data: ProductionPayload = response.into_struct().await;
     assert_eq!(data.id, target_id);
-    assert_eq!(data.title_nl.as_deref(), Some("Aangepaste Titel"));
+    let nl = data.translations.iter().find(|t| t.language_code == "nl").unwrap();
+    assert_eq!(nl.title.as_deref(), Some("Aangepaste Titel"));
 }
 
 #[sqlx::test]
@@ -138,7 +142,8 @@ async fn put_not_found(db: PgPool) {
 
     let missing_production: ProductionPayload = serde_json::from_value(json!({
         "id": Uuid::nil(),
-        "slug": "ghost-production"
+        "slug": "ghost-production",
+        "translations": []
     }))
     .expect("Failed to deserialize mock ProductionPayload");
 
@@ -189,8 +194,10 @@ fn mock_post_payload() -> ProductionPostPayload {
     serde_json::from_value(json!({
         "source_id": 9999,
         "slug": "test-post-production",
-        "title_nl": "Nieuwe Test Productie",
-        "title_en": "New Test Production"
+        "translations": [
+            { "language_code": "nl", "title": "Nieuwe Test Productie" },
+            { "language_code": "en", "title": "New Test Production" }
+        ]
     }))
     .expect("Failed to deserialize mock ProductionPostPayload")
 }

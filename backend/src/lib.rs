@@ -8,7 +8,6 @@ use database::models::entity_type::EntityType;
 use database::models::facet::Facet;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info, warn};
-use crate::extractors::auth::{EditorUser, AdminUser};
 
 use utoipa::{
     Modify, OpenApi,
