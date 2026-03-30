@@ -280,6 +280,7 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(collection::put))
         .routes(routes!(collection::delete))
         .routes(routes!(collection::post_item))
+        .routes(routes!(collection::put_items))
         .routes(routes!(collection::delete_item))
         // Media
         .routes(routes!(media::generate_upload_url))

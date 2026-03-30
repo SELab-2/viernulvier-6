@@ -4,8 +4,8 @@ use database::{
     models::{
         collection::{CollectionCreate, CollectionTranslationData, CollectionWithTranslations},
         collection_item::{
-            CollectionContentType, CollectionItemCreate, CollectionItemTranslationData,
-            CollectionItemWithTranslations,
+            CollectionContentType, CollectionItemBulkUpdate, CollectionItemCreate,
+            CollectionItemTranslationData, CollectionItemWithTranslations,
         },
     },
 };
@@ -206,6 +206,37 @@ impl CollectionPostPayload {
             .insert(CollectionCreate { slug: self.slug }, translations)
             .await?;
         Ok(build_payload(cwt, vec![]))
+    }
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct CollectionItemsBulkEntry {
+    /// UUID of the collection item to update.
+    pub id: Uuid,
+    /// New zero-based display order.
+    pub position: i32,
+    /// Per-language curator annotation.
+    pub translations: Vec<CollectionItemTranslationPayload>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct CollectionItemsBulkPayload {
+    /// Full ordered list of items with updated positions and translations.
+    pub items: Vec<CollectionItemsBulkEntry>,
+}
+
+impl CollectionItemsBulkPayload {
+    pub async fn apply(self, db: &Database, collection_id: Uuid) -> Result<(), AppError> {
+        let updates: Vec<CollectionItemBulkUpdate> = self
+            .items
+            .into_iter()
+            .map(|e| CollectionItemBulkUpdate {
+                id: e.id,
+                position: e.position,
+                translations: item_translations_to_data(&e.translations),
+            })
+            .collect();
+        Ok(db.collections().bulk_update_items(collection_id, &updates).await?)
     }
 }
 

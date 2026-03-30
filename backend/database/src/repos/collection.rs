@@ -11,8 +11,8 @@ use crate::{
             CollectionWithTranslations,
         },
         collection_item::{
-            CollectionItem, CollectionItemCreate, CollectionItemTranslation,
-            CollectionItemTranslationData, CollectionItemWithTranslations,
+            CollectionItem, CollectionItemBulkUpdate, CollectionItemCreate,
+            CollectionItemTranslation, CollectionItemTranslationData, CollectionItemWithTranslations,
         },
     },
 };
@@ -194,6 +194,36 @@ impl<'a> CollectionRepo<'a> {
             item: new_item,
             translations,
         })
+    }
+
+    pub async fn bulk_update_items(
+        &self,
+        collection_id: Uuid,
+        items: &[CollectionItemBulkUpdate],
+    ) -> Result<(), DatabaseError> {
+        if items.is_empty() {
+            return Ok(());
+        }
+
+        let ids: Vec<Uuid> = items.iter().map(|i| i.id).collect();
+        let positions: Vec<i32> = items.iter().map(|i| i.position).collect();
+
+        sqlx::query(
+            "UPDATE collection_items SET position = updates.position
+            FROM UNNEST($2::uuid[], $3::int[]) AS updates(id, position)
+            WHERE collection_items.id = updates.id AND collection_items.collection_id = $1",
+        )
+        .bind(collection_id)
+        .bind(&ids[..])
+        .bind(&positions[..])
+        .execute(self.db)
+        .await?;
+
+        for item in items {
+            self.upsert_item_translations(item.id, &item.translations).await?;
+        }
+
+        Ok(())
     }
 
     pub async fn delete_item(
