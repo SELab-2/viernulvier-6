@@ -21,7 +21,7 @@ const event = {
 };
 
 export const eventHandlers = [
-    http.get(apiUrl("/events"), () => HttpResponse.json([event])),
+    http.get(apiUrl("/events"), () => HttpResponse.json({ data: [event], next_cursor: null })),
     http.get(apiUrl(`/events/${event.id}`), () => HttpResponse.json(event)),
     http.get(apiUrl(`/productions/${event.production_id}/events`), () =>
         HttpResponse.json([event])
