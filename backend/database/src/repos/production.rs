@@ -25,8 +25,20 @@ impl<'a> ProductionRepo<'a> {
             .ok_or(DatabaseError::NotFound)
     }
 
-    pub async fn all(&self, limit: usize) -> Result<Vec<Production>, DatabaseError> {
-        Ok(Production::select().limit(limit).fetch_all(self.db).await?)
+    pub async fn all(
+        &self,
+        limit: usize,
+        id_cursor: Option<Uuid>,
+    ) -> Result<Vec<Production>, DatabaseError> {
+        let mut select = Production::select().limit(limit).order_desc("id");
+
+        if let Some(id_cursor) = id_cursor {
+            select = select.where_("id < $1").bind(id_cursor);
+        }
+
+        let productions = select.fetch_all(self.db).await?;
+
+        Ok(productions)
     }
 
     pub async fn insert(&self, production: ProductionCreate) -> Result<Production, DatabaseError> {
