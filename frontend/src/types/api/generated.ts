@@ -407,10 +407,6 @@ export interface components {
         /** @enum {string} */
         CollectionContentType: "production" | "event" | "blogpost" | "artist" | "location";
         CollectionItemPayload: {
-            /** @description Optional curator's annotation for this specific item in English, shown on the collection page. */
-            comment_en?: string | null;
-            /** @description Optional curator's annotation for this specific item in Dutch, shown on the collection page. */
-            comment_nl?: string | null;
             /**
              * Format: uuid
              * @description UUID of the referenced archive entity (production, event, artist, …).
@@ -433,12 +429,10 @@ export interface components {
              * @description Zero-based display order within the collection.
              */
             position: number;
+            /** @description Per-language curator annotation for this item. */
+            translations: components["schemas"]["CollectionItemTranslationPayload"][];
         };
         CollectionItemPostPayload: {
-            /** @description Optional curator's annotation for this specific item in English, shown on the collection page. */
-            comment_en?: string | null;
-            /** @description Optional curator's annotation for this specific item in Dutch, shown on the collection page. */
-            comment_nl?: string | null;
             /**
              * Format: uuid
              * @description UUID of the referenced archive entity (production, event, artist, …).
@@ -451,6 +445,12 @@ export interface components {
              * @description Zero-based display order within the collection.
              */
             position: number;
+            /** @description Per-language curator annotation for this item. */
+            translations: components["schemas"]["CollectionItemTranslationPayload"][];
+        };
+        CollectionItemTranslationPayload: {
+            comment?: string | null;
+            language_code: string;
         };
         CollectionPayload: {
             /**
@@ -458,10 +458,6 @@ export interface components {
              * @description ISO 8601 creation timestamp.
              */
             created_at: string;
-            /** @description Optional curator's note about this collection in English. */
-            description_en: string;
-            /** @description Optional curator's note about this collection in Dutch. */
-            description_nl: string;
             /**
              * Format: uuid
              * @description Unique identifier for the collection (UUIDv7).
@@ -471,10 +467,8 @@ export interface components {
             items: components["schemas"]["CollectionItemPayload"][];
             /** @description URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections. */
             slug: string;
-            /** @description Title of the collection in English. */
-            title_en: string;
-            /** @description Title of the collection in Dutch. */
-            title_nl: string;
+            /** @description Per-language title and description. */
+            translations: components["schemas"]["CollectionTranslationPayload"][];
             /**
              * Format: date-time
              * @description ISO 8601 last-updated timestamp.
@@ -482,16 +476,15 @@ export interface components {
             updated_at: string;
         };
         CollectionPostPayload: {
-            /** @description Optional curator's note about this collection in English. */
-            description_en: string;
-            /** @description Optional curator's note about this collection in Dutch. */
-            description_nl: string;
             /** @description URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections. */
             slug: string;
-            /** @description Title of the collection in English. */
-            title_en: string;
-            /** @description Title of the collection in Dutch. */
-            title_nl: string;
+            /** @description Per-language title and description. */
+            translations: components["schemas"]["CollectionTranslationPayload"][];
+        };
+        CollectionTranslationPayload: {
+            description: string;
+            language_code: string;
+            title: string;
         };
         CreateEditorRequest: {
             email: string;
@@ -703,6 +696,7 @@ export interface components {
                 phone_1?: string | null;
                 phone_2?: string | null;
                 postal_code?: string | null;
+                slug?: string | null;
                 /** Format: int32 */
                 source_id?: number | null;
                 street?: string | null;

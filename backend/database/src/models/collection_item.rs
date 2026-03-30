@@ -12,8 +12,6 @@ pub struct CollectionItem {
     pub content_id: Uuid,
     pub content_type: CollectionContentType,
     pub position: i32,
-    pub comment_nl: Option<String>,
-    pub comment_en: Option<String>,
 }
 
 pub struct CollectionItemCreate {
@@ -21,8 +19,24 @@ pub struct CollectionItemCreate {
     pub content_id: Uuid,
     pub content_type: CollectionContentType,
     pub position: i32,
-    pub comment_nl: Option<String>,
-    pub comment_en: Option<String>,
+    pub translations: Vec<CollectionItemTranslationData>,
+}
+
+#[derive(Debug, FromRow, PartialEq, Clone)]
+pub struct CollectionItemTranslation {
+    pub collection_item_id: Uuid,
+    pub language_code: String,
+    pub comment: Option<String>,
+}
+
+pub struct CollectionItemTranslationData {
+    pub language_code: String,
+    pub comment: Option<String>,
+}
+
+pub struct CollectionItemWithTranslations {
+    pub item: CollectionItem,
+    pub translations: Vec<CollectionItemTranslation>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema, sqlx::Type)]

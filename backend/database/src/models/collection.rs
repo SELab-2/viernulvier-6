@@ -8,16 +8,27 @@ pub struct Collection {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub slug: String,
-    pub title_nl: String,
-    pub title_en: String,
-    pub description_nl: String,
-    pub description_en: String,
 }
 
 pub struct CollectionCreate {
     pub slug: String,
-    pub title_nl: String,
-    pub title_en: String,
-    pub description_nl: String,
-    pub description_en: String,
+}
+
+#[derive(Debug, FromRow, PartialEq, Clone)]
+pub struct CollectionTranslation {
+    pub collection_id: Uuid,
+    pub language_code: String,
+    pub title: String,
+    pub description: String,
+}
+
+pub struct CollectionTranslationData {
+    pub language_code: String,
+    pub title: String,
+    pub description: String,
+}
+
+pub struct CollectionWithTranslations {
+    pub collection: Collection,
+    pub translations: Vec<CollectionTranslation>,
 }

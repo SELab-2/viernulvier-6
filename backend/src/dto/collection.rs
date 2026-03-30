@@ -2,8 +2,11 @@ use chrono::{DateTime, Utc};
 use database::{
     Database,
     models::{
-        collection::{Collection, CollectionCreate},
-        collection_item::{CollectionContentType, CollectionItem, CollectionItemCreate},
+        collection::{CollectionCreate, CollectionTranslationData, CollectionWithTranslations},
+        collection_item::{
+            CollectionContentType, CollectionItemCreate, CollectionItemTranslationData,
+            CollectionItemWithTranslations,
+        },
     },
 };
 use serde::{Deserialize, Serialize};
@@ -14,19 +17,26 @@ use uuid::Uuid;
 use crate::error::AppError;
 
 #[derive(Serialize, Deserialize, ToSchema)]
+pub struct CollectionTranslationPayload {
+    pub language_code: String,
+    pub title: String,
+    pub description: String,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct CollectionItemTranslationPayload {
+    pub language_code: String,
+    pub comment: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct CollectionPayload {
     /// Unique identifier for the collection (UUIDv7).
     pub id: Uuid,
     /// URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections.
     pub slug: String,
-    /// Title of the collection in Dutch.
-    pub title_nl: String,
-    /// Title of the collection in English.
-    pub title_en: String,
-    /// Optional curator's note about this collection in Dutch.
-    pub description_nl: String,
-    /// Optional curator's note about this collection in English.
-    pub description_en: String,
+    /// Per-language title and description.
+    pub translations: Vec<CollectionTranslationPayload>,
     /// Ordered list of items in this collection.
     pub items: Vec<CollectionItemPayload>,
     /// ISO 8601 creation timestamp.
@@ -39,14 +49,8 @@ pub struct CollectionPayload {
 pub struct CollectionPostPayload {
     /// URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections.
     pub slug: String,
-    /// Title of the collection in Dutch.
-    pub title_nl: String,
-    /// Title of the collection in English.
-    pub title_en: String,
-    /// Optional curator's note about this collection in Dutch.
-    pub description_nl: String,
-    /// Optional curator's note about this collection in English.
-    pub description_en: String,
+    /// Per-language title and description.
+    pub translations: Vec<CollectionTranslationPayload>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -59,10 +63,8 @@ pub struct CollectionItemPayload {
     pub content_type: CollectionContentType,
     /// Zero-based display order within the collection.
     pub position: i32,
-    /// Optional curator's annotation for this specific item in Dutch, shown on the collection page.
-    pub comment_nl: Option<String>,
-    /// Optional curator's annotation for this specific item in English, shown on the collection page.
-    pub comment_en: Option<String>,
+    /// Per-language curator annotation for this item.
+    pub translations: Vec<CollectionItemTranslationPayload>,
     /// ISO 8601 timestamp when the item was added to the collection.
     pub created_at: DateTime<Utc>,
 }
@@ -75,83 +77,108 @@ pub struct CollectionItemPostPayload {
     pub content_type: CollectionContentType,
     /// Zero-based display order within the collection.
     pub position: i32,
-    /// Optional curator's annotation for this specific item in Dutch, shown on the collection page.
-    pub comment_nl: Option<String>,
-    /// Optional curator's annotation for this specific item in English, shown on the collection page.
-    pub comment_en: Option<String>,
+    /// Per-language curator annotation for this item.
+    pub translations: Vec<CollectionItemTranslationPayload>,
 }
 
-impl From<CollectionItem> for CollectionItemPayload {
-    fn from(item: CollectionItem) -> Self {
+impl From<CollectionItemWithTranslations> for CollectionItemPayload {
+    fn from(wit: CollectionItemWithTranslations) -> Self {
         Self {
-            id: item.id,
-            content_id: item.content_id,
-            content_type: item.content_type,
-            position: item.position,
-            comment_nl: item.comment_nl,
-            comment_en: item.comment_en,
-            created_at: item.created_at,
+            id: wit.item.id,
+            content_id: wit.item.content_id,
+            content_type: wit.item.content_type,
+            position: wit.item.position,
+            translations: wit
+                .translations
+                .into_iter()
+                .map(|t| CollectionItemTranslationPayload {
+                    language_code: t.language_code,
+                    comment: t.comment,
+                })
+                .collect(),
+            created_at: wit.item.created_at,
         }
     }
 }
 
-fn build_payload(collection: Collection, items: Vec<CollectionItem>) -> CollectionPayload {
+fn build_payload(
+    cwt: CollectionWithTranslations,
+    items: Vec<CollectionItemWithTranslations>,
+) -> CollectionPayload {
     CollectionPayload {
-        id: collection.id,
-        slug: collection.slug,
-        title_nl: collection.title_nl,
-        title_en: collection.title_en,
-        description_nl: collection.description_nl,
-        description_en: collection.description_en,
+        id: cwt.collection.id,
+        slug: cwt.collection.slug,
+        translations: cwt
+            .translations
+            .into_iter()
+            .map(|t| CollectionTranslationPayload {
+                language_code: t.language_code,
+                title: t.title,
+                description: t.description,
+            })
+            .collect(),
         items: items.into_iter().map(CollectionItemPayload::from).collect(),
-        created_at: collection.created_at,
-        updated_at: collection.updated_at,
+        created_at: cwt.collection.created_at,
+        updated_at: cwt.collection.updated_at,
     }
+}
+
+fn item_translations_to_data(translations: &[CollectionItemTranslationPayload]) -> Vec<CollectionItemTranslationData> {
+    translations
+        .iter()
+        .map(|t| CollectionItemTranslationData {
+            language_code: t.language_code.clone(),
+            comment: t.comment.clone(),
+        })
+        .collect()
+}
+
+fn collection_translations_to_data(translations: &[CollectionTranslationPayload]) -> Vec<CollectionTranslationData> {
+    translations
+        .iter()
+        .map(|t| CollectionTranslationData {
+            language_code: t.language_code.clone(),
+            title: t.title.clone(),
+            description: t.description.clone(),
+        })
+        .collect()
 }
 
 impl CollectionPayload {
     pub async fn all(db: &Database) -> Result<Vec<Self>, AppError> {
         let collections = db.collections().all().await?;
-        let ids: Vec<Uuid> = collections.iter().map(|c| c.id).collect();
+        let ids: Vec<Uuid> = collections.iter().map(|c| c.collection.id).collect();
         let all_items = db.collections().items_for_collections(&ids).await?;
 
-        let mut items_map: HashMap<Uuid, Vec<CollectionItem>> = HashMap::new();
+        let mut items_map: HashMap<Uuid, Vec<CollectionItemWithTranslations>> = HashMap::new();
         for item in all_items {
-            items_map.entry(item.collection_id).or_default().push(item);
+            items_map.entry(item.item.collection_id).or_default().push(item);
         }
 
         Ok(collections
             .into_iter()
-            .map(|c| {
-                let items = items_map.remove(&c.id).unwrap_or_default();
-                build_payload(c, items)
+            .map(|cwt| {
+                let items = items_map.remove(&cwt.collection.id).unwrap_or_default();
+                build_payload(cwt, items)
             })
             .collect())
     }
 
     pub async fn by_id(db: &Database, id: Uuid) -> Result<Self, AppError> {
-        let collection = db.collections().by_id(id).await?.ok_or(AppError::NotFound)?;
+        let cwt = db.collections().by_id(id).await?.ok_or(AppError::NotFound)?;
         let items = db.collections().items_for(id).await?;
-        Ok(build_payload(collection, items))
+        Ok(build_payload(cwt, items))
     }
 
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {
-        let updated = db
+        let translations = collection_translations_to_data(&self.translations);
+        let cwt = db
             .collections()
-            .update(
-                self.id,
-                CollectionCreate {
-                    slug: self.slug,
-                    title_nl: self.title_nl,
-                    title_en: self.title_en,
-                    description_nl: self.description_nl,
-                    description_en: self.description_en,
-                },
-            )
+            .update(self.id, CollectionCreate { slug: self.slug }, translations)
             .await?
             .ok_or(AppError::NotFound)?;
-        let items = db.collections().items_for(updated.id).await?;
-        Ok(build_payload(updated, items))
+        let items = db.collections().items_for(cwt.collection.id).await?;
+        Ok(build_payload(cwt, items))
     }
 
     pub async fn delete(db: &Database, id: Uuid) -> Result<(), AppError> {
@@ -161,22 +188,18 @@ impl CollectionPayload {
 
 impl CollectionPostPayload {
     pub async fn create(self, db: &Database) -> Result<CollectionPayload, AppError> {
-        let collection = db
+        let translations = collection_translations_to_data(&self.translations);
+        let cwt = db
             .collections()
-            .insert(CollectionCreate {
-                slug: self.slug,
-                title_nl: self.title_nl,
-                title_en: self.title_en,
-                description_nl: self.description_nl,
-                description_en: self.description_en,
-            })
+            .insert(CollectionCreate { slug: self.slug }, translations)
             .await?;
-        Ok(build_payload(collection, vec![]))
+        Ok(build_payload(cwt, vec![]))
     }
 }
 
 impl CollectionItemPostPayload {
     pub async fn add_to(self, db: &Database, collection_id: Uuid) -> Result<CollectionItemPayload, AppError> {
+        let translations = item_translations_to_data(&self.translations);
         Ok(db
             .collections()
             .add_item(CollectionItemCreate {
@@ -184,8 +207,7 @@ impl CollectionItemPostPayload {
                 content_id: self.content_id,
                 content_type: self.content_type,
                 position: self.position,
-                comment_nl: self.comment_nl,
-                comment_en: self.comment_en,
+                translations,
             })
             .await?
             .into())
