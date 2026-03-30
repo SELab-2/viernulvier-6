@@ -1,4 +1,5 @@
 {
   "title": "Documentation",
-  "root": true
+  "root": true,
+  "pages": ["getting-started", "frontend", "api", "database", "deployment"]
 }

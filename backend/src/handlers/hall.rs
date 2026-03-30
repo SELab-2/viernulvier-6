@@ -1,11 +1,20 @@
-use axum::{Json, extract::Path, http::StatusCode};
+use axum::{
+    Json,
+    extract::{Path, Query},
+    http::StatusCode,
+};
 use database::Database;
 use uuid::Uuid;
 
 use crate::{
+    dto::{
+        hall::{HallPayload, HallPostPayload},
+        paginated::PaginatedResponse,
+    },
     error::ErrorResponse,
-    dto::hall::{HallPayload, HallPostPayload},
-    handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse}
+    handlers::{
+        IntoApiResponse, JsonResponse, JsonStatusResponse, PaginationQuery, StatusResponse,
+    },
 };
 
 #[utoipa::path(
@@ -14,12 +23,20 @@ use crate::{
     tag = "Halls",
     operation_id = "get_all_halls",
     description = "Get all halls",
+    params(
+        PaginationQuery
+    ),
     responses(
-        (status = 200, description = "Success", body = [HallPayload])
+        (status = 200, description = "Success", body = PaginatedResponse<HallPayload>)
     )
 )]
-pub async fn get_all(db: Database) -> JsonResponse<Vec<HallPayload>> {
-    HallPayload::all(&db, 10).await?.json()
+pub async fn get_all(
+    db: Database,
+    Query(pagination): Query<PaginationQuery>,
+) -> JsonResponse<PaginatedResponse<HallPayload>> {
+    HallPayload::all(&db, pagination.cursor, pagination.limit)
+        .await?
+        .json()
 }
 
 #[utoipa::path(
@@ -79,10 +96,7 @@ pub async fn post(
         ("cookie_auth" = [])
     )
 )]
-pub async fn delete(
-    db: Database,
-    Path(id): Path<Uuid>
-) -> StatusResponse {
+pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
     HallPayload::delete(&db, id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -102,9 +116,6 @@ pub async fn delete(
         ("cookie_auth" = [])
     )
 )]
-pub async fn put(
-    db: Database,
-    Json(hall): Json<HallPayload>
-) -> JsonResponse<HallPayload> {
+pub async fn put(db: Database, Json(hall): Json<HallPayload>) -> JsonResponse<HallPayload> {
     Ok(Json(hall.update(&db).await?))
 }

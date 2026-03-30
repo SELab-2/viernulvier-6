@@ -1,7 +1,8 @@
+use crate::extractors::auth::{AdminUser, EditorUser};
 use api::ApiImporter;
 use axum::http::{HeaderValue, Method};
-use axum::{Router, routing::get};
 use axum::middleware::from_extractor_with_state;
+use axum::{Router, routing::get};
 use database::Database;
 use database::models::entity_type::EntityType;
 use database::models::facet::Facet;
@@ -11,8 +12,8 @@ use crate::extractors::auth::{EditorUser, AdminUser};
 
 use utoipa::{
     Modify, OpenApi,
-    openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
     openapi::Server,
+    openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
 };
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
@@ -77,7 +78,7 @@ impl Modify for PathPrefixAddon {
 
         base_path = base_path.replace("//", "/");
         if !base_path.starts_with('/') {
-            base_path = format!("/{}", base_path);
+            base_path = format!("/{base_path}");
         }
 
         openapi.servers = Some(vec![Server::new(base_path)]);
@@ -110,13 +111,13 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
         .collect();
 
     let app = Router::new()
-        .merge(router(state.clone()))
+        .merge(router(&state))
         .layer(CompressionLayer::new())
         .layer(TraceLayer::new_for_http())
         .layer(
             CorsLayer::new()
                 .allow_origin(allowed_origins)
-                .allow_methods([Method::GET, Method::POST])
+                .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
                 .allow_headers([axum::http::header::CONTENT_TYPE])
                 .allow_credentials(true),
         )
@@ -132,7 +133,7 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
     Ok(())
 }
 
-pub fn router(state: AppState) -> Router<AppState> {
+pub fn router(state: &AppState) -> Router<AppState> {
     let mut openapi = ApiDoc::openapi();
 
     let base_path = if state.config.preview_name.is_empty() {
@@ -152,11 +153,10 @@ pub fn router(state: AppState) -> Router<AppState> {
         .merge(admin_routes(state.clone()))
         .split_for_parts();
 
-    let docs_path = format!("{}/docs", base_path);
-    let openapi_json_path = format!("{}/openapi.json", base_path);
+    let docs_path = format!("{base_path}/docs");
+    let openapi_json_path = format!("{base_path}/openapi.json");
 
-    let swagger_ui = SwaggerUi::new(docs_path)
-        .url(openapi_json_path, api_spec);
+    let swagger_ui = SwaggerUi::new(docs_path).url(openapi_json_path, api_spec);
 
     Router::new()
         .nest(&base_path, api_router)
@@ -247,7 +247,7 @@ async fn shutdown_signal() {
     let terminate = std::future::pending::<()>();
 
     tokio::select! {
-        _ = ctrl_c => {},
-        _ = terminate => {},
+        () = ctrl_c => {},
+        () = terminate => {},
     }
 }

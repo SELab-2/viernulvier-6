@@ -1,10 +1,16 @@
 use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
+    password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
 };
 use chrono::Utc;
-use database::{Database, models::{user::{User, UserCreate, UserRole}, session::SessionCreate}};
-use jsonwebtoken::{Header, EncodingKey, encode};
+use database::{
+    Database,
+    models::{
+        session::SessionCreate,
+        user::{User, UserCreate, UserRole},
+    },
+};
+use jsonwebtoken::{EncodingKey, Header, encode};
 use serde::Serialize;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
@@ -39,11 +45,15 @@ pub async fn create_test_user(db: &Database, email: &str, role: UserRole) -> Use
 }
 
 pub async fn login_user(db: &Database, config: &AppConfig, user: &User) -> String {
-    let session = db.sessions().create(SessionCreate {
-        user_id: user.id,
-        token_hash: "test_hash".to_string(),
-        expires_at: Utc::now() + chrono::Duration::days(1),
-    }).await.unwrap();
+    let session = db
+        .sessions()
+        .create(SessionCreate {
+            user_id: user.id,
+            token_hash: "test_hash".to_string(),
+            expires_at: Utc::now() + chrono::Duration::days(1),
+        })
+        .await
+        .unwrap();
 
     let exp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -63,7 +73,8 @@ pub async fn login_user(db: &Database, config: &AppConfig, user: &User) -> Strin
         &Header::default(),
         &claims,
         &EncodingKey::from_secret(config.jwt_secret.as_bytes()),
-    ).unwrap();
+    )
+    .unwrap();
 
-    format!("access_token={}", token)
+    format!("access_token={token}")
 }

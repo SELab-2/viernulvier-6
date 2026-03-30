@@ -57,7 +57,7 @@ runs:
       
       run: |
         PROD_DATABASE_URL="postgres://${PROD_DB_USER}:${PROD_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}_database:5432/${PROD_DB_NAME}"
-        
+
         cat > .env <<EOF
         COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME
         PROD_HOST=$PROD_HOST

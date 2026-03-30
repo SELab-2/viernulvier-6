@@ -272,36 +272,37 @@ impl ApiImporter {
             let amt = events.len();
             info!("Events: got {amt} from api");
             for event in events {
-                let production_id = match event.production_source_id() {
-                    Some(id) => {
-                        match self.db.productions().by_source_id(id).await.unwrap() {
-                            Some(p) => p.id,
-                            None => {
-                                warn!("Events: production source_id {id} not found in db, skipping");
-                                continue;
-                            }
-                        }
-                    }
-                    None => {
-                        warn!("Events: event has no production source_id, skipping");
-                        continue;
-                    }
+                let Some(prod_source_id) = event.production_source_id() else {
+                    warn!("Events: event has no production source_id, skipping");
+                    continue;
                 };
 
-                let hall_uuid = match event.hall_source_id() {
-                    Some(id) => {
-                        let uuid = self.db.halls().by_source_id(id).await
-                            .unwrap()
-                            .map(|h| h.id);
-                        if uuid.is_none() {
-                            warn!("Events: hall source_id {id} not found in db");
-                        }
-                        uuid
-                    }
-                    None => None,
+                let Some(production) = self
+                    .db
+                    .productions()
+                    .by_source_id(prod_source_id)
+                    .await
+                    .unwrap()
+                else {
+                    warn!(
+                        "Events: production source_id {prod_source_id} not found in db, skipping"
+                    );
+                    continue;
                 };
 
-                let event_create = event.to_create(production_id, hall_uuid);
+                let hall_uuid = if let Some(hall_source_id) = event.hall_source_id() {
+                    let hall_opt = self.db.halls().by_source_id(hall_source_id).await.unwrap();
+
+                    if hall_opt.is_none() {
+                        warn!("Events: hall source_id {hall_source_id} not found in db");
+                    }
+
+                    hall_opt.map(|h| h.id)
+                } else {
+                    None
+                };
+
+                let event_create = event.to_create(production.id, hall_uuid);
                 self.db.events().insert(event_create).await.unwrap();
             }
             info!("Events: inserted {amt} into db");

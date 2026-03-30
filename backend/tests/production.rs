@@ -1,10 +1,14 @@
+#![allow(clippy::indexing_slicing)]
 use std::str::FromStr;
 
 use axum::http::StatusCode;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
-use viernulvier_api::dto::production::{ProductionPayload, ProductionPostPayload};
+use viernulvier_api::dto::{
+    paginated::PaginatedResponse,
+    production::{ProductionPayload, ProductionPostPayload},
+};
 
 use crate::common::{into_struct::IntoStruct, router::TestRouter};
 
@@ -18,8 +22,44 @@ async fn get_all(db: PgPool) {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let data: Vec<ProductionPayload> = response.into_struct().await;
-    assert_eq!(data.len(), 5);
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 5);
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn get_paginated(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/productions?limit=2").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // page 1
+    let page1: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+
+    assert_eq!(page1.data.len(), 2, "page 1 should respect the limit of 2");
+    assert!(page1.next_cursor.is_some(), "there should be a next cursor");
+
+    let cursor = page1.next_cursor.unwrap();
+    let url = format!("/productions?limit=2&cursor={cursor}");
+
+    let response = app.get(&url).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // page 2
+    let page2: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+
+    assert_eq!(page2.data.len(), 2, "page 1 should respect the limit of 2");
+    assert_ne!(page1.data[0].id, page2.data[0].id);
+
+    let cursor = page2.next_cursor.unwrap();
+    let url = format!("/productions?limit=2&cursor={cursor}");
+
+    // page 3 (last)
+    let page3: PaginatedResponse<ProductionPayload> = app.get(&url).await.into_struct().await;
+
+    assert_eq!(page3.data.len(), 1, "page 3 should have only the last item");
+    assert!(page3.next_cursor.is_none(), "last page has no cursor");
 }
 
 #[sqlx::test(fixtures("productions"))]
@@ -28,7 +68,7 @@ async fn get_one_success(db: PgPool) {
     let app = TestRouter::new(db);
     let target_id = Uuid::from_str("11111111-1111-1111-1111-111111111111").unwrap();
 
-    let response = app.get(&format!("/productions/{}", target_id)).await;
+    let response = app.get(&format!("/productions/{target_id}")).await;
     assert_eq!(response.status(), StatusCode::OK);
 
     let data: ProductionPayload = response.into_struct().await;
@@ -116,16 +156,16 @@ async fn delete_success(db: PgPool) {
 
     let unauth_app = TestRouter::new(db.clone());
     let unauth_response = unauth_app
-        .delete(&format!("/productions/{}", target_id))
+        .delete(&format!("/productions/{target_id}"))
         .await;
     assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
 
     let app = TestRouter::as_editor(db).await;
 
-    let response = app.delete(&format!("/productions/{}", target_id)).await;
+    let response = app.delete(&format!("/productions/{target_id}")).await;
     assert_eq!(response.status(), StatusCode::NO_CONTENT);
 
-    let verify_res = app.get(&format!("/productions/{}", target_id)).await;
+    let verify_res = app.get(&format!("/productions/{target_id}")).await;
     assert_eq!(verify_res.status(), StatusCode::NOT_FOUND);
 }
 
@@ -133,7 +173,9 @@ async fn delete_success(db: PgPool) {
 #[test_log::test]
 async fn delete_not_found(db: PgPool) {
     let unauth_app = TestRouter::new(db.clone());
-    let unauth_response = unauth_app.delete(&format!("/productions/{}", Uuid::nil())).await;
+    let unauth_response = unauth_app
+        .delete(&format!("/productions/{}", Uuid::nil()))
+        .await;
     assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
 
     let app = TestRouter::as_editor(db).await;

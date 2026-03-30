@@ -3,6 +3,8 @@ import bundleAnalyzer from "@next/bundle-analyzer";
 import createNextIntlPlugin from "next-intl/plugin";
 import type { Configuration, RuleSetRule } from "webpack";
 
+import { codecovWebpackPlugin } from "@codecov/webpack-plugin";
+
 const withNextIntl = createNextIntlPlugin();
 const withBundleAnalyzer = bundleAnalyzer({
     enabled: process.env.ANALYZE === "true",
@@ -13,7 +15,7 @@ const nextConfig: NextConfig = {
     reactCompiler: true,
 
     basePath: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}` : "",
-    assetPrefix: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}` : "",
+    //assetPrefix: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}` : "",
 
     async redirects() {
         return [
@@ -28,7 +30,7 @@ const nextConfig: NextConfig = {
 
     // Local dev env
     turbopack: {
-        root: __dirname,
+        root: process.cwd(),
         rules: {
             "*.svg": {
                 loaders: ["@svgr/webpack"],
@@ -65,6 +67,15 @@ const nextConfig: NextConfig = {
             issuer: /\.[jt]sx?$/,
             use: ["@svgr/webpack"],
         });
+
+        config.plugins = config.plugins || [];
+        config.plugins.push(
+            codecovWebpackPlugin({
+                enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
+                bundleName: "viernulvier-archive-frontend",
+                uploadToken: process.env.CODECOV_TOKEN,
+            })
+        );
 
         return config;
     },

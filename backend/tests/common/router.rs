@@ -31,7 +31,7 @@ impl TestRouter {
         };
 
         Self {
-            router: router(state.clone()).with_state(state),
+            router: router(&state).with_state(state),
             db,
             cookie: None,
         }
@@ -47,7 +47,9 @@ impl TestRouter {
     }
 
     pub async fn as_editor(db: PgPool) -> Self {
-        Self::new(db).login("editor@test.com", UserRole::Editor).await
+        Self::new(db)
+            .login("editor@test.com", UserRole::Editor)
+            .await
     }
 
     pub async fn as_admin(db: PgPool) -> Self {
