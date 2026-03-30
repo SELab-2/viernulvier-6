@@ -6,6 +6,9 @@ const eslintConfig = defineConfig([
     ...nextVitals,
     ...nextTs,
     {
+        settings: {
+            react: { version: "19.0" },
+        },
         rules: {
             indent: "off",
             "@typescript-eslint/indent": "off",
@@ -21,6 +24,7 @@ const eslintConfig = defineConfig([
         "out/**",
         "build/**",
         "next-env.d.ts",
+        "coverage/",
     ]),
 ]);
 

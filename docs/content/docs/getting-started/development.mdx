@@ -1,0 +1,131 @@
+---
+title: Development Setup
+description: Local development with hot reload and auto-restart.
+---
+
+# Development Setup
+
+This setup provides hot reload for frontend and auto-restart for backend during development.
+
+## Prerequisites
+
+- [Node.js](https://nodejs.org/) v24+
+- [Docker](https://docs.docker.com/get-docker/)
+- [Rust](https://rustup.rs/)
+- [Bacon](https://dystroy.org/bacon/) (`cargo install bacon`)
+
+## Quick Start
+
+### 1. Environment Files
+
+The project requires two environment files for local development:
+
+```bash
+# Infrastructure config (Docker services, DB, S3)
+cp infra/dev/.env.dev.example infra/dev/.env
+
+# Frontend config (API URLs, feature flags)
+cp frontend/.env.local.example frontend/.env.local
+```
+
+**`infra/dev/.env`** — Configures Docker services:
+
+- PostgreSQL database credentials
+- Garage S3 storage settings
+- Backend environment variables
+
+**`frontend/.env.local`** — Configures the Next.js app:
+
+- API URL pointing to localhost backend
+- Site URL for local development
+- Public environment variables
+
+### 2. Install Dependencies
+
+```bash
+npm run install:all
+```
+
+This installs all dependencies across the monorepo:
+
+- **Root** — Dev tools (concurrently, husky, wait-on)
+- **Frontend** — Next.js, React, UI libraries
+- **Docs** — Fumadocs, MDX processing
+
+Runs installations in parallel for speed.
+
+### 3. Start Development
+
+```bash
+npm run dev
+```
+
+This command orchestrates the entire development stack:
+
+1. **Starts Docker services** — PostgreSQL and Garage S3
+2. **Runs database migrations** — Ensures schema is up-to-date
+3. **Launches concurrent processes:**
+   - Frontend dev server (Turbopack)
+   - Backend with auto-reload (Bacon)
+   - Documentation site
+   - Log streaming from DB and S3
+
+Result: All services running with live reload:
+
+| Service     | URL                   | Description                 |
+| ----------- | --------------------- | --------------------------- |
+| Frontend    | http://localhost:3000 | Next.js with Turbopack      |
+| Backend API | http://localhost:3001 | Rust with Bacon auto-reload |
+| Docs        | http://localhost:3002 | Fumadocs                    |
+| PostgreSQL  | localhost:5432        | Database                    |
+| Garage S3   | localhost:3900        | Object storage              |
+
+## Commands
+
+| Command                  | Description                |
+| ------------------------ | -------------------------- |
+| `npm run dev`            | Start full dev stack       |
+| `npm run install:all`    | Install all dependencies   |
+| `npm run dev:services`   | Start only Docker services |
+| `npm run dev:stop`       | Stop all services          |
+| `npm run dev:cleanup`    | Stop and remove all data   |
+| `npm run dev:db:migrate` | Run database migrations    |
+
+## Troubleshooting
+
+**Frontend slow to compile?**
+
+```bash
+rm -rf frontend/.next docs/.next
+```
+
+**Database errors?**
+
+```bash
+npm run dev:cleanup
+npm run dev
+```
+
+**Port already in use?**
+
+Default ports used by the stack:
+
+| Port | Service            |
+| ---- | ------------------ |
+| 3000 | Frontend (Next.js) |
+| 3001 | Backend API (Rust) |
+| 3002 | Documentation      |
+| 5432 | PostgreSQL         |
+| 3900 | Garage S3          |
+
+To change ports, update:
+
+1. `infra/dev/docker-compose.dev.yml` — DB and S3 ports
+2. `infra/dev/.env` — Service connection URLs
+3. `frontend/.env.local` — API URL
+4. `package.json` — `dev:frontend` and `dev:docs` commands
+
+<Callout type="warn">
+  Port configuration instructions may be outdated. Using default ports is strongly recommended. If
+  you must change ports, check all related configuration files in the repository.
+</Callout>

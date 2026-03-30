@@ -1,7 +1,7 @@
 services:
   traefik:
     image: traefik:v3.6.8
-    container_name: traefik_preview
+    container_name: ${COMPOSE_PROJECT_NAME}-traefik
     command:
       - "--api.dashboard=false"
       - "--log.level=INFO"

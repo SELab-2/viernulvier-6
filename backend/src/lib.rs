@@ -81,7 +81,7 @@ impl Modify for PathPrefixAddon {
 
         base_path = base_path.replace("//", "/");
         if !base_path.starts_with('/') {
-            base_path = format!("/{}", base_path);
+            base_path = format!("/{base_path}");
         }
 
         openapi.servers = Some(vec![Server::new(base_path)]);
@@ -146,7 +146,7 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
         .collect();
 
     let app = Router::new()
-        .merge(router(state.clone()))
+        .merge(router(&state))
         .layer(CompressionLayer::new())
         .layer(TraceLayer::new_for_http())
         .layer(
@@ -168,7 +168,7 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
     Ok(())
 }
 
-pub fn router(state: AppState) -> Router<AppState> {
+pub fn router(state: &AppState) -> Router<AppState> {
     let mut openapi = ApiDoc::openapi();
 
     let base_path = if state.config.preview_name.is_empty() {
@@ -188,8 +188,8 @@ pub fn router(state: AppState) -> Router<AppState> {
         .merge(admin_routes(state.clone()))
         .split_for_parts();
 
-    let docs_path = format!("{}/docs", base_path);
-    let openapi_json_path = format!("{}/openapi.json", base_path);
+    let docs_path = format!("{base_path}/docs");
+    let openapi_json_path = format!("{base_path}/openapi.json");
 
     let swagger_ui = SwaggerUi::new(docs_path).url(openapi_json_path, api_spec);
 
@@ -294,7 +294,7 @@ async fn shutdown_signal() {
     let terminate = std::future::pending::<()>();
 
     tokio::select! {
-        _ = ctrl_c => {},
-        _ = terminate => {},
+        () = ctrl_c => {},
+        () = terminate => {},
     }
 }
