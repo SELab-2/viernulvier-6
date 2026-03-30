@@ -7,17 +7,38 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::error::AppError;
+use base64::{Engine, prelude::BASE64_URL_SAFE};
+
+use crate::{dto::paginated::PaginatedResponse, error::AppError};
 
 impl SpacePayload {
-    pub async fn all(db: &Database, limit: usize) -> Result<Vec<Self>, AppError> {
-        Ok(db
+    pub async fn all(
+        db: &Database,
+        id_cursor: Option<String>,
+        limit: usize,
+    ) -> Result<PaginatedResponse<Self>, AppError> {
+        let id_cursor: Option<Uuid> = id_cursor.and_then(|b64| {
+            let bytes: [u8; 16] = BASE64_URL_SAFE.decode(b64).ok()?.try_into().ok()?;
+            Some(Uuid::from_bytes(bytes))
+        });
+
+        let mut data: Vec<_> = db
             .spaces()
-            .all(limit)
+            .all(limit + 1, id_cursor)
             .await?
             .into_iter()
             .map(Self::from)
-            .collect())
+            .collect();
+
+        // only return a cursor if there are more items
+        let next_cursor = if data.len() == limit + 1 {
+            data.pop();
+            data.last().map(|s| BASE64_URL_SAFE.encode(s.id))
+        } else {
+            None
+        };
+
+        Ok(PaginatedResponse { data, next_cursor })
     }
 
     pub async fn by_id(db: &Database, id: Uuid) -> Result<Self, AppError> {

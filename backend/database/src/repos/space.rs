@@ -25,8 +25,20 @@ impl<'a> SpaceRepo<'a> {
             .ok_or(DatabaseError::NotFound)
     }
 
-    pub async fn all(&self, limit: usize) -> Result<Vec<Space>, DatabaseError> {
-        Ok(Space::select().limit(limit).fetch_all(self.db).await?)
+    pub async fn all(
+        &self,
+        limit: usize,
+        id_cursor: Option<Uuid>,
+    ) -> Result<Vec<Space>, DatabaseError> {
+        let mut select = Space::select().limit(limit).order_desc("id");
+
+        if let Some(id_cursor) = id_cursor {
+            select = select.where_("id < $1").bind(id_cursor);
+        }
+
+        let spaces = select.fetch_all(self.db).await?;
+
+        Ok(spaces)
     }
 
     pub async fn insert(&self, space: SpaceCreate) -> Result<Space, DatabaseError> {
