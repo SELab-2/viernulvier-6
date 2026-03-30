@@ -5,15 +5,10 @@ import { useTranslations } from "next-intl";
 import type { Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
-import {
-    makeProductionColumns,
-    productionFields,
-    toProductionUpdateInput,
-    type ProductionRow,
-} from "./columns";
+import { makeProductionColumns, productionFields, toProductionUpdateInput } from "./columns";
+import type { ProductionRow } from "@/types/models/production.types";
 import { SelectionToolbar } from "../selection-toolbar";
 import { useParentChildSelection } from "../use-parent-child-selection";
-import { makeProductionColumns, productionFields, toProductionUpdateInput } from "./columns";
 import { makeEventColumns, eventFields, toEventUpdateInput } from "./event-columns";
 import { Spinner } from "@/components/ui/spinner";
 import { useGetProductions, useUpdateProduction } from "@/hooks/api/useProductions";
