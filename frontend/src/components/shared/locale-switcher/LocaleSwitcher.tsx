@@ -16,7 +16,7 @@ export function LocaleSwitcher() {
 
     return (
         <button
-            onClick={switchLocale}
+            onClick={() => onSelectChange(locale === "nl" ? "en" : "nl")}
             className="text-muted-foreground hover:text-foreground cursor-pointer font-mono text-[10px] tracking-[1.4px] uppercase transition-colors"
         >
             {locale === "nl" ? "EN" : "NL"}
