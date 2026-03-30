@@ -6,7 +6,7 @@ use database::Database;
 use database::models::entity_type::EntityType;
 use database::models::facet::Facet;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
-use tracing::{error, info};
+use tracing::{error, info, warn};
 use crate::extractors::auth::{EditorUser, AdminUser};
 
 use utoipa::{
@@ -96,6 +96,8 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
                 Err(e) => error!("API imported ended with error: {e:?}"),
             }
         });
+    } else {
+        warn!("API importer is disabled");
     }
 
     let state = AppState { db, config };
