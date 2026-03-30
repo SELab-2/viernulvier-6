@@ -10,7 +10,10 @@ use tracing::{info, warn};
 use crate::helper::extract_source_id;
 use crate::models::space::ApiSpace;
 use crate::models::{
-    collection::ApiCollection, event::ApiEvent, hall::ApiHall, location::ApiLocation,
+    collection::ApiCollection,
+    event::ApiEvent,
+    hall::ApiHall,
+    location::ApiLocation,
     production::{ApiProduction, ProductionImportData},
 };
 

@@ -20,7 +20,9 @@ use utoipa_swagger_ui::{Config, SwaggerUi};
 
 use crate::config::AppConfig;
 use crate::error::AppError;
-use crate::handlers::{admin, auth, collection, event, hall, location, production, space, taxonomy, version};
+use crate::handlers::{
+    admin, auth, collection, event, hall, location, production, space, taxonomy, version,
+};
 
 pub mod config;
 pub mod dto;
