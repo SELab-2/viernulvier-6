@@ -5,16 +5,17 @@ import {
     mapCreateEventInput,
     mapEvent,
     mapEvents,
+    mapPaginatedEvents,
     mapUpdateEventInput,
 } from "@/mappers/event.mapper";
-import { EventResponse } from "@/types/api/event.api.types";
+import { EventResponse, PaginatedEventResponse } from "@/types/api/event.api.types";
 import { Event, EventCreateInput, EventUpdateInput } from "@/types/models/event.types";
 
 import { queryKeys } from "./query-keys";
 
 const fetchEvents = async (): Promise<Event[]> => {
-    const { data } = await api.get<EventResponse[]>("/events");
-    return mapEvents(data);
+    const { data } = await api.get<PaginatedEventResponse>("/events");
+    return mapPaginatedEvents(data);
 };
 
 const fetchEventById = async (id: string): Promise<Event> => {

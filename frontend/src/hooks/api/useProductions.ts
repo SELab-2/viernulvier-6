@@ -3,11 +3,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import {
     mapCreateProductionInput,
+    mapPaginatedProductions,
     mapProduction,
-    mapProductions,
     mapUpdateProductionInput,
 } from "@/mappers/production.mapper";
-import { ProductionResponse } from "@/types/api/production.api.types";
+import { PaginatedProductionResponse, ProductionResponse } from "@/types/api/production.api.types";
 import {
     Production,
     ProductionCreateInput,
@@ -17,8 +17,8 @@ import {
 import { queryKeys } from "./query-keys";
 
 const fetchProductions = async (): Promise<Production[]> => {
-    const { data } = await api.get<ProductionResponse[]>("/productions");
-    return mapProductions(data);
+    const { data } = await api.get<PaginatedProductionResponse>("/productions");
+    return mapPaginatedProductions(data);
 };
 
 const fetchProductionById = async (id: string): Promise<Production> => {

@@ -1,15 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "@/lib/api-client";
-import { mapCreateHallInput, mapHall, mapHalls, mapUpdateHallInput } from "@/mappers/hall.mapper";
-import { HallResponse } from "@/types/api/hall.api.types";
+import {
+    mapCreateHallInput,
+    mapHall,
+    mapPaginatedHalls,
+    mapUpdateHallInput,
+} from "@/mappers/hall.mapper";
+import { HallResponse, PaginatedHallResponse } from "@/types/api/hall.api.types";
 import { Hall, HallCreateInput, HallUpdateInput } from "@/types/models/hall.types";
 
 import { queryKeys } from "./query-keys";
 
 const fetchHalls = async (): Promise<Hall[]> => {
-    const { data } = await api.get<HallResponse[]>("/halls");
-    return mapHalls(data);
+    const { data } = await api.get<PaginatedHallResponse>("/halls");
+    return mapPaginatedHalls(data);
 };
 
 const fetchHallById = async (id: string): Promise<Hall> => {

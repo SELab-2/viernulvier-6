@@ -1,4 +1,5 @@
 import {
+    PaginatedProductionResponse,
     ProductionCreateRequest,
     ProductionResponse,
     ProductionUpdateRequest,
@@ -67,6 +68,9 @@ export const mapProduction = (response: ProductionResponse): Production => {
 
 export const mapProductions = (response: ProductionResponse[]): Production[] =>
     response.map(mapProduction);
+
+export const mapPaginatedProductions = (response: PaginatedProductionResponse): Production[] =>
+    mapProductions(response.data);
 
 const mapTranslationInput = (t: ProductionTranslationInput): ApiTranslation => ({
     language_code: t.languageCode,

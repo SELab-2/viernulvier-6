@@ -4,17 +4,17 @@ import { api } from "@/lib/api-client";
 import {
     mapCreateLocationInput,
     mapLocation,
-    mapLocations,
+    mapPaginatedLocations,
     mapUpdateLocationInput,
 } from "@/mappers/location.mapper";
-import { LocationResponse } from "@/types/api/location.api.types";
+import { LocationResponse, PaginatedLocationResponse } from "@/types/api/location.api.types";
 import { Location, LocationCreateInput, LocationUpdateInput } from "@/types/models/location.types";
 
 import { queryKeys } from "./query-keys";
 
 const fetchLocations = async (): Promise<Location[]> => {
-    const { data } = await api.get<LocationResponse[]>("/locations");
-    return mapLocations(data);
+    const { data } = await api.get<PaginatedLocationResponse>("/locations");
+    return mapPaginatedLocations(data);
 };
 
 const fetchLocationById = async (id: string): Promise<Location> => {

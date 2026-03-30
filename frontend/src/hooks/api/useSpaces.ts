@@ -3,18 +3,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import {
     mapCreateSpaceInput,
+    mapPaginatedSpaces,
     mapSpace,
-    mapSpaces,
     mapUpdateSpaceInput,
 } from "@/mappers/space.mapper";
-import { SpaceResponse } from "@/types/api/space.api.types";
+import { PaginatedSpaceResponse, SpaceResponse } from "@/types/api/space.api.types";
 import { Space, SpaceCreateInput, SpaceUpdateInput } from "@/types/models/space.types";
 
 import { queryKeys } from "./query-keys";
 
 const fetchSpaces = async (): Promise<Space[]> => {
-    const { data } = await api.get<SpaceResponse[]>("/spaces");
-    return mapSpaces(data);
+    const { data } = await api.get<PaginatedSpaceResponse>("/spaces");
+    return mapPaginatedSpaces(data);
 };
 
 const fetchSpaceById = async (id: string): Promise<Space> => {
