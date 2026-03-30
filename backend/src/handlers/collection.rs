@@ -47,7 +47,7 @@ pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<Collect
     path = "/collections",
     tag = "Collections",
     operation_id = "create_collection",
-    description = "Create a new collection. Requires editor authentication. Supply a human-readable slug that will appear in the shareable URL (e.g. `videodroom-candidates-2026`), bilingual titles, and optional bilingual descriptions. Items are added separately via POST /collections/{id}/items.",
+    description = "Create a new collection. Requires editor authentication. Supply a human-readable slug that will appear in the shareable URL (e.g. `videodroom-candidates-2026`) and per-language translations (title required, description required but may be empty). Items are added separately via POST /collections/{id}/items.",
     responses(
         (status = 201, description = "Created", body = CollectionPayload),
         (status = 401, description = "Unauthorized", body = ErrorResponse)

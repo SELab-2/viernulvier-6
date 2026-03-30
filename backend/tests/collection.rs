@@ -35,7 +35,10 @@ async fn get_one_success(db: PgPool) {
     let data: CollectionPayload = response.into_struct().await;
     assert_eq!(data.id, target_id);
     assert_eq!(data.slug, "zomerselectie");
-    assert_eq!(data.title_nl, "Zomerselectie");
+
+    let nl = data.translations.iter().find(|t| t.language_code == "nl").expect("Dutch translation not found");
+    assert_eq!(nl.title, "Zomerselectie");
+
     assert_eq!(data.items.len(), 2);
     assert_eq!(data.items[0].position, 1);
     assert_eq!(data.items[1].position, 2);
@@ -66,10 +69,14 @@ async fn post_success(db: PgPool) {
 
     let data: CollectionPayload = response.into_struct().await;
     assert_eq!(data.slug, "test-selectie");
-    assert_eq!(data.title_nl, "Test Selectie");
-    assert_eq!(data.title_en, "Test Selection");
-    assert_eq!(data.description_nl, "");
-    assert_eq!(data.description_en, "");
+
+    let nl = data.translations.iter().find(|t| t.language_code == "nl").expect("Dutch translation not found");
+    let en = data.translations.iter().find(|t| t.language_code == "en").expect("English translation not found");
+    assert_eq!(nl.title, "Test Selectie");
+    assert_eq!(en.title, "Test Selection");
+    assert_eq!(nl.description, "");
+    assert_eq!(en.description, "");
+
     assert!(data.items.is_empty());
     assert!(!data.id.is_nil());
 }
@@ -85,10 +92,18 @@ async fn put_success(db: PgPool) {
     let update_payload: CollectionPayload = serde_json::from_value(json!({
         "id": target_id,
         "slug": "dans-2025-bijgewerkt",
-        "title_nl": "Dans 2025 (bijgewerkt)",
-        "title_en": "Dance 2025 (updated)",
-        "description_nl": "",
-        "description_en": "",
+        "translations": [
+            {
+                "language_code": "nl",
+                "title": "Dans 2025 (bijgewerkt)",
+                "description": ""
+            },
+            {
+                "language_code": "en",
+                "title": "Dance 2025 (updated)",
+                "description": ""
+            }
+        ],
         "items": [],
         "created_at": "2026-01-01T00:00:00Z",
         "updated_at": "2026-01-01T00:00:00Z"
@@ -106,7 +121,9 @@ async fn put_success(db: PgPool) {
     let data: CollectionPayload = response.into_struct().await;
     assert_eq!(data.id, target_id);
     assert_eq!(data.slug, "dans-2025-bijgewerkt");
-    assert_eq!(data.title_nl, "Dans 2025 (bijgewerkt)");
+
+    let nl = data.translations.iter().find(|t| t.language_code == "nl").expect("Dutch translation not found");
+    assert_eq!(nl.title, "Dans 2025 (bijgewerkt)");
 }
 
 #[sqlx::test]
@@ -117,10 +134,18 @@ async fn put_not_found(db: PgPool) {
     let missing: CollectionPayload = serde_json::from_value(json!({
         "id": Uuid::nil(),
         "slug": "missing",
-        "title_nl": "Missing",
-        "title_en": "Missing",
-        "description_nl": "",
-        "description_en": "",
+        "translations": [
+            {
+                "language_code": "nl",
+                "title": "Missing",
+                "description": ""
+            },
+            {
+                "language_code": "en",
+                "title": "Missing",
+                "description": ""
+            }
+        ],
         "items": [],
         "created_at": "2026-01-01T00:00:00Z",
         "updated_at": "2026-01-01T00:00:00Z"
@@ -233,10 +258,18 @@ async fn delete_item_not_found(db: PgPool) {
 fn mock_post_payload() -> CollectionPostPayload {
     serde_json::from_value(json!({
         "slug": "test-selectie",
-        "title_nl": "Test Selectie",
-        "title_en": "Test Selection",
-        "description_nl": "",
-        "description_en": ""
+        "translations": [
+            {
+                "language_code": "nl",
+                "title": "Test Selectie",
+                "description": ""
+            },
+            {
+                "language_code": "en",
+                "title": "Test Selection",
+                "description": ""
+            }
+        ]
     }))
     .expect("Failed to deserialize mock CollectionPostPayload")
 }

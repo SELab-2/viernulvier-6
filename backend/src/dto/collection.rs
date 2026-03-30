@@ -61,7 +61,7 @@ pub struct CollectionItemPayload {
     pub content_id: Uuid,
     /// Type of the referenced entity.
     pub content_type: CollectionContentType,
-    /// Zero-based display order within the collection.
+    /// Display order within the collection (1-based).
     pub position: i32,
     /// Per-language curator annotation for this item.
     pub translations: Vec<CollectionItemTranslationPayload>,
@@ -75,9 +75,10 @@ pub struct CollectionItemPostPayload {
     pub content_id: Uuid,
     /// Type of the referenced entity.
     pub content_type: CollectionContentType,
-    /// Zero-based display order within the collection.
+    /// Display order within the collection (1-based).
     pub position: i32,
     /// Per-language curator annotation for this item.
+    #[serde(default)]
     pub translations: Vec<CollectionItemTranslationPayload>,
 }
 
