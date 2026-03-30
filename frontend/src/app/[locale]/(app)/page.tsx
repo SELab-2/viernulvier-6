@@ -44,13 +44,15 @@ export default function HomePage() {
         [router]
     );
 
-    const { data: productions } = useGetProductions();
-    const { data: events } = useGetEvents();
-    const latestProductions = (productions ?? []).slice(0, 4);
+    const { data: productionsResult } = useGetProductions();
+    const { data: eventsResult } = useGetEvents();
+    const productions = productionsResult?.data ?? [];
+    const events = eventsResult?.data ?? [];
+    const latestProductions = productions.slice(0, 4);
 
     const eventsByProduction = useMemo(() => {
         const map = new Map<string, Event[]>();
-        (events ?? []).forEach((event) => {
+        events.forEach((event) => {
             const existing = map.get(event.productionId) ?? [];
             existing.push(event);
             map.set(event.productionId, existing);

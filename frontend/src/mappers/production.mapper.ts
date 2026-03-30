@@ -4,6 +4,7 @@ import {
     ProductionResponse,
     ProductionUpdateRequest,
 } from "@/types/api/production.api.types";
+import { PaginatedResult } from "@/types/api/api.types";
 import {
     Production,
     ProductionCreateInput,
@@ -71,6 +72,13 @@ export const mapProductions = (response: ProductionResponse[]): Production[] =>
 
 export const mapPaginatedProductions = (response: PaginatedProductionResponse): Production[] =>
     mapProductions(response.data);
+
+export const mapPaginatedProductionsResult = (
+    response: PaginatedProductionResponse
+): PaginatedResult<Production> => ({
+    data: mapProductions(response.data),
+    nextCursor: response.next_cursor ?? null,
+});
 
 const mapTranslationInput = (t: ProductionTranslationInput): ApiTranslation => ({
     language_code: t.languageCode,

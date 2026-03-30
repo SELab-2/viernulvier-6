@@ -4,7 +4,7 @@ import { api } from "@/lib/api-client";
 import {
     mapCreateLocationInput,
     mapLocation,
-    mapPaginatedLocations,
+    mapPaginatedLocationsResult,
     mapUpdateLocationInput,
 } from "@/mappers/location.mapper";
 import {
@@ -13,13 +13,14 @@ import {
     GetLocationByIdResponse,
     UpdateLocationResponse,
 } from "@/types/api/location.api.types";
+import { PaginationParams, PaginatedResult } from "@/types/api/api.types";
 import { Location, LocationCreateInput, LocationUpdateInput } from "@/types/models/location.types";
 
 import { queryKeys } from "./query-keys";
 
-const fetchLocations = async (): Promise<Location[]> => {
-    const { data } = await api.get<GetAllLocationsResponse>("/locations");
-    return mapPaginatedLocations(data);
+const fetchLocations = async (params?: PaginationParams): Promise<PaginatedResult<Location>> => {
+    const { data } = await api.get<GetAllLocationsResponse>("/locations", { params });
+    return mapPaginatedLocationsResult(data);
 };
 
 const fetchLocationById = async (id: string): Promise<Location> => {
@@ -27,10 +28,10 @@ const fetchLocationById = async (id: string): Promise<Location> => {
     return mapLocation(data);
 };
 
-export const useGetLocations = (options?: { enabled?: boolean }) => {
+export const useGetLocations = (options?: { enabled?: boolean; pagination?: PaginationParams }) => {
     return useQuery({
-        queryKey: queryKeys.locations.all,
-        queryFn: fetchLocations,
+        queryKey: queryKeys.locations.all(options?.pagination),
+        queryFn: () => fetchLocations(options?.pagination),
         ...options,
     });
 };
@@ -55,7 +56,7 @@ export const useCreateLocation = () => {
             return mapLocation(data);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.locations.all });
+            queryClient.invalidateQueries({ queryKey: ["locations"] });
         },
     });
 };
@@ -72,7 +73,7 @@ export const useUpdateLocation = () => {
             return mapLocation(data);
         },
         onSuccess: (location) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.locations.all });
+            queryClient.invalidateQueries({ queryKey: ["locations"] });
             queryClient.setQueryData(queryKeys.locations.detail(location.id), location);
         },
     });
@@ -87,7 +88,7 @@ export const useDeleteLocation = () => {
             return id;
         },
         onSuccess: (id) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.locations.all });
+            queryClient.invalidateQueries({ queryKey: ["locations"] });
             queryClient.removeQueries({ queryKey: queryKeys.locations.detail(id) });
         },
     });

@@ -5,7 +5,7 @@ import {
     mapCreateEventInput,
     mapEvent,
     mapEvents,
-    mapPaginatedEvents,
+    mapPaginatedEventsResult,
     mapUpdateEventInput,
 } from "@/mappers/event.mapper";
 import {
@@ -15,13 +15,14 @@ import {
     GetEventsByProductionIdResponse,
     UpdateEventResponse,
 } from "@/types/api/event.api.types";
+import { PaginationParams, PaginatedResult } from "@/types/api/api.types";
 import { Event, EventCreateInput, EventUpdateInput } from "@/types/models/event.types";
 
 import { queryKeys } from "./query-keys";
 
-const fetchEvents = async (): Promise<Event[]> => {
-    const { data } = await api.get<GetAllEventsResponse>("/events");
-    return mapPaginatedEvents(data);
+const fetchEvents = async (params?: PaginationParams): Promise<PaginatedResult<Event>> => {
+    const { data } = await api.get<GetAllEventsResponse>("/events", { params });
+    return mapPaginatedEventsResult(data);
 };
 
 const fetchEventById = async (id: string): Promise<Event> => {
@@ -36,10 +37,10 @@ const fetchEventsByProductionId = async (productionId: string): Promise<Event[]>
     return mapEvents(data);
 };
 
-export const useGetEvents = (options?: { enabled?: boolean }) => {
+export const useGetEvents = (options?: { enabled?: boolean; pagination?: PaginationParams }) => {
     return useQuery({
-        queryKey: queryKeys.events.all,
-        queryFn: fetchEvents,
+        queryKey: queryKeys.events.all(options?.pagination),
+        queryFn: () => fetchEvents(options?.pagination),
         ...options,
     });
 };
@@ -72,7 +73,7 @@ export const useCreateEvent = () => {
             return mapEvent(data);
         },
         onSuccess: (event) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+            queryClient.invalidateQueries({ queryKey: ["events"] });
             queryClient.invalidateQueries({
                 queryKey: queryKeys.productions.events(event.productionId),
             });
@@ -92,7 +93,7 @@ export const useUpdateEvent = () => {
             return mapEvent(data);
         },
         onSuccess: (event) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+            queryClient.invalidateQueries({ queryKey: ["events"] });
             queryClient.setQueryData(queryKeys.events.detail(event.id), event);
             queryClient.invalidateQueries({
                 queryKey: queryKeys.productions.events(event.productionId),
@@ -110,7 +111,7 @@ export const useDeleteEvent = () => {
             return id;
         },
         onSuccess: (id) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+            queryClient.invalidateQueries({ queryKey: ["events"] });
             queryClient.removeQueries({ queryKey: queryKeys.events.detail(id) });
         },
     });

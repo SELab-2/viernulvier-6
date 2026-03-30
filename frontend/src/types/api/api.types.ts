@@ -28,6 +28,17 @@ export type PaginatedListResponse<T extends keyof operations> = operations[T]["r
     ? R
     : never;
 
+// Pagination types
+export interface PaginationParams {
+    cursor?: string | null;
+    limit?: number;
+}
+
+export interface PaginatedResult<T> {
+    data: T[];
+    nextCursor: string | null;
+}
+
 // Entity-specific operation name patterns
 export type GetOneOperation<Entity extends string> = `get_one_${Entity}` | `get_${Entity}_by_id`;
 export type GetAllOperation<Entity extends string> = `get_all_${Entity}s`;

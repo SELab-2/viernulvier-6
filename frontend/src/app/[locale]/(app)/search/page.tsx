@@ -28,12 +28,16 @@ export default function SearchPage() {
 
     const [searchQuery, setSearchQuery] = useState(() => searchParams.get("q") ?? "");
 
-    const { data: productions, isLoading: productionsLoading } = useGetProductions();
-    const { data: events, isLoading: eventsLoading } = useGetEvents();
-    const { data: locations, isLoading: locationsLoading } = useGetLocations();
+    const { data: productionsResult, isLoading: productionsLoading } = useGetProductions();
+    const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
+    const { data: locationsResult, isLoading: locationsLoading } = useGetLocations();
     const { data: facets, isLoading: facetsLoading } = useGetFacets({
         entityType: "production",
     });
+
+    const productions = productionsResult?.data ?? [];
+    const events = eventsResult?.data ?? [];
+    const locations = locationsResult?.data ?? [];
 
     const isLoading = productionsLoading || eventsLoading || locationsLoading || facetsLoading;
 
@@ -42,7 +46,7 @@ export default function SearchPage() {
 
     const eventsByProduction = useMemo(() => {
         const map = new Map<string, Event[]>();
-        (events ?? []).forEach((event) => {
+        events.forEach((event) => {
             const existing = map.get(event.productionId) ?? [];
             existing.push(event);
             map.set(event.productionId, existing);
@@ -64,15 +68,14 @@ export default function SearchPage() {
         );
     }
 
-    const allProductions = productions ?? [];
-    const totalPages = Math.max(1, Math.ceil(allProductions.length / ITEMS_PER_PAGE));
-    const pagedProductions = allProductions.slice(
+    const totalPages = Math.max(1, Math.ceil(productions.length / ITEMS_PER_PAGE));
+    const pagedProductions = productions.slice(
         (currentPage - 1) * ITEMS_PER_PAGE,
         currentPage * ITEMS_PER_PAGE
     );
 
     const filteredProductions = searchQuery
-        ? allProductions.filter((p) => {
+        ? productions.filter((p) => {
               const title = getLocalizedField(p, "title", locale) ?? p.slug;
               const artist = getLocalizedField(p, "artist", locale) ?? "";
               const text = `${title} ${artist} ${p.slug}`.toLowerCase();
@@ -80,7 +83,7 @@ export default function SearchPage() {
           })
         : pagedProductions;
 
-    const totalCount = searchQuery ? filteredProductions.length : allProductions.length;
+    const totalCount = searchQuery ? filteredProductions.length : productions.length;
     const hasNoResults = searchQuery && filteredProductions.length === 0;
 
     return (
@@ -97,7 +100,7 @@ export default function SearchPage() {
             <ResultsBar shownCount={filteredProductions.length} totalCount={totalCount} />
 
             <div className="flex min-h-[calc(100vh-300px)] overflow-hidden">
-                <ArchiveSidebar locations={locations ?? []} facets={facets ?? []} />
+                <ArchiveSidebar locations={locations} facets={facets ?? []} />
                 <main className="min-w-0 flex-1 overflow-hidden">
                     {hasNoResults ? (
                         <VintageEmptyState

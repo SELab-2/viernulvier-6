@@ -4,6 +4,7 @@ import {
     LocationUpdateRequest,
     PaginatedLocationResponse,
 } from "@/types/api/location.api.types";
+import { PaginatedResult } from "@/types/api/api.types";
 import { Location, LocationCreateInput, LocationUpdateInput } from "@/types/models/location.types";
 
 const toNullable = <T>(value: T | null | undefined): T | null => value ?? null;
@@ -44,6 +45,13 @@ export const mapLocations = (response: LocationResponse[]): Location[] => respon
 
 export const mapPaginatedLocations = (response: PaginatedLocationResponse): Location[] =>
     mapLocations(response.data);
+
+export const mapPaginatedLocationsResult = (
+    response: PaginatedLocationResponse
+): PaginatedResult<Location> => ({
+    data: mapLocations(response.data),
+    nextCursor: response.next_cursor ?? null,
+});
 
 export const mapCreateLocationInput = (input: LocationCreateInput): LocationCreateRequest => {
     return {

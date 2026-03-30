@@ -17,8 +17,10 @@ import type { Hall } from "@/types/models/hall.types";
 
 export function LocationsTable() {
     const t = useTranslations("Cms.Locations");
-    const { data: locations = [], isLoading: locationsLoading } = useGetLocations();
-    const { data: allHalls = [], isLoading: hallsLoading } = useGetHalls();
+    const { data: locationsResult, isLoading: locationsLoading } = useGetLocations();
+    const { data: hallsResult, isLoading: hallsLoading } = useGetHalls();
+    const locations = locationsResult?.data ?? [];
+    const allHalls = hallsResult?.data ?? [];
     const updateLocation = useUpdateLocation();
     const updateHall = useUpdateHall();
 

@@ -4,6 +4,7 @@ import {
     EventUpdateRequest,
     PaginatedEventResponse,
 } from "@/types/api/event.api.types";
+import { PaginatedResult } from "@/types/api/api.types";
 import { Event, EventCreateInput, EventUpdateInput } from "@/types/models/event.types";
 
 const toNullable = <T>(value: T | null | undefined): T | null => value ?? null;
@@ -32,6 +33,13 @@ export const mapEvents = (response: EventResponse[]): Event[] => response.map(ma
 
 export const mapPaginatedEvents = (response: PaginatedEventResponse): Event[] =>
     mapEvents(response.data);
+
+export const mapPaginatedEventsResult = (
+    response: PaginatedEventResponse
+): PaginatedResult<Event> => ({
+    data: mapEvents(response.data),
+    nextCursor: response.next_cursor ?? null,
+});
 
 export const mapCreateEventInput = (input: EventCreateInput): EventCreateRequest => {
     return {

@@ -21,7 +21,7 @@ describe("resource mutation caching behavior", () => {
             expect(result.current.isSuccess).toBe(true);
         });
 
-        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: queryKeys.locations.all });
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: queryKeys.locations.all() });
     });
 
     it("updates detail cache on location update", async () => {
@@ -75,7 +75,7 @@ describe("resource mutation caching behavior", () => {
             expect(result.current.isSuccess).toBe(true);
         });
 
-        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: queryKeys.events.all });
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: queryKeys.events.all() });
     });
 
     it("updates detail cache on event update", async () => {

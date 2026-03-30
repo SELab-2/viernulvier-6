@@ -4,6 +4,7 @@ import {
     SpaceResponse,
     SpaceUpdateRequest,
 } from "@/types/api/space.api.types";
+import { PaginatedResult } from "@/types/api/api.types";
 import { Space, SpaceCreateInput, SpaceUpdateInput } from "@/types/models/space.types";
 
 const toNullable = <T>(value: T | null | undefined): T | null => value ?? null;
@@ -21,6 +22,13 @@ export const mapSpaces = (response: SpaceResponse[]): Space[] => response.map(ma
 
 export const mapPaginatedSpaces = (response: PaginatedSpaceResponse): Space[] =>
     mapSpaces(response.data);
+
+export const mapPaginatedSpacesResult = (
+    response: PaginatedSpaceResponse
+): PaginatedResult<Space> => ({
+    data: mapSpaces(response.data),
+    nextCursor: response.next_cursor ?? null,
+});
 
 export const mapCreateSpaceInput = (input: SpaceCreateInput): SpaceCreateRequest => {
     return {

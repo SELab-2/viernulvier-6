@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import {
     mapCreateSpaceInput,
-    mapPaginatedSpaces,
+    mapPaginatedSpacesResult,
     mapSpace,
     mapUpdateSpaceInput,
 } from "@/mappers/space.mapper";
@@ -13,13 +13,14 @@ import {
     GetSpaceByIdResponse,
     UpdateSpaceResponse,
 } from "@/types/api/space.api.types";
+import { PaginationParams, PaginatedResult } from "@/types/api/api.types";
 import { Space, SpaceCreateInput, SpaceUpdateInput } from "@/types/models/space.types";
 
 import { queryKeys } from "./query-keys";
 
-const fetchSpaces = async (): Promise<Space[]> => {
-    const { data } = await api.get<GetAllSpacesResponse>("/spaces");
-    return mapPaginatedSpaces(data);
+const fetchSpaces = async (params?: PaginationParams): Promise<PaginatedResult<Space>> => {
+    const { data } = await api.get<GetAllSpacesResponse>("/spaces", { params });
+    return mapPaginatedSpacesResult(data);
 };
 
 const fetchSpaceById = async (id: string): Promise<Space> => {
@@ -27,10 +28,10 @@ const fetchSpaceById = async (id: string): Promise<Space> => {
     return mapSpace(data);
 };
 
-export const useGetSpaces = (options?: { enabled?: boolean }) => {
+export const useGetSpaces = (options?: { enabled?: boolean; pagination?: PaginationParams }) => {
     return useQuery({
-        queryKey: queryKeys.spaces.all,
-        queryFn: fetchSpaces,
+        queryKey: queryKeys.spaces.all(options?.pagination),
+        queryFn: () => fetchSpaces(options?.pagination),
         ...options,
     });
 };
@@ -55,7 +56,7 @@ export const useCreateSpace = () => {
             return mapSpace(data);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all });
+            queryClient.invalidateQueries({ queryKey: ["spaces"] });
         },
     });
 };
@@ -72,7 +73,7 @@ export const useUpdateSpace = () => {
             return mapSpace(data);
         },
         onSuccess: (space) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all });
+            queryClient.invalidateQueries({ queryKey: ["spaces"] });
             queryClient.setQueryData(queryKeys.spaces.detail(space.id), space);
         },
     });
@@ -87,7 +88,7 @@ export const useDeleteSpace = () => {
             return id;
         },
         onSuccess: (id) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all });
+            queryClient.invalidateQueries({ queryKey: ["spaces"] });
             queryClient.removeQueries({ queryKey: queryKeys.spaces.detail(id) });
         },
     });

@@ -4,7 +4,7 @@ import { api } from "@/lib/api-client";
 import {
     mapCreateHallInput,
     mapHall,
-    mapPaginatedHalls,
+    mapPaginatedHallsResult,
     mapUpdateHallInput,
 } from "@/mappers/hall.mapper";
 import {
@@ -13,13 +13,14 @@ import {
     GetHallByIdResponse,
     UpdateHallResponse,
 } from "@/types/api/hall.api.types";
+import { PaginationParams, PaginatedResult } from "@/types/api/api.types";
 import { Hall, HallCreateInput, HallUpdateInput } from "@/types/models/hall.types";
 
 import { queryKeys } from "./query-keys";
 
-const fetchHalls = async (): Promise<Hall[]> => {
-    const { data } = await api.get<GetAllHallsResponse>("/halls");
-    return mapPaginatedHalls(data);
+const fetchHalls = async (params?: PaginationParams): Promise<PaginatedResult<Hall>> => {
+    const { data } = await api.get<GetAllHallsResponse>("/halls", { params });
+    return mapPaginatedHallsResult(data);
 };
 
 const fetchHallById = async (id: string): Promise<Hall> => {
@@ -27,10 +28,10 @@ const fetchHallById = async (id: string): Promise<Hall> => {
     return mapHall(data);
 };
 
-export const useGetHalls = (options?: { enabled?: boolean }) => {
+export const useGetHalls = (options?: { enabled?: boolean; pagination?: PaginationParams }) => {
     return useQuery({
-        queryKey: queryKeys.halls.all,
-        queryFn: fetchHalls,
+        queryKey: queryKeys.halls.all(options?.pagination),
+        queryFn: () => fetchHalls(options?.pagination),
         ...options,
     });
 };
@@ -55,7 +56,7 @@ export const useCreateHall = () => {
             return mapHall(data);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.halls.all });
+            queryClient.invalidateQueries({ queryKey: ["halls"] });
         },
     });
 };
@@ -72,7 +73,7 @@ export const useUpdateHall = () => {
             return mapHall(data);
         },
         onSuccess: (hall) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.halls.all });
+            queryClient.invalidateQueries({ queryKey: ["halls"] });
             queryClient.setQueryData(queryKeys.halls.detail(hall.id), hall);
         },
     });
@@ -87,7 +88,7 @@ export const useDeleteHall = () => {
             return id;
         },
         onSuccess: (id) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.halls.all });
+            queryClient.invalidateQueries({ queryKey: ["halls"] });
             queryClient.removeQueries({ queryKey: queryKeys.halls.detail(id) });
         },
     });

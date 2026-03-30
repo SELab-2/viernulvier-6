@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import {
     mapCreateProductionInput,
-    mapPaginatedProductions,
+    mapPaginatedProductionsResult,
     mapProduction,
     mapUpdateProductionInput,
 } from "@/mappers/production.mapper";
@@ -13,6 +13,7 @@ import {
     GetProductionByIdResponse,
     UpdateProductionResponse,
 } from "@/types/api/production.api.types";
+import { PaginationParams, PaginatedResult } from "@/types/api/api.types";
 import {
     Production,
     ProductionCreateInput,
@@ -21,9 +22,11 @@ import {
 
 import { queryKeys } from "./query-keys";
 
-const fetchProductions = async (): Promise<Production[]> => {
-    const { data } = await api.get<GetAllProductionsResponse>("/productions");
-    return mapPaginatedProductions(data);
+const fetchProductions = async (
+    params?: PaginationParams
+): Promise<PaginatedResult<Production>> => {
+    const { data } = await api.get<GetAllProductionsResponse>("/productions", { params });
+    return mapPaginatedProductionsResult(data);
 };
 
 const fetchProductionById = async (id: string): Promise<Production> => {
@@ -31,10 +34,13 @@ const fetchProductionById = async (id: string): Promise<Production> => {
     return mapProduction(data);
 };
 
-export const useGetProductions = (options?: { enabled?: boolean }) => {
+export const useGetProductions = (options?: {
+    enabled?: boolean;
+    pagination?: PaginationParams;
+}) => {
     return useQuery({
-        queryKey: queryKeys.productions.all,
-        queryFn: fetchProductions,
+        queryKey: queryKeys.productions.all(options?.pagination),
+        queryFn: () => fetchProductions(options?.pagination),
         ...options,
     });
 };
@@ -59,7 +65,7 @@ export const useCreateProduction = () => {
             return mapProduction(data);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.productions.all });
+            queryClient.invalidateQueries({ queryKey: ["productions"] });
         },
     });
 };
@@ -76,7 +82,7 @@ export const useUpdateProduction = () => {
             return mapProduction(data);
         },
         onSuccess: (production) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.productions.all });
+            queryClient.invalidateQueries({ queryKey: ["productions"] });
             queryClient.setQueryData(queryKeys.productions.detail(production.id), production);
         },
     });
@@ -91,7 +97,7 @@ export const useDeleteProduction = () => {
             return id;
         },
         onSuccess: (id) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.productions.all });
+            queryClient.invalidateQueries({ queryKey: ["productions"] });
             queryClient.removeQueries({ queryKey: queryKeys.productions.detail(id) });
         },
     });
