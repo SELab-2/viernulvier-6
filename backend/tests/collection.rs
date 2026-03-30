@@ -42,7 +42,6 @@ async fn get_one_success(db: PgPool) {
         .find(|t| t.language_code == "nl")
         .expect("Dutch translation not found");
     assert_eq!(nl.title, "Zomerselectie");
-
     assert_eq!(data.items.len(), 2);
     assert_eq!(data.items[0].position, 1);
     assert_eq!(data.items[1].position, 2);
@@ -88,7 +87,6 @@ async fn post_success(db: PgPool) {
     assert_eq!(en.title, "Test Selection");
     assert_eq!(nl.description, "");
     assert_eq!(en.description, "");
-
     assert!(data.items.is_empty());
     assert!(!data.id.is_nil());
 }
@@ -105,16 +103,8 @@ async fn put_success(db: PgPool) {
         "id": target_id,
         "slug": "dans-2025-bijgewerkt",
         "translations": [
-            {
-                "language_code": "nl",
-                "title": "Dans 2025 (bijgewerkt)",
-                "description": ""
-            },
-            {
-                "language_code": "en",
-                "title": "Dance 2025 (updated)",
-                "description": ""
-            }
+            { "language_code": "nl", "title": "Dans 2025 (bijgewerkt)", "description": "" },
+            { "language_code": "en", "title": "Dance 2025 (updated)", "description": "" }
         ],
         "items": [],
         "created_at": "2026-01-01T00:00:00Z",
@@ -151,16 +141,8 @@ async fn put_not_found(db: PgPool) {
         "id": Uuid::nil(),
         "slug": "missing",
         "translations": [
-            {
-                "language_code": "nl",
-                "title": "Missing",
-                "description": ""
-            },
-            {
-                "language_code": "en",
-                "title": "Missing",
-                "description": ""
-            }
+            { "language_code": "nl", "title": "Missing", "description": "" },
+            { "language_code": "en", "title": "Missing", "description": "" }
         ],
         "items": [],
         "created_at": "2026-01-01T00:00:00Z",
@@ -211,7 +193,11 @@ async fn post_item_success(db: PgPool) {
     let item_payload: CollectionItemPostPayload = serde_json::from_value(json!({
         "content_id": content_id,
         "content_type": "event",
-        "position": 1
+        "position": 1,
+        "translations": [
+            { "language_code": "nl", "comment": null },
+            { "language_code": "en", "comment": null }
+        ]
     }))
     .expect("Failed to deserialize CollectionItemPostPayload");
 
@@ -282,16 +268,9 @@ fn mock_post_payload() -> CollectionPostPayload {
     serde_json::from_value(json!({
         "slug": "test-selectie",
         "translations": [
-            {
-                "language_code": "nl",
-                "title": "Test Selectie",
-                "description": ""
-            },
-            {
-                "language_code": "en",
-                "title": "Test Selection",
-                "description": ""
-            }
+            { "language_code": "nl", "title": "Test Selectie", "description": "" },
+            { "language_code": "en", "title": "Test Selection", "description": "" }
+
         ]
     }))
     .expect("Failed to deserialize mock CollectionPostPayload")
