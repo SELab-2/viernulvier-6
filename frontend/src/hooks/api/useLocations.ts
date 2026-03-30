@@ -7,18 +7,23 @@ import {
     mapPaginatedLocations,
     mapUpdateLocationInput,
 } from "@/mappers/location.mapper";
-import { LocationResponse, PaginatedLocationResponse } from "@/types/api/location.api.types";
+import {
+    CreateLocationResponse,
+    GetAllLocationsResponse,
+    GetLocationByIdResponse,
+    UpdateLocationResponse,
+} from "@/types/api/location.api.types";
 import { Location, LocationCreateInput, LocationUpdateInput } from "@/types/models/location.types";
 
 import { queryKeys } from "./query-keys";
 
 const fetchLocations = async (): Promise<Location[]> => {
-    const { data } = await api.get<PaginatedLocationResponse>("/locations");
+    const { data } = await api.get<GetAllLocationsResponse>("/locations");
     return mapPaginatedLocations(data);
 };
 
 const fetchLocationById = async (id: string): Promise<Location> => {
-    const { data } = await api.get<LocationResponse>(`/locations/${id}`);
+    const { data } = await api.get<GetLocationByIdResponse>(`/locations/${id}`);
     return mapLocation(data);
 };
 
@@ -43,7 +48,7 @@ export const useCreateLocation = () => {
 
     return useMutation({
         mutationFn: async (payload: LocationCreateInput) => {
-            const { data } = await api.post<LocationResponse>(
+            const { data } = await api.post<CreateLocationResponse>(
                 "/locations",
                 mapCreateLocationInput(payload)
             );
@@ -60,7 +65,7 @@ export const useUpdateLocation = () => {
 
     return useMutation({
         mutationFn: async (payload: LocationUpdateInput) => {
-            const { data } = await api.put<LocationResponse>(
+            const { data } = await api.put<UpdateLocationResponse>(
                 "/locations",
                 mapUpdateLocationInput(payload)
             );

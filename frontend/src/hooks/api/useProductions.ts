@@ -7,7 +7,12 @@ import {
     mapProduction,
     mapUpdateProductionInput,
 } from "@/mappers/production.mapper";
-import { PaginatedProductionResponse, ProductionResponse } from "@/types/api/production.api.types";
+import {
+    CreateProductionResponse,
+    GetAllProductionsResponse,
+    GetProductionByIdResponse,
+    UpdateProductionResponse,
+} from "@/types/api/production.api.types";
 import {
     Production,
     ProductionCreateInput,
@@ -17,12 +22,12 @@ import {
 import { queryKeys } from "./query-keys";
 
 const fetchProductions = async (): Promise<Production[]> => {
-    const { data } = await api.get<PaginatedProductionResponse>("/productions");
+    const { data } = await api.get<GetAllProductionsResponse>("/productions");
     return mapPaginatedProductions(data);
 };
 
 const fetchProductionById = async (id: string): Promise<Production> => {
-    const { data } = await api.get<ProductionResponse>(`/productions/${id}`);
+    const { data } = await api.get<GetProductionByIdResponse>(`/productions/${id}`);
     return mapProduction(data);
 };
 
@@ -47,7 +52,7 @@ export const useCreateProduction = () => {
 
     return useMutation({
         mutationFn: async (payload: ProductionCreateInput) => {
-            const { data } = await api.post<ProductionResponse>(
+            const { data } = await api.post<CreateProductionResponse>(
                 "/productions",
                 mapCreateProductionInput(payload)
             );
@@ -64,7 +69,7 @@ export const useUpdateProduction = () => {
 
     return useMutation({
         mutationFn: async (payload: ProductionUpdateInput) => {
-            const { data } = await api.put<ProductionResponse>(
+            const { data } = await api.put<UpdateProductionResponse>(
                 "/productions",
                 mapUpdateProductionInput(payload)
             );

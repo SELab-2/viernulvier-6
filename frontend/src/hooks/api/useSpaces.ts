@@ -7,18 +7,23 @@ import {
     mapSpace,
     mapUpdateSpaceInput,
 } from "@/mappers/space.mapper";
-import { PaginatedSpaceResponse, SpaceResponse } from "@/types/api/space.api.types";
+import {
+    CreateSpaceResponse,
+    GetAllSpacesResponse,
+    GetSpaceByIdResponse,
+    UpdateSpaceResponse,
+} from "@/types/api/space.api.types";
 import { Space, SpaceCreateInput, SpaceUpdateInput } from "@/types/models/space.types";
 
 import { queryKeys } from "./query-keys";
 
 const fetchSpaces = async (): Promise<Space[]> => {
-    const { data } = await api.get<PaginatedSpaceResponse>("/spaces");
+    const { data } = await api.get<GetAllSpacesResponse>("/spaces");
     return mapPaginatedSpaces(data);
 };
 
 const fetchSpaceById = async (id: string): Promise<Space> => {
-    const { data } = await api.get<SpaceResponse>(`/spaces/${id}`);
+    const { data } = await api.get<GetSpaceByIdResponse>(`/spaces/${id}`);
     return mapSpace(data);
 };
 
@@ -43,7 +48,10 @@ export const useCreateSpace = () => {
 
     return useMutation({
         mutationFn: async (payload: SpaceCreateInput) => {
-            const { data } = await api.post<SpaceResponse>("/spaces", mapCreateSpaceInput(payload));
+            const { data } = await api.post<CreateSpaceResponse>(
+                "/spaces",
+                mapCreateSpaceInput(payload)
+            );
             return mapSpace(data);
         },
         onSuccess: () => {
@@ -57,7 +65,10 @@ export const useUpdateSpace = () => {
 
     return useMutation({
         mutationFn: async (payload: SpaceUpdateInput) => {
-            const { data } = await api.put<SpaceResponse>("/spaces", mapUpdateSpaceInput(payload));
+            const { data } = await api.put<UpdateSpaceResponse>(
+                "/spaces",
+                mapUpdateSpaceInput(payload)
+            );
             return mapSpace(data);
         },
         onSuccess: (space) => {

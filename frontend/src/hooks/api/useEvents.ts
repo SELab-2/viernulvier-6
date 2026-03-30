@@ -8,23 +8,31 @@ import {
     mapPaginatedEvents,
     mapUpdateEventInput,
 } from "@/mappers/event.mapper";
-import { EventResponse, PaginatedEventResponse } from "@/types/api/event.api.types";
+import {
+    CreateEventResponse,
+    GetAllEventsResponse,
+    GetEventByIdResponse,
+    GetEventsByProductionIdResponse,
+    UpdateEventResponse,
+} from "@/types/api/event.api.types";
 import { Event, EventCreateInput, EventUpdateInput } from "@/types/models/event.types";
 
 import { queryKeys } from "./query-keys";
 
 const fetchEvents = async (): Promise<Event[]> => {
-    const { data } = await api.get<PaginatedEventResponse>("/events");
+    const { data } = await api.get<GetAllEventsResponse>("/events");
     return mapPaginatedEvents(data);
 };
 
 const fetchEventById = async (id: string): Promise<Event> => {
-    const { data } = await api.get<EventResponse>(`/events/${id}`);
+    const { data } = await api.get<GetEventByIdResponse>(`/events/${id}`);
     return mapEvent(data);
 };
 
 const fetchEventsByProductionId = async (productionId: string): Promise<Event[]> => {
-    const { data } = await api.get<EventResponse[]>(`/productions/${productionId}/events`);
+    const { data } = await api.get<GetEventsByProductionIdResponse>(
+        `/productions/${productionId}/events`
+    );
     return mapEvents(data);
 };
 
@@ -57,7 +65,10 @@ export const useCreateEvent = () => {
 
     return useMutation({
         mutationFn: async (payload: EventCreateInput) => {
-            const { data } = await api.post<EventResponse>("/events", mapCreateEventInput(payload));
+            const { data } = await api.post<CreateEventResponse>(
+                "/events",
+                mapCreateEventInput(payload)
+            );
             return mapEvent(data);
         },
         onSuccess: (event) => {
@@ -74,7 +85,10 @@ export const useUpdateEvent = () => {
 
     return useMutation({
         mutationFn: async (payload: EventUpdateInput) => {
-            const { data } = await api.put<EventResponse>("/events", mapUpdateEventInput(payload));
+            const { data } = await api.put<UpdateEventResponse>(
+                "/events",
+                mapUpdateEventInput(payload)
+            );
             return mapEvent(data);
         },
         onSuccess: (event) => {

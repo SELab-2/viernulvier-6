@@ -7,18 +7,23 @@ import {
     mapPaginatedHalls,
     mapUpdateHallInput,
 } from "@/mappers/hall.mapper";
-import { HallResponse, PaginatedHallResponse } from "@/types/api/hall.api.types";
+import {
+    CreateHallResponse,
+    GetAllHallsResponse,
+    GetHallByIdResponse,
+    UpdateHallResponse,
+} from "@/types/api/hall.api.types";
 import { Hall, HallCreateInput, HallUpdateInput } from "@/types/models/hall.types";
 
 import { queryKeys } from "./query-keys";
 
 const fetchHalls = async (): Promise<Hall[]> => {
-    const { data } = await api.get<PaginatedHallResponse>("/halls");
+    const { data } = await api.get<GetAllHallsResponse>("/halls");
     return mapPaginatedHalls(data);
 };
 
 const fetchHallById = async (id: string): Promise<Hall> => {
-    const { data } = await api.get<HallResponse>(`/halls/${id}`);
+    const { data } = await api.get<GetHallByIdResponse>(`/halls/${id}`);
     return mapHall(data);
 };
 
@@ -43,7 +48,10 @@ export const useCreateHall = () => {
 
     return useMutation({
         mutationFn: async (payload: HallCreateInput) => {
-            const { data } = await api.post<HallResponse>("/halls", mapCreateHallInput(payload));
+            const { data } = await api.post<CreateHallResponse>(
+                "/halls",
+                mapCreateHallInput(payload)
+            );
             return mapHall(data);
         },
         onSuccess: () => {
@@ -57,7 +65,10 @@ export const useUpdateHall = () => {
 
     return useMutation({
         mutationFn: async (payload: HallUpdateInput) => {
-            const { data } = await api.put<HallResponse>("/halls", mapUpdateHallInput(payload));
+            const { data } = await api.put<UpdateHallResponse>(
+                "/halls",
+                mapUpdateHallInput(payload)
+            );
             return mapHall(data);
         },
         onSuccess: (hall) => {

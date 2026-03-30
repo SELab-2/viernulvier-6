@@ -3,6 +3,7 @@ import { queryClient } from "./query-client";
 import { FailedRequest, CustomAxiosRequestConfig } from "@/types/api/api.types";
 
 import { queryKeys } from "@/hooks/api";
+import { RefreshTokenResponse } from "@/types/api/auth.api.types";
 
 export const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -48,7 +49,7 @@ api.interceptors.response.use(
             isRefreshing = true;
 
             try {
-                await api.post("/auth/refresh");
+                await api.post<RefreshTokenResponse>("/auth/refresh");
                 processQueue(null);
                 return api(originalRequest);
             } catch (refreshError) {
