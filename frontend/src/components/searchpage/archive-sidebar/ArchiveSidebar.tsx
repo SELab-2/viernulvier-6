@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { SlidersHorizontal, X } from "lucide-react";
 
 import type { Location } from "@/types/models/location.types";
 import type { Facet } from "@/types/models/taxonomy.types";
+import { getLabel } from "@/lib/utils";
 
 const CATEGORIES = ["artists", "productions", "articles", "posters"] as const;
 
@@ -21,6 +22,7 @@ interface ArchiveSidebarProps {
 
 export function ArchiveSidebar({ locations = [], facets = [] }: ArchiveSidebarProps) {
     const t = useTranslations("Sidebar");
+    const locale = useLocale();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
     const [checkedCategories, setCheckedCategories] = useState<Set<string>>(
@@ -92,7 +94,7 @@ export function ArchiveSidebar({ locations = [], facets = [] }: ArchiveSidebarPr
             </FilterGroup>
 
             {facets.map((facet) => (
-                <FilterGroup key={facet.slug} label={facet.label}>
+                <FilterGroup key={facet.slug} label={getLabel(facet.translations, locale)}>
                     <div className="flex flex-wrap gap-2 pb-2.5">
                         {facet.tags.map((tag) => (
                             <button
@@ -104,7 +106,7 @@ export function ArchiveSidebar({ locations = [], facets = [] }: ArchiveSidebarPr
                                         : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
                                 }`}
                             >
-                                {tag.label}
+                                {getLabel(tag.translations, locale)}
                             </button>
                         ))}
                     </div>

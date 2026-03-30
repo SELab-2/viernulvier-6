@@ -11,7 +11,7 @@ use crate::helper::extract_source_id;
 use crate::models::space::ApiSpace;
 use crate::models::{
     collection::ApiCollection, event::ApiEvent, hall::ApiHall, location::ApiLocation,
-    production::ApiProduction,
+    production::{ApiProduction, ProductionImportData},
 };
 
 mod helper;
@@ -155,9 +155,10 @@ impl ApiImporter {
             let amt = productions.len();
             info!("Productions: got {amt} from api");
             for production in productions {
+                let data: ProductionImportData = production.into();
                 self.db
                     .productions()
-                    .insert(production.into())
+                    .insert(data.production, data.translations)
                     .await
                     .unwrap();
             }
@@ -302,7 +303,7 @@ impl ApiImporter {
                     None
                 };
 
-                let event_create = event.to_create(production.id, hall_uuid);
+                let event_create = event.to_create(production.production.id, hall_uuid);
                 self.db.events().insert(event_create).await.unwrap();
             }
             info!("Events: inserted {amt} into db");
