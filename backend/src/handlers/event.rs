@@ -1,10 +1,19 @@
-use axum::{Json, extract::Path, http::StatusCode};
+use axum::{
+    Json,
+    extract::{Path, Query},
+    http::StatusCode,
+};
 use database::Database;
 use uuid::Uuid;
 
 use crate::{
-    dto::event::{EventPayload, EventPostPayload},
-    handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
+    dto::{
+        event::{EventPayload, EventPostPayload},
+        paginated::PaginatedResponse,
+    },
+    handlers::{
+        IntoApiResponse, JsonResponse, JsonStatusResponse, PaginationQuery, StatusResponse,
+    },
 };
 
 #[utoipa::path(
@@ -13,12 +22,20 @@ use crate::{
     tag = "Events",
     operation_id = "get_all_events",
     description = "Get all events",
+    params(
+        PaginationQuery
+    ),
     responses(
-        (status = 200, description = "Success", body = [EventPayload])
+        (status = 200, description = "Success", body = PaginatedResponse<EventPayload>)
     )
 )]
-pub async fn get_all(db: Database) -> JsonResponse<Vec<EventPayload>> {
-    EventPayload::all(&db, 10).await?.json()
+pub async fn get_all(
+    db: Database,
+    Query(pagination): Query<PaginationQuery>,
+) -> JsonResponse<PaginatedResponse<EventPayload>> {
+    EventPayload::all(&db, pagination.cursor, pagination.limit)
+        .await?
+        .json()
 }
 
 #[utoipa::path(
