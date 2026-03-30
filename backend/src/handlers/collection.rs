@@ -6,7 +6,7 @@ use crate::{
     dto::collection::{
         CollectionItemPayload, CollectionItemPostPayload, CollectionPayload, CollectionPostPayload,
     },
-    error::ErrorResponse,
+    error::{AppError, ErrorResponse},
     handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
 };
 
@@ -156,6 +156,6 @@ pub async fn delete_item(
     db: Database,
     Path((collection_id, item_id)): Path<(Uuid, Uuid)>,
 ) -> StatusResponse {
-    db.collections().delete_item(collection_id, item_id).await?;
+    db.collections().delete_item(collection_id, item_id).await?.ok_or(AppError::NotFound)?;
     Ok(StatusCode::NO_CONTENT)
 }

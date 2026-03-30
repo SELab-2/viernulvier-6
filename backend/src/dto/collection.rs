@@ -130,7 +130,7 @@ impl CollectionPayload {
     }
 
     pub async fn by_id(db: &Database, id: Uuid) -> Result<Self, AppError> {
-        let collection = db.collections().by_id(id).await?;
+        let collection = db.collections().by_id(id).await?.ok_or(AppError::NotFound)?;
         let items = db.collections().items_for(id).await?;
         Ok(build_payload(collection, items))
     }
@@ -148,13 +148,14 @@ impl CollectionPayload {
                     description_en: self.description_en,
                 },
             )
-            .await?;
+            .await?
+            .ok_or(AppError::NotFound)?;
         let items = db.collections().items_for(updated.id).await?;
         Ok(build_payload(updated, items))
     }
 
     pub async fn delete(db: &Database, id: Uuid) -> Result<(), AppError> {
-        Ok(db.collections().delete(id).await?)
+        db.collections().delete(id).await?.ok_or(AppError::NotFound)
     }
 }
 

@@ -26,12 +26,11 @@ impl<'a> CollectionRepo<'a> {
         .await?)
     }
 
-    pub async fn by_id(&self, id: Uuid) -> Result<Collection, DatabaseError> {
-        sqlx::query_as::<_, Collection>("SELECT * FROM collections WHERE id = $1")
+    pub async fn by_id(&self, id: Uuid) -> Result<Option<Collection>, DatabaseError> {
+        Ok(sqlx::query_as::<_, Collection>("SELECT * FROM collections WHERE id = $1")
             .bind(id)
             .fetch_optional(self.db)
-            .await?
-            .ok_or(DatabaseError::NotFound)
+            .await?)
     }
 
     pub async fn insert(&self, data: CollectionCreate) -> Result<Collection, DatabaseError> {
@@ -47,8 +46,8 @@ impl<'a> CollectionRepo<'a> {
         .await?)
     }
 
-    pub async fn update(&self, id: Uuid, data: CollectionCreate) -> Result<Collection, DatabaseError> {
-        sqlx::query_as::<_, Collection>(
+    pub async fn update(&self, id: Uuid, data: CollectionCreate) -> Result<Option<Collection>, DatabaseError> {
+        Ok(sqlx::query_as::<_, Collection>(
             "UPDATE collections SET slug = $2, title_nl = $3, title_en = $4, description_nl = $5, description_en = $6, updated_at = NOW() WHERE id = $1 RETURNING *",
         )
         .bind(id)
@@ -58,21 +57,20 @@ impl<'a> CollectionRepo<'a> {
         .bind(data.description_nl)
         .bind(data.description_en)
         .fetch_optional(self.db)
-        .await?
-        .ok_or(DatabaseError::NotFound)
+        .await?)
     }
 
-    pub async fn delete(&self, id: Uuid) -> Result<(), DatabaseError> {
+    pub async fn delete(&self, id: Uuid) -> Result<Option<()>, DatabaseError> {
         let res = sqlx::query("DELETE FROM collections WHERE id = $1")
             .bind(id)
             .execute(self.db)
             .await?;
 
         if res.rows_affected() == 0 {
-            return Err(DatabaseError::NotFound);
+            return Ok(None);
         }
 
-        Ok(())
+        Ok(Some(()))
     }
 
     pub async fn items_for(&self, collection_id: Uuid) -> Result<Vec<CollectionItem>, DatabaseError> {
@@ -111,7 +109,7 @@ impl<'a> CollectionRepo<'a> {
         &self,
         collection_id: Uuid,
         item_id: Uuid,
-    ) -> Result<(), DatabaseError> {
+    ) -> Result<Option<()>, DatabaseError> {
         let res =
             sqlx::query("DELETE FROM collection_items WHERE id = $1 AND collection_id = $2")
                 .bind(item_id)
@@ -120,9 +118,9 @@ impl<'a> CollectionRepo<'a> {
                 .await?;
 
         if res.rows_affected() == 0 {
-            return Err(DatabaseError::NotFound);
+            return Ok(None);
         }
 
-        Ok(())
+        Ok(Some(()))
     }
 }
