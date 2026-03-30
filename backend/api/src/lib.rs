@@ -704,14 +704,14 @@ struct FormatInfo {
 fn get_format_info(format: &str) -> FormatInfo {
     let fmt = format.to_ascii_lowercase();
     match () {
-        _ if fmt.contains("jpeg") || fmt.contains("jpg") => FormatInfo { extension: "jpg", mime: "image/jpeg" },
-        _ if fmt.contains("png") => FormatInfo { extension: "png", mime: "image/png" },
-        _ if fmt.contains("gif") => FormatInfo { extension: "gif", mime: "image/gif" },
-        _ if fmt.contains("webp") => FormatInfo { extension: "webp", mime: "image/webp" },
-        _ if fmt.contains("svg") => FormatInfo { extension: "svg", mime: "image/svg+xml" },
-        _ if fmt.contains("mp4") => FormatInfo { extension: "mp4", mime: "video/mp4" },
-        _ if fmt.contains("pdf") => FormatInfo { extension: "pdf", mime: "application/pdf" },
-        _ => FormatInfo { extension: "bin", mime: "application/octet-stream" },
+        () if fmt.contains("jpeg") || fmt.contains("jpg") => FormatInfo { extension: "jpg", mime: "image/jpeg" },
+        () if fmt.contains("png") => FormatInfo { extension: "png", mime: "image/png" },
+        () if fmt.contains("gif") => FormatInfo { extension: "gif", mime: "image/gif" },
+        () if fmt.contains("webp") => FormatInfo { extension: "webp", mime: "image/webp" },
+        () if fmt.contains("svg") => FormatInfo { extension: "svg", mime: "image/svg+xml" },
+        () if fmt.contains("mp4") => FormatInfo { extension: "mp4", mime: "video/mp4" },
+        () if fmt.contains("pdf") => FormatInfo { extension: "pdf", mime: "application/pdf" },
+        () => FormatInfo { extension: "bin", mime: "application/octet-stream" },
     }
 }
 

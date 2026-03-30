@@ -63,39 +63,36 @@ impl<'a> MediaVariantRepo<'a> {
             source_uri: upsert.source_uri.clone(),
         };
 
-        match create.insert(self.db).await {
-            Ok(_) => Ok(()),
-            Err(_) => {
-                sqlx::query(
-                    r#"
-                    UPDATE media_variant
-                    SET
-                        s3_key = $1,
-                        mime_type = $2,
-                        file_size = $3,
-                        width = $4,
-                        height = $5,
-                        checksum = $6,
-                        source_uri = $7,
-                        updated_at = NOW()
-                    WHERE media_id = $8
-                      AND variant_kind = 'crop'
-                      AND crop_name = $9
-                    "#,
-                )
-                .bind(upsert.s3_key)
-                .bind(upsert.mime_type)
-                .bind(upsert.file_size)
-                .bind(upsert.width)
-                .bind(upsert.height)
-                .bind(upsert.checksum)
-                .bind(upsert.source_uri)
-                .bind(upsert.media_id)
-                .bind(upsert.crop_name)
-                .execute(self.db)
-                .await?;
-                Ok(())
-            }
+        if create.insert(self.db).await.is_ok() { Ok(()) } else {
+            sqlx::query(
+                r#"
+                UPDATE media_variant
+                SET
+                    s3_key = $1,
+                    mime_type = $2,
+                    file_size = $3,
+                    width = $4,
+                    height = $5,
+                    checksum = $6,
+                    source_uri = $7,
+                    updated_at = NOW()
+                WHERE media_id = $8
+                  AND variant_kind = 'crop'
+                  AND crop_name = $9
+                "#,
+            )
+            .bind(upsert.s3_key)
+            .bind(upsert.mime_type)
+            .bind(upsert.file_size)
+            .bind(upsert.width)
+            .bind(upsert.height)
+            .bind(upsert.checksum)
+            .bind(upsert.source_uri)
+            .bind(upsert.media_id)
+            .bind(upsert.crop_name)
+            .execute(self.db)
+            .await?;
+            Ok(())
         }
     }
 }

@@ -19,7 +19,7 @@ impl<'de> Deserialize<'de> for ApiLocalizedText {
         let value = match value {
             Some(v) => v,
             None => {
-                return Ok(ApiLocalizedText {
+                return Ok(Self {
                     en: None,
                     fr: None,
                     nl: None,
@@ -28,7 +28,7 @@ impl<'de> Deserialize<'de> for ApiLocalizedText {
         };
 
         if value.is_array() || value.is_null() {
-            return Ok(ApiLocalizedText {
+            return Ok(Self {
                 en: None,
                 fr: None,
                 nl: None,
@@ -40,10 +40,10 @@ impl<'de> Deserialize<'de> for ApiLocalizedText {
             let fr = obj.get("fr").and_then(|v| v.as_str()).map(String::from);
             let nl = obj.get("nl").and_then(|v| v.as_str()).map(String::from);
 
-            Ok(ApiLocalizedText { en, fr, nl })
+            Ok(Self { en, fr, nl })
         } else {
             // Unrecognized shape (e.g. a plain string), default to empty
-            Ok(ApiLocalizedText {
+            Ok(Self {
                 en: None,
                 fr: None,
                 nl: None,
