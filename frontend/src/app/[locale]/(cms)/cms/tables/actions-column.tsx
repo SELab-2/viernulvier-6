@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentType } from "react";
+import { memo, useCallback, useMemo, type ComponentType, type ReactNode } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal, SquarePen } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -40,7 +40,7 @@ interface ActionsCellProps<TData> {
     promotedActions?: PromotedAction<TData>[];
 }
 
-function ActionsCell<TData extends Record<string, unknown>>({
+function ActionsCellInner<TData extends Record<string, unknown>>({
     entity,
     label,
     copyKey,
@@ -50,18 +50,38 @@ function ActionsCell<TData extends Record<string, unknown>>({
     const t = useTranslations("Cms.ActionsColumn");
     const copyValue = String(entity[copyKey] ?? "");
 
+    const handleEdit = useCallback(() => onEdit(entity), [onEdit, entity]);
+
+    const handleCopy = useCallback(async () => {
+        try {
+            await navigator.clipboard.writeText(copyValue);
+            toast.success(t("copied", { key: String(copyKey) }));
+        } catch {
+            toast.error(t("copyFailed"));
+        }
+    }, [copyValue, copyKey, t]);
+
+    const boundPromotedActions = useMemo(
+        () =>
+            promotedActions?.map((action) => ({
+                ...action,
+                onClick: () => action.onClick(entity),
+            })),
+        [promotedActions, entity]
+    );
+
     return (
         <div className="flex items-center gap-1">
-            <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => onEdit(entity)}>
+            <Button variant="ghost" className="h-8 w-8 p-0" onClick={handleEdit}>
                 <span className="sr-only">{t("edit", { label })}</span>
                 <SquarePen className="h-4 w-4" />
             </Button>
-            {promotedActions?.map((action) => (
+            {boundPromotedActions?.map((action) => (
                 <Button
                     key={action.key}
                     variant="ghost"
                     className="h-8 w-8 p-0"
-                    onClick={() => action.onClick(entity)}
+                    onClick={action.onClick}
                 >
                     <span className="sr-only">{action.label}</span>
                     <action.icon className="h-4 w-4" />
@@ -76,27 +96,19 @@ function ActionsCell<TData extends Record<string, unknown>>({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
-                    <DropdownMenuItem
-                        disabled={copyValue === ""}
-                        onClick={async () => {
-                            try {
-                                await navigator.clipboard.writeText(copyValue);
-                                toast.success(t("copied", { key: String(copyKey) }));
-                            } catch {
-                                toast.error(t("copyFailed"));
-                            }
-                        }}
-                    >
+                    <DropdownMenuItem disabled={copyValue === ""} onClick={handleCopy}>
                         {t("copy", { key: String(copyKey) })}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onEdit(entity)}>
-                        {t("edit", { label })}
-                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleEdit}>{t("edit", { label })}</DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>
     );
 }
+
+const ActionsCell = memo(ActionsCellInner) as <TData extends Record<string, unknown>>(
+    props: ActionsCellProps<TData>
+) => ReactNode;
 
 export function makeActionsColumn<TData extends Record<string, unknown>>(
     options: ActionsColumnOptions<TData>

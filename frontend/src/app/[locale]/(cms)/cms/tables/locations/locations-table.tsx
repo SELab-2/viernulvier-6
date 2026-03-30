@@ -54,6 +54,13 @@ export function LocationsTable() {
 
     const hallCols = useMemo(() => makeHallColumns({ onEdit: setEditHall }), []);
 
+    const expanderLabels = useMemo(() => ({ show: t("showHalls"), hide: t("hideHalls") }), [t]);
+
+    const getRowCanExpand = useCallback(
+        (row: Row<Location>) => (hallsBySpace.get(row.original.id)?.length ?? 0) > 0,
+        [hallsBySpace]
+    );
+
     const getLocationRowId = useCallback((row: Location) => row.id, []);
     const getHallRowId = useCallback((row: Hall) => row.id, []);
 
@@ -88,8 +95,8 @@ export function LocationsTable() {
                 data={locations}
                 loading={locationsLoading}
                 renderSubComponent={renderHalls}
-                getRowCanExpand={(row) => (hallsBySpace.get(row.original.id)?.length ?? 0) > 0}
-                expanderLabels={{ show: t("showHalls"), hide: t("hideHalls") }}
+                getRowCanExpand={getRowCanExpand}
+                expanderLabels={expanderLabels}
                 toolbar={
                     <SelectionToolbar
                         groups={[
