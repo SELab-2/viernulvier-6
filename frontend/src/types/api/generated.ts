@@ -55,6 +55,77 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/collections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return all collections with their items. Public endpoint, no authentication required. Each collection contains the full list of its items in position order. */
+        get: operations["get_all_collections"];
+        /** @description Update the metadata (slug, titles, descriptions) of an existing collection. Requires editor authentication. Does not affect items — use the items sub-resource for that. */
+        put: operations["update_collection"];
+        /** @description Create a new collection. Requires editor authentication. Supply a human-readable slug that will appear in the shareable URL (e.g. `videodroom-candidates-2026`), bilingual titles, and optional bilingual descriptions. Items are added separately via POST /collections/{id}/items. */
+        post: operations["create_collection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/collections/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return a single collection by its UUID, including all its items in position order. Public endpoint, no authentication required. Use this to render the shareable collection page for a recipient. */
+        get: operations["get_one_collection"];
+        put?: never;
+        post?: never;
+        /** @description Permanently delete a collection and all its items (cascade). Requires editor authentication. This action is irreversible and invalidates any shared URLs pointing to this collection. */
+        delete: operations["delete_collection"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/collections/{id}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Add an item to a collection. Requires editor authentication. An item links a content_id (UUID of the referenced entity) and a content_type (Production, Event, Blogpost, Artist, or Location) with an optional bilingual curator comment and an explicit position for ordering. */
+        post: operations["add_collection_item"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/collections/{id}/items/{item_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Remove a single item from a collection. Requires editor authentication. Does not affect the other items or the collection itself. */
+        delete: operations["delete_collection_item"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/editor/create": {
         parameters: {
             query?: never;
@@ -333,6 +404,88 @@ export interface components {
             message: string;
             success: boolean;
         };
+        /** @enum {string} */
+        CollectionContentType: "production" | "event" | "blogpost" | "artist" | "location";
+        CollectionItemPayload: {
+            /**
+             * Format: uuid
+             * @description UUID of the referenced archive entity (production, event, artist, …).
+             */
+            content_id: string;
+            /** @description Type of the referenced entity. */
+            content_type: components["schemas"]["CollectionContentType"];
+            /**
+             * Format: date-time
+             * @description ISO 8601 timestamp when the item was added to the collection.
+             */
+            created_at: string;
+            /**
+             * Format: uuid
+             * @description Unique identifier for this collection item.
+             */
+            id: string;
+            /**
+             * Format: int32
+             * @description Zero-based display order within the collection.
+             */
+            position: number;
+            /** @description Per-language curator annotation for this item. */
+            translations: components["schemas"]["CollectionItemTranslationPayload"][];
+        };
+        CollectionItemPostPayload: {
+            /**
+             * Format: uuid
+             * @description UUID of the referenced archive entity (production, event, artist, …).
+             */
+            content_id: string;
+            /** @description Type of the referenced entity. */
+            content_type: components["schemas"]["CollectionContentType"];
+            /**
+             * Format: int32
+             * @description Zero-based display order within the collection.
+             */
+            position: number;
+            /** @description Per-language curator annotation for this item. */
+            translations: components["schemas"]["CollectionItemTranslationPayload"][];
+        };
+        CollectionItemTranslationPayload: {
+            comment?: string | null;
+            language_code: string;
+        };
+        CollectionPayload: {
+            /**
+             * Format: date-time
+             * @description ISO 8601 creation timestamp.
+             */
+            created_at: string;
+            /**
+             * Format: uuid
+             * @description Unique identifier for the collection (UUIDv7).
+             */
+            id: string;
+            /** @description Ordered list of items in this collection. */
+            items: components["schemas"]["CollectionItemPayload"][];
+            /** @description URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections. */
+            slug: string;
+            /** @description Per-language title and description. */
+            translations: components["schemas"]["CollectionTranslationPayload"][];
+            /**
+             * Format: date-time
+             * @description ISO 8601 last-updated timestamp.
+             */
+            updated_at: string;
+        };
+        CollectionPostPayload: {
+            /** @description URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections. */
+            slug: string;
+            /** @description Per-language title and description. */
+            translations: components["schemas"]["CollectionTranslationPayload"][];
+        };
+        CollectionTranslationPayload: {
+            description: string;
+            language_code: string;
+            title: string;
+        };
         CreateEditorRequest: {
             email: string;
             password: string;
@@ -455,6 +608,7 @@ export interface components {
             phone_1?: string | null;
             phone_2?: string | null;
             postal_code?: string | null;
+            slug?: string | null;
             /** Format: int32 */
             source_id?: number | null;
             street?: string | null;
@@ -470,6 +624,7 @@ export interface components {
             phone_1?: string | null;
             phone_2?: string | null;
             postal_code?: string | null;
+            slug?: string | null;
             /** Format: int32 */
             source_id?: number | null;
             street?: string | null;
@@ -541,6 +696,7 @@ export interface components {
                 phone_1?: string | null;
                 phone_2?: string | null;
                 postal_code?: string | null;
+                slug?: string | null;
                 /** Format: int32 */
                 source_id?: number | null;
                 street?: string | null;
@@ -745,6 +901,241 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
+            };
+        };
+    };
+    get_all_collections: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionPayload"][];
+                };
+            };
+        };
+    };
+    update_collection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CollectionPayload"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_collection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CollectionPostPayload"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_one_collection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Collection UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionPayload"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_collection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Collection UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    add_collection_item: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Collection UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CollectionItemPostPayload"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionItemPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    delete_collection_item: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Collection UUID */
+                id: string;
+                /** @description Collection item UUID */
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

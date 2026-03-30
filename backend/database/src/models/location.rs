@@ -20,4 +20,5 @@ pub struct Location {
     pub phone_2: Option<String>,
     pub is_owned_by_viernulvier: Option<bool>,
     pub uitdatabank_id: Option<String>,
+    pub slug: Option<String>,
 }
