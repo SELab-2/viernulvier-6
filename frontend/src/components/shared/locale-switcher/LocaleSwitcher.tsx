@@ -2,8 +2,6 @@
 
 import { useLocale } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/routing";
-import { useParams } from "next/navigation";
-import { useCallback } from "react";
 
 export function LocaleSwitcher() {
     const locale = useLocale();
@@ -16,6 +14,7 @@ export function LocaleSwitcher() {
 
     return (
         <button
+            type="button"
             onClick={() => onSelectChange(locale === "nl" ? "en" : "nl")}
             className="text-muted-foreground hover:text-foreground cursor-pointer font-mono text-[10px] tracking-[1.4px] uppercase transition-colors"
         >
