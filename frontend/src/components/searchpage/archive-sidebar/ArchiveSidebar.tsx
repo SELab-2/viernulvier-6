@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { SlidersHorizontal, X } from "lucide-react";
 
@@ -13,14 +13,23 @@ const CATEGORIES = ["artists", "productions", "articles", "posters"] as const;
 interface ArchiveSidebarProps {
     locations?: Location[];
     facets?: Facet[];
+    minYear: number;
+    maxYear: number;
     onFilterChange?: (filters: {
         categories: Set<string>;
         tags: Set<string>;
         locations: Set<string>;
+        yearRange: [number, number];
     }) => void;
 }
 
-export function ArchiveSidebar({ locations = [], facets = [] }: ArchiveSidebarProps) {
+export function ArchiveSidebar({
+    locations = [],
+    facets = [],
+    minYear,
+    maxYear,
+    onFilterChange,
+}: ArchiveSidebarProps) {
     const t = useTranslations("Sidebar");
     const locale = useLocale();
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -29,6 +38,16 @@ export function ArchiveSidebar({ locations = [], facets = [] }: ArchiveSidebarPr
         new Set(["productions"])
     );
     const [checkedLocations, setCheckedLocations] = useState<Set<string>>(new Set());
+    const [yearRange, setYearRange] = useState<[number, number]>([minYear, maxYear]);
+
+    useEffect(() => {
+        onFilterChange?.({
+            categories: checkedCategories,
+            tags: activeTags,
+            locations: checkedLocations,
+            yearRange,
+        });
+    }, [checkedCategories, activeTags, checkedLocations, yearRange, onFilterChange]);
 
     const toggleTag = useCallback((tag: string) => {
         setActiveTags((prev) => {
@@ -61,7 +80,8 @@ export function ArchiveSidebar({ locations = [], facets = [] }: ArchiveSidebarPr
         setActiveTags(new Set());
         setCheckedCategories(new Set());
         setCheckedLocations(new Set());
-    }, []);
+        setYearRange([minYear, maxYear]);
+    }, [minYear, maxYear]);
 
     const sidebarContent = (
         <>
@@ -159,12 +179,17 @@ export function ArchiveSidebar({ locations = [], facets = [] }: ArchiveSidebarPr
 
             <FilterGroup label={t("year.label")}>
                 <div className="flex flex-col gap-3.5 pb-2.5">
-                    <div className="text-foreground flex justify-between font-mono text-[13px]">
-                        <span>1980</span>
+                    <div className="text-foreground flex justify-between font-mono text-[13px] select-text">
+                        <span>{yearRange[0]}</span>
                         <span className="text-muted-foreground text-[11px]">—</span>
-                        <span>2026</span>
+                        <span>{yearRange[1]}</span>
                     </div>
-                    <div className="bg-foreground h-0.5 w-full rounded-sm" />
+                    <YearRangeSlider
+                        min={minYear}
+                        max={maxYear}
+                        value={yearRange}
+                        onChange={setYearRange}
+                    />
                 </div>
             </FilterGroup>
 
@@ -217,6 +242,153 @@ function FilterGroup({ label, children }: { label: string; children: React.React
                 {label}
             </span>
             {children}
+        </div>
+    );
+}
+
+function CheckboxList({ children }: { children: React.ReactNode }) {
+    return <div className="flex flex-col gap-2.5 pb-2.5">{children}</div>;
+}
+
+function CheckboxItem({
+    label,
+    checked,
+    onChange,
+}: {
+    label: string;
+    checked: boolean;
+    onChange: () => void;
+}) {
+    return (
+        <label className="flex cursor-pointer items-center gap-3">
+            <input type="checkbox" checked={checked} onChange={onChange} className="hidden" />
+            <div
+                className={`border-foreground relative h-3.5 w-3.5 shrink-0 border transition-colors ${
+                    checked ? "bg-foreground" : ""
+                }`}
+            >
+                {checked && (
+                    <div
+                        className="bg-background absolute inset-[3px]"
+                        style={{
+                            clipPath:
+                                "polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%)",
+                        }}
+                    />
+                )}
+            </div>
+            <span className="font-body text-foreground text-[13px] leading-5 font-medium">
+                {label}
+            </span>
+        </label>
+    );
+}
+
+function YearRangeSlider({
+    min,
+    max,
+    value,
+    onChange,
+}: {
+    min: number;
+    max: number;
+    value: [number, number];
+    onChange: (v: [number, number]) => void;
+}) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const drag = useRef<{ thumb: "lo" | "hi" | null; startX: number } | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
+
+    const frac = (v: number) => ((v - min) / (max - min)) * 100;
+
+    const toValue = (clientX: number) => {
+        if (!containerRef.current) return min;
+        const { left, width } = containerRef.current.getBoundingClientRect();
+        return Math.round(min + Math.max(0, Math.min(1, (clientX - left) / width)) * (max - min));
+    };
+
+    const onOverlayPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.currentTarget.setPointerCapture(e.pointerId);
+        drag.current = { thumb: null, startX: e.clientX };
+        setIsDragging(true);
+    };
+
+    const onOverlayPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (!drag.current || !e.buttons) return;
+        if (drag.current.thumb === null) {
+            const dx = e.clientX - drag.current.startX;
+            if (Math.abs(dx) < 3) return;
+            drag.current.thumb = dx < 0 ? "lo" : "hi";
+        }
+        const v = toValue(e.clientX);
+        if (drag.current.thumb === "lo") {
+            onChange([Math.max(min, Math.min(v, value[1])), value[1]]);
+        } else {
+            onChange([value[0], Math.min(max, Math.max(v, value[0]))]);
+        }
+    };
+
+    const onOverlayPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+        drag.current = null;
+        setIsDragging(false);
+    };
+
+    const merged = value[0] === value[1];
+    const overlayActive = merged || isDragging;
+
+    const thumbCls =
+        "absolute w-full -top-[6px] h-[14px] appearance-none bg-transparent pointer-events-none " +
+        "[&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none " +
+        "[&::-webkit-slider-thumb]:w-[14px] [&::-webkit-slider-thumb]:h-[14px] " +
+        "[&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-2 " +
+        "[&::-webkit-slider-thumb]:border-background [&::-webkit-slider-thumb]:cursor-pointer " +
+        "[&::-moz-range-thumb]:w-[14px] [&::-moz-range-thumb]:h-[14px] " +
+        "[&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-2 " +
+        "[&::-moz-range-thumb]:border-background [&::-moz-range-thumb]:cursor-pointer " +
+        "[&::-moz-range-thumb]:rounded-none [&::-moz-range-thumb]:appearance-none";
+
+    return (
+        <div ref={containerRef} className="relative pt-1">
+            <div className="bg-border relative h-0.5">
+                <div
+                    className="bg-foreground absolute h-full"
+                    style={{
+                        left: `${frac(value[0])}%`,
+                        right: `${100 - frac(value[1])}%`,
+                    }}
+                />
+            </div>
+            <input
+                type="range"
+                min={min}
+                max={max}
+                value={value[0]}
+                onChange={(e) => {
+                    const lo = Math.min(parseInt(e.target.value), value[1]);
+                    onChange([lo, value[1]]);
+                }}
+                className={thumbCls}
+            />
+            <input
+                type="range"
+                min={min}
+                max={max}
+                value={value[1]}
+                onChange={(e) => {
+                    const hi = Math.max(parseInt(e.target.value), value[0]);
+                    onChange([value[0], hi]);
+                }}
+                className={thumbCls}
+            />
+            {/* Overlay: active when merged so drag direction determines which thumb moves */}
+            <div
+                className={`absolute inset-x-0 -top-[6px] h-[14px] cursor-pointer ${overlayActive ? "" : "pointer-events-none"}`}
+                onPointerDown={onOverlayPointerDown}
+                onPointerMove={onOverlayPointerMove}
+                onPointerUp={onOverlayPointerUp}
+            />
         </div>
     );
 }
