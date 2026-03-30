@@ -25,8 +25,20 @@ impl<'a> HallRepo<'a> {
             .ok_or(DatabaseError::NotFound)
     }
 
-    pub async fn all(&self, limit: usize) -> Result<Vec<Hall>, DatabaseError> {
-        Ok(Hall::select().limit(limit).fetch_all(self.db).await?)
+    pub async fn all(
+        &self,
+        limit: usize,
+        id_cursor: Option<Uuid>,
+    ) -> Result<Vec<Hall>, DatabaseError> {
+        let mut select = Hall::select().limit(limit).order_desc("id");
+
+        if let Some(id_cursor) = id_cursor {
+            select = select.where_("id < $1").bind(id_cursor);
+        }
+
+        let halls = select.fetch_all(self.db).await?;
+
+        Ok(halls)
     }
 
     pub async fn insert(&self, hall: HallCreate) -> Result<Hall, DatabaseError> {
