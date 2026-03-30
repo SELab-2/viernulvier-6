@@ -61,13 +61,13 @@ describe("OpenAPI type contract", () => {
     it("keeps key operation schemas available", () => {
         expectTypeOf<
             operations["get_all_locations"]["responses"][200]["content"]["application/json"]
-        >().toEqualTypeOf<components["schemas"]["LocationPayload"][]>();
+        >().toEqualTypeOf<components["schemas"]["PaginatedResponse_LocationPayload"]>();
         expectTypeOf<
             operations["create_production"]["requestBody"]["content"]["application/json"]
         >().toEqualTypeOf<components["schemas"]["ProductionPostPayload"]>();
         expectTypeOf<
             operations["get_all_events"]["responses"][200]["content"]["application/json"]
-        >().toEqualTypeOf<components["schemas"]["EventPayload"][]>();
+        >().toEqualTypeOf<components["schemas"]["PaginatedResponse_EventPayload"]>();
         expectTypeOf<
             operations["create_event"]["requestBody"]["content"]["application/json"]
         >().toEqualTypeOf<components["schemas"]["EventPostPayload"]>();

@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
+import { getLabel } from "@/lib/utils";
 import {
     Sidebar,
     SidebarContent,
@@ -40,6 +41,7 @@ interface FacetFiltersProps {
 
 function FacetFilters({ facets, activeFacets, onToggle, onClear }: FacetFiltersProps) {
     const t = useTranslations("Cms.Sidebar");
+    const locale = useLocale();
     const hasActiveFilters = Object.values(activeFacets).some((s) => s.size > 0);
 
     return (
@@ -53,7 +55,7 @@ function FacetFilters({ facets, activeFacets, onToggle, onClear }: FacetFiltersP
             {facets.map((facet) => (
                 <div key={facet.slug} className="mb-3">
                     <p className="text-muted-foreground px-2 pb-1 text-xs font-medium">
-                        {facet.label}
+                        {getLabel(facet.translations, locale)}
                     </p>
                     <ul className="space-y-1">
                         {facet.tags.map((tag) => (
@@ -67,7 +69,7 @@ function FacetFilters({ facets, activeFacets, onToggle, onClear }: FacetFiltersP
                                     htmlFor={`tag-${tag.slug}`}
                                     className="cursor-pointer text-sm font-normal"
                                 >
-                                    {tag.label}
+                                    {getLabel(tag.translations, locale)}
                                 </Label>
                             </li>
                         ))}

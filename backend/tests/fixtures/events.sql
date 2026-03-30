@@ -2,8 +2,6 @@ INSERT INTO productions (
     id,
     source_id,
     slug,
-    title_nl,
-    title_en,
     starts_at,
     ends_at,
     attendance_mode
@@ -12,8 +10,6 @@ INSERT INTO productions (
     '11111111-1111-1111-1111-111111111111',
     1001,
     'heavy-metal-knitting-2026',
-    'Heavy Metal Breien',
-    'Heavy Metal Knitting',
     '2026-05-01 19:00:00+02',
     '2026-05-01 22:00:00+02',
     'live'
@@ -22,12 +18,16 @@ INSERT INTO productions (
     '22222222-2222-2222-2222-222222222222',
     1002,
     'digital-dystopia-talk',
-    'Digitale Dystopie',
-    'Digital Dystopia',
     '2026-06-01 20:00:00+02',
     '2026-06-01 23:00:00+02',
     'mixed'
 );
+
+INSERT INTO production_translations (production_id, language_code, title) VALUES
+('11111111-1111-1111-1111-111111111111', 'nl', 'Heavy Metal Breien'),
+('11111111-1111-1111-1111-111111111111', 'en', 'Heavy Metal Knitting'),
+('22222222-2222-2222-2222-222222222222', 'nl', 'Digitale Dystopie'),
+('22222222-2222-2222-2222-222222222222', 'en', 'Digital Dystopia');
 
 INSERT INTO events (
     id,

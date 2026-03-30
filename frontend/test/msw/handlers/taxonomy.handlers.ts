@@ -5,18 +5,52 @@ import { apiUrl } from "../../utils/env";
 const facets = [
     {
         slug: "discipline",
-        label: "Discipline",
+        translations: [
+            { language_code: "nl", label: "Discipline" },
+            { language_code: "en", label: "Discipline" },
+        ],
         tags: [
-            { slug: "theater", label: "Theater", sort_order: 1 },
-            { slug: "music", label: "Music", sort_order: 2 },
+            {
+                slug: "theatre",
+                sort_order: 1,
+                translations: [
+                    { language_code: "nl", label: "Theater", description: null },
+                    { language_code: "en", label: "Theatre", description: null },
+                ],
+            },
+            {
+                slug: "music",
+                sort_order: 2,
+                translations: [
+                    { language_code: "nl", label: "Muziek", description: null },
+                    { language_code: "en", label: "Music", description: null },
+                ],
+            },
         ],
     },
     {
         slug: "format",
-        label: "Format",
+        translations: [
+            { language_code: "nl", label: "Formaat" },
+            { language_code: "en", label: "Format" },
+        ],
         tags: [
-            { slug: "concert", label: "Concert", sort_order: 1 },
-            { slug: "exhibition", label: "Exhibition", sort_order: 2 },
+            {
+                slug: "world-premiere",
+                sort_order: 1,
+                translations: [
+                    { language_code: "nl", label: "Wereldpremière", description: null },
+                    { language_code: "en", label: "World premiere", description: null },
+                ],
+            },
+            {
+                slug: "festival",
+                sort_order: 2,
+                translations: [
+                    { language_code: "nl", label: "Festival", description: null },
+                    { language_code: "en", label: "Festival", description: null },
+                ],
+            },
         ],
     },
 ];
