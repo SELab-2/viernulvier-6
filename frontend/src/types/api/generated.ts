@@ -479,6 +479,103 @@ export interface components {
             email: string;
             password: string;
         };
+        PaginatedResponse_EventPayload: {
+            data: {
+                box_office_id?: string | null;
+                /** Format: date-time */
+                created_at: string;
+                /** Format: date-time */
+                doors_at?: string | null;
+                /** Format: date-time */
+                ends_at?: string | null;
+                /** Format: uuid */
+                hall_id?: string | null;
+                /** Format: uuid */
+                id: string;
+                /** Format: date-time */
+                intermission_at?: string | null;
+                /** Format: int32 */
+                max_tickets_per_order?: number | null;
+                /** Format: uuid */
+                production_id: string;
+                /** Format: int32 */
+                source_id?: number | null;
+                /** Format: date-time */
+                starts_at: string;
+                status: string;
+                uitdatabank_id?: string | null;
+                /** Format: date-time */
+                updated_at: string;
+                vendor_id?: string | null;
+            }[];
+            next_cursor?: string | null;
+        };
+        PaginatedResponse_HallPayload: {
+            data: {
+                box_office_id?: string | null;
+                /** Format: uuid */
+                id: string;
+                name: string;
+                open_seating?: boolean | null;
+                remark?: string | null;
+                seat_selection?: boolean | null;
+                slug: string;
+                /** Format: int32 */
+                source_id?: number | null;
+                /** Format: uuid */
+                space_id?: string | null;
+                vendor_id?: string | null;
+            }[];
+            next_cursor?: string | null;
+        };
+        PaginatedResponse_LocationPayload: {
+            data: {
+                city?: string | null;
+                code?: string | null;
+                country?: string | null;
+                /** Format: uuid */
+                id: string;
+                is_owned_by_viernulvier?: boolean | null;
+                name?: string | null;
+                number?: string | null;
+                phone_1?: string | null;
+                phone_2?: string | null;
+                postal_code?: string | null;
+                /** Format: int32 */
+                source_id?: number | null;
+                street?: string | null;
+                uitdatabank_id?: string | null;
+            }[];
+            next_cursor?: string | null;
+        };
+        PaginatedResponse_ProductionPayload: {
+            data: {
+                eticket_info?: string | null;
+                /** Format: uuid */
+                id: string;
+                slug: string;
+                /** Format: int32 */
+                source_id?: number | null;
+                translations: components["schemas"]["ProductionTranslationPayload"][];
+                uitdatabank_theme?: string | null;
+                uitdatabank_type?: string | null;
+                video_1?: string | null;
+                video_2?: string | null;
+            }[];
+            next_cursor?: string | null;
+        };
+        PaginatedResponse_SpacePayload: {
+            data: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                location_id: string;
+                name_nl: string;
+                /** Format: int32 */
+                source_id?: number | null;
+            }[];
+            next_cursor?: string | null;
+        };
         ProductionPayload: {
             eticket_info?: string | null;
             /** Format: uuid */
@@ -724,7 +821,10 @@ export interface operations {
     };
     get_all_events: {
         parameters: {
-            query?: never;
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -737,7 +837,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["EventPayload"][];
+                    "application/json": components["schemas"]["PaginatedResponse_EventPayload"];
                 };
             };
         };
@@ -857,7 +957,10 @@ export interface operations {
     };
     get_all_halls: {
         parameters: {
-            query?: never;
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -870,7 +973,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HallPayload"][];
+                    "application/json": components["schemas"]["PaginatedResponse_HallPayload"];
                 };
             };
         };
@@ -1017,7 +1120,10 @@ export interface operations {
     };
     get_all_locations: {
         parameters: {
-            query?: never;
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1030,7 +1136,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LocationPayload"][];
+                    "application/json": components["schemas"]["PaginatedResponse_LocationPayload"];
                 };
             };
         };
@@ -1177,7 +1283,10 @@ export interface operations {
     };
     get_all_productions: {
         parameters: {
-            query?: never;
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1190,7 +1299,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProductionPayload"][];
+                    "application/json": components["schemas"]["PaginatedResponse_ProductionPayload"];
                 };
             };
         };
@@ -1367,7 +1476,10 @@ export interface operations {
     };
     get_all_spaces: {
         parameters: {
-            query?: never;
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1380,7 +1492,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SpacePayload"][];
+                    "application/json": components["schemas"]["PaginatedResponse_SpacePayload"];
                 };
             };
         };
