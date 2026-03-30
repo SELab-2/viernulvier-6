@@ -1,4 +1,4 @@
-import { components, operations } from "@/types/api/generated";
+import { components } from "@/types/api/generated";
 import { SuccessResponse } from "./api.types";
 
 // Response types from specific operations

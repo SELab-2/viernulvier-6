@@ -42,7 +42,6 @@ export const eventHandlers = [
     http.get(apiUrl("/events"), ({ request }) => {
         const url = new URL(request.url);
         const cursor = url.searchParams.get("cursor");
-        const limit = url.searchParams.get("limit");
 
         // Simulate pagination: if cursor is provided, return second page
         if (cursor === "page2") {

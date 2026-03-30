@@ -47,7 +47,7 @@ export default function HomePage() {
     const { data: productionsResult } = useGetProductions();
     const { data: eventsResult } = useGetEvents();
     const productions = productionsResult?.data ?? [];
-    const events = eventsResult?.data ?? [];
+    const events = useMemo(() => eventsResult?.data ?? [], [eventsResult?.data]);
     const latestProductions = productions.slice(0, 4);
 
     const eventsByProduction = useMemo(() => {

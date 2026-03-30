@@ -1,4 +1,4 @@
-import { renderHook, waitFor, act } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { queryKeys } from "@/hooks/api/query-keys";
@@ -115,7 +115,7 @@ describe("useGetEvents", () => {
         });
 
         it("caches paginated queries separately based on pagination params", async () => {
-            const { wrapper, queryClient } = createQueryClientWrapper();
+            const { wrapper } = createQueryClientWrapper();
 
             // First page
             const firstPage = renderHook(() => useGetEvents(), { wrapper });

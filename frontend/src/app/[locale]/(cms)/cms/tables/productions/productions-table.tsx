@@ -20,8 +20,8 @@ export function ProductionsTable() {
     const t = useTranslations("Cms.Productions");
     const { data: productionsResult, isLoading: productionsLoading } = useGetProductions();
     const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
-    const productions = productionsResult?.data ?? [];
-    const allEvents = eventsResult?.data ?? [];
+    const productions = useMemo(() => productionsResult?.data ?? [], [productionsResult?.data]);
+    const allEvents = useMemo(() => eventsResult?.data ?? [], [eventsResult?.data]);
     const updateProduction = useUpdateProduction();
     const updateEvent = useUpdateEvent();
 

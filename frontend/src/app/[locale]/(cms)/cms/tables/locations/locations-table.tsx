@@ -19,8 +19,8 @@ export function LocationsTable() {
     const t = useTranslations("Cms.Locations");
     const { data: locationsResult, isLoading: locationsLoading } = useGetLocations();
     const { data: hallsResult, isLoading: hallsLoading } = useGetHalls();
-    const locations = locationsResult?.data ?? [];
-    const allHalls = hallsResult?.data ?? [];
+    const locations = useMemo(() => locationsResult?.data ?? [], [locationsResult?.data]);
+    const allHalls = useMemo(() => hallsResult?.data ?? [], [hallsResult?.data]);
     const updateLocation = useUpdateLocation();
     const updateHall = useUpdateHall();
 
