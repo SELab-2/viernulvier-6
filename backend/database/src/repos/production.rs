@@ -37,38 +37,45 @@ impl<'a> ProductionRepo<'a> {
         })
     }
 
-    pub async fn all(&self, limit: usize) -> Result<Vec<ProductionWithTranslations>, DatabaseError> {
-        let productions = Production::select().limit(limit).fetch_all(self.db).await?;
-
-        if productions.is_empty() {
-            return Ok(vec![]);
-        }
-
-        let ids: Vec<Uuid> = productions.iter().map(|p| p.id).collect();
-
-        let all_translations = sqlx::query_as::<_, ProductionTranslation>(
-            "SELECT * FROM production_translations WHERE production_id = ANY($1)",
-        )
-        .bind(&ids[..])
-        .fetch_all(self.db)
-        .await?;
-
-        let mut translation_map: HashMap<Uuid, Vec<ProductionTranslation>> = HashMap::new();
-        for t in all_translations {
-            translation_map.entry(t.production_id).or_default().push(t);
-        }
-
-        Ok(productions
-            .into_iter()
-            .map(|p| {
-                let translations = translation_map.remove(&p.id).unwrap_or_default();
-                ProductionWithTranslations {
-                    production: p,
-                    translations,
-                }
-            })
-            .collect())
+pub async fn all(
+    &self,
+    limit: usize,
+    id_cursor: Option<Uuid>,
+) -> Result<Vec<ProductionWithTranslations>, DatabaseError> {
+    let mut select = Production::select().limit(limit).order_desc("id");
+    if let Some(id_cursor) = id_cursor {
+        select = select.where_("id < $1").bind(id_cursor);
     }
+    let productions = select.fetch_all(self.db).await?;
+
+    if productions.is_empty() {
+        return Ok(vec![]);
+    }
+
+    let ids: Vec<Uuid> = productions.iter().map(|p| p.id).collect();
+    let all_translations = sqlx::query_as::<_, ProductionTranslation>(
+        "SELECT * FROM production_translations WHERE production_id = ANY($1)",
+    )
+    .bind(&ids[..])
+    .fetch_all(self.db)
+    .await?;
+
+    let mut translation_map: HashMap<Uuid, Vec<ProductionTranslation>> = HashMap::new();
+    for t in all_translations {
+        translation_map.entry(t.production_id).or_default().push(t);
+    }
+
+    Ok(productions
+        .into_iter()
+        .map(|p| {
+            let translations = translation_map.remove(&p.id).unwrap_or_default();
+            ProductionWithTranslations {
+                production: p,
+                translations,
+            }
+        })
+        .collect())
+}
 
     pub async fn insert(
         &self,

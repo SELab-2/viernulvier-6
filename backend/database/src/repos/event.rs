@@ -25,8 +25,20 @@ impl<'a> EventRepo<'a> {
             .ok_or(DatabaseError::NotFound)
     }
 
-    pub async fn all(&self, limit: usize) -> Result<Vec<Event>, DatabaseError> {
-        Ok(Event::select().limit(limit).fetch_all(self.db).await?)
+    pub async fn all(
+        &self,
+        limit: usize,
+        id_cursor: Option<Uuid>,
+    ) -> Result<Vec<Event>, DatabaseError> {
+        let mut select = Event::select().limit(limit).order_desc("id");
+
+        if let Some(id_cursor) = id_cursor {
+            select = select.where_("id < $1").bind(id_cursor);
+        }
+
+        let events = select.fetch_all(self.db).await?;
+
+        Ok(events)
     }
 
     pub async fn insert(&self, event: EventCreate) -> Result<Event, DatabaseError> {

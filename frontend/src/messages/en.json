@@ -2,8 +2,126 @@
     "General": {
         "projectName": "Viernulvier Archive"
     },
+    "Footer": {
+        "address": "Kunstencentrum VIERNULVIER vzw · Sint-Pietersnieuwstraat 23 · 9000 Ghent",
+        "contact": "T. 09 267 28 20 · info@viernulvier.gent · BTW BE 0423.063.619"
+    },
+    "Header": {
+        "logout": "Logout",
+        "loggingOut": "..."
+    },
     "LocaleSwitcher": {
         "label": "Select language"
+    },
+    "ThemeSwitcher": {
+        "dark": "Dark",
+        "light": "Light"
+    },
+    "Masthead": {
+        "address": "Sint-Pietersnieuwstraat 23, Ghent",
+        "subtitle": "De Vooruit — Founded 1883",
+        "genres": "Theatre · Dance · Music · Performance · Nightlife"
+    },
+    "Search": {
+        "placeholder": "Search the archive...",
+        "hint": "↵ search",
+        "heroEyebrow": "Archive — {count} productions",
+        "heroTitle": "Search the archive",
+        "heroTitleItalic": "of De Vooruit",
+        "heroPlaceholder": "Artist, production, year\u2026",
+        "quickSearch": "Quick search:",
+        "enter": "enter",
+        "noResultsTitle": "Nothing here but cobwebs",
+        "noResultsText": "No productions found for \"{query}\". Try a different search.",
+        "articleImageCaption": "The forgotten Vooruit building...",
+        "tags": {
+            "dance": "Dance",
+            "theater": "Theatre",
+            "concert": "Concert",
+            "nightlife": "Nightlife",
+            "performance": "Performance"
+        }
+    },
+    "ResultsBar": {
+        "sortBy": "Sort by:",
+        "recent": "Most recent",
+        "oldest": "Oldest first",
+        "az": "A–Z"
+    },
+    "Featured": {
+        "label": "Featured from the archive"
+    },
+    "Sidebar": {
+        "title": "Filters",
+        "categories": {
+            "label": "Category",
+            "artists": "Artists",
+            "productions": "Productions",
+            "articles": "Articles",
+            "posters": "Posters"
+        },
+        "tags": {
+            "label": "Tags",
+            "theater": "Theatre",
+            "dance": "Dance",
+            "concert": "Concert",
+            "nightlife": "Nightlife",
+            "performance": "Performance",
+            "comedy": "Comedy",
+            "circus": "Circus",
+            "music": "Music",
+            "spokenWord": "Spoken Word",
+            "talks": "Talks",
+            "monument": "Monument"
+        },
+        "locations": {
+            "label": "Location",
+            "deVooruit": "De Vooruit",
+            "domzaal": "Domzaal",
+            "balzaal": "Balzaal",
+            "plantentuin": "Botanical Garden"
+        },
+        "year": {
+            "label": "Year"
+        },
+        "clearAll": "Clear all"
+    },
+    "Home": {
+        "loading": "Loading archive...",
+        "hero": {
+            "title": "The story of De Vooruit",
+            "subtitle": "Over a century of theatre, dance, music and nightlife in the heart of Ghent.",
+            "searchPlaceholder": "Search the archive\u2026"
+        },
+        "tags": {
+            "theater": "Theatre",
+            "dance": "Dance",
+            "concert": "Concert",
+            "nightlife": "Nightlife"
+        },
+        "about": {
+            "title": "Arts Centre VIERNULVIER",
+            "text": "Since 1883, De Vooruit has been a breeding ground for art, culture and society. From revolutionary parties to contemporary performance \u2014 the archive preserves it all.",
+            "address": "Sint-Pietersnieuwstraat 23 \u00b7 9000 Ghent"
+        },
+        "latest": {
+            "label": "Latest productions",
+            "viewAll": "View all"
+        }
+    },
+    "Productions": {
+        "title": "Productions",
+        "showing": "Showing {shown} of {total} results",
+        "seeEvents": "see events",
+        "eventsAvailableSoon": "Events available soon"
+    },
+    "Events": {
+        "title": "Events",
+        "upcoming": "Upcoming",
+        "past": "Past",
+        "date": "Date",
+        "status": "Status",
+        "noEvents": "No events available"
     },
     "Login": {
         "title": "Welcome back",
@@ -35,6 +153,14 @@
         },
         "DataTable": {
             "noResults": "No results."
+        },
+        "SelectionToolbar": {
+            "clearSelection": "Clear selection",
+            "productionsSelected": "{count, plural, one {# production} other {# productions}}",
+            "eventsSelected": "{count, plural, one {# event} other {# events}}",
+            "locationsSelected": "{count, plural, one {# location} other {# locations}}",
+            "hallsSelected": "{count, plural, one {# hall} other {# halls}}",
+            "moreActions": "More actions"
         },
         "ActionsColumn": {
             "openMenu": "Open menu",
@@ -87,5 +213,17 @@
             "error": "Action failed.",
             "errorMessage": "Something went wrong while creating the editor."
         }
+    },
+    "PageNotFound": {
+        "title": "404 - Page Not Found",
+        "description": "The page you are looking for no longer exists in our archive or has been moved.",
+        "backToHome": "Back to the archive",
+        "articleImageCaption": "The forgotten Vooruit building..."
+    },
+    "NewsArticleComponent": {
+        "subTitle": "Vooruit Archive",
+        "edition": "Edition 404",
+        "articleBrand": "Archives Department",
+        "price": "Price: Priceless"
     }
 }

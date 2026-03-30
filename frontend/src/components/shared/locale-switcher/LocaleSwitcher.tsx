@@ -1,6 +1,6 @@
 "use client";
 
-import { useLocale, useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/routing";
 import {
     Select,
@@ -9,9 +9,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { useParams } from "next/navigation";
+import { useCallback } from "react";
 
-export const LocaleSwitcher = () => {
-    const localeSwitcherTranslations = useTranslations("LocaleSwitcher");
+export function LocaleSwitcher() {
     const locale = useLocale();
     const router = useRouter();
     const pathname = usePathname();
@@ -21,14 +22,11 @@ export const LocaleSwitcher = () => {
     }
 
     return (
-        <Select defaultValue={locale} onValueChange={onSelectChange}>
-            <SelectTrigger className="w-30">
-                <SelectValue placeholder={localeSwitcherTranslations("label")} />
-            </SelectTrigger>
-            <SelectContent>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="nl">Nederlands</SelectItem>
-            </SelectContent>
-        </Select>
+        <button
+            onClick={switchLocale}
+            className="text-muted-foreground hover:text-foreground cursor-pointer font-mono text-[10px] tracking-[1.4px] uppercase transition-colors"
+        >
+            {locale === "nl" ? "EN" : "NL"}
+        </button>
     );
-};
+}

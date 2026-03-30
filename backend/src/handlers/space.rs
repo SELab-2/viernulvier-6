@@ -1,11 +1,20 @@
-use axum::{Json, extract::Path, http::StatusCode};
+use axum::{
+    Json,
+    extract::{Path, Query},
+    http::StatusCode,
+};
 use database::Database;
 use uuid::Uuid;
 
 use crate::{
-    dto::space::{SpacePayload, SpacePostPayload},
+    dto::{
+        paginated::PaginatedResponse,
+        space::{SpacePayload, SpacePostPayload},
+    },
     error::ErrorResponse,
-    handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
+    handlers::{
+        IntoApiResponse, JsonResponse, JsonStatusResponse, PaginationQuery, StatusResponse,
+    },
 };
 
 #[utoipa::path(
@@ -14,12 +23,20 @@ use crate::{
     tag = "Spaces",
     operation_id = "get_all_spaces",
     description = "Get all spaces",
+    params(
+        PaginationQuery
+    ),
     responses(
-        (status = 200, description = "Success", body = [SpacePayload])
+        (status = 200, description = "Success", body = PaginatedResponse<SpacePayload>)
     )
 )]
-pub async fn get_all(db: Database) -> JsonResponse<Vec<SpacePayload>> {
-    SpacePayload::all(&db, 10).await?.json()
+pub async fn get_all(
+    db: Database,
+    Query(pagination): Query<PaginationQuery>,
+) -> JsonResponse<PaginatedResponse<SpacePayload>> {
+    SpacePayload::all(&db, pagination.cursor, pagination.limit)
+        .await?
+        .json()
 }
 
 #[utoipa::path(
