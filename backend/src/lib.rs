@@ -16,11 +16,11 @@ use utoipa::{
 };
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
-use utoipa_swagger_ui::SwaggerUi;
+use utoipa_swagger_ui::{Config, SwaggerUi};
 
 use crate::config::AppConfig;
 use crate::error::AppError;
-use crate::handlers::{admin, auth, event, hall, location, production, space, taxonomy, version};
+use crate::handlers::{admin, auth, collection, event, hall, location, production, space, taxonomy, version};
 
 pub mod config;
 pub mod dto;
@@ -39,7 +39,8 @@ pub struct AppState {
     modifiers(&SecurityAddon),
     components(schemas(EntityType, Facet)),
     tags(
-        (name = "viernulvier_api", description = "API Endpoints")
+        (name = "viernulvier_api", description = "API Endpoints"),
+        (name = "Collections", description = "A saved, titled selection of archive items with a shareable URL. No login required to view.")
     )
 )]
 pub struct ApiDoc;
@@ -155,7 +156,9 @@ pub fn router(state: &AppState) -> Router<AppState> {
     let docs_path = format!("{base_path}/docs");
     let openapi_json_path = format!("{base_path}/openapi.json");
 
-    let swagger_ui = SwaggerUi::new(docs_path).url(openapi_json_path, api_spec);
+    let swagger_ui = SwaggerUi::new(docs_path)
+        .url(openapi_json_path, api_spec)
+        .config(Config::default().doc_expansion("none").filter(true));
 
     Router::new()
         .nest(&base_path, api_router)
@@ -190,6 +193,9 @@ fn public_routes() -> OpenApiRouter<AppState> {
         .routes(routes!(event::get_one))
         // taxonomies
         .routes(routes!(taxonomy::get_facets))
+        // collections
+        .routes(routes!(collection::get_all))
+        .routes(routes!(collection::get_one))
 }
 
 // Only editors can edit data
@@ -217,6 +223,12 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(event::post))
         .routes(routes!(event::delete))
         .routes(routes!(event::put))
+        // Collection
+        .routes(routes!(collection::post))
+        .routes(routes!(collection::put))
+        .routes(routes!(collection::delete))
+        .routes(routes!(collection::post_item))
+        .routes(routes!(collection::delete_item))
         .layer(from_extractor_with_state::<EditorUser, AppState>(state))
 }
 
