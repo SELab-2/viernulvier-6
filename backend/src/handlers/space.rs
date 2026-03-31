@@ -13,7 +13,8 @@ use crate::{
     },
     error::ErrorResponse,
     handlers::{
-        IntoApiResponse, JsonResponse, JsonStatusResponse, PaginationQuery, StatusResponse,
+        IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse,
+        helpers::pagination_query::PaginationQuery,
     },
 };
 
