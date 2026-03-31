@@ -833,7 +833,7 @@ export interface components {
             role: components["schemas"]["UserRole"];
         };
         /** @enum {string} */
-        EntityType: "production" | "artist" | "article" | "media" | "event";
+        EntityType: "production" | "artist" | "article" | "media" | "location" | "event";
         ErrorResponse: {
             /** @example An error occurred during processing */
             message: string;
@@ -1242,7 +1242,7 @@ export interface operations {
                 subject_end?: string | null;
                 tag_slug?: string | null;
                 related_entity_id?: string | null;
-                related_entity_type?: string | null;
+                related_entity_type?: null | components["schemas"]["EntityType"];
             };
             header?: never;
             path?: never;
