@@ -27,11 +27,10 @@ impl<'a> CollectionRepo<'a> {
     }
 
     pub async fn all(&self) -> Result<Vec<CollectionWithTranslations>, DatabaseError> {
-        let collections = sqlx::query_as::<_, Collection>(
-            "SELECT * FROM collections ORDER BY created_at DESC",
-        )
-        .fetch_all(self.db)
-        .await?;
+        let collections =
+            sqlx::query_as::<_, Collection>("SELECT * FROM collections ORDER BY created_at DESC")
+                .fetch_all(self.db)
+                .await?;
 
         if collections.is_empty() {
             return Ok(vec![]);
@@ -62,13 +61,15 @@ impl<'a> CollectionRepo<'a> {
             .collect())
     }
 
-    pub async fn by_id(&self, id: Uuid) -> Result<Option<CollectionWithTranslations>, DatabaseError> {
-        let Some(collection) = sqlx::query_as::<_, Collection>(
-            "SELECT * FROM collections WHERE id = $1",
-        )
-        .bind(id)
-        .fetch_optional(self.db)
-        .await?
+    pub async fn by_id(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<CollectionWithTranslations>, DatabaseError> {
+        let Some(collection) =
+            sqlx::query_as::<_, Collection>("SELECT * FROM collections WHERE id = $1")
+                .bind(id)
+                .fetch_optional(self.db)
+                .await?
         else {
             return Ok(None);
         };
@@ -93,7 +94,8 @@ impl<'a> CollectionRepo<'a> {
         .fetch_one(self.db)
         .await?;
 
-        self.upsert_translations(collection.id, &translations).await?;
+        self.upsert_translations(collection.id, &translations)
+            .await?;
         let translations = self.fetch_translations_for(collection.id).await?;
 
         Ok(CollectionWithTranslations {
@@ -119,7 +121,8 @@ impl<'a> CollectionRepo<'a> {
             return Ok(None);
         };
 
-        self.upsert_translations(collection.id, &translations).await?;
+        self.upsert_translations(collection.id, &translations)
+            .await?;
         let translations = self.fetch_translations_for(collection.id).await?;
 
         Ok(Some(CollectionWithTranslations {
@@ -141,7 +144,10 @@ impl<'a> CollectionRepo<'a> {
         Ok(Some(()))
     }
 
-    pub async fn items_for(&self, collection_id: Uuid) -> Result<Vec<CollectionItemWithTranslations>, DatabaseError> {
+    pub async fn items_for(
+        &self,
+        collection_id: Uuid,
+    ) -> Result<Vec<CollectionItemWithTranslations>, DatabaseError> {
         let items = sqlx::query_as::<_, CollectionItem>(
             "SELECT * FROM collection_items WHERE collection_id = $1 ORDER BY position ASC",
         )
@@ -152,7 +158,10 @@ impl<'a> CollectionRepo<'a> {
         self.attach_item_translations(items).await
     }
 
-    pub async fn items_for_collections(&self, collection_ids: &[Uuid]) -> Result<Vec<CollectionItemWithTranslations>, DatabaseError> {
+    pub async fn items_for_collections(
+        &self,
+        collection_ids: &[Uuid],
+    ) -> Result<Vec<CollectionItemWithTranslations>, DatabaseError> {
         let items = sqlx::query_as::<_, CollectionItem>(
             "SELECT * FROM collection_items WHERE collection_id = ANY($1) ORDER BY position ASC",
         )
@@ -163,7 +172,10 @@ impl<'a> CollectionRepo<'a> {
         self.attach_item_translations(items).await
     }
 
-    pub async fn add_item(&self, item: CollectionItemCreate) -> Result<CollectionItemWithTranslations, DatabaseError> {
+    pub async fn add_item(
+        &self,
+        item: CollectionItemCreate,
+    ) -> Result<CollectionItemWithTranslations, DatabaseError> {
         let new_item = sqlx::query_as::<_, CollectionItem>(
             "INSERT INTO collection_items (collection_id, content_id, content_type, position) VALUES ($1, $2, $3, $4) RETURNING *",
         )
@@ -174,7 +186,8 @@ impl<'a> CollectionRepo<'a> {
         .fetch_one(self.db)
         .await?;
 
-        self.upsert_item_translations(new_item.id, &item.translations).await?;
+        self.upsert_item_translations(new_item.id, &item.translations)
+            .await?;
         let translations = self.fetch_item_translations_for(new_item.id).await?;
 
         Ok(CollectionItemWithTranslations {
@@ -188,12 +201,11 @@ impl<'a> CollectionRepo<'a> {
         collection_id: Uuid,
         item_id: Uuid,
     ) -> Result<Option<()>, DatabaseError> {
-        let res =
-            sqlx::query("DELETE FROM collection_items WHERE id = $1 AND collection_id = $2")
-                .bind(item_id)
-                .bind(collection_id)
-                .execute(self.db)
-                .await?;
+        let res = sqlx::query("DELETE FROM collection_items WHERE id = $1 AND collection_id = $2")
+            .bind(item_id)
+            .bind(collection_id)
+            .execute(self.db)
+            .await?;
 
         if res.rows_affected() == 0 {
             return Ok(None);
@@ -202,7 +214,10 @@ impl<'a> CollectionRepo<'a> {
         Ok(Some(()))
     }
 
-    async fn fetch_translations_for(&self, collection_id: Uuid) -> Result<Vec<CollectionTranslation>, DatabaseError> {
+    async fn fetch_translations_for(
+        &self,
+        collection_id: Uuid,
+    ) -> Result<Vec<CollectionTranslation>, DatabaseError> {
         Ok(sqlx::query_as::<_, CollectionTranslation>(
             "SELECT * FROM collection_translations WHERE collection_id = $1",
         )
@@ -220,9 +235,15 @@ impl<'a> CollectionRepo<'a> {
             return Ok(());
         }
 
-        let language_codes: Vec<&str> = translations.iter().map(|t| t.language_code.as_str()).collect();
+        let language_codes: Vec<&str> = translations
+            .iter()
+            .map(|t| t.language_code.as_str())
+            .collect();
         let titles: Vec<&str> = translations.iter().map(|t| t.title.as_str()).collect();
-        let descriptions: Vec<&str> = translations.iter().map(|t| t.description.as_str()).collect();
+        let descriptions: Vec<&str> = translations
+            .iter()
+            .map(|t| t.description.as_str())
+            .collect();
 
         sqlx::query(
             "INSERT INTO collection_translations (collection_id, language_code, title, description)
@@ -259,7 +280,10 @@ impl<'a> CollectionRepo<'a> {
 
         let mut translation_map: HashMap<Uuid, Vec<CollectionItemTranslation>> = HashMap::new();
         for t in all_translations {
-            translation_map.entry(t.collection_item_id).or_default().push(t);
+            translation_map
+                .entry(t.collection_item_id)
+                .or_default()
+                .push(t);
         }
 
         Ok(items
@@ -274,7 +298,10 @@ impl<'a> CollectionRepo<'a> {
             .collect())
     }
 
-    async fn fetch_item_translations_for(&self, item_id: Uuid) -> Result<Vec<CollectionItemTranslation>, DatabaseError> {
+    async fn fetch_item_translations_for(
+        &self,
+        item_id: Uuid,
+    ) -> Result<Vec<CollectionItemTranslation>, DatabaseError> {
         Ok(sqlx::query_as::<_, CollectionItemTranslation>(
             "SELECT * FROM collection_item_translations WHERE collection_item_id = $1",
         )
@@ -292,8 +319,12 @@ impl<'a> CollectionRepo<'a> {
             return Ok(());
         }
 
-        let language_codes: Vec<&str> = translations.iter().map(|t| t.language_code.as_str()).collect();
-        let comments: Vec<Option<&str>> = translations.iter().map(|t| t.comment.as_deref()).collect();
+        let language_codes: Vec<&str> = translations
+            .iter()
+            .map(|t| t.language_code.as_str())
+            .collect();
+        let comments: Vec<Option<&str>> =
+            translations.iter().map(|t| t.comment.as_deref()).collect();
 
         sqlx::query(
             "INSERT INTO collection_item_translations (collection_item_id, language_code, comment)
