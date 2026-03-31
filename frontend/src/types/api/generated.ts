@@ -66,7 +66,7 @@ export interface paths {
         get: operations["get_all_collections"];
         /** @description Update the metadata (slug, titles, descriptions) of an existing collection. Requires editor authentication. Does not affect items — use the items sub-resource for that. */
         put: operations["update_collection"];
-        /** @description Create a new collection. Requires editor authentication. Supply a human-readable slug that will appear in the shareable URL (e.g. `videodroom-candidates-2026`), bilingual titles, and optional bilingual descriptions. Items are added separately via POST /collections/{id}/items. */
+        /** @description Create a new collection. Requires editor authentication. Supply a human-readable slug that will appear in the shareable URL (e.g. `videodroom-candidates-2026`) and per-language translations (title required, description required but may be empty). Items are added separately via POST /collections/{id}/items. */
         post: operations["create_collection"];
         delete?: never;
         options?: never;
@@ -426,7 +426,7 @@ export interface components {
             id: string;
             /**
              * Format: int32
-             * @description Zero-based display order within the collection.
+             * @description Display order within the collection (1-based).
              */
             position: number;
             /** @description Per-language curator annotation for this item. */
@@ -442,11 +442,11 @@ export interface components {
             content_type: components["schemas"]["CollectionContentType"];
             /**
              * Format: int32
-             * @description Zero-based display order within the collection.
+             * @description Display order within the collection (1-based).
              */
             position: number;
             /** @description Per-language curator annotation for this item. */
-            translations: components["schemas"]["CollectionItemTranslationPayload"][];
+            translations?: components["schemas"]["CollectionItemTranslationPayload"][];
         };
         CollectionItemTranslationPayload: {
             comment?: string | null;
