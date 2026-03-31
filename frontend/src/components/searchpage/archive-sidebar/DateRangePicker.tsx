@@ -188,7 +188,7 @@ export function DateRangePicker({
             <div className="flex items-center gap-1.5">
                 <button
                     onClick={() => openPicker("start")}
-                    className={`flex-1 cursor-pointer border px-1.5 py-1 text-center font-mono text-[10px] tracking-wide transition-colors ${
+                    className={`flex-1 cursor-pointer border px-2 py-1.5 text-center font-mono text-[11px] tracking-wide transition-colors ${
                         open && picking === "start"
                             ? "border-foreground bg-foreground text-background"
                             : "border-border text-foreground hover:border-foreground"
@@ -199,7 +199,7 @@ export function DateRangePicker({
                 <span className="text-muted-foreground shrink-0 text-[10px]">—</span>
                 <button
                     onClick={() => openPicker("end")}
-                    className={`flex-1 cursor-pointer border px-1.5 py-1 text-center font-mono text-[10px] tracking-wide transition-colors ${
+                    className={`flex-1 cursor-pointer border px-2 py-1.5 text-center font-mono text-[11px] tracking-wide transition-colors ${
                         open && picking === "end"
                             ? "border-foreground bg-foreground text-background"
                             : "border-border text-foreground hover:border-foreground"

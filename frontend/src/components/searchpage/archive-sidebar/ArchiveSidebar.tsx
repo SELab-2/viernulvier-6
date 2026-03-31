@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { SlidersHorizontal, X } from "lucide-react";
 
@@ -50,7 +50,6 @@ export function ArchiveSidebar({
     const minDate = new Date(validatedMinYear, 0, 1);
     const maxDate = new Date(validatedMaxYear, 11, 31);
 
-    // ── Date filter state ─────────────────────────────────────────────
     const [dateMode, setDateMode] = useState<DateFilterMode>("year");
     const [yearRange, setYearRange] = useState<[number, number]>([
         validatedMinYear,
@@ -58,25 +57,24 @@ export function ArchiveSidebar({
     ]);
     const [dateRange, setDateRange] = useState<[Date, Date]>([minDate, maxDate]);
 
-    /** The effective date range used for filtering, derived from whichever mode is active. */
-    const effectiveDateRange: [Date, Date] =
-        dateMode === "year"
-            ? [new Date(yearRange[0], 0, 1), new Date(yearRange[1], 11, 31)]
-            : dateRange;
+    const effectiveDateRange = useMemo<[Date, Date]>(
+        () =>
+            dateMode === "year"
+                ? [new Date(yearRange[0], 0, 1), new Date(yearRange[1], 11, 31)]
+                : dateRange,
+        [dateMode, yearRange, dateRange]
+    );
 
     const switchToExact = () => {
-        // Initialise the exact picker from the current year slider position
         setDateRange([new Date(yearRange[0], 0, 1), new Date(yearRange[1], 11, 31)]);
         setDateMode("exact");
     };
 
     const switchToYear = () => {
-        // Snap the year slider to the years from the exact picker
         setYearRange([dateRange[0].getFullYear(), dateRange[1].getFullYear()]);
         setDateMode("year");
     };
 
-    // ── Debounced filter emission ─────────────────────────────────────
     const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
@@ -224,43 +222,41 @@ export function ArchiveSidebar({
                 </div>
             </FilterGroup>
 
-            <FilterGroup label={t("year.label")}>
-                <div className="pb-3">
-                    {/* ── Mode tabs ──────────────────────────────────── */}
-                    <div className="mb-3.5 flex">
-                        <ModeTab
-                            label="Year range"
-                            active={dateMode === "year"}
-                            onClick={switchToYear}
-                        />
-                        <ModeTab
-                            label="Exact dates"
-                            active={dateMode === "exact"}
-                            onClick={switchToExact}
-                        />
-                    </div>
+            {/* Date filter — tabs replace the section title */}
+            <div className="border-border border-t pt-2.5 pr-5 pb-3 pl-4">
+                <div className="mb-3.5 flex gap-5">
+                    <ModeTab
+                        label="Year range"
+                        active={dateMode === "year"}
+                        onClick={switchToYear}
+                    />
+                    <ModeTab
+                        label="Exact dates"
+                        active={dateMode === "exact"}
+                        onClick={switchToExact}
+                    />
+                </div>
 
-                    {/* ── Year range mode ────────────────────────────── */}
-                    {dateMode === "year" && (
-                        <>
-                            <div className="text-foreground mb-3.5 flex justify-between font-mono text-[13px] select-text">
-                                <span>{yearRange[0]}</span>
-                                <span className="text-muted-foreground text-[11px]">—</span>
-                                <span>{yearRange[1]}</span>
-                            </div>
-                            <YearRangeSlider
-                                min={validatedMinYear}
-                                max={validatedMaxYear}
-                                value={yearRange}
-                                onChange={setYearRange}
-                                ariaLabelStart={t("year.rangeFrom")}
-                                ariaLabelEnd={t("year.rangeTo")}
-                            />
-                        </>
-                    )}
+                {dateMode === "year" && (
+                    <>
+                        <div className="text-foreground mb-3.5 flex justify-between font-mono text-[13px] select-text">
+                            <span>{yearRange[0]}</span>
+                            <span className="text-muted-foreground text-[11px]">—</span>
+                            <span>{yearRange[1]}</span>
+                        </div>
+                        <YearRangeSlider
+                            min={validatedMinYear}
+                            max={validatedMaxYear}
+                            value={yearRange}
+                            onChange={setYearRange}
+                            ariaLabelStart={t("year.rangeFrom")}
+                            ariaLabelEnd={t("year.rangeTo")}
+                        />
+                    </>
+                )}
 
-                    {/* ── Exact date mode ────────────────────────────── */}
-                    {dateMode === "exact" && (
+                {dateMode === "exact" && (
+                    <div className="mt-5">
                         <DateRangePicker
                             startDate={dateRange[0]}
                             endDate={dateRange[1]}
@@ -268,9 +264,9 @@ export function ArchiveSidebar({
                             maxDate={maxDate}
                             onChange={(start, end) => setDateRange([start, end])}
                         />
-                    )}
-                </div>
-            </FilterGroup>
+                    </div>
+                )}
+            </div>
 
             <button
                 onClick={clearAll}
@@ -283,7 +279,6 @@ export function ArchiveSidebar({
 
     return (
         <>
-            {/* Mobile filter toggle */}
             <button
                 onClick={() => setMobileOpen(true)}
                 className="border-border text-muted-foreground hover:text-foreground bg-background fixed bottom-4 left-4 z-40 flex cursor-pointer items-center gap-2 border px-4 py-2.5 font-mono text-[10px] tracking-[1.4px] uppercase shadow-lg transition-colors lg:hidden"
@@ -292,7 +287,6 @@ export function ArchiveSidebar({
                 {t("title")}
             </button>
 
-            {/* Mobile overlay */}
             {mobileOpen && (
                 <div
                     className="fixed inset-0 z-40 bg-black/30 lg:hidden"
@@ -300,7 +294,6 @@ export function ArchiveSidebar({
                 />
             )}
 
-            {/* Sidebar */}
             <aside
                 className={`border-border shrink-0 border-r py-5 pb-10 ${
                     mobileOpen
@@ -314,8 +307,6 @@ export function ArchiveSidebar({
     );
 }
 
-// ── Mode tab button ────────────────────────────────────────────────────
-
 function ModeTab({
     label,
     active,
@@ -328,10 +319,10 @@ function ModeTab({
     return (
         <button
             onClick={onClick}
-            className={`flex-1 cursor-pointer border py-1.5 font-mono text-[9px] font-medium tracking-[1.1px] uppercase transition-all ${
+            className={`cursor-pointer border-b-2 pb-1 font-mono text-[11px] font-medium tracking-[1.2px] uppercase transition-all ${
                 active
-                    ? "border-foreground bg-foreground text-background"
-                    : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                    ? "border-foreground text-foreground"
+                    : "text-muted-foreground hover:text-foreground border-transparent"
             }`}
         >
             {label}
@@ -339,11 +330,9 @@ function ModeTab({
     );
 }
 
-// ── Shared sub-components ──────────────────────────────────────────────
-
 function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
     return (
-        <div className="border-border border-t px-5 py-2.5 pl-4 first:border-t-0">
+        <div className="border-border border-t px-5 py-2.5 pl-4">
             <span className="text-foreground mb-2.5 block font-mono text-[11px] font-medium tracking-[1.2px] uppercase">
                 {label}
             </span>
