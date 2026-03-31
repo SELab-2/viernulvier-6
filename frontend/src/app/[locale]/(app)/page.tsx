@@ -69,7 +69,7 @@ export default function HomePage() {
             />
 
             {/* Hero */}
-            <section className="border-muted/30 flex flex-col items-center gap-6 border-b px-4 py-16 text-center sm:px-10 sm:py-24">
+            <section className="flex flex-col items-center gap-6 px-4 py-16 text-center sm:px-10 sm:py-24">
                 <h1 className="font-display text-foreground text-[40px] leading-[1.05] font-bold tracking-[-0.03em] sm:text-[64px] md:text-[72px]">
                     {t("hero.title")}
                 </h1>
