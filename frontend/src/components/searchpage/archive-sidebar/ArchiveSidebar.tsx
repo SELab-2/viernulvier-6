@@ -38,7 +38,14 @@ export function ArchiveSidebar({
         new Set(["productions"])
     );
     const [checkedLocations, setCheckedLocations] = useState<Set<string>>(new Set());
-    const [yearRange, setYearRange] = useState<[number, number]>([minYear, maxYear]);
+
+    const validatedMinYear = Math.min(minYear, maxYear);
+    const validatedMaxYear = Math.max(minYear, maxYear);
+
+    const [yearRange, setYearRange] = useState<[number, number]>([
+        validatedMinYear,
+        validatedMaxYear,
+    ]);
 
     useEffect(() => {
         onFilterChange?.({
@@ -80,8 +87,8 @@ export function ArchiveSidebar({
         setActiveTags(new Set());
         setCheckedCategories(new Set());
         setCheckedLocations(new Set());
-        setYearRange([minYear, maxYear]);
-    }, [minYear, maxYear]);
+        setYearRange([validatedMinYear, validatedMaxYear]);
+    }, [validatedMinYear, validatedMaxYear]);
 
     const sidebarContent = (
         <>
@@ -185,8 +192,8 @@ export function ArchiveSidebar({
                         <span>{yearRange[1]}</span>
                     </div>
                     <YearRangeSlider
-                        min={minYear}
-                        max={maxYear}
+                        min={validatedMinYear}
+                        max={validatedMaxYear}
                         value={yearRange}
                         onChange={setYearRange}
                     />
