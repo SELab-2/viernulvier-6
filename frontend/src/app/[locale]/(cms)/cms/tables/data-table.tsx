@@ -302,7 +302,17 @@ export function DataTable<TData, TValue>({
                                     <TableRow
                                         data-state={row.getIsSelected() ? "selected" : undefined}
                                         className={onRowClick ? "cursor-pointer" : undefined}
-                                        onClick={() => onRowClick?.(row.original)}
+                                        onClick={(e) => {
+                                            if (!onRowClick) return;
+                                            const target = e.target as HTMLElement;
+                                            if (
+                                                target.closest(
+                                                    "button, a, input, select, textarea, [role='menuitem'], [role='checkbox']"
+                                                )
+                                            )
+                                                return;
+                                            onRowClick(row.original);
+                                        }}
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell

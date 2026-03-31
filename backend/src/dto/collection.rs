@@ -213,7 +213,7 @@ impl CollectionPostPayload {
 pub struct CollectionItemsBulkEntry {
     /// UUID of the collection item to update.
     pub id: Uuid,
-    /// New zero-based display order.
+    /// 1-based display order
     pub position: i32,
     /// Per-language curator annotation.
     pub translations: Vec<CollectionItemTranslationPayload>,
@@ -236,7 +236,10 @@ impl CollectionItemsBulkPayload {
                 translations: item_translations_to_data(&e.translations),
             })
             .collect();
-        Ok(db.collections().bulk_update_items(collection_id, &updates).await?)
+        Ok(db
+            .collections()
+            .bulk_update_items(collection_id, &updates)
+            .await?)
     }
 }
 

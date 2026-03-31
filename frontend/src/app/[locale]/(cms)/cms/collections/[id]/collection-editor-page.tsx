@@ -35,30 +35,30 @@ import type { Location } from "@/types/models/location.types";
 
 const LANGS = ["nl", "en"] as const;
 
+const TIME_FMT: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit" };
+const formatTime = (d: Date) => d.toLocaleTimeString([], TIME_FMT);
+
 type LocalCollectionItem = {
     id: string;
     contentId: string;
     contentType: CollectionItem["contentType"];
     position: number;
-    translations: {
-        languageCode: string;
-        comment: string | null;
-    }[];
+    translations: { languageCode: string; comment: string | null }[];
 };
 
 function withAllLanguages<T extends { languageCode: string }>(
     translations: T[],
     emptyFactory: (languageCode: string) => T
 ): T[] {
-    const map = new Map(translations.map((translation) => [translation.languageCode, translation]));
-    return LANGS.map((languageCode) => map.get(languageCode) ?? emptyFactory(languageCode));
+    const map = new Map(translations.map((t) => [t.languageCode, t]));
+    return LANGS.map((lc) => map.get(lc) ?? emptyFactory(lc));
 }
 
 function normalizeItems(items: LocalCollectionItem[]): LocalCollectionItem[] {
     return items
         .map((item, index) => ({
             ...item,
-            position: index,
+            position: index + 1,
             translations: withAllLanguages(item.translations, (languageCode) => ({
                 languageCode,
                 comment: null,
@@ -74,22 +74,15 @@ function getTranslation<T extends { languageCode: string }>(
     return translations.find((translation) => translation.languageCode === languageCode);
 }
 
-function getContentTypeClass(contentType: CollectionItem["contentType"]): string {
-    switch (contentType) {
-        case "production":
-            return "bg-blue-100 text-blue-700";
-        case "event":
-            return "bg-purple-100 text-purple-700";
-        case "location":
-            return "bg-emerald-100 text-emerald-700";
-        case "blogpost":
-            return "bg-orange-100 text-orange-700";
-        case "artist":
-            return "bg-pink-100 text-pink-700";
-        default:
-            return "bg-muted text-muted-foreground";
-    }
-}
+const CONTENT_TYPE_CLASSES: Record<string, string> = {
+    production: "bg-blue-100 text-blue-700",
+    event: "bg-purple-100 text-purple-700",
+    location: "bg-emerald-100 text-emerald-700",
+    blogpost: "bg-orange-100 text-orange-700",
+    artist: "bg-pink-100 text-pink-700",
+};
+const getContentTypeClass = (ct: string) =>
+    CONTENT_TYPE_CLASSES[ct] ?? "bg-muted text-muted-foreground";
 
 function toMetadataSnapshot(collection: Collection) {
     return {
@@ -98,25 +91,15 @@ function toMetadataSnapshot(collection: Collection) {
             languageCode,
             title: "",
             description: "",
-        })).map((translation) => ({
-            languageCode: translation.languageCode,
-            title: translation.title,
-            description: translation.description,
         })),
     };
 }
 
 function toItemsSnapshot(items: LocalCollectionItem[]) {
-    return normalizeItems(items).map((item) => ({
-        id: item.id,
-        position: item.position,
-        translations: withAllLanguages(item.translations, (languageCode) => ({
-            languageCode,
-            comment: null,
-        })).map((translation) => ({
-            languageCode: translation.languageCode,
-            comment: translation.comment ?? null,
-        })),
+    return normalizeItems(items).map(({ id, position, translations }) => ({
+        id,
+        position,
+        translations: withAllLanguages(translations, (lc) => ({ languageCode: lc, comment: null })),
     }));
 }
 
@@ -165,13 +148,9 @@ function ItemDetails({ entity }: { entity: EntityData }) {
         const d = entity.data;
         const starts = new Date(d.startsAt);
         const date = starts.toLocaleDateString();
-        const time = starts.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-        const ends = d.endsAt
-            ? new Date(d.endsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-            : null;
-        const doors = d.doorsAt
-            ? new Date(d.doorsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-            : null;
+        const time = formatTime(starts);
+        const ends = d.endsAt ? formatTime(new Date(d.endsAt)) : null;
+        const doors = d.doorsAt ? formatTime(new Date(d.doorsAt)) : null;
         return (
             <div className="grid gap-x-4 gap-y-1 md:grid-cols-3">
                 <DetailValue label="Date" value={date} />
@@ -251,6 +230,7 @@ function SortableItemRow({
     group: GroupedItem;
     renderItem: (item: LocalCollectionItem) => ItemRowProps;
 }) {
+    const t = useTranslations("Cms.Collections");
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
         id: group.item.id,
     });
@@ -296,7 +276,7 @@ function SortableItemRow({
             <ItemDetails entity={parentProps.entity} />
             {group.childEvents.length > 0 && (
                 <div className="space-y-1">
-                    <p className="text-muted-foreground text-xs font-medium">Voorstellingen</p>
+                    <p className="text-muted-foreground text-xs font-medium">{t("events")}</p>
                     {group.childEvents.map((childItem) => {
                         const childProps = renderItem(childItem);
                         const entity = childProps.entity;
@@ -305,7 +285,7 @@ function SortableItemRow({
                                 ? [
                                       entity.data.status,
                                       entity.data.doorsAt
-                                          ? `doors ${new Date(entity.data.doorsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                                          ? `doors ${formatTime(new Date(entity.data.doorsAt))}`
                                           : null,
                                   ]
                                       .filter(Boolean)
@@ -335,20 +315,20 @@ function SortableItemRow({
                 </div>
             )}
             <div className="grid gap-3 md:grid-cols-2">
-                <div className="space-y-1">
-                    <Label>{parentProps.commentNlLabel}</Label>
-                    <Input
-                        value={parentProps.commentNl}
-                        onChange={(event) => parentProps.onCommentChange("nl", event.target.value)}
-                    />
-                </div>
-                <div className="space-y-1">
-                    <Label>{parentProps.commentEnLabel}</Label>
-                    <Input
-                        value={parentProps.commentEn}
-                        onChange={(event) => parentProps.onCommentChange("en", event.target.value)}
-                    />
-                </div>
+                {(
+                    [
+                        ["nl", parentProps.commentNlLabel, parentProps.commentNl],
+                        ["en", parentProps.commentEnLabel, parentProps.commentEn],
+                    ] as const
+                ).map(([lang, label, value]) => (
+                    <div key={lang} className="space-y-1">
+                        <Label>{label}</Label>
+                        <Input
+                            value={value}
+                            onChange={(e) => parentProps.onCommentChange(lang, e.target.value)}
+                        />
+                    </div>
+                ))}
             </div>
         </div>
     );
@@ -407,15 +387,10 @@ export function CollectionEditorPage({ id }: { id: string }) {
     const metadata = useMemo(() => {
         if (!collection || !initialMetadata) return null;
 
-        const baseNl = initialMetadata.translations.find(
-            (translation) => translation.languageCode === "nl"
+        const [baseNl, baseEn] = LANGS.map((lc) =>
+            initialMetadata.translations.find((t) => t.languageCode === lc)
         );
-        const baseEn = initialMetadata.translations.find(
-            (translation) => translation.languageCode === "en"
-        );
-
         const nextTitleNl = titleNl ?? baseNl?.title ?? "";
-
         const nextSlug =
             localSlug ??
             (slugEdited ? initialMetadata.slug : slugify(nextTitleNl) || initialMetadata.slug);
@@ -464,9 +439,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
     const canSave = hydrationReady && (metadataDirty || itemsDirty) && !isSaving;
 
     const productionMap = useMemo(() => new Map(productions.map((p) => [p.id, p])), [productions]);
-
     const eventMap = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
-
     const locationMap = useMemo(() => new Map(locations.map((l) => [l.id, l])), [locations]);
 
     const getItemTitle = (item: LocalCollectionItem): string => {
@@ -484,7 +457,8 @@ export function CollectionEditorPage({ id }: { id: string }) {
             case "event": {
                 const e = eventMap.get(item.contentId);
                 if (!e) return item.contentId;
-                return `${new Date(e.startsAt).toLocaleDateString()} ${new Date(e.startsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+                const starts = new Date(e.startsAt);
+                return `${starts.toLocaleDateString()} ${formatTime(starts)}`;
             }
             case "location": {
                 const l = locationMap.get(item.contentId);
@@ -597,7 +571,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
             await navigator.clipboard.writeText(`${origin}/en/collections/${metadata.slug}`);
             toast.success(t("linkCopied"));
         } catch {
-            toast.error(t("itemsError"));
+            toast.error(t("copyError"));
         }
     };
 
@@ -667,34 +641,27 @@ export function CollectionEditorPage({ id }: { id: string }) {
             <section className="space-y-3 rounded-md border p-4">
                 <h2 className="font-medium">{t("title")}</h2>
                 <div className="grid gap-3 md:grid-cols-2">
-                    <div className="space-y-1">
-                        <Label>{t("titleNl")}</Label>
-                        <Input
-                            value={metadata.translations[0]?.title ?? ""}
-                            onChange={(event) => setTitleNl(event.target.value)}
-                        />
-                    </div>
-                    <div className="space-y-1">
-                        <Label>{t("titleEn")}</Label>
-                        <Input
-                            value={metadata.translations[1]?.title ?? ""}
-                            onChange={(event) => setTitleEn(event.target.value)}
-                        />
-                    </div>
-                    <div className="space-y-1">
-                        <Label>{t("descriptionNl")}</Label>
-                        <Input
-                            value={metadata.translations[0]?.description ?? ""}
-                            onChange={(event) => setDescriptionNl(event.target.value)}
-                        />
-                    </div>
-                    <div className="space-y-1">
-                        <Label>{t("descriptionEn")}</Label>
-                        <Input
-                            value={metadata.translations[1]?.description ?? ""}
-                            onChange={(event) => setDescriptionEn(event.target.value)}
-                        />
-                    </div>
+                    {(
+                        [
+                            ["titleNl", metadata.translations[0]?.title ?? "", setTitleNl],
+                            ["titleEn", metadata.translations[1]?.title ?? "", setTitleEn],
+                            [
+                                "descriptionNl",
+                                metadata.translations[0]?.description ?? "",
+                                setDescriptionNl,
+                            ],
+                            [
+                                "descriptionEn",
+                                metadata.translations[1]?.description ?? "",
+                                setDescriptionEn,
+                            ],
+                        ] as const
+                    ).map(([label, value, setter]) => (
+                        <div key={label} className="space-y-1">
+                            <Label>{t(label)}</Label>
+                            <Input value={value} onChange={(e) => setter(e.target.value)} />
+                        </div>
+                    ))}
                     <div className="space-y-1 md:col-span-2">
                         <Label>{t("slug")}</Label>
                         <div className="flex gap-2">

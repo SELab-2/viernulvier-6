@@ -12,7 +12,8 @@ use crate::{
         },
         collection_item::{
             CollectionItem, CollectionItemBulkUpdate, CollectionItemCreate,
-            CollectionItemTranslation, CollectionItemTranslationData, CollectionItemWithTranslations,
+            CollectionItemTranslation, CollectionItemTranslationData,
+            CollectionItemWithTranslations,
         },
     },
 };
@@ -205,7 +206,36 @@ impl<'a> CollectionRepo<'a> {
             return Ok(());
         }
 
+        let mut tx = self.db.begin().await?;
+
+        // Validate collection exists
+        let exists =
+            sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM collections WHERE id = $1)")
+                .bind(collection_id)
+                .fetch_one(&mut *tx)
+                .await?;
+
+        if !exists {
+            return Err(DatabaseError::NotFound);
+        }
+
+        // Validate all item IDs belong to this collection
         let ids: Vec<Uuid> = items.iter().map(|i| i.id).collect();
+        let found_count = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM collection_items WHERE collection_id = $1 AND id = ANY($2)",
+        )
+        .bind(collection_id)
+        .bind(&ids[..])
+        .fetch_one(&mut *tx)
+        .await?;
+
+        if found_count != items.len() as i64 {
+            return Err(DatabaseError::BadRequest(
+                "One or more item IDs do not belong to this collection".to_string(),
+            ));
+        }
+
+        // Update positions
         let positions: Vec<i32> = items.iter().map(|i| i.position).collect();
 
         sqlx::query(
@@ -216,12 +246,38 @@ impl<'a> CollectionRepo<'a> {
         .bind(collection_id)
         .bind(&ids[..])
         .bind(&positions[..])
-        .execute(self.db)
+        .execute(&mut *tx)
         .await?;
 
+        // Upsert translations within the same transaction
         for item in items {
-            self.upsert_item_translations(item.id, &item.translations).await?;
+            if !item.translations.is_empty() {
+                let language_codes: Vec<&str> = item
+                    .translations
+                    .iter()
+                    .map(|t| t.language_code.as_str())
+                    .collect();
+                let comments: Vec<Option<&str>> = item
+                    .translations
+                    .iter()
+                    .map(|t| t.comment.as_deref())
+                    .collect();
+
+                sqlx::query(
+                    "INSERT INTO collection_item_translations (collection_item_id, language_code, comment)
+                    SELECT $1, * FROM UNNEST($2::text[], $3::text[])
+                    ON CONFLICT (collection_item_id, language_code) DO UPDATE SET
+                        comment = EXCLUDED.comment",
+                )
+                .bind(item.id)
+                .bind(&language_codes[..])
+                .bind(&comments[..])
+                .execute(&mut *tx)
+                .await?;
+            }
         }
+
+        tx.commit().await?;
 
         Ok(())
     }

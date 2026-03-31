@@ -6,7 +6,15 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useAddCollectionItem, useCreateCollection, useGetCollections } from "@/hooks/api";
 import { slugify } from "@/lib/slugify";
-import type { CollectionContentType } from "@/types/models/collection.types";
+import {
+    type PickerItem,
+    getCollectionTitle,
+    itemKey,
+    maxItemPosition,
+    buildItemQueue,
+    existingItemKeys,
+    defaultCollectionTranslations,
+} from "@/lib/collection-picker-utils";
 import {
     DropdownMenuSub,
     DropdownMenuSubTrigger,
@@ -15,27 +23,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-type PickerItem = {
-    contentId: string;
-    contentType: CollectionContentType;
-    label?: string;
-    parentProductionId?: string;
-};
-
-function getCollectionTitle(collection: {
-    slug: string;
-    translations: { languageCode: string; title: string }[];
-}): string {
-    return (
-        collection.translations.find((t) => t.languageCode === "nl")?.title ||
-        collection.translations.find((t) => t.languageCode === "en")?.title ||
-        collection.slug
-    );
-}
-
-function itemKey(item: PickerItem): string {
-    return `${item.contentType}:${item.contentId}`;
-}
+export type { PickerItem };
 
 export function CollectionPickerSubmenu({
     item,
@@ -56,57 +44,37 @@ export function CollectionPickerSubmenu({
     const filteredCollections = useMemo(() => {
         const q = query.trim().toLowerCase();
         if (!q) return collections;
-        return collections.filter((collection) =>
-            getCollectionTitle(collection).toLowerCase().includes(q)
-        );
+        return collections.filter((c) => getCollectionTitle(c).toLowerCase().includes(q));
     }, [collections, query]);
 
     const addToCollection = async (collectionId: string) => {
-        const collection = collections.find((entry) => entry.id === collectionId);
+        const collection = collections.find((c) => c.id === collectionId);
         if (!collection) return;
 
-        const existing = new Set(
-            collection.items.map(
-                (collectionItem) => `${collectionItem.contentType}:${collectionItem.contentId}`
-            )
-        );
-
-        const queue: PickerItem[] = [];
-        if (item.contentType === "event" && item.parentProductionId) {
-            const productionItem: PickerItem = {
-                contentId: item.parentProductionId,
-                contentType: "production",
-            };
-            if (!existing.has(itemKey(productionItem))) {
-                queue.push(productionItem);
-                existing.add(itemKey(productionItem));
-            }
-        }
-
-        const key = itemKey(item);
-        if (existing.has(key)) {
+        const existing = existingItemKeys(collection);
+        if (existing.has(itemKey(item))) {
             toast.warning(t("alreadyInCollection", { title: item.label ?? item.contentId }));
             return;
         }
-        queue.push(item);
 
-        let added = 0;
+        const queue = buildItemQueue([item], existing);
+        const basePos = maxItemPosition(collection);
+
         for (const [index, queuedItem] of queue.entries()) {
             await addCollectionItem.mutateAsync({
                 collectionId,
                 contentId: queuedItem.contentId,
                 contentType: queuedItem.contentType,
-                position: collection.items.length + index,
+                position: basePos + 1 + index,
             });
-            added += 1;
         }
 
-        if (added > 0) {
+        if (queue.length > 0) {
             toast.success(
-                added === 1
+                queue.length === 1
                     ? t("addedToCollection", { collection: getCollectionTitle(collection) })
                     : t("addedToCollectionMultiple", {
-                          count: added,
+                          count: queue.length,
                           collection: getCollectionTitle(collection),
                       })
             );
@@ -119,29 +87,24 @@ export function CollectionPickerSubmenu({
         const title = newCollectionTitle.trim();
         if (!title) return;
 
+        const slug = slugify(title);
+        if (!slug) {
+            toast.error(t("invalidSlug"));
+            return;
+        }
+
         const created = await createCollection.mutateAsync({
-            slug: slugify(title),
-            translations: [
-                { languageCode: "nl", title, description: "" },
-                { languageCode: "en", title: "", description: "" },
-            ],
+            slug,
+            translations: defaultCollectionTranslations(title),
         });
 
-        const queue: PickerItem[] = [];
-        if (item.contentType === "event" && item.parentProductionId) {
-            queue.push({
-                contentId: item.parentProductionId,
-                contentType: "production",
-            });
-        }
-        queue.push(item);
-
+        const queue = buildItemQueue([item], new Set());
         for (const [index, queuedItem] of queue.entries()) {
             await addCollectionItem.mutateAsync({
                 collectionId: created.id,
                 contentId: queuedItem.contentId,
                 contentType: queuedItem.contentType,
-                position: index,
+                position: index + 1,
             });
         }
 

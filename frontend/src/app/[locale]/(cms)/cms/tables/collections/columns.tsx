@@ -31,7 +31,7 @@ function CollectionActionsCell({
             await navigator.clipboard.writeText(`${origin}/en/collections/${row.slug}`);
             toast.success(t("linkCopied"));
         } catch {
-            toast.error(t("itemsError"));
+            toast.error(t("copyError"));
         }
     };
 

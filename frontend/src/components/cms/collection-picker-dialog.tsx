@@ -6,7 +6,14 @@ import { toast } from "sonner";
 import { useRouter } from "@/i18n/routing";
 import { useAddCollectionItem, useCreateCollection, useGetCollections } from "@/hooks/api";
 import { slugify } from "@/lib/slugify";
-import type { CollectionContentType } from "@/types/models/collection.types";
+import {
+    type PickerItem,
+    getCollectionTitle,
+    maxItemPosition,
+    buildItemQueue,
+    existingItemKeys,
+    defaultCollectionTranslations,
+} from "@/lib/collection-picker-utils";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -18,34 +25,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
-type PickerItem = {
-    contentId: string;
-    contentType: CollectionContentType;
-    label?: string;
-    parentProductionId?: string;
-};
-
 type CollectionPickerDialogProps = {
     items: PickerItem[];
     triggerLabel?: string;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
 };
-
-function getCollectionTitle(collection: {
-    slug: string;
-    translations: { languageCode: string; title: string }[];
-}): string {
-    return (
-        collection.translations.find((translation) => translation.languageCode === "nl")?.title ||
-        collection.translations.find((translation) => translation.languageCode === "en")?.title ||
-        collection.slug
-    );
-}
-
-function itemKey(item: PickerItem): string {
-    return `${item.contentType}:${item.contentId}`;
-}
 
 export function CollectionPickerDialog({
     items,
@@ -71,42 +56,16 @@ export function CollectionPickerDialog({
     const filteredCollections = useMemo(() => {
         const q = query.trim().toLowerCase();
         if (!q) return collections;
-        return collections.filter((collection) =>
-            getCollectionTitle(collection).toLowerCase().includes(q)
-        );
+        return collections.filter((c) => getCollectionTitle(c).toLowerCase().includes(q));
     }, [collections, query]);
 
-    const selectedCollection =
-        collections.find((collection) => collection.id === selectedCollectionId) ?? null;
+    const selectedCollection = collections.find((c) => c.id === selectedCollectionId) ?? null;
 
     const addToCollection = async (openAfter: boolean) => {
         if (!selectedCollection) return;
 
-        const existing = new Set(
-            selectedCollection.items.map(
-                (collectionItem) => `${collectionItem.contentType}:${collectionItem.contentId}`
-            )
-        );
-
-        const queue: PickerItem[] = [];
-        for (const item of items) {
-            if (item.contentType === "event" && item.parentProductionId) {
-                const productionItem: PickerItem = {
-                    contentId: item.parentProductionId,
-                    contentType: "production",
-                };
-                const productionKey = itemKey(productionItem);
-                if (!existing.has(productionKey)) {
-                    queue.push(productionItem);
-                    existing.add(productionKey);
-                }
-            }
-
-            const key = itemKey(item);
-            if (existing.has(key)) continue;
-            queue.push(item);
-            existing.add(key);
-        }
+        const queue = buildItemQueue(items, existingItemKeys(selectedCollection));
+        const basePos = maxItemPosition(selectedCollection);
 
         await Promise.all(
             queue.map((queuedItem, index) =>
@@ -114,7 +73,7 @@ export function CollectionPickerDialog({
                     collectionId: selectedCollection.id,
                     contentId: queuedItem.contentId,
                     contentType: queuedItem.contentType,
-                    position: selectedCollection.items.length + index,
+                    position: basePos + 1 + index,
                 })
             )
         );
@@ -129,30 +88,22 @@ export function CollectionPickerDialog({
         }
 
         setResolvedOpen(false);
-
-        if (openAfter) {
-            router.push(`/cms/collections/${selectedCollection.id}`);
-        }
+        if (openAfter) router.push(`/cms/collections/${selectedCollection.id}`);
     };
 
     const createNewCollection = async () => {
         const title = newCollectionTitle.trim();
         if (!title) return;
 
+        const slug = slugify(title);
+        if (!slug) {
+            toast.error(t("invalidSlug"));
+            return;
+        }
+
         const created = await createCollection.mutateAsync({
-            slug: slugify(title),
-            translations: [
-                {
-                    languageCode: "nl",
-                    title,
-                    description: "",
-                },
-                {
-                    languageCode: "en",
-                    title: "",
-                    description: "",
-                },
-            ],
+            slug,
+            translations: defaultCollectionTranslations(title),
         });
 
         setSelectedCollectionId(created.id);

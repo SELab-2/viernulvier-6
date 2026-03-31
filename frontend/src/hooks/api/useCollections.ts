@@ -127,21 +127,20 @@ export const useAddCollectionItem = () => {
 
     return useMutation({
         mutationFn: async (payload: AddCollectionItemInput) => {
+            const translations = (
+                payload.translations ?? [
+                    { languageCode: "nl", comment: null },
+                    { languageCode: "en", comment: null },
+                ]
+            ).map((t) => ({ language_code: t.languageCode, comment: t.comment }));
+
             const { data } = await api.post<CollectionItemResponse>(
                 `/collections/${payload.collectionId}/items`,
                 {
                     content_id: payload.contentId,
                     content_type: payload.contentType,
                     position: payload.position,
-                    translations: (
-                        payload.translations ?? [
-                            { languageCode: "nl", comment: null },
-                            { languageCode: "en", comment: null },
-                        ]
-                    ).map((translation) => ({
-                        language_code: translation.languageCode,
-                        comment: translation.comment,
-                    })),
+                    translations,
                 }
             );
             return data;

@@ -55,23 +55,34 @@ export const mapCollection = (response: CollectionResponse): Collection => ({
 export const mapCollections = (response: CollectionResponse[]): Collection[] =>
     response.map(mapCollection);
 
-export const toCollectionRow = (collection: Collection): CollectionRow => ({
-    id: collection.id,
-    slug: collection.slug,
-    titleNl: collection.translations.find((t) => t.languageCode === "nl")?.title ?? "",
-    titleEn: collection.translations.find((t) => t.languageCode === "en")?.title ?? "",
-    descriptionNl: collection.translations.find((t) => t.languageCode === "nl")?.description ?? "",
-    itemCount: collection.items.length,
-    updatedAt: collection.updatedAt,
+export const toCollectionRow = (collection: Collection): CollectionRow => {
+    const nl = collection.translations.find((t) => t.languageCode === "nl");
+    const en = collection.translations.find((t) => t.languageCode === "en");
+    return {
+        id: collection.id,
+        slug: collection.slug,
+        titleNl: nl?.title ?? "",
+        titleEn: en?.title ?? "",
+        descriptionNl: nl?.description ?? "",
+        itemCount: collection.items.length,
+        updatedAt: collection.updatedAt,
+    };
+};
+
+const toApiTranslation = (t: CollectionTranslation) => ({
+    language_code: t.languageCode,
+    title: t.title,
+    description: t.description,
+});
+
+const toApiItemTranslation = (t: CollectionItemTranslation) => ({
+    language_code: t.languageCode,
+    comment: t.comment,
 });
 
 export const mapCreateInput = (input: CollectionCreateInput): CollectionCreateRequest => ({
     slug: input.slug,
-    translations: input.translations.map((translation) => ({
-        language_code: translation.languageCode,
-        title: translation.title,
-        description: translation.description,
-    })),
+    translations: input.translations.map(toApiTranslation),
 });
 
 export const mapUpdateInput = (collection: Collection): CollectionUpdateRequest => ({
@@ -84,26 +95,16 @@ export const mapUpdateInput = (collection: Collection): CollectionUpdateRequest 
         content_id: item.contentId,
         content_type: item.contentType,
         position: item.position,
-        translations: item.translations.map((translation) => ({
-            language_code: translation.languageCode,
-            comment: translation.comment,
-        })),
+        translations: item.translations.map(toApiItemTranslation),
         created_at: item.createdAt,
     })),
-    translations: collection.translations.map((translation) => ({
-        language_code: translation.languageCode,
-        title: translation.title,
-        description: translation.description,
-    })),
+    translations: collection.translations.map(toApiTranslation),
 });
 
 export const mapItemsBulkInput = (input: CollectionItemsBulkInput): CollectionItemsBulkRequest => ({
     items: input.items.map((item) => ({
         id: item.id,
         position: item.position,
-        translations: item.translations.map((translation) => ({
-            language_code: translation.languageCode,
-            comment: translation.comment,
-        })),
+        translations: item.translations.map(toApiItemTranslation),
     })),
 });

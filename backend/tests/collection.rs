@@ -35,7 +35,6 @@ async fn get_one_success(db: PgPool) {
     let data: CollectionPayload = response.into_struct().await;
     assert_eq!(data.id, target_id);
     assert_eq!(data.slug, "zomerselectie");
-
     let nl = data
         .translations
         .iter()
@@ -72,7 +71,6 @@ async fn post_success(db: PgPool) {
 
     let data: CollectionPayload = response.into_struct().await;
     assert_eq!(data.slug, "test-selectie");
-
     let nl = data
         .translations
         .iter()
@@ -123,7 +121,6 @@ async fn put_success(db: PgPool) {
     let data: CollectionPayload = response.into_struct().await;
     assert_eq!(data.id, target_id);
     assert_eq!(data.slug, "dans-2025-bijgewerkt");
-
     let nl = data
         .translations
         .iter()
