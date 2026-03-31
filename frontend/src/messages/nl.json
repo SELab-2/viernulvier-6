@@ -225,5 +225,16 @@
         "edition": "Editie 404",
         "articleBrand": "Archiefdienst",
         "price": "Prijs: Onschatbaar"
+    },
+    "Location": {
+        "about": "Over",
+        "history": "Geschiedenis",
+        "halls": "Zalen",
+        "seated": "Zitplaatsen",
+        "openSeating": "Vrije plaatskeuze",
+        "searchArchive": "Bekijk alle voorstellingen op deze locatie",
+        "searchNotImplemented": "Zoeken op locatie is nog niet beschikbaar.",
+        "loading": "Locatie laden...",
+        "notFound": "Locatie niet gevonden."
     }
 }

@@ -22,11 +22,13 @@ describe("location mapper", () => {
             phone_2: undefined,
             is_owned_by_viernulvier: true,
             uitdatabank_id: undefined,
+            translations: [{ language_code: "nl", description: "Beschrijving", history: null }],
         });
 
         expect(mapped).toEqual({
             id: "67c95f6a-8bb8-43d6-a4bc-f7e18b86f404",
             sourceId: null,
+            slug: null,
             name: "Main Venue",
             code: "MV",
             street: "Mainstraat",
@@ -39,6 +41,7 @@ describe("location mapper", () => {
             isOwnedByViernulvier: true,
             uitdatabankId: null,
             address: "Mainstraat 12, 9000 Gent, Belgium",
+            translations: [{ languageCode: "nl", description: "Beschrijving", history: null }],
         });
     });
 
@@ -62,6 +65,7 @@ describe("location mapper", () => {
             phone_2: undefined,
             is_owned_by_viernulvier: undefined,
             uitdatabank_id: undefined,
+            translations: [],
         });
 
         const updatePayload = mapUpdateLocationInput({ id: "id-1", name: "Updated" });
@@ -79,6 +83,7 @@ describe("location mapper", () => {
             phone_2: undefined,
             is_owned_by_viernulvier: undefined,
             uitdatabank_id: undefined,
+            translations: [],
         });
     });
 });

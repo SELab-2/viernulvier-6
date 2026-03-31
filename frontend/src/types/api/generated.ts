@@ -66,7 +66,7 @@ export interface paths {
         get: operations["get_all_collections"];
         /** @description Update the metadata (slug, titles, descriptions) of an existing collection. Requires editor authentication. Does not affect items — use the items sub-resource for that. */
         put: operations["update_collection"];
-        /** @description Create a new collection. Requires editor authentication. Supply a human-readable slug that will appear in the shareable URL (e.g. `videodroom-candidates-2026`), bilingual titles, and optional bilingual descriptions. Items are added separately via POST /collections/{id}/items. */
+        /** @description Create a new collection. Requires editor authentication. Supply a human-readable slug that will appear in the shareable URL (e.g. `videodroom-candidates-2026`) and per-language translations (title required, description required but may be empty). Items are added separately via POST /collections/{id}/items. */
         post: operations["create_collection"];
         delete?: never;
         options?: never;
@@ -253,6 +253,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/locations/slug/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get location by slug */
+        get: operations["get_location_by_slug"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/locations/{id}": {
         parameters: {
             query?: never;
@@ -426,7 +443,7 @@ export interface components {
             id: string;
             /**
              * Format: int32
-             * @description Zero-based display order within the collection.
+             * @description Display order within the collection (1-based).
              */
             position: number;
             /** @description Per-language curator annotation for this item. */
@@ -442,11 +459,11 @@ export interface components {
             content_type: components["schemas"]["CollectionContentType"];
             /**
              * Format: int32
-             * @description Zero-based display order within the collection.
+             * @description Display order within the collection (1-based).
              */
             position: number;
             /** @description Per-language curator annotation for this item. */
-            translations: components["schemas"]["CollectionItemTranslationPayload"][];
+            translations?: components["schemas"]["CollectionItemTranslationPayload"][];
         };
         CollectionItemTranslationPayload: {
             comment?: string | null;
@@ -612,6 +629,7 @@ export interface components {
             /** Format: int32 */
             source_id?: number | null;
             street?: string | null;
+            translations: components["schemas"]["LocationTranslationPayload"][];
             uitdatabank_id?: string | null;
         };
         LocationPostPayload: {
@@ -628,7 +646,14 @@ export interface components {
             /** Format: int32 */
             source_id?: number | null;
             street?: string | null;
+            translations: components["schemas"]["LocationTranslationPayload"][];
             uitdatabank_id?: string | null;
+        };
+        /** @description The per-language content for a location. */
+        LocationTranslationPayload: {
+            description?: string | null;
+            history?: string | null;
+            language_code: string;
         };
         LoginRequest: {
             email: string;
@@ -700,6 +725,7 @@ export interface components {
                 /** Format: int32 */
                 source_id?: number | null;
                 street?: string | null;
+                translations: components["schemas"]["LocationTranslationPayload"][];
                 uitdatabank_id?: string | null;
             }[];
             next_cursor?: string | null;
@@ -1602,6 +1628,36 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
+            };
+        };
+    };
+    get_location_by_slug: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Location slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocationPayload"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

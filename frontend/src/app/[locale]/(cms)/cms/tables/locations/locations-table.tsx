@@ -12,29 +12,38 @@ import { makeHallColumns, hallFields, toHallUpdateInput } from "./hall-columns";
 import { Spinner } from "@/components/ui/spinner";
 import { useGetLocations, useUpdateLocation } from "@/hooks/api/useLocations";
 import { useGetHalls, useUpdateHall } from "@/hooks/api/useHalls";
-import type { Location } from "@/types/models/location.types";
+import { useGetSpaces } from "@/hooks/api/useSpaces";
+import type { Location, LocationRow } from "@/types/models/location.types";
 import type { Hall } from "@/types/models/hall.types";
 
 export function LocationsTable() {
     const t = useTranslations("Cms.Locations");
     const { data: locations = [], isLoading: locationsLoading } = useGetLocations();
     const { data: allHalls = [], isLoading: hallsLoading } = useGetHalls();
+    const { data: allSpaces = [] } = useGetSpaces();
     const updateLocation = useUpdateLocation();
     const updateHall = useUpdateHall();
 
-    const [editLocation, setEditLocation] = useState<Location | null>(null);
+    const [editLocation, setEditLocation] = useState<LocationRow | null>(null);
     const [editHall, setEditHall] = useState<Hall | null>(null);
 
-    const hallsBySpace = useMemo(() => {
+    const hallsByLocation = useMemo(() => {
+        const spaceToLocation = new Map<string, string>();
+        for (const space of allSpaces) {
+            spaceToLocation.set(space.id, space.locationId);
+        }
+
         const map = new Map<string, Hall[]>();
         for (const hall of allHalls) {
             if (!hall.spaceId) continue;
-            const list = map.get(hall.spaceId) ?? [];
+            const locationId = spaceToLocation.get(hall.spaceId);
+            if (!locationId) continue;
+            const list = map.get(locationId) ?? [];
             list.push(hall);
-            map.set(hall.spaceId, list);
+            map.set(locationId, list);
         }
         return map;
-    }, [allHalls]);
+    }, [allHalls, allSpaces]);
 
     const {
         parentSelection,
@@ -45,10 +54,10 @@ export function LocationsTable() {
         selectedParentCount: selectedLocationCount,
         selectedChildCount: selectedHallCount,
         clearSelection,
-    } = useParentChildSelection<Location>(hallsBySpace);
+    } = useParentChildSelection<Location>(hallsByLocation);
 
     const locationCols = useMemo(
-        () => [selectColumn, ...makeLocationColumns({ onEdit: setEditLocation })],
+        () => [selectColumn, ...makeLocationColumns({ onEdit: (row) => setEditLocation(row) })],
         [selectColumn]
     );
 
@@ -67,7 +76,7 @@ export function LocationsTable() {
                 );
             }
             const locationId = row.original.id;
-            const halls = hallsBySpace.get(locationId) ?? [];
+            const halls = hallsByLocation.get(locationId) ?? [];
             return (
                 <MemoSubTable
                     items={halls}
@@ -78,7 +87,7 @@ export function LocationsTable() {
                 />
             );
         },
-        [childSelection, getChildHandler, getHallRowId, hallCols, hallsBySpace, hallsLoading]
+        [childSelection, getChildHandler, getHallRowId, hallCols, hallsByLocation, hallsLoading]
     );
 
     return (
@@ -88,7 +97,7 @@ export function LocationsTable() {
                 data={locations}
                 loading={locationsLoading}
                 renderSubComponent={renderHalls}
-                getRowCanExpand={(row) => (hallsBySpace.get(row.original.id)?.length ?? 0) > 0}
+                getRowCanExpand={(row) => (hallsByLocation.get(row.original.id)?.length ?? 0) > 0}
                 expanderLabels={{ show: t("showHalls"), hide: t("hideHalls") }}
                 toolbar={
                     <SelectionToolbar

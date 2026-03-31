@@ -1,7 +1,6 @@
 import { HallCreateRequest, HallResponse, HallUpdateRequest } from "@/types/api/hall.api.types";
 import { Hall, HallCreateInput, HallUpdateInput } from "@/types/models/hall.types";
-
-const toNullable = <T>(value: T | null | undefined): T | null => value ?? null;
+import { toNullable } from "@/mappers/utils";
 
 export const mapHall = (response: HallResponse): Hall => {
     return {

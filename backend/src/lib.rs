@@ -180,6 +180,7 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // location
         .routes(routes!(location::get_all))
         .routes(routes!(location::get_one))
+        .routes(routes!(location::get_by_slug))
         // production
         .routes(routes!(production::get_all))
         .routes(routes!(production::get_one))

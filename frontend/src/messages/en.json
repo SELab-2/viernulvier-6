@@ -225,5 +225,16 @@
         "edition": "Edition 404",
         "articleBrand": "Archives Department",
         "price": "Price: Priceless"
+    },
+    "Location": {
+        "about": "About",
+        "history": "History",
+        "halls": "Halls",
+        "seated": "Seated",
+        "openSeating": "Open seating",
+        "searchArchive": "View all productions at this location",
+        "searchNotImplemented": "Search filtering by location is not yet available.",
+        "loading": "Loading location...",
+        "notFound": "Location not found."
     }
 }

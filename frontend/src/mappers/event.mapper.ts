@@ -1,7 +1,6 @@
 import { EventCreateRequest, EventResponse, EventUpdateRequest } from "@/types/api/event.api.types";
 import { Event, EventCreateInput, EventUpdateInput } from "@/types/models/event.types";
-
-const toNullable = <T>(value: T | null | undefined): T | null => value ?? null;
+import { toNullable } from "@/mappers/utils";
 
 export const mapEvent = (response: EventResponse): Event => {
     return {

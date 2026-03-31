@@ -183,7 +183,7 @@ impl ApiImporter {
             let amt = locations.len();
             info!("Locations: got {amt} from api");
             for location in locations {
-                self.db.locations().insert(location.into()).await.unwrap();
+                self.db.locations().insert(location.into(), vec![]).await.unwrap();
             }
             info!("Locations: inserted {amt} into db");
         }
@@ -210,10 +210,11 @@ impl ApiImporter {
                     .locations()
                     .by_source_id(location_source_id)
                     .await
+                    .unwrap()
                     .unwrap();
 
                 // construct a SpaceCreate out of it
-                let space_create = space.to_create(location.id);
+                let space_create = space.to_create(location.location.id);
 
                 self.db.spaces().insert(space_create).await.unwrap();
             }

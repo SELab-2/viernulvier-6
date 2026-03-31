@@ -4,6 +4,7 @@ export const queryKeys = {
     locations: {
         all: ["locations"] as const,
         detail: (id: string) => ["locations", id] as const,
+        bySlug: (slug: string) => ["locations", "slug", slug] as const,
     },
     productions: {
         all: ["productions"] as const,

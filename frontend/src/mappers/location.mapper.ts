@@ -1,8 +1,17 @@
-import { LocationResponse } from "@/types/api/location.api.types";
-import { LocationCreateRequest, LocationUpdateRequest } from "@/types/api/location.api.types";
-import { Location, LocationCreateInput, LocationUpdateInput } from "@/types/models/location.types";
-
-const toNullable = <T>(value: T | null | undefined): T | null => value ?? null;
+import {
+    LocationResponse,
+    LocationTranslationResponse,
+    LocationCreateRequest,
+    LocationUpdateRequest,
+} from "@/types/api/location.api.types";
+import {
+    Location,
+    LocationTranslation,
+    LocationTranslationInput,
+    LocationCreateInput,
+    LocationUpdateInput,
+} from "@/types/models/location.types";
+import { toNullable } from "@/mappers/utils";
 
 const buildAddress = (
     location: Pick<Location, "street" | "number" | "postalCode" | "city" | "country">
@@ -13,10 +22,23 @@ const buildAddress = (
     return [lineOne, lineTwo, location.country].filter(Boolean).join(", ");
 };
 
+const mapLocationTranslation = (t: LocationTranslationResponse): LocationTranslation => ({
+    languageCode: t.language_code,
+    description: toNullable(t.description),
+    history: toNullable(t.history),
+});
+
+const mapTranslationInput = (t: LocationTranslationInput): LocationTranslationResponse => ({
+    language_code: t.languageCode,
+    description: t.description,
+    history: t.history,
+});
+
 export const mapLocation = (response: LocationResponse): Location => {
-    const location: Omit<Location, "address"> = {
+    const location: Omit<Location, "address" | "translations"> = {
         id: response.id,
         sourceId: toNullable(response.source_id),
+        slug: toNullable(response.slug),
         name: toNullable(response.name),
         code: toNullable(response.code),
         street: toNullable(response.street),
@@ -33,6 +55,7 @@ export const mapLocation = (response: LocationResponse): Location => {
     return {
         ...location,
         address: buildAddress(location),
+        translations: (response.translations ?? []).map(mapLocationTranslation),
     };
 };
 
@@ -41,6 +64,7 @@ export const mapLocations = (response: LocationResponse[]): Location[] => respon
 export const mapCreateLocationInput = (input: LocationCreateInput): LocationCreateRequest => {
     return {
         source_id: input.sourceId,
+        slug: input.slug,
         name: input.name,
         code: input.code,
         street: input.street,
@@ -52,6 +76,7 @@ export const mapCreateLocationInput = (input: LocationCreateInput): LocationCrea
         phone_2: input.phone2,
         is_owned_by_viernulvier: input.isOwnedByViernulvier,
         uitdatabank_id: input.uitdatabankId,
+        translations: (input.translations ?? []).map(mapTranslationInput),
     };
 };
 

@@ -19,6 +19,7 @@ describe("useGetLocations", () => {
             {
                 id: "67c95f6a-8bb8-43d6-a4bc-f7e18b86f404",
                 sourceId: 101,
+                slug: null,
                 name: "Main Venue",
                 code: "MV",
                 street: "Mainstraat",
@@ -31,6 +32,7 @@ describe("useGetLocations", () => {
                 isOwnedByViernulvier: true,
                 uitdatabankId: "udb-main",
                 address: "Mainstraat 12, 9000 Gent, Belgium",
+                translations: [{ languageCode: "nl", description: "Hoofdlocatie", history: null }],
             },
         ]);
     });

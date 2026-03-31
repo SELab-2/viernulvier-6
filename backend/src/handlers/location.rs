@@ -58,6 +58,27 @@ pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<Locatio
 }
 
 #[utoipa::path(
+    method(get),
+    path = "/locations/slug/{slug}",
+    tag = "Locations",
+    operation_id = "get_location_by_slug",
+    description = "Get location by slug",
+    params(
+        ("slug" = String, Path, description = "Location slug")
+    ),
+    responses(
+        (status = 200, description = "Success", body = LocationPayload),
+        (status = 404, description = "Not found")
+    )
+)]
+pub async fn get_by_slug(
+    db: Database,
+    Path(slug): Path<String>,
+) -> JsonResponse<LocationPayload> {
+    LocationPayload::by_slug(&db, &slug).await?.json()
+}
+
+#[utoipa::path(
     method(post),
     path = "/locations",
     tag = "Locations",

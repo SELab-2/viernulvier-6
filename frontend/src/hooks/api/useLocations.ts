@@ -13,12 +13,17 @@ import { Location, LocationCreateInput, LocationUpdateInput } from "@/types/mode
 import { queryKeys } from "./query-keys";
 
 const fetchLocations = async (): Promise<Location[]> => {
-    const { data } = await api.get<LocationResponse[]>("/locations");
-    return mapLocations(data);
+    const { data } = await api.get<{ data: LocationResponse[] }>("/locations");
+    return mapLocations(data.data);
 };
 
 const fetchLocationById = async (id: string): Promise<Location> => {
     const { data } = await api.get<LocationResponse>(`/locations/${id}`);
+    return mapLocation(data);
+};
+
+const fetchLocationBySlug = async (slug: string): Promise<Location> => {
+    const { data } = await api.get<LocationResponse>(`/locations/slug/${slug}`);
     return mapLocation(data);
 };
 
@@ -35,6 +40,14 @@ export const useGetLocation = (id: string, options?: { enabled?: boolean }) => {
         queryKey: queryKeys.locations.detail(id),
         queryFn: () => fetchLocationById(id),
         enabled: Boolean(id) && (options?.enabled ?? true),
+    });
+};
+
+export const useGetLocationBySlug = (slug: string, options?: { enabled?: boolean }) => {
+    return useQuery({
+        queryKey: queryKeys.locations.bySlug(slug),
+        queryFn: () => fetchLocationBySlug(slug),
+        enabled: Boolean(slug) && (options?.enabled ?? true),
     });
 };
 

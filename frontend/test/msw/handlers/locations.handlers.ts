@@ -16,11 +16,12 @@ const location = {
     phone_2: null,
     is_owned_by_viernulvier: true,
     uitdatabank_id: "udb-main",
+    translations: [{ language_code: "nl", description: "Hoofdlocatie", history: null }],
 };
 
 export const locationHandlers = [
     http.get(apiUrl("/locations"), () => {
-        return HttpResponse.json([location]);
+        return HttpResponse.json({ data: [location], next_cursor: null });
     }),
     http.get(apiUrl(`/locations/${location.id}`), () => {
         return HttpResponse.json(location);
