@@ -400,7 +400,7 @@ impl ApiImporter {
             self.import_media_item(
                 item,
                 &item_url,
-                production.id,
+                production.production.id,
                 production_source_id,
                 gallery_type,
             )

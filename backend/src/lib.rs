@@ -125,7 +125,6 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
         let api_importer = ApiImporter::new(
             db.clone(),
             api_key.clone(),
-            config.api_key_404.clone(),
             importer_s3_client,
             importer_s3_bucket,
         );
