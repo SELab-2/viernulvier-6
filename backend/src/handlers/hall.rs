@@ -14,7 +14,7 @@ use crate::{
     error::ErrorResponse,
     handlers::{
         IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse,
-        helpers::pagination_query::PaginationQuery,
+        queries::pagination::PaginationQuery,
     },
 };
 

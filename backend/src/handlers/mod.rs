@@ -17,8 +17,10 @@ pub mod series;
 pub mod space;
 pub mod taxonomy;
 pub mod version;
-pub mod helpers {
-    pub mod pagination_query;
+pub mod queries {
+    pub mod pagination;
+    pub mod production;
+    pub mod sort;
 }
 
 pub type JsonResponse<T> = Result<Json<T>, AppError>;

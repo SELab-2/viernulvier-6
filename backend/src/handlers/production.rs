@@ -15,7 +15,7 @@ use crate::{
     error::ErrorResponse,
     handlers::{
         IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse,
-        helpers::pagination_query::PaginationQuery,
+        queries::{pagination::PaginationQuery, production::ProductionSearchQuery},
     },
 };
 
@@ -26,7 +26,8 @@ use crate::{
     operation_id = "get_all_productions",
     description = "Get all productions",
     params(
-        PaginationQuery
+        PaginationQuery,
+        ProductionSearchQuery
     ),
     responses(
         (status = 200, description = "Success", body = PaginatedResponse<ProductionPayload>)
@@ -35,8 +36,9 @@ use crate::{
 pub async fn get_all(
     db: Database,
     Query(pagination): Query<PaginationQuery>,
+    Query(search): Query<ProductionSearchQuery>,
 ) -> JsonResponse<PaginatedResponse<ProductionPayload>> {
-    ProductionPayload::all(&db, pagination.cursor, pagination.limit)
+    ProductionPayload::all(&db, pagination.cursor, pagination.limit, search)
         .await?
         .json()
 }
