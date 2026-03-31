@@ -8,7 +8,7 @@ use database::Database;
 use database::models::entity_type::EntityType;
 use database::models::facet::Facet;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 use utoipa::{
     Modify, OpenApi,
@@ -17,12 +17,12 @@ use utoipa::{
 };
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
-use utoipa_swagger_ui::SwaggerUi;
+use utoipa_swagger_ui::{Config, SwaggerUi};
 
 use crate::config::AppConfig;
 use crate::error::AppError;
 use crate::handlers::{
-    admin, auth, event, hall, location, media, production, space, taxonomy, version,
+    admin, auth, collection, event, hall, location, production, space, taxonomy, version, media,
 };
 
 pub mod config;
@@ -43,7 +43,8 @@ pub struct AppState {
     modifiers(&SecurityAddon),
     components(schemas(EntityType, Facet)),
     tags(
-        (name = "viernulvier_api", description = "API Endpoints")
+        (name = "viernulvier_api", description = "API Endpoints"),
+        (name = "Collections", description = "A saved, titled selection of archive items with a shareable URL. No login required to view.")
     )
 )]
 pub struct ApiDoc;
@@ -116,21 +117,28 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
         info!("S3 config not set, media upload disabled");
     }
 
-    // start api importer (with S3 access for media import)
-    let importer_s3_client = s3_client.clone();
-    let importer_s3_bucket = config.s3.as_ref().map(|s| s.bucket.clone());
-    let api_importer = ApiImporter::new(
-        db.clone(),
-        config.api_key_404.clone(),
-        importer_s3_client,
-        importer_s3_bucket,
-    );
-    tokio::spawn(async move {
-        match api_importer.update_since_last().await {
-            Ok(()) => info!("API importer finished successfully"),
-            Err(e) => error!("API imported ended with error: {e:?}"),
-        }
-    });
+    // start api importer only if api_key_404 is configured
+    if let Some(api_key) = &config.api_key_404 {
+        let importer_s3_client = s3_client.clone();
+        let importer_s3_bucket = config.s3.as_ref().map(|s| s.bucket.clone());
+
+        let api_importer = ApiImporter::new(
+            db.clone(),
+            api_key.clone(),
+            config.api_key_404.clone(),
+            importer_s3_client,
+            importer_s3_bucket,
+        );
+
+        tokio::spawn(async move {
+            match api_importer.update_since_last().await {
+                Ok(()) => info!("API importer finished successfully"),
+                Err(e) => error!("API imported ended with error: {e:?}"),
+            }
+        });
+    } else {
+        warn!("API importer is disabled");
+    }
 
     let state = AppState {
         db,
@@ -191,7 +199,9 @@ pub fn router(state: &AppState) -> Router<AppState> {
     let docs_path = format!("{base_path}/docs");
     let openapi_json_path = format!("{base_path}/openapi.json");
 
-    let swagger_ui = SwaggerUi::new(docs_path).url(openapi_json_path, api_spec);
+    let swagger_ui = SwaggerUi::new(docs_path)
+        .url(openapi_json_path, api_spec)
+        .config(Config::default().doc_expansion("none").filter(true));
 
     Router::new()
         .nest(&base_path, api_router)
@@ -230,6 +240,9 @@ fn public_routes() -> OpenApiRouter<AppState> {
         .routes(routes!(media::get_all))
         .routes(routes!(media::get_one))
         .routes(routes!(media::get_entity_media))
+        // collections
+        .routes(routes!(collection::get_all))
+        .routes(routes!(collection::get_one))
 }
 
 // Only editors can edit data
@@ -257,6 +270,12 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(event::post))
         .routes(routes!(event::delete))
         .routes(routes!(event::put))
+        // Collection
+        .routes(routes!(collection::post))
+        .routes(routes!(collection::put))
+        .routes(routes!(collection::delete))
+        .routes(routes!(collection::post_item))
+        .routes(routes!(collection::delete_item))
         // Media
         .routes(routes!(media::generate_upload_url))
         .routes(routes!(media::put))

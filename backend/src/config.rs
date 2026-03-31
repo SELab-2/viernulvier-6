@@ -1,13 +1,13 @@
 use std::env;
 
-use tracing::info;
+use tracing::{info, warn};
 
 use crate::error::AppError;
 
 #[derive(Debug, Clone)]
 pub struct AppConfig {
     pub database_url: String,
-    pub api_key_404: String,
+    pub api_key_404: Option<String>,
     pub jwt_secret: String,
     pub access_token_expiry_minutes: i8,
     pub refresh_token_expiry_days: i8,
@@ -33,6 +33,11 @@ impl AppConfig {
             .split(',')
             .map(|s| s.trim().to_string())
             .collect();
+
+        let api_key_404 = env::var("API_KEY_404").ok();
+        if api_key_404.is_none() {
+            warn!("API_KEY_404 not set, API importer will be disabled");
+        }
 
         let s3 = match (
             env::var("S3_ENDPOINT"),
@@ -73,7 +78,7 @@ impl AppConfig {
 
         Ok(Self {
             database_url: get_env_var("DATABASE_URL")?,
-            api_key_404: get_env_var("API_KEY_404")?,
+            api_key_404,
             jwt_secret: get_env_var("JWT_SECRET")?,
             access_token_expiry_minutes: 5,
             refresh_token_expiry_days: 7,

@@ -1,10 +1,14 @@
+#![allow(clippy::indexing_slicing)]
 use std::str::FromStr;
 
 use axum::http::StatusCode;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
-use viernulvier_api::dto::production::{ProductionPayload, ProductionPostPayload};
+use viernulvier_api::dto::{
+    paginated::PaginatedResponse,
+    production::{ProductionPayload, ProductionPostPayload},
+};
 
 use crate::common::{into_struct::IntoStruct, router::TestRouter};
 
@@ -18,8 +22,44 @@ async fn get_all(db: PgPool) {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let data: Vec<ProductionPayload> = response.into_struct().await;
-    assert_eq!(data.len(), 5);
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 5);
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn get_paginated(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/productions?limit=2").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // page 1
+    let page1: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+
+    assert_eq!(page1.data.len(), 2, "page 1 should respect the limit of 2");
+    assert!(page1.next_cursor.is_some(), "there should be a next cursor");
+
+    let cursor = page1.next_cursor.unwrap();
+    let url = format!("/productions?limit=2&cursor={cursor}");
+
+    let response = app.get(&url).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // page 2
+    let page2: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+
+    assert_eq!(page2.data.len(), 2, "page 1 should respect the limit of 2");
+    assert_ne!(page1.data[0].id, page2.data[0].id);
+
+    let cursor = page2.next_cursor.unwrap();
+    let url = format!("/productions?limit=2&cursor={cursor}");
+
+    // page 3 (last)
+    let page3: PaginatedResponse<ProductionPayload> = app.get(&url).await.into_struct().await;
+
+    assert_eq!(page3.data.len(), 1, "page 3 should have only the last item");
+    assert!(page3.next_cursor.is_none(), "last page has no cursor");
 }
 
 #[sqlx::test(fixtures("productions"))]
@@ -61,7 +101,12 @@ async fn post_success(db: PgPool) {
 
     let data: ProductionPayload = response.into_struct().await;
     assert_eq!(data.slug, "test-post-production");
-    assert_eq!(data.title_nl.as_deref(), Some("Nieuwe Test Productie"));
+    let nl = data
+        .translations
+        .iter()
+        .find(|t| t.language_code == "nl")
+        .unwrap();
+    assert_eq!(nl.title.as_deref(), Some("Nieuwe Test Productie"));
     assert!(!data.id.is_nil());
 }
 
@@ -75,7 +120,9 @@ async fn put_success(db: PgPool) {
     let update_payload: ProductionPayload = serde_json::from_value(json!({
         "id": target_id,
         "slug": "minimal-event-test",
-        "title_nl": "Aangepaste Titel"
+        "translations": [
+            { "language_code": "nl", "title": "Aangepaste Titel" }
+        ]
     }))
     .expect("Failed to deserialize mock ProductionPayload");
 
@@ -87,7 +134,12 @@ async fn put_success(db: PgPool) {
 
     let data: ProductionPayload = response.into_struct().await;
     assert_eq!(data.id, target_id);
-    assert_eq!(data.title_nl.as_deref(), Some("Aangepaste Titel"));
+    let nl = data
+        .translations
+        .iter()
+        .find(|t| t.language_code == "nl")
+        .unwrap();
+    assert_eq!(nl.title.as_deref(), Some("Aangepaste Titel"));
 }
 
 #[sqlx::test]
@@ -98,7 +150,8 @@ async fn put_not_found(db: PgPool) {
 
     let missing_production: ProductionPayload = serde_json::from_value(json!({
         "id": Uuid::nil(),
-        "slug": "ghost-production"
+        "slug": "ghost-production",
+        "translations": []
     }))
     .expect("Failed to deserialize mock ProductionPayload");
 
@@ -149,8 +202,10 @@ fn mock_post_payload() -> ProductionPostPayload {
     serde_json::from_value(json!({
         "source_id": 9999,
         "slug": "test-post-production",
-        "title_nl": "Nieuwe Test Productie",
-        "title_en": "New Test Production"
+        "translations": [
+            { "language_code": "nl", "title": "Nieuwe Test Productie" },
+            { "language_code": "en", "title": "New Test Production" }
+        ]
     }))
     .expect("Failed to deserialize mock ProductionPostPayload")
 }

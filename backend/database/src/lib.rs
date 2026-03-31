@@ -4,10 +4,10 @@ use tracing::info;
 use crate::{
     error::DatabaseError,
     repos::{
-        event::EventRepo, hall::HallRepo, internal_state::InternalStateRepo,
-        location::LocationRepo, media::MediaRepo, media_variant::MediaVariantRepo,
-        production::ProductionRepo, sessions::SessionRepo, space::SpaceRepo, tag::TagRepo,
-        user::UserRepo,
+        collection::CollectionRepo, event::EventRepo, hall::HallRepo,
+        internal_state::InternalStateRepo, location::LocationRepo, production::ProductionRepo,
+        sessions::SessionRepo, space::SpaceRepo, tag::TagRepo, user::UserRepo, media::MediaRepo,
+        media_variant::MediaVariantRepo,
     },
 };
 
@@ -34,6 +34,7 @@ pub mod models {
 }
 
 pub mod repos {
+    pub mod collection;
     pub mod event;
     pub mod hall;
     pub mod internal_state;
@@ -108,6 +109,10 @@ impl Database {
 
     pub fn events<'a>(&'a self) -> EventRepo<'a> {
         EventRepo::new(&self.db)
+    }
+
+    pub fn collections<'a>(&'a self) -> CollectionRepo<'a> {
+        CollectionRepo::new(&self.db)
     }
 
     pub fn media<'a>(&'a self) -> MediaRepo<'a> {

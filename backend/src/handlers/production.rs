@@ -1,14 +1,21 @@
-use axum::{Json, extract::Path, http::StatusCode};
+use axum::{
+    Json,
+    extract::{Path, Query},
+    http::StatusCode,
+};
 use database::Database;
 use uuid::Uuid;
 
 use crate::{
     dto::{
         event::EventPayload,
+        paginated::PaginatedResponse,
         production::{ProductionPayload, ProductionPostPayload},
     },
     error::ErrorResponse,
-    handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
+    handlers::{
+        IntoApiResponse, JsonResponse, JsonStatusResponse, PaginationQuery, StatusResponse,
+    },
 };
 
 #[utoipa::path(
@@ -17,12 +24,20 @@ use crate::{
     tag = "Productions",
     operation_id = "get_all_productions",
     description = "Get all productions",
+    params(
+        PaginationQuery
+    ),
     responses(
-        (status = 200, description = "Success", body = [ProductionPayload])
+        (status = 200, description = "Success", body = PaginatedResponse<ProductionPayload>)
     )
 )]
-pub async fn get_all(db: Database) -> JsonResponse<Vec<ProductionPayload>> {
-    ProductionPayload::all(&db, 10).await?.json()
+pub async fn get_all(
+    db: Database,
+    Query(pagination): Query<PaginationQuery>,
+) -> JsonResponse<PaginatedResponse<ProductionPayload>> {
+    ProductionPayload::all(&db, pagination.cursor, pagination.limit)
+        .await?
+        .json()
 }
 
 #[utoipa::path(

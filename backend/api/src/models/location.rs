@@ -60,6 +60,7 @@ impl From<ApiLocation> for LocationCreate {
             phone_2: api.phone_2,
             is_owned_by_viernulvier: Some(is_owned_by_viernulvier),
             uitdatabank_id: api.uitdatabank_id,
+            slug: None,
         }
     }
 }

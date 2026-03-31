@@ -12,12 +12,15 @@ use serde::de::DeserializeOwned;
 use sha2::{Digest, Sha256};
 use tracing::{info, warn};
 
-use crate::helper::{extract_source_id};
-use crate::models::media::{ApiMediaGallery, ApiMediaItem};
-use crate::models::space::ApiSpace;
+use crate::helper::extract_source_id;
 use crate::models::{
-    collection::ApiCollection, event::ApiEvent, hall::ApiHall, location::ApiLocation,
-    production::ApiProduction,
+    space::ApiSpace,
+    collection::ApiCollection,
+    event::ApiEvent,
+    hall::ApiHall,
+    location::ApiLocation,
+    production::{ApiProduction, ProductionImportData},
+    media::{ApiMediaGallery, ApiMediaItem},
 };
 use uuid::Uuid;
 use crate::error::ImporterError;
@@ -186,9 +189,10 @@ impl ApiImporter {
                     (production.poster_gallery.clone(), "poster"),
                 ];
 
+                let data: ProductionImportData = production.into();
                 self.db
                     .productions()
-                    .insert(production.into())
+                    .insert(data.production, data.translations)
                     .await
                     .unwrap();
 
@@ -349,7 +353,7 @@ impl ApiImporter {
                     None
                 };
 
-                let event_create = event.to_create(production.id, hall_uuid);
+                let event_create = event.to_create(production.production.id, hall_uuid);
                 self.db.events().insert(event_create).await.unwrap();
             }
             info!("Events: inserted {amt} into db");
@@ -448,7 +452,7 @@ impl ApiImporter {
                         break;
                     }
             }
-            
+
             if cdn_url.is_none() {
                 // TODO: Decide which crops we want to keep: we can only use hd_ready and scale down in the rust API or select a few crops
                 if let Some(hd_crop) = item.crops.iter().find(|c| {
@@ -560,7 +564,7 @@ impl ApiImporter {
                         let ext = format_info.extension;
                         let file_uuid = Uuid::now_v7();
                         let crop_s3_key = format!("media/production/{production_source_id}/{gallery_type}/crop_{name}_{file_uuid}.{ext}");
-                        
+
                         if let Ok((checksum, file_size)) = self.download_and_upload_to_key(
                             s3_client,
                             s3_bucket,
