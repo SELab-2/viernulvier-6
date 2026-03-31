@@ -210,6 +210,8 @@ export function ArchiveSidebar({
                         max={validatedMaxYear}
                         value={yearRange}
                         onChange={setYearRange}
+                        ariaLabelStart={t("year.rangeFrom")}
+                        ariaLabelEnd={t("year.rangeTo")}
                     />
                 </div>
             </FilterGroup>
@@ -310,11 +312,15 @@ function YearRangeSlider({
     max,
     value,
     onChange,
+    ariaLabelStart,
+    ariaLabelEnd,
 }: {
     min: number;
     max: number;
     value: [number, number];
     onChange: (v: [number, number]) => void;
+    ariaLabelStart?: string;
+    ariaLabelEnd?: string;
 }) {
     const containerRef = useRef<HTMLDivElement>(null);
     const drag = useRef<{ thumb: "lo" | "hi" | null; startX: number } | null>(null);
@@ -394,6 +400,7 @@ function YearRangeSlider({
             </div>
             <input
                 type="range"
+                aria-label={ariaLabelStart}
                 min={min}
                 max={max}
                 value={value[0]}
@@ -405,6 +412,7 @@ function YearRangeSlider({
             />
             <input
                 type="range"
+                aria-label={ariaLabelEnd}
                 min={min}
                 max={max}
                 value={value[1]}

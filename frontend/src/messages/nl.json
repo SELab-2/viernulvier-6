@@ -85,7 +85,9 @@
             "plantentuin": "Plantentuin"
         },
         "year": {
-            "label": "Jaar"
+            "label": "Jaar",
+            "rangeFrom": "Startjaar",
+            "rangeTo": "Eindjaar"
         },
         "clearAll": "Wis alles"
     },

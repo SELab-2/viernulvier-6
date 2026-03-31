@@ -85,7 +85,9 @@
             "plantentuin": "Botanical Garden"
         },
         "year": {
-            "label": "Year"
+            "label": "Year",
+            "rangeFrom": "Start year",
+            "rangeTo": "End year"
         },
         "clearAll": "Clear all"
     },
