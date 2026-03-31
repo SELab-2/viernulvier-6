@@ -124,7 +124,9 @@ fn build_payload(
     }
 }
 
-fn item_translations_to_data(translations: &[CollectionItemTranslationPayload]) -> Vec<CollectionItemTranslationData> {
+fn item_translations_to_data(
+    translations: &[CollectionItemTranslationPayload],
+) -> Vec<CollectionItemTranslationData> {
     translations
         .iter()
         .map(|t| CollectionItemTranslationData {
@@ -134,7 +136,9 @@ fn item_translations_to_data(translations: &[CollectionItemTranslationPayload]) 
         .collect()
 }
 
-fn collection_translations_to_data(translations: &[CollectionTranslationPayload]) -> Vec<CollectionTranslationData> {
+fn collection_translations_to_data(
+    translations: &[CollectionTranslationPayload],
+) -> Vec<CollectionTranslationData> {
     translations
         .iter()
         .map(|t| CollectionTranslationData {
@@ -153,7 +157,10 @@ impl CollectionPayload {
 
         let mut items_map: HashMap<Uuid, Vec<CollectionItemWithTranslations>> = HashMap::new();
         for item in all_items {
-            items_map.entry(item.item.collection_id).or_default().push(item);
+            items_map
+                .entry(item.item.collection_id)
+                .or_default()
+                .push(item);
         }
 
         Ok(collections
@@ -166,7 +173,11 @@ impl CollectionPayload {
     }
 
     pub async fn by_id(db: &Database, id: Uuid) -> Result<Self, AppError> {
-        let cwt = db.collections().by_id(id).await?.ok_or(AppError::NotFound)?;
+        let cwt = db
+            .collections()
+            .by_id(id)
+            .await?
+            .ok_or(AppError::NotFound)?;
         let items = db.collections().items_for(id).await?;
         Ok(build_payload(cwt, items))
     }
@@ -199,7 +210,11 @@ impl CollectionPostPayload {
 }
 
 impl CollectionItemPostPayload {
-    pub async fn add_to(self, db: &Database, collection_id: Uuid) -> Result<CollectionItemPayload, AppError> {
+    pub async fn add_to(
+        self,
+        db: &Database,
+        collection_id: Uuid,
+    ) -> Result<CollectionItemPayload, AppError> {
         let translations = item_translations_to_data(&self.translations);
         Ok(db
             .collections()

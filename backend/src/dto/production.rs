@@ -49,7 +49,11 @@ impl ProductionPayload {
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {
         let translations = translations_to_data(&self.translations);
         let production: Production = self.into();
-        Ok(db.productions().update(production, translations).await?.into())
+        Ok(db
+            .productions()
+            .update(production, translations)
+            .await?
+            .into())
     }
 
     pub async fn delete(db: &Database, id: Uuid) -> Result<(), AppError> {
@@ -61,11 +65,17 @@ impl ProductionPostPayload {
     pub async fn create(self, db: &Database) -> Result<ProductionPayload, AppError> {
         let translations = translations_to_data(&self.translations);
         let production_create: ProductionCreate = self.into();
-        Ok(db.productions().insert(production_create, translations).await?.into())
+        Ok(db
+            .productions()
+            .insert(production_create, translations)
+            .await?
+            .into())
     }
 }
 
-fn translations_to_data(translations: &[ProductionTranslationPayload]) -> Vec<ProductionTranslationData> {
+fn translations_to_data(
+    translations: &[ProductionTranslationPayload],
+) -> Vec<ProductionTranslationData> {
     translations
         .iter()
         .map(|t| ProductionTranslationData {

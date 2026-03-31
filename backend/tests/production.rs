@@ -101,7 +101,11 @@ async fn post_success(db: PgPool) {
 
     let data: ProductionPayload = response.into_struct().await;
     assert_eq!(data.slug, "test-post-production");
-    let nl = data.translations.iter().find(|t| t.language_code == "nl").unwrap();
+    let nl = data
+        .translations
+        .iter()
+        .find(|t| t.language_code == "nl")
+        .unwrap();
     assert_eq!(nl.title.as_deref(), Some("Nieuwe Test Productie"));
     assert!(!data.id.is_nil());
 }
@@ -130,7 +134,11 @@ async fn put_success(db: PgPool) {
 
     let data: ProductionPayload = response.into_struct().await;
     assert_eq!(data.id, target_id);
-    let nl = data.translations.iter().find(|t| t.language_code == "nl").unwrap();
+    let nl = data
+        .translations
+        .iter()
+        .find(|t| t.language_code == "nl")
+        .unwrap();
     assert_eq!(nl.title.as_deref(), Some("Aangepaste Titel"));
 }
 

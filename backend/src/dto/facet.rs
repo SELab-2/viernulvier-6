@@ -47,6 +47,7 @@ impl FacetResponse {
     }
 }
 
+#[allow(clippy::single_match_else)]
 fn group_into_facets(rows: Vec<TaxonomyRow>) -> Vec<FacetResponse> {
     let mut facets: Vec<FacetResponse> = Vec::new();
 
@@ -64,7 +65,11 @@ fn group_into_facets(rows: Vec<TaxonomyRow>) -> Vec<FacetResponse> {
         };
 
         // Only the first occurrence per language wins
-        if !facet.translations.iter().any(|t| t.language_code == row.language_code) {
+        if !facet
+            .translations
+            .iter()
+            .any(|t| t.language_code == row.language_code)
+        {
             facet.translations.push(FacetTranslationPayload {
                 language_code: row.language_code.clone(),
                 label: row.facet_label.clone(),
