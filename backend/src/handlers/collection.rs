@@ -156,6 +156,9 @@ pub async fn delete_item(
     db: Database,
     Path((collection_id, item_id)): Path<(Uuid, Uuid)>,
 ) -> StatusResponse {
-    db.collections().delete_item(collection_id, item_id).await?.ok_or(AppError::NotFound)?;
+    db.collections()
+        .delete_item(collection_id, item_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
     Ok(StatusCode::NO_CONTENT)
 }

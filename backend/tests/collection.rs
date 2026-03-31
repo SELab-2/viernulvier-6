@@ -36,7 +36,11 @@ async fn get_one_success(db: PgPool) {
     assert_eq!(data.id, target_id);
     assert_eq!(data.slug, "zomerselectie");
 
-    let nl = data.translations.iter().find(|t| t.language_code == "nl").expect("Dutch translation not found");
+    let nl = data
+        .translations
+        .iter()
+        .find(|t| t.language_code == "nl")
+        .expect("Dutch translation not found");
     assert_eq!(nl.title, "Zomerselectie");
 
     assert_eq!(data.items.len(), 2);
@@ -70,8 +74,16 @@ async fn post_success(db: PgPool) {
     let data: CollectionPayload = response.into_struct().await;
     assert_eq!(data.slug, "test-selectie");
 
-    let nl = data.translations.iter().find(|t| t.language_code == "nl").expect("Dutch translation not found");
-    let en = data.translations.iter().find(|t| t.language_code == "en").expect("English translation not found");
+    let nl = data
+        .translations
+        .iter()
+        .find(|t| t.language_code == "nl")
+        .expect("Dutch translation not found");
+    let en = data
+        .translations
+        .iter()
+        .find(|t| t.language_code == "en")
+        .expect("English translation not found");
     assert_eq!(nl.title, "Test Selectie");
     assert_eq!(en.title, "Test Selection");
     assert_eq!(nl.description, "");
@@ -122,7 +134,11 @@ async fn put_success(db: PgPool) {
     assert_eq!(data.id, target_id);
     assert_eq!(data.slug, "dans-2025-bijgewerkt");
 
-    let nl = data.translations.iter().find(|t| t.language_code == "nl").expect("Dutch translation not found");
+    let nl = data
+        .translations
+        .iter()
+        .find(|t| t.language_code == "nl")
+        .expect("Dutch translation not found");
     assert_eq!(nl.title, "Dans 2025 (bijgewerkt)");
 }
 
@@ -181,9 +197,7 @@ async fn delete_success(db: PgPool) {
 async fn delete_not_found(db: PgPool) {
     let app = TestRouter::as_editor(db).await;
 
-    let response = app
-        .delete(&format!("/collections/{}", Uuid::nil()))
-        .await;
+    let response = app.delete(&format!("/collections/{}", Uuid::nil())).await;
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
@@ -202,14 +216,20 @@ async fn post_item_success(db: PgPool) {
     .expect("Failed to deserialize CollectionItemPostPayload");
 
     let unauthenticated_response = unauthenticated_app
-        .post(&format!("/collections/{collection_id}/items"), &item_payload)
+        .post(
+            &format!("/collections/{collection_id}/items"),
+            &item_payload,
+        )
         .await;
     assert_eq!(unauthenticated_response.status(), StatusCode::UNAUTHORIZED);
 
     let app = TestRouter::as_editor(db).await;
 
     let response = app
-        .post(&format!("/collections/{collection_id}/items"), &item_payload)
+        .post(
+            &format!("/collections/{collection_id}/items"),
+            &item_payload,
+        )
         .await;
     assert_eq!(response.status(), StatusCode::CREATED);
 
@@ -250,7 +270,10 @@ async fn delete_item_not_found(db: PgPool) {
     let app = TestRouter::as_editor(db).await;
 
     let response = app
-        .delete(&format!("/collections/{collection_id}/items/{}", Uuid::nil()))
+        .delete(&format!(
+            "/collections/{collection_id}/items/{}",
+            Uuid::nil()
+        ))
         .await;
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }

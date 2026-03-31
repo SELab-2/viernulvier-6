@@ -5,8 +5,8 @@ use utoipa::IntoParams;
 use crate::error::AppError;
 
 pub mod admin;
-pub mod collection;
 pub mod auth;
+pub mod collection;
 pub mod event;
 pub mod hall;
 pub mod location;
