@@ -89,8 +89,8 @@
     "Home": {
         "loading": "Loading archive...",
         "hero": {
-            "title": "The story of De Vooruit",
-            "subtitle": "Over a century of theatre, dance, music and nightlife in the heart of Ghent.",
+            "title": "The VIERNULVIER archive",
+            "subtitle": "Over 40 years of theatre, dance, music and nightlife in Ghent.",
             "searchPlaceholder": "Search the archive\u2026"
         },
         "tags": {
@@ -101,8 +101,7 @@
         },
         "about": {
             "title": "Arts Centre VIERNULVIER",
-            "text": "Since 1883, De Vooruit has been a breeding ground for art, culture and society. From revolutionary parties to contemporary performance \u2014 the archive preserves it all.",
-            "address": "Sint-Pietersnieuwstraat 23 \u00b7 9000 Ghent"
+            "text": "Since 1883, De Vooruit has been a breeding ground for art, culture and society. From revolutionary parties to contemporary performance. The archive preserves it all."
         },
         "latest": {
             "label": "Latest productions",
