@@ -87,7 +87,7 @@ export default function SearchPage() {
         };
     }, [loadMore]);
 
-    const maxYear = new Date().getFullYear();
+    const maxYear = useMemo(() => new Date().getFullYear(), []);
 
     if (isLoading && allProductions.length === 0) {
         return (
