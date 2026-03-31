@@ -6,6 +6,7 @@ use uuid::Uuid;
 use crate::{
     error::DatabaseError,
     models::article::{Article, ArticleCreate, ArticleRelations, ArticleStatus},
+    models::entity_type::EntityType,
 };
 
 pub struct ArticleRepo<'a> {
@@ -53,9 +54,27 @@ impl<'a> ArticleRepo<'a> {
     }
 
     pub async fn slug_exists(&self, slug: &str) -> Result<bool, DatabaseError> {
-        let row = sqlx::query_scalar!("SELECT EXISTS(SELECT 1 FROM articles WHERE slug = $1)", slug)
-            .fetch_one(self.db)
-            .await?;
+        let row = sqlx::query_scalar!(
+            "SELECT EXISTS(SELECT 1 FROM articles WHERE slug = $1)",
+            slug
+        )
+        .fetch_one(self.db)
+        .await?;
+        Ok(row.unwrap_or(false))
+    }
+
+    pub async fn slug_exists_excluding(
+        &self,
+        slug: &str,
+        exclude_id: Uuid,
+    ) -> Result<bool, DatabaseError> {
+        let row = sqlx::query_scalar!(
+            "SELECT EXISTS(SELECT 1 FROM articles WHERE slug = $1 AND id != $2)",
+            slug,
+            exclude_id
+        )
+        .fetch_one(self.db)
+        .await?;
         Ok(row.unwrap_or(false))
     }
 
@@ -86,11 +105,10 @@ impl<'a> ArticleRepo<'a> {
         subject_end: Option<NaiveDate>,
         tag_slug: Option<String>,
         related_entity_id: Option<Uuid>,
-        related_entity_type: Option<String>,
+        related_entity_type: Option<EntityType>,
     ) -> Result<Vec<Article>, DatabaseError> {
-        let mut builder = sqlx::QueryBuilder::new(
-            "SELECT a.* FROM articles a WHERE a.status = 'published'",
-        );
+        let mut builder =
+            sqlx::QueryBuilder::new("SELECT a.* FROM articles a WHERE a.status = 'published'");
 
         if let Some(end) = subject_end {
             builder.push(" AND (a.subject_period_start IS NULL OR a.subject_period_start <= ");
@@ -112,22 +130,13 @@ impl<'a> ArticleRepo<'a> {
         }
 
         if let (Some(entity_id), Some(entity_type)) = (related_entity_id, related_entity_type) {
-            let join_table = match entity_type.as_str() {
-                "production" => Some("articles_about_productions"),
-                "artist" => Some("articles_about_artists"),
-                "location" => Some("articles_about_locations"),
-                "event" => Some("articles_about_events"),
-                _ => None,
-            };
-            let id_col = match entity_type.as_str() {
-                "production" => Some("production_id"),
-                "artist" => Some("artist_id"),
-                "location" => Some("location_id"),
-                "event" => Some("event_id"),
-                _ => None,
-            };
-            if let (Some(table), Some(col)) = (join_table, id_col) {
-                builder.push(format!(" AND EXISTS (SELECT 1 FROM {table} r WHERE r.article_id = a.id AND r.{col} = "));
+            if let (Some(table), Some(col)) = (
+                entity_type.article_join_table(),
+                entity_type.article_id_column(),
+            ) {
+                builder.push(format!(
+                    " AND EXISTS (SELECT 1 FROM {table} r WHERE r.article_id = a.id AND r.{col} = "
+                ));
                 builder.push_bind(entity_id);
                 builder.push(")");
             }
@@ -185,18 +194,30 @@ impl<'a> ArticleRepo<'a> {
     ) -> Result<ArticleRelations, DatabaseError> {
         let mut tx = self.db.begin().await?;
 
-        sqlx::query!("DELETE FROM articles_about_productions WHERE article_id = $1", article_id)
-            .execute(&mut *tx)
-            .await?;
-        sqlx::query!("DELETE FROM articles_about_artists WHERE article_id = $1", article_id)
-            .execute(&mut *tx)
-            .await?;
-        sqlx::query!("DELETE FROM articles_about_locations WHERE article_id = $1", article_id)
-            .execute(&mut *tx)
-            .await?;
-        sqlx::query!("DELETE FROM articles_about_events WHERE article_id = $1", article_id)
-            .execute(&mut *tx)
-            .await?;
+        sqlx::query!(
+            "DELETE FROM articles_about_productions WHERE article_id = $1",
+            article_id
+        )
+        .execute(&mut *tx)
+        .await?;
+        sqlx::query!(
+            "DELETE FROM articles_about_artists WHERE article_id = $1",
+            article_id
+        )
+        .execute(&mut *tx)
+        .await?;
+        sqlx::query!(
+            "DELETE FROM articles_about_locations WHERE article_id = $1",
+            article_id
+        )
+        .execute(&mut *tx)
+        .await?;
+        sqlx::query!(
+            "DELETE FROM articles_about_events WHERE article_id = $1",
+            article_id
+        )
+        .execute(&mut *tx)
+        .await?;
 
         for production_id in &relations.production_ids {
             sqlx::query!(

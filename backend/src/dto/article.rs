@@ -2,6 +2,7 @@ use chrono::{DateTime, NaiveDate, Utc};
 use database::{
     Database,
     models::article::{Article, ArticleCreate, ArticleRelations, ArticleStatus},
+    models::entity_type::EntityType,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -66,6 +67,15 @@ pub struct ArticleUpdatePayload {
 impl ArticleUpdatePayload {
     pub async fn update(self, db: &Database, id: Uuid) -> Result<ArticlePayload, AppError> {
         let existing = db.articles().by_id(id).await?;
+
+        if self.slug != existing.slug && db.articles().slug_exists_excluding(&self.slug, id).await?
+        {
+            return Err(AppError::Conflict(format!(
+                "slug '{}' is already taken",
+                self.slug
+            )));
+        }
+
         let article = Article {
             id: existing.id,
             created_at: existing.created_at,
@@ -123,7 +133,7 @@ impl ArticleListPayload {
         subject_end: Option<NaiveDate>,
         tag_slug: Option<String>,
         related_entity_id: Option<Uuid>,
-        related_entity_type: Option<String>,
+        related_entity_type: Option<EntityType>,
     ) -> Result<Vec<Self>, AppError> {
         Ok(db
             .articles()

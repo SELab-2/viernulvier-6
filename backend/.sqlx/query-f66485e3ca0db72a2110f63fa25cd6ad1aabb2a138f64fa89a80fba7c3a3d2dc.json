@@ -40,6 +40,7 @@
                 "artist",
                 "article",
                 "media",
+                "location",
                 "event"
               ]
             }

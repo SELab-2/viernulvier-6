@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
 };
 use chrono::NaiveDate;
-use database::Database;
+use database::{Database, models::entity_type::EntityType};
 use serde::Deserialize;
 use utoipa::IntoParams;
 use uuid::Uuid;
@@ -24,10 +24,8 @@ pub struct ArticleListParams {
     pub subject_end: Option<NaiveDate>,
     pub tag_slug: Option<String>,
     pub related_entity_id: Option<Uuid>,
-    pub related_entity_type: Option<String>,
+    pub related_entity_type: Option<EntityType>,
 }
-
-// ─── Public routes ────────────────────────────────────────────────────────────
 
 #[utoipa::path(
     method(get),
@@ -73,8 +71,6 @@ pub async fn get_all(
 pub async fn get_one(db: Database, Path(slug): Path<String>) -> JsonResponse<ArticlePayload> {
     ArticlePayload::by_slug_published(&db, &slug).await?.json()
 }
-
-// ─── CMS/editor routes ────────────────────────────────────────────────────────
 
 #[utoipa::path(
     method(get),
