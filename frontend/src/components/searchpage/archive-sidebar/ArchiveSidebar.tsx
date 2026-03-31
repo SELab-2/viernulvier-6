@@ -320,7 +320,18 @@ function YearRangeSlider({
     const drag = useRef<{ thumb: "lo" | "hi" | null; startX: number } | null>(null);
     const [isDragging, setIsDragging] = useState(false);
 
-    const frac = (v: number) => ((v - min) / (max - min)) * 100;
+    const invalidRange = !Number.isFinite(min) || !Number.isFinite(max) || min >= max;
+
+    const frac = (v: number) => {
+        const range = max - min;
+        if (range === 0 || !Number.isFinite(range)) return 0;
+        return ((v - min) / range) * 100;
+    };
+
+    if (invalidRange) {
+        console.error("YearRangeSlider: Invalid min/max props", { min, max });
+        return <div>Error: Invalid year range</div>;
+    }
 
     const toValue = (clientX: number) => {
         if (!containerRef.current) return min;
