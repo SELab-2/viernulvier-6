@@ -9,27 +9,30 @@ import type { Facet } from "@/types/models/taxonomy.types";
 import { getLabel } from "@/lib/utils";
 
 import { YearRangeSlider } from "./YearRangeSlider";
+import { DateRangePicker } from "./DateRangePicker";
 
 const CATEGORIES = ["artists", "productions", "articles", "posters"] as const;
+
+type DateFilterMode = "year" | "exact";
 
 interface ArchiveSidebarProps {
     locations?: Location[];
     facets?: Facet[];
-    minYear: number;
-    maxYear: number;
+    minYear?: number;
+    maxYear?: number;
     onFilterChange?: (filters: {
         categories: Set<string>;
         tags: Set<string>;
         locations: Set<string>;
-        yearRange: [number, number];
+        dateRange: [Date, Date];
     }) => void;
 }
 
 export function ArchiveSidebar({
     locations = [],
     facets = [],
-    minYear,
-    maxYear,
+    minYear = 1980,
+    maxYear = new Date().getFullYear(),
     onFilterChange,
 }: ArchiveSidebarProps) {
     const t = useTranslations("Sidebar");
@@ -44,33 +47,52 @@ export function ArchiveSidebar({
     const validatedMinYear = Math.min(minYear, maxYear);
     const validatedMaxYear = Math.max(minYear, maxYear);
 
+    const minDate = new Date(validatedMinYear, 0, 1);
+    const maxDate = new Date(validatedMaxYear, 11, 31);
+
+    // ── Date filter state ─────────────────────────────────────────────
+    const [dateMode, setDateMode] = useState<DateFilterMode>("year");
     const [yearRange, setYearRange] = useState<[number, number]>([
         validatedMinYear,
         validatedMaxYear,
     ]);
+    const [dateRange, setDateRange] = useState<[Date, Date]>([minDate, maxDate]);
 
+    /** The effective date range used for filtering, derived from whichever mode is active. */
+    const effectiveDateRange: [Date, Date] =
+        dateMode === "year"
+            ? [new Date(yearRange[0], 0, 1), new Date(yearRange[1], 11, 31)]
+            : dateRange;
+
+    const switchToExact = () => {
+        // Initialise the exact picker from the current year slider position
+        setDateRange([new Date(yearRange[0], 0, 1), new Date(yearRange[1], 11, 31)]);
+        setDateMode("exact");
+    };
+
+    const switchToYear = () => {
+        // Snap the year slider to the years from the exact picker
+        setYearRange([dateRange[0].getFullYear(), dateRange[1].getFullYear()]);
+        setDateMode("year");
+    };
+
+    // ── Debounced filter emission ─────────────────────────────────────
     const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
-        if (debounceTimerRef.current) {
-            clearTimeout(debounceTimerRef.current);
-        }
-
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
         debounceTimerRef.current = setTimeout(() => {
             onFilterChange?.({
                 categories: checkedCategories,
                 tags: activeTags,
                 locations: checkedLocations,
-                yearRange,
+                dateRange: effectiveDateRange,
             });
         }, 300);
-
         return () => {
-            if (debounceTimerRef.current) {
-                clearTimeout(debounceTimerRef.current);
-            }
+            if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
         };
-    }, [checkedCategories, activeTags, checkedLocations, yearRange, onFilterChange]);
+    }, [checkedCategories, activeTags, checkedLocations, effectiveDateRange, onFilterChange]);
 
     const toggleTag = useCallback((tag: string) => {
         setActiveTags((prev) => {
@@ -103,7 +125,9 @@ export function ArchiveSidebar({
         setActiveTags(new Set());
         setCheckedCategories(new Set());
         setCheckedLocations(new Set());
+        setDateMode("year");
         setYearRange([validatedMinYear, validatedMaxYear]);
+        setDateRange([new Date(validatedMinYear, 0, 1), new Date(validatedMaxYear, 11, 31)]);
     }, [validatedMinYear, validatedMaxYear]);
 
     const sidebarContent = (
@@ -201,20 +225,50 @@ export function ArchiveSidebar({
             </FilterGroup>
 
             <FilterGroup label={t("year.label")}>
-                <div className="flex flex-col gap-3.5 pb-2.5">
-                    <div className="text-foreground flex justify-between font-mono text-[13px] select-text">
-                        <span>{yearRange[0]}</span>
-                        <span className="text-muted-foreground text-[11px]">—</span>
-                        <span>{yearRange[1]}</span>
+                <div className="pb-3">
+                    {/* ── Mode tabs ──────────────────────────────────── */}
+                    <div className="mb-3.5 flex">
+                        <ModeTab
+                            label="Year range"
+                            active={dateMode === "year"}
+                            onClick={switchToYear}
+                        />
+                        <ModeTab
+                            label="Exact dates"
+                            active={dateMode === "exact"}
+                            onClick={switchToExact}
+                        />
                     </div>
-                    <YearRangeSlider
-                        min={validatedMinYear}
-                        max={validatedMaxYear}
-                        value={yearRange}
-                        onChange={setYearRange}
-                        ariaLabelStart={t("year.rangeFrom")}
-                        ariaLabelEnd={t("year.rangeTo")}
-                    />
+
+                    {/* ── Year range mode ────────────────────────────── */}
+                    {dateMode === "year" && (
+                        <>
+                            <div className="text-foreground mb-3.5 flex justify-between font-mono text-[13px] select-text">
+                                <span>{yearRange[0]}</span>
+                                <span className="text-muted-foreground text-[11px]">—</span>
+                                <span>{yearRange[1]}</span>
+                            </div>
+                            <YearRangeSlider
+                                min={validatedMinYear}
+                                max={validatedMaxYear}
+                                value={yearRange}
+                                onChange={setYearRange}
+                                ariaLabelStart={t("year.rangeFrom")}
+                                ariaLabelEnd={t("year.rangeTo")}
+                            />
+                        </>
+                    )}
+
+                    {/* ── Exact date mode ────────────────────────────── */}
+                    {dateMode === "exact" && (
+                        <DateRangePicker
+                            startDate={dateRange[0]}
+                            endDate={dateRange[1]}
+                            minDate={minDate}
+                            maxDate={maxDate}
+                            onChange={(start, end) => setDateRange([start, end])}
+                        />
+                    )}
                 </div>
             </FilterGroup>
 
@@ -259,6 +313,33 @@ export function ArchiveSidebar({
         </>
     );
 }
+
+// ── Mode tab button ────────────────────────────────────────────────────
+
+function ModeTab({
+    label,
+    active,
+    onClick,
+}: {
+    label: string;
+    active: boolean;
+    onClick: () => void;
+}) {
+    return (
+        <button
+            onClick={onClick}
+            className={`flex-1 cursor-pointer border py-1.5 font-mono text-[9px] font-medium tracking-[1.1px] uppercase transition-all ${
+                active
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+            }`}
+        >
+            {label}
+        </button>
+    );
+}
+
+// ── Shared sub-components ──────────────────────────────────────────────
 
 function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
     return (
