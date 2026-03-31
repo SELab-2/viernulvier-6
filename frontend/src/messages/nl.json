@@ -89,8 +89,8 @@
     "Home": {
         "loading": "Archief laden...",
         "hero": {
-            "title": "Het verhaal van De Vooruit",
-            "subtitle": "Meer dan een eeuw theater, dans, muziek en nachtleven in het hart van Gent.",
+            "title": "Het archief van VIERNULVIER",
+            "subtitle": "Meer dan 40 jaar theater, dans, muziek en nachtleven in Gent.",
             "searchPlaceholder": "Zoek in het archief\u2026"
         },
         "tags": {
@@ -101,8 +101,7 @@
         },
         "about": {
             "title": "Kunstencentrum VIERNULVIER",
-            "text": "Sinds 1883 is De Vooruit een broedplaats voor kunst, cultuur en samenleving. Van revolutionaire feesten tot hedendaagse performance \u2014 het archief bewaart het allemaal.",
-            "address": "Sint-Pietersnieuwstraat 23 \u00b7 9000 Gent"
+            "text": "Sinds 1883 is De Vooruit een broedplaats voor kunst, cultuur en samenleving. Van revolutionaire feesten tot hedendaagse performance. Het archief bewaart het allemaal."
         },
         "latest": {
             "label": "Laatste producties",

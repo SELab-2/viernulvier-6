@@ -132,9 +132,6 @@ export default function HomePage() {
                 <p className="text-muted-foreground font-body max-w-[480px] text-sm leading-relaxed">
                     {t("about.text")}
                 </p>
-                <span className="text-muted-foreground font-mono text-[9px] tracking-[1.4px] uppercase sm:text-[10px]">
-                    {t("about.address")}
-                </span>
             </section>
         </>
     );
