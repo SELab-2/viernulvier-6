@@ -47,13 +47,27 @@ export function ArchiveSidebar({
         validatedMaxYear,
     ]);
 
+    const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     useEffect(() => {
-        onFilterChange?.({
-            categories: checkedCategories,
-            tags: activeTags,
-            locations: checkedLocations,
-            yearRange,
-        });
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+
+        debounceTimerRef.current = setTimeout(() => {
+            onFilterChange?.({
+                categories: checkedCategories,
+                tags: activeTags,
+                locations: checkedLocations,
+                yearRange,
+            });
+        }, 300);
+
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
     }, [checkedCategories, activeTags, checkedLocations, yearRange, onFilterChange]);
 
     const toggleTag = useCallback((tag: string) => {
