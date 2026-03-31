@@ -235,6 +235,7 @@
         "searchArchive": "View all productions at this location",
         "searchNotImplemented": "Search filtering by location is not yet available.",
         "loading": "Loading location...",
-        "notFound": "Location not found."
+        "notFound": "Location not found.",
+        "error": "Something went wrong while loading this location."
     }
 }

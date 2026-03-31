@@ -117,6 +117,7 @@ pub struct LocationPayload {
     pub uitdatabank_id: Option<String>,
     pub slug: Option<String>,
 
+    #[serde(default)]
     pub translations: Vec<LocationTranslationPayload>,
 }
 
@@ -137,6 +138,7 @@ pub struct LocationPostPayload {
     pub uitdatabank_id: Option<String>,
     pub slug: Option<String>,
 
+    #[serde(default)]
     pub translations: Vec<LocationTranslationPayload>,
 }
 

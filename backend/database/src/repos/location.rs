@@ -179,6 +179,10 @@ impl<'a> LocationRepo<'a> {
         translations: &[LocationTranslationData],
     ) -> Result<(), DatabaseError> {
         if translations.is_empty() {
+            sqlx::query("DELETE FROM location_translations WHERE location_id = $1")
+                .bind(location_id)
+                .execute(self.db)
+                .await?;
             return Ok(());
         }
 

@@ -20,7 +20,7 @@ export default function LocationPage() {
 
     const [headerQuery, setHeaderQuery] = useState("");
 
-    const { data: location, isLoading: locationLoading } = useGetLocationBySlug(slug);
+    const { data: location, isLoading: locationLoading, isError } = useGetLocationBySlug(slug);
     const { data: spaces = [] } = useGetSpaces();
     const { data: halls = [] } = useGetHalls();
 
@@ -47,6 +47,22 @@ export default function LocationPage() {
                     searchHint={tSearch("hint")}
                 />
                 <LoadingState message={t("loading")} />
+            </>
+        );
+    }
+
+    if (isError) {
+        return (
+            <>
+                <SearchHeader
+                    query={headerQuery}
+                    onQueryChange={setHeaderQuery}
+                    searchPlaceholder={tSearch("placeholder")}
+                    searchHint={tSearch("hint")}
+                />
+                <div className="flex min-h-[50vh] flex-col items-center justify-center gap-2">
+                    <p className="text-muted-foreground text-sm">{t("error")}</p>
+                </div>
             </>
         );
     }

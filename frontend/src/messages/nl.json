@@ -235,6 +235,7 @@
         "searchArchive": "Bekijk alle voorstellingen op deze locatie",
         "searchNotImplemented": "Zoeken op locatie is nog niet beschikbaar.",
         "loading": "Locatie laden...",
-        "notFound": "Locatie niet gevonden."
+        "notFound": "Locatie niet gevonden.",
+        "error": "Er ging iets mis bij het laden van deze locatie."
     }
 }
