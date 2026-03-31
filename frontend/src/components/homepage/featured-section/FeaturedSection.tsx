@@ -41,13 +41,13 @@ export function FeaturedSection() {
     const t = useTranslations("Featured");
 
     return (
-        <div className="border-foreground border-b-2">
+        <div>
             <div className="text-muted-foreground mb-3 flex items-center gap-2.5 font-mono text-[9px] font-medium tracking-[2px] uppercase">
                 {t("label")}
                 <span className="bg-muted/40 h-px flex-1" />
             </div>
 
-            <div className="bg-muted border-muted -mx-4 grid grid-cols-1 gap-px border sm:-mx-[30px] sm:grid-cols-[1.6fr_1fr_1fr]">
+            <div className="bg-muted border-foreground -mx-4 grid grid-cols-1 gap-px border-x border-b-2 sm:-mx-[30px] sm:grid-cols-[1.6fr_1fr_1fr]">
                 {FEATURED_ITEMS.map((item, index) => (
                     <FeaturedCard key={item.title} item={item} isFirst={index === 0} />
                 ))}
