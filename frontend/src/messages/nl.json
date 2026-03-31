@@ -87,7 +87,40 @@
         "year": {
             "label": "Jaar",
             "rangeFrom": "Startjaar",
-            "rangeTo": "Eindjaar"
+            "rangeTo": "Eindjaar",
+            "rangeMode": "Jaarbereik",
+            "exactMode": "Exacte datums",
+            "startYear": "Startjaar",
+            "endYear": "Eindjaar",
+            "monthsShort": [
+                "Jan",
+                "Feb",
+                "Mrt",
+                "Apr",
+                "Mei",
+                "Jun",
+                "Jul",
+                "Aug",
+                "Sep",
+                "Okt",
+                "Nov",
+                "Dec"
+            ],
+            "monthsLong": [
+                "Januari",
+                "Februari",
+                "Maart",
+                "April",
+                "Mei",
+                "Juni",
+                "Juli",
+                "Augustus",
+                "September",
+                "Oktober",
+                "November",
+                "December"
+            ],
+            "weekdays": ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"]
         },
         "clearAll": "Wis alles"
     },

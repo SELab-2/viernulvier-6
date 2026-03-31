@@ -226,12 +226,12 @@ export function ArchiveSidebar({
             <div className="border-border border-t pt-2.5 pr-5 pb-3 pl-4">
                 <div className="mb-3.5 flex gap-5">
                     <ModeTab
-                        label="Year range"
+                        label={t("year.rangeMode")}
                         active={dateMode === "year"}
                         onClick={switchToYear}
                     />
                     <ModeTab
-                        label="Exact dates"
+                        label={t("year.exactMode")}
                         active={dateMode === "exact"}
                         onClick={switchToExact}
                     />

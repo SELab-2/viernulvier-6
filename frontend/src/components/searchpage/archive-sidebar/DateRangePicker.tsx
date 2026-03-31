@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { ChevronLeft } from "lucide-react";
 
 interface DateRangePickerProps {
@@ -13,40 +14,6 @@ interface DateRangePickerProps {
 
 type View = "year" | "month" | "day";
 type Picking = "start" | "end";
-
-const MONTHS_SHORT = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-];
-const MONTHS_LONG = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-];
-const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
-
-function formatDate(d: Date) {
-    return `${d.getDate().toString().padStart(2, "0")} ${MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`;
-}
 
 function getDaysInMonth(year: number, month: number) {
     return new Date(year, month + 1, 0).getDate();
@@ -72,8 +39,18 @@ export function DateRangePicker({
     maxDate,
     onChange,
 }: DateRangePickerProps) {
+    const t = useTranslations("Sidebar");
+    const monthsShort = t.raw("year.monthsShort") as string[];
+    const monthsLong = t.raw("year.monthsLong") as string[];
+    const weekdays = t.raw("year.weekdays") as string[];
+    const startYearLabel = t("year.startYear");
+    const endYearLabel = t("year.endYear");
+
     const minYear = minDate.getFullYear();
     const maxYear = maxDate.getFullYear();
+
+    const formatDate = (d: Date) =>
+        `${d.getDate().toString().padStart(2, "0")} ${monthsShort[d.getMonth()]} ${d.getFullYear()}`;
 
     const [open, setOpen] = useState(false);
     const [picking, setPicking] = useState<Picking>("start");
@@ -174,9 +151,9 @@ export function DateRangePicker({
     };
 
     const panelHeader = () => {
-        if (view === "year") return picking === "start" ? "Start year" : "End year";
+        if (view === "year") return picking === "start" ? startYearLabel : endYearLabel;
         if (view === "month") return String(browseYear);
-        return `${MONTHS_LONG[browseMonth]} ${browseYear}`;
+        return `${monthsLong[browseMonth]} ${browseYear}`;
     };
 
     const years: number[] = [];
@@ -258,7 +235,7 @@ export function DateRangePicker({
                     {/* Month grid */}
                     {view === "month" && (
                         <div className="grid grid-cols-3 gap-0.5 p-1.5">
-                            {MONTHS_SHORT.map((m, i) => {
+                            {monthsShort.map((m, i) => {
                                 const disabled = isMonthDisabled(i);
                                 const selected = i === activeMonth && browseYear === activeYear;
                                 return (
@@ -285,7 +262,7 @@ export function DateRangePicker({
                     {view === "day" && (
                         <div className="p-1.5">
                             <div className="mb-0.5 grid grid-cols-7">
-                                {WEEKDAYS.map((d) => (
+                                {weekdays.map((d) => (
                                     <span
                                         key={d}
                                         className="text-muted-foreground py-1 text-center font-mono text-[9px] tracking-wide"
