@@ -232,6 +232,10 @@ impl<'a> CollectionRepo<'a> {
         translations: &[CollectionTranslationData],
     ) -> Result<(), DatabaseError> {
         if translations.is_empty() {
+            sqlx::query("DELETE FROM collection_translations WHERE collection_id = $1")
+                .bind(collection_id)
+                .execute(self.db)
+                .await?;
             return Ok(());
         }
 
@@ -316,6 +320,10 @@ impl<'a> CollectionRepo<'a> {
         translations: &[CollectionItemTranslationData],
     ) -> Result<(), DatabaseError> {
         if translations.is_empty() {
+            sqlx::query("DELETE FROM collection_item_translations WHERE collection_item_id = $1")
+                .bind(item_id)
+                .execute(self.db)
+                .await?;
             return Ok(());
         }
 

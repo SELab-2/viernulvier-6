@@ -161,6 +161,10 @@ impl<'a> ProductionRepo<'a> {
         translations: &[ProductionTranslationData],
     ) -> Result<(), DatabaseError> {
         if translations.is_empty() {
+            sqlx::query("DELETE FROM production_translations WHERE production_id = $1")
+                .bind(production_id)
+                .execute(self.db)
+                .await?;
             return Ok(());
         }
 

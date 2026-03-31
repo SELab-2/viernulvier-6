@@ -133,6 +133,7 @@ pub struct ProductionPayload {
     pub uitdatabank_theme: Option<String>,
     pub uitdatabank_type: Option<String>,
 
+    #[serde(default)]
     pub translations: Vec<ProductionTranslationPayload>,
 }
 
@@ -148,6 +149,7 @@ pub struct ProductionPostPayload {
     pub uitdatabank_theme: Option<String>,
     pub uitdatabank_type: Option<String>,
 
+    #[serde(default)]
     pub translations: Vec<ProductionTranslationPayload>,
 }
 
