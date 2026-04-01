@@ -43,7 +43,7 @@ export function CmsSidebar() {
             <nav className="flex-1 overflow-y-auto py-5">
                 {/* Main Content Section */}
                 <div className="mb-5">
-                    <div className="text-muted-foreground mb-3 px-5 text-center font-mono text-[10px] tracking-[2px] uppercase">
+                    <div className="text-muted-foreground mb-3 px-5 text-center font-mono text-xs tracking-[2px] uppercase">
                         — Inhoud —
                     </div>
 
@@ -93,7 +93,7 @@ export function CmsSidebar() {
 
                 {/* Utility Section */}
                 <div>
-                    <div className="text-muted-foreground mb-3 px-5 text-center font-mono text-[10px] tracking-[2px] uppercase">
+                    <div className="text-muted-foreground mb-3 px-5 text-center font-mono text-xs tracking-[2px] uppercase">
                         — Systeem —
                     </div>
 

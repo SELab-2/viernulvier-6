@@ -205,11 +205,17 @@
         },
         "Ingest": {
             "title": "Ingest",
-            "subtitle": "Bulk media import"
+            "subtitle": "Bulk import of media files and archive materials",
+            "comingSoon": "Coming soon",
+            "notAvailable": "Ingest functionality",
+            "description": "This feature is still under development. Soon you will be able to upload and process media files here."
         },
         "Import": {
             "title": "Import",
-            "subtitle": "Automatic import status"
+            "subtitle": "Automatic import from external data sources",
+            "comingSoon": "Coming soon",
+            "notAvailable": "Import functionality",
+            "description": "This feature is still under development. Soon you will be able to import data from external sources such as UiTdatabank here."
         },
         "DataTable": {
             "noResults": "No items found"
@@ -248,6 +254,7 @@
             "edit": "Edit"
         },
         "EditSheet": {
+            "editMode": "Edit Mode",
             "yes": "Yes",
             "no": "No",
             "selectPlaceholder": "Select…",

@@ -35,15 +35,23 @@ export function toHallUpdateInput(entity: Hall): HallUpdateInput {
 
 export function makeHallColumns(options: { onEdit: (entity: Hall) => void }): ColumnDef<Hall>[] {
     return [
-        { accessorKey: "name", header: "Name" },
+        {
+            accessorKey: "name",
+            header: "Naam",
+            cell: ({ getValue }) => (
+                <span className="font-display max-w-[200px] truncate text-base font-medium tracking-tight">
+                    {String(getValue() || "—")}
+                </span>
+            ),
+        },
         {
             accessorKey: "seatSelection",
-            header: "Seat selection",
+            header: "Stoelselectie",
             cell: ({ getValue }) => <BooleanCell value={getValue<boolean | null>()} />,
         },
         {
             accessorKey: "openSeating",
-            header: "Open seating",
+            header: "Vrije plaatskeuze",
             cell: ({ getValue }) => <BooleanCell value={getValue<boolean | null>()} />,
         },
         makeActionsColumn<Hall>({ label: "hall", copyKey: "name", onEdit: options.onEdit }),

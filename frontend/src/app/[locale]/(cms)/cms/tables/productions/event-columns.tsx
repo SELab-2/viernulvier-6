@@ -5,10 +5,35 @@ import { makeActionsColumn } from "../actions-column";
 import type { FieldDef } from "../edit-sheet";
 import type { Event, EventUpdateInput } from "@/types/models/event.types";
 
+// Format datetime in a hydration-safe way using fixed format
 function formatDateTime(iso: string | null): string {
     if (!iso) return "—";
     const d = new Date(iso);
-    return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+    // Use fixed format to avoid hydration mismatches between server/client locales
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+}
+
+function StatusBadge({ status }: { status: string }) {
+    const statusStyles: Record<string, string> = {
+        scheduled: "bg-foreground/5 text-foreground",
+        cancelled: "bg-destructive/10 text-destructive",
+        postponed: "bg-foreground/10 text-muted-foreground",
+        soldout: "bg-foreground/10 text-foreground",
+    };
+    const style = statusStyles[status.toLowerCase()] || statusStyles.scheduled;
+
+    return (
+        <span
+            className={`inline-block rounded px-2 py-0.5 font-mono text-[9px] tracking-[1px] uppercase ${style}`}
+        >
+            {status}
+        </span>
+    );
 }
 
 export const eventFields: FieldDef<Event>[] = [
@@ -47,16 +72,27 @@ export function makeEventColumns(options: { onEdit: (entity: Event) => void }): 
     return [
         {
             accessorKey: "startsAt",
-            header: "Start",
-            cell: ({ getValue }) => formatDateTime(getValue<string>()),
+            header: "Datum & Tijd",
+            cell: ({ getValue }) => (
+                <span className="font-mono text-[11px] tracking-tight">
+                    {formatDateTime(getValue<string>())}
+                </span>
+            ),
         },
         {
-            accessorKey: "endsAt",
-            header: "End",
-            cell: ({ getValue }) => formatDateTime(getValue<string | null>()),
+            accessorKey: "status",
+            header: "Status",
+            cell: ({ getValue }) => <StatusBadge status={getValue<string>()} />,
         },
-        { accessorKey: "status", header: "Status" },
-        { accessorKey: "hallId", header: "Hall" },
+        {
+            accessorKey: "hallId",
+            header: "Zaal",
+            cell: ({ getValue }) => (
+                <code className="bg-foreground/5 text-muted-foreground rounded px-1.5 py-0.5 font-mono text-[10px]">
+                    {String(getValue()).slice(0, 8)}...
+                </code>
+            ),
+        },
         makeActionsColumn<Event>({
             label: "event",
             copyKey: "id",

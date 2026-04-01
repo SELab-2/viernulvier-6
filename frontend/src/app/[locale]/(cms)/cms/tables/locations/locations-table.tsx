@@ -68,7 +68,7 @@ export function LocationsTable() {
         (row: Row<Location>) => {
             if (hallsLoading) {
                 return (
-                    <div className="bg-muted/30 flex items-center py-1 pr-6 pl-12">
+                    <div className="flex items-center py-1 pr-6 pl-14">
                         <Spinner className="text-muted-foreground size-3" />
                     </div>
                 );
@@ -88,16 +88,13 @@ export function LocationsTable() {
         [childSelection, getChildHandler, getHallRowId, hallCols, hallsBySpace, hallsLoading]
     );
 
+    const hasSelection = selectedLocationCount > 0 || selectedHallCount > 0;
+
     return (
         <>
-            <DataTable
-                columns={locationCols}
-                data={locations}
-                loading={locationsLoading}
-                renderSubComponent={renderHalls}
-                getRowCanExpand={getRowCanExpand}
-                expanderLabels={expanderLabels}
-                toolbar={
+            {/* Selection Toolbar - Outside table */}
+            {hasSelection && (
+                <div className="border-foreground/10 bg-foreground/[0.02] mb-4 border px-4 py-3">
                     <SelectionToolbar
                         groups={[
                             {
@@ -115,7 +112,16 @@ export function LocationsTable() {
                         ]}
                         onClear={clearSelection}
                     />
-                }
+                </div>
+            )}
+
+            <DataTable
+                columns={locationCols}
+                data={locations}
+                loading={locationsLoading}
+                renderSubComponent={renderHalls}
+                getRowCanExpand={getRowCanExpand}
+                expanderLabels={expanderLabels}
                 rowSelection={parentSelection}
                 onRowSelectionChange={setParentSelection}
                 getRowId={getLocationRowId}

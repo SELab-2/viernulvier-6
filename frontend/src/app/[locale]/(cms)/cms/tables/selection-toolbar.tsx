@@ -3,7 +3,6 @@
 import { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { X, MoreHorizontal } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -43,43 +42,54 @@ export function SelectionToolbar({ groups, onClear }: SelectionToolbarProps) {
 
     // Always render so the toolbar area reserves space and the table never shifts.
     return (
-        <div className="flex min-h-8 flex-wrap items-center gap-2">
+        <div className="flex min-h-8 flex-wrap items-center gap-3">
             {activeGroups.map((group, i) => (
                 <div key={group.countKey} className="contents">
-                    {i > 0 && <div className="bg-border h-5 w-px shrink-0" />}
-                    <span className="text-muted-foreground text-sm">
+                    {i > 0 && <div className="bg-foreground/20 h-4 w-px shrink-0" />}
+                    <span className="text-muted-foreground font-mono text-[10px] tracking-[1px] uppercase">
                         {t(group.countKey, { count: group.count })}
                     </span>
                     {group.inlineActions.map((action) => (
-                        <Button
+                        <button
                             key={action.label}
-                            variant={action.variant === "destructive" ? "destructive" : "outline"}
-                            size="sm"
                             onClick={action.onClick}
+                            type="button"
+                            className={`inline-flex items-center gap-1.5 rounded-sm border px-2.5 py-1 font-mono text-[10px] tracking-[0.5px] uppercase transition-colors ${
+                                action.variant === "destructive"
+                                    ? "border-destructive/30 text-destructive hover:bg-destructive/5"
+                                    : "border-foreground/20 hover:bg-foreground/5"
+                            }`}
                         >
-                            {action.icon}
+                            {action.icon && <span className="h-3.5 w-3.5">{action.icon}</span>}
                             {action.label}
-                        </Button>
+                        </button>
                     ))}
                     {group.overflowActions.length > 0 && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm" aria-label={t("moreActions")}>
-                                    <MoreHorizontal className="h-4 w-4" />
-                                </Button>
+                                <button
+                                    type="button"
+                                    aria-label={t("moreActions")}
+                                    className="border-foreground/20 hover:bg-foreground/5 inline-flex h-7 w-7 items-center justify-center rounded-sm border transition-colors"
+                                >
+                                    <MoreHorizontal className="h-4 w-4" strokeWidth={1.5} />
+                                </button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start">
+                            <DropdownMenuContent
+                                align="start"
+                                className="border-foreground/20 min-w-[140px]"
+                            >
                                 {group.overflowActions.map((action) => (
                                     <DropdownMenuItem
                                         key={action.label}
                                         onClick={action.onClick}
-                                        className={
+                                        className={`font-body text-sm ${
                                             action.variant === "destructive"
                                                 ? "text-destructive"
-                                                : undefined
-                                        }
+                                                : ""
+                                        }`}
                                     >
-                                        {action.icon}
+                                        {action.icon && <span className="mr-2">{action.icon}</span>}
                                         {action.label}
                                     </DropdownMenuItem>
                                 ))}
@@ -88,10 +98,16 @@ export function SelectionToolbar({ groups, onClear }: SelectionToolbarProps) {
                     )}
                 </div>
             ))}
-            <Button variant="ghost" size="sm" onClick={onClear} className="ml-auto">
-                <X className="h-4 w-4" />
-                {t("clearSelection")}
-            </Button>
+            {activeGroups.length > 0 && (
+                <button
+                    type="button"
+                    onClick={onClear}
+                    className="text-muted-foreground hover:text-foreground ml-auto inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[1px] uppercase transition-colors"
+                >
+                    <X className="h-3.5 w-3.5" strokeWidth={1.5} />
+                    {t("clearSelection")}
+                </button>
+            )}
         </div>
     );
 }

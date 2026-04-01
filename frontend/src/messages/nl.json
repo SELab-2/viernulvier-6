@@ -152,7 +152,7 @@
         "locations": "Locaties",
         "articles": "Artikelen",
         "performers": "Uitvoerders",
-        "ingest": "Import",
+        "ingest": "Ingest",
         "import": "Import",
         "Overview": {
             "title": "CMS Overzicht",
@@ -204,12 +204,18 @@
             "notAvailable": "Uitvoerders-API is nog niet beschikbaar. Geen gegevens om weer te geven."
         },
         "Ingest": {
-            "title": "Import",
-            "subtitle": "Bulk media import"
+            "title": "Ingest",
+            "subtitle": "Bulk import van mediabestanden en archiefmaterialen",
+            "comingSoon": "Binnenkort beschikbaar",
+            "notAvailable": "Ingest functionaliteit",
+            "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier mediabestanden uploaden en verwerken."
         },
         "Import": {
             "title": "Import",
-            "subtitle": "Status automatische import"
+            "subtitle": "Automatische import van externe databronnen",
+            "comingSoon": "Binnenkort beschikbaar",
+            "notAvailable": "Import functionaliteit",
+            "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier data importeren van externe bronnen zoals UiTdatabank."
         },
         "DataTable": {
             "noResults": "Geen items gevonden"
@@ -248,6 +254,7 @@
             "edit": "Bewerken"
         },
         "EditSheet": {
+            "editMode": "Bewerkmodus",
             "yes": "Ja",
             "no": "Nee",
             "selectPlaceholder": "Selecteer…",

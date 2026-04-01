@@ -67,7 +67,7 @@ export function ProductionsTable() {
         (row: Row<Production>) => {
             if (eventsLoading) {
                 return (
-                    <div className="bg-muted/30 flex items-center py-1 pr-6 pl-12">
+                    <div className="flex items-center py-1 pr-6 pl-14">
                         <Spinner className="text-muted-foreground size-3" />
                     </div>
                 );
@@ -94,16 +94,13 @@ export function ProductionsTable() {
         ]
     );
 
+    const hasSelection = selectedProductionCount > 0 || selectedEventCount > 0;
+
     return (
         <>
-            <DataTable
-                columns={productionCols}
-                data={productions}
-                loading={productionsLoading}
-                renderSubComponent={renderEvents}
-                getRowCanExpand={getRowCanExpand}
-                expanderLabels={expanderLabels}
-                toolbar={
+            {/* Selection Toolbar - Outside table */}
+            {hasSelection && (
+                <div className="border-foreground/10 bg-foreground/[0.02] mb-4 border px-4 py-3">
                     <SelectionToolbar
                         groups={[
                             {
@@ -121,10 +118,21 @@ export function ProductionsTable() {
                         ]}
                         onClear={clearSelection}
                     />
-                }
+                </div>
+            )}
+
+            {/* Table without toolbar */}
+            <DataTable
+                columns={productionCols}
+                data={productions}
+                loading={productionsLoading}
+                renderSubComponent={renderEvents}
+                getRowCanExpand={getRowCanExpand}
+                expanderLabels={expanderLabels}
                 rowSelection={parentSelection}
                 onRowSelectionChange={setParentSelection}
             />
+
             <EditSheet
                 open={!!editProduction}
                 onOpenChange={(open) => !open && setEditProduction(null)}

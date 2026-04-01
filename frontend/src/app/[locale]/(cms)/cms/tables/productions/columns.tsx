@@ -138,21 +138,43 @@ export function makeProductionColumns(options: {
     return [
         {
             id: "titleNl",
-            header: "Title (NL)",
+            header: "Titel (NL)",
             accessorFn: (row) => row.translations.find((t) => t.languageCode === "nl")?.title ?? "",
+            cell: ({ getValue }) => (
+                <span className="font-display max-w-[200px] truncate text-base font-medium tracking-tight">
+                    {String(getValue() || "—")}
+                </span>
+            ),
         },
         {
             id: "titleEn",
-            header: "Title (EN)",
+            header: "Titel (EN)",
             accessorFn: (row) => row.translations.find((t) => t.languageCode === "en")?.title ?? "",
+            cell: ({ getValue }) => (
+                <span className="text-muted-foreground max-w-[200px] truncate">
+                    {String(getValue() || "—")}
+                </span>
+            ),
         },
         {
             id: "artistNl",
-            header: "Artist",
+            header: "Artiest",
             accessorFn: (row) =>
                 row.translations.find((t) => t.languageCode === "nl")?.artist ?? "",
+            cell: ({ getValue }) => (
+                <span className="max-w-[150px] truncate">{String(getValue() || "—")}</span>
+            ),
         },
-        { accessorKey: "slug", header: "Slug" },
+        {
+            id: "slug",
+            header: "Slug",
+            accessorKey: "slug",
+            cell: ({ getValue }) => (
+                <code className="bg-foreground/5 text-muted-foreground rounded px-1.5 py-0.5 font-mono text-[10px]">
+                    {String(getValue())}
+                </code>
+            ),
+        },
         makeActionsColumn<Production>({
             label: "production",
             copyKey: "slug",

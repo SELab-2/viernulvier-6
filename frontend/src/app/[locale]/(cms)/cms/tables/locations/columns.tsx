@@ -47,13 +47,43 @@ export function makeLocationColumns(options: {
     onEdit: (entity: Location) => void;
 }): ColumnDef<Location>[] {
     return [
-        { accessorKey: "name", header: "Name" },
-        { accessorKey: "code", header: "Code" },
-        { accessorKey: "address", header: "Address" },
-        { accessorKey: "phone1", header: "Phone" },
+        {
+            accessorKey: "name",
+            header: "Naam",
+            cell: ({ getValue }) => (
+                <span className="font-display max-w-[200px] truncate text-base font-medium tracking-tight">
+                    {String(getValue() || "—")}
+                </span>
+            ),
+        },
+        {
+            accessorKey: "code",
+            header: "Code",
+            cell: ({ getValue }) => (
+                <code className="bg-foreground/5 text-muted-foreground rounded px-1.5 py-0.5 font-mono text-[10px]">
+                    {String(getValue() || "—")}
+                </code>
+            ),
+        },
+        {
+            accessorKey: "address",
+            header: "Adres",
+            cell: ({ getValue }) => (
+                <span className="text-muted-foreground max-w-[200px] truncate text-sm">
+                    {String(getValue() || "—")}
+                </span>
+            ),
+        },
+        {
+            accessorKey: "phone1",
+            header: "Telefoon",
+            cell: ({ getValue }) => (
+                <span className="font-mono text-[11px]">{String(getValue() || "—")}</span>
+            ),
+        },
         {
             accessorKey: "isOwnedByViernulvier",
-            header: "Owned",
+            header: "Eigendom",
             cell: ({ getValue }) => <BooleanCell value={getValue<boolean | null>()} />,
         },
         makeActionsColumn<Location>({

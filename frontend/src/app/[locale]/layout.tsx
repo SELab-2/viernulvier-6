@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 
 import { hasLocale } from "next-intl";
 import { getMessages, getTimeZone, setRequestLocale } from "next-intl/server";

@@ -7,7 +7,16 @@ import { FileUp, Database, Clapperboard, MapPin, Newspaper, Users } from "lucide
 
 import { SectionCard, SectionCardContent } from "@/components/cms/SectionCard";
 
-const CONTENT_SECTIONS = [
+interface ContentSection {
+    key: string;
+    href: string;
+    edition: string;
+    span: string;
+    icon: typeof Clapperboard;
+    comingSoon?: boolean;
+}
+
+const CONTENT_SECTIONS: ContentSection[] = [
     {
         key: "productions",
         href: "/cms/productions",
@@ -38,20 +47,29 @@ const CONTENT_SECTIONS = [
         comingSoon: true,
         icon: Users,
     },
-] as const;
+];
 
-const UTILITY_SECTIONS = [
+interface UtilitySection {
+    key: string;
+    href: string;
+    icon: typeof Database;
+    edition: string;
+}
+
+const UTILITY_SECTIONS: UtilitySection[] = [
     {
         key: "ingest",
         href: "/cms/ingest",
         icon: Database,
+        edition: "Ed. 05",
     },
     {
         key: "import",
         href: "/cms/import",
         icon: FileUp,
+        edition: "Ed. 06",
     },
-] as const;
+];
 
 export default function CmsOverviewPage() {
     const t = useTranslations("Cms.Overview");
@@ -132,7 +150,7 @@ export default function CmsOverviewPage() {
                         >
                             <div data-card>
                                 <SectionCardContent
-                                    edition={t(util.key)}
+                                    edition={util.edition}
                                     title={t(util.key)}
                                     description={t(`${util.key}Description`)}
                                     actionLabel={t("openSection")}
