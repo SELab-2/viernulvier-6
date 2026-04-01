@@ -75,6 +75,14 @@ export function ArchiveSidebar({
         setDateMode("year");
     };
 
+    useEffect(() => {
+        if (!mobileOpen) return;
+        document.body.style.overflow = "hidden";
+        return () => {
+            document.body.style.overflow = "";
+        };
+    }, [mobileOpen]);
+
     const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
@@ -298,7 +306,7 @@ export function ArchiveSidebar({
             <aside
                 className={`border-border shrink-0 border-r py-5 pb-10 ${
                     mobileOpen
-                        ? "bg-background fixed inset-y-0 left-0 z-50 w-[290px] shadow-xl"
+                        ? "bg-background fixed inset-y-0 left-0 z-50 w-[290px] overflow-y-auto shadow-xl"
                         : "hidden lg:block lg:w-[290px]"
                 }`}
             >

@@ -85,7 +85,7 @@ export function YearRangeSlider({
         "[&::-moz-range-thumb]:rounded-none [&::-moz-range-thumb]:appearance-none";
 
     return (
-        <div ref={containerRef} className="relative pt-1">
+        <div ref={containerRef} className="relative pt-1 select-none">
             <div className="bg-border relative h-0.5">
                 <div
                     className="bg-foreground absolute h-full"
@@ -124,6 +124,7 @@ export function YearRangeSlider({
                 onPointerDown={onOverlayPointerDown}
                 onPointerMove={onOverlayPointerMove}
                 onPointerUp={onOverlayPointerUp}
+                onPointerCancel={onOverlayPointerUp}
             />
         </div>
     );
