@@ -118,6 +118,7 @@ services:
     labels:
       - "traefik.enable=true"
       # S3 API endpoint (port 3900)
+      # TODO: Does this even need to be public the API? I think we only need media
       - "traefik.http.routers.${PREVIEW_NAME}-s3-api.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/s3-api`)"
       - "traefik.http.routers.${PREVIEW_NAME}-s3-api.entrypoints=websecure"
       - "traefik.http.routers.${PREVIEW_NAME}-s3-api.tls.certresolver=letsencrypt"
@@ -134,8 +135,8 @@ services:
       - "traefik.http.services.${PREVIEW_NAME}-s3-web.loadbalancer.server.port=3902"
       # Strip the path prefix AND set the Host header to the bucket name
       - "traefik.http.middlewares.${PREVIEW_NAME}-s3-web-strip.stripprefix.prefixes=/${PREVIEW_NAME}/s3"
-      - "traefik.http.middlewares.${PREVIEW_NAME}-s3-web-headers.headers.customrequestheaders.Host=${GARAGE_S3_BUCKET}.s3.garage.localhost"
-      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.middlewares=${PREVIEW_NAME}-s3-web-strip,${PREVIEW_NAME}-s3-web-headers"
+      #- "traefik.http.middlewares.${PREVIEW_NAME}-s3-web-headers.headers.customrequestheaders.Host=${GARAGE_S3_BUCKET}.s3.garage.localhost"
+      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.middlewares=${PREVIEW_NAME}-s3-web-strip" #,${PREVIEW_NAME}-s3-web-headers
 
   garage-init:
     image: alpine:3.21

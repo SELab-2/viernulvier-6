@@ -100,6 +100,7 @@ services:
     labels:
       - "traefik.enable=true"
       # S3 API endpoint (port 3900) - internal use only
+      # TODO: Does this even need to be public the API? I think we only need media
       - "traefik.http.routers.main-s3-api.rule=Host(`${PROD_HOST}`) && PathPrefix(`/s3-api`)"
       - "traefik.http.routers.main-s3-api.entrypoints=websecure"
       - "traefik.http.routers.main-s3-api.tls.certresolver=letsencrypt"
