@@ -10,11 +10,10 @@ rpc_bind_addr = "[::]:3901"
 [s3_api]
 s3_region = "garage"
 api_bind_addr = "[::]:3900"
-root_domain = ".s3.garage.localhost"
+# Empty root_domain enables path-style access (bucket in URL path)
+root_domain = ""
 
 [s3_web]
 bind_addr = "[::]:3902"
-# Empty root_domain means buckets are accessed directly by their name as Host
-# e.g., dev-bucket.s3.garage.localhost:3902/ for bucket "dev-bucket"
-# or just "localhost:3902" if bucket name matches the Host header
-root_domain = ".s3.garage.localhost"
+# Empty root_domain enables path-style access (bucket in URL path)
+root_domain = ""

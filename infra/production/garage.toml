@@ -10,8 +10,10 @@ rpc_bind_addr = "[::]:3901"
 [s3_api]
 s3_region = "garage"
 api_bind_addr = "[::]:3900"
-root_domain = ".s3.garage.localhost"
+# Empty root_domain enables path-style access (bucket in URL path)
+root_domain = ""
 
 [s3_web]
 bind_addr = "[::]:3902"
-root_domain = ".s3.garage.localhost"
+# Empty root_domain enables path-style access (bucket in URL path)
+root_domain = ""

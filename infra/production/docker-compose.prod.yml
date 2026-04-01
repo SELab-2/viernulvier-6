@@ -118,8 +118,7 @@ services:
       - "traefik.http.services.main-s3-web.loadbalancer.server.port=3902"
       # Strip the path prefix AND set the Host header to the bucket name
       - "traefik.http.middlewares.main-s3-web-strip.stripprefix.prefixes=/s3"
-      - "traefik.http.middlewares.main-s3-web-headers.headers.customrequestheaders.Host=${GARAGE_S3_BUCKET}.s3.garage.localhost"
-      - "traefik.http.routers.main-s3-web.middlewares=main-s3-web-strip,main-s3-web-headers"
+      - "traefik.http.routers.main-s3-web.middlewares=main-s3-web-strip"
 
   garage-init:
     image: alpine:3.21
