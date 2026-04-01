@@ -122,6 +122,7 @@ services:
       - "traefik.http.routers.${PREVIEW_NAME}-s3-api.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/s3-api`)"
       - "traefik.http.routers.${PREVIEW_NAME}-s3-api.entrypoints=websecure"
       - "traefik.http.routers.${PREVIEW_NAME}-s3-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${PREVIEW_NAME}-s3-api.priority=250"
       - "traefik.http.services.${PREVIEW_NAME}-s3-api.loadbalancer.server.port=3900"
       - "traefik.http.middlewares.${PREVIEW_NAME}-s3-api-strip.stripprefix.prefixes=/${PREVIEW_NAME}/s3-api"
       - "traefik.http.routers.${PREVIEW_NAME}-s3-api.middlewares=${PREVIEW_NAME}-s3-api-strip"
