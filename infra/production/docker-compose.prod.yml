@@ -112,6 +112,7 @@ services:
       - "traefik.http.routers.main-s3-web.rule=Host(`${PROD_HOST}`) && PathPrefix(`/s3`)"
       - "traefik.http.routers.main-s3-web.entrypoints=websecure"
       - "traefik.http.routers.main-s3-web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.main-s3-web.priority=150"
       - "traefik.http.services.main-s3-web.loadbalancer.server.port=3902"
       # Strip the path prefix AND set the Host header to the bucket name
       - "traefik.http.middlewares.main-s3-web-strip.stripprefix.prefixes=/s3"
