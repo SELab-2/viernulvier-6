@@ -56,13 +56,14 @@ impl<'a> ProductionRepo<'a> {
                 let mut query = sqlx::QueryBuilder::new("WITH matched_translations AS (");
 
                 query
-                    .push("SELECT production_id, MAX(title <-> ")
+                    .push("SELECT production_id, MAX( ")
                     .push_bind(&search_q)
-                    .push(") ")
+                    .push(" <<-> full_search_text) ")
                     .push(" as distance_score ") // lower is better
                     .push(" FROM production_translations ")
-                    .push(" WHERE title % ")
+                    .push(" WHERE ")
                     .push_bind(&search_q)
+                    .push(" <% full_search_text")
                     .push(" GROUP BY production_id ");
 
                 // use the cursor if there is one
@@ -70,15 +71,15 @@ impl<'a> ProductionRepo<'a> {
                     && let Some(score) = cursor.score
                 {
                     // HAVING score > cursor.score
-                    query.push(" HAVING MAX(title <-> ");
+                    query.push(" HAVING MAX( ");
                     query.push_bind(&search_q);
-                    query.push(") > ");
+                    query.push(" <<-> full_search_text) > ");
                     query.push_bind(score);
 
                     // OR (score = cursor.score AND id < cursor.id)
-                    query.push(" OR (MAX(title <-> ");
+                    query.push(" OR (MAX( ");
                     query.push_bind(&search_q);
-                    query.push(") = ");
+                    query.push(" <<-> full_search_text) = ");
                     query.push_bind(score);
                     query.push(" AND production_id < ");
                     query.push_bind(cursor.id);
