@@ -25,7 +25,7 @@ const eslintConfig = defineConfig([
         "build/**",
         "next-env.d.ts",
         "coverage/",
-        "src/types/generated.ts"
+        "src/types/api/generated.ts",
     ]),
 ]);
 
