@@ -579,13 +579,7 @@ export interface components {
             s3_keys: string[];
         };
         /** @enum {string} */
-        CollectionContentType:
-            | "production"
-            | "event"
-            | "blogpost"
-            | "artist"
-            | "location"
-            | "media";
+        CollectionContentType: "production" | "event" | "blogpost" | "artist" | "location" | "media";
         CollectionItemPayload: {
             /**
              * Format: uuid
