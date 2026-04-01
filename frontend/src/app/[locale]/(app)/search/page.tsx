@@ -34,6 +34,7 @@ export default function SearchPage() {
     const [cursorHistory, setCursorHistory] = useState<(string | null)[]>([null]);
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
     const [allProductions, setAllProductions] = useState<Production[]>([]);
+    const processedCursors = useRef<Set<string>>(new Set());
 
     const currentCursor = cursorHistory[currentPageIndex];
 
@@ -58,19 +59,24 @@ export default function SearchPage() {
 
     const isLoading = productionsLoading || eventsLoading || locationsLoading || facetsLoading;
 
-    // Accumulate productions when new page loads - defer setState to avoid cascade
+    // Accumulate productions when new page loads
     useEffect(() => {
-        if (productionsData.length > 0 && currentPageIndex === cursorHistory.length - 1) {
-            const timeoutId = setTimeout(() => {
+        const cursorKey = currentCursor ?? "initial";
+
+        // Only add if this cursor hasn't been processed yet
+        if (productionsData.length > 0 && !processedCursors.current.has(cursorKey)) {
+            processedCursors.current.add(cursorKey);
+
+            // Defer state update to avoid cascading renders
+            queueMicrotask(() => {
                 setAllProductions((prev) => {
                     const newIds = new Set(productionsData.map((p) => p.id));
                     const filtered = prev.filter((p) => !newIds.has(p.id));
                     return [...filtered, ...productionsData];
                 });
-            }, 0);
-            return () => clearTimeout(timeoutId);
+            });
         }
-    }, [productionsData, currentPageIndex, cursorHistory.length]);
+    }, [productionsData, currentCursor]);
 
     // Memoize eventsByProduction to prevent dependency issues
     const eventsByProduction = useMemo(() => {
@@ -94,6 +100,7 @@ export default function SearchPage() {
         setCursorHistory([null]);
         setCurrentPageIndex(0);
         setAllProductions([]);
+        processedCursors.current.clear(); // Also reset the ref!
     }, []);
 
     // Infinite scroll with Intersection Observer
