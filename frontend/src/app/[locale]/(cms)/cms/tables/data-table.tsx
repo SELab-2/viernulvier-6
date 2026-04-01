@@ -12,7 +12,7 @@ import {
     useReactTable,
 } from "@tanstack/react-table";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { Fragment, ReactNode, memo, useState } from "react";
+import { Fragment, ReactNode, memo, useMemo, useState } from "react";
 
 // Generic memoized subtable that only rerenders when its own row items or selection changes.
 // TanStack Query structural sharing ensures unchanged items keep their reference,
@@ -146,54 +146,65 @@ export function DataTable<TData, TValue>({
     // rowSelection may be undefined when no items are selected yet (treated as {}).
     const hasSelection = onRowSelectionChange !== undefined;
     const effectiveRowSelection = rowSelection ?? {};
-    const hasCustomSelectColumn = columns.some((c) => c.id === "select");
+    const hasCustomSelectColumn = useMemo(() => columns.some((c) => c.id === "select"), [columns]);
 
-    const selectColumn: ColumnDef<TData> = {
-        id: "select",
-        header: () => null,
-        cell: ({ row }) => (
-            <Checkbox
-                checked={row.getIsSelected()}
-                onCheckedChange={(value) => row.toggleSelected(!!value)}
-                aria-label="Select row"
-            />
-        ),
-        enableSorting: false,
-        enableHiding: false,
-    };
+    const selectColumn = useMemo<ColumnDef<TData>>(
+        () => ({
+            id: "select",
+            header: () => null,
+            cell: ({ row }) => (
+                <Checkbox
+                    checked={row.getIsSelected()}
+                    onCheckedChange={(value) => row.toggleSelected(!!value)}
+                    aria-label="Select row"
+                />
+            ),
+            enableSorting: false,
+            enableHiding: false,
+        }),
+        []
+    );
 
-    const expanderColumn: ColumnDef<TData> = {
-        id: "expander",
-        header: () => null,
-        cell: ({ row }) =>
-            row.getCanExpand() ? (
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={row.getToggleExpandedHandler()}
-                            className="h-6 w-6 p-0"
-                        >
-                            {row.getIsExpanded() ? (
-                                <ChevronDown className="h-4 w-4" />
-                            ) : (
-                                <ChevronRight className="h-4 w-4" />
-                            )}
-                        </Button>
-                    </TooltipTrigger>
-                    {expanderLabels && (
-                        <TooltipContent>
-                            {row.getIsExpanded() ? expanderLabels.hide : expanderLabels.show}
-                        </TooltipContent>
-                    )}
-                </Tooltip>
-            ) : null,
-    };
+    const expanderColumn = useMemo<ColumnDef<TData>>(
+        () => ({
+            id: "expander",
+            header: () => null,
+            cell: ({ row }) =>
+                row.getCanExpand() ? (
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={row.getToggleExpandedHandler()}
+                                className="h-6 w-6 p-0"
+                            >
+                                {row.getIsExpanded() ? (
+                                    <ChevronDown className="h-4 w-4" />
+                                ) : (
+                                    <ChevronRight className="h-4 w-4" />
+                                )}
+                            </Button>
+                        </TooltipTrigger>
+                        {expanderLabels && (
+                            <TooltipContent>
+                                {row.getIsExpanded() ? expanderLabels.hide : expanderLabels.show}
+                            </TooltipContent>
+                        )}
+                    </Tooltip>
+                ) : null,
+        }),
+        [expanderLabels]
+    );
+
+    const spacerColumn = useMemo<ColumnDef<TData, TValue>>(
+        () => ({ id: "spacer", header: () => null, cell: () => null }),
+        []
+    );
 
     // Build column list with correct ordering: [select] [expander] [data...]
     // When a custom select column is provided, the expander is inserted right after it.
-    const allColumns: ColumnDef<TData, TValue>[] = (() => {
+    const allColumns = useMemo<ColumnDef<TData, TValue>[]>(() => {
         const withSelect =
             hasSelection && !hasCustomSelectColumn
                 ? [selectColumn as ColumnDef<TData, TValue>, ...columns]
@@ -206,15 +217,16 @@ export function DataTable<TData, TValue>({
         const result = [...withSelect];
         result.splice(insertAt, 0, expanderColumn as ColumnDef<TData, TValue>);
         return result;
-    })();
+    }, [
+        columns,
+        expanderColumn,
+        hasCustomSelectColumn,
+        hasSelection,
+        renderSubComponent,
+        selectColumn,
+    ]);
 
-    const spacerColumn: ColumnDef<TData, TValue> = {
-        id: "spacer",
-        header: () => null,
-        cell: () => null,
-    };
-
-    const finalColumns: ColumnDef<TData, TValue>[] = (() => {
+    const finalColumns = useMemo<ColumnDef<TData, TValue>[]>(() => {
         const actionsIdx = allColumns.findIndex((c) => c.id === "actions");
         const cols = [...allColumns];
         if (actionsIdx !== -1) {
@@ -223,7 +235,7 @@ export function DataTable<TData, TValue>({
             cols.push(spacerColumn);
         }
         return cols;
-    })();
+    }, [allColumns, spacerColumn]);
 
     // @tanstack/react-table peer dep mismatch triggers this rule
     // eslint-disable-next-line react-hooks/incompatible-library

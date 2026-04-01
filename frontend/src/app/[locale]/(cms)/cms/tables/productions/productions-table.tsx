@@ -54,6 +54,13 @@ export function ProductionsTable() {
 
     const eventCols = useMemo(() => makeEventColumns({ onEdit: setEditEvent }), []);
 
+    const expanderLabels = useMemo(() => ({ show: t("showEvents"), hide: t("hideEvents") }), [t]);
+
+    const getRowCanExpand = useCallback(
+        (row: Row<Production>) => (eventsByProduction.get(row.original.id)?.length ?? 0) > 0,
+        [eventsByProduction]
+    );
+
     const getEventRowId = useCallback((row: Event) => row.id, []);
 
     const renderEvents = useCallback(
@@ -94,10 +101,8 @@ export function ProductionsTable() {
                 data={productions}
                 loading={productionsLoading}
                 renderSubComponent={renderEvents}
-                getRowCanExpand={(row) =>
-                    (eventsByProduction.get(row.original.id)?.length ?? 0) > 0
-                }
-                expanderLabels={{ show: t("showEvents"), hide: t("hideEvents") }}
+                getRowCanExpand={getRowCanExpand}
+                expanderLabels={expanderLabels}
                 toolbar={
                     <SelectionToolbar
                         groups={[
