@@ -70,6 +70,11 @@ export default function CmsOverviewPage() {
 
         if (containerRef.current) {
             const cards = containerRef.current.querySelectorAll("[data-card]");
+            // Set initial state before animating to avoid hydration mismatch
+            cards.forEach((card) => {
+                (card as HTMLElement).style.opacity = "0";
+                (card as HTMLElement).style.transform = "translateY(16px)";
+            });
             animate(cards, {
                 opacity: [0, 1],
                 translateY: [16, 0],
@@ -94,19 +99,16 @@ export default function CmsOverviewPage() {
             </header>
 
             {/* Main Content - scrollable */}
-            <div className="mx-auto w-full max-w-7xl flex-1 overflow-y-auto">
+            <div ref={containerRef} className="mx-auto w-full max-w-7xl flex-1 overflow-y-auto">
                 {/* Content Sections Grid */}
-                <div
-                    ref={containerRef}
-                    className="grid grid-cols-1 gap-4 p-4 sm:gap-6 lg:grid-cols-12"
-                >
+                <div className="grid grid-cols-1 gap-4 p-4 sm:gap-6 lg:grid-cols-12">
                     {CONTENT_SECTIONS.map((section) => (
                         <SectionCard
                             key={section.key}
                             href={section.href}
                             className={`border-foreground/10 hover:border-foreground/30 group relative flex flex-col overflow-hidden border p-4 transition-colors duration-250 sm:p-5 ${section.span}`}
                         >
-                            <div data-card className="opacity-0">
+                            <div data-card>
                                 <SectionCardContent
                                     edition={section.edition}
                                     title={t(section.key)}
