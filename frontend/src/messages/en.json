@@ -166,11 +166,12 @@
             "performers": "Performers",
             "performersDescription": "Manage artists and performers",
             "ingest": "Ingest",
-            "ingestDescription": "Upload and process archive materials",
+            "ingestDescription": "Upload and process archive materials. This feature is still under development.",
             "import": "Import",
-            "importDescription": "Import data from external sources",
+            "importDescription": "Import data from external sources. This feature is still under development.",
             "items": "items",
-            "openSection": "Open section"
+            "openSection": "Open section",
+            "backToOverview": "Back to overview"
         },
         "Productions": {
             "title": "Productions",

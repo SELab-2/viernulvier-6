@@ -1,10 +1,11 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { animate, stagger } from "animejs";
 import { FileUp, Database, Clapperboard, MapPin, Newspaper, Users } from "lucide-react";
+
+import { SectionCard, SectionCardContent } from "@/components/cms/SectionCard";
 
 const CONTENT_SECTIONS = [
     {
@@ -51,54 +52,6 @@ const UTILITY_SECTIONS = [
         icon: FileUp,
     },
 ] as const;
-
-// Card component with hover animation
-function SectionCard({
-    children,
-    href,
-    className = "",
-}: {
-    children: React.ReactNode;
-    href: string;
-    className?: string;
-}) {
-    const cardRef = useRef<HTMLAnchorElement>(null);
-
-    useEffect(() => {
-        const card = cardRef.current;
-        if (!card) return;
-
-        const handleEnter = () => {
-            animate(card, {
-                scale: 1.01,
-                ease: "outQuad",
-                duration: 200,
-            });
-        };
-
-        const handleLeave = () => {
-            animate(card, {
-                scale: 1,
-                ease: "outQuad",
-                duration: 200,
-            });
-        };
-
-        card.addEventListener("mouseenter", handleEnter);
-        card.addEventListener("mouseleave", handleLeave);
-
-        return () => {
-            card.removeEventListener("mouseenter", handleEnter);
-            card.removeEventListener("mouseleave", handleLeave);
-        };
-    }, []);
-
-    return (
-        <Link ref={cardRef} href={href} className={className}>
-            {children}
-        </Link>
-    );
-}
 
 export default function CmsOverviewPage() {
     const t = useTranslations("Cms.Overview");
@@ -153,38 +106,15 @@ export default function CmsOverviewPage() {
                             href={section.href}
                             className={`border-foreground/10 hover:border-foreground/30 group relative flex flex-col overflow-hidden border p-4 transition-colors duration-250 sm:p-5 ${section.span}`}
                         >
-                            <div data-card className="flex flex-col opacity-0">
-                                <div className="flex items-start justify-between">
-                                    <div className="text-muted-foreground mb-3 font-mono text-[9px] tracking-[1.4px] uppercase">
-                                        {section.edition}
-                                    </div>
-                                    <section.icon className="text-muted-foreground/40 group-hover:text-foreground h-5 w-5 transition-colors duration-200" />
-                                </div>
-
-                                {section.comingSoon && (
-                                    <div className="mb-2 inline-flex">
-                                        <span className="bg-foreground/10 text-foreground/70 px-1.5 py-0.5 font-mono text-[9px] tracking-[1px]">
-                                            Binnenkort
-                                        </span>
-                                    </div>
-                                )}
-
-                                <h2 className="font-display text-foreground mb-2 text-[24px] font-bold tracking-tight sm:text-[26px]">
-                                    {t(section.key)}
-                                </h2>
-
-                                <div className="bg-foreground mb-3 h-0.5 w-12" />
-
-                                <p className="text-muted-foreground font-body text-sm leading-relaxed">
-                                    {t(`${section.key}Description`)}
-                                </p>
-
-                                <div className="text-muted-foreground mt-4 font-mono text-[9px] tracking-[1.4px] uppercase opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                                    <span className="text-foreground inline-block transition-transform duration-200 group-hover:translate-x-1">
-                                        →
-                                    </span>{" "}
-                                    {t("openSection")}
-                                </div>
+                            <div data-card className="opacity-0">
+                                <SectionCardContent
+                                    edition={section.edition}
+                                    title={t(section.key)}
+                                    description={t(`${section.key}Description`)}
+                                    actionLabel={t("openSection")}
+                                    icon={section.icon}
+                                    comingSoon={section.comingSoon}
+                                />
                             </div>
                         </SectionCard>
                     ))}
@@ -198,30 +128,14 @@ export default function CmsOverviewPage() {
                             href={util.href}
                             className="border-foreground/10 hover:border-foreground/30 group relative flex flex-col overflow-hidden border p-4 transition-colors duration-250 sm:p-5"
                         >
-                            <div className="flex flex-col">
-                                <div className="flex items-start justify-between">
-                                    <div className="text-muted-foreground mb-3 font-mono text-[9px] tracking-[1.4px] uppercase">
-                                        {t(util.key)}
-                                    </div>
-                                    <util.icon className="text-muted-foreground/40 group-hover:text-foreground h-5 w-5 transition-colors duration-200" />
-                                </div>
-
-                                <h2 className="font-display text-foreground mb-2 text-[20px] font-bold tracking-tight">
-                                    {t(util.key)}
-                                </h2>
-
-                                <div className="bg-foreground mb-3 h-0.5 w-10" />
-
-                                <p className="text-muted-foreground font-body text-sm leading-relaxed">
-                                    {t(`${util.key}Description`)}
-                                </p>
-
-                                <div className="text-muted-foreground mt-4 font-mono text-[9px] tracking-[1.4px] uppercase opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                                    <span className="text-foreground inline-block transition-transform duration-200 group-hover:translate-x-1">
-                                        →
-                                    </span>{" "}
-                                    {t("openSection")}
-                                </div>
+                            <div data-card>
+                                <SectionCardContent
+                                    edition={t(util.key)}
+                                    title={t(util.key)}
+                                    description={t(`${util.key}Description`)}
+                                    actionLabel={t("openSection")}
+                                    icon={util.icon}
+                                />
                             </div>
                         </SectionCard>
                     ))}

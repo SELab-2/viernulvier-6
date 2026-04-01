@@ -166,11 +166,12 @@
             "performers": "Uitvoerders",
             "performersDescription": "Beheer artiesten en uitvoerders",
             "ingest": "Ingest",
-            "ingestDescription": "Upload en verwerk archiefmaterialen",
+            "ingestDescription": "Upload en verwerk archiefmaterialen. Deze functionaliteit is nog in ontwikkeling.",
             "import": "Import",
-            "importDescription": "Importeer data van externe bronnen",
+            "importDescription": "Importeer data van externe bronnen. Deze functionaliteit is nog in ontwikkeling.",
             "items": "items",
-            "openSection": "Open sectie"
+            "openSection": "Open sectie",
+            "backToOverview": "Terug naar overzicht"
         },
         "Productions": {
             "title": "Producties",
