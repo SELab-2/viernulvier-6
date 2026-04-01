@@ -15,7 +15,7 @@ services:
       PREVIEW_NAME: ${PREVIEW_NAME}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${PREVIEW_NAME}.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}`) && !PathPrefix(`/${PREVIEW_NAME}/docs`) && !PathPrefix(`/${PREVIEW_NAME}/api`)"
+      - "traefik.http.routers.${PREVIEW_NAME}.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}`) && !PathPrefix(`/${PREVIEW_NAME}/docs`) && !PathPrefix(`/${PREVIEW_NAME}/api`) && !PathPrefix(`/${PREVIEW_NAME}/s3`)"
       - "traefik.http.routers.${PREVIEW_NAME}.entrypoints=websecure"
       - "traefik.http.services.${PREVIEW_NAME}.loadbalancer.server.port=3000"
       - "traefik.http.routers.${PREVIEW_NAME}.tls.certresolver=letsencrypt"
@@ -130,7 +130,7 @@ services:
       - "traefik.http.routers.${PREVIEW_NAME}-s3-web.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/s3`)"
       - "traefik.http.routers.${PREVIEW_NAME}-s3-web.entrypoints=websecure"
       - "traefik.http.routers.${PREVIEW_NAME}-s3-web.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.priority=190"
+      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.priority=250"
       - "traefik.http.services.${PREVIEW_NAME}-s3-web.loadbalancer.server.port=3902"
       # Strip the path prefix AND set the Host header to the bucket name
       - "traefik.http.middlewares.${PREVIEW_NAME}-s3-web-strip.stripprefix.prefixes=/${PREVIEW_NAME}/s3"
