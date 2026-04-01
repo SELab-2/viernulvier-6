@@ -78,9 +78,10 @@ export function ArchiveSidebar({
     const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
+        if (!onFilterChange) return;
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
         debounceTimerRef.current = setTimeout(() => {
-            onFilterChange?.({
+            onFilterChange({
                 categories: checkedCategories,
                 tags: activeTags,
                 locations: checkedLocations,
