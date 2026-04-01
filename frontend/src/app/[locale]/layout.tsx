@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { hasLocale } from "next-intl";
 import { getMessages, getTimeZone, setRequestLocale } from "next-intl/server";
@@ -38,7 +38,7 @@ export default async function LocaleLayout({
     const { locale } = await params;
 
     if (!hasLocale(routing.locales, locale)) {
-        notFound();
+        redirect(`/en`);
     }
 
     setRequestLocale(locale);

@@ -165,6 +165,10 @@
             "locationsDescription": "Beheer locaties en zalen",
             "performers": "Uitvoerders",
             "performersDescription": "Beheer artiesten en uitvoerders",
+            "ingest": "Ingest",
+            "ingestDescription": "Upload en verwerk archiefmaterialen",
+            "import": "Import",
+            "importDescription": "Importeer data van externe bronnen",
             "items": "items",
             "openSection": "Open sectie"
         },
@@ -231,9 +235,7 @@
         },
         "TabBar": {
             "overview": "Overzicht",
-            "content": "Inhoud",
-            "ingest": "Import",
-            "import": "Import"
+            "content": "Inhoud"
         },
         "ActionsColumn": {
             "openMenu": "Menu openen",

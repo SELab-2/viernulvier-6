@@ -165,6 +165,10 @@
             "locationsDescription": "Manage locations and halls",
             "performers": "Performers",
             "performersDescription": "Manage artists and performers",
+            "ingest": "Ingest",
+            "ingestDescription": "Upload and process archive materials",
+            "import": "Import",
+            "importDescription": "Import data from external sources",
             "items": "items",
             "openSection": "Open section"
         },
@@ -231,9 +235,7 @@
         },
         "TabBar": {
             "overview": "Overview",
-            "content": "Content",
-            "ingest": "Ingest",
-            "import": "Import"
+            "content": "Content"
         },
         "ActionsColumn": {
             "openMenu": "Open menu",
