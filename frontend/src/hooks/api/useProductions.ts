@@ -65,7 +65,7 @@ export const useCreateProduction = () => {
             return mapProduction(data);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["productions"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.productions.all() });
         },
     });
 };
@@ -82,7 +82,7 @@ export const useUpdateProduction = () => {
             return mapProduction(data);
         },
         onSuccess: (production) => {
-            queryClient.invalidateQueries({ queryKey: ["productions"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.productions.all() });
             queryClient.setQueryData(queryKeys.productions.detail(production.id), production);
         },
     });
@@ -97,7 +97,7 @@ export const useDeleteProduction = () => {
             return id;
         },
         onSuccess: (id) => {
-            queryClient.invalidateQueries({ queryKey: ["productions"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.productions.all() });
             queryClient.removeQueries({ queryKey: queryKeys.productions.detail(id) });
         },
     });

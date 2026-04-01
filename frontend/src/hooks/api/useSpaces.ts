@@ -56,7 +56,7 @@ export const useCreateSpace = () => {
             return mapSpace(data);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["spaces"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all() });
         },
     });
 };
@@ -73,7 +73,7 @@ export const useUpdateSpace = () => {
             return mapSpace(data);
         },
         onSuccess: (space) => {
-            queryClient.invalidateQueries({ queryKey: ["spaces"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all() });
             queryClient.setQueryData(queryKeys.spaces.detail(space.id), space);
         },
     });
@@ -88,7 +88,7 @@ export const useDeleteSpace = () => {
             return id;
         },
         onSuccess: (id) => {
-            queryClient.invalidateQueries({ queryKey: ["spaces"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all() });
             queryClient.removeQueries({ queryKey: queryKeys.spaces.detail(id) });
         },
     });

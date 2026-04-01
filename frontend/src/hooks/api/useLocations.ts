@@ -56,7 +56,7 @@ export const useCreateLocation = () => {
             return mapLocation(data);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["locations"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.locations.all() });
         },
     });
 };
@@ -73,7 +73,7 @@ export const useUpdateLocation = () => {
             return mapLocation(data);
         },
         onSuccess: (location) => {
-            queryClient.invalidateQueries({ queryKey: ["locations"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.locations.all() });
             queryClient.setQueryData(queryKeys.locations.detail(location.id), location);
         },
     });
@@ -88,7 +88,7 @@ export const useDeleteLocation = () => {
             return id;
         },
         onSuccess: (id) => {
-            queryClient.invalidateQueries({ queryKey: ["locations"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.locations.all() });
             queryClient.removeQueries({ queryKey: queryKeys.locations.detail(id) });
         },
     });

@@ -56,7 +56,7 @@ export const useCreateHall = () => {
             return mapHall(data);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["halls"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.halls.all() });
         },
     });
 };
@@ -73,7 +73,7 @@ export const useUpdateHall = () => {
             return mapHall(data);
         },
         onSuccess: (hall) => {
-            queryClient.invalidateQueries({ queryKey: ["halls"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.halls.all() });
             queryClient.setQueryData(queryKeys.halls.detail(hall.id), hall);
         },
     });
@@ -88,7 +88,7 @@ export const useDeleteHall = () => {
             return id;
         },
         onSuccess: (id) => {
-            queryClient.invalidateQueries({ queryKey: ["halls"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.halls.all() });
             queryClient.removeQueries({ queryKey: queryKeys.halls.detail(id) });
         },
     });

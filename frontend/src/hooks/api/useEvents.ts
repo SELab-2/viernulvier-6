@@ -73,7 +73,7 @@ export const useCreateEvent = () => {
             return mapEvent(data);
         },
         onSuccess: (event) => {
-            queryClient.invalidateQueries({ queryKey: ["events"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.events.all() });
             queryClient.invalidateQueries({
                 queryKey: queryKeys.productions.events(event.productionId),
             });
@@ -93,7 +93,7 @@ export const useUpdateEvent = () => {
             return mapEvent(data);
         },
         onSuccess: (event) => {
-            queryClient.invalidateQueries({ queryKey: ["events"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.events.all() });
             queryClient.setQueryData(queryKeys.events.detail(event.id), event);
             queryClient.invalidateQueries({
                 queryKey: queryKeys.productions.events(event.productionId),
@@ -111,7 +111,7 @@ export const useDeleteEvent = () => {
             return id;
         },
         onSuccess: (id) => {
-            queryClient.invalidateQueries({ queryKey: ["events"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.events.all() });
             queryClient.removeQueries({ queryKey: queryKeys.events.detail(id) });
         },
     });
