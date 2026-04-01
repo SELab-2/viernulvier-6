@@ -238,6 +238,7 @@
             "overview": "Overview",
             "content": "Content"
         },
+        "backToSite": "Back to site",
         "ActionsColumn": {
             "openMenu": "Open menu",
             "actions": "Actions",

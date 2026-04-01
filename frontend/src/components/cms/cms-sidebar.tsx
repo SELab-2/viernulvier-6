@@ -2,28 +2,18 @@
 
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/routing";
-import {
-    LayoutGrid,
-    Calendar,
-    MapPin,
-    FileText,
-    Users,
-    Settings,
-    Archive,
-    ChevronRight,
-} from "lucide-react";
+import { Clapperboard, MapPin, Newspaper, Users, Database, FileUp } from "lucide-react";
 
 const navItems = [
-    { key: "overview", href: "/cms", icon: LayoutGrid },
-    { key: "productions", href: "/cms/productions", icon: Calendar },
-    { key: "locations", href: "/cms/locations", icon: MapPin },
-    { key: "articles", href: "/cms/articles", icon: FileText },
-    { key: "performers", href: "/cms/performers", icon: Users },
+    { key: "productions", href: "/cms/productions", icon: Clapperboard, edition: "Ed. 01" },
+    { key: "locations", href: "/cms/locations", icon: MapPin, edition: "Ed. 02" },
+    { key: "articles", href: "/cms/articles", icon: Newspaper, edition: "Ed. 03" },
+    { key: "performers", href: "/cms/performers", icon: Users, edition: "Ed. 04" },
 ];
 
-const systemItems = [
-    { key: "ingest", href: "/cms/ingest", icon: Archive },
-    { key: "import", href: "/cms/import", icon: Settings },
+const utilityItems = [
+    { key: "ingest", href: "/cms/ingest", icon: Database, edition: "Ed. 05" },
+    { key: "import", href: "/cms/import", icon: FileUp, edition: "Ed. 06" },
 ];
 
 export function CmsSidebar() {
@@ -31,102 +21,123 @@ export function CmsSidebar() {
     const pathname = usePathname();
 
     const isActive = (href: string) => {
-        if (href === "/cms") {
-            return pathname === "/cms" || pathname === "/cms/";
-        }
         return pathname.startsWith(href);
     };
 
     return (
         <aside className="border-foreground/20 bg-background flex h-full w-56 flex-col border-r">
-            {/* Masthead */}
+            {/* Header - Newspaper style */}
             <div className="border-foreground/20 border-b p-5">
-                <Link href="/cms" className="block">
-                    <div className="font-display text-foreground text-[22px] leading-none font-black tracking-tight uppercase">
+                <Link href="/cms" className="block text-center">
+                    <div className="font-display text-foreground text-[28px] leading-tight font-black tracking-tight uppercase">
                         CMS
                     </div>
-                    <div className="bg-foreground mt-2 mb-1 h-0.5 w-8" />
-                    <div className="text-muted-foreground font-mono text-[9px] tracking-[2px] uppercase">
-                        Archive Index
+                    <div className="bg-foreground mx-auto mt-2 h-0.5 w-16" />
+                    <div className="text-muted-foreground mt-2 font-mono text-[9px] tracking-[3px] uppercase">
+                        Content Management
                     </div>
                 </Link>
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 overflow-y-auto py-4">
-                {/* Section Label */}
-                <div className="text-muted-foreground mb-3 px-5 font-mono text-[8px] tracking-[2px] uppercase">
-                    — Content —
-                </div>
+            <nav className="flex-1 overflow-y-auto py-5">
+                {/* Main Content Section */}
+                <div className="mb-5">
+                    <div className="text-muted-foreground mb-3 px-5 text-center font-mono text-[10px] tracking-[2px] uppercase">
+                        — Inhoud —
+                    </div>
 
-                <ul className="space-y-0">
-                    {navItems.map((item) => {
-                        const Icon = item.icon;
-                        const active = isActive(item.href);
-                        return (
-                            <li key={item.key}>
+                    <div className="space-y-2 px-3">
+                        {navItems.map((item) => {
+                            const Icon = item.icon;
+                            const active = isActive(item.href);
+                            return (
                                 <Link
+                                    key={item.key}
                                     href={item.href}
-                                    className={`group flex items-center gap-3 border-l-2 px-5 py-3 font-mono text-[10px] tracking-[1.4px] uppercase transition-all ${
+                                    className={`group relative flex flex-col border p-2.5 transition-all ${
                                         active
-                                            ? "border-foreground bg-foreground/5 text-foreground"
-                                            : "text-muted-foreground hover:border-foreground/30 hover:text-foreground border-transparent"
+                                            ? "border-foreground bg-foreground/5"
+                                            : "border-foreground/10 hover:border-foreground/30"
                                     }`}
                                 >
-                                    <Icon className="h-4 w-4" strokeWidth={1.5} />
-                                    <span className="flex-1">{t(item.key)}</span>
-                                    {active && <ChevronRight className="h-3 w-3" />}
+                                    <div className="flex items-start justify-between">
+                                        <div className="text-muted-foreground font-mono text-[8px] tracking-[1px] uppercase">
+                                            {item.edition}
+                                        </div>
+                                        <Icon
+                                            className={`h-3.5 w-3.5 transition-colors ${
+                                                active
+                                                    ? "text-foreground"
+                                                    : "text-muted-foreground/40 group-hover:text-foreground"
+                                            }`}
+                                        />
+                                    </div>
+                                    <div className="mt-1.5">
+                                        <span
+                                            className={`font-display text-sm font-bold tracking-tight ${
+                                                active
+                                                    ? "text-foreground"
+                                                    : "text-foreground/70 group-hover:text-foreground"
+                                            }`}
+                                        >
+                                            {t(item.key)}
+                                        </span>
+                                    </div>
+                                    {active && <div className="bg-foreground mt-1.5 h-0.5 w-8" />}
                                 </Link>
-                            </li>
-                        );
-                    })}
-                </ul>
-
-                {/* Divider */}
-                <div className="border-foreground/10 mx-5 my-4 border-t" />
-
-                {/* Section Label */}
-                <div className="text-muted-foreground mb-3 px-5 font-mono text-[8px] tracking-[2px] uppercase">
-                    — System —
+                            );
+                        })}
+                    </div>
                 </div>
 
-                <ul className="space-y-0">
-                    {systemItems.map((item) => {
-                        const Icon = item.icon;
-                        const active = isActive(item.href);
-                        return (
-                            <li key={item.key}>
+                {/* Utility Section */}
+                <div>
+                    <div className="text-muted-foreground mb-3 px-5 text-center font-mono text-[10px] tracking-[2px] uppercase">
+                        — Systeem —
+                    </div>
+
+                    <div className="space-y-2 px-3">
+                        {utilityItems.map((item) => {
+                            const Icon = item.icon;
+                            const active = isActive(item.href);
+                            return (
                                 <Link
+                                    key={item.key}
                                     href={item.href}
-                                    className={`group flex items-center gap-3 border-l-2 px-5 py-3 font-mono text-[10px] tracking-[1.4px] uppercase transition-all ${
+                                    className={`group relative flex items-center gap-3 border p-2.5 transition-all ${
                                         active
-                                            ? "border-foreground bg-foreground/5 text-foreground"
-                                            : "text-muted-foreground hover:border-foreground/30 hover:text-foreground border-transparent"
+                                            ? "border-foreground bg-foreground/5"
+                                            : "border-foreground/10 hover:border-foreground/30"
                                     }`}
                                 >
-                                    <Icon className="h-4 w-4" strokeWidth={1.5} />
-                                    <span className="flex-1">{t(item.key)}</span>
-                                    {active && <ChevronRight className="h-3 w-3" />}
+                                    <Icon
+                                        className={`h-3.5 w-3.5 transition-colors ${
+                                            active
+                                                ? "text-foreground"
+                                                : "text-muted-foreground/40 group-hover:text-foreground"
+                                        }`}
+                                    />
+                                    <div className="flex-1">
+                                        <span
+                                            className={`font-display text-sm font-bold tracking-tight ${
+                                                active
+                                                    ? "text-foreground"
+                                                    : "text-foreground/70 group-hover:text-foreground"
+                                            }`}
+                                        >
+                                            {t(item.key)}
+                                        </span>
+                                    </div>
+                                    <div className="text-muted-foreground font-mono text-[8px] tracking-[1px]">
+                                        {item.edition}
+                                    </div>
                                 </Link>
-                            </li>
-                        );
-                    })}
-                </ul>
+                            );
+                        })}
+                    </div>
+                </div>
             </nav>
-
-            {/* Footer */}
-            <div className="border-foreground/20 border-t p-5">
-                <Link
-                    href="/"
-                    className="text-muted-foreground hover:text-foreground flex items-center gap-2 font-mono text-[9px] tracking-[1.4px] uppercase transition-colors"
-                >
-                    <span>→</span>
-                    <span>Back to Site</span>
-                </Link>
-                <div className="text-muted-foreground/50 mt-3 font-mono text-[8px] tracking-[1px]">
-                    © {new Date().getFullYear()} VIERNULVIER
-                </div>
-            </div>
         </aside>
     );
 }
