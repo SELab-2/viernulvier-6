@@ -99,12 +99,24 @@ services:
       - app_network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.main-s3.rule=Host(`${PROD_HOST}`) && PathPrefix(`/s3`)"
-      - "traefik.http.routers.main-s3.entrypoints=websecure"
-      - "traefik.http.routers.main-s3.tls.certresolver=letsencrypt"
-      - "traefik.http.services.main-s3.loadbalancer.server.port=3900"
-      - "traefik.http.middlewares.main-s3-strip.stripprefix.prefixes=/s3"
-      - "traefik.http.routers.main-s3.middlewares=main-s3-strip"
+      # S3 API endpoint (port 3900) - internal use only
+      - "traefik.http.routers.main-s3-api.rule=Host(`${PROD_HOST}`) && PathPrefix(`/s3-api`)"
+      - "traefik.http.routers.main-s3-api.entrypoints=websecure"
+      - "traefik.http.routers.main-s3-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.main-s3-api.loadbalancer.server.port=3900"
+      - "traefik.http.middlewares.main-s3-api-strip.stripprefix.prefixes=/s3-api"
+      - "traefik.http.routers.main-s3-api.middlewares=main-s3-api-strip"
+      # S3 Web endpoint (port 3902) for public file serving
+      # Note: Garage web endpoint uses Host header to determine bucket
+      # We rewrite the Host header to match the bucket name
+      - "traefik.http.routers.main-s3-web.rule=Host(`${PROD_HOST}`) && PathPrefix(`/s3`)"
+      - "traefik.http.routers.main-s3-web.entrypoints=websecure"
+      - "traefik.http.routers.main-s3-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.main-s3-web.loadbalancer.server.port=3902"
+      # Strip the path prefix AND set the Host header to the bucket name
+      - "traefik.http.middlewares.main-s3-web-strip.stripprefix.prefixes=/s3"
+      - "traefik.http.middlewares.main-s3-web-headers.headers.customrequestheaders.Host=${GARAGE_S3_BUCKET}"
+      - "traefik.http.routers.main-s3-web.middlewares=main-s3-web-strip,main-s3-web-headers"
 
   garage-init:
     image: alpine:3.21
@@ -175,6 +187,9 @@ services:
         $$G bucket info "$$GARAGE_S3_BUCKET" 2>/dev/null || \
           $$G bucket create "$$GARAGE_S3_BUCKET"
         $$G bucket allow "$$GARAGE_S3_BUCKET" --key "$$GARAGE_S3_ACCESS_KEY" --read --write || true
+
+        echo "Enabling website access on bucket..."
+        $$G bucket website "$$GARAGE_S3_BUCKET" --allow || true
 
         echo "Init complete!"
 

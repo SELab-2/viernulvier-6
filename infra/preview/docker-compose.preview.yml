@@ -117,12 +117,24 @@ services:
       - internal
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${PREVIEW_NAME}-s3.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/s3`)"
-      - "traefik.http.routers.${PREVIEW_NAME}-s3.entrypoints=websecure"
-      - "traefik.http.routers.${PREVIEW_NAME}-s3.tls.certresolver=letsencrypt"
-      - "traefik.http.services.${PREVIEW_NAME}-s3.loadbalancer.server.port=3900"
-      - "traefik.http.middlewares.${PREVIEW_NAME}-s3-strip.stripprefix.prefixes=/${PREVIEW_NAME}/s3"
-      - "traefik.http.routers.${PREVIEW_NAME}-s3.middlewares=${PREVIEW_NAME}-s3-strip"
+      # S3 API endpoint (port 3900)
+      - "traefik.http.routers.${PREVIEW_NAME}-s3-api.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/s3-api`)"
+      - "traefik.http.routers.${PREVIEW_NAME}-s3-api.entrypoints=websecure"
+      - "traefik.http.routers.${PREVIEW_NAME}-s3-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${PREVIEW_NAME}-s3-api.loadbalancer.server.port=3900"
+      - "traefik.http.middlewares.${PREVIEW_NAME}-s3-api-strip.stripprefix.prefixes=/${PREVIEW_NAME}/s3-api"
+      - "traefik.http.routers.${PREVIEW_NAME}-s3-api.middlewares=${PREVIEW_NAME}-s3-api-strip"
+      # S3 Web endpoint (port 3902) for public file serving
+      # Note: Garage web endpoint uses Host header to determine bucket
+      # We rewrite the Host header to match the bucket name
+      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/s3`)"
+      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.entrypoints=websecure"
+      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${PREVIEW_NAME}-s3-web.loadbalancer.server.port=3902"
+      # Strip the path prefix AND set the Host header to the bucket name
+      - "traefik.http.middlewares.${PREVIEW_NAME}-s3-web-strip.stripprefix.prefixes=/${PREVIEW_NAME}/s3"
+      - "traefik.http.middlewares.${PREVIEW_NAME}-s3-web-headers.headers.customrequestheaders.Host=${GARAGE_S3_BUCKET}"
+      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.middlewares=${PREVIEW_NAME}-s3-web-strip,${PREVIEW_NAME}-s3-web-headers"
 
   garage-init:
     image: alpine:3.21
@@ -193,6 +205,9 @@ services:
         $$G bucket info "$$GARAGE_S3_BUCKET" 2>/dev/null || \
           $$G bucket create "$$GARAGE_S3_BUCKET"
         $$G bucket allow "$$GARAGE_S3_BUCKET" --key "$$GARAGE_S3_ACCESS_KEY" --read --write || true
+
+        echo "Enabling website access on bucket..."
+        $$G bucket website "$$GARAGE_S3_BUCKET" --allow || true
 
         echo "Init complete!"
 
