@@ -14,8 +14,8 @@ workspace = true
 [dependencies]
 tracing = { workspace = true }
 serde = { workspace = true }
-uuid = { workspace = true }
-chrono = { workspace = true }
+uuid = { workspace = true, features = ["serde"] }
+chrono = { workspace = true, features = ["serde"] }
 thiserror = { workspace = true }
 
 sqlx = { version = "0.8.6", default-features = false, features = [

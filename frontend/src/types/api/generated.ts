@@ -271,6 +271,144 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/media": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description List media records with pagination for CMS browsing. */
+        get: operations["get_all_media"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/cleanup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Business cleanup: remove media rows with no entity links (orphans) and attempt to delete their S3 objects. */
+        post: operations["cleanup_orphaned_media"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/entity/{entity_type}/{entity_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get media linked to an entity. Use role/pagination filters. If cover_only=true and no explicit cover is set, the first item by ordering is returned. */
+        get: operations["get_entity_media"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/entity/{entity_type}/{entity_id}/attach": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Primary CMS write endpoint: create/update media metadata by s3_key and link it to an entity in one transaction. */
+        post: operations["attach_media_to_entity"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/entity/{entity_type}/{entity_id}/{media_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Unlink media from an entity only (does not directly delete media row/object). Orphans are handled by cleanup/reconcile flows. */
+        delete: operations["unlink_media_from_entity"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/reconcile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Storage drift check: compare DB media keys vs S3 objects. Dry-run by default; use apply=true to delete DB rows whose S3 object is missing. */
+        post: operations["reconcile_media_storage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/upload-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Generate a short-lived presigned S3/Garage PUT URL. Frontend uploads the file directly; backend credentials remain private. */
+        post: operations["generate_upload_url"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get a single media record by media ID. */
+        get: operations["get_media_by_id"];
+        /** @description Update media metadata fields only. Storage location (s3_key) remains unchanged. */
+        put: operations["update_media"];
+        post?: never;
+        /** @description Delete a media record and attempt to delete its S3 object. */
+        delete: operations["delete_media"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/productions": {
         parameters: {
             query?: never;
@@ -400,12 +538,48 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AttachMediaRequest: {
+            alt_text_en?: string | null;
+            alt_text_fr?: string | null;
+            alt_text_nl?: string | null;
+            checksum?: string | null;
+            credit_en?: string | null;
+            credit_fr?: string | null;
+            credit_nl?: string | null;
+            derivative_type?: string | null;
+            description_en?: string | null;
+            description_fr?: string | null;
+            description_nl?: string | null;
+            /** Format: int64 */
+            file_size?: number | null;
+            gallery_type?: string | null;
+            /** Format: double */
+            geo_latitude?: number | null;
+            /** Format: double */
+            geo_longitude?: number | null;
+            /** Format: int32 */
+            height?: number | null;
+            is_cover_image?: boolean | null;
+            mime_type: string;
+            /** Format: uuid */
+            parent_id?: string | null;
+            role?: string | null;
+            s3_key: string;
+            /** Format: int32 */
+            sort_order?: number | null;
+            /** Format: int32 */
+            width?: number | null;
+        };
         AuthResponse: {
             message: string;
             success: boolean;
         };
+        CleanupResponse: {
+            deleted_count: number;
+            s3_keys: string[];
+        };
         /** @enum {string} */
-        CollectionContentType: "production" | "event" | "blogpost" | "artist" | "location";
+        CollectionContentType: "production" | "event" | "blogpost" | "artist" | "location" | "media";
         CollectionItemPayload: {
             /**
              * Format: uuid
@@ -497,7 +671,7 @@ export interface components {
             role: components["schemas"]["UserRole"];
         };
         /** @enum {string} */
-        EntityType: "production" | "artist" | "article" | "media";
+        EntityType: "production" | "artist" | "article" | "media" | "event";
         ErrorResponse: {
             /** @example An error occurred during processing */
             message: string;
@@ -633,6 +807,66 @@ export interface components {
         LoginRequest: {
             email: string;
             password: string;
+        };
+        /**
+         * @description Response payload for a media item. The `url` field is the direct public URL
+         *     the frontend can use to load the file (either from S3/Garage or an external CDN).
+         */
+        MediaPayload: {
+            alt_text_en?: string | null;
+            alt_text_fr?: string | null;
+            alt_text_nl?: string | null;
+            checksum?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            credit_en?: string | null;
+            credit_fr?: string | null;
+            credit_nl?: string | null;
+            crops: components["schemas"]["MediaVariantPayload"][];
+            derivative_type?: string | null;
+            description_en?: string | null;
+            description_fr?: string | null;
+            description_nl?: string | null;
+            /** Format: int64 */
+            file_size?: number | null;
+            gallery_type?: string | null;
+            /** Format: double */
+            geo_latitude?: number | null;
+            /** Format: double */
+            geo_longitude?: number | null;
+            /** Format: int32 */
+            height?: number | null;
+            /** Format: uuid */
+            id: string;
+            mime_type: string;
+            /** Format: uuid */
+            parent_id?: string | null;
+            source_system: string;
+            source_uri?: string | null;
+            /** Format: date-time */
+            updated_at: string;
+            /** @description Direct public URL to the media file (S3 or external) */
+            url?: string | null;
+            /** Format: int32 */
+            width?: number | null;
+        };
+        MediaVariantPayload: {
+            checksum?: string | null;
+            crop_name?: string | null;
+            /** Format: int64 */
+            file_size?: number | null;
+            /** Format: int32 */
+            height?: number | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            media_id: string;
+            mime_type?: string | null;
+            source_uri?: string | null;
+            url?: string | null;
+            variant_kind: string;
+            /** Format: int32 */
+            width?: number | null;
         };
         PaginatedResponse_EventPayload: {
             data: {
@@ -775,6 +1009,15 @@ export interface components {
             teaser?: string | null;
             title?: string | null;
         };
+        ReconcileResponse: {
+            applied: boolean;
+            db_key_count: number;
+            /** Format: int64 */
+            deleted_missing_in_s3_count: number;
+            missing_in_db: string[];
+            missing_in_s3: string[];
+            s3_key_count: number;
+        };
         SpacePayload: {
             /** Format: uuid */
             id: string;
@@ -801,6 +1044,23 @@ export interface components {
             description?: string | null;
             label: string;
             language_code: string;
+        };
+        UploadUrlRequest: {
+            /** @description Original filename (used to derive the S3 key extension) */
+            filename: string;
+            /** @description MIME type of the file (e.g., "image/jpeg") */
+            mime_type: string;
+        };
+        UploadUrlResponse: {
+            /**
+             * Format: int64
+             * @description URL expiration in seconds
+             */
+            expires_in: number;
+            /** @description The S3 key where the file should be uploaded */
+            s3_key: string;
+            /** @description Presigned PUT URL for direct upload */
+            upload_url: string;
         };
         /** @enum {string} */
         UserRole: "admin" | "editor" | "user";
@@ -1662,6 +1922,296 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_all_media: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaPayload"][];
+                };
+            };
+        };
+    };
+    cleanup_orphaned_media: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cleanup complete */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CleanupResponse"];
+                };
+            };
+        };
+    };
+    get_entity_media: {
+        parameters: {
+            query?: {
+                /** @description Optional media role filter (e.g. gallery, poster, review, cover) */
+                role?: string;
+                /** @description If true, return one cover item; falls back to first ordered item when no explicit cover exists */
+                cover_only?: boolean;
+                /** @description If true, include imported crop variants */
+                include_crops?: boolean;
+                /** @description Pagination size, default 50, max 200 */
+                limit?: number;
+                /** @description Pagination offset */
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                /** @description Entity type (production, event, blogpost, media, artist) */
+                entity_type: string;
+                /** @description Entity UUID */
+                entity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaPayload"][];
+                };
+            };
+        };
+    };
+    attach_media_to_entity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Entity type (production, event, blogpost, media, artist) */
+                entity_type: string;
+                /** @description Entity UUID */
+                entity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AttachMediaRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaPayload"];
+                };
+            };
+            /** @description Bad request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unlink_media_from_entity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Entity type (production, event, blogpost, media, artist) */
+                entity_type: string;
+                /** @description Entity UUID */
+                entity_id: string;
+                /** @description Media UUID */
+                media_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reconcile_media_storage: {
+        parameters: {
+            query?: {
+                /** @description Apply destructive cleanup when true (default false) */
+                apply?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reconciliation complete */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReconcileResponse"];
+                };
+            };
+        };
+    };
+    generate_upload_url: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UploadUrlRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadUrlResponse"];
+                };
+            };
+            /** @description S3 not configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_media_by_id: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaPayload"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_media: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MediaPayload"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaPayload"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_media: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Not found */
             404: {

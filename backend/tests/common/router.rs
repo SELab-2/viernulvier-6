@@ -28,6 +28,7 @@ impl TestRouter {
         let state = AppState {
             db: Database::new(db.clone()),
             config,
+            s3_client: None,
         };
 
         Self {
