@@ -95,9 +95,9 @@ services:
       - garage_meta:/var/lib/garage/meta
       - garage_data:/var/lib/garage/data
     networks:
-      traefik:
-        { }
       app_network:
+        { }
+      traefik:
         aliases:
           - $GARAGE_S3_BUCKET.s3.garage.localhost
     labels:
