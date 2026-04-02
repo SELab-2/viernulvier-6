@@ -113,8 +113,11 @@ services:
       - garage_meta:/var/lib/garage/meta
       - garage_data:/var/lib/garage/data
     networks:
-      - traefik
-      - internal
+      traefik:
+        { }
+      app_network:
+        aliases:
+          - $GARAGE_S3_BUCKET.s3.garage.localhost
     labels:
       - "traefik.enable=true"
       # S3 API endpoint (port 3900)
@@ -136,8 +139,8 @@ services:
       - "traefik.http.services.${PREVIEW_NAME}-s3-web.loadbalancer.server.port=3902"
       # Strip the path prefix AND set the Host header to the bucket name
       - "traefik.http.middlewares.${PREVIEW_NAME}-s3-web-strip.stripprefix.prefixes=/${PREVIEW_NAME}/s3"
-      #- "traefik.http.middlewares.${PREVIEW_NAME}-s3-web-headers.headers.customrequestheaders.Host=${GARAGE_S3_BUCKET}.s3.garage.localhost"
-      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.middlewares=${PREVIEW_NAME}-s3-web-strip" #,${PREVIEW_NAME}-s3-web-headers
+      - "traefik.http.services.${PREVIEW_NAME}-s3-web.loadbalancer.passhostheader=false"
+      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.middlewares=${PREVIEW_NAME}-s3-web-strip"
 
   garage-init:
     image: alpine:3.21
