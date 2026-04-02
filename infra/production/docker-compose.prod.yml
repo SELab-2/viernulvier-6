@@ -102,15 +102,6 @@ services:
           - $GARAGE_S3_BUCKET.s3.garage.localhost
     labels:
       - "traefik.enable=true"
-      # S3 API endpoint (port 3900) - internal use only
-      # TODO: Does this even need to be public the API? I think we only need media
-      - "traefik.http.routers.main-s3-api.rule=Host(`${PROD_HOST}`) && PathPrefix(`/s3-api`)"
-      - "traefik.http.routers.main-s3-api.entrypoints=websecure"
-      - "traefik.http.routers.main-s3-api.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.main-s3-api.priority=150"
-      - "traefik.http.services.main-s3-api.loadbalancer.server.port=3900"
-      - "traefik.http.middlewares.main-s3-api-strip.stripprefix.prefixes=/s3-api"
-      - "traefik.http.routers.main-s3-api.middlewares=main-s3-api-strip"
       # S3 Web endpoint (port 3902) for public file serving
       # Note: Garage web endpoint uses Host header to determine bucket
       # We rewrite the Host header to match the bucket name
