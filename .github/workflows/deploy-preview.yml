@@ -62,7 +62,7 @@ jobs:
           garage_rpc_secret: ${{ secrets.GARAGE_RPC_SECRET }}
           garage_s3_access_key: ${{ secrets.GARAGE_S3_ACCESS_KEY }}
           garage_s3_secret_key: ${{ secrets.GARAGE_S3_SECRET_KEY }}
-          garage_s3_bucket: media
+          garage_s3_bucket: media-${{ github.event.pull_request.number }}
           jwt_secret: ${{ secrets.JWT_SECRET }}
           api_key_404: ${{ secrets.API_KEY_404 }}
 

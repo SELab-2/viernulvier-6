@@ -1,4 +1,5 @@
 {
   "title": "API",
-  "root": true
+  "root": true,
+  "pages": ["index", "garage-media"]
 }

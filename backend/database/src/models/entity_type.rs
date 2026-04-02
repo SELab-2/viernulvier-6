@@ -9,4 +9,5 @@ pub enum EntityType {
     Artist,
     Article,
     Media,
+    Event,
 }
