@@ -114,10 +114,10 @@ services:
       - garage_data:/var/lib/garage/data
     networks:
       traefik:
-        { }
-      internal:
         aliases:
-          - $GARAGE_S3_BUCKET.s3.garage.localhost
+          - ${GARAGE_S3_BUCKET}.s3.garage.localhost
+      internal:
+        { }
     labels:
       - "traefik.enable=true"
       # S3 API endpoint (port 3900)
