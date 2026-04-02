@@ -48,4 +48,5 @@ pub enum CollectionContentType {
     Blogpost,
     Artist,
     Location,
+    Media,
 }

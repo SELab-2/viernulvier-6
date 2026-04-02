@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+out/
+build/
+dist/
+
+# Coverage
+coverage/
+
+# Generated files
+src/types/api/generated.ts
+
+# Misc
+*.log
+.DS_Store

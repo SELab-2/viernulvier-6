@@ -4,5 +4,6 @@ pub mod facet;
 pub mod hall;
 pub mod location;
 pub mod paginated;
+pub mod media;
 pub mod production;
 pub mod space;
