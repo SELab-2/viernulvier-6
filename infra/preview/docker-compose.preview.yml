@@ -116,8 +116,7 @@ services:
       traefik:
         aliases:
           - ${GARAGE_S3_BUCKET}.s3.garage.localhost
-      internal:
-        { }
+      internal: {}
     labels:
       - "traefik.enable=true"
       # S3 Web endpoint (port 3902) for public file serving
@@ -141,7 +140,7 @@ services:
       - GARAGE_S3_SECRET_KEY=${GARAGE_S3_SECRET_KEY}
       - GARAGE_S3_BUCKET=${GARAGE_S3_BUCKET}
       - GARAGE_ZONE=${GARAGE_ZONE:-dc1}
-      - GARAGE_CAPACITY=${GARAGE_CAPACITY:-1GiB}
+      - GARAGE_CAPACITY=${GARAGE_CAPACITY:-500MB}
     volumes:
       - ./garage.toml:/etc/garage.toml:ro
       - garage_meta:/var/lib/garage/meta
