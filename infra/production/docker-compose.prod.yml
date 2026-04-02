@@ -118,11 +118,10 @@ services:
       - "traefik.http.routers.main-s3-web.entrypoints=websecure"
       - "traefik.http.routers.main-s3-web.tls.certresolver=letsencrypt"
       - "traefik.http.routers.main-s3-web.priority=150"
-      - "traefik.http.services.main-s3-web.loadbalancer.server.port=3902"
-      # Strip the path prefix AND set the Host header to the bucket name
       - "traefik.http.middlewares.main-s3-web-strip.stripprefix.prefixes=/s3"
-      - "traefik.http.services.main-s3-web.loadbalancer.passhostheader=false"
       - "traefik.http.routers.main-s3-web.middlewares=main-s3-web-strip"
+      - "traefik.http.services.main-s3-web.loadbalancer.server.url=http://${GARAGE_S3_BUCKET}.s3.garage.localhost:3902"
+      - "traefik.http.services.main-s3-web.loadbalancer.passhostheader=false"
 
   garage-init:
     image: alpine:3.21
