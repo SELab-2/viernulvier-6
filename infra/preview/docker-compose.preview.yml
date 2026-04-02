@@ -115,7 +115,7 @@ services:
     networks:
       traefik:
         { }
-      app_network:
+      internal:
         aliases:
           - $GARAGE_S3_BUCKET.s3.garage.localhost
     labels:
