@@ -22,7 +22,8 @@ use utoipa_swagger_ui::{Config, SwaggerUi};
 use crate::config::AppConfig;
 use crate::error::AppError;
 use crate::handlers::{
-    admin, auth, collection, event, hall, location, production, space, taxonomy, version, media,
+    admin, article, artist, auth, collection, event, hall, location, media, production, space,
+    taxonomy, version,
 };
 
 pub mod config;
@@ -242,6 +243,11 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // collections
         .routes(routes!(collection::get_all))
         .routes(routes!(collection::get_one))
+        // artists
+        .routes(routes!(artist::get_all))
+        // articles (public: published only, filterable)
+        .routes(routes!(article::get_all))
+        .routes(routes!(article::get_one))
 }
 
 // Only editors can edit data
@@ -283,6 +289,14 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(media::unlink_from_entity))
         .routes(routes!(media::cleanup_orphans))
         .routes(routes!(media::reconcile_storage))
+        // Articles (CMS)
+        .routes(routes!(article::get_all_cms))
+        .routes(routes!(article::get_one_cms))
+        .routes(routes!(article::post))
+        .routes(routes!(article::put))
+        .routes(routes!(article::delete))
+        .routes(routes!(article::get_relations))
+        .routes(routes!(article::put_relations))
         .layer(from_extractor_with_state::<EditorUser, AppState>(state))
 }
 

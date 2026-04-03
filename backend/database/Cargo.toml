@@ -28,4 +28,5 @@ sqlx = { version = "0.8.6", default-features = false, features = [
     "uuid",
 ] }
 ormlite = { version = "0.24.3", features = ["default-postgres"] }
-utoipa = { version = "5.4.0", features = ["uuid"] }
+utoipa = { version = "5.4.0", features = ["uuid", "chrono"] }
+serde_json = "1.0"
