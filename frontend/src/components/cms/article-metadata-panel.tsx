@@ -144,7 +144,7 @@ export function ArticleMetadataPanel({
                 ids={relations.productionIds}
                 options={productions.map((p) => ({
                     id: p.id,
-                    label: p.titleNl ?? p.slug,
+                    label: p.translations.find((t) => t.languageCode === "nl")?.title ?? p.slug,
                 }))}
                 onChange={(productionIds) => onRelationsChange({ ...relations, productionIds })}
             />
