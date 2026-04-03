@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Link, usePathname } from "@/i18n/routing";
-import { Clapperboard, MapPin, Newspaper, Users, Database, FileUp, X } from "lucide-react";
+import { Clapperboard, MapPin, Newspaper, Users, Database, FileUp } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -101,7 +101,6 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
     const pathname = usePathname();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const locale = useLocale();
 
     const entityType = ENTITY_TYPE_MAP[pathname] ?? null;
     const { data: facets } = useGetFacets({ entityType: entityType ?? undefined });
