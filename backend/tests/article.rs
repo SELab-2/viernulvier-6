@@ -135,16 +135,13 @@ async fn post_success(db: PgPool) {
 
 #[sqlx::test(fixtures("articles"))]
 #[test_log::test]
-async fn post_duplicate_title_increments_slug(db: PgPool) {
+async fn post_duplicate_title_returns_conflict(db: PgPool) {
     let payload: ArticlePostPayload =
         serde_json::from_value(json!({ "title": "Published Article" })).unwrap();
 
     let app = TestRouter::as_editor(db).await;
     let response = app.post("/articles", &payload).await;
-    assert_eq!(response.status(), StatusCode::CREATED);
-
-    let data: ArticlePayload = response.into_struct().await;
-    assert_eq!(data.slug, "published-article-2");
+    assert_eq!(response.status(), StatusCode::CONFLICT);
 }
 
 #[sqlx::test(fixtures("articles"))]
