@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { animate } from "animejs";
 import type { LucideIcon } from "lucide-react";
 
