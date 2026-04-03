@@ -17,11 +17,12 @@ const TAB_DEFS: { value: Tab; href: string }[] = [
 ];
 
 function getActiveTab(pathname: string): Tab {
-    const segments = pathname.split("/");
+    const segments = pathname.split("/").filter(Boolean);
     const lastSegment = segments[segments.length - 1] ?? "";
-    if (CONTENT_SEGMENTS.includes(lastSegment)) return "content";
     if (lastSegment === "ingest") return "ingest";
     if (lastSegment === "import") return "import";
+    // Match any content sub-route (e.g. /cms/articles/[id]/edit)
+    if (CONTENT_SEGMENTS.some((s) => segments.includes(s))) return "content";
     return "overview";
 }
 

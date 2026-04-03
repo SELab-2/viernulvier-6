@@ -22,6 +22,14 @@ export const queryKeys = {
         all: ["spaces"] as const,
         detail: (id: string) => ["spaces", id] as const,
     },
+    artists: {
+        all: ["artists"] as const,
+    },
+    articles: {
+        all: ["articles"] as const,
+        detail: (id: string) => ["articles", id] as const,
+        relations: (id: string) => ["articles", id, "relations"] as const,
+    },
     taxonomy: {
         facets: (entityType?: string) =>
             entityType

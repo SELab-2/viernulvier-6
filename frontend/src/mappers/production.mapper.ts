@@ -11,7 +11,7 @@ import {
     ProductionUpdateInput,
 } from "@/types/models/production.types";
 
-const toNullable = <T>(value: T | null | undefined): T | null => value ?? null;
+import { toNullable } from "./utils";
 
 type ApiTranslation = {
     language_code: string;
