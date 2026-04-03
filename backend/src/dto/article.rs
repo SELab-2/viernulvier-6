@@ -9,7 +9,9 @@ use serde_json::Value;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::{error::AppError, utils::slugify};
+use slug::slugify;
+
+use crate::error::AppError;
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ArticlePayload {
@@ -158,23 +160,16 @@ pub struct ArticlePostPayload {
 
 impl ArticlePostPayload {
     pub async fn create(self, db: &Database) -> Result<ArticlePayload, AppError> {
-        let base_slug = match &self.title {
+        let slug = match &self.title {
             Some(t) if !t.is_empty() => slugify(t),
             _ => "article".to_string(),
         };
 
-        let slug = if !db.articles().slug_exists(&base_slug).await? {
-            base_slug.clone()
-        } else {
-            let mut n = 2u32;
-            loop {
-                let candidate = format!("{base_slug}-{n}");
-                if !db.articles().slug_exists(&candidate).await? {
-                    break candidate;
-                }
-                n += 1;
-            }
-        };
+        if db.articles().slug_exists(&slug).await? {
+            return Err(AppError::Conflict(format!(
+                "slug '{slug}' is already taken"
+            )));
+        }
 
         let now = Utc::now();
         let create = ArticleCreate {

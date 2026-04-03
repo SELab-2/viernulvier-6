@@ -129,17 +129,17 @@ impl<'a> ArticleRepo<'a> {
             builder.push(")");
         }
 
-        if let (Some(entity_id), Some(entity_type)) = (related_entity_id, related_entity_type) {
-            if let (Some(table), Some(col)) = (
+        if let (Some(entity_id), Some(entity_type)) = (related_entity_id, related_entity_type)
+            && let (Some(table), Some(col)) = (
                 entity_type.article_join_table(),
                 entity_type.article_id_column(),
-            ) {
-                builder.push(format!(
-                    " AND EXISTS (SELECT 1 FROM {table} r WHERE r.article_id = a.id AND r.{col} = "
-                ));
-                builder.push_bind(entity_id);
-                builder.push(")");
-            }
+            )
+        {
+            builder.push(format!(
+                " AND EXISTS (SELECT 1 FROM {table} r WHERE r.article_id = a.id AND r.{col} = "
+            ));
+            builder.push_bind(entity_id);
+            builder.push(")");
         }
 
         builder.push(" ORDER BY a.updated_at DESC");

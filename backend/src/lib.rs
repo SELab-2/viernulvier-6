@@ -31,7 +31,6 @@ pub mod dto;
 mod error;
 mod extractors;
 mod handlers;
-mod utils;
 
 #[derive(Clone)]
 pub struct AppState {
