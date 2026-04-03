@@ -189,7 +189,22 @@
             "editHall": "Zaal bewerken"
         },
         "Articles": {
-            "notAvailable": "Artikelen-API is nog niet beschikbaar. Geen gegevens om weer te geven."
+            "notAvailable": "Artikelen-API is nog niet beschikbaar. Geen gegevens om weer te geven.",
+            "newArticle": "Nieuw artikel",
+            "createFailed": "Aanmaken van artikel mislukt.",
+            "save": "Opslaan",
+            "saving": "Bezig met opslaan…",
+            "saveSuccess": "Artikel opgeslagen.",
+            "saveFailed": "Opslaan mislukt.",
+            "backToList": "Terug naar artikelen",
+            "statusLabel": "Status",
+            "slug": "Slug",
+            "subjectPeriod": "Periode",
+            "title": "Titel",
+            "relatedProductions": "Gerelateerde producties",
+            "relatedArtists": "Gerelateerde artiesten",
+            "relatedLocations": "Gerelateerde locaties",
+            "relatedEvents": "Gerelateerde voorstellingen"
         },
         "Performers": {
             "notAvailable": "Uitvoerders-API is nog niet beschikbaar. Geen gegevens om weer te geven."

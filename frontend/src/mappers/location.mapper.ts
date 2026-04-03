@@ -2,7 +2,7 @@ import { LocationResponse } from "@/types/api/location.api.types";
 import { LocationCreateRequest, LocationUpdateRequest } from "@/types/api/location.api.types";
 import { Location, LocationCreateInput, LocationUpdateInput } from "@/types/models/location.types";
 
-const toNullable = <T>(value: T | null | undefined): T | null => value ?? null;
+import { toNullable } from "./utils";
 
 const buildAddress = (
     location: Pick<Location, "street" | "number" | "postalCode" | "city" | "country">
