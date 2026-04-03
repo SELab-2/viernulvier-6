@@ -218,7 +218,10 @@
             "description": "This feature is still under development. Soon you will be able to import data from external sources such as UiTdatabank here."
         },
         "DataTable": {
-            "noResults": "No items found"
+            "noResults": "No items found",
+            "searchPlaceholder": "Search...",
+            "clearSearch": "Clear search",
+            "resultsCount": "{count} results"
         },
         "Sidebar": {
             "archiveIndex": "Archive Index",

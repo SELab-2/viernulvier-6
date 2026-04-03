@@ -13,8 +13,8 @@ import { Space, SpaceCreateInput, SpaceUpdateInput } from "@/types/models/space.
 import { queryKeys } from "./query-keys";
 
 const fetchSpaces = async (): Promise<Space[]> => {
-    const { data } = await api.get<SpaceResponse[]>("/spaces");
-    return mapSpaces(data);
+    const { data } = await api.get<{ data: SpaceResponse[] }>("/spaces?limit=100");
+    return mapSpaces(data.data);
 };
 
 const fetchSpaceById = async (id: string): Promise<Space> => {

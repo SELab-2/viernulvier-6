@@ -36,7 +36,10 @@ export default function ImportPage() {
     return (
         <div className="flex h-full flex-col">
             {/* Header */}
-            <header ref={headerRef} className="border-foreground/10 mb-8 border-b-2 pb-6 opacity-0">
+            <header
+                ref={headerRef}
+                className="border-foreground/10 bg-background relative z-20 mb-8 shrink-0 border-b-2 pb-6 opacity-0"
+            >
                 <div className="text-muted-foreground mb-3 font-mono text-[9px] tracking-[2px] uppercase">
                     Ed. 06 — Import
                 </div>
@@ -50,7 +53,7 @@ export default function ImportPage() {
             </header>
 
             {/* Content */}
-            <div ref={contentRef} className="flex-1 overflow-auto">
+            <div ref={contentRef} className="flex-1 overflow-y-auto">
                 <div className="max-w-2xl">
                     <div className="border-foreground/20 bg-foreground/[0.02] border p-8">
                         <div className="flex items-start gap-4">

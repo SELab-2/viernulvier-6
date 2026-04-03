@@ -51,7 +51,7 @@ export function makeLocationColumns(options: {
             accessorKey: "name",
             header: "Naam",
             cell: ({ getValue }) => (
-                <span className="font-display max-w-[200px] truncate text-base font-medium tracking-tight">
+                <span className="font-display max-w-[200px] text-base font-medium tracking-tight break-words">
                     {String(getValue() || "—")}
                 </span>
             ),
@@ -69,7 +69,7 @@ export function makeLocationColumns(options: {
             accessorKey: "address",
             header: "Adres",
             cell: ({ getValue }) => (
-                <span className="text-muted-foreground max-w-[200px] truncate text-sm">
+                <span className="text-muted-foreground max-w-[200px] text-sm break-words">
                     {String(getValue() || "—")}
                 </span>
             ),

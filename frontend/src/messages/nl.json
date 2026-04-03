@@ -218,7 +218,10 @@
             "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier data importeren van externe bronnen zoals UiTdatabank."
         },
         "DataTable": {
-            "noResults": "Geen items gevonden"
+            "noResults": "Geen items gevonden",
+            "searchPlaceholder": "Zoeken...",
+            "clearSearch": "Zoeken wissen",
+            "resultsCount": "{count} resultaten"
         },
         "Sidebar": {
             "archiveIndex": "Archief Index",

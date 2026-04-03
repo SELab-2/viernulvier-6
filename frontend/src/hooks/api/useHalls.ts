@@ -8,8 +8,8 @@ import { Hall, HallCreateInput, HallUpdateInput } from "@/types/models/hall.type
 import { queryKeys } from "./query-keys";
 
 const fetchHalls = async (): Promise<Hall[]> => {
-    const { data } = await api.get<HallResponse[]>("/halls");
-    return mapHalls(data);
+    const { data } = await api.get<{ data: HallResponse[] }>("/halls?limit=100");
+    return mapHalls(data.data);
 };
 
 const fetchHallById = async (id: string): Promise<Hall> => {

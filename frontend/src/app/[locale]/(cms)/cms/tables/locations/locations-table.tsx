@@ -91,7 +91,7 @@ export function LocationsTable() {
     const hasSelection = selectedLocationCount > 0 || selectedHallCount > 0;
 
     return (
-        <>
+        <div className="flex flex-col">
             {/* Selection Toolbar - Outside table */}
             {hasSelection && (
                 <div className="border-foreground/10 bg-foreground/[0.02] mb-4 border px-4 py-3">
@@ -115,17 +115,19 @@ export function LocationsTable() {
                 </div>
             )}
 
-            <DataTable
-                columns={locationCols}
-                data={locations}
-                loading={locationsLoading}
-                renderSubComponent={renderHalls}
-                getRowCanExpand={getRowCanExpand}
-                expanderLabels={expanderLabels}
-                rowSelection={parentSelection}
-                onRowSelectionChange={setParentSelection}
-                getRowId={getLocationRowId}
-            />
+            <div className="overflow-x-auto">
+                <DataTable
+                    columns={locationCols}
+                    data={locations}
+                    loading={locationsLoading}
+                    renderSubComponent={renderHalls}
+                    getRowCanExpand={getRowCanExpand}
+                    expanderLabels={expanderLabels}
+                    rowSelection={parentSelection}
+                    onRowSelectionChange={setParentSelection}
+                    getRowId={getLocationRowId}
+                />
+            </div>
             <EditSheet
                 open={!!editLocation}
                 onOpenChange={(open) => !open && setEditLocation(null)}
@@ -142,6 +144,6 @@ export function LocationsTable() {
                 title={t("editHall")}
                 onSave={(data) => updateHall.mutate(toHallUpdateInput(data))}
             />
-        </>
+        </div>
     );
 }

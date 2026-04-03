@@ -13,8 +13,8 @@ import { Location, LocationCreateInput, LocationUpdateInput } from "@/types/mode
 import { queryKeys } from "./query-keys";
 
 const fetchLocations = async (): Promise<Location[]> => {
-    const { data } = await api.get<LocationResponse[]>("/locations");
-    return mapLocations(data);
+    const { data } = await api.get<{ data: LocationResponse[] }>("/locations?limit=100");
+    return mapLocations(data.data);
 };
 
 const fetchLocationById = async (id: string): Promise<Location> => {

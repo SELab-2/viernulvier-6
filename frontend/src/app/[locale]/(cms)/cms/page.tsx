@@ -104,11 +104,11 @@ export default function CmsOverviewPage() {
     }, []);
 
     return (
-        <div className="flex h-[calc(100vh-4rem)] flex-col px-4 py-6 sm:px-6 sm:py-8">
+        <div className="flex flex-col px-4 py-6 sm:px-6 sm:py-8">
             {/* Header */}
             <header
                 ref={headerRef}
-                className="border-foreground/10 mx-auto mb-6 w-full max-w-7xl shrink-0 border-b-2 pb-6 text-center opacity-0 sm:mb-8"
+                className="border-foreground/10 mx-auto mb-6 w-full max-w-7xl border-b-2 pb-6 text-center opacity-0 sm:mb-8"
             >
                 <h1 className="font-display text-foreground mb-2 text-[36px] font-black tracking-tight uppercase sm:text-[42px] lg:text-[56px]">
                     {t("title")}
@@ -116,8 +116,8 @@ export default function CmsOverviewPage() {
                 <div className="bg-foreground mx-auto h-0.5 w-20 sm:w-24" />
             </header>
 
-            {/* Main Content - scrollable */}
-            <div ref={containerRef} className="mx-auto w-full max-w-7xl flex-1 overflow-y-auto">
+            {/* Main Content */}
+            <div ref={containerRef} className="mx-auto w-full max-w-7xl">
                 {/* Content Sections Grid */}
                 <div className="grid grid-cols-1 gap-4 p-4 sm:gap-6 lg:grid-cols-12">
                     {CONTENT_SECTIONS.map((section) => (
@@ -141,7 +141,7 @@ export default function CmsOverviewPage() {
                 </div>
 
                 {/* Utility Sections - Ingest & Import */}
-                <div className="border-foreground/10 mx-auto mt-6 grid w-full max-w-2xl grid-cols-1 gap-3 border-t pt-6 sm:mt-8 sm:grid-cols-2 sm:gap-4">
+                <div className="border-foreground/10 mx-auto mt-6 grid w-full max-w-7xl grid-cols-1 gap-4 border-t p-4 pt-6 sm:mt-8 sm:grid-cols-2 sm:gap-6">
                     {UTILITY_SECTIONS.map((util) => (
                         <SectionCard
                             key={util.key}

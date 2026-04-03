@@ -141,7 +141,7 @@ export function makeProductionColumns(options: {
             header: "Titel (NL)",
             accessorFn: (row) => row.translations.find((t) => t.languageCode === "nl")?.title ?? "",
             cell: ({ getValue }) => (
-                <span className="font-display max-w-[200px] truncate text-base font-medium tracking-tight">
+                <span className="font-display max-w-[200px] text-base font-medium tracking-tight break-words">
                     {String(getValue() || "—")}
                 </span>
             ),
@@ -151,7 +151,7 @@ export function makeProductionColumns(options: {
             header: "Titel (EN)",
             accessorFn: (row) => row.translations.find((t) => t.languageCode === "en")?.title ?? "",
             cell: ({ getValue }) => (
-                <span className="text-muted-foreground max-w-[200px] truncate">
+                <span className="text-muted-foreground max-w-[200px] break-words">
                     {String(getValue() || "—")}
                 </span>
             ),
@@ -162,7 +162,7 @@ export function makeProductionColumns(options: {
             accessorFn: (row) =>
                 row.translations.find((t) => t.languageCode === "nl")?.artist ?? "",
             cell: ({ getValue }) => (
-                <span className="max-w-[150px] truncate">{String(getValue() || "—")}</span>
+                <span className="max-w-[150px] break-words">{String(getValue() || "—")}</span>
             ),
         },
         {

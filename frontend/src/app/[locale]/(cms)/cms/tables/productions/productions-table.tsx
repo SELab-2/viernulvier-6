@@ -97,7 +97,7 @@ export function ProductionsTable() {
     const hasSelection = selectedProductionCount > 0 || selectedEventCount > 0;
 
     return (
-        <>
+        <div className="flex flex-col">
             {/* Selection Toolbar - Outside table */}
             {hasSelection && (
                 <div className="border-foreground/10 bg-foreground/[0.02] mb-4 border px-4 py-3">
@@ -121,17 +121,19 @@ export function ProductionsTable() {
                 </div>
             )}
 
-            {/* Table without toolbar */}
-            <DataTable
-                columns={productionCols}
-                data={productions}
-                loading={productionsLoading}
-                renderSubComponent={renderEvents}
-                getRowCanExpand={getRowCanExpand}
-                expanderLabels={expanderLabels}
-                rowSelection={parentSelection}
-                onRowSelectionChange={setParentSelection}
-            />
+            {/* Table */}
+            <div className="overflow-x-auto">
+                <DataTable
+                    columns={productionCols}
+                    data={productions}
+                    loading={productionsLoading}
+                    renderSubComponent={renderEvents}
+                    getRowCanExpand={getRowCanExpand}
+                    expanderLabels={expanderLabels}
+                    rowSelection={parentSelection}
+                    onRowSelectionChange={setParentSelection}
+                />
+            </div>
 
             <EditSheet
                 open={!!editProduction}
@@ -149,6 +151,6 @@ export function ProductionsTable() {
                 title={t("editEvent")}
                 onSave={(data) => updateEvent.mutate(toEventUpdateInput(data))}
             />
-        </>
+        </div>
     );
 }

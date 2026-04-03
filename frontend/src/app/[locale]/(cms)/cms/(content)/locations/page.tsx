@@ -23,7 +23,10 @@ export default function LocationsPage() {
     return (
         <div className="flex h-full flex-col px-6 py-8">
             {/* Header */}
-            <header ref={headerRef} className="border-foreground/10 mb-8 border-b-2 pb-6 opacity-0">
+            <header
+                ref={headerRef}
+                className="border-foreground/10 bg-background relative z-20 mb-8 shrink-0 border-b-2 pb-6 opacity-0"
+            >
                 <div className="text-muted-foreground mb-3 font-mono text-[9px] tracking-[2px] uppercase">
                     Ed. 02 — Locaties
                 </div>
@@ -37,7 +40,7 @@ export default function LocationsPage() {
             </header>
 
             {/* Table */}
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-y-auto">
                 <LocationsTable />
             </div>
         </div>
