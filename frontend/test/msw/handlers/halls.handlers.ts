@@ -16,7 +16,7 @@ const hall = {
 };
 
 export const hallHandlers = [
-    http.get(apiUrl("/halls"), () => HttpResponse.json([hall])),
+    http.get(apiUrl("/halls"), () => HttpResponse.json({ data: [hall], next_cursor: null })),
     http.get(apiUrl(`/halls/${hall.id}`), () => HttpResponse.json(hall)),
     http.post(apiUrl("/halls"), async ({ request }) => {
         const body = await request.json();
