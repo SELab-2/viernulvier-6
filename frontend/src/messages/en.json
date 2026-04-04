@@ -157,13 +157,16 @@
         "DataTable": {
             "noResults": "No results."
         },
-        "SelectionToolbar": {
+        "ActionBar": {
             "clearSelection": "Clear selection",
-            "productionsSelected": "{count, plural, one {# production} other {# productions}}",
-            "eventsSelected": "{count, plural, one {# event} other {# events}}",
-            "locationsSelected": "{count, plural, one {# location} other {# locations}}",
-            "hallsSelected": "{count, plural, one {# hall} other {# halls}}",
-            "moreActions": "More actions"
+            "totalProductions": "{count, plural, one {# production} other {# productions}}",
+            "totalLocations": "{count, plural, one {# location} other {# locations}}",
+            "productionsSelected": "{count, plural, one {# production} other {# productions}} selected",
+            "eventsSelected": "{count, plural, one {# event} other {# events}} selected",
+            "locationsSelected": "{count, plural, one {# location} other {# locations}} selected",
+            "hallsSelected": "{count, plural, one {# hall} other {# halls}} selected",
+            "bulkEdit": "Bulk edit",
+            "delete": "Delete"
         },
         "ActionsColumn": {
             "openMenu": "Open menu",

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import type { Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
-import { SelectionToolbar } from "../selection-toolbar";
+import { ActionBar } from "../action-bar";
 import { useParentChildSelection } from "../use-parent-child-selection";
 import { makeLocationColumns, locationFields, toLocationUpdateInput } from "./columns";
 import { makeHallColumns, hallFields, toHallUpdateInput } from "./hall-columns";
@@ -13,12 +13,15 @@ import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialo
 import { Spinner } from "@/components/ui/spinner";
 import { useGetLocations, useUpdateLocation } from "@/hooks/api/useLocations";
 import { useGetHalls, useUpdateHall } from "@/hooks/api/useHalls";
+import { ActionVariant } from "@/types/cms/actions";
 import type { Location } from "@/types/models/location.types";
 import type { Hall } from "@/types/models/hall.types";
 
 export function LocationsTable() {
     const t = useTranslations("Cms.Locations");
     const tCollections = useTranslations("Cms.Collections");
+    const tActions = useTranslations("Cms.ActionsColumn");
+    const tBar = useTranslations("Cms.ActionBar");
     const { data: locationsResult, isLoading: locationsLoading } = useGetLocations();
     const { data: hallsResult, isLoading: hallsLoading } = useGetHalls();
     const locations = useMemo(() => locationsResult?.data ?? [], [locationsResult?.data]);
@@ -28,7 +31,7 @@ export function LocationsTable() {
 
     const [editLocation, setEditLocation] = useState<Location | null>(null);
     const [editHall, setEditHall] = useState<Hall | null>(null);
-    const [locationDialogOpen, setLocationDialogOpen] = useState(false);
+    const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
 
     const hallsBySpace = useMemo(() => {
         const map = new Map<string, Hall[]>();
@@ -51,8 +54,6 @@ export function LocationsTable() {
         selectedChildCount: selectedHallCount,
         clearSelection,
     } = useParentChildSelection<Location>(hallsBySpace);
-
-    const tActions = useTranslations("Cms.ActionsColumn");
 
     const locationCols = useMemo(
         () => [selectColumn, ...makeLocationColumns({ onEdit: setEditLocation, t: tActions })],
@@ -79,6 +80,16 @@ export function LocationsTable() {
         [locations, parentSelection]
     );
 
+    const collectionPickerItems = useMemo(
+        () =>
+            selectedLocations.map((location) => ({
+                contentId: location.id,
+                contentType: "location" as const,
+                label: location.name || location.address || location.id,
+            })),
+        [selectedLocations]
+    );
+
     const renderHalls = useCallback(
         (row: Row<Location>) => {
             if (hallsLoading) {
@@ -103,50 +114,56 @@ export function LocationsTable() {
         [childSelection, getChildHandler, getHallRowId, hallCols, hallsBySpace, hallsLoading]
     );
 
+    const actions = useMemo(
+        () => [
+            {
+                key: "add-to-collection",
+                label: tCollections("addToCollection"),
+                onClick: () => setCollectionDialogOpen(true),
+            },
+            {
+                key: "bulk-edit",
+                label: tBar("bulkEdit"),
+                disabled: true,
+            },
+            {
+                key: "delete",
+                label: tBar("delete"),
+                variant: ActionVariant.Destructive,
+            },
+        ],
+        [tCollections, tBar]
+    );
+
     return (
         <>
-            <DataTable
-                columns={locationCols}
-                data={locations}
-                loading={locationsLoading}
-                renderSubComponent={renderHalls}
-                getRowCanExpand={getRowCanExpand}
-                expanderLabels={expanderLabels}
-                toolbar={
-                    <SelectionToolbar
-                        groups={[
-                            {
-                                countKey: "locationsSelected",
-                                count: selectedLocationCount,
-                                inlineActions: [
-                                    {
-                                        key: "add-locations-to-collection",
-                                        label: tCollections("addToCollection"),
-                                        onClick: () => setLocationDialogOpen(true),
-                                    },
-                                ],
-                            },
-                            {
-                                countKey: "hallsSelected",
-                                count: selectedHallCount,
-                                inlineActions: [],
-                            },
-                        ]}
-                        onClear={clearSelection}
-                    />
-                }
-                rowSelection={parentSelection}
-                onRowSelectionChange={setParentSelection}
-                getRowId={getLocationRowId}
+            <ActionBar
+                totalCount={locations.length}
+                totalCountKey="totalLocations"
+                entityCounts={[
+                    { countKey: "locationsSelected", count: selectedLocationCount },
+                    { countKey: "hallsSelected", count: selectedHallCount },
+                ]}
+                actions={actions}
+                onClear={clearSelection}
             />
+            <div className="min-h-0 flex-1 overflow-auto">
+                <DataTable
+                    columns={locationCols}
+                    data={locations}
+                    loading={locationsLoading}
+                    renderSubComponent={renderHalls}
+                    getRowCanExpand={getRowCanExpand}
+                    expanderLabels={expanderLabels}
+                    rowSelection={parentSelection}
+                    onRowSelectionChange={setParentSelection}
+                    getRowId={getLocationRowId}
+                />
+            </div>
             <CollectionPickerDialog
-                open={locationDialogOpen}
-                onOpenChange={setLocationDialogOpen}
-                items={selectedLocations.map((location) => ({
-                    contentId: location.id,
-                    contentType: "location" as const,
-                    label: location.name || location.address || location.id,
-                }))}
+                open={collectionDialogOpen}
+                onOpenChange={setCollectionDialogOpen}
+                items={collectionPickerItems}
             />
             <EditSheet
                 open={!!editLocation}
