@@ -249,7 +249,14 @@ impl<'a> CollectionRepo<'a> {
         .execute(&mut *tx)
         .await?;
 
-        // Upsert translations within the same transaction
+        sqlx::query(
+            "DELETE FROM collection_items WHERE collection_id = $1 AND id != ALL($2::uuid[])",
+        )
+        .bind(collection_id)
+        .bind(&ids[..])
+        .execute(&mut *tx)
+        .await?;
+
         for item in items {
             if !item.translations.is_empty() {
                 let language_codes: Vec<&str> = item

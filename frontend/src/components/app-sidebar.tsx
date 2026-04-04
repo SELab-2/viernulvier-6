@@ -62,6 +62,7 @@ function FacetFilters({ facets, activeFacets, onToggle, onClear }: FacetFiltersP
                                 <button
                                     key={tag.slug}
                                     type="button"
+                                    aria-pressed={active}
                                     onClick={() => onToggle(facet.slug, tag.slug)}
                                     className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase transition-all ${
                                         active

@@ -249,6 +249,7 @@
             "alreadyInCollection": "{title} is already in this collection",
             "addedToCollection": "Added to \"{collection}\"",
             "addedToCollectionMultiple": "Added {count} items to \"{collection}\"",
+            "removeItem": "Remove item",
             "commentNl": "Comment (NL)",
             "commentEn": "Comment (EN)",
             "contentTypes": {

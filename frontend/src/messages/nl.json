@@ -249,6 +249,7 @@
             "alreadyInCollection": "{title} zit al in deze collectie",
             "addedToCollection": "Toegevoegd aan \"{collection}\"",
             "addedToCollectionMultiple": "{count} items toegevoegd aan \"{collection}\"",
+            "removeItem": "Item verwijderen",
             "commentNl": "Commentaar (NL)",
             "commentEn": "Commentaar (EN)",
             "contentTypes": {

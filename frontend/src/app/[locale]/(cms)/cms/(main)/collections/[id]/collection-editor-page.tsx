@@ -268,6 +268,7 @@ function SortableItemRow({
                     variant="ghost"
                     size="sm"
                     className="ml-auto"
+                    aria-label={t("removeItem")}
                     onClick={parentProps.onRemove}
                 >
                     <Trash2 className="h-4 w-4" />
@@ -305,6 +306,7 @@ function SortableItemRow({
                                     variant="ghost"
                                     size="sm"
                                     className="ml-auto h-6 w-6 shrink-0 p-0"
+                                    aria-label={t("removeItem")}
                                     onClick={childProps.onRemove}
                                 >
                                     <Trash2 className="h-3 w-3" />

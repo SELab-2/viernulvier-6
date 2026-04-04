@@ -85,6 +85,8 @@ export function ArchiveSidebar({ locations = [], facets = [] }: ArchiveSidebarPr
                     {CATEGORIES.map((cat) => (
                         <button
                             key={cat}
+                            type="button"
+                            aria-pressed={checkedCategories.has(cat)}
                             onClick={() => toggleCategory(cat)}
                             className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase transition-all ${
                                 checkedCategories.has(cat)
@@ -104,6 +106,8 @@ export function ArchiveSidebar({ locations = [], facets = [] }: ArchiveSidebarPr
                         {facet.tags.map((tag) => (
                             <button
                                 key={tag.slug}
+                                type="button"
+                                aria-pressed={activeTags.has(tag.slug)}
                                 onClick={() => toggleTag(tag.slug)}
                                 className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase transition-all ${
                                     activeTags.has(tag.slug)
@@ -124,6 +128,8 @@ export function ArchiveSidebar({ locations = [], facets = [] }: ArchiveSidebarPr
                         locations.map((loc) => (
                             <button
                                 key={loc.id}
+                                type="button"
+                                aria-pressed={checkedLocations.has(loc.id)}
                                 onClick={() => toggleLocation(loc.id)}
                                 className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase transition-all ${
                                     checkedLocations.has(loc.id)
@@ -136,6 +142,8 @@ export function ArchiveSidebar({ locations = [], facets = [] }: ArchiveSidebarPr
                         ))
                     ) : (
                         <button
+                            type="button"
+                            aria-pressed={checkedLocations.has("deVooruit")}
                             onClick={() => toggleLocation("deVooruit")}
                             className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase transition-all ${
                                 checkedLocations.has("deVooruit")
