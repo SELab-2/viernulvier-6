@@ -7,8 +7,8 @@ use crate::{
         article::ArticleRepo, artist::ArtistRepo, collection::CollectionRepo,
         event::EventRepo, hall::HallRepo, internal_state::InternalStateRepo,
         location::LocationRepo, media::MediaRepo, media_variant::MediaVariantRepo,
-        production::ProductionRepo, sessions::SessionRepo, space::SpaceRepo, tag::TagRepo,
-        user::UserRepo,
+        production::ProductionRepo, series::SeriesRepo, sessions::SessionRepo,
+        space::SpaceRepo, tag::TagRepo, user::UserRepo,
     },
 };
 
@@ -27,6 +27,7 @@ pub mod models {
     pub mod media;
     pub mod media_variant;
     pub mod production;
+    pub mod series;
     pub mod session;
     pub mod space;
     pub mod tag;
@@ -45,6 +46,7 @@ pub mod repos {
     pub mod media;
     pub mod media_variant;
     pub mod production;
+    pub mod series;
     pub mod sessions;
     pub mod space;
     pub mod tag;
@@ -124,6 +126,10 @@ impl Database {
 
     pub fn collections<'a>(&'a self) -> CollectionRepo<'a> {
         CollectionRepo::new(&self.db)
+    }
+
+    pub fn series<'a>(&'a self) -> SeriesRepo<'a> {
+        SeriesRepo::new(&self.db)
     }
 
     pub fn media<'a>(&'a self) -> MediaRepo<'a> {
