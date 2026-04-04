@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,7 +44,19 @@ export interface EditSheetProps<TData extends { id: string } & Record<string, un
     fields: FieldDef<TData>[];
     title: string;
     description?: string;
-    onSave?: (data: TData) => void;
+    /**
+     * Called when the user clicks "Save". Must return a promise that resolves on
+     * success or rejects on failure.
+     *
+     * **UX behaviour (deliberate choice):**
+     * The sheet waits for the promise to settle before closing. While pending the
+     * save button is disabled. On rejection the sheet stays open so the user can
+     * retry or correct their input without losing context.
+     *
+     * To switch to optimistic close-immediately behaviour, change `handleSave` in
+     * `SheetFormBody` to call `onClose()` before awaiting the promise.
+     */
+    onSave?: (data: TData) => Promise<unknown>;
 }
 
 const NULL_SENTINEL = "__null__";
@@ -145,7 +157,7 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
 interface SheetFormBodyProps<TData extends { id: string } & Record<string, unknown>> {
     entity: TData;
     fields: FieldDef<TData>[];
-    onSave?: (data: TData) => void;
+    onSave?: (data: TData) => Promise<unknown>;
     onClose: () => void;
 }
 
@@ -157,14 +169,24 @@ function SheetFormBody<TData extends { id: string } & Record<string, unknown>>({
 }: SheetFormBodyProps<TData>) {
     const t = useTranslations("Cms.EditSheet");
     const [values, setValues] = useState<Partial<TData>>(() => ({ ...entity }));
+    const [isPending, setIsPending] = useState(false);
 
     const handleChange = (key: keyof TData, value: unknown) => {
         setValues((prev) => ({ ...prev, [key]: value }));
     };
 
-    const handleSave = () => {
-        onSave?.({ ...entity, ...values } as TData);
-        onClose();
+    const handleSave = async () => {
+        if (!onSave) return;
+        setIsPending(true);
+        try {
+            await onSave({ ...entity, ...values } as TData);
+            onClose();
+        } catch {
+            // Stay open on failure — the mutation hook is responsible for
+            // showing an error toast to the user.
+        } finally {
+            setIsPending(false);
+        }
     };
 
     return (
@@ -181,10 +203,10 @@ function SheetFormBody<TData extends { id: string } & Record<string, unknown>>({
             </div>
             <Separator />
             <SheetFooter className="flex-row justify-end gap-2 px-6 py-4">
-                <Button variant="outline" size="sm" onClick={onClose}>
+                <Button variant="outline" size="sm" onClick={onClose} disabled={isPending}>
                     {t("cancel")}
                 </Button>
-                <Button size="sm" onClick={handleSave}>
+                <Button size="sm" onClick={handleSave} disabled={isPending}>
                     {t("saveChanges")}
                 </Button>
             </SheetFooter>
@@ -201,10 +223,31 @@ export function EditSheet<TData extends { id: string } & Record<string, unknown>
     description,
     onSave,
 }: EditSheetProps<TData>) {
-    const formKey = entity?.id ?? null;
+    /**
+     * `openCount` forces a full remount of `SheetFormBody` every time the sheet
+     * opens. Without it, opening the same entity twice in a row (e.g. open →
+     * edit a field → close without saving → reopen) would show stale edits
+     * because React's `key` (entity ID) hasn't changed so the component keeps
+     * its old state.
+     *
+     * The counter is incremented inside the `onOpenChange` callback (an event
+     * handler, not during render) to satisfy React 19's strict ref/setState
+     * rules.
+     */
+    const [openCount, setOpenCount] = useState(0);
+
+    const handleOpenChange = useCallback(
+        (next: boolean) => {
+            if (next) setOpenCount((c) => c + 1);
+            onOpenChange(next);
+        },
+        [onOpenChange]
+    );
+
+    const formKey = entity ? `${entity.id}-${openCount}` : null;
 
     return (
-        <Sheet open={open} onOpenChange={onOpenChange}>
+        <Sheet open={open} onOpenChange={handleOpenChange}>
             <SheetContent className="flex flex-col gap-0 p-0 sm:max-w-md">
                 <SheetHeader className="px-6 pt-6 pb-4">
                     <SheetTitle>{title}</SheetTitle>

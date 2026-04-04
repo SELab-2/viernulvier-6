@@ -17,9 +17,14 @@ export function ArticlesTable() {
     const { data: articles = [], isLoading } = useGetArticlesCms();
     const createArticle = useCreateArticle();
 
+    const tActions = useTranslations("Cms.ActionsColumn");
     const columns = useMemo(
-        () => makeArticleColumns((article) => router.push(`/cms/articles/${article.id}/edit`)),
-        [router]
+        () =>
+            makeArticleColumns(
+                (article) => router.push(`/cms/articles/${article.id}/edit`),
+                tActions
+            ),
+        [router, tActions]
     );
 
     const handleNew = () => {
