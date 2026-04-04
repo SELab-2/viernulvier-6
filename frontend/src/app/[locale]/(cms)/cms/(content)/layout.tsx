@@ -11,7 +11,7 @@ export default function ContentLayout({ children }: { children: React.ReactNode 
                 <Suspense>
                     <AppSidebar />
                 </Suspense>
-                <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-4">
+                <main className="flex min-h-0 flex-1 flex-col overflow-auto px-4 pb-4">
                     {children}
                 </main>
             </SidebarProvider>

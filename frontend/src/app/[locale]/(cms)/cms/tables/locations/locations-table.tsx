@@ -122,11 +122,6 @@ export function LocationsTable() {
                 onClick: () => setCollectionDialogOpen(true),
             },
             {
-                key: "bulk-edit",
-                label: tBar("bulkEdit"),
-                disabled: true,
-            },
-            {
                 key: "delete",
                 label: tBar("delete"),
                 variant: ActionVariant.Destructive,

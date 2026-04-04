@@ -35,12 +35,12 @@ export function ActionBar({
             {hasSelection ? (
                 <>
                     {activeCounts.map((entity, i) => (
-                        <span key={entity.countKey} className="contents">
+                        <div key={entity.countKey} className="contents">
                             {i > 0 && <div className="bg-border h-5 w-px shrink-0" />}
                             <span className="text-muted-foreground text-sm">
                                 {t(entity.countKey, { count: entity.count })}
                             </span>
-                        </span>
+                        </div>
                     ))}
                     {actions.map((action) => (
                         <Button
@@ -52,7 +52,7 @@ export function ActionBar({
                             }
                             size="sm"
                             onClick={action.onClick}
-                            disabled={action.disabled}
+                            disabled={action.disabled || !action.onClick}
                         >
                             {action.icon}
                             {action.label}
