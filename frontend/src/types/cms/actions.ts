@@ -23,11 +23,20 @@ export type Action<T> =
     | {
           key: string;
           label: string;
+          icon: ComponentType<{ className?: string }>;
+          onClick: (entity: T) => void | Promise<void>;
+          variant?: ActionVariant;
+          /** Inline actions render as icon-only buttons and require an icon. */
+          display: ActionDisplay.Inline;
+      }
+    | {
+          key: string;
+          label: string;
           icon?: ComponentType<{ className?: string }>;
-          onClick: (entity: T) => void;
+          onClick: (entity: T) => void | Promise<void>;
           variant?: ActionVariant;
           /** Where to display the action. Defaults to `ActionDisplay.Menu`. */
-          display?: ActionDisplay;
+          display?: ActionDisplay.Menu;
       }
     | {
           key: string;

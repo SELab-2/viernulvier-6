@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useMemo, type ReactNode } from "react";
+import { Fragment, memo, useMemo, type ReactNode } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { useState } from "react";
@@ -89,7 +89,9 @@ function ActionsCellInner<TData extends Record<string, unknown>>({
                                     {action.label}
                                 </DropdownMenuItem>
                             ) : (
-                                <span key={action.key}>{action.render(entity, closeMenu)}</span>
+                                <Fragment key={action.key}>
+                                    {action.render(entity, closeMenu)}
+                                </Fragment>
                             )
                         )}
                     </DropdownMenuContent>
