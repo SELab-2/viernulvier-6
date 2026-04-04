@@ -158,6 +158,17 @@ impl SeriesPayload {
     }
 
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {
+        if db
+            .series()
+            .slug_exists_excluding(&self.slug, self.id)
+            .await?
+        {
+            return Err(AppError::Conflict(format!(
+                "slug '{}' is already taken",
+                self.slug
+            )));
+        }
+
         let translations = translations_to_data(&self.translations);
         let swt = db
             .series()
@@ -188,6 +199,13 @@ impl SeriesPayload {
 
 impl SeriesPostPayload {
     pub async fn create(self, db: &Database) -> Result<SeriesPayload, AppError> {
+        if db.series().slug_exists(&self.slug).await? {
+            return Err(AppError::Conflict(format!(
+                "slug '{}' is already taken",
+                self.slug
+            )));
+        }
+
         let translations = translations_to_data(&self.translations);
         let swt = db
             .series()

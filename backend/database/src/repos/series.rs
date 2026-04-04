@@ -128,6 +128,29 @@ impl<'a> SeriesRepo<'a> {
         }))
     }
 
+    pub async fn slug_exists(&self, slug: &str) -> Result<bool, DatabaseError> {
+        Ok(
+            sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM series WHERE slug = $1)")
+                .bind(slug)
+                .fetch_one(self.db)
+                .await?,
+        )
+    }
+
+    pub async fn slug_exists_excluding(
+        &self,
+        slug: &str,
+        exclude_id: Uuid,
+    ) -> Result<bool, DatabaseError> {
+        Ok(sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM series WHERE slug = $1 AND id != $2)",
+        )
+        .bind(slug)
+        .bind(exclude_id)
+        .fetch_one(self.db)
+        .await?)
+    }
+
     pub async fn delete_by_slug(&self, slug: &str) -> Result<Option<()>, DatabaseError> {
         let res = sqlx::query("DELETE FROM series WHERE slug = $1")
             .bind(slug)
@@ -226,6 +249,19 @@ impl<'a> SeriesRepo<'a> {
     ) -> Result<(), DatabaseError> {
         if production_ids.is_empty() {
             return Ok(());
+        }
+
+        let found_count = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM productions WHERE id = ANY($1)",
+        )
+        .bind(production_ids)
+        .fetch_one(self.db)
+        .await?;
+
+        if found_count != production_ids.len() as i64 {
+            return Err(DatabaseError::BadRequest(
+                "One or more production IDs do not exist".to_string(),
+            ));
         }
 
         let series_ids_repeated: Vec<Uuid> = vec![series_id; production_ids.len()];
