@@ -206,7 +206,8 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
+        /** @description Replace the positions and translations of all items in a collection in one atomic call. Requires editor authentication. Send the full ordered list; positions are applied as given. */
+        put: operations["bulk_update_collection_items"];
         /** @description Add an item to a collection. Requires editor authentication. An item links a content_id (UUID of the referenced entity) and a content_type (Production, Event, Blogpost, Artist, or Location) with an optional bilingual curator comment and an explicit position for ordering. */
         post: operations["add_collection_item"];
         delete?: never;
@@ -787,6 +788,24 @@ export interface components {
         CollectionItemTranslationPayload: {
             comment?: string | null;
             language_code: string;
+        };
+        CollectionItemsBulkEntry: {
+            /**
+             * Format: uuid
+             * @description UUID of the collection item to update.
+             */
+            id: string;
+            /**
+             * Format: int32
+             * @description 1-based display order
+             */
+            position: number;
+            /** @description Per-language curator annotation. */
+            translations: components["schemas"]["CollectionItemTranslationPayload"][];
+        };
+        CollectionItemsBulkPayload: {
+            /** @description Full ordered list of items with updated positions and translations. */
+            items: components["schemas"]["CollectionItemsBulkEntry"][];
         };
         CollectionPayload: {
             /**
@@ -1799,6 +1818,47 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    bulk_update_collection_items: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Collection UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CollectionItemsBulkPayload"];
+            };
+        };
         responses: {
             /** @description No Content */
             204: {

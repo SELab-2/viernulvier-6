@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { makeActionsColumn } from "../actions-column";
 import type { FieldDef } from "../edit-sheet";
+import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
 import type {
     Production,
     ProductionRow,
@@ -157,6 +158,19 @@ export function makeProductionColumns(options: {
             label: "production",
             copyKey: "slug",
             onEdit: (p) => options.onEdit(toProductionRow(p)),
+            extraMenuItems: (production, closeMenu) => (
+                <CollectionPickerSubmenu
+                    item={{
+                        contentId: production.id,
+                        contentType: "production",
+                        label:
+                            production.translations.find((t) => t.languageCode === "nl")?.title ??
+                            production.translations.find((t) => t.languageCode === "en")?.title ??
+                            production.slug,
+                    }}
+                    onComplete={closeMenu}
+                />
+            ),
         }),
     ];
 }

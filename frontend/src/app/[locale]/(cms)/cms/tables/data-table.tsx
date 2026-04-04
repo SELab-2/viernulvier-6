@@ -124,6 +124,7 @@ interface DataTableProps<TData, TValue> {
     rowSelection?: RowSelectionState;
     onRowSelectionChange?: OnChangeFn<RowSelectionState>;
     getRowId?: (row: TData) => string;
+    onRowClick?: (row: TData) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -138,6 +139,7 @@ export function DataTable<TData, TValue>({
     rowSelection,
     onRowSelectionChange,
     getRowId,
+    onRowClick,
 }: DataTableProps<TData, TValue>) {
     const t = useTranslations("Cms.DataTable");
     const [expanded, setExpanded] = useState<ExpandedState>({});
@@ -299,6 +301,18 @@ export function DataTable<TData, TValue>({
                                 <Fragment key={row.id}>
                                     <TableRow
                                         data-state={row.getIsSelected() ? "selected" : undefined}
+                                        className={onRowClick ? "cursor-pointer" : undefined}
+                                        onClick={(e) => {
+                                            if (!onRowClick) return;
+                                            const target = e.target as HTMLElement;
+                                            if (
+                                                target.closest(
+                                                    "button, a, input, select, textarea, [role='menuitem'], [role='checkbox']"
+                                                )
+                                            )
+                                                return;
+                                            onRowClick(row.original);
+                                        }}
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell

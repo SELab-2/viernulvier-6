@@ -3,6 +3,7 @@
 import { memo, useCallback, useMemo, type ComponentType, type ReactNode } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal, SquarePen } from "lucide-react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ interface ActionsColumnOptions<TData> {
     copyKey: CopyableKeys<TData>;
     onEdit: (entity: TData) => void;
     promotedActions?: PromotedAction<TData>[];
+    extraMenuItems?: (entity: TData, closeMenu: () => void) => ReactNode;
 }
 
 interface ActionsCellProps<TData> {
@@ -38,6 +40,7 @@ interface ActionsCellProps<TData> {
     copyKey: CopyableKeys<TData>;
     onEdit: (entity: TData) => void;
     promotedActions?: PromotedAction<TData>[];
+    extraMenuItems?: (entity: TData, closeMenu: () => void) => ReactNode;
 }
 
 function ActionsCellInner<TData extends Record<string, unknown>>({
@@ -46,9 +49,11 @@ function ActionsCellInner<TData extends Record<string, unknown>>({
     copyKey,
     onEdit,
     promotedActions,
+    extraMenuItems,
 }: ActionsCellProps<TData>) {
     const t = useTranslations("Cms.ActionsColumn");
     const copyValue = String(entity[copyKey] ?? "");
+    const [open, setOpen] = useState(false);
 
     const handleEdit = useCallback(() => onEdit(entity), [onEdit, entity]);
 
@@ -87,7 +92,7 @@ function ActionsCellInner<TData extends Record<string, unknown>>({
                     <action.icon className="h-4 w-4" />
                 </Button>
             ))}
-            <DropdownMenu>
+            <DropdownMenu open={open} onOpenChange={setOpen}>
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="h-8 w-8 p-0">
                         <span className="sr-only">{t("openMenu")}</span>
@@ -100,6 +105,7 @@ function ActionsCellInner<TData extends Record<string, unknown>>({
                         {t("copy", { key: String(copyKey) })}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleEdit}>{t("edit", { label })}</DropdownMenuItem>
+                    {extraMenuItems?.(entity, () => setOpen(false))}
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>
@@ -113,7 +119,7 @@ const ActionsCell = memo(ActionsCellInner) as <TData extends Record<string, unkn
 export function makeActionsColumn<TData extends Record<string, unknown>>(
     options: ActionsColumnOptions<TData>
 ): ColumnDef<TData> {
-    const { label, copyKey, onEdit, promotedActions } = options;
+    const { label, copyKey, onEdit, promotedActions, extraMenuItems } = options;
 
     return {
         id: "actions",
@@ -124,6 +130,7 @@ export function makeActionsColumn<TData extends Record<string, unknown>>(
                 copyKey={copyKey}
                 onEdit={onEdit}
                 promotedActions={promotedActions}
+                extraMenuItems={extraMenuItems}
             />
         ),
     };

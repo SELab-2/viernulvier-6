@@ -10,7 +10,7 @@ const space = {
 };
 
 export const spaceHandlers = [
-    http.get(apiUrl("/spaces"), () => HttpResponse.json([space])),
+    http.get(apiUrl("/spaces"), () => HttpResponse.json({ data: [space], next_cursor: null })),
     http.get(apiUrl(`/spaces/${space.id}`), () => HttpResponse.json(space)),
     http.post(apiUrl("/spaces"), async ({ request }) => {
         const body = await request.json();

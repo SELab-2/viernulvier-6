@@ -17,8 +17,8 @@ import {
 import { queryKeys } from "./query-keys";
 
 const fetchProductions = async (): Promise<Production[]> => {
-    const { data } = await api.get<ProductionResponse[]>("/productions");
-    return mapProductions(data);
+    const { data } = await api.get<{ data: ProductionResponse[] }>("/productions");
+    return mapProductions(data.data);
 };
 
 const fetchProductionById = async (id: string): Promise<Production> => {
