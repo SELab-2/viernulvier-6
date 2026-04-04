@@ -83,6 +83,7 @@ impl From<DatabaseError> for AppError {
     fn from(value: DatabaseError) -> Self {
         match value {
             DatabaseError::NotFound => Self::NotFound,
+            DatabaseError::BadRequest(msg) => Self::PayloadError(msg),
             other => Self::Database(other),
         }
     }

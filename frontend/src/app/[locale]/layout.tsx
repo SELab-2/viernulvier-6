@@ -9,7 +9,6 @@ import { siteConfig } from "@/config/site.config";
 
 import { routing } from "@/i18n/routing";
 
-import { Footer } from "@/components/layout";
 import { Providers } from "@/providers";
 
 export async function generateMetadata({
@@ -48,8 +47,7 @@ export default async function LocaleLayout({
 
     return (
         <Providers messages={messages} locale={locale} timeZone={timeZone}>
-            <main className="flex-1">{children}</main>
-            <Footer />
+            {children}
         </Providers>
     );
 }

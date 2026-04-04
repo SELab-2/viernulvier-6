@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { makeActionsColumn } from "../actions-column";
 import { BooleanCell } from "../boolean-cell";
 import type { FieldDef } from "../edit-sheet";
+import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
 import type { Location, LocationUpdateInput } from "@/types/models/location.types";
 
 export const locationFields: FieldDef<Location>[] = [
@@ -60,6 +61,16 @@ export function makeLocationColumns(options: {
             label: "location",
             copyKey: "name",
             onEdit: options.onEdit,
+            extraMenuItems: (location, closeMenu) => (
+                <CollectionPickerSubmenu
+                    item={{
+                        contentId: location.id,
+                        contentType: "location",
+                        label: location.name || location.address || location.id,
+                    }}
+                    onComplete={closeMenu}
+                />
+            ),
         }),
     ];
 }

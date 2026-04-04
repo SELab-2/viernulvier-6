@@ -13,8 +13,8 @@ import { Event, EventCreateInput, EventUpdateInput } from "@/types/models/event.
 import { queryKeys } from "./query-keys";
 
 const fetchEvents = async (): Promise<Event[]> => {
-    const { data } = await api.get<EventResponse[]>("/events");
-    return mapEvents(data);
+    const { data } = await api.get<{ data: EventResponse[] }>("/events");
+    return mapEvents(data.data);
 };
 
 const fetchEventById = async (id: string): Promise<Event> => {

@@ -20,7 +20,7 @@ const location = {
 
 export const locationHandlers = [
     http.get(apiUrl("/locations"), () => {
-        return HttpResponse.json([location]);
+        return HttpResponse.json({ data: [location], next_cursor: null });
     }),
     http.get(apiUrl(`/locations/${location.id}`), () => {
         return HttpResponse.json(location);

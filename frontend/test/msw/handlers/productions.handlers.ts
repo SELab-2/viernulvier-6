@@ -44,7 +44,9 @@ const production = {
 };
 
 export const productionHandlers = [
-    http.get(apiUrl("/productions"), () => HttpResponse.json([production])),
+    http.get(apiUrl("/productions"), () =>
+        HttpResponse.json({ data: [production], next_cursor: null })
+    ),
     http.get(apiUrl(`/productions/${production.id}`), () => HttpResponse.json(production)),
     http.post(apiUrl("/productions"), async ({ request }) => {
         const body = await request.json();
