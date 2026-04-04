@@ -153,25 +153,3 @@ export const useAddCollectionItem = () => {
         },
     });
 };
-
-type DeleteCollectionItemInput = {
-    collectionId: string;
-    itemId: string;
-};
-
-export const useDeleteCollectionItem = () => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: async (payload: DeleteCollectionItemInput) => {
-            await api.delete(`/collections/${payload.collectionId}/items/${payload.itemId}`);
-            return payload;
-        },
-        onSuccess: (payload) => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.collections.detail(payload.collectionId),
-            });
-            queryClient.invalidateQueries({ queryKey: queryKeys.collections.all });
-        },
-    });
-};

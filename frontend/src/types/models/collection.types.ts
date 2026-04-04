@@ -1,4 +1,10 @@
-export type CollectionContentType = "production" | "event" | "blogpost" | "artist" | "location";
+export type CollectionContentType =
+    | "production"
+    | "event"
+    | "blogpost"
+    | "artist"
+    | "location"
+    | "media";
 
 export type CollectionTranslation = {
     languageCode: string;

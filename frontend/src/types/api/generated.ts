@@ -797,7 +797,7 @@ export interface components {
             id: string;
             /**
              * Format: int32
-             * @description New zero-based display order.
+             * @description 1-based display order
              */
             position: number;
             /** @description Per-language curator annotation. */
