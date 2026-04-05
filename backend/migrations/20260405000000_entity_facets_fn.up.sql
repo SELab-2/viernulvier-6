@@ -13,22 +13,22 @@ RETURNS jsonb LANGUAGE sql STABLE AS $$
     SELECT
       t.facet AS facet_enum,
       t.facet::text AS facet_slug,
-      (SELECT jsonb_agg(jsonb_build_object(
+      COALESCE((SELECT jsonb_agg(jsonb_build_object(
           'language_code', fl.language_code, 'label', fl.label
-       )) FROM facet_labels fl WHERE fl.facet = t.facet
-      ) AS facet_trans,
+       ) ORDER BY fl.language_code) FROM facet_labels fl WHERE fl.facet = t.facet
+      ), '[]'::jsonb) AS facet_trans,
       jsonb_agg(
         jsonb_build_object(
           'slug', t.slug,
           'sort_order', t.sort_order,
           'inherited', tg.inherited,
-          'translations', (
+          'translations', COALESCE((
             SELECT jsonb_agg(jsonb_build_object(
               'language_code', tt.language_code,
               'label', tt.label,
               'description', tt.description
-            )) FROM tag_translations tt WHERE tt.tag_id = t.id
-          )
+            ) ORDER BY tt.language_code) FROM tag_translations tt WHERE tt.tag_id = t.id
+          ), '[]'::jsonb)
         ) ORDER BY t.sort_order
       ) AS tags
     FROM taggings tg
