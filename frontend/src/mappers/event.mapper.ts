@@ -55,8 +55,6 @@ export const mapCreateEventInput = (input: EventCreateInput): EventCreateRequest
         production_id: input.productionId,
         status: input.status,
         hall_id: input.hallId,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
     };
 };
 
@@ -76,6 +74,5 @@ export const mapUpdateEventInput = (input: EventUpdateInput): EventUpdateRequest
         status: input.status,
         hall_id: input.hallId,
         created_at: input.createdAt,
-        updated_at: new Date().toISOString(),
     };
 };

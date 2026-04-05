@@ -10,8 +10,12 @@ export type GetEventsByProductionIdResponse =
     operations["get_events_by_production_id"]["responses"][200]["content"]["application/json"];
 
 // Request types (using component schemas as they're shared)
-export type EventCreateRequest = components["schemas"]["EventPostPayload"];
-export type EventUpdateRequest = components["schemas"]["EventPayload"];
+// created_at / updated_at are omitted — these are server-managed timestamps
+export type EventCreateRequest = Omit<
+    components["schemas"]["EventPostPayload"],
+    "created_at" | "updated_at"
+>;
+export type EventUpdateRequest = Omit<components["schemas"]["EventPayload"], "updated_at">;
 
 // Convenience aliases - these reference the operation-specific types
 export type EventResponse = GetEventByIdResponse;
