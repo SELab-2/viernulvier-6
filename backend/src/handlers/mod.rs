@@ -14,6 +14,7 @@ pub mod hall;
 pub mod location;
 pub mod media;
 pub mod production;
+pub mod series;
 pub mod space;
 pub mod taxonomy;
 pub mod version;

@@ -22,8 +22,8 @@ use utoipa_swagger_ui::{Config, SwaggerUi};
 use crate::config::AppConfig;
 use crate::error::AppError;
 use crate::handlers::{
-    admin, article, artist, auth, collection, event, hall, location, media, production, space,
-    taxonomy, version,
+    admin, article, artist, auth, collection, event, hall, location, media, production, series,
+    space, taxonomy, version,
 };
 
 pub mod config;
@@ -45,7 +45,8 @@ pub struct AppState {
     components(schemas(EntityType, Facet)),
     tags(
         (name = "viernulvier_api", description = "API Endpoints"),
-        (name = "Collections", description = "A saved, titled selection of archive items with a shareable URL. No login required to view.")
+        (name = "Collections", description = "A saved, titled selection of archive items with a shareable URL. No login required to view."),
+        (name = "Series", description = "Thematic/programmatic groupings of productions.")
     )
 )]
 pub struct ApiDoc;
@@ -243,6 +244,10 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // collections
         .routes(routes!(collection::get_all))
         .routes(routes!(collection::get_one))
+        // series
+        .routes(routes!(series::get_all))
+        .routes(routes!(series::get_one))
+        .routes(routes!(series::get_for_production))
         // artists
         .routes(routes!(artist::get_all))
         // articles (public: published only, filterable)
@@ -282,6 +287,12 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(collection::post_item))
         .routes(routes!(collection::put_items))
         .routes(routes!(collection::delete_item))
+        // Series
+        .routes(routes!(series::post))
+        .routes(routes!(series::put))
+        .routes(routes!(series::delete))
+        .routes(routes!(series::add_productions))
+        .routes(routes!(series::remove_production))
         // Media
         .routes(routes!(media::generate_upload_url))
         .routes(routes!(media::put))

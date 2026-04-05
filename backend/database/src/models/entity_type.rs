@@ -11,6 +11,7 @@ pub enum EntityType {
     Media,
     Location,
     Event,
+    Series,
 }
 
 impl EntityType {
@@ -21,6 +22,7 @@ impl EntityType {
             Self::Artist => Some("articles_about_artists"),
             Self::Location => Some("articles_about_locations"),
             Self::Event => Some("articles_about_events"),
+            Self::Series => Some("articles_about_series"),
             _ => None,
         }
     }
@@ -32,6 +34,7 @@ impl EntityType {
             Self::Artist => Some("artist_id"),
             Self::Location => Some("location_id"),
             Self::Event => Some("event_id"),
+            Self::Series => Some("series_id"),
             _ => None,
         }
     }
