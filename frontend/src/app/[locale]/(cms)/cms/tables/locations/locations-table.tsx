@@ -9,6 +9,7 @@ import { SelectionToolbar } from "../selection-toolbar";
 import { useParentChildSelection } from "../use-parent-child-selection";
 import { makeLocationColumns, locationFields, toLocationUpdateInput } from "./columns";
 import { makeHallColumns, hallFields, toHallUpdateInput } from "./hall-columns";
+import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { useGetLocations, useUpdateLocation } from "@/hooks/api/useLocations";
 import { useGetHalls, useUpdateHall } from "@/hooks/api/useHalls";
@@ -17,6 +18,7 @@ import type { Hall } from "@/types/models/hall.types";
 
 export function LocationsTable() {
     const t = useTranslations("Cms.Locations");
+    const tCollections = useTranslations("Cms.Collections");
     const { data: locationsResult, isLoading: locationsLoading } = useGetLocations();
     const { data: hallsResult, isLoading: hallsLoading } = useGetHalls();
     const locations = useMemo(() => locationsResult?.data ?? [], [locationsResult?.data]);
@@ -26,6 +28,7 @@ export function LocationsTable() {
 
     const [editLocation, setEditLocation] = useState<Location | null>(null);
     const [editHall, setEditHall] = useState<Hall | null>(null);
+    const [locationDialogOpen, setLocationDialogOpen] = useState(false);
 
     const hallsBySpace = useMemo(() => {
         const map = new Map<string, Hall[]>();
@@ -56,8 +59,20 @@ export function LocationsTable() {
 
     const hallCols = useMemo(() => makeHallColumns({ onEdit: setEditHall }), []);
 
+    const expanderLabels = useMemo(() => ({ show: t("showHalls"), hide: t("hideHalls") }), [t]);
+
+    const getRowCanExpand = useCallback(
+        (row: Row<Location>) => (hallsBySpace.get(row.original.id)?.length ?? 0) > 0,
+        [hallsBySpace]
+    );
+
     const getLocationRowId = useCallback((row: Location) => row.id, []);
     const getHallRowId = useCallback((row: Hall) => row.id, []);
+
+    const selectedLocations = useMemo(
+        () => locations.filter((location) => parentSelection[location.id]),
+        [locations, parentSelection]
+    );
 
     const renderHalls = useCallback(
         (row: Row<Location>) => {
@@ -90,15 +105,20 @@ export function LocationsTable() {
                 data={locations}
                 loading={locationsLoading}
                 renderSubComponent={renderHalls}
-                getRowCanExpand={(row) => (hallsBySpace.get(row.original.id)?.length ?? 0) > 0}
-                expanderLabels={{ show: t("showHalls"), hide: t("hideHalls") }}
+                getRowCanExpand={getRowCanExpand}
+                expanderLabels={expanderLabels}
                 toolbar={
                     <SelectionToolbar
                         groups={[
                             {
                                 countKey: "locationsSelected",
                                 count: selectedLocationCount,
-                                inlineActions: [],
+                                inlineActions: [
+                                    {
+                                        label: tCollections("addToCollection"),
+                                        onClick: () => setLocationDialogOpen(true),
+                                    },
+                                ],
                                 overflowActions: [],
                             },
                             {
@@ -114,6 +134,15 @@ export function LocationsTable() {
                 rowSelection={parentSelection}
                 onRowSelectionChange={setParentSelection}
                 getRowId={getLocationRowId}
+            />
+            <CollectionPickerDialog
+                open={locationDialogOpen}
+                onOpenChange={setLocationDialogOpen}
+                items={selectedLocations.map((location) => ({
+                    contentId: location.id,
+                    contentType: "location" as const,
+                    label: location.name || location.address || location.id,
+                }))}
             />
             <EditSheet
                 open={!!editLocation}

@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { makeActionsColumn } from "../actions-column";
 import type { FieldDef } from "../edit-sheet";
+import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
 import type { Event, EventUpdateInput } from "@/types/models/event.types";
 
 function formatDateTime(iso: string | null): string {
@@ -62,6 +63,17 @@ export function makeEventColumns(options: { onEdit: (entity: Event) => void }): 
             label: "event",
             copyKey: "id",
             onEdit: options.onEdit,
+            extraMenuItems: (event, closeMenu) => (
+                <CollectionPickerSubmenu
+                    item={{
+                        contentId: event.id,
+                        contentType: "event",
+                        label: formatDateTime(event.startsAt),
+                        parentProductionId: event.productionId,
+                    }}
+                    onComplete={closeMenu}
+                />
+            ),
         }),
     ];
 }

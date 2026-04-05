@@ -20,6 +20,10 @@ export const queryKeys = {
         detail: (id: string) => ["productions", id] as const,
         events: (id: string) => ["productions", id, "events"] as const,
     },
+    collections: {
+        all: ["collections"] as const,
+        detail: (id: string) => ["collections", id] as const,
+    },
     events: {
         all: (pagination?: PaginationParams) => buildQueryKey(["events"], pagination),
         detail: (id: string) => ["events", id] as const,
@@ -31,6 +35,14 @@ export const queryKeys = {
     spaces: {
         all: (pagination?: PaginationParams) => buildQueryKey(["spaces"], pagination),
         detail: (id: string) => ["spaces", id] as const,
+    },
+    artists: {
+        all: ["artists"] as const,
+    },
+    articles: {
+        all: ["articles"] as const,
+        detail: (id: string) => ["articles", id] as const,
+        relations: (id: string) => ["articles", id, "relations"] as const,
     },
     taxonomy: {
         facets: (entityType?: string) =>

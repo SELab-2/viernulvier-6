@@ -99,108 +99,59 @@ impl From<ApiProduction> for ProductionImportData {
             uitdatabank_type: api.uitdatabank_type,
         };
 
-        let translations =
-            build_translations(api.supertitle, api.title, api.artist, api.meta_title, api.meta_description, api.tagline, api.teaser, api.description, api.description_extra, api.description_2, api.quote, api.quote_source, api.programme, api.info, api.description_short);
+        macro_rules! extract_translations {
+            // kind of like a regex
+            // $field:ident matches identifiers (variables) and puts them in $field
+            // + is at least once
+            // $(,)? allows a trailing comma
+            ( $( $field:ident ),+ $(,)? ) => {{
+                // write this line for every field
+                $( let $field = flatten_loc(api.$field); )+
+
+                let mut out = Vec::with_capacity(2);
+
+                // nl
+                // expands into supertitle.0.is_some() || title.0.is_some() ...
+                if $( $field.0.is_some() )||+ {
+                    out.push(ProductionTranslationData {
+                        language_code: "nl".into(),
+                        $( $field: $field.0 ),+
+                    });
+                }
+
+                // en
+                if $( $field.1.is_some() )||+ {
+                    out.push(ProductionTranslationData {
+                        language_code: "en".into(),
+                        $( $field: $field.1 ),+
+                    });
+                }
+
+                out
+            }};
+        }
+
+        let translations = extract_translations!(
+            supertitle,
+            title,
+            artist,
+            meta_title,
+            meta_description,
+            tagline,
+            teaser,
+            description,
+            description_extra,
+            description_2,
+            quote,
+            quote_source,
+            programme,
+            info,
+            description_short
+        );
 
         Self {
             production,
             translations,
         }
     }
-}
-
-fn build_translations(
-    supertitle: Option<ApiLocalizedText>,
-    title: Option<ApiLocalizedText>,
-    artist: Option<ApiLocalizedText>,
-    meta_title: Option<ApiLocalizedText>,
-    meta_description: Option<ApiLocalizedText>,
-    tagline: Option<ApiLocalizedText>,
-    teaser: Option<ApiLocalizedText>,
-    description: Option<ApiLocalizedText>,
-    description_extra: Option<ApiLocalizedText>,
-    description_2: Option<ApiLocalizedText>,
-    quote: Option<ApiLocalizedText>,
-    quote_source: Option<ApiLocalizedText>,
-    programme: Option<ApiLocalizedText>,
-    info: Option<ApiLocalizedText>,
-    description_short: Option<ApiLocalizedText>,
-) -> Vec<ProductionTranslationData> {
-    let (supertitle_nl, supertitle_en) = flatten_loc(supertitle);
-    let (title_nl, title_en) = flatten_loc(title);
-    let (artist_nl, artist_en) = flatten_loc(artist);
-    let (meta_title_nl, meta_title_en) = flatten_loc(meta_title);
-    let (meta_description_nl, meta_description_en) = flatten_loc(meta_description);
-    let (tagline_nl, tagline_en) = flatten_loc(tagline);
-    let (teaser_nl, teaser_en) = flatten_loc(teaser);
-    let (description_nl, description_en) = flatten_loc(description);
-    let (description_extra_nl, description_extra_en) = flatten_loc(description_extra);
-    let (description_2_nl, description_2_en) = flatten_loc(description_2);
-    let (quote_nl, quote_en) = flatten_loc(quote);
-    let (quote_source_nl, quote_source_en) = flatten_loc(quote_source);
-    let (programme_nl, programme_en) = flatten_loc(programme);
-    let (info_nl, info_en) = flatten_loc(info);
-    let (description_short_nl, description_short_en) = flatten_loc(description_short);
-
-    let mut out = Vec::with_capacity(2);
-
-    let nl_any = [
-        &supertitle_nl, &title_nl, &artist_nl, &meta_title_nl, &meta_description_nl,
-        &tagline_nl, &teaser_nl, &description_nl, &description_extra_nl, &description_2_nl,
-        &quote_nl, &quote_source_nl, &programme_nl, &info_nl, &description_short_nl,
-    ]
-    .iter()
-    .any(|f| f.is_some());
-
-    if nl_any {
-        out.push(ProductionTranslationData {
-            language_code: "nl".into(),
-            supertitle: supertitle_nl,
-            title: title_nl,
-            artist: artist_nl,
-            meta_title: meta_title_nl,
-            meta_description: meta_description_nl,
-            tagline: tagline_nl,
-            teaser: teaser_nl,
-            description: description_nl,
-            description_extra: description_extra_nl,
-            description_2: description_2_nl,
-            quote: quote_nl,
-            quote_source: quote_source_nl,
-            programme: programme_nl,
-            info: info_nl,
-            description_short: description_short_nl,
-        });
-    }
-
-    let en_any = [
-        &supertitle_en, &title_en, &artist_en, &meta_title_en, &meta_description_en,
-        &tagline_en, &teaser_en, &description_en, &description_extra_en, &description_2_en,
-        &quote_en, &quote_source_en, &programme_en, &info_en, &description_short_en,
-    ]
-    .iter()
-    .any(|f| f.is_some());
-
-    if en_any {
-        out.push(ProductionTranslationData {
-            language_code: "en".into(),
-            supertitle: supertitle_en,
-            title: title_en,
-            artist: artist_en,
-            meta_title: meta_title_en,
-            meta_description: meta_description_en,
-            tagline: tagline_en,
-            teaser: teaser_en,
-            description: description_en,
-            description_extra: description_extra_en,
-            description_2: description_2_en,
-            quote: quote_en,
-            quote_source: quote_source_en,
-            programme: programme_en,
-            info: info_en,
-            description_short: description_short_en,
-        });
-    }
-
-    out
 }

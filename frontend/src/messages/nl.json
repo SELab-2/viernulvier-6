@@ -92,8 +92,8 @@
     "Home": {
         "loading": "Archief laden...",
         "hero": {
-            "title": "Het verhaal van De Vooruit",
-            "subtitle": "Meer dan een eeuw theater, dans, muziek en nachtleven in het hart van Gent.",
+            "title": "Het archief van VIERNULVIER",
+            "subtitle": "Meer dan 40 jaar theater, dans, muziek en nachtleven in Gent.",
             "searchPlaceholder": "Zoek in het archief\u2026"
         },
         "tags": {
@@ -104,8 +104,7 @@
         },
         "about": {
             "title": "Kunstencentrum VIERNULVIER",
-            "text": "Sinds 1883 is De Vooruit een broedplaats voor kunst, cultuur en samenleving. Van revolutionaire feesten tot hedendaagse performance \u2014 het archief bewaart het allemaal.",
-            "address": "Sint-Pietersnieuwstraat 23 \u00b7 9000 Gent"
+            "text": "Sinds 1883 is De Vooruit een broedplaats voor kunst, cultuur en samenleving. Van revolutionaire feesten tot hedendaagse performance. Het archief bewaart het allemaal."
         },
         "latest": {
             "label": "Laatste producties",
@@ -141,6 +140,7 @@
         "TabBar": {
             "overview": "CMS Overzicht",
             "content": "Inhoud beheren",
+            "collections": "Collecties",
             "ingest": "Importeren",
             "import": "Automatische import"
         },
@@ -193,10 +193,75 @@
             "editHall": "Zaal bewerken"
         },
         "Articles": {
-            "notAvailable": "Artikelen-API is nog niet beschikbaar. Geen gegevens om weer te geven."
+            "notAvailable": "Artikelen-API is nog niet beschikbaar. Geen gegevens om weer te geven.",
+            "newArticle": "Nieuw artikel",
+            "createFailed": "Aanmaken van artikel mislukt.",
+            "save": "Opslaan",
+            "saving": "Bezig met opslaan…",
+            "saveSuccess": "Artikel opgeslagen.",
+            "saveFailed": "Opslaan mislukt.",
+            "backToList": "Terug naar artikelen",
+            "statusLabel": "Status",
+            "slug": "Slug",
+            "subjectPeriod": "Periode",
+            "title": "Titel",
+            "relatedProductions": "Gerelateerde producties",
+            "relatedArtists": "Gerelateerde artiesten",
+            "relatedLocations": "Gerelateerde locaties",
+            "relatedEvents": "Gerelateerde voorstellingen"
         },
         "Performers": {
             "notAvailable": "Uitvoerders-API is nog niet beschikbaar. Geen gegevens om weer te geven."
+        },
+        "Collections": {
+            "title": "Collecties",
+            "newCollection": "Nieuwe collectie",
+            "noCollections": "Nog geen collecties.",
+            "noItems": "Nog geen items. Voeg items toe vanuit het tabblad Inhoud.",
+            "goToContent": "Ga naar inhoud",
+            "itemCount": "{count, plural, one {# item} other {# items}}",
+            "itemsTitle": "Items ({count})",
+            "slug": "Slug",
+            "titleNl": "Titel (NL)",
+            "titleEn": "Titel (EN)",
+            "descriptionNl": "Beschrijving (NL)",
+            "descriptionEn": "Beschrijving (EN)",
+            "shareableLink": "Deelbare link",
+            "copyLink": "Kopieer link",
+            "linkCopied": "Link gekopieerd",
+            "save": "Opslaan",
+            "saving": "Opslaan…",
+            "loading": "Laden…",
+            "cancel": "Annuleren",
+            "open": "Openen",
+            "metadataSaved": "Collectie opgeslagen",
+            "metadataError": "Opslaan van collectie mislukt",
+            "itemsSaved": "Items opgeslagen",
+            "itemsError": "Opslaan van items mislukt",
+            "copyError": "Kopiëren van link mislukt",
+            "events": "Voorstellingen",
+            "invalidSlug": "Titel moet minstens één letter of cijfer bevatten",
+            "deleteCollection": "Collectie verwijderen",
+            "deleteConfirm": "Weet je zeker dat je \"{title}\" wil verwijderen? Alle items worden verwijderd.",
+            "backToCollections": "Terug naar collecties",
+            "addToCollection": "Toevoegen aan collectie",
+            "addAndOpen": "Toevoegen en collectie openen",
+            "createNewCollection": "Nieuwe collectie maken",
+            "searchCollections": "Collecties zoeken…",
+            "selectedItems": "{count, plural, one {# geselecteerd item} other {# geselecteerde items}}",
+            "alreadyInCollection": "{title} zit al in deze collectie",
+            "addedToCollection": "Toegevoegd aan \"{collection}\"",
+            "addedToCollectionMultiple": "{count} items toegevoegd aan \"{collection}\"",
+            "removeItem": "Item verwijderen",
+            "commentNl": "Commentaar (NL)",
+            "commentEn": "Commentaar (EN)",
+            "contentTypes": {
+                "production": "Productie",
+                "event": "Voorstelling",
+                "blogpost": "Artikel",
+                "artist": "Artiest",
+                "location": "Locatie"
+            }
         }
     },
     "Admin": {

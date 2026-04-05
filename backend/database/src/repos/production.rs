@@ -37,45 +37,45 @@ impl<'a> ProductionRepo<'a> {
         })
     }
 
-pub async fn all(
-    &self,
-    limit: usize,
-    id_cursor: Option<Uuid>,
-) -> Result<Vec<ProductionWithTranslations>, DatabaseError> {
-    let mut select = Production::select().limit(limit).order_desc("id");
-    if let Some(id_cursor) = id_cursor {
-        select = select.where_("id < $1").bind(id_cursor);
+    pub async fn all(
+        &self,
+        limit: usize,
+        id_cursor: Option<Uuid>,
+    ) -> Result<Vec<ProductionWithTranslations>, DatabaseError> {
+        let mut select = Production::select().limit(limit).order_desc("id");
+        if let Some(id_cursor) = id_cursor {
+            select = select.where_("id < $1").bind(id_cursor);
+        }
+        let productions = select.fetch_all(self.db).await?;
+
+        if productions.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let ids: Vec<Uuid> = productions.iter().map(|p| p.id).collect();
+        let all_translations = sqlx::query_as::<_, ProductionTranslation>(
+            "SELECT * FROM production_translations WHERE production_id = ANY($1)",
+        )
+        .bind(&ids[..])
+        .fetch_all(self.db)
+        .await?;
+
+        let mut translation_map: HashMap<Uuid, Vec<ProductionTranslation>> = HashMap::new();
+        for t in all_translations {
+            translation_map.entry(t.production_id).or_default().push(t);
+        }
+
+        Ok(productions
+            .into_iter()
+            .map(|p| {
+                let translations = translation_map.remove(&p.id).unwrap_or_default();
+                ProductionWithTranslations {
+                    production: p,
+                    translations,
+                }
+            })
+            .collect())
     }
-    let productions = select.fetch_all(self.db).await?;
-
-    if productions.is_empty() {
-        return Ok(vec![]);
-    }
-
-    let ids: Vec<Uuid> = productions.iter().map(|p| p.id).collect();
-    let all_translations = sqlx::query_as::<_, ProductionTranslation>(
-        "SELECT * FROM production_translations WHERE production_id = ANY($1)",
-    )
-    .bind(&ids[..])
-    .fetch_all(self.db)
-    .await?;
-
-    let mut translation_map: HashMap<Uuid, Vec<ProductionTranslation>> = HashMap::new();
-    for t in all_translations {
-        translation_map.entry(t.production_id).or_default().push(t);
-    }
-
-    Ok(productions
-        .into_iter()
-        .map(|p| {
-            let translations = translation_map.remove(&p.id).unwrap_or_default();
-            ProductionWithTranslations {
-                production: p,
-                translations,
-            }
-        })
-        .collect())
-}
 
     pub async fn insert(
         &self,
@@ -83,7 +83,8 @@ pub async fn all(
         translations: Vec<ProductionTranslationData>,
     ) -> Result<ProductionWithTranslations, DatabaseError> {
         let production = production.insert(self.db).await?;
-        self.upsert_translations(production.id, &translations).await?;
+        self.upsert_translations(production.id, &translations)
+            .await?;
         let translation_rows = self.fetch_translations_for(production.id).await?;
 
         Ok(ProductionWithTranslations {
@@ -98,7 +99,8 @@ pub async fn all(
         translations: Vec<ProductionTranslationData>,
     ) -> Result<ProductionWithTranslations, DatabaseError> {
         let production = production.update_all_fields(self.db).await?;
-        self.upsert_translations(production.id, &translations).await?;
+        self.upsert_translations(production.id, &translations)
+            .await?;
         let translation_rows = self.fetch_translations_for(production.id).await?;
 
         Ok(ProductionWithTranslations {
@@ -162,22 +164,53 @@ pub async fn all(
             return Ok(());
         }
 
-        let language_codes: Vec<&str> = translations.iter().map(|t| t.language_code.as_str()).collect();
-        let supertitles: Vec<Option<&str>> = translations.iter().map(|t| t.supertitle.as_deref()).collect();
+        let language_codes: Vec<&str> = translations
+            .iter()
+            .map(|t| t.language_code.as_str())
+            .collect();
+        let supertitles: Vec<Option<&str>> = translations
+            .iter()
+            .map(|t| t.supertitle.as_deref())
+            .collect();
         let titles: Vec<Option<&str>> = translations.iter().map(|t| t.title.as_deref()).collect();
         let artists: Vec<Option<&str>> = translations.iter().map(|t| t.artist.as_deref()).collect();
-        let meta_titles: Vec<Option<&str>> = translations.iter().map(|t| t.meta_title.as_deref()).collect();
-        let meta_descriptions: Vec<Option<&str>> = translations.iter().map(|t| t.meta_description.as_deref()).collect();
-        let taglines: Vec<Option<&str>> = translations.iter().map(|t| t.tagline.as_deref()).collect();
+        let meta_titles: Vec<Option<&str>> = translations
+            .iter()
+            .map(|t| t.meta_title.as_deref())
+            .collect();
+        let meta_descriptions: Vec<Option<&str>> = translations
+            .iter()
+            .map(|t| t.meta_description.as_deref())
+            .collect();
+        let taglines: Vec<Option<&str>> =
+            translations.iter().map(|t| t.tagline.as_deref()).collect();
         let teasers: Vec<Option<&str>> = translations.iter().map(|t| t.teaser.as_deref()).collect();
-        let descriptions: Vec<Option<&str>> = translations.iter().map(|t| t.description.as_deref()).collect();
-        let description_extras: Vec<Option<&str>> = translations.iter().map(|t| t.description_extra.as_deref()).collect();
-        let description_2s: Vec<Option<&str>> = translations.iter().map(|t| t.description_2.as_deref()).collect();
+        let descriptions: Vec<Option<&str>> = translations
+            .iter()
+            .map(|t| t.description.as_deref())
+            .collect();
+        let description_extras: Vec<Option<&str>> = translations
+            .iter()
+            .map(|t| t.description_extra.as_deref())
+            .collect();
+        let description_2s: Vec<Option<&str>> = translations
+            .iter()
+            .map(|t| t.description_2.as_deref())
+            .collect();
         let quotes: Vec<Option<&str>> = translations.iter().map(|t| t.quote.as_deref()).collect();
-        let quote_sources: Vec<Option<&str>> = translations.iter().map(|t| t.quote_source.as_deref()).collect();
-        let programmes: Vec<Option<&str>> = translations.iter().map(|t| t.programme.as_deref()).collect();
+        let quote_sources: Vec<Option<&str>> = translations
+            .iter()
+            .map(|t| t.quote_source.as_deref())
+            .collect();
+        let programmes: Vec<Option<&str>> = translations
+            .iter()
+            .map(|t| t.programme.as_deref())
+            .collect();
         let infos: Vec<Option<&str>> = translations.iter().map(|t| t.info.as_deref()).collect();
-        let description_shorts: Vec<Option<&str>> = translations.iter().map(|t| t.description_short.as_deref()).collect();
+        let description_shorts: Vec<Option<&str>> = translations
+            .iter()
+            .map(|t| t.description_short.as_deref())
+            .collect();
 
         sqlx::query(
             "INSERT INTO production_translations (

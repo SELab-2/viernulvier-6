@@ -7,7 +7,7 @@ import {
 import { PaginatedResult } from "@/types/api/api.types";
 import { Event, EventCreateInput, EventUpdateInput } from "@/types/models/event.types";
 
-const toNullable = <T>(value: T | null | undefined): T | null => value ?? null;
+import { toNullable } from "./utils";
 
 export const mapEvent = (response: EventResponse): Event => {
     return {
