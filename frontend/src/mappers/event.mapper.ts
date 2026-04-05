@@ -62,7 +62,20 @@ export const mapCreateEventInput = (input: EventCreateInput): EventCreateRequest
 
 export const mapUpdateEventInput = (input: EventUpdateInput): EventUpdateRequest => {
     return {
-        ...mapCreateEventInput(input),
         id: input.id,
+        source_id: input.sourceId,
+        starts_at: input.startsAt,
+        ends_at: input.endsAt,
+        intermission_at: input.intermissionAt,
+        doors_at: input.doorsAt,
+        vendor_id: input.vendorId,
+        box_office_id: input.boxOfficeId,
+        uitdatabank_id: input.uitdatabankId,
+        max_tickets_per_order: input.maxTicketsPerOrder,
+        production_id: input.productionId,
+        status: input.status,
+        hall_id: input.hallId,
+        created_at: input.createdAt,
+        updated_at: new Date().toISOString(),
     };
 };

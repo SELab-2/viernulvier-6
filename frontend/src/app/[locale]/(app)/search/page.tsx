@@ -3,14 +3,12 @@
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 
 import { useGetProductions } from "@/hooks/api/useProductions";
-import { useGetEvents } from "@/hooks/api/useEvents";
 import { useGetLocations } from "@/hooks/api/useLocations";
 import { useGetFacets } from "@/hooks/api/useTaxonomy";
 import type { Production } from "@/types/models/production.types";
-import type { Event } from "@/types/models/event.types";
 import { getLocalizedField } from "@/lib/locale";
 
 import { LoadingState } from "@/components/shared/loading-state";
@@ -45,7 +43,6 @@ export default function SearchPage() {
     } = useGetProductions({
         pagination: currentCursor ? { cursor: currentCursor } : undefined,
     });
-    const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
     const { data: locationsResult, isLoading: locationsLoading } = useGetLocations();
     const { data: facets, isLoading: facetsLoading } = useGetFacets({
         entityType: "production",
@@ -54,10 +51,12 @@ export default function SearchPage() {
     // Memoize data arrays to prevent dependency issues
     const productionsData = useMemo(() => productionsResult?.data ?? [], [productionsResult?.data]);
     const nextCursor = productionsResult?.nextCursor;
-    const eventsData = useMemo(() => eventsResult?.data ?? [], [eventsResult?.data]);
     const locationsData = useMemo(() => locationsResult?.data ?? [], [locationsResult?.data]);
 
-    const isLoading = productionsLoading || eventsLoading || locationsLoading || facetsLoading;
+    const isLoading = productionsLoading || locationsLoading || facetsLoading;
+
+    // Track if all productions have been loaded
+    const allLoaded = nextCursor === null && !isFetching && allProductions.length > 0;
 
     // Accumulate productions when new page loads
     useEffect(() => {
@@ -67,7 +66,7 @@ export default function SearchPage() {
         if (productionsData.length > 0 && !processedCursors.current.has(cursorKey)) {
             processedCursors.current.add(cursorKey);
 
-            // Defer state update to avoid cascading renders
+            // Use queueMicrotask to avoid cascading renders while still accumulating data
             queueMicrotask(() => {
                 setAllProductions((prev) => {
                     const newIds = new Set(productionsData.map((p) => p.id));
@@ -78,16 +77,16 @@ export default function SearchPage() {
         }
     }, [productionsData, currentCursor]);
 
-    // Memoize eventsByProduction to prevent dependency issues
-    const eventsByProduction = useMemo(() => {
-        const map = new Map<string, Event[]>();
-        eventsData.forEach((event) => {
-            const existing = map.get(event.productionId) ?? [];
-            existing.push(event);
-            map.set(event.productionId, existing);
-        });
-        return map;
-    }, [eventsData]);
+    // Auto-load all productions when searching
+    useEffect(() => {
+        if (searchQuery && nextCursor && !isFetching) {
+            // Automatically load next page when searching and more data available
+            queueMicrotask(() => {
+                setCursorHistory((prev) => [...prev, nextCursor]);
+                setCurrentPageIndex((prev) => prev + 1);
+            });
+        }
+    }, [searchQuery, nextCursor, isFetching]);
 
     const loadMore = useCallback(() => {
         if (nextCursor && !isFetching) {
@@ -96,14 +95,7 @@ export default function SearchPage() {
         }
     }, [nextCursor, isFetching]);
 
-    const handleReset = useCallback(() => {
-        setCursorHistory([null]);
-        setCurrentPageIndex(0);
-        setAllProductions([]);
-        processedCursors.current.clear(); // Also reset the ref!
-    }, []);
-
-    // Infinite scroll with Intersection Observer
+    // Infinite scroll with Intersection Observer (only when not searching)
     useEffect(() => {
         if (searchQuery) return; // Disable infinite scroll when searching
 
@@ -155,6 +147,7 @@ export default function SearchPage() {
     const totalCount = allProductions.length;
     const hasNoResults = searchQuery && filteredProductions.length === 0;
     const hasMore = !searchQuery && nextCursor !== null;
+    const isLoadingMoreForSearch = searchQuery && nextCursor !== null;
 
     return (
         <>
@@ -162,7 +155,8 @@ export default function SearchPage() {
                 query={searchQuery}
                 onQueryChange={(value) => {
                     setSearchQuery(value);
-                    if (!value) handleReset();
+                    // Note: We intentionally do NOT reset accumulated data here
+                    // to preserve scroll position and loaded content
                 }}
                 searchPlaceholder={t("placeholder")}
                 searchHint={t("hint")}
@@ -184,12 +178,34 @@ export default function SearchPage() {
                         />
                     ) : (
                         <>
-                            <ProductionList
-                                productions={filteredProductions}
-                                locale={locale}
-                                eventsByProduction={eventsByProduction}
-                            />
-                            {/* Infinite scroll sentinel */}
+                            {/* Show loading indicator when searching and still loading more data */}
+                            {isLoadingMoreForSearch && (
+                                <div className="bg-muted/30 border-muted/50 flex items-center gap-2 border-b px-4 py-2 text-xs sm:px-7">
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    <span className="text-muted-foreground">
+                                        {t("loadingMoreForSearch", {
+                                            loaded: totalCount,
+                                            defaultValue: `Loading more productions for search... (${totalCount} loaded)`,
+                                        })}
+                                    </span>
+                                </div>
+                            )}
+
+                            {/* Show warning if searching but not all productions loaded yet */}
+                            {searchQuery && !allLoaded && !isLoadingMoreForSearch && (
+                                <div className="bg-muted/30 border-muted/50 flex items-center gap-2 border-b px-4 py-2 text-xs sm:px-7">
+                                    <AlertCircle className="text-muted-foreground h-3 w-3" />
+                                    <span className="text-muted-foreground">
+                                        {t("partialResults", {
+                                            defaultValue: `Showing results from ${totalCount} loaded productions. Results may be incomplete.`,
+                                        })}
+                                    </span>
+                                </div>
+                            )}
+
+                            <ProductionList productions={filteredProductions} locale={locale} />
+
+                            {/* Infinite scroll sentinel (only for non-search browsing) */}
                             {hasMore && (
                                 <div ref={loadMoreRef} className="flex justify-center py-8">
                                     {isFetching && (
