@@ -34,6 +34,9 @@
         "noResultsTitle": "Nothing here but cobwebs",
         "noResultsText": "No productions found for \"{query}\". Try a different search.",
         "articleImageCaption": "The forgotten Vooruit building...",
+        "loading": "Loading...",
+        "loadingMoreForSearch": "Loading more productions for search... ({loaded} loaded)",
+        "partialResults": "Showing results from {loaded} loaded productions. Results may be incomplete.",
         "tags": {
             "dance": "Dance",
             "theater": "Theatre",

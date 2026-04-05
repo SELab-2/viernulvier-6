@@ -25,6 +25,13 @@ describe("useGetProductions", () => {
         expect(result.current.data?.data).toHaveLength(1);
         expect(result.current.data?.data[0]).toHaveProperty("id");
         expect(result.current.data?.data[0]).toHaveProperty("slug");
+        expect(result.current.data?.data[0]).toHaveProperty("translations");
+        expect(Array.isArray(result.current.data?.data[0].translations)).toBe(true);
+        expect(result.current.data?.data[0].translations.length).toBeGreaterThan(0);
+        const nlTranslation = result.current.data?.data[0].translations.find(
+            (t) => t.languageCode === "nl"
+        );
+        expect(nlTranslation?.title).toBe("Productie NL");
     });
 
     it("returns paginated result with data array and nextCursor", async () => {

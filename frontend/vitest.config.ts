@@ -7,6 +7,10 @@ export default defineConfig({
         setupFiles: ["./test/setup.ts"],
         clearMocks: true,
         restoreMocks: true,
+        typecheck: {
+            enabled: true,
+            tsconfig: "./tsconfig.json",
+        },
         coverage: {
             provider: "v8", // or 'istanbul'
             reporter: ["text", "lcov"],

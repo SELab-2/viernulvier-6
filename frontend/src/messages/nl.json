@@ -34,6 +34,9 @@
         "noResultsTitle": "Hier hangen enkel spinnenwebben",
         "noResultsText": "Geen producties gevonden voor \"{query}\". Probeer een andere zoekopdracht.",
         "articleImageCaption": "Het vergeten Vooruit gebouw...",
+        "loading": "Laden...",
+        "loadingMoreForSearch": "Meer producties laden voor zoeken... ({loaded} geladen)",
+        "partialResults": "Resultaten van {loaded} geladen producties. Resultaten kunnen onvolledig zijn.",
         "tags": {
             "dance": "Dans",
             "theater": "Theater",

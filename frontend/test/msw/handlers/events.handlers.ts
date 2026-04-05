@@ -1,8 +1,9 @@
 import { http, HttpResponse } from "msw";
 
+import type { components } from "@/types/api/generated";
 import { apiUrl } from "../../utils/env";
 
-const event1 = {
+const event1: components["schemas"]["EventPayload"] = {
     id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     source_id: 42,
     created_at: "2025-01-01T00:00:00Z",
@@ -20,7 +21,7 @@ const event1 = {
     hall_id: "d30f5f95-3a64-4fc0-8f6a-a9dc44c02222",
 };
 
-const event2 = {
+const event2: components["schemas"]["EventPayload"] = {
     id: "b2c3d4e5-f6g7-8901-bcde-f12345678901",
     source_id: 43,
     created_at: "2025-01-02T00:00:00Z",
@@ -48,30 +49,40 @@ export const eventHandlers = [
             return HttpResponse.json({
                 data: [event2],
                 next_cursor: null,
-            });
+            } satisfies components["schemas"]["PaginatedResponse_EventPayload"]);
         }
 
         // First page - return first event with cursor to next page
         return HttpResponse.json({
             data: [event1],
             next_cursor: "page2",
-        });
+        } satisfies components["schemas"]["PaginatedResponse_EventPayload"]);
     }),
-    http.get(apiUrl(`/events/${event1.id}`), () => HttpResponse.json(event1)),
-    http.get(apiUrl(`/events/${event2.id}`), () => HttpResponse.json(event2)),
+    http.get(apiUrl(`/events/${event1.id}`), () =>
+        HttpResponse.json(event1 satisfies components["schemas"]["EventPayload"])
+    ),
+    http.get(apiUrl(`/events/${event2.id}`), () =>
+        HttpResponse.json(event2 satisfies components["schemas"]["EventPayload"])
+    ),
     http.get(apiUrl(`/productions/${event1.production_id}/events`), () =>
-        HttpResponse.json([event1])
+        HttpResponse.json([event1] satisfies components["schemas"]["EventPayload"][])
     ),
     http.post(apiUrl("/events"), async ({ request }) => {
         const body = await request.json();
         return HttpResponse.json(
-            { ...event1, ...(body as Record<string, unknown>) },
+            {
+                ...event1,
+                ...(body as Record<string, unknown>),
+            } satisfies components["schemas"]["EventPayload"],
             { status: 201 }
         );
     }),
     http.put(apiUrl("/events"), async ({ request }) => {
         const body = await request.json();
-        return HttpResponse.json({ ...event1, ...(body as Record<string, unknown>) });
+        return HttpResponse.json({
+            ...event1,
+            ...(body as Record<string, unknown>),
+        } satisfies components["schemas"]["EventPayload"]);
     }),
     http.delete(apiUrl(`/events/${event1.id}`), () => new HttpResponse(null, { status: 204 })),
 ];
