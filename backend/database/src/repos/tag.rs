@@ -1,3 +1,4 @@
+use serde_json::Value as JsonValue;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -5,7 +6,7 @@ use crate::{
     error::DatabaseError,
     models::{
         entity_type::EntityType,
-        tag::{EntityTagRow, TaxonomyRow},
+        tag::TaxonomyRow,
     },
 };
 
@@ -64,33 +65,58 @@ impl<'a> TagRepo<'a> {
         .await?)
     }
 
-    /// Returns all tags on a specific entity with their translations.
-    pub async fn for_entity(
+    /// Returns pre-grouped facets+tags JSONB for a single entity via the SQL function.
+    pub async fn entity_facets(
         &self,
         entity_type: EntityType,
         entity_id: Uuid,
-    ) -> Result<Vec<EntityTagRow>, DatabaseError> {
-        Ok(sqlx::query_as::<_, EntityTagRow>(
-            "SELECT
-                tg.entity_type,
-                tg.entity_id,
-                tg.inherited,
-                t.facet::text  AS facet_slug,
-                t.slug         AS tag_slug,
-                t.sort_order   AS tag_sort_order,
-                tt.language_code,
-                tt.label       AS tag_label,
-                fl.label       AS facet_label
-            FROM taggings tg
-            JOIN tags t ON t.id = tg.tag_id
-            JOIN tag_translations tt ON tt.tag_id = t.id
-            JOIN facet_labels fl ON fl.facet = t.facet AND fl.language_code = tt.language_code
-            WHERE tg.entity_type = $1 AND tg.entity_id = $2
-            ORDER BY t.facet, t.sort_order, tt.language_code",
+    ) -> Result<JsonValue, DatabaseError> {
+        Ok(
+            sqlx::query_scalar::<_, JsonValue>("SELECT entity_facets($1, $2)")
+                .bind(entity_type)
+                .bind(entity_id)
+                .fetch_one(self.db)
+                .await?,
         )
-        .bind(entity_type)
-        .bind(entity_id)
-        .fetch_all(self.db)
-        .await?)
+    }
+
+    /// Replace all tags on an entity. Deletes existing taggings and inserts new ones.
+    /// Returns the resulting facets JSONB.
+    pub async fn replace_tags(
+        &self,
+        entity_type: EntityType,
+        entity_id: Uuid,
+        tag_slugs: &[String],
+    ) -> Result<JsonValue, DatabaseError> {
+        let mut tx = self.db.begin().await?;
+
+        sqlx::query("DELETE FROM taggings WHERE entity_type = $1 AND entity_id = $2")
+            .bind(entity_type)
+            .bind(entity_id)
+            .execute(&mut *tx)
+            .await?;
+
+        for slug in tag_slugs {
+            let result = sqlx::query(
+                "INSERT INTO taggings (tag_id, entity_type, entity_id, inherited)
+                 SELECT t.id, $1, $2, false
+                 FROM tags t WHERE t.slug = $3",
+            )
+            .bind(entity_type)
+            .bind(entity_id)
+            .bind(slug)
+            .execute(&mut *tx)
+            .await?;
+
+            if result.rows_affected() == 0 {
+                return Err(DatabaseError::BadRequest(format!(
+                    "unknown tag slug: '{slug}'"
+                )));
+            }
+        }
+
+        tx.commit().await?;
+
+        self.entity_facets(entity_type, entity_id).await
     }
 }

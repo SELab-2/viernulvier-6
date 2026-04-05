@@ -16,6 +16,7 @@ pub mod media;
 pub mod production;
 pub mod series;
 pub mod space;
+pub mod tagging;
 pub mod taxonomy;
 pub mod version;
 
