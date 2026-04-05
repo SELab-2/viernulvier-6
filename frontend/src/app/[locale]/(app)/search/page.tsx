@@ -18,6 +18,7 @@ import { SearchHero } from "@/components/searchpage/search-hero";
 import { ResultsBar } from "@/components/searchpage/results-bar";
 import { ArchiveSidebar } from "@/components/searchpage/archive-sidebar";
 import { ProductionList } from "@/components/searchpage/production-list";
+import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
 
 export default function SearchPage() {
     const locale = useLocale();
@@ -114,7 +115,16 @@ export default function SearchPage() {
             <div className="flex min-h-[calc(100vh-300px)] overflow-hidden">
                 <ArchiveSidebar locations={locationsData} facets={facets ?? []} />
                 <main className="min-w-0 flex-1 overflow-hidden">
-                    <ProductionList productions={allProductions} locale={locale} />
+                    {allProductions.length === 0 && !isLoading ? (
+                        <VintageEmptyState
+                            title={t("noResultsTitle")}
+                            description={t("noResultsText", { query: "" })}
+                            imagePath="/images/de_vooruit_decaying.png"
+                            caption={t("articleImageCaption")}
+                        />
+                    ) : (
+                        <ProductionList productions={allProductions} locale={locale} />
+                    )}
 
                     {nextCursor !== null && (
                         <div ref={loadMoreRef} className="flex justify-center py-8">
