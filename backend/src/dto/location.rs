@@ -1,14 +1,15 @@
 use database::{
     Database,
-    models::location::{
-        Location, LocationCreate, LocationTranslationData, LocationWithTranslations,
+    models::{
+        cursor::CursorData,
+        location::{Location, LocationCreate, LocationTranslationData, LocationWithTranslations},
     },
 };
+use base64::{Engine, prelude::BASE64_URL_SAFE};
 use serde::{Deserialize, Serialize};
+use tracing::debug;
 use utoipa::ToSchema;
 use uuid::Uuid;
-
-use base64::{Engine, prelude::BASE64_URL_SAFE};
 
 use crate::{
     dto::paginated::PaginatedResponse, error::AppError,
@@ -20,30 +21,26 @@ impl LocationPayload {
         db: &Database,
         id_cursor: Option<String>,
         limit: u32,
-        _search: LocationSearchQuery,
+        search: LocationSearchQuery,
     ) -> Result<PaginatedResponse<Self>, AppError> {
-        let id_cursor: Option<Uuid> = id_cursor.and_then(|b64| {
-            let bytes: [u8; 16] = BASE64_URL_SAFE.decode(b64).ok()?.try_into().ok()?;
-            Some(Uuid::from_bytes(bytes))
+        let cursor: Option<CursorData> = id_cursor.and_then(|b64| {
+            let bytes = BASE64_URL_SAFE.decode(b64).ok()?;
+            serde_json::from_slice(&bytes).ok()
         });
-        let limit = limit as usize;
-        let mut data: Vec<_> = db
-            .locations()
-            .all(limit + 1, id_cursor)
-            .await?
-            .into_iter()
-            .map(Self::from)
-            .collect();
 
-        // only return a cursor if there are more items
-        let next_cursor = if data.len() == limit + 1 {
-            data.pop();
-            data.last().map(|l| BASE64_URL_SAFE.encode(l.id))
-        } else {
-            None
-        };
+        let (locations, next_cursor) = db.locations().all(limit, cursor, search.into()).await?;
+        let locations: Vec<_> = locations.into_iter().map(Self::from).collect();
 
-        Ok(PaginatedResponse { data, next_cursor })
+        let next_cursor_data = next_cursor.and_then(|c| {
+            let data = serde_json::to_vec(&c).ok()?;
+            Some(BASE64_URL_SAFE.encode(data))
+        });
+
+        debug!("Returning {} locations", locations.len());
+        Ok(PaginatedResponse {
+            data: locations,
+            next_cursor: next_cursor_data,
+        })
     }
 
     pub async fn by_id(db: &Database, id: Uuid) -> Result<Self, AppError> {
