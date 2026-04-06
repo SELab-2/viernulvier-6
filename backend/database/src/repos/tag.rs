@@ -4,10 +4,7 @@ use uuid::Uuid;
 
 use crate::{
     error::DatabaseError,
-    models::{
-        entity_type::EntityType,
-        tag::TaxonomyRow,
-    },
+    models::{entity_type::EntityType, tag::TaxonomyRow},
 };
 
 pub struct TagRepo<'a> {
@@ -39,7 +36,6 @@ impl<'a> TagRepo<'a> {
         .await?)
     }
 
-    /// Returns all tags applicable to the given entity type, with their translations.
     pub async fn with_facets_for_entity(
         &self,
         entity_type: EntityType,
@@ -80,15 +76,31 @@ impl<'a> TagRepo<'a> {
         )
     }
 
-    /// Replace all tags on an entity. Deletes existing taggings and inserts new ones.
-    /// Returns the resulting facets JSONB.
     pub async fn replace_tags(
         &self,
         entity_type: EntityType,
         entity_id: Uuid,
         tag_slugs: &[String],
     ) -> Result<JsonValue, DatabaseError> {
+        let mut seen = std::collections::HashSet::new();
+        let unique_slugs: Vec<&String> = tag_slugs
+            .iter()
+            .filter(|s| seen.insert(s.as_str()))
+            .collect();
+
         let mut tx = self.db.begin().await?;
+
+        let exists: bool = sqlx::query_scalar(&format!(
+            "SELECT EXISTS(SELECT 1 FROM {} WHERE id = $1)",
+            entity_type.table()
+        ))
+        .bind(entity_id)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        if !exists {
+            return Err(DatabaseError::NotFound);
+        }
 
         sqlx::query("DELETE FROM taggings WHERE entity_type = $1 AND entity_id = $2")
             .bind(entity_type)
@@ -96,21 +108,23 @@ impl<'a> TagRepo<'a> {
             .execute(&mut *tx)
             .await?;
 
-        for slug in tag_slugs {
+        for slug in &unique_slugs {
             let result = sqlx::query(
                 "INSERT INTO taggings (tag_id, entity_type, entity_id, inherited)
                  SELECT t.id, $1, $2, false
-                 FROM tags t WHERE t.slug = $3",
+                 FROM tags t
+                 JOIN facet_entity_types fet ON fet.facet = t.facet AND fet.entity_type = $1
+                 WHERE t.slug = $3",
             )
             .bind(entity_type)
             .bind(entity_id)
-            .bind(slug)
+            .bind(*slug)
             .execute(&mut *tx)
             .await?;
 
             if result.rows_affected() == 0 {
                 return Err(DatabaseError::BadRequest(format!(
-                    "unknown tag slug: '{slug}'"
+                    "unknown or inapplicable tag slug: '{slug}'"
                 )));
             }
         }

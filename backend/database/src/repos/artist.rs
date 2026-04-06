@@ -1,5 +1,4 @@
 use sqlx::PgPool;
-use uuid::Uuid;
 
 use crate::{error::DatabaseError, models::artist::Artist};
 
@@ -19,16 +18,5 @@ impl<'a> ArtistRepo<'a> {
         )
         .fetch_all(self.db)
         .await?)
-    }
-
-    pub async fn by_id(&self, id: Uuid) -> Result<Artist, DatabaseError> {
-        sqlx::query_as!(
-            Artist,
-            "SELECT id, created_at, updated_at, slug, name FROM artists WHERE id = $1",
-            id
-        )
-        .fetch_optional(self.db)
-        .await?
-        .ok_or(DatabaseError::NotFound)
     }
 }
