@@ -44,3 +44,7 @@ pub struct LocationWithTranslations {
     pub location: Location,
     pub translations: Vec<LocationTranslation>,
 }
+
+pub struct LocationSearch {
+    pub q: Option<String>,
+}

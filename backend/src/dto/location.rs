@@ -10,13 +10,17 @@ use uuid::Uuid;
 
 use base64::{Engine, prelude::BASE64_URL_SAFE};
 
-use crate::{dto::paginated::PaginatedResponse, error::AppError};
+use crate::{
+    dto::paginated::PaginatedResponse, error::AppError,
+    handlers::queries::location::LocationSearchQuery,
+};
 
 impl LocationPayload {
     pub async fn all(
         db: &Database,
         id_cursor: Option<String>,
         limit: u32,
+        _search: LocationSearchQuery,
     ) -> Result<PaginatedResponse<Self>, AppError> {
         let id_cursor: Option<Uuid> = id_cursor.and_then(|b64| {
             let bytes: [u8; 16] = BASE64_URL_SAFE.decode(b64).ok()?.try_into().ok()?;
