@@ -1,13 +1,13 @@
 "use client";
 
-import { use, useMemo } from "react";
+import { use, useMemo, useState, useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { notFound } from "next/navigation";
 
 import { useGetProduction, useGetProductions } from "@/hooks/api/useProductions";
 import { useGetEvents } from "@/hooks/api/useEvents";
 import { getLocalizedField } from "@/lib/locale";
-import { Link } from "@/i18n/routing";
+import { Link, useRouter } from "@/i18n/routing";
 
 import { SearchHeader } from "@/components/homepage/search-header";
 import { LoadingState } from "@/components/shared/loading-state";
@@ -25,6 +25,19 @@ export default function ProductionPage({
     const { id } = use(params);
     const locale = useLocale();
     const tSearch = useTranslations("Search");
+    const router = useRouter();
+
+    const [headerQuery, setHeaderQuery] = useState("");
+    const handleHeaderSearch = useCallback(
+        (value: string) => {
+            if (value.trim()) {
+                router.push(`/search?q=${encodeURIComponent(value.trim())}`);
+            } else {
+                router.push("/search");
+            }
+        },
+        [router]
+    );
 
     const { data: production, isLoading: isProdLoading, isError } = useGetProduction(id);
     const { data: allEvents, isLoading: isEventsLoading } = useGetEvents();
@@ -54,8 +67,9 @@ export default function ProductionPage({
         return (
             <>
                 <SearchHeader
-                    query=""
-                    onQueryChange={() => {}}
+                    query={headerQuery}
+                    onQueryChange={setHeaderQuery}
+                    onSearch={handleHeaderSearch}
                     searchPlaceholder={tSearch("placeholder")}
                     searchHint={tSearch("hint")}
                 />
@@ -69,8 +83,9 @@ export default function ProductionPage({
     return (
         <div className="bg-background text-foreground font-body min-h-screen">
             <SearchHeader
-                query=""
-                onQueryChange={() => {}}
+                query={headerQuery}
+                onQueryChange={setHeaderQuery}
+                onSearch={handleHeaderSearch}
                 searchPlaceholder={tSearch("placeholder")}
                 searchHint={tSearch("hint")}
             />
