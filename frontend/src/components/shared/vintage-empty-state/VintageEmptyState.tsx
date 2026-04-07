@@ -21,7 +21,8 @@ export function VintageEmptyState({
 
     // For some scuffed reason basePath doesn't actually work on images and you have to add it yourself
     // https://nextjs.org/docs/app/api-reference/config/next-config-js/basePath#images
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+    const rawPath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+    const basePath = rawPath === "/" ? "" : rawPath;
 
     return (
         <div className="flex flex-col items-center justify-center px-4 py-12">

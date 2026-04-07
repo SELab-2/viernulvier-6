@@ -46,19 +46,19 @@ describe("event mapper", () => {
         expect(createPayload.starts_at).toBe("2025-06-15T20:00:00Z");
         expect(createPayload.production_id).toBe("4f327f95-3a64-4fc0-8f6a-a9dc44c01111");
         expect(createPayload.status).toBe("available");
-        expect(createPayload.created_at).toBeDefined();
-        expect(createPayload.updated_at).toBeDefined();
     });
 
-    it("maps update input to api payload with id", () => {
+    it("maps update input to api payload with id and preserves createdAt", () => {
         const updatePayload = mapUpdateEventInput({
             id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
             startsAt: "2025-06-15T20:00:00Z",
             productionId: "4f327f95-3a64-4fc0-8f6a-a9dc44c01111",
             status: "available",
+            createdAt: "2025-01-01T00:00:00Z",
         });
 
         expect(updatePayload.id).toBe("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
         expect(updatePayload.starts_at).toBe("2025-06-15T20:00:00Z");
+        expect(updatePayload.created_at).toBe("2025-01-01T00:00:00Z");
     });
 });

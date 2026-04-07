@@ -6,11 +6,11 @@ describe("queryKeys", () => {
     it("returns stable collection keys", () => {
         expect(queryKeys.user).toEqual(["user"]);
         expect(queryKeys.version).toEqual(["version"]);
-        expect(queryKeys.locations.all).toEqual(["locations"]);
-        expect(queryKeys.productions.all).toEqual(["productions"]);
-        expect(queryKeys.events.all).toEqual(["events"]);
-        expect(queryKeys.halls.all).toEqual(["halls"]);
-        expect(queryKeys.spaces.all).toEqual(["spaces"]);
+        expect(queryKeys.locations.all()).toEqual(["locations"]);
+        expect(queryKeys.productions.all()).toEqual(["productions"]);
+        expect(queryKeys.events.all()).toEqual(["events"]);
+        expect(queryKeys.halls.all()).toEqual(["halls"]);
+        expect(queryKeys.spaces.all()).toEqual(["spaces"]);
     });
 
     it("builds deterministic detail keys", () => {
@@ -32,5 +32,21 @@ describe("queryKeys", () => {
             "facets",
             "production",
         ]);
+    });
+
+    describe("pagination support", () => {
+        it("includes pagination params in list keys when provided", () => {
+            const pagination = { cursor: "page2", limit: 10 };
+            expect(queryKeys.events.all(pagination)).toEqual(["events", pagination]);
+            expect(queryKeys.productions.all(pagination)).toEqual(["productions", pagination]);
+            expect(queryKeys.locations.all(pagination)).toEqual(["locations", pagination]);
+            expect(queryKeys.halls.all(pagination)).toEqual(["halls", pagination]);
+            expect(queryKeys.spaces.all(pagination)).toEqual(["spaces", pagination]);
+        });
+
+        it("returns base key without pagination when no params provided", () => {
+            expect(queryKeys.events.all()).toEqual(["events"]);
+            expect(queryKeys.events.all(undefined)).toEqual(["events"]);
+        });
     });
 });
