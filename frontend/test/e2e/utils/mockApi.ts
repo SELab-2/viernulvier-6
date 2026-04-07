@@ -1,4 +1,11 @@
 import { Page } from "@playwright/test";
+import { components } from "@/types/api/generated";
+
+type ProductionPayload = components["schemas"]["ProductionPayload"];
+type PaginatedProductionResponse = components["schemas"]["PaginatedResponse_ProductionPayload"];
+type PaginatedEventResponse = components["schemas"]["PaginatedResponse_EventPayload"];
+type PaginatedLocationResponse = components["schemas"]["PaginatedResponse_LocationPayload"];
+type FacetResponse = components["schemas"]["FacetResponse"];
 
 /**
  * Mocks the backend API responses for E2E tests.
@@ -11,14 +18,27 @@ export async function mockApi(page: Page) {
     const productionId = (i: number) => "00000000-0000-4000-8000-" + String(i).padStart(12, "0");
 
     // Mock productions (return enough items to trigger pagination > 20 items)
-    const productions = Array.from({ length: 25 }).map((_, i) => ({
+    const productions: ProductionPayload[] = Array.from({ length: 25 }).map((_, i) => ({
         id: productionId(i + 1),
         slug: `test-theater-${i + 1}`,
-        title_nl: `Test Theater ${i + 1}`,
-        title_en: `Test Theater ${i + 1}`,
-        description_nl: `Beschrijving ${i + 1}`,
-        description_en: `Description ${i + 1}`,
+        translations: [
+            {
+                language_code: "nl",
+                title: `Test Theater ${i + 1}`,
+                description: `Beschrijving ${i + 1}`,
+            },
+            {
+                language_code: "en",
+                title: `Test Theater ${i + 1}`,
+                description: `Description ${i + 1}`,
+            },
+        ],
     }));
+
+    const paginatedProductions: PaginatedProductionResponse = {
+        data: productions,
+        next_cursor: null,
+    };
 
     // GET /api/productions | /api/productions/:id | /api/productions/:id/events
     await page.route("**/api/productions**", async (route) => {
@@ -36,29 +56,39 @@ export async function mockApi(page: Page) {
         const id = segments[prodIdx + 1];
         const sub = segments[prodIdx + 2];
         if (sub === "events") {
-            await route.fulfill({ json: [] });
+            const emptyEvents: components["schemas"]["EventPayload"][] = [];
+            await route.fulfill({ json: emptyEvents });
             return;
         }
         if (id && /^[0-9a-f-]{36}$/i.test(id)) {
-            const one = productions.find((p) => p.id === id) ?? productions[0];
+            const one: ProductionPayload = productions.find((p) => p.id === id) ?? productions[0];
             await route.fulfill({ json: one });
             return;
         }
-        await route.fulfill({ json: productions });
+        await route.fulfill({ json: paginatedProductions });
     });
 
     // Mock events
+    const emptyPaginatedEvents: PaginatedEventResponse = {
+        data: [],
+        next_cursor: null,
+    };
     await page.route("**/api/events**", async (route) => {
-        await route.fulfill({ json: [] });
+        await route.fulfill({ json: emptyPaginatedEvents });
     });
 
     // Mock locations
+    const emptyPaginatedLocations: PaginatedLocationResponse = {
+        data: [],
+        next_cursor: null,
+    };
     await page.route("**/api/locations**", async (route) => {
-        await route.fulfill({ json: [] });
+        await route.fulfill({ json: emptyPaginatedLocations });
     });
 
     // Mock facets
+    const emptyFacets: FacetResponse[] = [];
     await page.route("**/api/taxonomy/facets**", async (route) => {
-        await route.fulfill({ json: [] });
+        await route.fulfill({ json: emptyFacets });
     });
 }

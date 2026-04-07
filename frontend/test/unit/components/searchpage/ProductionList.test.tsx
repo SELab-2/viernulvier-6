@@ -29,22 +29,26 @@ describe("ProductionList component", () => {
     const mockProductions: Production[] = [
         {
             id: "1",
-            title: { nl: "Production 1 Title", en: "Production 1 Title" },
             slug: "prod-1",
-            createdAt: "2024-01-01T00:00:00Z",
-            updatedAt: "2024-01-01T00:00:00Z",
-            status: "draft",
-            sourceId: 1,
-        } as unknown as Production,
+            sourceId: null,
+            video1: null,
+            video2: null,
+            eticketInfo: null,
+            uitdatabankTheme: null,
+            uitdatabankType: null,
+            translations: [],
+        },
         {
             id: "2",
-            title: { nl: "Production 2 Title", en: "Production 2 Title" },
             slug: "prod-2",
-            createdAt: "2024-01-02T00:00:00Z",
-            updatedAt: "2024-01-02T00:00:00Z",
-            status: "draft",
-            sourceId: 2,
-        } as unknown as Production,
+            sourceId: null,
+            video1: null,
+            video2: null,
+            eticketInfo: null,
+            uitdatabankTheme: null,
+            uitdatabankType: null,
+            translations: [],
+        },
     ];
 
     it("renders empty state when no productions provided", () => {

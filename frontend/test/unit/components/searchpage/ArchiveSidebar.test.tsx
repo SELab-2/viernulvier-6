@@ -46,13 +46,25 @@ describe("ArchiveSidebar component", () => {
     const mockFacets: Facet[] = [
         {
             slug: "discipline",
-            label: "Facet 1",
-            tags: [{ slug: "t1", label: "Tag 1", sortOrder: 0 }],
+            translations: [{ languageCode: "en", label: "Facet 1" }],
+            tags: [
+                {
+                    slug: "t1",
+                    sortOrder: 0,
+                    translations: [{ languageCode: "en", label: "Tag 1", description: null }],
+                },
+            ],
         },
         {
             slug: "format",
-            label: "Facet 2",
-            tags: [{ slug: "t2", label: "Tag 2", sortOrder: 1 }],
+            translations: [{ languageCode: "en", label: "Facet 2" }],
+            tags: [
+                {
+                    slug: "t2",
+                    sortOrder: 1,
+                    translations: [{ languageCode: "en", label: "Tag 2", description: null }],
+                },
+            ],
         },
     ];
 
@@ -78,22 +90,22 @@ describe("ArchiveSidebar component", () => {
     it("has 'productions' category checked by default", () => {
         renderWithIntl(<ArchiveSidebar />);
 
-        const productionsCheckbox = screen.getByRole("checkbox", { name: "Productions" });
-        expect(productionsCheckbox).toBeChecked();
+        const productionsButton = screen.getByRole("button", { name: "Productions" });
+        expect(productionsButton).toHaveAttribute("aria-pressed", "true");
 
-        const artistsCheckbox = screen.getByRole("checkbox", { name: "Artists" });
-        expect(artistsCheckbox).not.toBeChecked();
+        const artistsButton = screen.getByRole("button", { name: "Artists" });
+        expect(artistsButton).toHaveAttribute("aria-pressed", "false");
     });
 
     it("toggles categories on click", async () => {
         const user = userEvent.setup();
         renderWithIntl(<ArchiveSidebar />);
 
-        const artistsCheckbox = screen.getByRole("checkbox", { name: "Artists" });
-        expect(artistsCheckbox).not.toBeChecked();
+        const artistsButton = screen.getByRole("button", { name: "Artists" });
+        expect(artistsButton).toHaveAttribute("aria-pressed", "false");
 
-        await user.click(artistsCheckbox);
+        await user.click(artistsButton);
 
-        expect(artistsCheckbox).toBeChecked();
+        expect(artistsButton).toHaveAttribute("aria-pressed", "true");
     });
 });
