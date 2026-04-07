@@ -4,28 +4,34 @@ import { api } from "@/lib/api-client";
 import {
     mapCreateLocationInput,
     mapLocation,
-    mapLocations,
+    mapPaginatedLocationsResult,
     mapUpdateLocationInput,
 } from "@/mappers/location.mapper";
-import { LocationResponse } from "@/types/api/location.api.types";
+import {
+    CreateLocationResponse,
+    GetAllLocationsResponse,
+    GetLocationByIdResponse,
+    UpdateLocationResponse,
+} from "@/types/api/location.api.types";
+import { PaginationParams, PaginatedResult } from "@/types/api/api.types";
 import { Location, LocationCreateInput, LocationUpdateInput } from "@/types/models/location.types";
 
 import { queryKeys } from "./query-keys";
 
-const fetchLocations = async (): Promise<Location[]> => {
-    const { data } = await api.get<{ data: LocationResponse[] }>("/locations");
-    return mapLocations(data.data);
+const fetchLocations = async (params?: PaginationParams): Promise<PaginatedResult<Location>> => {
+    const { data } = await api.get<GetAllLocationsResponse>("/locations", { params });
+    return mapPaginatedLocationsResult(data);
 };
 
 const fetchLocationById = async (id: string): Promise<Location> => {
-    const { data } = await api.get<LocationResponse>(`/locations/${id}`);
+    const { data } = await api.get<GetLocationByIdResponse>(`/locations/${id}`);
     return mapLocation(data);
 };
 
-export const useGetLocations = (options?: { enabled?: boolean }) => {
+export const useGetLocations = (options?: { enabled?: boolean; pagination?: PaginationParams }) => {
     return useQuery({
-        queryKey: queryKeys.locations.all,
-        queryFn: fetchLocations,
+        queryKey: queryKeys.locations.all(options?.pagination),
+        queryFn: () => fetchLocations(options?.pagination),
         ...options,
     });
 };
@@ -43,14 +49,14 @@ export const useCreateLocation = () => {
 
     return useMutation({
         mutationFn: async (payload: LocationCreateInput) => {
-            const { data } = await api.post<LocationResponse>(
+            const { data } = await api.post<CreateLocationResponse>(
                 "/locations",
                 mapCreateLocationInput(payload)
             );
             return mapLocation(data);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.locations.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.locations.all() });
         },
     });
 };
@@ -60,14 +66,14 @@ export const useUpdateLocation = () => {
 
     return useMutation({
         mutationFn: async (payload: LocationUpdateInput) => {
-            const { data } = await api.put<LocationResponse>(
+            const { data } = await api.put<UpdateLocationResponse>(
                 "/locations",
                 mapUpdateLocationInput(payload)
             );
             return mapLocation(data);
         },
         onSuccess: (location) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.locations.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.locations.all() });
             queryClient.setQueryData(queryKeys.locations.detail(location.id), location);
         },
     });
@@ -82,7 +88,7 @@ export const useDeleteLocation = () => {
             return id;
         },
         onSuccess: (id) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.locations.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.locations.all() });
             queryClient.removeQueries({ queryKey: queryKeys.locations.detail(id) });
         },
     });

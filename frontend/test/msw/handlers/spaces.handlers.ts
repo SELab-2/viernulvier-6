@@ -1,8 +1,9 @@
 import { http, HttpResponse } from "msw";
 
+import type { components } from "@/types/api/generated";
 import { apiUrl } from "../../utils/env";
 
-const space = {
+const space: components["schemas"]["SpacePayload"] = {
     id: "cb74aa4f-6856-4a8b-9930-2a8c56ec3333",
     source_id: 33,
     name_nl: "Main Space",
@@ -10,18 +11,31 @@ const space = {
 };
 
 export const spaceHandlers = [
-    http.get(apiUrl("/spaces"), () => HttpResponse.json({ data: [space], next_cursor: null })),
-    http.get(apiUrl(`/spaces/${space.id}`), () => HttpResponse.json(space)),
+    http.get(apiUrl("/spaces"), () =>
+        HttpResponse.json({
+            data: [space],
+            next_cursor: null,
+        } satisfies components["schemas"]["PaginatedResponse_SpacePayload"])
+    ),
+    http.get(apiUrl(`/spaces/${space.id}`), () =>
+        HttpResponse.json(space satisfies components["schemas"]["SpacePayload"])
+    ),
     http.post(apiUrl("/spaces"), async ({ request }) => {
         const body = await request.json();
         return HttpResponse.json(
-            { ...space, ...(body as Record<string, unknown>) },
+            {
+                ...space,
+                ...(body as Record<string, unknown>),
+            } satisfies components["schemas"]["SpacePayload"],
             { status: 201 }
         );
     }),
     http.put(apiUrl("/spaces"), async ({ request }) => {
         const body = await request.json();
-        return HttpResponse.json({ ...space, ...(body as Record<string, unknown>) });
+        return HttpResponse.json({
+            ...space,
+            ...(body as Record<string, unknown>),
+        } satisfies components["schemas"]["SpacePayload"]);
     }),
     http.delete(apiUrl(`/spaces/${space.id}`), () => new HttpResponse(null, { status: 204 })),
 ];

@@ -1,8 +1,9 @@
 import { http, HttpResponse } from "msw";
 
+import type { components } from "@/types/api/generated";
 import { apiUrl } from "../../utils/env";
 
-const facets = [
+const facets: components["schemas"]["FacetResponse"][] = [
     {
         slug: "discipline",
         translations: [
@@ -61,9 +62,9 @@ export const taxonomyHandlers = [
         const entityType = url.searchParams.get("entity_type");
 
         if (entityType === "production") {
-            return HttpResponse.json(facets);
+            return HttpResponse.json(facets satisfies components["schemas"]["FacetResponse"][]);
         }
 
-        return HttpResponse.json(facets);
+        return HttpResponse.json(facets satisfies components["schemas"]["FacetResponse"][]);
     }),
 ];

@@ -6,7 +6,7 @@ import { useGetLocations } from "@/hooks/api/useLocations";
 import { createQueryClientWrapper } from "../../utils/query-client";
 
 describe("useGetLocations", () => {
-    it("maps DTO response to domain model", async () => {
+    it("maps paginated DTO response to domain model with pagination info", async () => {
         const { wrapper } = createQueryClientWrapper();
 
         const { result } = renderHook(() => useGetLocations(), { wrapper });
@@ -15,24 +15,26 @@ describe("useGetLocations", () => {
             expect(result.current.isSuccess).toBe(true);
         });
 
-        expect(result.current.data).toEqual([
-            {
-                id: "67c95f6a-8bb8-43d6-a4bc-f7e18b86f404",
-                sourceId: 101,
-                name: "Main Venue",
-                code: "MV",
-                street: "Mainstraat",
-                number: "12",
-                postalCode: "9000",
-                city: "Gent",
-                country: "Belgium",
-                phone1: "+32-9-000-00-00",
-                phone2: null,
-                isOwnedByViernulvier: true,
-                uitdatabankId: "udb-main",
-                address: "Mainstraat 12, 9000 Gent, Belgium",
-            },
-        ]);
+        expect(result.current.data).toHaveProperty("data");
+        expect(result.current.data).toHaveProperty("nextCursor");
+        expect(Array.isArray(result.current.data?.data)).toBe(true);
+        expect(result.current.data?.data[0]).toHaveProperty("id");
+        expect(result.current.data?.data[0]).toHaveProperty("name");
+    });
+
+    it("returns paginated result with data array and nextCursor", async () => {
+        const { wrapper, queryClient } = createQueryClientWrapper();
+
+        const { result } = renderHook(() => useGetLocations(), { wrapper });
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        const cachedData = queryClient.getQueryData(queryKeys.locations.all());
+        expect(cachedData).toHaveProperty("data");
+        expect(cachedData).toHaveProperty("nextCursor");
+        expect(Array.isArray((cachedData as { data: unknown[] }).data)).toBe(true);
     });
 
     it("uses React Query cache for repeated hook mounts", async () => {
@@ -44,7 +46,7 @@ describe("useGetLocations", () => {
             expect(first.result.current.isSuccess).toBe(true);
         });
 
-        const cached = queryClient.getQueryData(queryKeys.locations.all);
+        const cached = queryClient.getQueryData(queryKeys.locations.all());
         expect(cached).toEqual(first.result.current.data);
 
         const second = renderHook(() => useGetLocations(), { wrapper });

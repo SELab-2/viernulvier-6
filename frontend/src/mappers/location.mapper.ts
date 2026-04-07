@@ -1,5 +1,10 @@
-import { LocationResponse } from "@/types/api/location.api.types";
-import { LocationCreateRequest, LocationUpdateRequest } from "@/types/api/location.api.types";
+import {
+    LocationCreateRequest,
+    LocationResponse,
+    LocationUpdateRequest,
+    PaginatedLocationResponse,
+} from "@/types/api/location.api.types";
+import { PaginatedResult } from "@/types/api/api.types";
 import { Location, LocationCreateInput, LocationUpdateInput } from "@/types/models/location.types";
 
 import { toNullable } from "./utils";
@@ -37,6 +42,16 @@ export const mapLocation = (response: LocationResponse): Location => {
 };
 
 export const mapLocations = (response: LocationResponse[]): Location[] => response.map(mapLocation);
+
+export const mapPaginatedLocations = (response: PaginatedLocationResponse): Location[] =>
+    mapLocations(response.data);
+
+export const mapPaginatedLocationsResult = (
+    response: PaginatedLocationResponse
+): PaginatedResult<Location> => ({
+    data: mapLocations(response.data),
+    nextCursor: response.next_cursor ?? null,
+});
 
 export const mapCreateLocationInput = (input: LocationCreateInput): LocationCreateRequest => {
     return {

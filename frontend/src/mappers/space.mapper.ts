@@ -1,4 +1,10 @@
-import { SpaceCreateRequest, SpaceResponse, SpaceUpdateRequest } from "@/types/api/space.api.types";
+import {
+    PaginatedSpaceResponse,
+    SpaceCreateRequest,
+    SpaceResponse,
+    SpaceUpdateRequest,
+} from "@/types/api/space.api.types";
+import { PaginatedResult } from "@/types/api/api.types";
 import { Space, SpaceCreateInput, SpaceUpdateInput } from "@/types/models/space.types";
 
 import { toNullable } from "./utils";
@@ -13,6 +19,16 @@ export const mapSpace = (response: SpaceResponse): Space => {
 };
 
 export const mapSpaces = (response: SpaceResponse[]): Space[] => response.map(mapSpace);
+
+export const mapPaginatedSpaces = (response: PaginatedSpaceResponse): Space[] =>
+    mapSpaces(response.data);
+
+export const mapPaginatedSpacesResult = (
+    response: PaginatedSpaceResponse
+): PaginatedResult<Space> => ({
+    data: mapSpaces(response.data),
+    nextCursor: response.next_cursor ?? null,
+});
 
 export const mapCreateSpaceInput = (input: SpaceCreateInput): SpaceCreateRequest => {
     return {

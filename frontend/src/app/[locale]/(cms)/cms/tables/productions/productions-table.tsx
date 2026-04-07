@@ -20,8 +20,10 @@ import type { Event } from "@/types/models/event.types";
 export function ProductionsTable() {
     const t = useTranslations("Cms.Productions");
     const tCollections = useTranslations("Cms.Collections");
-    const { data: productions = [], isLoading: productionsLoading } = useGetProductions();
-    const { data: allEvents = [], isLoading: eventsLoading } = useGetEvents();
+    const { data: productionsResult, isLoading: productionsLoading } = useGetProductions();
+    const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
+    const productions = useMemo(() => productionsResult?.data ?? [], [productionsResult?.data]);
+    const allEvents = useMemo(() => eventsResult?.data ?? [], [eventsResult?.data]);
     const updateProduction = useUpdateProduction();
     const updateEvent = useUpdateEvent();
 

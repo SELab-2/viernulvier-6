@@ -341,9 +341,12 @@ export function CollectionEditorPage({ id }: { id: string }) {
     const router = useRouter();
 
     const { data: collection, isLoading } = useGetCollection(id);
-    const { data: productions = [], isLoading: productionsLoading } = useGetProductions();
-    const { data: events = [], isLoading: eventsLoading } = useGetEvents();
-    const { data: locations = [], isLoading: locationsLoading } = useGetLocations();
+    const { data: productionsResult, isLoading: productionsLoading } = useGetProductions();
+    const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
+    const { data: locationsResult, isLoading: locationsLoading } = useGetLocations();
+    const productions = useMemo(() => productionsResult?.data ?? [], [productionsResult?.data]);
+    const events = useMemo(() => eventsResult?.data ?? [], [eventsResult?.data]);
+    const locations = useMemo(() => locationsResult?.data ?? [], [locationsResult?.data]);
 
     const entitiesLoading = productionsLoading || eventsLoading || locationsLoading;
 
