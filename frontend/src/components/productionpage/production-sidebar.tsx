@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
 
@@ -37,7 +38,7 @@ export function ProductionSidebar({
     const copyLink = () => {
         if (typeof window !== "undefined") {
             navigator.clipboard.writeText(window.location.href);
-            alert("Link gekopieerd!");
+            toast.success("Link gekopieerd!");
         }
     };
 
@@ -55,9 +56,9 @@ export function ProductionSidebar({
                         return (
                             <div
                                 key={event.id}
-                                className="border-muted/25 group cursor-pointer border-b py-2.5 last:border-0"
+                                className="border-muted/25 border-b py-2.5 last:border-0"
                             >
-                                <div className="font-body text-foreground mb-0.5 text-[13px] font-medium capitalize group-hover:underline">
+                                <div className="font-body text-foreground mb-0.5 text-[13px] font-medium capitalize">
                                     {formatDateFull(event.startsAt, locale)}
                                 </div>
                                 <div className="text-muted-foreground mb-2 font-mono text-[9px] tracking-[1.1px] uppercase">

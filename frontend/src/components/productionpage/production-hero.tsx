@@ -12,7 +12,7 @@ export function ProductionHero({ production, locale }: { production: Production;
 
     return (
         <div className="border-foreground animate-in fade-in slide-in-from-bottom-2 fill-mode-both grid grid-cols-1 gap-0 border-b-2 duration-500 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_480px]">
-            <div className="border-border flex min-h-[300px] flex-col justify-between border-b p-6 sm:p-10 lg:min-h-[460px] lg:border-r lg:border-b-0">
+            <div className="border-border order-2 flex min-h-[300px] flex-col justify-between border-b p-6 sm:p-10 lg:order-1 lg:min-h-[460px] lg:border-r lg:border-b-0">
                 {/* Eyebrow */}
                 <div className="mb-5 flex items-center gap-2.5">
                     <span className="border-foreground bg-foreground text-background border-[1.2px] px-2.5 py-1 font-mono text-[9px] font-medium tracking-[2px] uppercase">
@@ -83,7 +83,7 @@ export function ProductionHero({ production, locale }: { production: Production;
             </div>
 
             {/* Right side (Image) */}
-            <div className="relative min-h-[300px] overflow-hidden bg-[#ccc6bc] lg:min-h-auto">
+            <div className="relative order-1 min-h-[300px] overflow-hidden bg-[#ccc6bc] lg:order-2 lg:min-h-auto">
                 {/* Fallback pattern/gradient if no image */}
                 <div className="absolute inset-0 bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
                 <div className="bg-foreground/70 text-background/80 absolute right-0 bottom-0 left-0 p-3 font-mono text-[8px] tracking-[1.2px] uppercase">

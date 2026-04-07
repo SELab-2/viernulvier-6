@@ -19,9 +19,10 @@ export default function HomePage() {
     const t = useTranslations("Home");
     const tSearch = useTranslations("Search");
     const router = useRouter();
+
     const [query, setQuery] = useState("");
 
-    const handleHeaderSearch = useCallback(
+    const navigateToSearch = useCallback(
         (value: string) => {
             if (value.trim()) {
                 router.push(`/search?q=${encodeURIComponent(value.trim())}`);
@@ -31,14 +32,6 @@ export default function HomePage() {
         },
         [router]
     );
-
-    const handleHeroSearch = useCallback(() => {
-        if (query.trim()) {
-            router.push(`/search?q=${encodeURIComponent(query.trim())}`);
-        } else {
-            router.push("/search");
-        }
-    }, [query, router]);
 
     const { data: productions } = useGetProductions();
     const { data: events } = useGetEvents();
@@ -58,7 +51,7 @@ export default function HomePage() {
         <>
             <SearchHeader
                 query=""
-                onQueryChange={handleHeaderSearch}
+                onQueryChange={navigateToSearch}
                 searchPlaceholder={tSearch("placeholder")}
                 searchHint={tSearch("hint")}
             />
@@ -80,14 +73,14 @@ export default function HomePage() {
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         onKeyDown={(e) => {
-                            if (e.key === "Enter") handleHeroSearch();
+                            if (e.key === "Enter") navigateToSearch(query);
                         }}
                         placeholder={t("hero.searchPlaceholder")}
                         autoComplete="off"
                         className="border-foreground font-display text-foreground placeholder:text-muted-foreground w-full border-b-2 bg-transparent pr-24 pb-3 pl-[34px] text-[18px] font-normal outline-none placeholder:italic sm:pr-28 sm:text-[22px]"
                     />
                     <button
-                        onClick={handleHeroSearch}
+                        onClick={() => navigateToSearch(query)}
                         className="text-muted-foreground hover:text-foreground absolute top-1/2 right-0 flex -translate-y-1/2 cursor-pointer items-center gap-1.5 font-mono text-[9px] tracking-[1.2px] uppercase"
                     >
                         enter{" "}

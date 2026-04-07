@@ -1,5 +1,3 @@
-"use client";
-
 export function Footer() {
     return (
         <footer className="border-foreground flex flex-col items-center gap-4 border-t-2 px-4 py-6 text-center sm:flex-row sm:items-center sm:justify-between sm:px-10 sm:text-left">

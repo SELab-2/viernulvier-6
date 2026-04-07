@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { SlidersHorizontal, X } from "lucide-react";
+import { Check, SlidersHorizontal, X } from "lucide-react";
 
 import type { Location } from "@/types/models/location.types";
 import type { Facet } from "@/types/models/taxonomy.types";
@@ -218,13 +218,7 @@ function CheckboxItem({
                 }`}
             >
                 {checked && (
-                    <div
-                        className="bg-background absolute inset-[3px]"
-                        style={{
-                            clipPath:
-                                "polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%)",
-                        }}
-                    />
+                    <Check className="text-background absolute inset-0 h-full w-full p-[1px]" />
                 )}
             </div>
             <span className="font-body text-foreground text-[13px] leading-5 font-medium">
