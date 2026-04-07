@@ -1,5 +1,6 @@
 use crate::extractors::auth::{AdminUser, EditorUser};
 use api::ApiImporter;
+use aws_sdk_s3::config::{Builder as S3Builder, Credentials, Region};
 use axum::http::{HeaderValue, Method};
 use axum::middleware::from_extractor_with_state;
 use axum::{Router, routing::get};
@@ -7,7 +8,7 @@ use database::Database;
 use database::models::entity_type::EntityType;
 use database::models::facet::Facet;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 use utoipa::{
     Modify, OpenApi,
@@ -16,11 +17,14 @@ use utoipa::{
 };
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
-use utoipa_swagger_ui::SwaggerUi;
+use utoipa_swagger_ui::{Config, SwaggerUi};
 
 use crate::config::AppConfig;
 use crate::error::AppError;
-use crate::handlers::{admin, auth, event, hall, location, production, space, taxonomy, version};
+use crate::handlers::{
+    admin, article, artist, auth, collection, event, hall, location, media, production, series,
+    space, taxonomy, version,
+};
 
 pub mod config;
 pub mod dto;
@@ -32,6 +36,7 @@ mod handlers;
 pub struct AppState {
     pub db: Database,
     pub config: AppConfig,
+    pub s3_client: Option<aws_sdk_s3::Client>,
 }
 
 #[derive(OpenApi)]
@@ -39,7 +44,9 @@ pub struct AppState {
     modifiers(&SecurityAddon),
     components(schemas(EntityType, Facet)),
     tags(
-        (name = "viernulvier_api", description = "API Endpoints")
+        (name = "viernulvier_api", description = "API Endpoints"),
+        (name = "Collections", description = "A saved, titled selection of archive items with a shareable URL. No login required to view."),
+        (name = "Series", description = "Thematic/programmatic groupings of productions.")
     )
 )]
 pub struct ApiDoc;
@@ -87,16 +94,58 @@ impl Modify for PathPrefixAddon {
 pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
     let db = Database::create_connect_migrate(&config.database_url).await?;
 
-    // start api importer
-    let api_importer = ApiImporter::new(db.clone(), config.api_key_404.clone());
-    tokio::spawn(async move {
-        match api_importer.update_since_last().await {
-            Ok(()) => info!("API importer finished successfully"),
-            Err(e) => error!("API imported ended with error: {e:?}"),
-        }
+    // initialize S3 client if config is present
+    let s3_client = config.s3.as_ref().map(|s3_config| {
+        info!("initializing S3 client for {}", s3_config.endpoint);
+        let creds = Credentials::new(
+            &s3_config.access_key,
+            &s3_config.secret_key,
+            None,
+            None,
+            "garage",
+        );
+
+        let s3_conf = S3Builder::new()
+            .region(Region::new(s3_config.region.clone()))
+            .endpoint_url(&s3_config.endpoint)
+            .credentials_provider(creds)
+            .force_path_style(true)
+            .build();
+
+        aws_sdk_s3::Client::from_conf(s3_conf)
     });
 
-    let state = AppState { db, config };
+    if s3_client.is_none() {
+        info!("S3 config not set, media upload disabled");
+    }
+
+    // start api importer only if api_key_404 is configured
+    if let Some(api_key) = &config.api_key_404 {
+        let importer_s3_client = s3_client.clone();
+        let importer_s3_bucket = config.s3.as_ref().map(|s| s.bucket.clone());
+
+        let api_importer = ApiImporter::new(
+            db.clone(),
+            api_key.clone(),
+            importer_s3_client,
+            importer_s3_bucket,
+        );
+
+        tokio::spawn(async move {
+            match api_importer.update_since_last().await {
+                Ok(()) => info!("API importer finished successfully"),
+                Err(e) => error!("API imported ended with error: {e:?}"),
+            }
+        });
+    } else {
+        warn!("API importer is disabled");
+    }
+
+    let state = AppState {
+        db,
+        config,
+        s3_client,
+    };
 
     let allowed_origins: Vec<HeaderValue> = state
         .config
@@ -151,7 +200,9 @@ pub fn router(state: &AppState) -> Router<AppState> {
     let docs_path = format!("{base_path}/docs");
     let openapi_json_path = format!("{base_path}/openapi.json");
 
-    let swagger_ui = SwaggerUi::new(docs_path).url(openapi_json_path, api_spec);
+    let swagger_ui = SwaggerUi::new(docs_path)
+        .url(openapi_json_path, api_spec)
+        .config(Config::default().doc_expansion("none").filter(true));
 
     Router::new()
         .nest(&base_path, api_router)
@@ -186,6 +237,22 @@ fn public_routes() -> OpenApiRouter<AppState> {
         .routes(routes!(event::get_one))
         // taxonomies
         .routes(routes!(taxonomy::get_facets))
+        // media
+        .routes(routes!(media::get_all))
+        .routes(routes!(media::get_one))
+        .routes(routes!(media::get_entity_media))
+        // collections
+        .routes(routes!(collection::get_all))
+        .routes(routes!(collection::get_one))
+        // series
+        .routes(routes!(series::get_all))
+        .routes(routes!(series::get_one))
+        .routes(routes!(series::get_for_production))
+        // artists
+        .routes(routes!(artist::get_all))
+        // articles (public: published only, filterable)
+        .routes(routes!(article::get_all))
+        .routes(routes!(article::get_one))
 }
 
 // Only editors can edit data
@@ -213,6 +280,35 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(event::post))
         .routes(routes!(event::delete))
         .routes(routes!(event::put))
+        // Collection
+        .routes(routes!(collection::post))
+        .routes(routes!(collection::put))
+        .routes(routes!(collection::delete))
+        .routes(routes!(collection::post_item))
+        .routes(routes!(collection::put_items))
+        .routes(routes!(collection::delete_item))
+        // Series
+        .routes(routes!(series::post))
+        .routes(routes!(series::put))
+        .routes(routes!(series::delete))
+        .routes(routes!(series::add_productions))
+        .routes(routes!(series::remove_production))
+        // Media
+        .routes(routes!(media::generate_upload_url))
+        .routes(routes!(media::put))
+        .routes(routes!(media::delete))
+        .routes(routes!(media::attach_to_entity))
+        .routes(routes!(media::unlink_from_entity))
+        .routes(routes!(media::cleanup_orphans))
+        .routes(routes!(media::reconcile_storage))
+        // Articles (CMS)
+        .routes(routes!(article::get_all_cms))
+        .routes(routes!(article::get_one_cms))
+        .routes(routes!(article::post))
+        .routes(routes!(article::put))
+        .routes(routes!(article::delete))
+        .routes(routes!(article::get_relations))
+        .routes(routes!(article::put_relations))
         .layer(from_extractor_with_state::<EditorUser, AppState>(state))
 }
 

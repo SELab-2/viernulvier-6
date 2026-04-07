@@ -1,10 +1,14 @@
+#![allow(clippy::indexing_slicing)]
 use std::str::FromStr;
 
 use axum::http::StatusCode;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
-use viernulvier_api::dto::space::{SpacePayload, SpacePostPayload};
+use viernulvier_api::dto::{
+    paginated::PaginatedResponse,
+    space::{SpacePayload, SpacePostPayload},
+};
 
 use crate::common::{into_struct::IntoStruct, router::TestRouter};
 
@@ -18,8 +22,36 @@ async fn get_all(db: PgPool) {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let data: Vec<SpacePayload> = response.into_struct().await;
-    assert_eq!(data.len(), 3);
+    let data: PaginatedResponse<SpacePayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 3);
+}
+
+#[sqlx::test(fixtures("locations", "spaces"))]
+#[test_log::test]
+async fn get_paginated(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/spaces?limit=2").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // page 1
+    let page1: PaginatedResponse<SpacePayload> = response.into_struct().await;
+
+    assert_eq!(page1.data.len(), 2, "page 1 should respect the limit of 2");
+    assert!(page1.next_cursor.is_some(), "there should be a next cursor");
+
+    let cursor = page1.next_cursor.unwrap();
+    let url = format!("/spaces?limit=2&cursor={cursor}");
+
+    let response = app.get(&url).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // page 2
+    let page2: PaginatedResponse<SpacePayload> = response.into_struct().await;
+
+    assert_eq!(page2.data.len(), 1, "page 2 should have 1 item");
+    assert_ne!(page1.data[0].id, page2.data[0].id);
+    assert!(page2.next_cursor.is_none(), "last page has no cursor");
 }
 
 #[sqlx::test(fixtures("locations", "spaces"))]

@@ -1,6 +1,17 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@plugin "@tailwindcss/typography";
+
+.tiptap {
+    line-height: 1.5;
+
+    p,
+    li {
+        margin-top: 0.2em;
+        margin-bottom: 0.2em;
+    }
+}
 
 @custom-variant dark (&:is(.dark *));
 

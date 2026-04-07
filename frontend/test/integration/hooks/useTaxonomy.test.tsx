@@ -18,10 +18,27 @@ describe("useGetFacets", () => {
         expect(result.current.data).toHaveLength(2);
         expect(result.current.data![0]).toEqual({
             slug: "discipline",
-            label: "Discipline",
+            translations: [
+                { languageCode: "nl", label: "Discipline" },
+                { languageCode: "en", label: "Discipline" },
+            ],
             tags: [
-                { slug: "theater", label: "Theater", sortOrder: 1 },
-                { slug: "music", label: "Music", sortOrder: 2 },
+                {
+                    slug: "theatre",
+                    sortOrder: 1,
+                    translations: [
+                        { languageCode: "nl", label: "Theater", description: null },
+                        { languageCode: "en", label: "Theatre", description: null },
+                    ],
+                },
+                {
+                    slug: "music",
+                    sortOrder: 2,
+                    translations: [
+                        { languageCode: "nl", label: "Muziek", description: null },
+                        { languageCode: "en", label: "Music", description: null },
+                    ],
+                },
             ],
         });
     });

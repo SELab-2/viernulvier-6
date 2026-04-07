@@ -38,9 +38,11 @@ describe("OpenAPI type contract", () => {
 
         expectTypeOf<EventResponse>().toEqualTypeOf<components["schemas"]["EventPayload"]>();
         expectTypeOf<EventCreateRequest>().toEqualTypeOf<
-            components["schemas"]["EventPostPayload"]
+            Omit<components["schemas"]["EventPostPayload"], "created_at" | "updated_at">
         >();
-        expectTypeOf<EventUpdateRequest>().toEqualTypeOf<components["schemas"]["EventPayload"]>();
+        expectTypeOf<EventUpdateRequest>().toEqualTypeOf<
+            Omit<components["schemas"]["EventPayload"], "updated_at">
+        >();
 
         expectTypeOf<HallResponse>().toEqualTypeOf<components["schemas"]["HallPayload"]>();
         expectTypeOf<HallCreateRequest>().toEqualTypeOf<components["schemas"]["HallPostPayload"]>();
@@ -61,13 +63,13 @@ describe("OpenAPI type contract", () => {
     it("keeps key operation schemas available", () => {
         expectTypeOf<
             operations["get_all_locations"]["responses"][200]["content"]["application/json"]
-        >().toEqualTypeOf<components["schemas"]["LocationPayload"][]>();
+        >().toEqualTypeOf<components["schemas"]["PaginatedResponse_LocationPayload"]>();
         expectTypeOf<
             operations["create_production"]["requestBody"]["content"]["application/json"]
         >().toEqualTypeOf<components["schemas"]["ProductionPostPayload"]>();
         expectTypeOf<
             operations["get_all_events"]["responses"][200]["content"]["application/json"]
-        >().toEqualTypeOf<components["schemas"]["EventPayload"][]>();
+        >().toEqualTypeOf<components["schemas"]["PaginatedResponse_EventPayload"]>();
         expectTypeOf<
             operations["create_event"]["requestBody"]["content"]["application/json"]
         >().toEqualTypeOf<components["schemas"]["EventPostPayload"]>();

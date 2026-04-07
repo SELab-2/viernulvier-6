@@ -1,11 +1,20 @@
-use axum::{Json, extract::Path, http::StatusCode};
+use axum::{
+    Json,
+    extract::{Path, Query},
+    http::StatusCode,
+};
 use database::Database;
 use uuid::Uuid;
 
 use crate::{
-    dto::location::{LocationPayload, LocationPostPayload},
+    dto::{
+        location::{LocationPayload, LocationPostPayload},
+        paginated::PaginatedResponse,
+    },
     error::ErrorResponse,
-    handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
+    handlers::{
+        IntoApiResponse, JsonResponse, JsonStatusResponse, PaginationQuery, StatusResponse,
+    },
 };
 
 #[utoipa::path(
@@ -14,12 +23,20 @@ use crate::{
     tag = "Locations",
     operation_id = "get_all_locations",
     description = "Get all locations",
+    params(
+        PaginationQuery
+    ),
     responses(
-        (status = 200, description = "Success", body = [LocationPayload])
+        (status = 200, description = "Success", body = PaginatedResponse<LocationPayload>)
     )
 )]
-pub async fn get_all(db: Database) -> JsonResponse<Vec<LocationPayload>> {
-    LocationPayload::all(&db, 10).await?.json()
+pub async fn get_all(
+    db: Database,
+    Query(pagination): Query<PaginationQuery>,
+) -> JsonResponse<PaginatedResponse<LocationPayload>> {
+    LocationPayload::all(&db, pagination.cursor, pagination.limit)
+        .await?
+        .json()
 }
 
 #[utoipa::path(

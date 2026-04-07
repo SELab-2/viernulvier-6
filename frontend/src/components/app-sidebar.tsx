@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
+import { getLabel } from "@/lib/utils";
 import {
     Sidebar,
     SidebarContent,
@@ -14,9 +15,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Label } from "@/components/ui/label";
 import { Link, usePathname } from "@/i18n/routing";
 import { useGetFacets } from "@/hooks/api/useTaxonomy";
 import type { Facet, EntityType } from "@/types/models/taxonomy.types";
@@ -40,6 +39,7 @@ interface FacetFiltersProps {
 
 function FacetFilters({ facets, activeFacets, onToggle, onClear }: FacetFiltersProps) {
     const t = useTranslations("Cms.Sidebar");
+    const locale = useLocale();
     const hasActiveFilters = Object.values(activeFacets).some((s) => s.size > 0);
 
     return (
@@ -53,25 +53,28 @@ function FacetFilters({ facets, activeFacets, onToggle, onClear }: FacetFiltersP
             {facets.map((facet) => (
                 <div key={facet.slug} className="mb-3">
                     <p className="text-muted-foreground px-2 pb-1 text-xs font-medium">
-                        {facet.label}
+                        {getLabel(facet.translations, locale)}
                     </p>
-                    <ul className="space-y-1">
-                        {facet.tags.map((tag) => (
-                            <li key={tag.slug} className="flex items-center gap-2 px-2 py-0.5">
-                                <Checkbox
-                                    id={`tag-${tag.slug}`}
-                                    checked={activeFacets[facet.slug]?.has(tag.slug) ?? false}
-                                    onCheckedChange={() => onToggle(facet.slug, tag.slug)}
-                                />
-                                <Label
-                                    htmlFor={`tag-${tag.slug}`}
-                                    className="cursor-pointer text-sm font-normal"
+                    <div className="flex flex-wrap gap-1.5 px-2">
+                        {facet.tags.map((tag) => {
+                            const active = activeFacets[facet.slug]?.has(tag.slug) ?? false;
+                            return (
+                                <button
+                                    key={tag.slug}
+                                    type="button"
+                                    aria-pressed={active}
+                                    onClick={() => onToggle(facet.slug, tag.slug)}
+                                    className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase transition-all ${
+                                        active
+                                            ? "bg-foreground text-background border-foreground"
+                                            : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                                    }`}
                                 >
-                                    {tag.label}
-                                </Label>
-                            </li>
-                        ))}
-                    </ul>
+                                    {getLabel(tag.translations, locale)}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
             ))}
 

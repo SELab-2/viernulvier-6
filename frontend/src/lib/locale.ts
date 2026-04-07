@@ -27,7 +27,7 @@ export function getLocalizedField(
     field: BilingualField,
     locale: string
 ): string | null {
-    const suffix = locale === "en" ? "En" : "Nl";
-    const key = `${field}${suffix}` as keyof Production;
-    return (production[key] as string | null) ?? null;
+    const languageCode = locale === "en" ? "en" : "nl";
+    const translation = production.translations.find((t) => t.languageCode === languageCode);
+    return translation?.[field] ?? null;
 }

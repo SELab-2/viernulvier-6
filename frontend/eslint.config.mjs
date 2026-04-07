@@ -27,6 +27,7 @@ const eslintConfig = defineConfig([
         "coverage/",
         "playwright-report/**",
         "test-results/**",
+        "src/types/api/generated.ts",
     ]),
 ]);
 

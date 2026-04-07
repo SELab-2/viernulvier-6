@@ -15,6 +15,10 @@ export default defineConfig({
             "**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*",
             "./test/e2e/**",
         ],
+        typecheck: {
+            enabled: true,
+            tsconfig: "./tsconfig.json",
+        },
         coverage: {
             provider: "v8", // or 'istanbul'
             reporter: ["text", "lcov"],

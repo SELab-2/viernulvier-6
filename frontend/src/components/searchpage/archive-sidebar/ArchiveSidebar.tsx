@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { SlidersHorizontal, X } from "lucide-react";
 
 import type { Location } from "@/types/models/location.types";
 import type { Facet } from "@/types/models/taxonomy.types";
+import { getLabel } from "@/lib/utils";
 
 const CATEGORIES = ["artists", "productions", "articles", "posters"] as const;
 
@@ -21,6 +22,7 @@ interface ArchiveSidebarProps {
 
 export function ArchiveSidebar({ locations = [], facets = [] }: ArchiveSidebarProps) {
     const t = useTranslations("Sidebar");
+    const locale = useLocale();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
     const [checkedCategories, setCheckedCategories] = useState<Set<string>>(
@@ -79,24 +81,33 @@ export function ArchiveSidebar({ locations = [], facets = [] }: ArchiveSidebarPr
             </div>
 
             <FilterGroup label={t("categories.label")}>
-                <CheckboxList>
+                <div className="flex flex-wrap gap-2 pb-2.5">
                     {CATEGORIES.map((cat) => (
-                        <CheckboxItem
+                        <button
                             key={cat}
-                            label={t(`categories.${cat}`)}
-                            checked={checkedCategories.has(cat)}
-                            onChange={() => toggleCategory(cat)}
-                        />
+                            type="button"
+                            aria-pressed={checkedCategories.has(cat)}
+                            onClick={() => toggleCategory(cat)}
+                            className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase transition-all ${
+                                checkedCategories.has(cat)
+                                    ? "bg-foreground text-background border-foreground"
+                                    : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                            }`}
+                        >
+                            {t(`categories.${cat}`)}
+                        </button>
                     ))}
-                </CheckboxList>
+                </div>
             </FilterGroup>
 
             {facets.map((facet) => (
-                <FilterGroup key={facet.slug} label={facet.label}>
+                <FilterGroup key={facet.slug} label={getLabel(facet.translations, locale)}>
                     <div className="flex flex-wrap gap-2 pb-2.5">
                         {facet.tags.map((tag) => (
                             <button
                                 key={tag.slug}
+                                type="button"
+                                aria-pressed={activeTags.has(tag.slug)}
                                 onClick={() => toggleTag(tag.slug)}
                                 className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase transition-all ${
                                     activeTags.has(tag.slug)
@@ -104,7 +115,7 @@ export function ArchiveSidebar({ locations = [], facets = [] }: ArchiveSidebarPr
                                         : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
                                 }`}
                             >
-                                {tag.label}
+                                {getLabel(tag.translations, locale)}
                             </button>
                         ))}
                     </div>
@@ -112,24 +123,38 @@ export function ArchiveSidebar({ locations = [], facets = [] }: ArchiveSidebarPr
             ))}
 
             <FilterGroup label={t("locations.label")}>
-                <CheckboxList>
+                <div className="flex flex-wrap gap-2 pb-2.5">
                     {locations.length > 0 ? (
                         locations.map((loc) => (
-                            <CheckboxItem
+                            <button
                                 key={loc.id}
-                                label={loc.name ?? loc.address}
-                                checked={checkedLocations.has(loc.id)}
-                                onChange={() => toggleLocation(loc.id)}
-                            />
+                                type="button"
+                                aria-pressed={checkedLocations.has(loc.id)}
+                                onClick={() => toggleLocation(loc.id)}
+                                className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase transition-all ${
+                                    checkedLocations.has(loc.id)
+                                        ? "bg-foreground text-background border-foreground"
+                                        : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                                }`}
+                            >
+                                {loc.name ?? loc.address}
+                            </button>
                         ))
                     ) : (
-                        <CheckboxItem
-                            label="De Vooruit"
-                            checked={checkedLocations.has("deVooruit")}
-                            onChange={() => toggleLocation("deVooruit")}
-                        />
+                        <button
+                            type="button"
+                            aria-pressed={checkedLocations.has("deVooruit")}
+                            onClick={() => toggleLocation("deVooruit")}
+                            className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase transition-all ${
+                                checkedLocations.has("deVooruit")
+                                    ? "bg-foreground text-background border-foreground"
+                                    : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                            }`}
+                        >
+                            De Vooruit
+                        </button>
                     )}
-                </CheckboxList>
+                </div>
             </FilterGroup>
 
             <FilterGroup label={t("year.label")}>
@@ -193,43 +218,5 @@ function FilterGroup({ label, children }: { label: string; children: React.React
             </span>
             {children}
         </div>
-    );
-}
-
-function CheckboxList({ children }: { children: React.ReactNode }) {
-    return <div className="flex flex-col gap-2.5 pb-2.5">{children}</div>;
-}
-
-function CheckboxItem({
-    label,
-    checked,
-    onChange,
-}: {
-    label: string;
-    checked: boolean;
-    onChange: () => void;
-}) {
-    return (
-        <label className="flex cursor-pointer items-center gap-3">
-            <input type="checkbox" checked={checked} onChange={onChange} className="hidden" />
-            <div
-                className={`border-foreground relative h-3.5 w-3.5 shrink-0 border transition-colors ${
-                    checked ? "bg-foreground" : ""
-                }`}
-            >
-                {checked && (
-                    <div
-                        className="bg-background absolute inset-[3px]"
-                        style={{
-                            clipPath:
-                                "polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%)",
-                        }}
-                    />
-                )}
-            </div>
-            <span className="font-body text-foreground text-[13px] leading-5 font-medium">
-                {label}
-            </span>
-        </label>
     );
 }

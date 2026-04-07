@@ -1,13 +1,11 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { useGetProductions } from "@/hooks/api/useProductions";
-import { useGetEvents } from "@/hooks/api/useEvents";
-import type { Event } from "@/types/models/event.types";
 
 import { SearchHeader } from "@/components/homepage/search-header";
 import { SearchBar } from "@/components/homepage/search-bar";
@@ -44,19 +42,9 @@ export default function HomePage() {
         [router]
     );
 
-    const { data: productions } = useGetProductions();
-    const { data: events } = useGetEvents();
-    const latestProductions = (productions ?? []).slice(0, 4);
-
-    const eventsByProduction = useMemo(() => {
-        const map = new Map<string, Event[]>();
-        (events ?? []).forEach((event) => {
-            const existing = map.get(event.productionId) ?? [];
-            existing.push(event);
-            map.set(event.productionId, existing);
-        });
-        return map;
-    }, [events]);
+    const { data: productionsResult } = useGetProductions();
+    const productions = productionsResult?.data ?? [];
+    const latestProductions = productions.slice(0, 4);
 
     return (
         <>
@@ -69,7 +57,7 @@ export default function HomePage() {
             />
 
             {/* Hero */}
-            <section className="border-muted/30 flex flex-col items-center gap-6 border-b px-4 py-16 text-center sm:px-10 sm:py-24">
+            <section className="flex flex-col items-center gap-6 px-4 py-16 text-center sm:px-10 sm:py-24">
                 <h1 className="font-display text-foreground text-[40px] leading-[1.05] font-bold tracking-[-0.03em] sm:text-[64px] md:text-[72px]">
                     {t("hero.title")}
                 </h1>
@@ -117,7 +105,6 @@ export default function HomePage() {
                                 key={production.id}
                                 production={production}
                                 locale={locale}
-                                events={eventsByProduction.get(production.id)}
                             />
                         ))}
                     </div>
@@ -132,9 +119,6 @@ export default function HomePage() {
                 <p className="text-muted-foreground font-body max-w-[480px] text-sm leading-relaxed">
                     {t("about.text")}
                 </p>
-                <span className="text-muted-foreground font-mono text-[9px] tracking-[1.4px] uppercase sm:text-[10px]">
-                    {t("about.address")}
-                </span>
             </section>
         </>
     );

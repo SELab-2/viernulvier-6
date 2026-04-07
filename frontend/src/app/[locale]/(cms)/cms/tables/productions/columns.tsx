@@ -3,9 +3,14 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { makeActionsColumn } from "../actions-column";
 import type { FieldDef } from "../edit-sheet";
-import type { Production, ProductionUpdateInput } from "@/types/models/production.types";
+import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
+import type {
+    Production,
+    ProductionRow,
+    ProductionUpdateInput,
+} from "@/types/models/production.types";
 
-export const productionFields: FieldDef<Production>[] = [
+export const productionFields: FieldDef<ProductionRow>[] = [
     { key: "slug", label: "Slug", type: "text", readOnly: true },
     { key: "titleNl", label: "Title (NL)", type: "text" },
     { key: "titleEn", label: "Title (EN)", type: "text" },
@@ -32,61 +37,140 @@ export const productionFields: FieldDef<Production>[] = [
     { key: "uitdatabankType", label: "UiTdatabank type", type: "text" },
 ];
 
-export function toProductionUpdateInput(entity: Production): ProductionUpdateInput {
+export function toProductionRow(entity: Production): ProductionRow {
+    const nl = entity.translations.find((t) => t.languageCode === "nl");
+    const en = entity.translations.find((t) => t.languageCode === "en");
     return {
         id: entity.id,
         slug: entity.slug,
         sourceId: entity.sourceId,
-        supertitleNl: entity.supertitleNl,
-        supertitleEn: entity.supertitleEn,
-        titleNl: entity.titleNl,
-        titleEn: entity.titleEn,
-        artistNl: entity.artistNl,
-        artistEn: entity.artistEn,
-        metaTitleNl: entity.metaTitleNl,
-        metaTitleEn: entity.metaTitleEn,
-        metaDescriptionNl: entity.metaDescriptionNl,
-        metaDescriptionEn: entity.metaDescriptionEn,
-        taglineNl: entity.taglineNl,
-        taglineEn: entity.taglineEn,
-        teaserNl: entity.teaserNl,
-        teaserEn: entity.teaserEn,
-        descriptionNl: entity.descriptionNl,
-        descriptionEn: entity.descriptionEn,
-        descriptionExtraNl: entity.descriptionExtraNl,
-        descriptionExtraEn: entity.descriptionExtraEn,
-        description2Nl: entity.description2Nl,
-        description2En: entity.description2En,
         video1: entity.video1,
         video2: entity.video2,
-        quoteNl: entity.quoteNl,
-        quoteEn: entity.quoteEn,
-        quoteSourceNl: entity.quoteSourceNl,
-        quoteSourceEn: entity.quoteSourceEn,
-        programmeNl: entity.programmeNl,
-        programmeEn: entity.programmeEn,
-        infoNl: entity.infoNl,
-        infoEn: entity.infoEn,
-        descriptionShortNl: entity.descriptionShortNl,
-        descriptionShortEn: entity.descriptionShortEn,
         eticketInfo: entity.eticketInfo,
         uitdatabankTheme: entity.uitdatabankTheme,
         uitdatabankType: entity.uitdatabankType,
+        supertitleNl: nl?.supertitle ?? null,
+        supertitleEn: en?.supertitle ?? null,
+        titleNl: nl?.title ?? null,
+        titleEn: en?.title ?? null,
+        artistNl: nl?.artist ?? null,
+        artistEn: en?.artist ?? null,
+        metaTitleNl: nl?.metaTitle ?? null,
+        metaTitleEn: en?.metaTitle ?? null,
+        metaDescriptionNl: nl?.metaDescription ?? null,
+        metaDescriptionEn: en?.metaDescription ?? null,
+        taglineNl: nl?.tagline ?? null,
+        taglineEn: en?.tagline ?? null,
+        teaserNl: nl?.teaser ?? null,
+        teaserEn: en?.teaser ?? null,
+        descriptionNl: nl?.description ?? null,
+        descriptionEn: en?.description ?? null,
+        descriptionExtraNl: nl?.descriptionExtra ?? null,
+        descriptionExtraEn: en?.descriptionExtra ?? null,
+        description2Nl: nl?.description2 ?? null,
+        description2En: en?.description2 ?? null,
+        quoteNl: nl?.quote ?? null,
+        quoteEn: en?.quote ?? null,
+        quoteSourceNl: nl?.quoteSource ?? null,
+        quoteSourceEn: en?.quoteSource ?? null,
+        programmeNl: nl?.programme ?? null,
+        programmeEn: en?.programme ?? null,
+        infoNl: nl?.info ?? null,
+        infoEn: en?.info ?? null,
+        descriptionShortNl: nl?.descriptionShort ?? null,
+        descriptionShortEn: en?.descriptionShort ?? null,
+    };
+}
+
+export function toProductionUpdateInput(row: ProductionRow): ProductionUpdateInput {
+    return {
+        id: row.id,
+        slug: row.slug,
+        sourceId: row.sourceId,
+        video1: row.video1,
+        video2: row.video2,
+        eticketInfo: row.eticketInfo,
+        uitdatabankTheme: row.uitdatabankTheme,
+        uitdatabankType: row.uitdatabankType,
+        translations: [
+            {
+                languageCode: "nl",
+                supertitle: row.supertitleNl,
+                title: row.titleNl,
+                artist: row.artistNl,
+                metaTitle: row.metaTitleNl,
+                metaDescription: row.metaDescriptionNl,
+                tagline: row.taglineNl,
+                teaser: row.teaserNl,
+                description: row.descriptionNl,
+                descriptionExtra: row.descriptionExtraNl,
+                description2: row.description2Nl,
+                quote: row.quoteNl,
+                quoteSource: row.quoteSourceNl,
+                programme: row.programmeNl,
+                info: row.infoNl,
+                descriptionShort: row.descriptionShortNl,
+            },
+            {
+                languageCode: "en",
+                supertitle: row.supertitleEn,
+                title: row.titleEn,
+                artist: row.artistEn,
+                metaTitle: row.metaTitleEn,
+                metaDescription: row.metaDescriptionEn,
+                tagline: row.taglineEn,
+                teaser: row.teaserEn,
+                description: row.descriptionEn,
+                descriptionExtra: row.descriptionExtraEn,
+                description2: row.description2En,
+                quote: row.quoteEn,
+                quoteSource: row.quoteSourceEn,
+                programme: row.programmeEn,
+                info: row.infoEn,
+                descriptionShort: row.descriptionShortEn,
+            },
+        ],
     };
 }
 
 export function makeProductionColumns(options: {
-    onEdit: (entity: Production) => void;
+    onEdit: (row: ProductionRow) => void;
 }): ColumnDef<Production>[] {
     return [
-        { accessorKey: "titleNl", header: "Title (NL)" },
-        { accessorKey: "titleEn", header: "Title (EN)" },
-        { accessorKey: "artistNl", header: "Artist" },
+        {
+            id: "titleNl",
+            header: "Title (NL)",
+            accessorFn: (row) => row.translations.find((t) => t.languageCode === "nl")?.title ?? "",
+        },
+        {
+            id: "titleEn",
+            header: "Title (EN)",
+            accessorFn: (row) => row.translations.find((t) => t.languageCode === "en")?.title ?? "",
+        },
+        {
+            id: "artistNl",
+            header: "Artist",
+            accessorFn: (row) =>
+                row.translations.find((t) => t.languageCode === "nl")?.artist ?? "",
+        },
         { accessorKey: "slug", header: "Slug" },
         makeActionsColumn<Production>({
             label: "production",
             copyKey: "slug",
-            onEdit: options.onEdit,
+            onEdit: (p) => options.onEdit(toProductionRow(p)),
+            extraMenuItems: (production, closeMenu) => (
+                <CollectionPickerSubmenu
+                    item={{
+                        contentId: production.id,
+                        contentType: "production",
+                        label:
+                            production.translations.find((t) => t.languageCode === "nl")?.title ??
+                            production.translations.find((t) => t.languageCode === "en")?.title ??
+                            production.slug,
+                    }}
+                    onComplete={closeMenu}
+                />
+            ),
         }),
     ];
 }

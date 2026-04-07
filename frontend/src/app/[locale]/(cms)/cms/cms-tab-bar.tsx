@@ -7,21 +7,24 @@ import { LocaleSwitcher } from "@/components/shared/locale-switcher/LocaleSwitch
 
 const CONTENT_SEGMENTS = ["productions", "articles", "locations", "performers"];
 
-type Tab = "overview" | "content" | "ingest" | "import";
+type Tab = "overview" | "content" | "collections" | "ingest" | "import";
 
 const TAB_DEFS: { value: Tab; href: string }[] = [
     { value: "overview", href: "/cms" },
     { value: "content", href: "/cms/productions" },
+    { value: "collections", href: "/cms/collections" },
     { value: "ingest", href: "/cms/ingest" },
     { value: "import", href: "/cms/import" },
 ];
 
 function getActiveTab(pathname: string): Tab {
-    const segments = pathname.split("/");
+    if (pathname.startsWith("/cms/collections")) return "collections";
+    const segments = pathname.split("/").filter(Boolean);
     const lastSegment = segments[segments.length - 1] ?? "";
-    if (CONTENT_SEGMENTS.includes(lastSegment)) return "content";
     if (lastSegment === "ingest") return "ingest";
     if (lastSegment === "import") return "import";
+    // Match any content sub-route (e.g. /cms/articles/[id]/edit)
+    if (CONTENT_SEGMENTS.some((s) => segments.includes(s))) return "content";
     return "overview";
 }
 

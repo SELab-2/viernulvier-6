@@ -1,23 +1,45 @@
 use database::{
     Database,
-    models::production::{Production, ProductionCreate},
+    models::production::{
+        Production, ProductionCreate, ProductionTranslationData, ProductionWithTranslations,
+    },
 };
-use o2o::o2o;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::error::AppError;
+use base64::{Engine, prelude::BASE64_URL_SAFE};
+
+use crate::{dto::paginated::PaginatedResponse, error::AppError};
 
 impl ProductionPayload {
-    pub async fn all(db: &Database, limit: usize) -> Result<Vec<Self>, AppError> {
-        Ok(db
+    pub async fn all(
+        db: &Database,
+        id_cursor: Option<String>,
+        limit: usize,
+    ) -> Result<PaginatedResponse<Self>, AppError> {
+        let id_cursor: Option<Uuid> = id_cursor.and_then(|b64| {
+            let bytes: [u8; 16] = BASE64_URL_SAFE.decode(b64).ok()?.try_into().ok()?;
+            Some(Uuid::from_bytes(bytes))
+        });
+
+        let mut data: Vec<_> = db
             .productions()
-            .all(limit)
+            .all(limit + 1, id_cursor)
             .await?
             .into_iter()
             .map(Self::from)
-            .collect())
+            .collect();
+
+        // only return a cursor if there are more items
+        let next_cursor = if data.len() == limit + 1 {
+            data.pop();
+            data.last().map(|p| BASE64_URL_SAFE.encode(p.id))
+        } else {
+            None
+        };
+
+        Ok(PaginatedResponse { data, next_cursor })
     }
 
     pub async fn by_id(db: &Database, id: Uuid) -> Result<Self, AppError> {
@@ -25,7 +47,13 @@ impl ProductionPayload {
     }
 
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {
-        Ok(db.productions().update(self.into()).await?.into())
+        let translations = translations_to_data(&self.translations);
+        let production: Production = self.into();
+        Ok(db
+            .productions()
+            .update(production, translations)
+            .await?
+            .into())
     }
 
     pub async fn delete(db: &Database, id: Uuid) -> Result<(), AppError> {
@@ -35,100 +63,158 @@ impl ProductionPayload {
 
 impl ProductionPostPayload {
     pub async fn create(self, db: &Database) -> Result<ProductionPayload, AppError> {
-        Ok(db.productions().insert(self.into()).await?.into())
+        let translations = translations_to_data(&self.translations);
+        let production_create: ProductionCreate = self.into();
+        Ok(db
+            .productions()
+            .insert(production_create, translations)
+            .await?
+            .into())
     }
 }
 
-#[derive(o2o, Serialize, Deserialize, ToSchema)]
-#[map_owned(Production)]
+fn translations_to_data(
+    translations: &[ProductionTranslationPayload],
+) -> Vec<ProductionTranslationData> {
+    translations
+        .iter()
+        .map(|t| ProductionTranslationData {
+            language_code: t.language_code.clone(),
+            supertitle: t.supertitle.clone(),
+            title: t.title.clone(),
+            artist: t.artist.clone(),
+            meta_title: t.meta_title.clone(),
+            meta_description: t.meta_description.clone(),
+            tagline: t.tagline.clone(),
+            teaser: t.teaser.clone(),
+            description: t.description.clone(),
+            description_extra: t.description_extra.clone(),
+            description_2: t.description_2.clone(),
+            quote: t.quote.clone(),
+            quote_source: t.quote_source.clone(),
+            programme: t.programme.clone(),
+            info: t.info.clone(),
+            description_short: t.description_short.clone(),
+        })
+        .collect()
+}
+
+/// The per-language content for a production.
+#[derive(Serialize, Deserialize, ToSchema, Clone)]
+pub struct ProductionTranslationPayload {
+    pub language_code: String,
+    pub supertitle: Option<String>,
+    pub title: Option<String>,
+    pub artist: Option<String>,
+    pub meta_title: Option<String>,
+    pub meta_description: Option<String>,
+    pub tagline: Option<String>,
+    pub teaser: Option<String>,
+    pub description: Option<String>,
+    pub description_extra: Option<String>,
+    pub description_2: Option<String>,
+    pub quote: Option<String>,
+    pub quote_source: Option<String>,
+    pub programme: Option<String>,
+    pub info: Option<String>,
+    pub description_short: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct ProductionPayload {
     pub id: Uuid,
-
     pub source_id: Option<i32>,
     pub slug: String,
 
-    pub supertitle_nl: Option<String>,
-    pub supertitle_en: Option<String>,
-    pub title_nl: Option<String>,
-    pub title_en: Option<String>,
-    pub artist_nl: Option<String>,
-    pub artist_en: Option<String>,
-    pub meta_title_nl: Option<String>,
-    pub meta_title_en: Option<String>,
-    pub meta_description_nl: Option<String>,
-    pub meta_description_en: Option<String>,
-    pub tagline_nl: Option<String>,
-    pub tagline_en: Option<String>,
-    pub teaser_nl: Option<String>,
-    pub teaser_en: Option<String>,
-    pub description_nl: Option<String>,
-    pub description_en: Option<String>,
-    pub description_extra_nl: Option<String>,
-    pub description_extra_en: Option<String>,
-    pub description_2_nl: Option<String>,
-    pub description_2_en: Option<String>,
     pub video_1: Option<String>,
     pub video_2: Option<String>,
-    pub quote_nl: Option<String>,
-    pub quote_en: Option<String>,
-    pub quote_source_nl: Option<String>,
-    pub quote_source_en: Option<String>,
-    pub programme_nl: Option<String>,
-    pub programme_en: Option<String>,
-    pub info_nl: Option<String>,
-    pub info_en: Option<String>,
-    pub description_short_nl: Option<String>,
-    pub description_short_en: Option<String>,
     pub eticket_info: Option<String>,
 
-    // pub genres: Option<String>,
-    // pub uitdatabank_keywords: Option<String>,
     pub uitdatabank_theme: Option<String>,
     pub uitdatabank_type: Option<String>,
+
+    pub translations: Vec<ProductionTranslationPayload>,
 }
 
-#[derive(o2o, Serialize, Deserialize, ToSchema)]
-#[owned_into(ProductionCreate)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct ProductionPostPayload {
     pub source_id: Option<i32>,
     pub slug: String,
 
-    pub supertitle_nl: Option<String>,
-    pub supertitle_en: Option<String>,
-    pub title_nl: Option<String>,
-    pub title_en: Option<String>,
-    pub artist_nl: Option<String>,
-    pub artist_en: Option<String>,
-    pub meta_title_nl: Option<String>,
-    pub meta_title_en: Option<String>,
-    pub meta_description_nl: Option<String>,
-    pub meta_description_en: Option<String>,
-    pub tagline_nl: Option<String>,
-    pub tagline_en: Option<String>,
-    pub teaser_nl: Option<String>,
-    pub teaser_en: Option<String>,
-    pub description_nl: Option<String>,
-    pub description_en: Option<String>,
-    pub description_extra_nl: Option<String>,
-    pub description_extra_en: Option<String>,
-    pub description_2_nl: Option<String>,
-    pub description_2_en: Option<String>,
     pub video_1: Option<String>,
     pub video_2: Option<String>,
-    pub quote_nl: Option<String>,
-    pub quote_en: Option<String>,
-    pub quote_source_nl: Option<String>,
-    pub quote_source_en: Option<String>,
-    pub programme_nl: Option<String>,
-    pub programme_en: Option<String>,
-    pub info_nl: Option<String>,
-    pub info_en: Option<String>,
-    pub description_short_nl: Option<String>,
-    pub description_short_en: Option<String>,
     pub eticket_info: Option<String>,
 
-    // pub genres: Option<String>,
-    // pub uitdatabank_keywords: Option<String>,
     pub uitdatabank_theme: Option<String>,
     pub uitdatabank_type: Option<String>,
+
+    pub translations: Vec<ProductionTranslationPayload>,
+}
+
+impl From<ProductionWithTranslations> for ProductionPayload {
+    fn from(pwt: ProductionWithTranslations) -> Self {
+        let translations = pwt
+            .translations
+            .into_iter()
+            .map(|t| ProductionTranslationPayload {
+                language_code: t.language_code,
+                supertitle: t.supertitle,
+                title: t.title,
+                artist: t.artist,
+                meta_title: t.meta_title,
+                meta_description: t.meta_description,
+                tagline: t.tagline,
+                teaser: t.teaser,
+                description: t.description,
+                description_extra: t.description_extra,
+                description_2: t.description_2,
+                quote: t.quote,
+                quote_source: t.quote_source,
+                programme: t.programme,
+                info: t.info,
+                description_short: t.description_short,
+            })
+            .collect();
+
+        Self {
+            id: pwt.production.id,
+            source_id: pwt.production.source_id,
+            slug: pwt.production.slug,
+            video_1: pwt.production.video_1,
+            video_2: pwt.production.video_2,
+            eticket_info: pwt.production.eticket_info,
+            uitdatabank_theme: pwt.production.uitdatabank_theme,
+            uitdatabank_type: pwt.production.uitdatabank_type,
+            translations,
+        }
+    }
+}
+
+impl From<ProductionPayload> for Production {
+    fn from(p: ProductionPayload) -> Self {
+        Self {
+            id: p.id,
+            source_id: p.source_id,
+            slug: p.slug,
+            video_1: p.video_1,
+            video_2: p.video_2,
+            eticket_info: p.eticket_info,
+            uitdatabank_theme: p.uitdatabank_theme,
+            uitdatabank_type: p.uitdatabank_type,
+        }
+    }
+}
+
+impl From<ProductionPostPayload> for ProductionCreate {
+    fn from(p: ProductionPostPayload) -> Self {
+        Self {
+            source_id: p.source_id,
+            slug: p.slug,
+            video_1: p.video_1,
+            video_2: p.video_2,
+            eticket_info: p.eticket_info,
+            uitdatabank_theme: p.uitdatabank_theme,
+            uitdatabank_type: p.uitdatabank_type,
+        }
+    }
 }

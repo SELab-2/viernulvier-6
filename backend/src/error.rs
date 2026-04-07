@@ -35,6 +35,9 @@ pub enum AppError {
 
     #[error("Payload error: {0}")]
     PayloadError(String),
+
+    #[error("Conflict: {0}")]
+    Conflict(String),
 }
 
 #[derive(Serialize, ToSchema)]
@@ -65,6 +68,7 @@ impl AppError {
     fn error_details(&self) -> (StatusCode, &'static str) {
         match self {
             Self::PayloadError(_) => (StatusCode::BAD_REQUEST, "Payload error"),
+            Self::Conflict(_) => (StatusCode::CONFLICT, "Resource conflict."),
             Self::NotFound => (StatusCode::NOT_FOUND, "We couldn't find that."),
             Self::Unauthorized => (StatusCode::UNAUTHORIZED, "Invalid credentials."),
             _ => (
@@ -79,6 +83,7 @@ impl From<DatabaseError> for AppError {
     fn from(value: DatabaseError) -> Self {
         match value {
             DatabaseError::NotFound => Self::NotFound,
+            DatabaseError::BadRequest(msg) => Self::PayloadError(msg),
             other => Self::Database(other),
         }
     }

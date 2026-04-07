@@ -1,26 +1,37 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "@/lib/api-client";
-import { mapCreateHallInput, mapHall, mapHalls, mapUpdateHallInput } from "@/mappers/hall.mapper";
-import { HallResponse } from "@/types/api/hall.api.types";
+import {
+    mapCreateHallInput,
+    mapHall,
+    mapPaginatedHallsResult,
+    mapUpdateHallInput,
+} from "@/mappers/hall.mapper";
+import {
+    CreateHallResponse,
+    GetAllHallsResponse,
+    GetHallByIdResponse,
+    UpdateHallResponse,
+} from "@/types/api/hall.api.types";
+import { PaginationParams, PaginatedResult } from "@/types/api/api.types";
 import { Hall, HallCreateInput, HallUpdateInput } from "@/types/models/hall.types";
 
 import { queryKeys } from "./query-keys";
 
-const fetchHalls = async (): Promise<Hall[]> => {
-    const { data } = await api.get<HallResponse[]>("/halls");
-    return mapHalls(data);
+const fetchHalls = async (params?: PaginationParams): Promise<PaginatedResult<Hall>> => {
+    const { data } = await api.get<GetAllHallsResponse>("/halls", { params });
+    return mapPaginatedHallsResult(data);
 };
 
 const fetchHallById = async (id: string): Promise<Hall> => {
-    const { data } = await api.get<HallResponse>(`/halls/${id}`);
+    const { data } = await api.get<GetHallByIdResponse>(`/halls/${id}`);
     return mapHall(data);
 };
 
-export const useGetHalls = (options?: { enabled?: boolean }) => {
+export const useGetHalls = (options?: { enabled?: boolean; pagination?: PaginationParams }) => {
     return useQuery({
-        queryKey: queryKeys.halls.all,
-        queryFn: fetchHalls,
+        queryKey: queryKeys.halls.all(options?.pagination),
+        queryFn: () => fetchHalls(options?.pagination),
         ...options,
     });
 };
@@ -38,11 +49,14 @@ export const useCreateHall = () => {
 
     return useMutation({
         mutationFn: async (payload: HallCreateInput) => {
-            const { data } = await api.post<HallResponse>("/halls", mapCreateHallInput(payload));
+            const { data } = await api.post<CreateHallResponse>(
+                "/halls",
+                mapCreateHallInput(payload)
+            );
             return mapHall(data);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.halls.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.halls.all() });
         },
     });
 };
@@ -52,11 +66,14 @@ export const useUpdateHall = () => {
 
     return useMutation({
         mutationFn: async (payload: HallUpdateInput) => {
-            const { data } = await api.put<HallResponse>("/halls", mapUpdateHallInput(payload));
+            const { data } = await api.put<UpdateHallResponse>(
+                "/halls",
+                mapUpdateHallInput(payload)
+            );
             return mapHall(data);
         },
         onSuccess: (hall) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.halls.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.halls.all() });
             queryClient.setQueryData(queryKeys.halls.detail(hall.id), hall);
         },
     });
@@ -71,7 +88,7 @@ export const useDeleteHall = () => {
             return id;
         },
         onSuccess: (id) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.halls.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.halls.all() });
             queryClient.removeQueries({ queryKey: queryKeys.halls.detail(id) });
         },
     });
