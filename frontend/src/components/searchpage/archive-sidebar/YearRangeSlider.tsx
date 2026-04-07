@@ -78,11 +78,11 @@ export function YearRangeSlider({
         "[&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none " +
         "[&::-webkit-slider-thumb]:w-[14px] [&::-webkit-slider-thumb]:h-[14px] " +
         "[&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-2 " +
-        "[&::-webkit-slider-thumb]:border-background [&::-webkit-slider-thumb]:cursor-pointer " +
-        "[&::-moz-range-thumb]:w-[14px] [&::-moz-range-thumb]:h-[14px] " +
+        "[&::-webkit-slider-thumb]:border-background [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:[border-radius:0px] " +
+        "[&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-[13px] [&::-moz-range-thumb]:h-[13px] " +
         "[&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-2 " +
         "[&::-moz-range-thumb]:border-background [&::-moz-range-thumb]:cursor-pointer " +
-        "[&::-moz-range-thumb]:rounded-none [&::-moz-range-thumb]:appearance-none";
+        "[&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:[border-radius:0px] [&::-moz-range-thumb]:[box-sizing:border-box]";
 
     return (
         <div ref={containerRef} className="relative pt-1 select-none">
