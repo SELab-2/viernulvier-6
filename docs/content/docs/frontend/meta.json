@@ -1,4 +1,5 @@
 {
   "title": "Frontend",
-  "root": true
+  "root": true,
+  "pages": ["index", "testing"]
 }
