@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 
 import { Input } from "@/components/ui/input";
@@ -72,10 +73,13 @@ export function ArticleMetadataPanel({
     onRelationsChange,
 }: ArticleMetadataPanelProps) {
     const t = useTranslations("Cms.Articles");
-    const { data: productions = [] } = useGetProductions();
+    const { data: productionsResult } = useGetProductions();
+    const { data: locationsResult } = useGetLocations();
+    const { data: eventsResult } = useGetEvents();
     const { data: artists = [] } = useGetArtists();
-    const { data: locations = [] } = useGetLocations();
-    const { data: events = [] } = useGetEvents();
+    const productions = useMemo(() => productionsResult?.data ?? [], [productionsResult?.data]);
+    const locations = useMemo(() => locationsResult?.data ?? [], [locationsResult?.data]);
+    const events = useMemo(() => eventsResult?.data ?? [], [eventsResult?.data]);
 
     return (
         <div className="space-y-5 p-4">

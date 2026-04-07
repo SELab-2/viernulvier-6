@@ -38,9 +38,11 @@ describe("OpenAPI type contract", () => {
 
         expectTypeOf<EventResponse>().toEqualTypeOf<components["schemas"]["EventPayload"]>();
         expectTypeOf<EventCreateRequest>().toEqualTypeOf<
-            components["schemas"]["EventPostPayload"]
+            Omit<components["schemas"]["EventPostPayload"], "created_at" | "updated_at">
         >();
-        expectTypeOf<EventUpdateRequest>().toEqualTypeOf<components["schemas"]["EventPayload"]>();
+        expectTypeOf<EventUpdateRequest>().toEqualTypeOf<
+            Omit<components["schemas"]["EventPayload"], "updated_at">
+        >();
 
         expectTypeOf<HallResponse>().toEqualTypeOf<components["schemas"]["HallPayload"]>();
         expectTypeOf<HallCreateRequest>().toEqualTypeOf<components["schemas"]["HallPostPayload"]>();

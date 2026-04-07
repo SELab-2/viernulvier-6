@@ -41,6 +41,7 @@ export function toEventUpdateInput(entity: Event): EventUpdateInput {
         uitdatabankId: entity.uitdatabankId,
         maxTicketsPerOrder: entity.maxTicketsPerOrder,
         hallId: entity.hallId,
+        createdAt: entity.createdAt,
     };
 }
 

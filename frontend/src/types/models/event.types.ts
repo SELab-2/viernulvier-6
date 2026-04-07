@@ -33,4 +33,5 @@ export type EventCreateInput = {
 
 export type EventUpdateInput = EventCreateInput & {
     id: string;
+    createdAt: string; // Required for updates to preserve original timestamp
 };
