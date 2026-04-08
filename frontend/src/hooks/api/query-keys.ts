@@ -43,6 +43,8 @@ export const queryKeys = {
         all: ["articles"] as const,
         detail: (id: string) => ["articles", id] as const,
         relations: (id: string) => ["articles", id, "relations"] as const,
+        published: ["articles", "published"] as const,
+        bySlug: (slug: string) => ["articles", "bySlug", slug] as const,
     },
     taxonomy: {
         facets: (entityType?: string) =>
