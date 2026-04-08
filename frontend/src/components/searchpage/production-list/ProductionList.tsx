@@ -2,16 +2,17 @@
 
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { ChevronDown, Loader2 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 
 import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
 import { getLocalizedField } from "@/lib/locale";
+import { useGetEventsByProduction } from "@/hooks/api/useEvents";
 
 interface ProductionItemProps {
     production: Production;
     locale: string;
-    events?: Event[];
 }
 
 function formatDate(dateStr: string, locale: string): string {
@@ -43,16 +44,44 @@ function EventRow({ event, locale }: { event: Event; locale: string }) {
                     {isPast ? t("past") : t("upcoming")}
                 </span>
             </div>
-            <span className="border-border text-muted-foreground border px-1.5 py-px font-mono text-[8px] tracking-[1px] uppercase">
-                {event.status}
+            <span className="border-border text-muted-foreground mx-2 border px-1.5 py-px font-mono text-[8px] tracking-[1px] uppercase">
+                {isPast ? t("past") : t("upcoming")}
             </span>
         </div>
     );
 }
 
-export function ProductionItem({ production, locale, events = [] }: ProductionItemProps) {
-    const [expanded, setExpanded] = useState(false);
+function EventList({ productionId, locale }: { productionId: string; locale: string }) {
+    const { data: events, isLoading } = useGetEventsByProduction(productionId);
     const t = useTranslations("Productions");
+
+    if (isLoading) {
+        return (
+            <div className="border-muted/35 flex items-center justify-center border-t px-4 py-4 sm:px-0">
+                <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+            </div>
+        );
+    }
+
+    if (!events || events.length === 0) {
+        return (
+            <div className="border-muted/35 font-body text-muted-foreground border-t px-4 py-2.5 text-xs tracking-[0.06em] sm:px-0">
+                {t("eventsAvailableSoon")}
+            </div>
+        );
+    }
+
+    return (
+        <>
+            {events.map((event) => (
+                <EventRow key={event.id} event={event} locale={locale} />
+            ))}
+        </>
+    );
+}
+
+export function ProductionItem({ production, locale }: ProductionItemProps) {
+    const [expanded, setExpanded] = useState(false);
 
     const toggle = useCallback(() => {
         setExpanded((prev) => !prev);
@@ -72,8 +101,10 @@ export function ProductionItem({ production, locale, events = [] }: ProductionIt
         <>
             <div
                 onClick={toggle}
-                className={`border-muted/35 hover:bg-muted/5 flex cursor-pointer items-start gap-3 border-b px-4 py-3.5 transition-colors sm:gap-[18px] sm:px-7 ${
-                    expanded ? "bg-muted/5" : ""
+                className={`border-muted/35 hover:bg-muted/5 flex cursor-pointer items-start gap-3 border-b px-4 py-3.5 transition-all sm:gap-[18px] sm:px-7 ${
+                    expanded
+                        ? "bg-muted/10 border-l-primary border-l-[3px]"
+                        : "border-l-[3px] border-l-transparent"
                 }`}
                 style={{ animation: "fadein 0.3s ease both" }}
             >
@@ -84,9 +115,9 @@ export function ProductionItem({ production, locale, events = [] }: ProductionIt
 
                 <div className="min-w-0 flex-1">
                     <Link
-                        href={`/productions/${production.id}`}
-                        onClick={(e) => e.stopPropagation()}
+                        href={`/productions/${production.slug}`}
                         className="font-display text-foreground mb-0.5 block text-[16px] leading-[1.1] font-bold tracking-[-0.02em] hover:underline sm:text-[18px]"
+                        onClick={(e) => e.stopPropagation()}
                     >
                         {title}
                     </Link>
@@ -117,24 +148,21 @@ export function ProductionItem({ production, locale, events = [] }: ProductionIt
                     )}
                 </div>
 
-                <div className="flex shrink-0 flex-col items-end gap-2 pt-0.5">
+                <div className="flex shrink-0 items-center gap-2 pt-0.5">
                     <span className="border-foreground text-foreground border px-2 py-1 font-mono text-[8px] font-medium tracking-[1.3px] uppercase sm:px-2 sm:py-1">
                         {displayType}
                     </span>
+                    <ChevronDown
+                        className={`text-muted-foreground h-4 w-4 shrink-0 transition-transform duration-200 ${
+                            expanded ? "rotate-180" : ""
+                        }`}
+                    />
                 </div>
             </div>
 
             {expanded && (
                 <div className="border-muted/35 bg-muted/4 flex flex-col border-b pl-4 sm:pl-[calc(28px+86px+18px)]">
-                    {events.length > 0 ? (
-                        events.map((event) => (
-                            <EventRow key={event.id} event={event} locale={locale} />
-                        ))
-                    ) : (
-                        <div className="border-muted/35 font-body text-muted-foreground border-t px-4 py-2.5 text-xs tracking-[0.06em] sm:px-0">
-                            {t("eventsAvailableSoon")}
-                        </div>
-                    )}
+                    <EventList productionId={production.id} locale={locale} />
                 </div>
             )}
         </>
@@ -144,19 +172,13 @@ export function ProductionItem({ production, locale, events = [] }: ProductionIt
 interface ProductionListProps {
     productions: Production[];
     locale: string;
-    eventsByProduction?: Map<string, Event[]>;
 }
 
-export function ProductionList({ productions, locale, eventsByProduction }: ProductionListProps) {
+export function ProductionList({ productions, locale }: ProductionListProps) {
     return (
         <div className="overflow-hidden">
             {productions.map((production) => (
-                <ProductionItem
-                    key={production.id}
-                    production={production}
-                    locale={locale}
-                    events={eventsByProduction?.get(production.id)}
-                />
+                <ProductionItem key={production.id} production={production} locale={locale} />
             ))}
         </div>
     );

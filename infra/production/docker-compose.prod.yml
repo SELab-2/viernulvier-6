@@ -1,7 +1,7 @@
 services:
   backend:
     image: kayasem/${COMPOSE_PROJECT_NAME}-backend:latest
-    container_name: ${COMPOSE_PROJECT_NAME}_backend
+    container_name: ${COMPOSE_PROJECT_NAME}-backend
     restart: always
     environment:
       DATABASE_URL: ${PROD_DATABASE_URL}
@@ -13,6 +13,7 @@ services:
       S3_ACCESS_KEY: ${GARAGE_S3_ACCESS_KEY}
       S3_SECRET_KEY: ${GARAGE_S3_SECRET_KEY}
       S3_BUCKET: ${GARAGE_S3_BUCKET}
+      S3_PUBLIC_URL: ${NEXT_PUBLIC_SITE_URL}/s3
       ALLOWED_ORIGINS: ${NEXT_PUBLIC_SITE_URL}
     depends_on:
       database:
@@ -32,7 +33,7 @@ services:
 
   frontend:
     image: kayasem/${COMPOSE_PROJECT_NAME}-frontend:latest
-    container_name: ${COMPOSE_PROJECT_NAME}_frontend
+    container_name: ${COMPOSE_PROJECT_NAME}-frontend
     restart: always
     networks:
       - app_network
@@ -40,9 +41,10 @@ services:
     environment:
       - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_SITE_URL}/api
+      - NEXT_PUBLIC_MEDIA_URL=${NEXT_PUBLIC_SITE_URL}/s3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.main.rule=Host(`${PROD_HOST}`) && PathPrefix(`/`) && !PathPrefix(`/docs`) && !PathPrefix(`/api`)"
+      - "traefik.http.routers.main.rule=Host(`${PROD_HOST}`) && PathPrefix(`/`) && !PathPrefix(`/docs`) && !PathPrefix(`/api`) && !PathPrefix(`/s3`)"
       - "traefik.http.routers.main.entrypoints=websecure"
       - "traefik.http.services.main.loadbalancer.server.port=3000"
       - "traefik.http.routers.main.tls.certresolver=letsencrypt"
@@ -66,7 +68,7 @@ services:
 
   database:
     image: postgres:18
-    container_name: ${COMPOSE_PROJECT_NAME}_database
+    container_name: ${COMPOSE_PROJECT_NAME}-database
     restart: always
     environment:
       POSTGRES_USER: ${PROD_DB_USER}
@@ -93,7 +95,24 @@ services:
       - garage_meta:/var/lib/garage/meta
       - garage_data:/var/lib/garage/data
     networks:
-      - app_network
+      app_network:
+        { }
+      traefik:
+        aliases:
+          - $GARAGE_S3_BUCKET.s3.garage.localhost
+    labels:
+      - "traefik.enable=true"
+      # S3 Web endpoint (port 3902) for public file serving
+      # Note: Garage web endpoint uses Host header to determine bucket
+      # We rewrite the Host header to match the bucket name
+      - "traefik.http.routers.main-s3-web.rule=Host(`${PROD_HOST}`) && PathPrefix(`/s3`)"
+      - "traefik.http.routers.main-s3-web.entrypoints=websecure"
+      - "traefik.http.routers.main-s3-web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.main-s3-web.priority=150"
+      - "traefik.http.middlewares.main-s3-web-strip.stripprefix.prefixes=/s3"
+      - "traefik.http.routers.main-s3-web.middlewares=main-s3-web-strip"
+      - "traefik.http.services.main-s3-web.loadbalancer.server.url=http://${GARAGE_S3_BUCKET}.s3.garage.localhost:3902"
+      - "traefik.http.services.main-s3-web.loadbalancer.passhostheader=false"
 
   garage-init:
     image: alpine:3.21
@@ -164,6 +183,9 @@ services:
         $$G bucket info "$$GARAGE_S3_BUCKET" 2>/dev/null || \
           $$G bucket create "$$GARAGE_S3_BUCKET"
         $$G bucket allow "$$GARAGE_S3_BUCKET" --key "$$GARAGE_S3_ACCESS_KEY" --read --write || true
+
+        echo "Enabling website access on bucket..."
+        $$G bucket website "$$GARAGE_S3_BUCKET" --allow || true
 
         echo "Init complete!"
 

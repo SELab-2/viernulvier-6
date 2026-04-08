@@ -1,23 +1,36 @@
 use database::{
     Database,
-    models::{entity_type::EntityType, tag::TaxonomyTag},
+    models::{entity_type::EntityType, tag::TaxonomyRow},
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::error::AppError;
 
-#[derive(Serialize, ToSchema)]
-pub struct TagResponse {
-    pub slug: String,
+#[derive(Serialize, Deserialize, ToSchema, Clone)]
+pub struct TagTranslationPayload {
+    pub language_code: String,
     pub label: String,
-    pub sort_order: i32,
+    pub description: Option<String>,
 }
 
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema, Clone)]
+pub struct FacetTranslationPayload {
+    pub language_code: String,
+    pub label: String,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct TagResponse {
+    pub slug: String,
+    pub sort_order: i32,
+    pub translations: Vec<TagTranslationPayload>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct FacetResponse {
     pub slug: String,
-    pub label: String,
+    pub translations: Vec<FacetTranslationPayload>,
     pub tags: Vec<TagResponse>,
 }
 
@@ -34,23 +47,46 @@ impl FacetResponse {
     }
 }
 
-fn group_into_facets(rows: Vec<TaxonomyTag>) -> Vec<FacetResponse> {
+#[allow(clippy::single_match_else)]
+fn group_into_facets(rows: Vec<TaxonomyRow>) -> Vec<FacetResponse> {
     let mut facets: Vec<FacetResponse> = Vec::new();
 
     for row in rows {
-        let tag = TagResponse {
-            slug: row.tag_slug,
-            label: row.tag_label,
-            sort_order: row.tag_sort_order,
+        let facet = if let Some(f) = facets.iter_mut().find(|f| f.slug == row.facet_slug) { f } else {
+            facets.push(FacetResponse {
+                slug: row.facet_slug.clone(),
+                translations: Vec::new(),
+                tags: Vec::new(),
+            });
+            facets.last_mut().unwrap()
         };
-        match facets.iter_mut().find(|f| f.slug == row.facet_slug) {
-            Some(f) => f.tags.push(tag),
-            None => facets.push(FacetResponse {
-                slug: row.facet_slug,
-                label: row.facet_label,
-                tags: vec![tag],
-            }),
+
+        // Only the first occurrence per language wins
+        if !facet
+            .translations
+            .iter()
+            .any(|t| t.language_code == row.language_code)
+        {
+            facet.translations.push(FacetTranslationPayload {
+                language_code: row.language_code.clone(),
+                label: row.facet_label.clone(),
+            });
         }
+
+        let tag = if let Some(t) = facet.tags.iter_mut().find(|t| t.slug == row.tag_slug) { t } else {
+            facet.tags.push(TagResponse {
+                slug: row.tag_slug.clone(),
+                sort_order: row.tag_sort_order,
+                translations: Vec::new(),
+            });
+            facet.tags.last_mut().unwrap()
+        };
+
+        tag.translations.push(TagTranslationPayload {
+            language_code: row.language_code,
+            label: row.tag_label,
+            description: row.tag_description,
+        });
     }
 
     facets

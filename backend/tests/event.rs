@@ -1,10 +1,14 @@
+#![allow(clippy::indexing_slicing)]
 use std::str::FromStr;
 
 use axum::http::StatusCode;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
-use viernulvier_api::dto::event::{EventPayload, EventPostPayload};
+use viernulvier_api::dto::{
+    event::{EventPayload, EventPostPayload},
+    paginated::PaginatedResponse,
+};
 
 use crate::common::{into_struct::IntoStruct, router::TestRouter};
 
@@ -18,8 +22,36 @@ async fn get_all(db: PgPool) {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let data: Vec<EventPayload> = response.into_struct().await;
-    assert_eq!(data.len(), 3);
+    let data: PaginatedResponse<EventPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 3);
+}
+
+#[sqlx::test(fixtures("events"))]
+#[test_log::test]
+async fn get_paginated(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/events?limit=2").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // page 1
+    let page1: PaginatedResponse<EventPayload> = response.into_struct().await;
+
+    assert_eq!(page1.data.len(), 2, "page 1 should respect the limit of 2");
+    assert!(page1.next_cursor.is_some(), "there should be a next cursor");
+
+    let cursor = page1.next_cursor.unwrap();
+    let url = format!("/events?limit=2&cursor={cursor}");
+
+    let response = app.get(&url).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // page 2
+    let page2: PaginatedResponse<EventPayload> = response.into_struct().await;
+
+    assert_eq!(page2.data.len(), 1, "page 2 should have only the last item");
+    assert_ne!(page1.data[0].id, page2.data[0].id);
+    assert!(page2.next_cursor.is_none(), "last page has no cursor");
 }
 
 #[sqlx::test(fixtures("events"))]
@@ -28,7 +60,7 @@ async fn get_one_success(db: PgPool) {
     let app = TestRouter::new(db);
     let target_id = Uuid::from_str("33333333-3333-3333-3333-333333333333").unwrap();
 
-    let response = app.get(&format!("/events/{}", target_id)).await;
+    let response = app.get(&format!("/events/{target_id}")).await;
     assert_eq!(response.status(), StatusCode::OK);
 
     let data: EventPayload = response.into_struct().await;
@@ -56,7 +88,7 @@ async fn get_by_production(db: PgPool) {
     let production_id = Uuid::from_str("11111111-1111-1111-1111-111111111111").unwrap();
 
     let response = app
-        .get(&format!("/productions/{}/events", production_id))
+        .get(&format!("/productions/{production_id}/events"))
         .await;
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -146,15 +178,15 @@ async fn delete_success(db: PgPool) {
     let target_id = Uuid::from_str("44444444-4444-4444-4444-444444444444").unwrap();
 
     let unauth_app = TestRouter::new(db.clone());
-    let unauth_response = unauth_app.delete(&format!("/events/{}", target_id)).await;
+    let unauth_response = unauth_app.delete(&format!("/events/{target_id}")).await;
     assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
 
     let app = TestRouter::as_editor(db).await;
 
-    let response = app.delete(&format!("/events/{}", target_id)).await;
+    let response = app.delete(&format!("/events/{target_id}")).await;
     assert_eq!(response.status(), StatusCode::NO_CONTENT);
 
-    let verify_res = app.get(&format!("/events/{}", target_id)).await;
+    let verify_res = app.get(&format!("/events/{target_id}")).await;
     assert_eq!(verify_res.status(), StatusCode::NOT_FOUND);
 }
 

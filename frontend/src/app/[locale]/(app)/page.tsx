@@ -1,16 +1,14 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { Search } from "lucide-react";
 import Link from "next/link";
 
 import { useGetProductions } from "@/hooks/api/useProductions";
-import { useGetEvents } from "@/hooks/api/useEvents";
-import type { Event } from "@/types/models/event.types";
 
 import { SearchHeader } from "@/components/homepage/search-header";
+import { SearchBar } from "@/components/homepage/search-bar";
 import { FeaturedSection } from "@/components/homepage/featured-section";
 import { ProductionItem } from "@/components/searchpage/production-list";
 
@@ -20,9 +18,9 @@ export default function HomePage() {
     const tSearch = useTranslations("Search");
     const router = useRouter();
 
-    const [query, setQuery] = useState("");
+    const [headerQuery, setHeaderQuery] = useState("");
 
-    const navigateToSearch = useCallback(
+    const handleHeaderSearch = useCallback(
         (value: string) => {
             if (value.trim()) {
                 router.push(`/search?q=${encodeURIComponent(value.trim())}`);
@@ -33,31 +31,33 @@ export default function HomePage() {
         [router]
     );
 
-    const { data: productions } = useGetProductions();
-    const { data: events } = useGetEvents();
-    const latestProductions = (productions ?? []).slice(0, 4);
+    const handleHeroSearch = useCallback(
+        (query: string) => {
+            if (query.trim()) {
+                router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+            } else {
+                router.push("/search");
+            }
+        },
+        [router]
+    );
 
-    const eventsByProduction = useMemo(() => {
-        const map = new Map<string, Event[]>();
-        (events ?? []).forEach((event) => {
-            const existing = map.get(event.productionId) ?? [];
-            existing.push(event);
-            map.set(event.productionId, existing);
-        });
-        return map;
-    }, [events]);
+    const { data: productionsResult } = useGetProductions();
+    const productions = productionsResult?.data ?? [];
+    const latestProductions = productions.slice(0, 4);
 
     return (
         <>
             <SearchHeader
-                query=""
-                onQueryChange={navigateToSearch}
+                query={headerQuery}
+                onQueryChange={setHeaderQuery}
+                onSearch={handleHeaderSearch}
                 searchPlaceholder={tSearch("placeholder")}
                 searchHint={tSearch("hint")}
             />
 
             {/* Hero */}
-            <section className="border-muted/30 flex flex-col items-center gap-6 border-b px-4 py-16 text-center sm:px-10 sm:py-24">
+            <section className="flex flex-col items-center gap-6 px-4 py-16 text-center sm:px-10 sm:py-24">
                 <h1 className="font-display text-foreground text-[40px] leading-[1.05] font-bold tracking-[-0.03em] sm:text-[64px] md:text-[72px]">
                     {t("hero.title")}
                 </h1>
@@ -65,30 +65,7 @@ export default function HomePage() {
                     {t("hero.subtitle")}
                 </p>
 
-                {/* Search CTA — same style as search page hero */}
-                <div className="relative w-full max-w-[680px]">
-                    <Search className="stroke-foreground pointer-events-none absolute top-1/2 left-0 h-5 w-5 -translate-y-1/2 fill-none stroke-[1.5]" />
-                    <input
-                        type="text"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter") navigateToSearch(query);
-                        }}
-                        placeholder={t("hero.searchPlaceholder")}
-                        autoComplete="off"
-                        className="border-foreground font-display text-foreground placeholder:text-muted-foreground w-full border-b-2 bg-transparent pr-24 pb-3 pl-[34px] text-[18px] font-normal outline-none placeholder:italic sm:pr-28 sm:text-[22px]"
-                    />
-                    <button
-                        onClick={() => navigateToSearch(query)}
-                        className="text-muted-foreground hover:text-foreground absolute top-1/2 right-0 flex -translate-y-1/2 cursor-pointer items-center gap-1.5 font-mono text-[9px] tracking-[1.2px] uppercase"
-                    >
-                        enter{" "}
-                        <kbd className="border-border text-muted-foreground flex items-center justify-center border px-[5px] py-0.5 font-mono text-[9px]">
-                            ↵
-                        </kbd>
-                    </button>
-                </div>
+                <SearchBar onSearch={handleHeroSearch} placeholder={t("hero.searchPlaceholder")} />
 
                 <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
                     {["theater", "dance", "concert", "nightlife"].map((tag) => (
@@ -128,7 +105,6 @@ export default function HomePage() {
                                 key={production.id}
                                 production={production}
                                 locale={locale}
-                                events={eventsByProduction.get(production.id)}
                             />
                         ))}
                     </div>
@@ -143,9 +119,6 @@ export default function HomePage() {
                 <p className="text-muted-foreground font-body max-w-[480px] text-sm leading-relaxed">
                     {t("about.text")}
                 </p>
-                <span className="text-muted-foreground font-mono text-[9px] tracking-[1.4px] uppercase sm:text-[10px]">
-                    {t("about.address")}
-                </span>
             </section>
         </>
     );

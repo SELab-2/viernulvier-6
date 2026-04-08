@@ -165,7 +165,6 @@ CREATE TABLE blogposts (
     id           UUID        PRIMARY KEY DEFAULT uuidv7(),
     created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
-    published_at TIMESTAMPTZ,
     slug         TEXT        NOT NULL UNIQUE,
     title_nl     TEXT        NOT NULL,
     title_en     TEXT        NOT NULL,

@@ -4,6 +4,112 @@
  */
 
 export interface paths {
+    "/articles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get published articles with optional filters */
+        get: operations["get_all_articles"];
+        put?: never;
+        /** @description Create a new draft article */
+        post: operations["create_article"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/articles/cms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get all articles (all statuses) — editor only */
+        get: operations["get_all_articles_cms"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/articles/cms/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get a single article by UUID — editor only */
+        get: operations["get_article_by_id_cms"];
+        /** @description Update an article */
+        put: operations["update_article"];
+        post?: never;
+        /** @description Delete an article */
+        delete: operations["delete_article"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/articles/cms/{id}/relations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get related entities for an article — editor only */
+        get: operations["get_article_relations"];
+        /** @description Replace all related entities for an article — editor only */
+        put: operations["update_article_relations"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/articles/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get a published article by slug */
+        get: operations["get_article_by_slug"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/artists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get all artists */
+        get: operations["get_all_artists"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -50,6 +156,78 @@ export interface paths {
         /** @description Refresh the access token using the refresh cookie */
         post: operations["refresh_access_token"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/collections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return all collections with their items. Public endpoint, no authentication required. Each collection contains the full list of its items in position order. */
+        get: operations["get_all_collections"];
+        /** @description Update the metadata (slug, titles, descriptions) of an existing collection. Requires editor authentication. Does not affect items — use the items sub-resource for that. */
+        put: operations["update_collection"];
+        /** @description Create a new collection. Requires editor authentication. Supply a human-readable slug that will appear in the shareable URL (e.g. `videodroom-candidates-2026`) and per-language translations (title required, description required but may be empty). Items are added separately via POST /collections/{id}/items. */
+        post: operations["create_collection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/collections/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return a single collection by its UUID, including all its items in position order. Public endpoint, no authentication required. Use this to render the shareable collection page for a recipient. */
+        get: operations["get_one_collection"];
+        put?: never;
+        post?: never;
+        /** @description Permanently delete a collection and all its items (cascade). Requires editor authentication. This action is irreversible and invalidates any shared URLs pointing to this collection. */
+        delete: operations["delete_collection"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/collections/{id}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Replace the positions and translations of all items in a collection in one atomic call. Requires editor authentication. Send the full ordered list; positions are applied as given. */
+        put: operations["bulk_update_collection_items"];
+        /** @description Add an item to a collection. Requires editor authentication. An item links a content_id (UUID of the referenced entity) and a content_type (Production, Event, Blogpost, Artist, or Location) with an optional bilingual curator comment and an explicit position for ordering. */
+        post: operations["add_collection_item"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/collections/{id}/items/{item_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Remove a single item from a collection. Requires editor authentication. Does not affect the other items or the collection itself. */
+        delete: operations["delete_collection_item"];
         options?: never;
         head?: never;
         patch?: never;
@@ -200,6 +378,144 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/media": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description List media records with pagination for CMS browsing. */
+        get: operations["get_all_media"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/cleanup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Business cleanup: remove media rows with no entity links (orphans) and attempt to delete their S3 objects. */
+        post: operations["cleanup_orphaned_media"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/entity/{entity_type}/{entity_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get media linked to an entity. Use role/pagination filters. If cover_only=true and no explicit cover is set, the first item by ordering is returned. */
+        get: operations["get_entity_media"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/entity/{entity_type}/{entity_id}/attach": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Primary CMS write endpoint: create/update media metadata by s3_key and link it to an entity in one transaction. */
+        post: operations["attach_media_to_entity"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/entity/{entity_type}/{entity_id}/{media_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Unlink media from an entity only (does not directly delete media row/object). Orphans are handled by cleanup/reconcile flows. */
+        delete: operations["unlink_media_from_entity"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/reconcile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Storage drift check: compare DB media keys vs S3 objects. Dry-run by default; use apply=true to delete DB rows whose S3 object is missing. */
+        post: operations["reconcile_media_storage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/upload-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Generate a short-lived presigned S3/Garage PUT URL. Frontend uploads the file directly; backend credentials remain private. */
+        post: operations["generate_upload_url"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get a single media record by media ID. */
+        get: operations["get_media_by_id"];
+        /** @description Update media metadata fields only. Storage location (s3_key) remains unchanged. */
+        put: operations["update_media"];
+        post?: never;
+        /** @description Delete a media record and attempt to delete its S3 object. */
+        delete: operations["delete_media"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/productions": {
         parameters: {
             query?: never;
@@ -249,6 +565,94 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/productions/{id}/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return all series that contain the given production. Public endpoint, no authentication required. */
+        get: operations["get_series_for_production"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return all series with translations, production IDs, and derived period. Public endpoint, no authentication required. */
+        get: operations["get_all_series"];
+        /** @description Update the metadata (slug, translations) of an existing series. Requires editor authentication. Does not affect production membership. */
+        put: operations["update_series"];
+        /** @description Create a new series. Requires editor authentication. Supply a slug and per-language translations (name, subtitle, description). Productions are added separately via POST /series/{slug}/productions. */
+        post: operations["create_series"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/series/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return a single series by its slug, including translations, production IDs, and derived period. Public endpoint, no authentication required. */
+        get: operations["get_one_series"];
+        put?: never;
+        post?: never;
+        /** @description Permanently delete a series. Requires editor authentication. Productions are not affected. */
+        delete: operations["delete_series"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/series/{slug}/productions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Add one or more productions to a series. Requires editor authentication. Duplicates are silently ignored. */
+        post: operations["add_productions_to_series"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/series/{slug}/productions/{production_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Remove a production from a series. Requires editor authentication. The production itself is not deleted. */
+        delete: operations["remove_production_from_series"];
         options?: never;
         head?: never;
         patch?: never;
@@ -329,9 +733,201 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ArticleListPayload: {
+            /** Format: uuid */
+            id: string;
+            slug: string;
+            status: components["schemas"]["ArticleStatus"];
+            /** Format: date */
+            subject_period_end?: string | null;
+            /** Format: date */
+            subject_period_start?: string | null;
+            title?: string | null;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        ArticlePayload: {
+            content?: unknown;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: uuid */
+            id: string;
+            slug: string;
+            status: components["schemas"]["ArticleStatus"];
+            /** Format: date */
+            subject_period_end?: string | null;
+            /** Format: date */
+            subject_period_start?: string | null;
+            title?: string | null;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        ArticlePostPayload: {
+            title?: string | null;
+        };
+        ArticleRelationsPayload: {
+            artist_ids: string[];
+            event_ids: string[];
+            location_ids: string[];
+            production_ids: string[];
+        };
+        /** @enum {string} */
+        ArticleStatus: "draft" | "published" | "archived";
+        ArticleUpdatePayload: {
+            content?: unknown;
+            slug: string;
+            status: components["schemas"]["ArticleStatus"];
+            /** Format: date */
+            subject_period_end?: string | null;
+            /** Format: date */
+            subject_period_start?: string | null;
+            title?: string | null;
+        };
+        ArtistPayload: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            slug: string;
+        };
+        AttachMediaRequest: {
+            alt_text_en?: string | null;
+            alt_text_fr?: string | null;
+            alt_text_nl?: string | null;
+            checksum?: string | null;
+            credit_en?: string | null;
+            credit_fr?: string | null;
+            credit_nl?: string | null;
+            derivative_type?: string | null;
+            description_en?: string | null;
+            description_fr?: string | null;
+            description_nl?: string | null;
+            /** Format: int64 */
+            file_size?: number | null;
+            gallery_type?: string | null;
+            /** Format: double */
+            geo_latitude?: number | null;
+            /** Format: double */
+            geo_longitude?: number | null;
+            /** Format: int32 */
+            height?: number | null;
+            is_cover_image?: boolean | null;
+            mime_type: string;
+            /** Format: uuid */
+            parent_id?: string | null;
+            role?: string | null;
+            s3_key: string;
+            /** Format: int32 */
+            sort_order?: number | null;
+            /** Format: int32 */
+            width?: number | null;
+        };
         AuthResponse: {
             message: string;
             success: boolean;
+        };
+        CleanupResponse: {
+            deleted_count: number;
+            s3_keys: string[];
+        };
+        /** @enum {string} */
+        CollectionContentType: "production" | "event" | "blogpost" | "artist" | "location" | "media";
+        CollectionItemPayload: {
+            /**
+             * Format: uuid
+             * @description UUID of the referenced archive entity (production, event, artist, …).
+             */
+            content_id: string;
+            /** @description Type of the referenced entity. */
+            content_type: components["schemas"]["CollectionContentType"];
+            /**
+             * Format: date-time
+             * @description ISO 8601 timestamp when the item was added to the collection.
+             */
+            created_at: string;
+            /**
+             * Format: uuid
+             * @description Unique identifier for this collection item.
+             */
+            id: string;
+            /**
+             * Format: int32
+             * @description Display order within the collection (1-based).
+             */
+            position: number;
+            /** @description Per-language curator annotation for this item. */
+            translations: components["schemas"]["CollectionItemTranslationPayload"][];
+        };
+        CollectionItemPostPayload: {
+            /**
+             * Format: uuid
+             * @description UUID of the referenced archive entity (production, event, artist, …).
+             */
+            content_id: string;
+            /** @description Type of the referenced entity. */
+            content_type: components["schemas"]["CollectionContentType"];
+            /**
+             * Format: int32
+             * @description Display order within the collection (1-based).
+             */
+            position: number;
+            /** @description Per-language curator annotation for this item. */
+            translations?: components["schemas"]["CollectionItemTranslationPayload"][];
+        };
+        CollectionItemTranslationPayload: {
+            comment?: string | null;
+            language_code: string;
+        };
+        CollectionItemsBulkEntry: {
+            /**
+             * Format: uuid
+             * @description UUID of the collection item to update.
+             */
+            id: string;
+            /**
+             * Format: int32
+             * @description 1-based display order
+             */
+            position: number;
+            /** @description Per-language curator annotation. */
+            translations: components["schemas"]["CollectionItemTranslationPayload"][];
+        };
+        CollectionItemsBulkPayload: {
+            /** @description Full ordered list of items with updated positions and translations. */
+            items: components["schemas"]["CollectionItemsBulkEntry"][];
+        };
+        CollectionPayload: {
+            /**
+             * Format: date-time
+             * @description ISO 8601 creation timestamp.
+             */
+            created_at: string;
+            /**
+             * Format: uuid
+             * @description Unique identifier for the collection (UUIDv7).
+             */
+            id: string;
+            /** @description Ordered list of items in this collection. */
+            items: components["schemas"]["CollectionItemPayload"][];
+            /** @description URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections. */
+            slug: string;
+            /** @description Per-language title and description. */
+            translations: components["schemas"]["CollectionTranslationPayload"][];
+            /**
+             * Format: date-time
+             * @description ISO 8601 last-updated timestamp.
+             */
+            updated_at: string;
+        };
+        CollectionPostPayload: {
+            /** @description URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections. */
+            slug: string;
+            /** @description Per-language title and description. */
+            translations: components["schemas"]["CollectionTranslationPayload"][];
+        };
+        CollectionTranslationPayload: {
+            description: string;
+            language_code: string;
+            title: string;
         };
         CreateEditorRequest: {
             email: string;
@@ -344,7 +940,7 @@ export interface components {
             role: components["schemas"]["UserRole"];
         };
         /** @enum {string} */
-        EntityType: "production" | "artist" | "article" | "media";
+        EntityType: "production" | "artist" | "article" | "media" | "location" | "event" | "series";
         ErrorResponse: {
             /** @example An error occurred during processing */
             message: string;
@@ -407,9 +1003,13 @@ export interface components {
         /** @enum {string} */
         Facet: "discipline" | "format" | "theme" | "audience";
         FacetResponse: {
-            label: string;
             slug: string;
             tags: components["schemas"]["TagResponse"][];
+            translations: components["schemas"]["FacetTranslationPayload"][];
+        };
+        FacetTranslationPayload: {
+            label: string;
+            language_code: string;
         };
         HallPayload: {
             box_office_id?: string | null;
@@ -451,6 +1051,7 @@ export interface components {
             phone_1?: string | null;
             phone_2?: string | null;
             postal_code?: string | null;
+            slug?: string | null;
             /** Format: int32 */
             source_id?: number | null;
             street?: string | null;
@@ -466,6 +1067,7 @@ export interface components {
             phone_1?: string | null;
             phone_2?: string | null;
             postal_code?: string | null;
+            slug?: string | null;
             /** Format: int32 */
             source_id?: number | null;
             street?: string | null;
@@ -475,87 +1077,243 @@ export interface components {
             email: string;
             password: string;
         };
-        ProductionPayload: {
-            artist_en?: string | null;
-            artist_nl?: string | null;
-            description_2_en?: string | null;
-            description_2_nl?: string | null;
+        /**
+         * @description Response payload for a media item. The `url` field is the direct public URL
+         *     the frontend can use to load the file (either from S3/Garage or an external CDN).
+         */
+        MediaPayload: {
+            alt_text_en?: string | null;
+            alt_text_fr?: string | null;
+            alt_text_nl?: string | null;
+            checksum?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            credit_en?: string | null;
+            credit_fr?: string | null;
+            credit_nl?: string | null;
+            crops: components["schemas"]["MediaVariantPayload"][];
+            derivative_type?: string | null;
             description_en?: string | null;
-            description_extra_en?: string | null;
-            description_extra_nl?: string | null;
+            description_fr?: string | null;
             description_nl?: string | null;
-            description_short_en?: string | null;
-            description_short_nl?: string | null;
+            /** Format: int64 */
+            file_size?: number | null;
+            gallery_type?: string | null;
+            /** Format: double */
+            geo_latitude?: number | null;
+            /** Format: double */
+            geo_longitude?: number | null;
+            /** Format: int32 */
+            height?: number | null;
+            /** Format: uuid */
+            id: string;
+            mime_type: string;
+            /** Format: uuid */
+            parent_id?: string | null;
+            source_system: string;
+            source_uri?: string | null;
+            /** Format: date-time */
+            updated_at: string;
+            /** @description Direct public URL to the media file (S3 or external) */
+            url?: string | null;
+            /** Format: int32 */
+            width?: number | null;
+        };
+        MediaVariantPayload: {
+            checksum?: string | null;
+            crop_name?: string | null;
+            /** Format: int64 */
+            file_size?: number | null;
+            /** Format: int32 */
+            height?: number | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            media_id: string;
+            mime_type?: string | null;
+            source_uri?: string | null;
+            url?: string | null;
+            variant_kind: string;
+            /** Format: int32 */
+            width?: number | null;
+        };
+        PaginatedResponse_EventPayload: {
+            data: {
+                box_office_id?: string | null;
+                /** Format: date-time */
+                created_at: string;
+                /** Format: date-time */
+                doors_at?: string | null;
+                /** Format: date-time */
+                ends_at?: string | null;
+                /** Format: uuid */
+                hall_id?: string | null;
+                /** Format: uuid */
+                id: string;
+                /** Format: date-time */
+                intermission_at?: string | null;
+                /** Format: int32 */
+                max_tickets_per_order?: number | null;
+                /** Format: uuid */
+                production_id: string;
+                /** Format: int32 */
+                source_id?: number | null;
+                /** Format: date-time */
+                starts_at: string;
+                status: string;
+                uitdatabank_id?: string | null;
+                /** Format: date-time */
+                updated_at: string;
+                vendor_id?: string | null;
+            }[];
+            next_cursor?: string | null;
+        };
+        PaginatedResponse_HallPayload: {
+            data: {
+                box_office_id?: string | null;
+                /** Format: uuid */
+                id: string;
+                name: string;
+                open_seating?: boolean | null;
+                remark?: string | null;
+                seat_selection?: boolean | null;
+                slug: string;
+                /** Format: int32 */
+                source_id?: number | null;
+                /** Format: uuid */
+                space_id?: string | null;
+                vendor_id?: string | null;
+            }[];
+            next_cursor?: string | null;
+        };
+        PaginatedResponse_LocationPayload: {
+            data: {
+                city?: string | null;
+                code?: string | null;
+                country?: string | null;
+                /** Format: uuid */
+                id: string;
+                is_owned_by_viernulvier?: boolean | null;
+                name?: string | null;
+                number?: string | null;
+                phone_1?: string | null;
+                phone_2?: string | null;
+                postal_code?: string | null;
+                slug?: string | null;
+                /** Format: int32 */
+                source_id?: number | null;
+                street?: string | null;
+                uitdatabank_id?: string | null;
+            }[];
+            next_cursor?: string | null;
+        };
+        PaginatedResponse_ProductionPayload: {
+            data: {
+                eticket_info?: string | null;
+                /** Format: uuid */
+                id: string;
+                slug: string;
+                /** Format: int32 */
+                source_id?: number | null;
+                translations: components["schemas"]["ProductionTranslationPayload"][];
+                uitdatabank_theme?: string | null;
+                uitdatabank_type?: string | null;
+                video_1?: string | null;
+                video_2?: string | null;
+            }[];
+            next_cursor?: string | null;
+        };
+        PaginatedResponse_SpacePayload: {
+            data: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                location_id: string;
+                name_nl: string;
+                /** Format: int32 */
+                source_id?: number | null;
+            }[];
+            next_cursor?: string | null;
+        };
+        ProductionPayload: {
             eticket_info?: string | null;
             /** Format: uuid */
             id: string;
-            info_en?: string | null;
-            info_nl?: string | null;
-            meta_description_en?: string | null;
-            meta_description_nl?: string | null;
-            meta_title_en?: string | null;
-            meta_title_nl?: string | null;
-            programme_en?: string | null;
-            programme_nl?: string | null;
-            quote_en?: string | null;
-            quote_nl?: string | null;
-            quote_source_en?: string | null;
-            quote_source_nl?: string | null;
             slug: string;
             /** Format: int32 */
             source_id?: number | null;
-            supertitle_en?: string | null;
-            supertitle_nl?: string | null;
-            tagline_en?: string | null;
-            tagline_nl?: string | null;
-            teaser_en?: string | null;
-            teaser_nl?: string | null;
-            title_en?: string | null;
-            title_nl?: string | null;
+            translations: components["schemas"]["ProductionTranslationPayload"][];
             uitdatabank_theme?: string | null;
             uitdatabank_type?: string | null;
             video_1?: string | null;
             video_2?: string | null;
         };
         ProductionPostPayload: {
-            artist_en?: string | null;
-            artist_nl?: string | null;
-            description_2_en?: string | null;
-            description_2_nl?: string | null;
-            description_en?: string | null;
-            description_extra_en?: string | null;
-            description_extra_nl?: string | null;
-            description_nl?: string | null;
-            description_short_en?: string | null;
-            description_short_nl?: string | null;
             eticket_info?: string | null;
-            info_en?: string | null;
-            info_nl?: string | null;
-            meta_description_en?: string | null;
-            meta_description_nl?: string | null;
-            meta_title_en?: string | null;
-            meta_title_nl?: string | null;
-            programme_en?: string | null;
-            programme_nl?: string | null;
-            quote_en?: string | null;
-            quote_nl?: string | null;
-            quote_source_en?: string | null;
-            quote_source_nl?: string | null;
             slug: string;
             /** Format: int32 */
             source_id?: number | null;
-            supertitle_en?: string | null;
-            supertitle_nl?: string | null;
-            tagline_en?: string | null;
-            tagline_nl?: string | null;
-            teaser_en?: string | null;
-            teaser_nl?: string | null;
-            title_en?: string | null;
-            title_nl?: string | null;
+            translations: components["schemas"]["ProductionTranslationPayload"][];
             uitdatabank_theme?: string | null;
             uitdatabank_type?: string | null;
             video_1?: string | null;
             video_2?: string | null;
+        };
+        /** @description The per-language content for a production. */
+        ProductionTranslationPayload: {
+            artist?: string | null;
+            description?: string | null;
+            description_2?: string | null;
+            description_extra?: string | null;
+            description_short?: string | null;
+            info?: string | null;
+            language_code: string;
+            meta_description?: string | null;
+            meta_title?: string | null;
+            programme?: string | null;
+            quote?: string | null;
+            quote_source?: string | null;
+            supertitle?: string | null;
+            tagline?: string | null;
+            teaser?: string | null;
+            title?: string | null;
+        };
+        ReconcileResponse: {
+            applied: boolean;
+            db_key_count: number;
+            /** Format: int64 */
+            deleted_missing_in_s3_count: number;
+            missing_in_db: string[];
+            missing_in_s3: string[];
+            s3_key_count: number;
+        };
+        SeriesPayload: {
+            /** Format: date-time */
+            created_at: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            period_end?: string | null;
+            /** Format: date-time */
+            period_start?: string | null;
+            production_ids: string[];
+            slug: string;
+            translations: components["schemas"]["SeriesTranslationPayload"][];
+            /** Format: date-time */
+            updated_at: string;
+        };
+        SeriesPostPayload: {
+            slug: string;
+            translations: components["schemas"]["SeriesTranslationPayload"][];
+        };
+        SeriesProductionsPayload: {
+            production_ids: string[];
+        };
+        SeriesTranslationPayload: {
+            description: string;
+            language_code: string;
+            name: string;
+            subtitle: string;
         };
         SpacePayload: {
             /** Format: uuid */
@@ -574,10 +1332,32 @@ export interface components {
             source_id?: number | null;
         };
         TagResponse: {
-            label: string;
             slug: string;
             /** Format: int32 */
             sort_order: number;
+            translations: components["schemas"]["TagTranslationPayload"][];
+        };
+        TagTranslationPayload: {
+            description?: string | null;
+            label: string;
+            language_code: string;
+        };
+        UploadUrlRequest: {
+            /** @description Original filename (used to derive the S3 key extension) */
+            filename: string;
+            /** @description MIME type of the file (e.g., "image/jpeg") */
+            mime_type: string;
+        };
+        UploadUrlResponse: {
+            /**
+             * Format: int64
+             * @description URL expiration in seconds
+             */
+            expires_in: number;
+            /** @description The S3 key where the file should be uploaded */
+            s3_key: string;
+            /** @description Presigned PUT URL for direct upload */
+            upload_url: string;
         };
         /** @enum {string} */
         UserRole: "admin" | "editor" | "user";
@@ -590,6 +1370,345 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    get_all_articles: {
+        parameters: {
+            query?: {
+                subject_start?: string | null;
+                subject_end?: string | null;
+                tag_slug?: string | null;
+                related_entity_id?: string | null;
+                related_entity_type?: null | components["schemas"]["EntityType"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticleListPayload"][];
+                };
+            };
+        };
+    };
+    create_article: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArticlePostPayload"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticlePayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_all_articles_cms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticleListPayload"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_article_by_id_cms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Article UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticlePayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_article: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Article UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArticleUpdatePayload"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticlePayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_article: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Article UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_article_relations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Article UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticleRelationsPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_article_relations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Article UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArticleRelationsPayload"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticleRelationsPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_article_by_slug: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Article slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticlePayload"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_all_artists: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtistPayload"][];
+                };
+            };
+        };
+    };
     auth_login: {
         parameters: {
             query?: never;
@@ -681,6 +1800,282 @@ export interface operations {
             };
         };
     };
+    get_all_collections: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionPayload"][];
+                };
+            };
+        };
+    };
+    update_collection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CollectionPayload"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_collection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CollectionPostPayload"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_one_collection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Collection UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionPayload"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_collection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Collection UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    bulk_update_collection_items: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Collection UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CollectionItemsBulkPayload"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    add_collection_item: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Collection UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CollectionItemPostPayload"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionItemPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    delete_collection_item: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Collection UUID */
+                id: string;
+                /** @description Collection item UUID */
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     create_editor: {
         parameters: {
             query?: never;
@@ -754,7 +2149,10 @@ export interface operations {
     };
     get_all_events: {
         parameters: {
-            query?: never;
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -767,7 +2165,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["EventPayload"][];
+                    "application/json": components["schemas"]["PaginatedResponse_EventPayload"];
                 };
             };
         };
@@ -887,7 +2285,10 @@ export interface operations {
     };
     get_all_halls: {
         parameters: {
-            query?: never;
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -900,7 +2301,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HallPayload"][];
+                    "application/json": components["schemas"]["PaginatedResponse_HallPayload"];
                 };
             };
         };
@@ -1047,7 +2448,10 @@ export interface operations {
     };
     get_all_locations: {
         parameters: {
-            query?: never;
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1060,7 +2464,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LocationPayload"][];
+                    "application/json": components["schemas"]["PaginatedResponse_LocationPayload"];
                 };
             };
         };
@@ -1205,7 +2609,7 @@ export interface operations {
             };
         };
     };
-    get_all_productions: {
+    get_all_media: {
         parameters: {
             query?: never;
             header?: never;
@@ -1220,7 +2624,300 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProductionPayload"][];
+                    "application/json": components["schemas"]["MediaPayload"][];
+                };
+            };
+        };
+    };
+    cleanup_orphaned_media: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cleanup complete */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CleanupResponse"];
+                };
+            };
+        };
+    };
+    get_entity_media: {
+        parameters: {
+            query?: {
+                /** @description Optional media role filter (e.g. gallery, poster, review, cover) */
+                role?: string;
+                /** @description If true, return one cover item; falls back to first ordered item when no explicit cover exists */
+                cover_only?: boolean;
+                /** @description If true, include imported crop variants */
+                include_crops?: boolean;
+                /** @description Pagination size, default 50, max 200 */
+                limit?: number;
+                /** @description Pagination offset */
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                /** @description Entity type (production, event, blogpost, media, artist) */
+                entity_type: string;
+                /** @description Entity UUID */
+                entity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaPayload"][];
+                };
+            };
+        };
+    };
+    attach_media_to_entity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Entity type (production, event, blogpost, media, artist) */
+                entity_type: string;
+                /** @description Entity UUID */
+                entity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AttachMediaRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaPayload"];
+                };
+            };
+            /** @description Bad request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unlink_media_from_entity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Entity type (production, event, blogpost, media, artist) */
+                entity_type: string;
+                /** @description Entity UUID */
+                entity_id: string;
+                /** @description Media UUID */
+                media_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reconcile_media_storage: {
+        parameters: {
+            query?: {
+                /** @description Apply destructive cleanup when true (default false) */
+                apply?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reconciliation complete */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReconcileResponse"];
+                };
+            };
+        };
+    };
+    generate_upload_url: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UploadUrlRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadUrlResponse"];
+                };
+            };
+            /** @description S3 not configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_media_by_id: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaPayload"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_media: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MediaPayload"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaPayload"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_media: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_all_productions: {
+        parameters: {
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedResponse_ProductionPayload"];
                 };
             };
         };
@@ -1395,7 +3092,30 @@ export interface operations {
             };
         };
     };
-    get_all_spaces: {
+    get_series_for_production: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Production UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeriesPayload"][];
+                };
+            };
+        };
+    };
+    get_all_series: {
         parameters: {
             query?: never;
             header?: never;
@@ -1410,7 +3130,252 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SpacePayload"][];
+                    "application/json": components["schemas"]["SeriesPayload"][];
+                };
+            };
+        };
+    };
+    update_series: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeriesPayload"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeriesPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_series: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeriesPostPayload"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeriesPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_one_series: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Series slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeriesPayload"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_series: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Series slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    add_productions_to_series: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Series slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeriesProductionsPayload"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeriesPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    remove_production_from_series: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Series slug */
+                slug: string;
+                /** @description Production UUID */
+                production_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_all_spaces: {
+        parameters: {
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedResponse_SpacePayload"];
                 };
             };
         };

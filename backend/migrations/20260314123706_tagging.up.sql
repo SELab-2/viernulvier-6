@@ -97,7 +97,7 @@ INSERT INTO facet_entity_types (facet, entity_type) VALUES
   ('audience',   'media');
 
 
-
+-- Seed data: tags
 INSERT INTO tags (facet, slug, label, sort_order) VALUES
 
   -- discipline

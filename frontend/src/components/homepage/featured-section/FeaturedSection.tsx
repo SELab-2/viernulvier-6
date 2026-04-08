@@ -41,13 +41,13 @@ export function FeaturedSection() {
     const t = useTranslations("Featured");
 
     return (
-        <div className="border-foreground border-b-2">
+        <div>
             <div className="text-muted-foreground mb-3 flex items-center gap-2.5 font-mono text-[9px] font-medium tracking-[2px] uppercase">
                 {t("label")}
                 <span className="bg-muted/40 h-px flex-1" />
             </div>
 
-            <div className="bg-muted border-muted -mx-4 grid grid-cols-1 gap-px border sm:-mx-[30px] sm:grid-cols-[1.6fr_1fr_1fr]">
+            <div className="bg-muted border-foreground -mx-4 grid grid-cols-1 gap-px border-x border-b-2 sm:-mx-[30px] sm:grid-cols-[1.6fr_1fr_1fr]">
                 {FEATURED_ITEMS.map((item, index) => (
                     <FeaturedCard key={item.title} item={item} isFirst={index === 0} />
                 ))}
@@ -58,7 +58,7 @@ export function FeaturedSection() {
 
 function FeaturedCard({ item, isFirst }: { item: FeaturedItem; isFirst: boolean }) {
     return (
-        <div className="bg-background hover:bg-muted/5 relative cursor-pointer p-4 pb-5 transition-colors sm:p-5">
+        <div className="group bg-background hover:bg-muted/5 relative cursor-pointer p-4 pb-5 transition-colors sm:p-5">
             {/* TODO: replace with actual featured image from API/CMS when available */}
             <div
                 className={`relative mb-3 h-[160px] w-full overflow-hidden bg-[#CCC6BC] sm:${isFirst ? "h-[200px]" : "h-[140px]"}`}
@@ -66,7 +66,7 @@ function FeaturedCard({ item, isFirst }: { item: FeaturedItem; isFirst: boolean 
                 <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
             </div>
 
-            <div className="text-muted-foreground mb-1.5 font-mono text-[9px] tracking-[1.4px] uppercase">
+            <div className="text-muted-foreground group-hover:text-foreground mb-1.5 font-mono text-[9px] tracking-[1.4px] uppercase transition-colors">
                 {item.category}
             </div>
 
@@ -86,7 +86,7 @@ function FeaturedCard({ item, isFirst }: { item: FeaturedItem; isFirst: boolean 
                 {item.subtitle}
             </div>
 
-            <p className="font-body text-muted-foreground text-xs leading-relaxed">
+            <p className="font-body text-muted-foreground group-hover:text-foreground text-xs leading-relaxed transition-colors">
                 {item.description}
             </p>
 

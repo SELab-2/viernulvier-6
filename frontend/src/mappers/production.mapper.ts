@@ -1,101 +1,114 @@
 import {
+    PaginatedProductionResponse,
     ProductionCreateRequest,
     ProductionResponse,
     ProductionUpdateRequest,
 } from "@/types/api/production.api.types";
+import { PaginatedResult } from "@/types/api/api.types";
 import {
     Production,
     ProductionCreateInput,
+    ProductionTranslation,
+    ProductionTranslationInput,
     ProductionUpdateInput,
 } from "@/types/models/production.types";
 
-const toNullable = <T>(value: T | null | undefined): T | null => value ?? null;
+import { toNullable } from "./utils";
+
+type ApiTranslation = {
+    language_code: string;
+    supertitle?: string | null;
+    title?: string | null;
+    artist?: string | null;
+    meta_title?: string | null;
+    meta_description?: string | null;
+    tagline?: string | null;
+    teaser?: string | null;
+    description?: string | null;
+    description_extra?: string | null;
+    description_2?: string | null;
+    quote?: string | null;
+    quote_source?: string | null;
+    programme?: string | null;
+    info?: string | null;
+    description_short?: string | null;
+};
+
+const mapTranslation = (t: ApiTranslation): ProductionTranslation => ({
+    languageCode: t.language_code,
+    supertitle: toNullable(t.supertitle),
+    title: toNullable(t.title),
+    artist: toNullable(t.artist),
+    metaTitle: toNullable(t.meta_title),
+    metaDescription: toNullable(t.meta_description),
+    tagline: toNullable(t.tagline),
+    teaser: toNullable(t.teaser),
+    description: toNullable(t.description),
+    descriptionExtra: toNullable(t.description_extra),
+    description2: toNullable(t.description_2),
+    quote: toNullable(t.quote),
+    quoteSource: toNullable(t.quote_source),
+    programme: toNullable(t.programme),
+    info: toNullable(t.info),
+    descriptionShort: toNullable(t.description_short),
+});
 
 export const mapProduction = (response: ProductionResponse): Production => {
     return {
         id: response.id,
         sourceId: toNullable(response.source_id),
         slug: response.slug,
-        supertitleNl: toNullable(response.supertitle_nl),
-        supertitleEn: toNullable(response.supertitle_en),
-        titleNl: toNullable(response.title_nl),
-        titleEn: toNullable(response.title_en),
-        artistNl: toNullable(response.artist_nl),
-        artistEn: toNullable(response.artist_en),
-        metaTitleNl: toNullable(response.meta_title_nl),
-        metaTitleEn: toNullable(response.meta_title_en),
-        metaDescriptionNl: toNullable(response.meta_description_nl),
-        metaDescriptionEn: toNullable(response.meta_description_en),
-        taglineNl: toNullable(response.tagline_nl),
-        taglineEn: toNullable(response.tagline_en),
-        teaserNl: toNullable(response.teaser_nl),
-        teaserEn: toNullable(response.teaser_en),
-        descriptionNl: toNullable(response.description_nl),
-        descriptionEn: toNullable(response.description_en),
-        descriptionExtraNl: toNullable(response.description_extra_nl),
-        descriptionExtraEn: toNullable(response.description_extra_en),
-        description2Nl: toNullable(response.description_2_nl),
-        description2En: toNullable(response.description_2_en),
         video1: toNullable(response.video_1),
         video2: toNullable(response.video_2),
-        quoteNl: toNullable(response.quote_nl),
-        quoteEn: toNullable(response.quote_en),
-        quoteSourceNl: toNullable(response.quote_source_nl),
-        quoteSourceEn: toNullable(response.quote_source_en),
-        programmeNl: toNullable(response.programme_nl),
-        programmeEn: toNullable(response.programme_en),
-        infoNl: toNullable(response.info_nl),
-        infoEn: toNullable(response.info_en),
-        descriptionShortNl: toNullable(response.description_short_nl),
-        descriptionShortEn: toNullable(response.description_short_en),
         eticketInfo: toNullable(response.eticket_info),
         uitdatabankTheme: toNullable(response.uitdatabank_theme),
         uitdatabankType: toNullable(response.uitdatabank_type),
+        translations: (response.translations ?? []).map((t: ApiTranslation) => mapTranslation(t)),
     };
 };
 
 export const mapProductions = (response: ProductionResponse[]): Production[] =>
     response.map(mapProduction);
 
+export const mapPaginatedProductions = (response: PaginatedProductionResponse): Production[] =>
+    mapProductions(response.data);
+
+export const mapPaginatedProductionsResult = (
+    response: PaginatedProductionResponse
+): PaginatedResult<Production> => ({
+    data: mapProductions(response.data),
+    nextCursor: response.next_cursor ?? null,
+});
+
+const mapTranslationInput = (t: ProductionTranslationInput): ApiTranslation => ({
+    language_code: t.languageCode,
+    supertitle: t.supertitle,
+    title: t.title,
+    artist: t.artist,
+    meta_title: t.metaTitle,
+    meta_description: t.metaDescription,
+    tagline: t.tagline,
+    teaser: t.teaser,
+    description: t.description,
+    description_extra: t.descriptionExtra,
+    description_2: t.description2,
+    quote: t.quote,
+    quote_source: t.quoteSource,
+    programme: t.programme,
+    info: t.info,
+    description_short: t.descriptionShort,
+});
+
 export const mapCreateProductionInput = (input: ProductionCreateInput): ProductionCreateRequest => {
     return {
         source_id: input.sourceId,
         slug: input.slug,
-        supertitle_nl: input.supertitleNl,
-        supertitle_en: input.supertitleEn,
-        title_nl: input.titleNl,
-        title_en: input.titleEn,
-        artist_nl: input.artistNl,
-        artist_en: input.artistEn,
-        meta_title_nl: input.metaTitleNl,
-        meta_title_en: input.metaTitleEn,
-        meta_description_nl: input.metaDescriptionNl,
-        meta_description_en: input.metaDescriptionEn,
-        tagline_nl: input.taglineNl,
-        tagline_en: input.taglineEn,
-        teaser_nl: input.teaserNl,
-        teaser_en: input.teaserEn,
-        description_nl: input.descriptionNl,
-        description_en: input.descriptionEn,
-        description_extra_nl: input.descriptionExtraNl,
-        description_extra_en: input.descriptionExtraEn,
-        description_2_nl: input.description2Nl,
-        description_2_en: input.description2En,
         video_1: input.video1,
         video_2: input.video2,
-        quote_nl: input.quoteNl,
-        quote_en: input.quoteEn,
-        quote_source_nl: input.quoteSourceNl,
-        quote_source_en: input.quoteSourceEn,
-        programme_nl: input.programmeNl,
-        programme_en: input.programmeEn,
-        info_nl: input.infoNl,
-        info_en: input.infoEn,
-        description_short_nl: input.descriptionShortNl,
-        description_short_en: input.descriptionShortEn,
         eticket_info: input.eticketInfo,
         uitdatabank_theme: input.uitdatabankTheme,
         uitdatabank_type: input.uitdatabankType,
+        translations: (input.translations ?? []).map(mapTranslationInput),
     };
 };
 

@@ -1,0 +1,20 @@
+metadata_dir = "/var/lib/garage/meta"
+data_dir = "/var/lib/garage/data"
+db_engine = "lmdb"
+
+replication_factor = 1
+
+rpc_bind_addr = "[::]:3901"
+# GARAGE_RPC_SECRET env var wordt automatisch gebruikt
+
+[s3_api]
+s3_region = "garage"
+api_bind_addr = "[::]:3900"
+root_domain = ".s3.garage.localhost"
+
+[s3_web]
+bind_addr = "[::]:3902"
+# Empty root_domain means buckets are accessed directly by their name as Host
+# e.g., dev-bucket.s3.garage.localhost:3902/ for bucket "dev-bucket"
+# or just "localhost:3902" if bucket name matches the Host header
+root_domain = ".s3.garage.localhost"

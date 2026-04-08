@@ -28,10 +28,11 @@ impl TestRouter {
         let state = AppState {
             db: Database::new(db.clone()),
             config,
+            s3_client: None,
         };
 
         Self {
-            router: router(state.clone()).with_state(state),
+            router: router(&state).with_state(state),
             db,
             cookie: None,
         }

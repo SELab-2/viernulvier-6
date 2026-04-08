@@ -83,7 +83,7 @@ pub async fn create_editor(
             role: UserRole::Editor,
         })
         .await
-        .map_err(|e| AppError::Internal(format!("Could not create editor: {}", e)))?;
+        .map_err(|e| AppError::Internal(format!("Could not create editor: {e}")))?;
 
     Ok(Json(EditorResponse {
         id: user.id.to_string(),

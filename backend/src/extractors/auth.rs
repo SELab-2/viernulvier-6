@@ -33,7 +33,7 @@ impl FromRequestParts<AppState> for AuthUser {
         )
         .map_err(|_| AppError::Unauthorized)?;
 
-        Ok(AuthUser {
+        Ok(Self {
             id: token_data.claims.sub,
             email: token_data.claims.email,
             session_id: token_data.claims.sid,
@@ -57,7 +57,7 @@ impl FromRequestParts<AppState> for AdminUser {
             return Err(AppError::Unauthorized);
         }
 
-        Ok(AdminUser(user))
+        Ok(Self(user))
     }
 }
 
@@ -73,7 +73,7 @@ impl FromRequestParts<AppState> for EditorUser {
             return Err(AppError::Unauthorized);
         }
 
-        Ok(EditorUser(user))
+        Ok(Self(user))
     }
 }
 

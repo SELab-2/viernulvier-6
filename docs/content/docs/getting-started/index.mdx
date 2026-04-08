@@ -1,139 +1,38 @@
 ---
 title: Getting Started
-description: Step-by-step guide to setting up the viernulvier-archief application for local development.
+description: Choose your setup for local development or production deployment.
 ---
 
 # Getting Started
 
-Welcome to the `viernulvier-archief` project! This guide will walk you through setting up the application on your local machine. You can either use our fully dockerized quick start (recommended) or set up the frontend and backend manually.
+Choose the setup that fits your needs:
+
+## Development Setup
+
+For active development with hot reload and auto-restart:
+
+- Next.js with Turbopack (port 3000)
+- Rust backend with Bacon (port 3001)
+- Live documentation (port 3002)
+- PostgreSQL and Garage S3
+
+→ [**Start Development Setup**](/getting-started/development)
+
+## Preview / Production Setup
+
+For staging and production with Docker:
+
+- Full Docker containerization
+- Traefik reverse proxy with auto SSL
+- Optimized production builds
+- Horizontal scaling ready
+
+→ [**Start Production Setup**](/getting-started/preview)
 
 ---
 
-## Prerequisites
+## Quick Links
 
-Before you begin, ensure you have the following installed on your system:
-
-- **Node.js** (v20 or higher recommended) & **npm**
-- **Docker & Docker Compose**: Required for the recommended quick start environment.
-- **Rust & Cargo** (latest stable version via [rustup](https://rustup.rs/)): If you plan to run the backend natively.
-- **PostgreSQL** (running locally or via Docker): If running services manually.
-- **SQLx CLI**: Required for manual database migrations.
-  ```bash
-  cargo install sqlx-cli --no-default-features --features rustls,postgres
-  ```
-
----
-
-## Quick Start (Recommended)
-
-The easiest way to get the entire stack (Database, Backend API, and Next.js Frontend) running is by using our root development scripts, which leverage Docker orchestration.
-
-1. **Install Root Dependencies & Git Hooks**
-   From the root of the monorepo repository, run `npm install`. This is **crucial** as it installs the root dependencies and automatically sets up Husky (our pre-commit and push git hooks).
-
-   ```bash
-   npm install
-   ```
-
-2. **Environment**
-   Inside the `\infra` directory rename `.env.preview.example` into `.env`. Add the needed variables, most of them are already prefilled.
-
-3. **Start the Environment**
-   Use the root development script to spin up the entire project using Docker Compose:
-   ```bash
-   npm run dev
-   ```
-   This script handles the environment orchestration. You do not need to manually start the backend, frontend, or database. Once fully initialized:
-   - The **Frontend** will be available at `http://localhost/pr-1024`
-   - The **Backend API** will be available at `http://localhost/pr-1024/api`
-
----
-
-## Manual Setup
-
-If you prefer to run the services natively without Docker, follow these steps to run the backend and frontend separately.
-
-### 1. Backend Setup (Rust / Axum)
-
-The backend provides the core API and requires a PostgreSQL database to function.
-
-**Environment Configuration**
-
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-2. Copy the example environment file:
-   ```bash
-   cp .env.example .env
-   ```
-3. Open `.env` and ensure the `DATABASE_URL` matches your local PostgreSQL credentials (e.g., `postgres://user:password@localhost:5432/viernulvier`).
-
-**Database Initialization**
-With your PostgreSQL server running, use SQLx to create the database and run the migrations:
-
-```bash
-# Create the database defined in DATABASE_URL
-sqlx database create
-
-# Run all migrations in the /migrations folder
-sqlx migrate run
-```
-
-**Running the Server**
-Start the development server. It is recommended to use `cargo-watch` if you want hot-reloading for Rust, otherwise standard `cargo run` works perfectly:
-
-```bash
-cargo run
-```
-
-### 2. Frontend Setup (Next.js)
-
-The frontend is a React 19 / Next.js 16 application heavily utilizing the App Router.
-
-**Environment Configuration**
-
-1. Open a new terminal window and navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-2. Copy the example environment file:
-   ```bash
-   cp .env.example .env.local
-   ```
-3. Open `.env.local` and ensure the API URL points to your locally running Rust backend (e.g., `NEXT_PUBLIC_API_URL=http://localhost:8000`).
-
-**Installation & Running**
-Install the Node dependencies specific to the frontend and start the development server:
-
-```bash
-npm install
-npm run dev
-```
-
----
-
-## Developer Tooling & Git Hooks
-
-This project enforces code quality standards using Prettier, ESLint, and Husky.
-
-By running `npm install` in the **root directory**, **Husky** automatically configures Git hooks for your local repository. These hooks will:
-
-- Check your commit messages against the Conventional Commits standard (via `commitlint`).
-- Run code formatting (`prettier`) and linting (`eslint`) before allowing a push.
-
-### Useful Frontend Scripts
-
-If you are working inside the `frontend/` directory, you can utilize:
-
-- `npm run lint`: Runs ESLint to catch errors.
-- `npm run format`: Formats code using Prettier.
-- `npm run knip`: Scans the workspace for unused files, dependencies, and unreferenced exports.
-
----
-
-## Troubleshooting
-
-- **Database Errors**: Ensure your PostgreSQL service is actively running and the user specified in `DATABASE_URL` has database creation privileges.
-- **Frontend Type Errors on Boot**: Ensure your `.env.local` exactly matches the required schema in `frontend/src/env.ts`. `@t3-oss/env-nextjs` will intentionally crash the app if required environment variables are missing.
-- **CORS Issues**: If the frontend cannot communicate with the backend locally, verify that your backend's CORS configuration (in `backend/src/main.rs` or `config.rs`) permits requests from `http://localhost:3000`.
+- [Frontend Documentation](/frontend)
+- [API Reference](/api)
+- [Database Schema](/database)

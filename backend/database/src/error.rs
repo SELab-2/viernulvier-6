@@ -13,14 +13,17 @@ pub enum DatabaseError {
 
     #[error("Query returned no rows")]
     NotFound,
+
+    #[error("Bad request: {0}")]
+    BadRequest(String),
 }
 
 impl From<ormlite::Error> for DatabaseError {
     fn from(value: ormlite::Error) -> Self {
         match value {
-            ormlite::Error::SqlxError(sqlx::Error::RowNotFound) => DatabaseError::NotFound,
-            ormlite::Error::SqlxError(e) => DatabaseError::Sqlx(e),
-            _ => DatabaseError::Ormlite(value),
+            ormlite::Error::SqlxError(sqlx::Error::RowNotFound) => Self::NotFound,
+            ormlite::Error::SqlxError(e) => Self::Sqlx(e),
+            _ => Self::Ormlite(value),
         }
     }
 }

@@ -7,8 +7,27 @@ edition = "2024"
 name = "viernulvier_api"
 path = "src/main.rs"
 
-[lints.clippy]
+[workspace.lints.clippy]
 unused_async = "warn"
+indexing_slicing = "warn"
+dbg_macro = "warn"
+future_not_send = "warn"
+await_holding_lock = "warn"
+format_push_string = "warn"
+cloned_instead_of_copied = "warn"
+# pedantic
+ignored_unit_patterns = "warn"
+uninlined_format_args = "warn"
+cast_lossless = "warn"
+single_match_else = "warn"
+needless_pass_by_value = "warn"
+trivially_copy_pass_by_ref = "warn"
+# nursery
+use_self = "warn"
+redundant_clone = "warn"
+
+[lints]
+workspace = true
 
 [workspace]
 members = ["database", "api"]
@@ -60,6 +79,9 @@ rand = "0.10"
 sha2 = "0.10.9"
 hex = "0.4.3"
 time = "0.3.47"
+aws-sdk-s3 = { version = "1", features = ["behavior-version-latest"] }
+aws-config = { version = "1", features = ["behavior-version-latest"] }
+slug = "0.1.6"
 
 [dev-dependencies]
 http-body-util = "0.1.2"

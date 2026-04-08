@@ -3,7 +3,7 @@ import { api } from "@/lib/api-client";
 import { useRouter } from "@/i18n/routing";
 import { LoginDTO } from "@/types/dto/auth.types";
 import { User } from "@/types/models/user.types";
-import { UserResponse } from "@/types/api/auth.api.types";
+import { GetEditorInfoResponse, LoginResponse } from "@/types/api/auth.api.types";
 import { mapUser } from "@/mappers/user.mapper";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
@@ -14,7 +14,7 @@ export const useUser = (options?: { enabled?: boolean }) => {
     return useQuery<User>({
         queryKey: queryKeys.user,
         queryFn: async () => {
-            const { data } = await api.get<UserResponse>("/editor/me");
+            const { data } = await api.get<GetEditorInfoResponse>("/editor/me");
             return mapUser(data);
         },
         retry: false,
@@ -31,12 +31,12 @@ export const useLogin = () => {
 
     return useMutation({
         mutationFn: async (credentials: LoginDTO) => {
-            const { data } = await api.post("/auth/login", credentials);
+            const { data } = await api.post<LoginResponse>("/auth/login", credentials);
             return data;
         },
         onSuccess: async () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.user });
-            router.push("/editor");
+            router.push("/cms");
         },
         onError: (error: AxiosError) => {
             if (error.response?.status === 401) {

@@ -1,66 +1,132 @@
 ---
 title: Deployment Infrastructure
-description: Comprehensive guide to the deployment infrastructure, including Traefik reverse proxy setup, Docker Compose environments, and GitHub Actions CI/CD pipelines.
+description: Technical details about Traefik, CI/CD pipelines, and deployment architecture.
 ---
 
-# Deployment Infrastructure
+import { Callout } from 'fumadocs-ui/components/callout';
 
-The `viernulvier-archief` project uses a fully containerized deployment strategy. It leverages Docker and Docker Compose for orchestration, Traefik for dynamic routing and SSL, and GitHub Actions for continuous integration and continuous deployment (CI/CD).
+<Callout type="info">
+  Looking to deploy the application? See the [Preview / Production Setup](/getting-started/preview)
+  guide for step-by-step instructions.
+</Callout>
 
-All infrastructure configurations are located in the `infra/` and `.github/` directories.
-
----
-
-## 1. Reverse Proxy (Traefik)
-
-We use **Traefik** (`infra/traefik/docker-compose.yml`) as the global edge router for all incoming HTTP/HTTPS traffic.
-
-- **Dynamic Discovery**: Traefik connects directly to the Docker socket. It automatically discovers newly deployed frontend and backend containers and routes traffic to them based on Docker labels (e.g., `traefik.http.routers.frontend.rule=Host(...)`).
-- **SSL Termination**: It is configured with an ACME provider (Let's Encrypt) to automatically provision, attach, and renew TLS certificates for all routed domains without manual intervention.
-- **Global Network**: Traefik operates on an external Docker network called `traefik-public`. Applications that need external exposure attach to this network.
+This page explains the technical infrastructure behind our deployments.
 
 ---
 
-## 2. Container Orchestration (Docker Compose)
+## 1. Architecture Overview
 
-The application stack (Frontend, Backend API, and PostgreSQL Database) is orchestrated using environment-specific Docker Compose files.
+We use **self-hosted GitHub Actions runners** that run directly on the deployment server. This means:
 
-### Production Environment (`infra/production/docker-compose.prod.yml`)
+- No SSH connections needed
+- Direct Docker access
+- Faster deployments (images stay on the same machine)
 
-- Runs the stable `main` branch images.
-- **Networking**:
-  - `traefik-public`: Connects the frontend and backend to the Traefik router.
-  - `internal`: A private backend network ensuring the database is isolated and only accessible by the API container.
-- Persistent volumes are mounted to ensure database data outlives container restarts.
-
-### Preview Environments (`infra/preview/docker-compose.preview.yml`)
-
-- Spins up an ephemeral, isolated copy of the entire stack for every Pull Request.
-- **Dynamic Routing**: Uses the `${PR_NUMBER}` environment variable to generate dynamic subdomains (e.g., `pr-123.example.com`), allowing isolated testing without port conflicts.
-- Utilizes a fresh PostgreSQL database instance for each PR to prevent data pollution.
+```
+┌─────────────────────────────────────────┐
+│           GitHub Actions                │
+│    (triggered on push/PR)               │
+└───────────────────┬─────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────────┐
+│      Self-Hosted Runner (Server)        │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐    │
+│  │  Build  │ │  Push   │ │ Deploy  │    │
+│  │  Images │ │  Images │ │  Stack  │    │
+│  └────┬────┘ └────┬────┘ └────┬────┘    │
+│       └───────────┴───────────┘         │
+│                   │                     │
+│       ┌───────────▼───────────┐         │
+│       │   Docker Compose      │         │
+│       │  (on same server)     │         │
+│       └───────────────────────┘         │
+└─────────────────────────────────────────┘
+```
 
 ---
 
-## 3. CI/CD Pipelines (GitHub Actions)
+## 2. Reverse Proxy (Traefik)
 
-Our automated workflows (`.github/workflows/`) handle building, pushing, and deploying code using GitHub Actions. Both pipelines utilize multi-stage `Dockerfile`s to build optimized, lightweight images.
+**Traefik** (`infra/traefik/docker-compose.yml`) handles all incoming traffic:
+
+- **Dynamic Discovery**: Connects to Docker socket, auto-discovers containers via labels
+- **SSL Certificates**: Automatic Let's Encrypt provisioning and renewal
+- **Path-Based Routing**: Routes `example.com/pr-123/` to preview environments
+- **Network**: Uses external `traefik` network
+
+---
+
+## 3. Container Orchestration
+
+### Production (`infra/production/docker-compose.prod.yml`)
+
+- Runs `latest` tagged images
+- Networks:
+  - `traefik`: External network for Traefik routing
+  - `app_network`: Internal network for service communication
+- Persistent volumes for database
+
+### Preview (`infra/preview/docker-compose.preview.yml`)
+
+- Ephemeral stack per Pull Request
+- Isolated by `PREVIEW_NAME` (e.g., `pr-123`)
+- Separate PostgreSQL database per preview
+- Accessed via `/pr-123/` path prefix
+
+---
+
+## 4. CI/CD Pipelines
+
+Both pipelines run on **self-hosted runners** with direct Docker access.
 
 ### Production Pipeline (`build-push-deploy.yml`)
 
-1. **Trigger**: Executes automatically on a push/merge to the `main` branch.
-2. **Build & Push**: Compiles the Rust backend and Next.js frontend, builds Docker images, and pushes them to the GitHub Container Registry (`ghcr.io`).
-3. **Environment Generation**: Uses the custom action `.github/actions/generate-prod-env/` to securely write GitHub Secrets into a `.env` file on the deployment server.
-4. **Deploy**: Connects to the server via SSH, pulls the new images, and recreates the production Docker Compose stack with minimal downtime.
+1. **Build & Push**: Builds Rust backend, Next.js frontend, and docs images
+2. **Tagging**: Tags images as `latest` and commit SHA
+3. **Deploy**: Pulls images and recreates production stack
 
 ### Preview Pipeline (`deploy-preview.yml`)
 
-1. **Trigger**: Executes when a Pull Request is opened, synchronized, or reopened.
-2. **Tagging**: Docker images are built and tagged uniquely using the PR's commit SHA (`${{ github.sha }}`).
-3. **Environment Generation**: Uses `.github/actions/generate-preview-env/` to dynamically map specific staging secrets to the preview `.env` file.
-4. **Deploy**: SSHs into the staging server, pulls the SHA-tagged images, and launches the isolated preview stack.
+1. **Trigger**: PR opened, updated, or reopened
+2. **Generate Env**: Creates isolated environment for the PR
+3. **Deploy**: Starts preview stack at `/pr-{number}/`
+4. **Comment**: Posts preview URL as PR comment
+5. **Cleanup**: Removes stack when PR is closed
 
 ---
 
-## 4. Environment Variables Management
+---
 
-Secrets and configuration are entirely managed via GitHub Actions Secrets. The custom `.github/actions/` scripts safely map these secrets into `.env` files on the target host machines during deployment, ensuring that no sensitive credentials are ever hardcoded or committed to the repository.
+## 5. Automated Testing & Codecov
+
+Before any application image is built or preview is deployed, our CI/CD pipelines trigger automated testing workflows:
+
+- **`backend-tests.yml`**: Runs cargo unit tests, linting (clippy), formatting checks, and uploads the Rust coverage report.
+- **`frontend-tests.yml`**:
+  1. Runs typechecking and Vitest unit/integration tests.
+  2. Uploads the Vitest test coverage to **Codecov**.
+  3. Installs Playwright browsers.
+  4. Runs the Playwright End-to-End (E2E) tests against the built Next.js server.
+  5. Uploads a visual HTML report of the Playwright E2E run as a GitHub Artifact if the job succeeds or fails.
+
+Both pipelines send their coverage metrics (LCOV) directly to Codecov using the `CODECOV_TOKEN` GitHub Action secret. The pipelines are strict; if any test or typecheck fails, the PR preview deployment or Production deployment is blocked automatically.
+
+## 6. Environment Generation
+
+We use composite actions to generate `.env` files from GitHub secrets:
+
+- `.github/actions/generate-prod-env` — Production environment
+- `.github/actions/generate-preview-env` — Preview environments
+
+This keeps secrets out of the repository while making them available to Docker Compose.
+
+---
+
+## 7. Image Registry
+
+All images are pushed to **Docker Hub**:
+
+- `kayasem/{PROJECT_NAME}-frontend`
+- `kayasem/{PROJECT_NAME}-backend`
+- `kayasem/{PROJECT_NAME}-docs`
