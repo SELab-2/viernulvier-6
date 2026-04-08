@@ -1,9 +1,13 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { SquarePen } from "lucide-react";
+import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
 import { BooleanCell } from "../boolean-cell";
 import type { FieldDef } from "../edit-sheet";
+import { Action, ActionDisplay } from "@/types/cms/actions";
 import type { Hall, HallUpdateInput } from "@/types/models/hall.types";
 
 export const hallFields: FieldDef<Hall>[] = [
@@ -33,7 +37,35 @@ export function toHallUpdateInput(entity: Hall): HallUpdateInput {
     };
 }
 
-export function makeHallColumns(options: { onEdit: (entity: Hall) => void }): ColumnDef<Hall>[] {
+export function makeHallColumns(options: {
+    onEdit: (entity: Hall) => void;
+    t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>;
+}): ColumnDef<Hall>[] {
+    const { onEdit, t } = options;
+
+    const actions: Action<Hall>[] = [
+        {
+            key: "edit",
+            label: t("edit", { label: "hall" }),
+            icon: SquarePen,
+            display: ActionDisplay.Inline,
+            onClick: onEdit,
+        },
+        {
+            key: "copy-name",
+            label: t("copy", { key: "name" }),
+            onClick: async (hall) => {
+                const value = hall.name ?? "";
+                try {
+                    await navigator.clipboard.writeText(value);
+                    toast.success(t("copied", { key: "name" }));
+                } catch {
+                    toast.error(t("copyFailed"));
+                }
+            },
+        },
+    ];
+
     return [
         { accessorKey: "name", header: "Name" },
         {
@@ -46,6 +78,6 @@ export function makeHallColumns(options: { onEdit: (entity: Hall) => void }): Co
             header: "Open seating",
             cell: ({ getValue }) => <BooleanCell value={getValue<boolean | null>()} />,
         },
-        makeActionsColumn<Hall>({ label: "hall", copyKey: "name", onEdit: options.onEdit }),
+        makeActionsColumn<Hall>({ actions }),
     ];
 }
