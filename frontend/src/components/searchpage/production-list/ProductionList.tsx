@@ -115,7 +115,7 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
 
                 <div className="min-w-0 flex-1">
                     <Link
-                        href={`/productions/${production.slug}`}
+                        href={`/productions/${production.id}`}
                         className="font-display text-foreground mb-0.5 block text-[16px] leading-[1.1] font-bold tracking-[-0.02em] hover:underline sm:text-[18px]"
                         onClick={(e) => e.stopPropagation()}
                     >

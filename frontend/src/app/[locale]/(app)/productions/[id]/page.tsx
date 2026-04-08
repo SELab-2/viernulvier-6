@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { notFound } from "next/navigation";
 
 import { useGetProduction, useGetProductions } from "@/hooks/api/useProductions";
-import { useGetEvents } from "@/hooks/api/useEvents";
+import { useGetEventsByProduction } from "@/hooks/api/useEvents";
 import { getLocalizedField } from "@/lib/locale";
 import { Link, useRouter } from "@/i18n/routing";
 
@@ -40,24 +40,19 @@ export default function ProductionPage({
     );
 
     const { data: production, isLoading: isProdLoading, isError } = useGetProduction(id);
-    const { data: allEvents, isLoading: isEventsLoading } = useGetEvents();
-    const { data: allProductions, isLoading: isAllProdLoading } = useGetProductions();
+    const { data: events = [], isLoading: isEventsLoading } = useGetEventsByProduction(id);
+    const { data: productionsResult, isLoading: isAllProdLoading } = useGetProductions();
 
     const isLoading = isProdLoading || isEventsLoading || isAllProdLoading;
 
-    const events = useMemo(() => {
-        if (!allEvents || !production) return [];
-        return allEvents.filter((e) => e.productionId === production.id);
-    }, [allEvents, production]);
-
     const relatedProductions = useMemo(() => {
-        if (!allProductions || !production) return [];
-        return allProductions
+        if (!productionsResult?.data || !production) return [];
+        return productionsResult.data
             .filter(
                 (p) => p.id !== production.id && p.uitdatabankType === production.uitdatabankType
             )
             .slice(0, 4);
-    }, [allProductions, production]);
+    }, [productionsResult, production]);
 
     if (isError) {
         notFound();
