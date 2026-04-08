@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { animate } from "animejs";
 import type { LucideIcon } from "lucide-react";
@@ -67,6 +68,7 @@ export function SectionCardContent({
     icon: Icon,
     comingSoon = false,
 }: SectionCardContentProps) {
+    const t = useTranslations("Cms.SectionCard");
     return (
         <div className="flex flex-col">
             <div className="flex items-start justify-between">
@@ -79,7 +81,7 @@ export function SectionCardContent({
             {comingSoon && (
                 <div className="mb-2 inline-flex">
                     <span className="bg-foreground/10 text-foreground/70 px-1.5 py-0.5 font-mono text-[9px] tracking-[1px]">
-                        Binnenkort
+                        {t("comingSoon")}
                     </span>
                 </div>
             )}

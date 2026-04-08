@@ -10,7 +10,7 @@ import { SectionCard, SectionCardContent } from "@/components/cms/SectionCard";
 interface ContentSection {
     key: string;
     href: string;
-    edition: string;
+    editionKey: string;
     span: string;
     icon: typeof Clapperboard;
     comingSoon?: boolean;
@@ -20,21 +20,21 @@ const CONTENT_SECTIONS: ContentSection[] = [
     {
         key: "productions",
         href: "/cms/productions",
-        edition: "Ed. 01",
+        editionKey: "edition1",
         span: "lg:col-span-8",
         icon: Clapperboard,
     },
     {
         key: "locations",
         href: "/cms/locations",
-        edition: "Ed. 02",
+        editionKey: "edition2",
         span: "lg:col-span-4",
         icon: MapPin,
     },
     {
         key: "articles",
         href: "/cms/articles",
-        edition: "Ed. 03",
+        editionKey: "edition3",
         span: "lg:col-span-6",
         comingSoon: true,
         icon: Newspaper,
@@ -42,7 +42,7 @@ const CONTENT_SECTIONS: ContentSection[] = [
     {
         key: "performers",
         href: "/cms/performers",
-        edition: "Ed. 04",
+        editionKey: "edition4",
         span: "lg:col-span-6",
         comingSoon: true,
         icon: Users,
@@ -53,7 +53,7 @@ interface UtilitySection {
     key: string;
     href: string;
     icon: typeof Database;
-    edition: string;
+    editionKey: string;
 }
 
 const UTILITY_SECTIONS: UtilitySection[] = [
@@ -61,18 +61,19 @@ const UTILITY_SECTIONS: UtilitySection[] = [
         key: "ingest",
         href: "/cms/ingest",
         icon: Database,
-        edition: "Ed. 05",
+        editionKey: "edition5",
     },
     {
         key: "import",
         href: "/cms/import",
         icon: FileUp,
-        edition: "Ed. 06",
+        editionKey: "edition6",
     },
 ];
 
 export default function CmsOverviewPage() {
     const t = useTranslations("Cms.Overview");
+    const tEditions = useTranslations("Cms.editions");
     const containerRef = useRef<HTMLDivElement>(null);
     const headerRef = useRef<HTMLElement>(null);
 
@@ -128,7 +129,7 @@ export default function CmsOverviewPage() {
                         >
                             <div data-card>
                                 <SectionCardContent
-                                    edition={section.edition}
+                                    edition={tEditions(section.editionKey)}
                                     title={t(section.key)}
                                     description={t(`${section.key}Description`)}
                                     actionLabel={t("openSection")}
@@ -150,7 +151,7 @@ export default function CmsOverviewPage() {
                         >
                             <div data-card>
                                 <SectionCardContent
-                                    edition={util.edition}
+                                    edition={tEditions(util.editionKey)}
                                     title={t(util.key)}
                                     description={t(`${util.key}Description`)}
                                     actionLabel={t("openSection")}

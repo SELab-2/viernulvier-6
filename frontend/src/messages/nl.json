@@ -154,6 +154,19 @@
         "performers": "Uitvoerders",
         "ingest": "Ingest",
         "import": "Import",
+        "editions": {
+            "edition1": "Ed. 01",
+            "edition2": "Ed. 02",
+            "edition3": "Ed. 03",
+            "edition4": "Ed. 04",
+            "edition5": "Ed. 05",
+            "edition6": "Ed. 06"
+        },
+        "sidebar": {
+            "contentManagement": "Content Management",
+            "content": "Inhoud",
+            "system": "Systeem"
+        },
         "Overview": {
             "title": "CMS Overzicht",
             "subtitle": "Beheer inhoud en instellingen",
@@ -263,6 +276,17 @@
             "selectPlaceholder": "Selecteer…",
             "cancel": "Annuleren",
             "saveChanges": "Wijzigingen opslaan"
+        },
+        "SectionCard": {
+            "comingSoon": "Binnenkort"
+        },
+        "PageHeader": {
+            "productionsEyebrow": "Ed. 01 — Producties",
+            "locationsEyebrow": "Ed. 02 — Locaties",
+            "articlesEyebrow": "Ed. 03 — Artikelen",
+            "performersEyebrow": "Ed. 04 — Uitvoerders",
+            "ingestEyebrow": "Ed. 05 — Ingest",
+            "importEyebrow": "Ed. 06 — Import"
         }
     },
     "Admin": {

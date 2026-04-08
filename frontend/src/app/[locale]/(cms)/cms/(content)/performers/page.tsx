@@ -7,6 +7,7 @@ import { PerformersTable } from "../../tables/performers/performers-table";
 
 export default function PerformersPage() {
     const t = useTranslations("Cms.Performers");
+    const tHeader = useTranslations("Cms.PageHeader");
     const headerRef = useRef<HTMLElement>(null);
 
     useEffect(() => {
@@ -28,7 +29,7 @@ export default function PerformersPage() {
                 className="border-foreground/10 bg-background relative z-20 mb-8 shrink-0 border-b-2 pb-6 opacity-0"
             >
                 <div className="text-muted-foreground mb-3 font-mono text-[9px] tracking-[2px] uppercase">
-                    Ed. 04 — Artiesten
+                    {tHeader("performersEyebrow")}
                 </div>
                 <h1 className="font-display text-foreground text-[36px] font-black tracking-tight uppercase sm:text-[42px]">
                     {t("title")}

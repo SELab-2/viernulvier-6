@@ -13,15 +13,15 @@ import { getLabel } from "@/lib/utils";
 import type { EntityType, Facet } from "@/types/models/taxonomy.types";
 
 const navItems = [
-    { key: "productions", href: "/cms/productions", icon: Clapperboard, edition: "Ed. 01" },
-    { key: "locations", href: "/cms/locations", icon: MapPin, edition: "Ed. 02" },
-    { key: "articles", href: "/cms/articles", icon: Newspaper, edition: "Ed. 03" },
-    { key: "performers", href: "/cms/performers", icon: Users, edition: "Ed. 04" },
+    { key: "productions", href: "/cms/productions", icon: Clapperboard, editionKey: "edition1" },
+    { key: "locations", href: "/cms/locations", icon: MapPin, editionKey: "edition2" },
+    { key: "articles", href: "/cms/articles", icon: Newspaper, editionKey: "edition3" },
+    { key: "performers", href: "/cms/performers", icon: Users, editionKey: "edition4" },
 ];
 
 const utilityItems = [
-    { key: "ingest", href: "/cms/ingest", icon: Database, edition: "Ed. 05" },
-    { key: "import", href: "/cms/import", icon: FileUp, edition: "Ed. 06" },
+    { key: "ingest", href: "/cms/ingest", icon: Database, editionKey: "edition5" },
+    { key: "import", href: "/cms/import", icon: FileUp, editionKey: "edition6" },
 ];
 
 const ENTITY_TYPE_MAP: Record<string, EntityType | null> = {
@@ -98,6 +98,8 @@ interface SidebarContentProps {
 
 function SidebarContent({ onNavigate }: SidebarContentProps) {
     const t = useTranslations("Cms");
+    const tSidebar = useTranslations("Cms.sidebar");
+    const tEditions = useTranslations("Cms.editions");
     const pathname = usePathname();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -160,7 +162,7 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
                     </div>
                     <div className="bg-foreground mx-auto mt-2 h-0.5 w-16" />
                     <div className="text-muted-foreground mt-2 font-mono text-[9px] tracking-[3px] uppercase">
-                        Content Management
+                        {tSidebar("contentManagement")}
                     </div>
                 </Link>
             </div>
@@ -170,7 +172,7 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
                 {/* Main Content Section */}
                 <div className="mb-5">
                     <div className="text-muted-foreground mb-3 px-5 text-center font-mono text-xs tracking-[2px] uppercase">
-                        — Inhoud —
+                        — {tSidebar("content")} —
                     </div>
 
                     <div className="space-y-2 px-3">
@@ -190,7 +192,7 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
                                 >
                                     <div className="flex items-start justify-between">
                                         <div className="text-muted-foreground font-mono text-[8px] tracking-[1px] uppercase">
-                                            {item.edition}
+                                            {tEditions(item.editionKey)}
                                         </div>
                                         <Icon
                                             className={`h-3.5 w-3.5 transition-colors ${
@@ -233,7 +235,7 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
                 {/* Utility Section */}
                 <div>
                     <div className="text-muted-foreground mb-3 px-5 text-center font-mono text-xs tracking-[2px] uppercase">
-                        — Systeem —
+                        — {tSidebar("system")} —
                     </div>
 
                     <div className="space-y-2 px-3">
@@ -270,7 +272,7 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
                                         </span>
                                     </div>
                                     <div className="text-muted-foreground font-mono text-[8px] tracking-[1px]">
-                                        {item.edition}
+                                        {tEditions(item.editionKey)}
                                     </div>
                                 </Link>
                             );

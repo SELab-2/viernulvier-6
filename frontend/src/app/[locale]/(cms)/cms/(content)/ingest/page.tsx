@@ -7,6 +7,7 @@ import { Construction } from "lucide-react";
 
 export default function IngestPage() {
     const t = useTranslations("Cms.Ingest");
+    const tHeader = useTranslations("Cms.PageHeader");
     const headerRef = useRef<HTMLElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
 
@@ -41,7 +42,7 @@ export default function IngestPage() {
                 className="border-foreground/10 bg-background relative z-20 mb-8 shrink-0 border-b-2 pb-6 opacity-0"
             >
                 <div className="text-muted-foreground mb-3 font-mono text-[9px] tracking-[2px] uppercase">
-                    Ed. 05 — Import
+                    {tHeader("ingestEyebrow")}
                 </div>
                 <h1 className="font-display text-foreground text-[36px] font-black tracking-tight uppercase sm:text-[42px]">
                     {t("title")}

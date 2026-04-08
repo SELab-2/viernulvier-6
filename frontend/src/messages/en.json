@@ -154,6 +154,19 @@
         "performers": "Performers",
         "ingest": "Ingest",
         "import": "Import",
+        "editions": {
+            "edition1": "Ed. 01",
+            "edition2": "Ed. 02",
+            "edition3": "Ed. 03",
+            "edition4": "Ed. 04",
+            "edition5": "Ed. 05",
+            "edition6": "Ed. 06"
+        },
+        "sidebar": {
+            "contentManagement": "Content Management",
+            "content": "Content",
+            "system": "System"
+        },
         "Overview": {
             "title": "CMS Overview",
             "subtitle": "Manage content and settings",
@@ -263,6 +276,17 @@
             "selectPlaceholder": "Select…",
             "cancel": "Cancel",
             "saveChanges": "Save changes"
+        },
+        "SectionCard": {
+            "comingSoon": "Coming soon"
+        },
+        "PageHeader": {
+            "productionsEyebrow": "Ed. 01 — Productions",
+            "locationsEyebrow": "Ed. 02 — Locations",
+            "articlesEyebrow": "Ed. 03 — Articles",
+            "performersEyebrow": "Ed. 04 — Performers",
+            "ingestEyebrow": "Ed. 05 — Ingest",
+            "importEyebrow": "Ed. 06 — Import"
         }
     },
     "Admin": {
