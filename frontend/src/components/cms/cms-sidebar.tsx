@@ -160,6 +160,7 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
                     <div className="font-display text-foreground text-[28px] leading-tight font-black tracking-tight uppercase">
                         CMS
                     </div>
+                    <div className="bg-foreground mx-auto mt-2 h-0.5 w-16" />
                 </Link>
             </div>
 
