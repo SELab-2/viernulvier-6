@@ -79,6 +79,9 @@ export default function CmsOverviewPage() {
 
     useEffect(() => {
         if (headerRef.current) {
+            // Reset initial state before animating
+            headerRef.current.style.opacity = "0";
+            headerRef.current.style.transform = "translateY(-10px)";
             animate(headerRef.current, {
                 opacity: [0, 1],
                 translateY: [-10, 0],
@@ -89,7 +92,7 @@ export default function CmsOverviewPage() {
 
         if (containerRef.current) {
             const cards = containerRef.current.querySelectorAll("[data-card]");
-            // Set initial state before animating to avoid hydration mismatch
+            // Set initial state before animating
             cards.forEach((card) => {
                 (card as HTMLElement).style.opacity = "0";
                 (card as HTMLElement).style.transform = "translateY(16px)";
@@ -102,7 +105,7 @@ export default function CmsOverviewPage() {
                 delay: stagger(80, { start: 200 }),
             });
         }
-    }, []);
+    });
 
     return (
         <div className="flex flex-col px-4 py-6 sm:px-6 sm:py-8">
