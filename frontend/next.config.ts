@@ -11,7 +11,7 @@ const withBundleAnalyzer = bundleAnalyzer({
 });
 
 const s3Url = process.env.NEXT_PUBLIC_MEDIA_URL;
-const s3Hostname = s3Url ? new URL(s3Url).hostname : undefined;
+const s3Parsed = s3Url ? new URL(s3Url) : undefined;
 
 const nextConfig: NextConfig = {
     output: "standalone",
@@ -19,7 +19,15 @@ const nextConfig: NextConfig = {
 
     images: {
         remotePatterns: [
-            ...(s3Hostname ? [{ protocol: "https" as const, hostname: s3Hostname }] : []),
+            ...(s3Parsed
+                ? [
+                      {
+                          protocol: s3Parsed.protocol.replace(":", "") as "http" | "https",
+                          hostname: s3Parsed.hostname,
+                          ...(s3Parsed.port ? { port: s3Parsed.port } : {}),
+                      },
+                  ]
+                : []),
         ],
     },
 
