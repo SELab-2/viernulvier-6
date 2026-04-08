@@ -253,6 +253,7 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // hall
         .routes(routes!(hall::get_all))
         .routes(routes!(hall::get_one))
+        .routes(routes!(hall::get_one_by_slug))
         // space
         .routes(routes!(space::get_all))
         .routes(routes!(space::get_one))

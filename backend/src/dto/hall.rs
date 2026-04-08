@@ -48,6 +48,10 @@ impl HallPayload {
         Ok(db.halls().by_id(id).await?.into())
     }
 
+    pub async fn by_slug(db: &Database, slug: &str) -> Result<Self, AppError> {
+        Ok(db.halls().by_slug(slug).await?.into())
+    }
+
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {
         Ok(db.halls().update(self.into()).await?.into())
     }
