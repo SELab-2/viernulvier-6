@@ -10,9 +10,18 @@ const withBundleAnalyzer = bundleAnalyzer({
     enabled: process.env.ANALYZE === "true",
 });
 
+const s3Url = process.env.NEXT_PUBLIC_MEDIA_URL;
+const s3Hostname = s3Url ? new URL(s3Url).hostname : undefined;
+
 const nextConfig: NextConfig = {
     output: "standalone",
     reactCompiler: true,
+
+    images: {
+        remotePatterns: [
+            ...(s3Hostname ? [{ protocol: "https" as const, hostname: s3Hostname }] : []),
+        ],
+    },
 
     basePath: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}` : "",
     //assetPrefix: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}` : "",

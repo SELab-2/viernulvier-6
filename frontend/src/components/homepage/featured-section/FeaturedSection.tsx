@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 
 interface FeaturedItem {
@@ -8,6 +9,7 @@ interface FeaturedItem {
     subtitle: string;
     description: string;
     date: string;
+    imageUrl?: string | null;
 }
 
 // TODO: replace with curated featured items from CMS/API when available
@@ -59,11 +61,24 @@ export function FeaturedSection() {
 function FeaturedCard({ item, isFirst }: { item: FeaturedItem; isFirst: boolean }) {
     return (
         <div className="group bg-background hover:bg-muted/5 relative cursor-pointer p-4 pb-5 transition-colors sm:p-5">
-            {/* TODO: replace with actual featured image from API/CMS when available */}
             <div
                 className={`relative mb-3 h-[160px] w-full overflow-hidden bg-[#CCC6BC] sm:${isFirst ? "h-[200px]" : "h-[140px]"}`}
             >
-                <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                {item.imageUrl ? (
+                    <Image
+                        src={item.imageUrl}
+                        alt={item.title}
+                        fill
+                        className="object-cover"
+                        sizes={
+                            isFirst
+                                ? "(min-width: 640px) 60vw, 100vw"
+                                : "(min-width: 640px) 30vw, 100vw"
+                        }
+                    />
+                ) : (
+                    <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                )}
             </div>
 
             <div className="text-muted-foreground group-hover:text-foreground mb-1.5 font-mono text-[9px] tracking-[1.4px] uppercase transition-colors">
