@@ -52,12 +52,17 @@ export function LocationsTable() {
         clearSelection,
     } = useParentChildSelection<Location>(hallsBySpace);
 
+    const tActions = useTranslations("Cms.ActionsColumn");
+
     const locationCols = useMemo(
-        () => [selectColumn, ...makeLocationColumns({ onEdit: setEditLocation })],
-        [selectColumn]
+        () => [selectColumn, ...makeLocationColumns({ onEdit: setEditLocation, t: tActions })],
+        [selectColumn, tActions]
     );
 
-    const hallCols = useMemo(() => makeHallColumns({ onEdit: setEditHall }), []);
+    const hallCols = useMemo(
+        () => makeHallColumns({ onEdit: setEditHall, t: tActions }),
+        [tActions]
+    );
 
     const expanderLabels = useMemo(() => ({ show: t("showHalls"), hide: t("hideHalls") }), [t]);
 
@@ -115,17 +120,16 @@ export function LocationsTable() {
                                 count: selectedLocationCount,
                                 inlineActions: [
                                     {
+                                        key: "add-locations-to-collection",
                                         label: tCollections("addToCollection"),
                                         onClick: () => setLocationDialogOpen(true),
                                     },
                                 ],
-                                overflowActions: [],
                             },
                             {
                                 countKey: "hallsSelected",
                                 count: selectedHallCount,
                                 inlineActions: [],
-                                overflowActions: [],
                             },
                         ]}
                         onClear={clearSelection}
@@ -150,7 +154,7 @@ export function LocationsTable() {
                 entity={editLocation}
                 fields={locationFields}
                 title={t("editLocation")}
-                onSave={(data) => updateLocation.mutate(toLocationUpdateInput(data))}
+                onSave={(data) => updateLocation.mutateAsync(toLocationUpdateInput(data))}
             />
             <EditSheet
                 open={!!editHall}
@@ -158,7 +162,7 @@ export function LocationsTable() {
                 entity={editHall}
                 fields={hallFields}
                 title={t("editHall")}
-                onSave={(data) => updateHall.mutate(toHallUpdateInput(data))}
+                onSave={(data) => updateHall.mutateAsync(toHallUpdateInput(data))}
             />
         </>
     );

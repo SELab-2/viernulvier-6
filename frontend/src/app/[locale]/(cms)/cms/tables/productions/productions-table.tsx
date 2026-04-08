@@ -53,12 +53,17 @@ export function ProductionsTable() {
         clearSelection,
     } = useParentChildSelection<Production>(eventsByProduction);
 
+    const tActions = useTranslations("Cms.ActionsColumn");
+
     const productionCols = useMemo(
-        () => [selectColumn, ...makeProductionColumns({ onEdit: setEditProduction })],
-        [selectColumn]
+        () => [selectColumn, ...makeProductionColumns({ onEdit: setEditProduction, t: tActions })],
+        [selectColumn, tActions]
     );
 
-    const eventCols = useMemo(() => makeEventColumns({ onEdit: setEditEvent }), []);
+    const eventCols = useMemo(
+        () => makeEventColumns({ onEdit: setEditEvent, t: tActions }),
+        [tActions]
+    );
 
     const expanderLabels = useMemo(() => ({ show: t("showEvents"), hide: t("hideEvents") }), [t]);
 
@@ -139,22 +144,22 @@ export function ProductionsTable() {
                                 count: selectedProductionCount,
                                 inlineActions: [
                                     {
+                                        key: "add-productions-to-collection",
                                         label: tCollections("addToCollection"),
                                         onClick: () => setProductionDialogOpen(true),
                                     },
                                 ],
-                                overflowActions: [],
                             },
                             {
                                 countKey: "eventsSelected",
                                 count: selectedEventCount,
                                 inlineActions: [
                                     {
+                                        key: "add-events-to-collection",
                                         label: tCollections("addToCollection"),
                                         onClick: () => setEventDialogOpen(true),
                                     },
                                 ],
-                                overflowActions: [],
                             },
                         ]}
                         onClear={clearSelection}
@@ -196,7 +201,7 @@ export function ProductionsTable() {
                 entity={editProduction}
                 fields={productionFields}
                 title={t("editProduction")}
-                onSave={(data) => updateProduction.mutate(toProductionUpdateInput(data))}
+                onSave={(data) => updateProduction.mutateAsync(toProductionUpdateInput(data))}
             />
             <EditSheet
                 open={!!editEvent}
@@ -204,7 +209,7 @@ export function ProductionsTable() {
                 entity={editEvent}
                 fields={eventFields}
                 title={t("editEvent")}
-                onSave={(data) => updateEvent.mutate(toEventUpdateInput(data))}
+                onSave={(data) => updateEvent.mutateAsync(toEventUpdateInput(data))}
             />
         </>
     );
