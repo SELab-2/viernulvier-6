@@ -155,7 +155,7 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
     return (
         <>
             {/* Header - Newspaper style */}
-            <div className="border-foreground/20 border-b p-5">
+            <div className="px-5 pt-5 pb-3">
                 <Link href="/cms" className="block text-center" onClick={handleNavClick}>
                     <div className="font-display text-foreground text-[28px] leading-tight font-black tracking-tight uppercase">
                         CMS
