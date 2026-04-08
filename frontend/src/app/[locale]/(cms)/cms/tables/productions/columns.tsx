@@ -1,9 +1,13 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { SquarePen } from "lucide-react";
+import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
 import type { FieldDef } from "../edit-sheet";
 import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
+import { Action, ActionDisplay } from "@/types/cms/actions";
 import type {
     Production,
     ProductionRow,
@@ -135,7 +139,48 @@ export function toProductionUpdateInput(row: ProductionRow): ProductionUpdateInp
 
 export function makeProductionColumns(options: {
     onEdit: (row: ProductionRow) => void;
+    t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>;
 }): ColumnDef<Production>[] {
+    const { onEdit, t } = options;
+
+    const actions: Action<Production>[] = [
+        {
+            key: "edit",
+            label: t("edit", { label: "production" }),
+            icon: SquarePen,
+            display: ActionDisplay.Inline,
+            onClick: (p) => onEdit(toProductionRow(p)),
+        },
+        {
+            key: "copy-slug",
+            label: t("copy", { key: "slug" }),
+            onClick: async (p) => {
+                try {
+                    await navigator.clipboard.writeText(p.slug);
+                    toast.success(t("copied", { key: "slug" }));
+                } catch {
+                    toast.error(t("copyFailed"));
+                }
+            },
+        },
+        {
+            key: "add-to-collection",
+            render: (production, closeMenu) => (
+                <CollectionPickerSubmenu
+                    item={{
+                        contentId: production.id,
+                        contentType: "production",
+                        label:
+                            production.translations.find((t) => t.languageCode === "nl")?.title ??
+                            production.translations.find((t) => t.languageCode === "en")?.title ??
+                            production.slug,
+                    }}
+                    onComplete={closeMenu}
+                />
+            ),
+        },
+    ];
+
     return [
         {
             id: "titleNl",
@@ -154,23 +199,6 @@ export function makeProductionColumns(options: {
                 row.translations.find((t) => t.languageCode === "nl")?.artist ?? "",
         },
         { accessorKey: "slug", header: "Slug" },
-        makeActionsColumn<Production>({
-            label: "production",
-            copyKey: "slug",
-            onEdit: (p) => options.onEdit(toProductionRow(p)),
-            extraMenuItems: (production, closeMenu) => (
-                <CollectionPickerSubmenu
-                    item={{
-                        contentId: production.id,
-                        contentType: "production",
-                        label:
-                            production.translations.find((t) => t.languageCode === "nl")?.title ??
-                            production.translations.find((t) => t.languageCode === "en")?.title ??
-                            production.slug,
-                    }}
-                    onComplete={closeMenu}
-                />
-            ),
-        }),
+        makeActionsColumn<Production>({ actions }),
     ];
 }
