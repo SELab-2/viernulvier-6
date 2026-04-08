@@ -1,12 +1,13 @@
 use axum::{
     Json,
-    extract::{Path, Query},
+    extract::{Path, Query, State},
     http::StatusCode,
 };
-use database::Database;
+use database::{Database, models::entity_type::EntityType};
 use uuid::Uuid;
 
 use crate::{
+    AppState,
     dto::{
         event::EventPayload,
         paginated::PaginatedResponse,
@@ -32,12 +33,27 @@ use crate::{
     )
 )]
 pub async fn get_all(
+    State(state): State<AppState>,
     db: Database,
     Query(pagination): Query<PaginationQuery>,
 ) -> JsonResponse<PaginatedResponse<ProductionPayload>> {
-    ProductionPayload::all(&db, pagination.cursor, pagination.limit)
-        .await?
-        .json()
+    let mut response = ProductionPayload::all(&db, pagination.cursor, pagination.limit).await?;
+
+    let ids: Vec<Uuid> = response.data.iter().map(|p| p.id).collect();
+    let cover_keys = db
+        .media()
+        .cover_s3_keys_for_entities(EntityType::Production, &ids)
+        .await?;
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+
+    for p in &mut response.data {
+        if let Some(s3_key) = cover_keys.get(&p.id) {
+            p.cover_image_url =
+                public_url.map(|base| format!("{}/{}", base.trim_end_matches('/'), s3_key));
+        }
+    }
+
+    response.json()
 }
 
 #[utoipa::path(
@@ -54,8 +70,25 @@ pub async fn get_all(
         (status = 404, description = "Not found")
     )
 )]
-pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<ProductionPayload> {
-    ProductionPayload::by_id(&db, id).await?.json()
+pub async fn get_one(
+    State(state): State<AppState>,
+    db: Database,
+    Path(id): Path<Uuid>,
+) -> JsonResponse<ProductionPayload> {
+    let mut payload = ProductionPayload::by_id(&db, id).await?;
+
+    let cover_keys = db
+        .media()
+        .cover_s3_keys_for_entities(EntityType::Production, &[id])
+        .await?;
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+
+    if let Some(s3_key) = cover_keys.get(&id) {
+        payload.cover_image_url =
+            public_url.map(|base| format!("{}/{}", base.trim_end_matches('/'), s3_key));
+    }
+
+    payload.json()
 }
 
 #[utoipa::path(

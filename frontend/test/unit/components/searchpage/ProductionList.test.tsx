@@ -37,6 +37,7 @@ describe("ProductionList component", () => {
             uitdatabankTheme: null,
             uitdatabankType: null,
             translations: [],
+            coverImageUrl: null,
         },
         {
             id: "2",
@@ -48,6 +49,7 @@ describe("ProductionList component", () => {
             uitdatabankTheme: null,
             uitdatabankType: null,
             translations: [],
+            coverImageUrl: null,
         },
     ];
 

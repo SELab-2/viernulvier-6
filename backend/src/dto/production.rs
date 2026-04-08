@@ -134,6 +134,10 @@ pub struct ProductionPayload {
     pub uitdatabank_type: Option<String>,
 
     pub translations: Vec<ProductionTranslationPayload>,
+
+    /// Cover image URL resolved from the entity_media link (output-only).
+    #[serde(skip_deserializing)]
+    pub cover_image_url: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -186,6 +190,7 @@ impl From<ProductionWithTranslations> for ProductionPayload {
             uitdatabank_theme: pwt.production.uitdatabank_theme,
             uitdatabank_type: pwt.production.uitdatabank_type,
             translations,
+            cover_image_url: None,
         }
     }
 }
