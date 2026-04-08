@@ -57,7 +57,7 @@ function FeaturedCard({
     return (
         <div className="group bg-background hover:bg-muted/5 relative cursor-pointer p-4 pb-5 transition-colors sm:p-5">
             <div
-                className={`relative mb-3 h-[160px] w-full overflow-hidden bg-[#CCC6BC] sm:${isFirst ? "h-[200px]" : "h-[140px]"}`}
+                className={`relative mb-3 h-[160px] w-full overflow-hidden bg-[#CCC6BC] ${isFirst ? "sm:h-[200px]" : "sm:h-[140px]"}`}
             >
                 {production.coverImageUrl ? (
                     <Image

@@ -5,6 +5,7 @@ import {
     mapAttachMediaInput,
     mapMedia,
     mapMediaList,
+    mapMediaToPayload,
     mapUploadUrlInput,
     mapUploadUrlResult,
 } from "@/mappers/media.mapper";
@@ -34,7 +35,15 @@ const fetchEntityMedia = async (
 ): Promise<Media[]> => {
     const { data } = await api.get<GetEntityMediaResponse>(
         `/media/entity/${entityType}/${entityId}`,
-        { params }
+        {
+            params: params && {
+                role: params.role,
+                cover_only: params.coverOnly,
+                include_crops: params.includeCrops,
+                limit: params.limit,
+                offset: params.offset,
+            },
+        }
     );
     return mapMediaList(data);
 };
@@ -79,7 +88,7 @@ export const useGetAllMedia = (options?: {
     return useQuery({
         queryKey: queryKeys.media.all(),
         queryFn: () => fetchAllMedia({ limit: options?.limit, offset: options?.offset }),
-        ...options,
+        enabled: options?.enabled,
     });
 };
 
@@ -153,7 +162,10 @@ export const useUpdateMedia = () => {
 
     return useMutation({
         mutationFn: async (media: Media): Promise<Media> => {
-            const { data } = await api.put<GetMediaByIdResponse>(`/media/${media.id}`, media);
+            const { data } = await api.put<GetMediaByIdResponse>(
+                `/media/${media.id}`,
+                mapMediaToPayload(media)
+            );
             return mapMedia(data);
         },
         onSuccess: (updated) => {

@@ -43,8 +43,8 @@ export type Media = {
 
 export type EntityMediaParams = {
     role?: string;
-    cover_only?: boolean;
-    include_crops?: boolean;
+    coverOnly?: boolean;
+    includeCrops?: boolean;
     limit?: number;
     offset?: number;
 };
