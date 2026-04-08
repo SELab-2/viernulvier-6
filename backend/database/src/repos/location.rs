@@ -173,6 +173,7 @@ impl<'a> LocationRepo<'a> {
         .await?)
     }
 
+    /// Insert or update translations for a location. Clears all translations when the list is empty.
     async fn upsert_translations(
         &self,
         location_id: Uuid,

@@ -226,6 +226,7 @@ impl<'a> CollectionRepo<'a> {
         .await?)
     }
 
+    /// Insert or update translations for a collection. Clears all translations when the list is empty.
     async fn upsert_translations(
         &self,
         collection_id: Uuid,
@@ -314,6 +315,7 @@ impl<'a> CollectionRepo<'a> {
         .await?)
     }
 
+    /// Insert or update translations for a collection item. Clears all translations when the list is empty.
     async fn upsert_item_translations(
         &self,
         item_id: Uuid,

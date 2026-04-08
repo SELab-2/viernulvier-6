@@ -23,7 +23,7 @@ const fetchLocationById = async (id: string): Promise<Location> => {
 };
 
 const fetchLocationBySlug = async (slug: string): Promise<Location> => {
-    const { data } = await api.get<LocationResponse>(`/locations/slug/${slug}`);
+    const { data } = await api.get<LocationResponse>(`/locations/slug/${encodeURIComponent(slug)}`);
     return mapLocation(data);
 };
 
