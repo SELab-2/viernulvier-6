@@ -1,5 +1,7 @@
 import { http, HttpResponse } from "msw";
 
+import { LocationResponse } from "@/types/api/location.api.types";
+
 import { apiUrl } from "../../utils/env";
 
 const location = {
@@ -17,7 +19,7 @@ const location = {
     is_owned_by_viernulvier: true,
     uitdatabank_id: "udb-main",
     translations: [{ language_code: "nl", description: "Hoofdlocatie", history: null }],
-};
+} satisfies LocationResponse;
 
 export const locationHandlers = [
     http.get(apiUrl("/locations"), () => {
