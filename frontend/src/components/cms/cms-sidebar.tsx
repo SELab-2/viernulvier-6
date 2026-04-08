@@ -220,20 +220,8 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
                     </div>
                 </div>
 
-                {/* Filters Section */}
-                {entityType !== null && facets && facets.length > 0 && (
-                    <div className="mb-5">
-                        <FacetFilters
-                            facets={facets}
-                            activeFacets={activeFacets}
-                            onToggle={toggleTag}
-                            onClear={clearFilters}
-                        />
-                    </div>
-                )}
-
                 {/* Utility Section */}
-                <div>
+                <div className="mb-5">
                     <div className="text-muted-foreground mb-3 px-5 text-center font-mono text-xs tracking-[2px] uppercase">
                         — {tSidebar("system")} —
                     </div>
@@ -279,6 +267,18 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
                         })}
                     </div>
                 </div>
+
+                {/* Filters Section */}
+                {entityType !== null && facets && facets.length > 0 && (
+                    <div className="mb-5">
+                        <FacetFilters
+                            facets={facets}
+                            activeFacets={activeFacets}
+                            onToggle={toggleTag}
+                            onClear={clearFilters}
+                        />
+                    </div>
+                )}
             </nav>
         </>
     );
