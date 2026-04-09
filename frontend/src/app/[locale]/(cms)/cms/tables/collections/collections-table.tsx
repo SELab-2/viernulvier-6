@@ -65,16 +65,14 @@ export function CollectionsTable() {
 
     return (
         <div className="p-4">
+            <div className="flex items-center justify-end pb-2">
+                <Button onClick={() => setCreateOpen(true)}>{t("newCollection")}</Button>
+            </div>
             <DataTable
                 columns={columns}
                 data={rows}
                 loading={isLoading}
                 onRowClick={handleRowClick}
-                toolbar={
-                    <div className="flex items-center justify-end">
-                        <Button onClick={() => setCreateOpen(true)}>{t("newCollection")}</Button>
-                    </div>
-                }
             />
             <CreateCollectionDialog open={createOpen} onOpenChange={setCreateOpen} />
         </div>
