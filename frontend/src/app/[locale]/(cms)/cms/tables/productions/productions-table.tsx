@@ -17,13 +17,13 @@ import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialo
 import type { PickerItem } from "@/lib/collection-picker-utils";
 import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
-import { Archive, Plus } from "lucide-react";
+import { Archive } from "lucide-react";
 
 export function ProductionsTable() {
     const t = useTranslations("Cms.Productions");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
-    const { data: productionsResult, isLoading: productionsLoading } = useGetProductions();
+    const { data: productionsResult } = useGetProductions();
     const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
     const productions = useMemo(() => productionsResult?.data ?? [], [productionsResult?.data]);
     const allEvents = useMemo(() => eventsResult?.data ?? [], [eventsResult?.data]);
@@ -142,8 +142,6 @@ export function ProductionsTable() {
             getEventRowId,
         ]
     );
-
-    const hasSelection = selectedProductionCount > 0 || selectedEventCount > 0;
 
     // Selection toolbar groups with our styling but main's collections feature
     const selectionGroups = useMemo(() => {
