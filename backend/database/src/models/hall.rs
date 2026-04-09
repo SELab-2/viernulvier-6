@@ -20,3 +20,7 @@ pub struct Hall {
     // references
     pub space_id: Option<Uuid>, // foreign key of the associated space
 }
+
+pub struct HallSearch {
+    pub q: Option<String>,
+}
