@@ -242,4 +242,27 @@ describe("DateRangePicker component", () => {
         await user.click(screen.getByRole("button", { name: "Outside" }));
         expect(screen.queryByText("Start year")).not.toBeInTheDocument();
     });
+
+    it("auto-advances to end picker when start date is picked after current end date", async () => {
+        const user = userEvent.setup();
+        const onChange = vi.fn();
+        // startDate=15 Mar 2020, endDate=10 Sep 2022 — pick a start date of Dec 15 2023 (after endDate)
+        renderWithIntl(<DateRangePicker {...defaultProps} onChange={onChange} />);
+
+        await user.click(screen.getByText("15 Mar 2020"));
+        await user.click(screen.getByRole("button", { name: "2023" }));
+        await user.click(screen.getByText("Dec"));
+        await user.click(screen.getByRole("button", { name: "15" }));
+
+        // onChange called with newEnd === selected (since selected > endDate)
+        expect(onChange).toHaveBeenCalledOnce();
+        const [start, end] = onChange.mock.calls[0] as [Date, Date];
+        expect(start.getFullYear()).toBe(2023);
+        expect(start.getMonth()).toBe(11); // December
+        expect(start.getDate()).toBe(15);
+        expect(end).toEqual(start);
+
+        // Picker stays open and switches to End year header
+        expect(screen.getByText("End year")).toBeInTheDocument();
+    });
 });
