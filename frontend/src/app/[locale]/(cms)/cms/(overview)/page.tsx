@@ -108,7 +108,7 @@ export default function CmsOverviewPage() {
     });
 
     return (
-        <div className="flex flex-col px-4 py-6 sm:px-6 sm:py-8">
+        <div className="flex h-full flex-col px-4 py-6 sm:px-6 sm:py-8">
             {/* Header */}
             <header
                 ref={headerRef}

@@ -137,6 +137,13 @@
         "loggedOut": "Succesvol uitgelogd."
     },
     "Cms": {
+        "overview": "Overzicht",
+        "productions": "Producties",
+        "locations": "Locaties",
+        "articles": "Artikelen",
+        "performers": "Uitvoerders",
+        "ingest": "Ingest",
+        "import": "Import",
         "TabBar": {
             "overview": "CMS Overzicht",
             "content": "Inhoud beheren",
@@ -168,6 +175,14 @@
             "bulkEdit": "Bulk bewerken",
             "delete": "Verwijderen"
         },
+        "SelectionToolbar": {
+            "clearSelection": "Wissen",
+            "moreActions": "Meer acties",
+            "productionsSelected": "{count, plural, one {# productie} other {# producties}}",
+            "eventsSelected": "{count, plural, one {# voorstelling} other {# voorstellingen}}",
+            "locationsSelected": "{count, plural, one {# locatie} other {# locaties}}",
+            "hallsSelected": "{count, plural, one {# zaal} other {# zalen}}"
+        },
         "ActionsColumn": {
             "openMenu": "Menu openen",
             "actions": "Acties",
@@ -181,7 +196,27 @@
             "no": "Nee",
             "selectPlaceholder": "Selecteer\u2026",
             "cancel": "Annuleren",
-            "saveChanges": "Wijzigingen opslaan"
+            "saveChanges": "Wijzigingen opslaan",
+            "editMode": "Bewerk modus"
+        },
+        "Overview": {
+            "title": "CMS Overzicht",
+            "subtitle": "Beheer inhoud en instellingen",
+            "productions": "Producties",
+            "productionsDescription": "Beheer producties en evenementen",
+            "articles": "Artikelen",
+            "articlesDescription": "Beheer nieuwsartikelen",
+            "locations": "Locaties",
+            "locationsDescription": "Beheer locaties en zalen",
+            "performers": "Uitvoerders",
+            "performersDescription": "Beheer artiesten en uitvoerders",
+            "ingest": "Ingest",
+            "ingestDescription": "Upload en verwerk archiefmaterialen",
+            "import": "Import",
+            "importDescription": "Importeer data van externe bronnen",
+            "items": "items",
+            "openSection": "Open sectie",
+            "backToOverview": "Terug naar overzicht"
         },
         "editions": {
             "edition1": "Ed. 01",
@@ -205,21 +240,31 @@
             "articlesEyebrow": "Ed. 03 — Artikelen",
             "performersEyebrow": "Ed. 04 — Uitvoerders",
             "ingestEyebrow": "Ed. 05 — Ingest",
-            "importEyebrow": "Ed. 06 — Import"
+            "importEyebrow": "Ed. 06 — Import",
+            "collectionsEyebrow": "Collecties"
         },
         "Productions": {
+            "title": "Producties",
+            "subtitle": "Beheer alle producties en geplande evenementen",
+            "items": "items",
             "showEvents": "Voorstellingen tonen",
             "hideEvents": "Voorstellingen verbergen",
             "editProduction": "Productie bewerken",
             "editEvent": "Voorstelling bewerken"
         },
         "Locations": {
+            "title": "Locaties",
+            "subtitle": "Beheer locaties, theaters en hun individuele zalen",
+            "items": "locaties",
             "showHalls": "Zalen tonen",
             "hideHalls": "Zalen verbergen",
             "editLocation": "Locatie bewerken",
             "editHall": "Zaal bewerken"
         },
         "Articles": {
+            "title": "Artikelen",
+            "subtitle": "Beheer nieuwsartikelen",
+            "comingSoon": "Binnenkort beschikbaar",
             "notAvailable": "Artikelen-API is nog niet beschikbaar. Geen gegevens om weer te geven.",
             "newArticle": "Nieuw artikel",
             "createFailed": "Aanmaken van artikel mislukt.",
@@ -231,14 +276,31 @@
             "statusLabel": "Status",
             "slug": "Slug",
             "subjectPeriod": "Periode",
-            "title": "Titel",
+            "titleColumn": "Titel",
             "relatedProductions": "Gerelateerde producties",
             "relatedArtists": "Gerelateerde artiesten",
             "relatedLocations": "Gerelateerde locaties",
             "relatedEvents": "Gerelateerde voorstellingen"
         },
         "Performers": {
+            "title": "Uitvoerders",
+            "subtitle": "Beheer artiesten",
+            "comingSoon": "Binnenkort beschikbaar",
             "notAvailable": "Uitvoerders-API is nog niet beschikbaar. Geen gegevens om weer te geven."
+        },
+        "Ingest": {
+            "title": "Ingest",
+            "subtitle": "Bulk import van mediabestanden en archiefmaterialen",
+            "comingSoon": "Binnenkort beschikbaar",
+            "notAvailable": "Ingest functionaliteit",
+            "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier mediabestanden uploaden en verwerken."
+        },
+        "Import": {
+            "title": "Import",
+            "subtitle": "Automatische import van externe databronnen",
+            "comingSoon": "Binnenkort beschikbaar",
+            "notAvailable": "Import functionaliteit",
+            "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier data importeren van externe bronnen zoals UiTdatabank."
         },
         "Collections": {
             "title": "Collecties",

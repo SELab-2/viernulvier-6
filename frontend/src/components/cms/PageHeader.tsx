@@ -27,12 +27,12 @@ export function PageHeader({ eyebrow, title }: PageHeaderProps) {
     return (
         <header
             ref={headerRef}
-            className="border-foreground/10 bg-background relative z-20 mb-6 shrink-0 border-b pb-4 opacity-0"
+            className="border-foreground/10 bg-background relative z-20 mb-2 shrink-0 border-b pb-2 opacity-0"
         >
-            <div className="text-muted-foreground mb-2 font-mono text-[9px] tracking-[2px] uppercase">
+            <div className="text-muted-foreground mb-1 font-mono text-[9px] tracking-[2px] uppercase">
                 {eyebrow}
             </div>
-            <h1 className="font-display text-foreground text-[32px] font-black tracking-tight uppercase">
+            <h1 className="font-display text-foreground text-[32px] leading-none font-black tracking-tight uppercase">
                 {title}
             </h1>
         </header>

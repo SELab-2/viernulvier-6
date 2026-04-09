@@ -22,7 +22,8 @@ function formatDate(date: string | null): string {
 
 export function makeArticleColumns(
     onEdit: (article: ArticleListItem) => void,
-    t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>
+    t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>,
+    tArticles: ReturnType<typeof useTranslations<"Cms.Articles">>
 ): ColumnDef<ArticleListItem>[] {
     const actions: Action<ArticleListItem>[] = [
         {
@@ -55,9 +56,15 @@ export function makeArticleColumns(
         },
         {
             accessorKey: "title",
-            header: "Title",
+            header: tArticles("titleColumn"),
             cell: ({ row }) =>
-                row.original.title ?? <span className="text-muted-foreground">—</span>,
+                row.original.title ? (
+                    <span className="font-display text-sm tracking-tight">
+                        {row.original.title}
+                    </span>
+                ) : (
+                    <span className="text-muted-foreground">—</span>
+                ),
         },
         {
             id: "subjectPeriod",
@@ -68,7 +75,7 @@ export function makeArticleColumns(
                     return <span className="text-muted-foreground">—</span>;
                 }
                 return (
-                    <span>
+                    <span className="text-muted-foreground font-mono text-xs">
                         {formatDate(subjectPeriodStart)} – {formatDate(subjectPeriodEnd)}
                     </span>
                 );

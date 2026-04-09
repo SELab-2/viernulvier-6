@@ -153,9 +153,9 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
     };
 
     return (
-        <>
+        <div className="flex h-full flex-col overflow-hidden">
             {/* Header - Newspaper style */}
-            <div className="px-5 pt-5 pb-3">
+            <div className="shrink-0 px-5 pt-5 pb-3">
                 <Link href="/cms" className="block text-center" onClick={handleNavClick}>
                     <div className="font-display text-foreground text-[28px] leading-tight font-black tracking-tight uppercase">
                         CMS
@@ -277,7 +277,7 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
                     </div>
                 )}
             </nav>
-        </>
+        </div>
     );
 }
 
@@ -287,7 +287,7 @@ export function CmsSidebar() {
     return (
         <>
             {/* Desktop Sidebar - Always visible */}
-            <aside className="border-foreground/20 bg-background hidden h-full w-56 flex-col border-r lg:flex">
+            <aside className="border-foreground/20 bg-background flex hidden h-full w-56 flex-col overflow-hidden border-r lg:flex">
                 <SidebarContent />
             </aside>
 

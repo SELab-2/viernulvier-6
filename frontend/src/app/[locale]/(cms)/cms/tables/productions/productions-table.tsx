@@ -5,24 +5,24 @@ import { useTranslations } from "next-intl";
 import type { Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
-import { ActionBar } from "../action-bar";
 import { makeProductionColumns, productionFields, toProductionUpdateInput } from "./columns";
 import type { ProductionRow } from "@/types/models/production.types";
+import { SelectionToolbar } from "../selection-toolbar";
 import { useParentChildSelection } from "../use-parent-child-selection";
 import { makeEventColumns, eventFields, toEventUpdateInput } from "./event-columns";
-import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { useGetProductions, useUpdateProduction } from "@/hooks/api/useProductions";
 import { useGetEvents, useUpdateEvent } from "@/hooks/api/useEvents";
-import { ActionVariant } from "@/types/cms/actions";
+import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
+import type { PickerItem } from "@/lib/collection-picker-utils";
 import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
+import { Archive, Plus } from "lucide-react";
 
 export function ProductionsTable() {
     const t = useTranslations("Cms.Productions");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
-    const tBar = useTranslations("Cms.ActionBar");
     const { data: productionsResult, isLoading: productionsLoading } = useGetProductions();
     const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
     const productions = useMemo(() => productionsResult?.data ?? [], [productionsResult?.data]);
@@ -96,23 +96,17 @@ export function ProductionsTable() {
         return selected;
     }, [childSelection, eventsById]);
 
-    const collectionPickerItems = useMemo(
+    const collectionPickerItems: PickerItem[] = useMemo(
         () => [
-            ...selectedProductions.map((production) => ({
-                contentId: production.id,
+            ...selectedProductions.map((p) => ({
                 contentType: "production" as const,
-                label:
-                    production.translations.find((translation) => translation.languageCode === "nl")
-                        ?.title ||
-                    production.translations.find((translation) => translation.languageCode === "en")
-                        ?.title ||
-                    production.slug,
+                contentId: p.id,
+                label: p.slug,
             })),
-            ...selectedEvents.map((event) => ({
-                contentId: event.id,
+            ...selectedEvents.map((e) => ({
                 contentType: "event" as const,
-                label: `${new Date(event.startsAt).toLocaleDateString()} ${new Date(event.startsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
-                parentProductionId: event.productionId,
+                contentId: e.id,
+                label: e.id.slice(0, 8),
             })),
         ],
         [selectedProductions, selectedEvents]
@@ -122,7 +116,7 @@ export function ProductionsTable() {
         (row: Row<Production>) => {
             if (eventsLoading) {
                 return (
-                    <div className="bg-muted/30 flex items-center py-1 pr-6 pl-12">
+                    <div className="flex items-center py-1 pr-6 pl-14">
                         <Spinner className="text-muted-foreground size-3" />
                     </div>
                 );
@@ -149,68 +143,95 @@ export function ProductionsTable() {
         ]
     );
 
-    const actions = useMemo(
-        () => [
-            {
-                key: "add-to-collection",
-                label: tCollections("addToCollection"),
-                onClick: () => setCollectionDialogOpen(true),
-            },
-            {
-                key: "delete",
-                label: tBar("delete"),
-                variant: ActionVariant.Destructive,
-            },
-        ],
-        [tCollections, tBar]
-    );
+    const hasSelection = selectedProductionCount > 0 || selectedEventCount > 0;
+
+    // Selection toolbar groups with our styling but main's collections feature
+    const selectionGroups = useMemo(() => {
+        const groups: Parameters<typeof SelectionToolbar>[0]["groups"] = [];
+        if (selectedProductionCount > 0) {
+            groups.push({
+                countKey: "productionsSelected" as const,
+                count: selectedProductionCount,
+                inlineActions: [
+                    {
+                        label: tCollections("addToCollection"),
+                        icon: <Archive className="h-3.5 w-3.5" />,
+                        onClick: () => setCollectionDialogOpen(true),
+                    },
+                ],
+                overflowActions: [],
+            });
+        }
+        if (selectedEventCount > 0) {
+            groups.push({
+                countKey: "eventsSelected" as const,
+                count: selectedEventCount,
+                inlineActions: [
+                    {
+                        label: tCollections("addToCollection"),
+                        icon: <Archive className="h-3.5 w-3.5" />,
+                        onClick: () => setCollectionDialogOpen(true),
+                    },
+                ],
+                overflowActions: [],
+            });
+        }
+        return groups;
+    }, [selectedProductionCount, selectedEventCount, tCollections]);
 
     return (
-        <>
-            <ActionBar
-                totalCount={productions.length}
-                totalCountKey="totalProductions"
-                entityCounts={[
-                    { countKey: "productionsSelected", count: selectedProductionCount },
-                    { countKey: "eventsSelected", count: selectedEventCount },
-                ]}
-                actions={actions}
-                onClear={clearSelection}
-            />
-            <div className="min-h-0 flex-1 overflow-auto">
+        <div className="flex h-full flex-col">
+            {/* Our styled SelectionToolbar with collections feature - sticky */}
+            <div className="bg-background sticky top-0 z-10">
+                <SelectionToolbar groups={selectionGroups} onClear={clearSelection} />
+            </div>
+
+            <div className="flex-1 overflow-auto">
                 <DataTable
                     columns={productionCols}
                     data={productions}
-                    loading={productionsLoading}
-                    renderSubComponent={renderEvents}
                     getRowCanExpand={getRowCanExpand}
-                    expanderLabels={expanderLabels}
+                    renderSubRows={renderEvents}
                     rowSelection={parentSelection}
                     onRowSelectionChange={setParentSelection}
+                    expanderLabels={expanderLabels}
                     getRowId={getProductionRowId}
                 />
             </div>
+
+            {editProduction && (
+                <EditSheet
+                    open={!!editProduction}
+                    onOpenChange={(open) => !open && setEditProduction(null)}
+                    title={t("editProduction")}
+                    entity={editProduction}
+                    fields={productionFields}
+                    onSave={async (values) => {
+                        await updateProduction.mutateAsync(toProductionUpdateInput(values));
+                        setEditProduction(null);
+                    }}
+                />
+            )}
+
+            {editEvent && (
+                <EditSheet
+                    open={!!editEvent}
+                    onOpenChange={(open) => !open && setEditEvent(null)}
+                    title={t("editEvent")}
+                    entity={editEvent}
+                    fields={eventFields}
+                    onSave={async (values) => {
+                        await updateEvent.mutateAsync(toEventUpdateInput(values));
+                        setEditEvent(null);
+                    }}
+                />
+            )}
+
             <CollectionPickerDialog
                 open={collectionDialogOpen}
                 onOpenChange={setCollectionDialogOpen}
                 items={collectionPickerItems}
             />
-            <EditSheet
-                open={!!editProduction}
-                onOpenChange={(open) => !open && setEditProduction(null)}
-                entity={editProduction}
-                fields={productionFields}
-                title={t("editProduction")}
-                onSave={(data) => updateProduction.mutateAsync(toProductionUpdateInput(data))}
-            />
-            <EditSheet
-                open={!!editEvent}
-                onOpenChange={(open) => !open && setEditEvent(null)}
-                entity={editEvent}
-                fields={eventFields}
-                title={t("editEvent")}
-                onSave={(data) => updateEvent.mutateAsync(toEventUpdateInput(data))}
-            />
-        </>
+        </div>
     );
 }

@@ -76,7 +76,9 @@ export function ProductionHero({ production, locale }: { production: Production;
                             Taal
                         </div>
                         <div className="font-body text-foreground text-[13px] leading-[1.4] font-medium">
-                            {production.titleEn ? "EN / NL" : "NL"}
+                            {production.translations.some((t) => t.languageCode === "en")
+                                ? "EN / NL"
+                                : "NL"}
                         </div>
                     </div>
                 </div>

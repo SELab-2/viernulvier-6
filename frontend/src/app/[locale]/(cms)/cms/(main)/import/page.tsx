@@ -27,11 +27,11 @@ export default function ImportPage() {
     }, []);
 
     return (
-        <div className="flex h-full flex-col">
+        <div className="flex h-full flex-col px-4 py-3">
             <PageHeader eyebrow={tHeader("importEyebrow")} title={t("title")} />
 
-            {/* Content */}
-            <div ref={contentRef} className="flex-1 overflow-y-auto">
+            {/* Content - scrollable */}
+            <div ref={contentRef} className="flex-1 overflow-auto">
                 <div className="max-w-2xl">
                     <div className="border-foreground/20 bg-foreground/[0.02] border p-8">
                         <div className="flex items-start gap-4">

@@ -131,18 +131,20 @@ export function LocationsTable() {
     );
 
     return (
-        <>
-            <ActionBar
-                totalCount={locations.length}
-                totalCountKey="totalLocations"
-                entityCounts={[
-                    { countKey: "locationsSelected", count: selectedLocationCount },
-                    { countKey: "hallsSelected", count: selectedHallCount },
-                ]}
-                actions={actions}
-                onClear={clearSelection}
-            />
-            <div className="min-h-0 flex-1 overflow-auto">
+        <div className="flex h-full flex-col">
+            <div className="bg-background sticky top-0 z-10">
+                <ActionBar
+                    totalCount={locations.length}
+                    totalCountKey="totalLocations"
+                    entityCounts={[
+                        { countKey: "locationsSelected", count: selectedLocationCount },
+                        { countKey: "hallsSelected", count: selectedHallCount },
+                    ]}
+                    actions={actions}
+                    onClear={clearSelection}
+                />
+            </div>
+            <div className="flex-1 overflow-auto">
                 <DataTable
                     columns={locationCols}
                     data={locations}
@@ -176,6 +178,6 @@ export function LocationsTable() {
                 title={t("editHall")}
                 onSave={(data) => updateHall.mutateAsync(toHallUpdateInput(data))}
             />
-        </>
+        </div>
     );
 }

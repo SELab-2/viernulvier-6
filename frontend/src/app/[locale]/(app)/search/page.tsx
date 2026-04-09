@@ -29,6 +29,7 @@ export default function SearchPage() {
 
     const [cursorHistory, setCursorHistory] = useState<(string | null)[]>([null]);
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
+    const [searchQuery, setSearchQuery] = useState("");
 
     const currentCursor = cursorHistory[currentPageIndex];
 
