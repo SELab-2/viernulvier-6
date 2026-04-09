@@ -2,7 +2,7 @@ name: PR Preview
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, closed]
+    types: [opened, synchronize, reopened, closed, labeled, unlabeled]
 
 concurrency:
   group: preview-${{ github.ref }}
@@ -28,7 +28,10 @@ jobs:
     secrets: inherit
 
   preview:
-    if: github.event.action != 'closed'
+    if: >-
+      github.event.action != 'closed' &&
+      github.event.action != 'unlabeled' &&
+      contains(github.event.pull_request.labels.*.name, 'preview')
     runs-on: self-hosted
     environment: preview
     needs: [run_backend_tests, run_frontend_tests]
@@ -130,7 +133,11 @@ jobs:
             });
 
   cleanup:
-    if: github.event.action == 'closed'
+    if: >-
+      (github.event.action == 'closed' &&
+       contains(github.event.pull_request.labels.*.name, 'preview')) ||
+      (github.event.action == 'unlabeled' &&
+       github.event.label.name == 'preview')
     runs-on: self-hosted
     environment: preview
     steps:
