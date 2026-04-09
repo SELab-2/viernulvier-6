@@ -31,7 +31,7 @@ function MemoSubTableInner<T>({
     getRowId?: (row: T) => string;
 }) {
     return (
-        <div className="border-foreground/10 bg-foreground/[0.02] py-1 pr-6 pl-14">
+        <div className="bg-muted/30 py-1 pr-6 pl-12">
             <DataTable
                 columns={columns}
                 data={items}
@@ -58,9 +58,9 @@ function shallowEqual(
 }
 
 import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 import {
     Table,
     TableBody,
@@ -111,6 +111,10 @@ export interface ExpanderLabels {
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
+    // useSuspenseQuery would normally handle this, but it suspends at the hook
+    // call site, so primary + secondary queries (locations + halls, productions +
+    // events) in the same component would both need to settle before anything
+    // renders. This prop keeps the primary table visible while secondary data loads.
     loading?: boolean;
     renderSubComponent?: (row: Row<TData>) => ReactNode;
     getRowCanExpand?: (row: Row<TData>) => boolean;
@@ -119,6 +123,7 @@ interface DataTableProps<TData, TValue> {
     rowSelection?: RowSelectionState;
     onRowSelectionChange?: OnChangeFn<RowSelectionState>;
     getRowId?: (row: TData) => string;
+    onRowClick?: (row: TData) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -132,10 +137,13 @@ export function DataTable<TData, TValue>({
     rowSelection,
     onRowSelectionChange,
     getRowId,
+    onRowClick,
 }: DataTableProps<TData, TValue>) {
     const t = useTranslations("Cms.DataTable");
     const [expanded, setExpanded] = useState<ExpandedState>({});
 
+    // onRowSelectionChange alone determines whether selection is enabled.
+    // rowSelection may be undefined when no items are selected yet (treated as {}).
     const hasSelection = onRowSelectionChange !== undefined;
     const effectiveRowSelection = rowSelection ?? {};
     const hasCustomSelectColumn = useMemo(() => columns.some((c) => c.id === "select"), [columns]);
@@ -149,7 +157,6 @@ export function DataTable<TData, TValue>({
                     checked={row.getIsSelected()}
                     onCheckedChange={(value) => row.toggleSelected(!!value)}
                     aria-label="Select row"
-                    className="border-foreground/30 data-[state=checked]:bg-foreground data-[state=checked]:border-foreground"
                 />
             ),
             enableSorting: false,
@@ -166,17 +173,18 @@ export function DataTable<TData, TValue>({
                 row.getCanExpand() ? (
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <button
+                            <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={row.getToggleExpandedHandler()}
-                                className="text-muted-foreground hover:text-foreground flex h-6 w-6 items-center justify-center transition-colors"
-                                type="button"
+                                className="h-6 w-6 p-0"
                             >
                                 {row.getIsExpanded() ? (
                                     <ChevronDown className="h-4 w-4" />
                                 ) : (
                                     <ChevronRight className="h-4 w-4" />
                                 )}
-                            </button>
+                            </Button>
                         </TooltipTrigger>
                         {expanderLabels && (
                             <TooltipContent>
@@ -187,6 +195,11 @@ export function DataTable<TData, TValue>({
                 ) : null,
         }),
         [expanderLabels]
+    );
+
+    const spacerColumn = useMemo<ColumnDef<TData, TValue>>(
+        () => ({ id: "spacer", header: () => null, cell: () => null }),
+        []
     );
 
     // Build column list with correct ordering: [select] [expander] [data...]
@@ -213,11 +226,22 @@ export function DataTable<TData, TValue>({
         selectColumn,
     ]);
 
+    const finalColumns = useMemo<ColumnDef<TData, TValue>[]>(() => {
+        const actionsIdx = allColumns.findIndex((c) => c.id === "actions");
+        const cols = [...allColumns];
+        if (actionsIdx !== -1) {
+            cols.splice(actionsIdx, 0, spacerColumn);
+        } else {
+            cols.push(spacerColumn);
+        }
+        return cols;
+    }, [allColumns, spacerColumn]);
+
     // @tanstack/react-table peer dep mismatch triggers this rule
     // eslint-disable-next-line react-hooks/incompatible-library
     const table = useReactTable({
         data,
-        columns: allColumns,
+        columns: finalColumns,
         getCoreRowModel: getCoreRowModel(),
         ...(getRowId && { getRowId }),
         state: {
@@ -237,24 +261,25 @@ export function DataTable<TData, TValue>({
 
     return (
         <TooltipProvider>
-            <div className={cn("", compact ? "" : "")}>
-                <Table className={compact ? "text-xs [&_tbody_tr]:border-0 [&_td]:py-1" : ""}>
-                    <TableHeader className="bg-muted">
+            <div className={compact ? undefined : "overflow-hidden rounded-md border"}>
+                <Table
+                    className={
+                        compact
+                            ? "text-xs [&_tbody_tr]:border-0 [&_td]:py-1.5 [&_thead]:border-b"
+                            : "text-sm"
+                    }
+                >
+                    <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id} className="bg-muted hover:bg-muted">
+                            <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => (
                                     <TableHead
                                         key={header.id}
-                                        className={cn(
-                                            "bg-muted relative z-10 shadow-[0_1px_0_0_hsl(var(--border))]",
-                                            compact ? "" : "sticky top-0",
-                                            header.column.id === "select" ||
-                                                header.column.id === "expander"
-                                                ? "w-px px-2 py-2 whitespace-nowrap"
-                                                : header.column.id === "actions"
-                                                  ? "text-foreground px-3 py-2 text-right font-mono text-[10px] tracking-[1.2px] uppercase"
-                                                  : "text-foreground max-w-[300px] px-3 py-2 font-mono text-[10px] tracking-[1.2px] break-words whitespace-normal uppercase"
-                                        )}
+                                        className={
+                                            header.column.id === "spacer"
+                                                ? "w-full"
+                                                : "w-px whitespace-nowrap"
+                                        }
                                     >
                                         {header.isPlaceholder
                                             ? null
@@ -269,25 +294,31 @@ export function DataTable<TData, TValue>({
                     </TableHeader>
                     <TableBody>
                         {table.getRowModel().rows?.length ? (
-                            table.getRowModel().rows.map((row, rowIndex) => (
+                            table.getRowModel().rows.map((row) => (
                                 <Fragment key={row.id}>
                                     <TableRow
                                         data-state={row.getIsSelected() ? "selected" : undefined}
-                                        className={`hover:bg-foreground/[0.04] data-[state=selected]:bg-foreground/[0.06] border-0 transition-colors ${
-                                            rowIndex % 2 === 1 ? "bg-secondary" : ""
-                                        }`}
+                                        className={onRowClick ? "cursor-pointer" : undefined}
+                                        onClick={(e) => {
+                                            if (!onRowClick) return;
+                                            const target = e.target as HTMLElement;
+                                            if (
+                                                target.closest(
+                                                    "button, a, input, select, textarea, [role='menuitem'], [role='checkbox']"
+                                                )
+                                            )
+                                                return;
+                                            onRowClick(row.original);
+                                        }}
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell
                                                 key={cell.id}
-                                                className={cn(
-                                                    cell.column.id === "select" ||
-                                                        cell.column.id === "expander"
-                                                        ? "w-px px-2 whitespace-nowrap"
-                                                        : cell.column.id === "actions"
-                                                          ? "font-body px-3 py-2.5 text-right text-sm whitespace-nowrap"
-                                                          : "font-body max-w-[300px] px-3 py-2.5 text-sm break-words whitespace-normal"
-                                                )}
+                                                className={
+                                                    cell.column.id === "spacer"
+                                                        ? "w-full p-0"
+                                                        : "whitespace-nowrap"
+                                                }
                                             >
                                                 {flexRender(
                                                     cell.column.columnDef.cell,
@@ -297,8 +328,11 @@ export function DataTable<TData, TValue>({
                                         ))}
                                     </TableRow>
                                     {renderSubComponent && row.getIsExpanded() && (
-                                        <TableRow className="border-0 hover:bg-transparent">
-                                            <TableCell colSpan={allColumns.length} className="p-0">
+                                        <TableRow key={`${row.id}-expanded`}>
+                                            <TableCell
+                                                colSpan={finalColumns.length}
+                                                className="p-0"
+                                            >
                                                 {renderSubComponent(row)}
                                             </TableCell>
                                         </TableRow>
@@ -307,20 +341,21 @@ export function DataTable<TData, TValue>({
                             ))
                         ) : loading ? (
                             Array.from({ length: 5 }).map((_, i) => (
-                                <TableRow key={`skeleton-${i}`} className="border-0">
+                                <TableRow key={`skeleton-${i}`}>
                                     {table.getVisibleLeafColumns().map((col) => (
-                                        <TableCell key={col.id} className="px-3 py-2.5">
-                                            <Skeleton className="bg-foreground/10 h-4 w-full" />
+                                        <TableCell key={col.id}>
+                                            <Skeleton className="h-4 w-full" />
                                         </TableCell>
                                     ))}
                                 </TableRow>
                             ))
                         ) : (
-                            <TableRow className="border-0">
-                                <TableCell colSpan={allColumns.length} className="h-32 text-center">
-                                    <div className="text-muted-foreground font-mono text-xs tracking-wide">
-                                        {t("noResults")}
-                                    </div>
+                            <TableRow>
+                                <TableCell
+                                    colSpan={finalColumns.length}
+                                    className="h-24 text-center"
+                                >
+                                    {t("noResults")}
                                 </TableCell>
                             </TableRow>
                         )}

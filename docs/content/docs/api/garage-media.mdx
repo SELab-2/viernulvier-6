@@ -1,0 +1,105 @@
+---
+title: Garage Media Setup
+description: How media storage works with Garage (S3), how importer/CMS flows work, and which API endpoints to use.
+---
+
+# Garage Media Setup
+
+This project stores media files in **Garage (S3-compatible object storage)** and metadata/linking in **PostgreSQL**.
+
+## Architecture
+
+- **Garage/S3** stores the file blob (object)
+- **PostgreSQL** stores media metadata and entity links
+- **Rust API** generates presigned upload URLs and manages metadata/linking
+- **Frontend/CMS** uploads directly to Garage via presigned URL (no file proxy through backend)
+
+## Why This Split
+
+- Object storage is optimized for files and bandwidth
+- SQL is optimized for querying metadata, ordering, filtering, and linking
+- Keeps API stateless for file transfer and avoids backend upload bottlenecks
+
+## Data Model (high-level)
+
+- `media`: canonical media records (`s3_key`, mime, dimensions, checksum, attribution, etc.)
+- `entity_media`: links media to entities (`entity_type`, `entity_id`, `role`, `sort_order`, `is_cover_image`)
+- `media_variant`: crop/variant records (e.g. imported crops)
+
+## Upload & Attach Flow (CMS)
+
+1. Request presigned URL
+   - `POST /api/media/upload-url`
+2. Upload file directly from browser to Garage
+3. Attach metadata + link to entity in one transaction
+   - `POST /api/media/entity/{entity_type}/{entity_id}/attach`
+
+This keeps metadata and linking consistent for CMS operations.
+
+## Retrieval Flow
+
+- Get entity media:
+  - `GET /api/media/entity/{entity_type}/{entity_id}`
+- Useful query params:
+  - `role=gallery|poster|review|...`
+  - `cover_only=true` (fallback: first item by ordering when no explicit cover exists)
+  - `include_crops=true`
+  - `limit`, `offset`
+
+## Importer Behavior (Viernulvier API)
+
+The external API importer retrieves media galleries related to productions and automatically ingests them into our S3 backend.
+
+### Extracting the Hidden Original Source URLs
+
+Many Legacy external API payloads do not expose a direct `link` field to the original image. Instead, they provide an array of `crops` processed by an external image service (like imgproxy).
+
+Here is an example crop from the external API:
+`https://img.viernulvier.gent/.../c:3939:2215:fp:0.5:0.33/s:1920:1080:1/aHR0cHM6Ly93d3cudmllcm51bHZpZXIuZ2VudC8vY21zX2ZpbGVzL3N5c3RlbS9pbWFnZXMvaW1nNzMwM19vcmlnLmpwZw`
+
+If you take the trailing URL segment (`aHR0cHM...`) and Base64-decode it, it reveals the original, uncompressed, and uncropped source URL:
+`https://www.viernulvier.gent/cms_files/system/images/img7303_orig.jpg`
+
+**Why we extract this:**
+If we simply downloaded the `hd_ready` crop as the main image, we would permanently lose the high-resolution original image (e.g., a 4K 3939x3085 master image) because the crop URL applies a scale filter (`s:1920:1080`) and a crop filter (`c:3939:2215`).
+
+To retain maximum fidelity for potential future redesigns or print uses, the Rust importer:
+
+1. Iterates over all crop URLs to locate and decode the Base64 segment.
+2. Downloads the **original master image** and saves it to S3, tying it to the main `media` row in the database.
+3. Downloads specific high-res crops (like `hd_ready` or `FE3_header`) and saves them to S3, tied to the `media_variant` table.
+
+## Maintenance Endpoints
+
+- `POST /api/media/cleanup`
+  - Business orphan cleanup: removes media with no links and deletes their S3 objects.
+
+- `POST /api/media/reconcile?apply=true|false`
+  - Storage integrity drift check (DB keys vs S3 objects)
+  - Dry-run by default (`apply=false`)
+  - With `apply=true`, removes DB rows for keys missing in S3
+
+These endpoints are related but not identical:
+
+- **cleanup** = unlink/business orphan policy
+- **reconcile** = DB/S3 integrity consistency
+
+## Local Testing (Preview Stack)
+
+Run only Garage + init:
+
+```bash
+docker compose --env-file infra/preview/.env -f infra/preview/docker-compose.preview.yml up -d garage garage-init
+```
+
+Run API + DB + Garage for importer tests:
+
+```bash
+docker compose --env-file infra/preview/.env -f infra/preview/docker-compose.preview.yml up -d db garage garage-init api
+```
+
+Watch importer logs:
+
+```bash
+docker compose --env-file infra/preview/.env -f infra/preview/docker-compose.preview.yml logs -f api
+```

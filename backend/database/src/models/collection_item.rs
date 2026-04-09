@@ -34,6 +34,12 @@ pub struct CollectionItemTranslationData {
     pub comment: Option<String>,
 }
 
+pub struct CollectionItemBulkUpdate {
+    pub id: Uuid,
+    pub position: i32,
+    pub translations: Vec<CollectionItemTranslationData>,
+}
+
 pub struct CollectionItemWithTranslations {
     pub item: CollectionItem,
     pub translations: Vec<CollectionItemTranslation>,
@@ -48,4 +54,5 @@ pub enum CollectionContentType {
     Blogpost,
     Artist,
     Location,
+    Media,
 }

@@ -1,8 +1,10 @@
 import {
+    PaginatedProductionResponse,
     ProductionCreateRequest,
     ProductionResponse,
     ProductionUpdateRequest,
 } from "@/types/api/production.api.types";
+import { PaginatedResult } from "@/types/api/api.types";
 import {
     Production,
     ProductionCreateInput,
@@ -11,7 +13,7 @@ import {
     ProductionUpdateInput,
 } from "@/types/models/production.types";
 
-const toNullable = <T>(value: T | null | undefined): T | null => value ?? null;
+import { toNullable } from "./utils";
 
 type ApiTranslation = {
     language_code: string;
@@ -67,6 +69,16 @@ export const mapProduction = (response: ProductionResponse): Production => {
 
 export const mapProductions = (response: ProductionResponse[]): Production[] =>
     response.map(mapProduction);
+
+export const mapPaginatedProductions = (response: PaginatedProductionResponse): Production[] =>
+    mapProductions(response.data);
+
+export const mapPaginatedProductionsResult = (
+    response: PaginatedProductionResponse
+): PaginatedResult<Production> => ({
+    data: mapProductions(response.data),
+    nextCursor: response.next_cursor ?? null,
+});
 
 const mapTranslationInput = (t: ProductionTranslationInput): ApiTranslation => ({
     language_code: t.languageCode,

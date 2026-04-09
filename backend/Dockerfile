@@ -1,4 +1,5 @@
-FROM rust:1.88-slim AS builder
+FROM rust:1.91-slim-bookworm AS builder
+
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY . .
@@ -6,7 +7,8 @@ ENV SQLX_OFFLINE=true
 RUN cargo build --release
 
 FROM debian:bookworm-slim
-RUN apt-get update && apt-get install -y libssl-dev ca-certificates && rm -rf /var/lib/apt/lists/*
+# Note: Switched libssl-dev to libssl3 for the runtime stage (smaller/correct package)
+RUN apt-get update && apt-get install -y libssl3 ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=builder /app/target/release/viernulvier_api .
 CMD ["./viernulvier_api"]

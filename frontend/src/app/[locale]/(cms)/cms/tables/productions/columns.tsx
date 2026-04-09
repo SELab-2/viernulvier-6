@@ -1,8 +1,13 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { SquarePen } from "lucide-react";
+import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
 import type { FieldDef } from "../edit-sheet";
+import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
+import { Action, ActionDisplay } from "@/types/cms/actions";
 import type {
     Production,
     ProductionRow,
@@ -134,51 +139,66 @@ export function toProductionUpdateInput(row: ProductionRow): ProductionUpdateInp
 
 export function makeProductionColumns(options: {
     onEdit: (row: ProductionRow) => void;
+    t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>;
 }): ColumnDef<Production>[] {
+    const { onEdit, t } = options;
+
+    const actions: Action<Production>[] = [
+        {
+            key: "edit",
+            label: t("edit", { label: "production" }),
+            icon: SquarePen,
+            display: ActionDisplay.Inline,
+            onClick: (p) => onEdit(toProductionRow(p)),
+        },
+        {
+            key: "copy-slug",
+            label: t("copy", { key: "slug" }),
+            onClick: async (p) => {
+                try {
+                    await navigator.clipboard.writeText(p.slug);
+                    toast.success(t("copied", { key: "slug" }));
+                } catch {
+                    toast.error(t("copyFailed"));
+                }
+            },
+        },
+        {
+            key: "add-to-collection",
+            render: (production, closeMenu) => (
+                <CollectionPickerSubmenu
+                    item={{
+                        contentId: production.id,
+                        contentType: "production",
+                        label:
+                            production.translations.find((t) => t.languageCode === "nl")?.title ??
+                            production.translations.find((t) => t.languageCode === "en")?.title ??
+                            production.slug,
+                    }}
+                    onComplete={closeMenu}
+                />
+            ),
+        },
+    ];
+
     return [
         {
             id: "titleNl",
-            header: "Titel (NL)",
+            header: "Title (NL)",
             accessorFn: (row) => row.translations.find((t) => t.languageCode === "nl")?.title ?? "",
-            cell: ({ getValue }) => (
-                <span className="font-display max-w-[200px] text-base font-medium tracking-tight break-words">
-                    {String(getValue() || "—")}
-                </span>
-            ),
         },
         {
             id: "titleEn",
-            header: "Titel (EN)",
+            header: "Title (EN)",
             accessorFn: (row) => row.translations.find((t) => t.languageCode === "en")?.title ?? "",
-            cell: ({ getValue }) => (
-                <span className="text-muted-foreground max-w-[200px] break-words">
-                    {String(getValue() || "—")}
-                </span>
-            ),
         },
         {
             id: "artistNl",
-            header: "Artiest",
+            header: "Artist",
             accessorFn: (row) =>
                 row.translations.find((t) => t.languageCode === "nl")?.artist ?? "",
-            cell: ({ getValue }) => (
-                <span className="max-w-[150px] break-words">{String(getValue() || "—")}</span>
-            ),
         },
-        {
-            id: "slug",
-            header: "Slug",
-            accessorKey: "slug",
-            cell: ({ getValue }) => (
-                <code className="bg-foreground/5 text-muted-foreground rounded px-1.5 py-0.5 font-mono text-[10px]">
-                    {String(getValue())}
-                </code>
-            ),
-        },
-        makeActionsColumn<Production>({
-            label: "production",
-            copyKey: "slug",
-            onEdit: (p) => options.onEdit(toProductionRow(p)),
-        }),
+        { accessorKey: "slug", header: "Slug" },
+        makeActionsColumn<Production>({ actions }),
     ];
 }

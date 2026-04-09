@@ -4,24 +4,30 @@ use tracing::info;
 use crate::{
     error::DatabaseError,
     repos::{
-        collection::CollectionRepo, event::EventRepo, hall::HallRepo,
-        internal_state::InternalStateRepo, location::LocationRepo, production::ProductionRepo,
-        sessions::SessionRepo, space::SpaceRepo, tag::TagRepo, user::UserRepo,
+        article::ArticleRepo, artist::ArtistRepo, collection::CollectionRepo,
+        event::EventRepo, hall::HallRepo, internal_state::InternalStateRepo,
+        location::LocationRepo, media::MediaRepo, media_variant::MediaVariantRepo,
+        production::ProductionRepo, series::SeriesRepo, sessions::SessionRepo,
+        space::SpaceRepo, tag::TagRepo, user::UserRepo,
     },
 };
 
 pub mod models {
+    pub mod article;
     pub mod artist;
-    pub mod blogpost;
     pub mod collection;
     pub mod collection_item;
+    pub mod entity_media;
     pub mod entity_type;
     pub mod event;
     pub mod facet;
     pub mod hall;
     pub mod internal_state;
     pub mod location;
+    pub mod media;
+    pub mod media_variant;
     pub mod production;
+    pub mod series;
     pub mod session;
     pub mod space;
     pub mod tag;
@@ -30,12 +36,17 @@ pub mod models {
 }
 
 pub mod repos {
+    pub mod article;
+    pub mod artist;
     pub mod collection;
     pub mod event;
     pub mod hall;
     pub mod internal_state;
     pub mod location;
+    pub mod media;
+    pub mod media_variant;
     pub mod production;
+    pub mod series;
     pub mod sessions;
     pub mod space;
     pub mod tag;
@@ -105,7 +116,27 @@ impl Database {
         EventRepo::new(&self.db)
     }
 
+    pub fn articles<'a>(&'a self) -> ArticleRepo<'a> {
+        ArticleRepo::new(&self.db)
+    }
+
+    pub fn artists<'a>(&'a self) -> ArtistRepo<'a> {
+        ArtistRepo::new(&self.db)
+    }
+
     pub fn collections<'a>(&'a self) -> CollectionRepo<'a> {
         CollectionRepo::new(&self.db)
+    }
+
+    pub fn series<'a>(&'a self) -> SeriesRepo<'a> {
+        SeriesRepo::new(&self.db)
+    }
+
+    pub fn media<'a>(&'a self) -> MediaRepo<'a> {
+        MediaRepo::new(&self.db)
+    }
+
+    pub fn media_variants<'a>(&'a self) -> MediaVariantRepo<'a> {
+        MediaVariantRepo::new(&self.db)
     }
 }

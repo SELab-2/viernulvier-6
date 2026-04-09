@@ -1,9 +1,14 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { SquarePen } from "lucide-react";
+import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
 import { BooleanCell } from "../boolean-cell";
 import type { FieldDef } from "../edit-sheet";
+import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
+import { Action, ActionDisplay } from "@/types/cms/actions";
 import type { Location, LocationUpdateInput } from "@/types/models/location.types";
 
 export const locationFields: FieldDef<Location>[] = [
@@ -45,7 +50,46 @@ export function toLocationUpdateInput(entity: Location): LocationUpdateInput {
 
 export function makeLocationColumns(options: {
     onEdit: (entity: Location) => void;
+    t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>;
 }): ColumnDef<Location>[] {
+    const { onEdit, t } = options;
+
+    const actions: Action<Location>[] = [
+        {
+            key: "edit",
+            label: t("edit", { label: "location" }),
+            icon: SquarePen,
+            display: ActionDisplay.Inline,
+            onClick: onEdit,
+        },
+        {
+            key: "copy-name",
+            label: t("copy", { key: "name" }),
+            onClick: async (location) => {
+                const value = location.name ?? "";
+                try {
+                    await navigator.clipboard.writeText(value);
+                    toast.success(t("copied", { key: "name" }));
+                } catch {
+                    toast.error(t("copyFailed"));
+                }
+            },
+        },
+        {
+            key: "add-to-collection",
+            render: (location, closeMenu) => (
+                <CollectionPickerSubmenu
+                    item={{
+                        contentId: location.id,
+                        contentType: "location",
+                        label: location.name || location.address || location.id,
+                    }}
+                    onComplete={closeMenu}
+                />
+            ),
+        },
+    ];
+
     return [
         {
             accessorKey: "name",
@@ -86,10 +130,6 @@ export function makeLocationColumns(options: {
             header: "Eigendom",
             cell: ({ getValue }) => <BooleanCell value={getValue<boolean | null>()} />,
         },
-        makeActionsColumn<Location>({
-            label: "location",
-            copyKey: "name",
-            onEdit: options.onEdit,
-        }),
+        makeActionsColumn<Location>({ actions }),
     ];
 }

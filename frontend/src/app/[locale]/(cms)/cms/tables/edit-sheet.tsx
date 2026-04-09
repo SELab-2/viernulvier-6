@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import {
     Select,
     SelectContent,
@@ -42,7 +44,19 @@ export interface EditSheetProps<TData extends { id: string } & Record<string, un
     fields: FieldDef<TData>[];
     title: string;
     description?: string;
-    onSave?: (data: TData) => void;
+    /**
+     * Called when the user clicks "Save". Must return a promise that resolves on
+     * success or rejects on failure.
+     *
+     * **UX behaviour (deliberate choice):**
+     * The sheet waits for the promise to settle before closing. While pending the
+     * save button is disabled. On rejection the sheet stays open so the user can
+     * retry or correct their input without losing context.
+     *
+     * To switch to optimistic close-immediately behaviour, change `handleSave` in
+     * `SheetFormBody` to call `onClose()` before awaiting the promise.
+     */
+    onSave?: (data: TData) => Promise<unknown>;
 }
 
 const NULL_SENTINEL = "__null__";
@@ -60,15 +74,11 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
 
     if (field.readOnly) {
         return (
-            <div className="flex flex-col gap-1.5">
-                <span className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
+            <div className="flex flex-col gap-1">
+                <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                     {field.label}
                 </span>
-                <div className="border-foreground/10 bg-foreground/[0.02] rounded-sm border px-3 py-2">
-                    <code className="text-muted-foreground font-mono text-xs">
-                        {stringValue || "—"}
-                    </code>
-                </div>
+                <p className="text-sm">{stringValue || "—"}</p>
             </div>
         );
     }
@@ -76,17 +86,12 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
     if (field.type === "text") {
         return (
             <div className="flex flex-col gap-1.5">
-                <Label
-                    htmlFor={fieldId}
-                    className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase"
-                >
-                    {field.label}
-                </Label>
+                <Label htmlFor={fieldId}>{field.label}</Label>
                 <Input
                     id={fieldId}
                     value={stringValue}
                     onChange={(e) => onChange(e.target.value)}
-                    className="border-foreground/20 focus-visible:ring-foreground/30 h-9 text-sm"
+                    className="h-8 text-sm"
                 />
             </div>
         );
@@ -101,12 +106,7 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
 
         return (
             <div className="flex flex-col gap-1.5">
-                <Label
-                    htmlFor={fieldId}
-                    className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase"
-                >
-                    {field.label}
-                </Label>
+                <Label htmlFor={fieldId}>{field.label}</Label>
                 <Select
                     value={selectValue}
                     onValueChange={(v) => {
@@ -117,13 +117,10 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
                         }
                     }}
                 >
-                    <SelectTrigger
-                        id={fieldId}
-                        className="border-foreground/20 focus:ring-foreground/30 h-9 w-full text-sm"
-                    >
+                    <SelectTrigger id={fieldId} size="sm" className="w-full">
                         <SelectValue placeholder={t("selectPlaceholder")} />
                     </SelectTrigger>
-                    <SelectContent className="border-foreground/20">
+                    <SelectContent>
                         <SelectItem value={NULL_SENTINEL}>—</SelectItem>
                         {booleanOptions.map((opt) => (
                             <SelectItem key={opt.value} value={opt.value}>
@@ -140,20 +137,12 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
 
     return (
         <div className="flex flex-col gap-1.5">
-            <Label
-                htmlFor={fieldId}
-                className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase"
-            >
-                {field.label}
-            </Label>
+            <Label htmlFor={fieldId}>{field.label}</Label>
             <Select value={stringValue} onValueChange={onChange}>
-                <SelectTrigger
-                    id={fieldId}
-                    className="border-foreground/20 focus:ring-foreground/30 h-9 w-full text-sm"
-                >
+                <SelectTrigger id={fieldId} size="sm" className="w-full">
                     <SelectValue placeholder={t("selectPlaceholder")} />
                 </SelectTrigger>
-                <SelectContent className="border-foreground/20">
+                <SelectContent>
                     {options.map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>
                             {opt.label}
@@ -168,7 +157,7 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
 interface SheetFormBodyProps<TData extends { id: string } & Record<string, unknown>> {
     entity: TData;
     fields: FieldDef<TData>[];
-    onSave?: (data: TData) => void;
+    onSave?: (data: TData) => Promise<unknown>;
     onClose: () => void;
 }
 
@@ -180,19 +169,29 @@ function SheetFormBody<TData extends { id: string } & Record<string, unknown>>({
 }: SheetFormBodyProps<TData>) {
     const t = useTranslations("Cms.EditSheet");
     const [values, setValues] = useState<Partial<TData>>(() => ({ ...entity }));
+    const [isPending, setIsPending] = useState(false);
 
     const handleChange = (key: keyof TData, value: unknown) => {
         setValues((prev) => ({ ...prev, [key]: value }));
     };
 
-    const handleSave = () => {
-        onSave?.({ ...entity, ...values } as TData);
-        onClose();
+    const handleSave = async () => {
+        if (!onSave) return;
+        setIsPending(true);
+        try {
+            await onSave({ ...entity, ...values } as TData);
+            onClose();
+        } catch {
+            // Stay open on failure — the mutation hook is responsible for
+            // showing an error toast to the user.
+        } finally {
+            setIsPending(false);
+        }
     };
 
     return (
         <>
-            <div className="flex flex-col gap-5 overflow-y-auto px-6 py-6">
+            <div className="flex flex-col gap-5 overflow-y-auto px-6 py-5">
                 {fields.map((field) => (
                     <FieldRow
                         key={String(field.key)}
@@ -202,24 +201,15 @@ function SheetFormBody<TData extends { id: string } & Record<string, unknown>>({
                     />
                 ))}
             </div>
-            <div className="border-foreground/10 border-t px-6 py-4">
-                <SheetFooter className="flex-row justify-end gap-3 sm:justify-end">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="border-foreground/20 hover:bg-foreground/5 px-4 py-2 font-mono text-[10px] tracking-[1px] uppercase transition-colors"
-                    >
-                        {t("cancel")}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleSave}
-                        className="bg-foreground text-background hover:bg-foreground/90 px-4 py-2 font-mono text-[10px] tracking-[1px] uppercase transition-colors"
-                    >
-                        {t("saveChanges")}
-                    </button>
-                </SheetFooter>
-            </div>
+            <Separator />
+            <SheetFooter className="flex-row justify-end gap-2 px-6 py-4">
+                <Button variant="outline" size="sm" onClick={onClose} disabled={isPending}>
+                    {t("cancel")}
+                </Button>
+                <Button size="sm" onClick={handleSave} disabled={isPending}>
+                    {t("saveChanges")}
+                </Button>
+            </SheetFooter>
         </>
     );
 }
@@ -233,25 +223,37 @@ export function EditSheet<TData extends { id: string } & Record<string, unknown>
     description,
     onSave,
 }: EditSheetProps<TData>) {
-    const t = useTranslations("Cms.EditSheet");
-    const formKey = entity?.id ?? null;
+    /**
+     * `openCount` forces a full remount of `SheetFormBody` every time the sheet
+     * opens. Without it, opening the same entity twice in a row (e.g. open →
+     * edit a field → close without saving → reopen) would show stale edits
+     * because React's `key` (entity ID) hasn't changed so the component keeps
+     * its old state.
+     *
+     * The counter is incremented inside the `onOpenChange` callback (an event
+     * handler, not during render) to satisfy React 19's strict ref/setState
+     * rules.
+     */
+    const [openCount, setOpenCount] = useState(0);
+
+    const handleOpenChange = useCallback(
+        (next: boolean) => {
+            if (next) setOpenCount((c) => c + 1);
+            onOpenChange(next);
+        },
+        [onOpenChange]
+    );
+
+    const formKey = entity ? `${entity.id}-${openCount}` : null;
 
     return (
-        <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="border-foreground/20 flex flex-col gap-0 border-l p-0 sm:max-w-md">
-                <SheetHeader className="border-foreground/10 border-b px-6 pt-6 pb-4">
-                    <div className="text-muted-foreground mb-2 font-mono text-[9px] tracking-[2px] uppercase">
-                        {t("editMode")}
-                    </div>
-                    <SheetTitle className="font-display text-2xl font-bold tracking-tight">
-                        {title}
-                    </SheetTitle>
-                    {description && (
-                        <SheetDescription className="font-body text-muted-foreground text-sm">
-                            {description}
-                        </SheetDescription>
-                    )}
+        <Sheet open={open} onOpenChange={handleOpenChange}>
+            <SheetContent className="flex flex-col gap-0 p-0 sm:max-w-md">
+                <SheetHeader className="px-6 pt-6 pb-4">
+                    <SheetTitle>{title}</SheetTitle>
+                    {description && <SheetDescription>{description}</SheetDescription>}
                 </SheetHeader>
+                <Separator />
                 {entity !== null && (
                     <SheetFormBody
                         key={formKey}

@@ -5,12 +5,16 @@ use utoipa::IntoParams;
 use crate::error::AppError;
 
 pub mod admin;
+pub mod article;
+pub mod artist;
 pub mod auth;
 pub mod collection;
 pub mod event;
 pub mod hall;
 pub mod location;
+pub mod media;
 pub mod production;
+pub mod series;
 pub mod space;
 pub mod taxonomy;
 pub mod version;

@@ -8,19 +8,7 @@
     },
     "Header": {
         "logout": "Uitloggen",
-        "loggingOut": "...",
-        "login": "Inloggen",
-        "nav": {
-            "home": "Home",
-            "archive": "Archief"
-        },
-        "cms": {
-            "overview": "Overzicht",
-            "content": "Inhoud",
-            "ingest": "Import",
-            "import": "Import",
-            "admin": "Admin"
-        }
+        "loggingOut": "..."
     },
     "LocaleSwitcher": {
         "label": "Taal selecteren"
@@ -40,12 +28,15 @@
         "heroEyebrow": "Archief — {count} producties",
         "heroTitle": "Doorzoek het archief",
         "heroTitleItalic": "van De Vooruit",
-        "heroPlaceholder": "Artiest, productie, jaar…",
+        "heroPlaceholder": "Artiest, productie, jaar\u2026",
         "quickSearch": "Snel zoeken:",
         "enter": "enter",
         "noResultsTitle": "Hier hangen enkel spinnenwebben",
         "noResultsText": "Geen producties gevonden voor \"{query}\". Probeer een andere zoekopdracht.",
         "articleImageCaption": "Het vergeten Vooruit gebouw...",
+        "loading": "Laden...",
+        "loadingMoreForSearch": "Meer producties laden voor zoeken... ({loaded} geladen)",
+        "partialResults": "Resultaten van {loaded} geladen producties. Resultaten kunnen onvolledig zijn.",
         "tags": {
             "dance": "Dans",
             "theater": "Theater",
@@ -103,7 +94,7 @@
         "hero": {
             "title": "Het archief van VIERNULVIER",
             "subtitle": "Meer dan 40 jaar theater, dans, muziek en nachtleven in Gent.",
-            "searchPlaceholder": "Zoek in het archief…"
+            "searchPlaceholder": "Zoek in het archief\u2026"
         },
         "tags": {
             "theater": "Theater",
@@ -113,8 +104,7 @@
         },
         "about": {
             "title": "Kunstencentrum VIERNULVIER",
-            "text": "Sinds 1883 is De Vooruit een broedplaats voor kunst, cultuur en samenleving. Van revolutionaire feesten tot hedendaagse performance — het archief bewaart het allemaal.",
-            "address": "Sint-Pietersnieuwstraat 23 · 9000 Gent"
+            "text": "Sinds 1883 is De Vooruit een broedplaats voor kunst, cultuur en samenleving. Van revolutionaire feesten tot hedendaagse performance. Het archief bewaart het allemaal."
         },
         "latest": {
             "label": "Laatste producties",
@@ -147,13 +137,52 @@
         "loggedOut": "Succesvol uitgelogd."
     },
     "Cms": {
-        "overview": "Overzicht",
-        "productions": "Producties",
-        "locations": "Locaties",
-        "articles": "Artikelen",
-        "performers": "Uitvoerders",
-        "ingest": "Ingest",
-        "import": "Import",
+        "TabBar": {
+            "overview": "CMS Overzicht",
+            "content": "Inhoud beheren",
+            "collections": "Collecties",
+            "ingest": "Importeren",
+            "import": "Automatische import"
+        },
+        "Sidebar": {
+            "contentType": "Inhoudstype",
+            "filters": "Filters",
+            "noFilters": "Geen filters beschikbaar.",
+            "clearFilters": "Filters wissen",
+            "productions": "Producties",
+            "articles": "Artikelen",
+            "locations": "Locaties",
+            "performers": "Uitvoerders"
+        },
+        "DataTable": {
+            "noResults": "Geen resultaten."
+        },
+        "ActionBar": {
+            "clearSelection": "Selectie wissen",
+            "totalProductions": "{count, plural, one {# productie} other {# producties}}",
+            "totalLocations": "{count, plural, one {# locatie} other {# locaties}}",
+            "productionsSelected": "{count, plural, one {# productie} other {# producties}} geselecteerd",
+            "eventsSelected": "{count, plural, one {# voorstelling} other {# voorstellingen}} geselecteerd",
+            "locationsSelected": "{count, plural, one {# locatie} other {# locaties}} geselecteerd",
+            "hallsSelected": "{count, plural, one {# zaal} other {# zalen}} geselecteerd",
+            "bulkEdit": "Bulk bewerken",
+            "delete": "Verwijderen"
+        },
+        "ActionsColumn": {
+            "openMenu": "Menu openen",
+            "actions": "Acties",
+            "copy": "{key} kopi\u00ebren",
+            "copied": "{key} gekopieerd",
+            "copyFailed": "Kopi\u00ebren naar klembord mislukt",
+            "edit": "{label} bewerken"
+        },
+        "EditSheet": {
+            "yes": "Ja",
+            "no": "Nee",
+            "selectPlaceholder": "Selecteer\u2026",
+            "cancel": "Annuleren",
+            "saveChanges": "Wijzigingen opslaan"
+        },
         "editions": {
             "edition1": "Ed. 01",
             "edition2": "Ed. 02",
@@ -167,116 +196,6 @@
             "content": "Inhoud",
             "system": "Systeem"
         },
-        "Overview": {
-            "title": "CMS Overzicht",
-            "subtitle": "Beheer inhoud en instellingen",
-            "productions": "Producties",
-            "productionsDescription": "Beheer producties en evenementen",
-            "articles": "Artikelen",
-            "articlesDescription": "Beheer nieuwsartikelen",
-            "locations": "Locaties",
-            "locationsDescription": "Beheer locaties en zalen",
-            "performers": "Uitvoerders",
-            "performersDescription": "Beheer artiesten en uitvoerders",
-            "ingest": "Ingest",
-            "ingestDescription": "Upload en verwerk archiefmaterialen. Deze functionaliteit is nog in ontwikkeling.",
-            "import": "Import",
-            "importDescription": "Importeer data van externe bronnen. Deze functionaliteit is nog in ontwikkeling.",
-            "items": "items",
-            "openSection": "Open sectie",
-            "backToOverview": "Terug naar overzicht"
-        },
-        "Productions": {
-            "title": "Producties",
-            "subtitle": "Beheer alle producties en geplande evenementen",
-            "items": "items",
-            "showEvents": "Toon evenementen",
-            "hideEvents": "Verberg evenementen",
-            "editProduction": "Productie bewerken",
-            "editEvent": "Evenement bewerken"
-        },
-        "Locations": {
-            "title": "Locaties",
-            "subtitle": "Beheer locaties, theaters en hun individuele zalen",
-            "items": "locaties",
-            "showHalls": "Toon zalen",
-            "hideHalls": "Verberg zalen",
-            "editLocation": "Locatie bewerken",
-            "editHall": "Zaal bewerken"
-        },
-        "Articles": {
-            "title": "Artikelen",
-            "subtitle": "Beheer nieuwsartikelen",
-            "comingSoon": "Binnenkort beschikbaar",
-            "notAvailable": "Artikelen-API is nog niet beschikbaar. Geen gegevens om weer te geven."
-        },
-        "Performers": {
-            "title": "Uitvoerders",
-            "subtitle": "Beheer artiesten",
-            "comingSoon": "Binnenkort beschikbaar",
-            "notAvailable": "Uitvoerders-API is nog niet beschikbaar. Geen gegevens om weer te geven."
-        },
-        "Ingest": {
-            "title": "Ingest",
-            "subtitle": "Bulk import van mediabestanden en archiefmaterialen",
-            "comingSoon": "Binnenkort beschikbaar",
-            "notAvailable": "Ingest functionaliteit",
-            "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier mediabestanden uploaden en verwerken."
-        },
-        "Import": {
-            "title": "Import",
-            "subtitle": "Automatische import van externe databronnen",
-            "comingSoon": "Binnenkort beschikbaar",
-            "notAvailable": "Import functionaliteit",
-            "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier data importeren van externe bronnen zoals UiTdatabank."
-        },
-        "DataTable": {
-            "noResults": "Geen items gevonden",
-            "searchPlaceholder": "Zoeken...",
-            "clearSearch": "Zoeken wissen",
-            "resultsCount": "{count} resultaten"
-        },
-        "Sidebar": {
-            "archiveIndex": "Archief Index",
-            "contentType": "Inhoudstype",
-            "filters": "Filters",
-            "noFilters": "Geen filters beschikbaar",
-            "clearFilters": "Wis filters",
-            "productions": "Producties",
-            "articles": "Artikelen",
-            "locations": "Locaties",
-            "performers": "Uitvoerders"
-        },
-        "SelectionToolbar": {
-            "clearSelection": "Selectie wissen",
-            "selectItems": "Selecteer items voor bulk acties",
-            "productionsSelected": "{count, plural, one {# productie} other {# producties}}",
-            "eventsSelected": "{count, plural, one {# evenement} other {# evenementen}}",
-            "locationsSelected": "{count, plural, one {# locatie} other {# locaties}}",
-            "hallsSelected": "{count, plural, one {# zaal} other {# zalen}}",
-            "moreActions": "Meer acties"
-        },
-        "TabBar": {
-            "overview": "Overzicht",
-            "content": "Inhoud"
-        },
-        "backToSite": "Terug naar site",
-        "ActionsColumn": {
-            "openMenu": "Menu openen",
-            "actions": "Acties",
-            "copy": "Kopiëren",
-            "copied": "Gekopieerd",
-            "copyFailed": "Kopiëren mislukt",
-            "edit": "Bewerken"
-        },
-        "EditSheet": {
-            "editMode": "Bewerkmodus",
-            "yes": "Ja",
-            "no": "Nee",
-            "selectPlaceholder": "Selecteer…",
-            "cancel": "Annuleren",
-            "saveChanges": "Wijzigingen opslaan"
-        },
         "SectionCard": {
             "comingSoon": "Binnenkort"
         },
@@ -287,11 +206,94 @@
             "performersEyebrow": "Ed. 04 — Uitvoerders",
             "ingestEyebrow": "Ed. 05 — Ingest",
             "importEyebrow": "Ed. 06 — Import"
+        },
+        "Productions": {
+            "showEvents": "Voorstellingen tonen",
+            "hideEvents": "Voorstellingen verbergen",
+            "editProduction": "Productie bewerken",
+            "editEvent": "Voorstelling bewerken"
+        },
+        "Locations": {
+            "showHalls": "Zalen tonen",
+            "hideHalls": "Zalen verbergen",
+            "editLocation": "Locatie bewerken",
+            "editHall": "Zaal bewerken"
+        },
+        "Articles": {
+            "notAvailable": "Artikelen-API is nog niet beschikbaar. Geen gegevens om weer te geven.",
+            "newArticle": "Nieuw artikel",
+            "createFailed": "Aanmaken van artikel mislukt.",
+            "save": "Opslaan",
+            "saving": "Bezig met opslaan…",
+            "saveSuccess": "Artikel opgeslagen.",
+            "saveFailed": "Opslaan mislukt.",
+            "backToList": "Terug naar artikelen",
+            "statusLabel": "Status",
+            "slug": "Slug",
+            "subjectPeriod": "Periode",
+            "title": "Titel",
+            "relatedProductions": "Gerelateerde producties",
+            "relatedArtists": "Gerelateerde artiesten",
+            "relatedLocations": "Gerelateerde locaties",
+            "relatedEvents": "Gerelateerde voorstellingen"
+        },
+        "Performers": {
+            "notAvailable": "Uitvoerders-API is nog niet beschikbaar. Geen gegevens om weer te geven."
+        },
+        "Collections": {
+            "title": "Collecties",
+            "newCollection": "Nieuwe collectie",
+            "noCollections": "Nog geen collecties.",
+            "noItems": "Nog geen items. Voeg items toe vanuit het tabblad Inhoud.",
+            "goToContent": "Ga naar inhoud",
+            "itemCount": "{count, plural, one {# item} other {# items}}",
+            "itemsTitle": "Items ({count})",
+            "slug": "Slug",
+            "titleNl": "Titel (NL)",
+            "titleEn": "Titel (EN)",
+            "descriptionNl": "Beschrijving (NL)",
+            "descriptionEn": "Beschrijving (EN)",
+            "shareableLink": "Deelbare link",
+            "copyLink": "Kopieer link",
+            "linkCopied": "Link gekopieerd",
+            "save": "Opslaan",
+            "saving": "Opslaan…",
+            "loading": "Laden…",
+            "cancel": "Annuleren",
+            "open": "Openen",
+            "metadataSaved": "Collectie opgeslagen",
+            "metadataError": "Opslaan van collectie mislukt",
+            "itemsSaved": "Items opgeslagen",
+            "itemsError": "Opslaan van items mislukt",
+            "copyError": "Kopiëren van link mislukt",
+            "events": "Voorstellingen",
+            "invalidSlug": "Titel moet minstens één letter of cijfer bevatten",
+            "deleteCollection": "Collectie verwijderen",
+            "deleteConfirm": "Weet je zeker dat je \"{title}\" wil verwijderen? Alle items worden verwijderd.",
+            "backToCollections": "Terug naar collecties",
+            "addToCollection": "Toevoegen aan collectie",
+            "addAndOpen": "Toevoegen en collectie openen",
+            "createNewCollection": "Nieuwe collectie maken",
+            "searchCollections": "Collecties zoeken…",
+            "selectedItems": "{count, plural, one {# geselecteerd item} other {# geselecteerde items}}",
+            "alreadyInCollection": "{title} zit al in deze collectie",
+            "addedToCollection": "Toegevoegd aan \"{collection}\"",
+            "addedToCollectionMultiple": "{count} items toegevoegd aan \"{collection}\"",
+            "removeItem": "Item verwijderen",
+            "commentNl": "Commentaar (NL)",
+            "commentEn": "Commentaar (EN)",
+            "contentTypes": {
+                "production": "Productie",
+                "event": "Voorstelling",
+                "blogpost": "Artikel",
+                "artist": "Artiest",
+                "location": "Locatie"
+            }
         }
     },
     "Admin": {
         "title": "Admin Dashboard",
-        "welcomeBack": "Welkom terug",
+        "welcomeBack": "Welkom terug!",
         "emailLabel": "E-mail",
         "loading": "Admin dashboard laden...",
         "quickActions": "Snelle acties",

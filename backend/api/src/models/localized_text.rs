@@ -1,9 +1,53 @@
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
+use serde_json::Value;
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Default)]
 pub struct ApiLocalizedText {
     pub en: Option<String>,
     pub fr: Option<String>,
     pub nl: Option<String>,
-    // some include `af` for some reason
+}
+
+impl<'de> Deserialize<'de> for ApiLocalizedText {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        // We use serde_json::Value to handle edge cases like `[]` or `null` gracefully
+        let value = Option::<Value>::deserialize(deserializer)?;
+
+        let value = match value {
+            Some(v) => v,
+            None => {
+                return Ok(Self {
+                    en: None,
+                    fr: None,
+                    nl: None,
+                });
+            }
+        };
+
+        if value.is_array() || value.is_null() {
+            return Ok(Self {
+                en: None,
+                fr: None,
+                nl: None,
+            });
+        }
+
+        if let Some(obj) = value.as_object() {
+            let en = obj.get("en").and_then(|v| v.as_str()).map(String::from);
+            let fr = obj.get("fr").and_then(|v| v.as_str()).map(String::from);
+            let nl = obj.get("nl").and_then(|v| v.as_str()).map(String::from);
+
+            Ok(Self { en, fr, nl })
+        } else {
+            // Unrecognized shape (e.g. a plain string), default to empty
+            Ok(Self {
+                en: None,
+                fr: None,
+                nl: None,
+            })
+        }
+    }
 }

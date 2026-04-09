@@ -1,61 +1,83 @@
 import { http, HttpResponse } from "msw";
 
+import type { components } from "@/types/api/generated";
 import { apiUrl } from "../../utils/env";
 
-const production = {
+const production: components["schemas"]["ProductionPayload"] = {
     id: "4f327f95-3a64-4fc0-8f6a-a9dc44c01111",
     source_id: 10,
     slug: "test-production",
-    supertitle_nl: null,
-    supertitle_en: null,
-    title_nl: "Productie NL",
-    title_en: "Production EN",
-    artist_nl: null,
-    artist_en: null,
-    meta_title_nl: null,
-    meta_title_en: null,
-    meta_description_nl: null,
-    meta_description_en: null,
-    tagline_nl: null,
-    tagline_en: null,
-    teaser_nl: null,
-    teaser_en: null,
-    description_nl: null,
-    description_en: null,
-    description_extra_nl: null,
-    description_extra_en: null,
-    description_2_nl: null,
-    description_2_en: null,
     video_1: null,
     video_2: null,
-    quote_nl: null,
-    quote_en: null,
-    quote_source_nl: null,
-    quote_source_en: null,
-    programme_nl: null,
-    programme_en: null,
-    info_nl: null,
-    info_en: null,
-    description_short_nl: null,
-    description_short_en: null,
     eticket_info: null,
     uitdatabank_theme: null,
     uitdatabank_type: null,
+    translations: [
+        {
+            language_code: "nl",
+            title: "Productie NL",
+            supertitle: null,
+            artist: null,
+            meta_title: null,
+            meta_description: null,
+            tagline: null,
+            teaser: null,
+            description: null,
+            description_extra: null,
+            description_2: null,
+            quote: null,
+            quote_source: null,
+            programme: null,
+            info: null,
+            description_short: null,
+        },
+        {
+            language_code: "en",
+            title: "Production EN",
+            supertitle: null,
+            artist: null,
+            meta_title: null,
+            meta_description: null,
+            tagline: null,
+            teaser: null,
+            description: null,
+            description_extra: null,
+            description_2: null,
+            quote: null,
+            quote_source: null,
+            programme: null,
+            info: null,
+            description_short: null,
+        },
+    ],
 };
 
 export const productionHandlers = [
-    http.get(apiUrl("/productions"), () => HttpResponse.json([production])),
-    http.get(apiUrl(`/productions/${production.id}`), () => HttpResponse.json(production)),
+    http.get(apiUrl("/productions"), () =>
+        HttpResponse.json({
+            data: [production],
+            next_cursor: null,
+        } satisfies components["schemas"]["PaginatedResponse_ProductionPayload"])
+    ),
+    http.get(apiUrl(`/productions/${production.id}`), () =>
+        HttpResponse.json(production satisfies components["schemas"]["ProductionPayload"])
+    ),
     http.post(apiUrl("/productions"), async ({ request }) => {
         const body = await request.json();
         return HttpResponse.json(
-            { ...production, ...(body as Record<string, unknown>) },
+            {
+                ...production,
+                ...(body as Record<string, unknown>),
+            } satisfies components["schemas"]["ProductionPayload"],
             { status: 201 }
         );
     }),
     http.put(apiUrl("/productions"), async ({ request }) => {
         const body = await request.json();
-        return HttpResponse.json({ ...production, ...(body as Record<string, unknown>) });
+        return HttpResponse.json({
+            ...production,
+            ...(body as Record<string, unknown>),
+        } satisfies components["schemas"]["ProductionPayload"]);
     }),
     http.delete(
         apiUrl(`/productions/${production.id}`),

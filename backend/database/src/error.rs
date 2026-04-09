@@ -13,6 +13,9 @@ pub enum DatabaseError {
 
     #[error("Query returned no rows")]
     NotFound,
+
+    #[error("Bad request: {0}")]
+    BadRequest(String),
 }
 
 impl From<ormlite::Error> for DatabaseError {

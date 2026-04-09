@@ -3,29 +3,35 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import {
     mapCreateSpaceInput,
+    mapPaginatedSpacesResult,
     mapSpace,
-    mapSpaces,
     mapUpdateSpaceInput,
 } from "@/mappers/space.mapper";
-import { SpaceResponse } from "@/types/api/space.api.types";
+import {
+    CreateSpaceResponse,
+    GetAllSpacesResponse,
+    GetSpaceByIdResponse,
+    UpdateSpaceResponse,
+} from "@/types/api/space.api.types";
+import { PaginationParams, PaginatedResult } from "@/types/api/api.types";
 import { Space, SpaceCreateInput, SpaceUpdateInput } from "@/types/models/space.types";
 
 import { queryKeys } from "./query-keys";
 
-const fetchSpaces = async (): Promise<Space[]> => {
-    const { data } = await api.get<{ data: SpaceResponse[] }>("/spaces?limit=100");
-    return mapSpaces(data.data);
+const fetchSpaces = async (params?: PaginationParams): Promise<PaginatedResult<Space>> => {
+    const { data } = await api.get<GetAllSpacesResponse>("/spaces", { params });
+    return mapPaginatedSpacesResult(data);
 };
 
 const fetchSpaceById = async (id: string): Promise<Space> => {
-    const { data } = await api.get<SpaceResponse>(`/spaces/${id}`);
+    const { data } = await api.get<GetSpaceByIdResponse>(`/spaces/${id}`);
     return mapSpace(data);
 };
 
-export const useGetSpaces = (options?: { enabled?: boolean }) => {
+export const useGetSpaces = (options?: { enabled?: boolean; pagination?: PaginationParams }) => {
     return useQuery({
-        queryKey: queryKeys.spaces.all,
-        queryFn: fetchSpaces,
+        queryKey: queryKeys.spaces.all(options?.pagination),
+        queryFn: () => fetchSpaces(options?.pagination),
         ...options,
     });
 };
@@ -43,11 +49,14 @@ export const useCreateSpace = () => {
 
     return useMutation({
         mutationFn: async (payload: SpaceCreateInput) => {
-            const { data } = await api.post<SpaceResponse>("/spaces", mapCreateSpaceInput(payload));
+            const { data } = await api.post<CreateSpaceResponse>(
+                "/spaces",
+                mapCreateSpaceInput(payload)
+            );
             return mapSpace(data);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all() });
         },
     });
 };
@@ -57,11 +66,14 @@ export const useUpdateSpace = () => {
 
     return useMutation({
         mutationFn: async (payload: SpaceUpdateInput) => {
-            const { data } = await api.put<SpaceResponse>("/spaces", mapUpdateSpaceInput(payload));
+            const { data } = await api.put<UpdateSpaceResponse>(
+                "/spaces",
+                mapUpdateSpaceInput(payload)
+            );
             return mapSpace(data);
         },
         onSuccess: (space) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all() });
             queryClient.setQueryData(queryKeys.spaces.detail(space.id), space);
         },
     });
@@ -76,7 +88,7 @@ export const useDeleteSpace = () => {
             return id;
         },
         onSuccess: (id) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all() });
             queryClient.removeQueries({ queryKey: queryKeys.spaces.detail(id) });
         },
     });

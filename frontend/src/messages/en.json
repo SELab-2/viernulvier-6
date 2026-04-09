@@ -8,19 +8,7 @@
     },
     "Header": {
         "logout": "Logout",
-        "loggingOut": "...",
-        "login": "Sign in",
-        "nav": {
-            "home": "Home",
-            "archive": "Archive"
-        },
-        "cms": {
-            "overview": "Overview",
-            "content": "Content",
-            "ingest": "Ingest",
-            "import": "Import",
-            "admin": "Admin"
-        }
+        "loggingOut": "..."
     },
     "LocaleSwitcher": {
         "label": "Select language"
@@ -40,12 +28,15 @@
         "heroEyebrow": "Archive — {count} productions",
         "heroTitle": "Search the archive",
         "heroTitleItalic": "of De Vooruit",
-        "heroPlaceholder": "Artist, production, year…",
+        "heroPlaceholder": "Artist, production, year\u2026",
         "quickSearch": "Quick search:",
         "enter": "enter",
         "noResultsTitle": "Nothing here but cobwebs",
         "noResultsText": "No productions found for \"{query}\". Try a different search.",
         "articleImageCaption": "The forgotten Vooruit building...",
+        "loading": "Loading...",
+        "loadingMoreForSearch": "Loading more productions for search... ({loaded} loaded)",
+        "partialResults": "Showing results from {loaded} loaded productions. Results may be incomplete.",
         "tags": {
             "dance": "Dance",
             "theater": "Theatre",
@@ -103,7 +94,7 @@
         "hero": {
             "title": "The VIERNULVIER archive",
             "subtitle": "Over 40 years of theatre, dance, music and nightlife in Ghent.",
-            "searchPlaceholder": "Search the archive…"
+            "searchPlaceholder": "Search the archive\u2026"
         },
         "tags": {
             "theater": "Theatre",
@@ -113,8 +104,7 @@
         },
         "about": {
             "title": "Arts Centre VIERNULVIER",
-            "text": "Since 1883, De Vooruit has been a breeding ground for art, culture and society. From revolutionary parties to contemporary performance — the archive preserves it all.",
-            "address": "Sint-Pietersnieuwstraat 23 · 9000 Ghent"
+            "text": "Since 1883, De Vooruit has been a breeding ground for art, culture and society. From revolutionary parties to contemporary performance. The archive preserves it all."
         },
         "latest": {
             "label": "Latest productions",
@@ -147,13 +137,52 @@
         "loggedOut": "Logged out successfully"
     },
     "Cms": {
-        "overview": "Overview",
-        "productions": "Productions",
-        "locations": "Locations",
-        "articles": "Articles",
-        "performers": "Performers",
-        "ingest": "Ingest",
-        "import": "Import",
+        "TabBar": {
+            "overview": "CMS Overview",
+            "content": "Manage content",
+            "collections": "Collections",
+            "ingest": "Ingest",
+            "import": "Automatic import"
+        },
+        "Sidebar": {
+            "contentType": "Content type",
+            "filters": "Filters",
+            "noFilters": "No filters available.",
+            "clearFilters": "Clear filters",
+            "productions": "Productions",
+            "articles": "Articles",
+            "locations": "Locations",
+            "performers": "Performers"
+        },
+        "DataTable": {
+            "noResults": "No results."
+        },
+        "ActionBar": {
+            "clearSelection": "Clear selection",
+            "totalProductions": "{count, plural, one {# production} other {# productions}}",
+            "totalLocations": "{count, plural, one {# location} other {# locations}}",
+            "productionsSelected": "{count, plural, one {# production} other {# productions}} selected",
+            "eventsSelected": "{count, plural, one {# event} other {# events}} selected",
+            "locationsSelected": "{count, plural, one {# location} other {# locations}} selected",
+            "hallsSelected": "{count, plural, one {# hall} other {# halls}} selected",
+            "bulkEdit": "Bulk edit",
+            "delete": "Delete"
+        },
+        "ActionsColumn": {
+            "openMenu": "Open menu",
+            "actions": "Actions",
+            "copy": "Copy {key}",
+            "copied": "Copied {key}",
+            "copyFailed": "Failed to copy to clipboard",
+            "edit": "Edit {label}"
+        },
+        "EditSheet": {
+            "yes": "Yes",
+            "no": "No",
+            "selectPlaceholder": "Select\u2026",
+            "cancel": "Cancel",
+            "saveChanges": "Save changes"
+        },
         "editions": {
             "edition1": "Ed. 01",
             "edition2": "Ed. 02",
@@ -167,116 +196,6 @@
             "content": "Content",
             "system": "System"
         },
-        "Overview": {
-            "title": "CMS Overview",
-            "subtitle": "Manage content and settings",
-            "productions": "Productions",
-            "productionsDescription": "Manage productions and events",
-            "articles": "Articles",
-            "articlesDescription": "Manage news articles",
-            "locations": "Locations",
-            "locationsDescription": "Manage locations and halls",
-            "performers": "Performers",
-            "performersDescription": "Manage artists and performers",
-            "ingest": "Ingest",
-            "ingestDescription": "Upload and process archive materials. This feature is still under development.",
-            "import": "Import",
-            "importDescription": "Import data from external sources. This feature is still under development.",
-            "items": "items",
-            "openSection": "Open section",
-            "backToOverview": "Back to overview"
-        },
-        "Productions": {
-            "title": "Productions",
-            "subtitle": "Manage all productions and scheduled events",
-            "items": "items",
-            "showEvents": "Show events",
-            "hideEvents": "Hide events",
-            "editProduction": "Edit production",
-            "editEvent": "Edit event"
-        },
-        "Locations": {
-            "title": "Locations",
-            "subtitle": "Manage venues, theaters and their individual halls",
-            "items": "locations",
-            "showHalls": "Show halls",
-            "hideHalls": "Hide halls",
-            "editLocation": "Edit location",
-            "editHall": "Edit hall"
-        },
-        "Articles": {
-            "title": "Articles",
-            "subtitle": "Manage news articles",
-            "comingSoon": "Coming soon",
-            "notAvailable": "Articles API is not yet available. No data to display."
-        },
-        "Performers": {
-            "title": "Performers",
-            "subtitle": "Manage artists",
-            "comingSoon": "Coming soon",
-            "notAvailable": "Performers API is not yet available. No data to display."
-        },
-        "Ingest": {
-            "title": "Ingest",
-            "subtitle": "Bulk import of media files and archive materials",
-            "comingSoon": "Coming soon",
-            "notAvailable": "Ingest functionality",
-            "description": "This feature is still under development. Soon you will be able to upload and process media files here."
-        },
-        "Import": {
-            "title": "Import",
-            "subtitle": "Automatic import from external data sources",
-            "comingSoon": "Coming soon",
-            "notAvailable": "Import functionality",
-            "description": "This feature is still under development. Soon you will be able to import data from external sources such as UiTdatabank here."
-        },
-        "DataTable": {
-            "noResults": "No items found",
-            "searchPlaceholder": "Search...",
-            "clearSearch": "Clear search",
-            "resultsCount": "{count} results"
-        },
-        "Sidebar": {
-            "archiveIndex": "Archive Index",
-            "contentType": "Content Type",
-            "filters": "Filters",
-            "noFilters": "No filters available",
-            "clearFilters": "Clear",
-            "productions": "Productions",
-            "articles": "Articles",
-            "locations": "Locations",
-            "performers": "Performers"
-        },
-        "SelectionToolbar": {
-            "clearSelection": "Clear selection",
-            "selectItems": "Select items to perform bulk actions",
-            "productionsSelected": "{count, plural, one {# production} other {# productions}}",
-            "eventsSelected": "{count, plural, one {# event} other {# events}}",
-            "locationsSelected": "{count, plural, one {# location} other {# locations}}",
-            "hallsSelected": "{count, plural, one {# hall} other {# halls}}",
-            "moreActions": "More actions"
-        },
-        "TabBar": {
-            "overview": "Overview",
-            "content": "Content"
-        },
-        "backToSite": "Back to site",
-        "ActionsColumn": {
-            "openMenu": "Open menu",
-            "actions": "Actions",
-            "copy": "Copy",
-            "copied": "Copied",
-            "copyFailed": "Failed to copy",
-            "edit": "Edit"
-        },
-        "EditSheet": {
-            "editMode": "Edit Mode",
-            "yes": "Yes",
-            "no": "No",
-            "selectPlaceholder": "Select…",
-            "cancel": "Cancel",
-            "saveChanges": "Save changes"
-        },
         "SectionCard": {
             "comingSoon": "Coming soon"
         },
@@ -287,11 +206,94 @@
             "performersEyebrow": "Ed. 04 — Performers",
             "ingestEyebrow": "Ed. 05 — Ingest",
             "importEyebrow": "Ed. 06 — Import"
+        },
+        "Productions": {
+            "showEvents": "Show events",
+            "hideEvents": "Hide events",
+            "editProduction": "Edit production",
+            "editEvent": "Edit event"
+        },
+        "Locations": {
+            "showHalls": "Show halls",
+            "hideHalls": "Hide halls",
+            "editLocation": "Edit location",
+            "editHall": "Edit hall"
+        },
+        "Articles": {
+            "notAvailable": "Articles API is not yet available. No data to display.",
+            "newArticle": "New article",
+            "createFailed": "Failed to create article.",
+            "save": "Save",
+            "saving": "Saving…",
+            "saveSuccess": "Article saved.",
+            "saveFailed": "Failed to save article.",
+            "backToList": "Back to articles",
+            "statusLabel": "Status",
+            "slug": "Slug",
+            "subjectPeriod": "Subject period",
+            "title": "Title",
+            "relatedProductions": "Related productions",
+            "relatedArtists": "Related artists",
+            "relatedLocations": "Related locations",
+            "relatedEvents": "Related events"
+        },
+        "Performers": {
+            "notAvailable": "Performers API is not yet available. No data to display."
+        },
+        "Collections": {
+            "title": "Collections",
+            "newCollection": "New collection",
+            "noCollections": "No collections yet.",
+            "noItems": "No items yet. Add items from the Content tab.",
+            "goToContent": "Go to content",
+            "itemCount": "{count, plural, one {# item} other {# items}}",
+            "itemsTitle": "Items ({count})",
+            "slug": "Slug",
+            "titleNl": "Title (NL)",
+            "titleEn": "Title (EN)",
+            "descriptionNl": "Description (NL)",
+            "descriptionEn": "Description (EN)",
+            "shareableLink": "Shareable link",
+            "copyLink": "Copy link",
+            "linkCopied": "Link copied",
+            "save": "Save",
+            "saving": "Saving…",
+            "loading": "Loading…",
+            "cancel": "Cancel",
+            "open": "Open",
+            "metadataSaved": "Collection saved",
+            "metadataError": "Failed to save collection",
+            "itemsSaved": "Items saved",
+            "itemsError": "Failed to save items",
+            "copyError": "Failed to copy link",
+            "events": "Events",
+            "invalidSlug": "Title must contain at least one letter or number",
+            "deleteCollection": "Delete collection",
+            "deleteConfirm": "Are you sure you want to delete \"{title}\"? All items will be removed.",
+            "backToCollections": "Back to collections",
+            "addToCollection": "Add to collection",
+            "addAndOpen": "Add and open collection",
+            "createNewCollection": "Create new collection",
+            "searchCollections": "Search collections…",
+            "selectedItems": "{count, plural, one {# selected item} other {# selected items}}",
+            "alreadyInCollection": "{title} is already in this collection",
+            "addedToCollection": "Added to \"{collection}\"",
+            "addedToCollectionMultiple": "Added {count} items to \"{collection}\"",
+            "removeItem": "Remove item",
+            "commentNl": "Comment (NL)",
+            "commentEn": "Comment (EN)",
+            "contentTypes": {
+                "production": "Production",
+                "event": "Event",
+                "blogpost": "Article",
+                "artist": "Artist",
+                "location": "Location"
+            }
         }
     },
     "Admin": {
         "title": "Admin Dashboard",
-        "welcomeBack": "Welcome back",
+        "welcomeBack": "Welcome back!",
         "emailLabel": "Email",
         "loading": "Loading admin dashboard...",
         "quickActions": "Quick Actions",

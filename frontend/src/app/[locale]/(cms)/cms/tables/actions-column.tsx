@@ -1,10 +1,11 @@
 "use client";
 
-import { memo, useCallback, useMemo, type ComponentType, type ReactNode } from "react";
+import { Fragment, memo, useMemo, type ReactNode } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, SquarePen, Copy } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -12,112 +13,90 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Action, ActionDisplay, ActionVariant } from "@/types/cms/actions";
 
-type CopyableKeys<TData> = {
-    [K in keyof TData]: TData[K] extends string | number | null | undefined ? K : never;
-}[keyof TData];
-
-export interface PromotedAction<TData> {
-    key: string;
-    icon: ComponentType<{ className?: string }>;
-    label: string;
-    onClick: (entity: TData) => void;
+function isSimpleAction<T>(action: Action<T>): action is Extract<Action<T>, { onClick: unknown }> {
+    return "onClick" in action;
 }
 
 interface ActionsColumnOptions<TData> {
-    label: string;
-    copyKey: CopyableKeys<TData>;
-    onEdit: (entity: TData) => void;
-    promotedActions?: PromotedAction<TData>[];
+    actions: Action<TData>[];
 }
 
 interface ActionsCellProps<TData> {
     entity: TData;
-    label: string;
-    copyKey: CopyableKeys<TData>;
-    onEdit: (entity: TData) => void;
-    promotedActions?: PromotedAction<TData>[];
+    actions: Action<TData>[];
 }
 
 function ActionsCellInner<TData extends Record<string, unknown>>({
     entity,
-    label,
-    copyKey,
-    onEdit,
-    promotedActions,
+    actions,
 }: ActionsCellProps<TData>) {
     const t = useTranslations("Cms.ActionsColumn");
-    const copyValue = String(entity[copyKey] ?? "");
+    const [open, setOpen] = useState(false);
+    const closeMenu = () => setOpen(false);
 
-    const handleEdit = useCallback(() => onEdit(entity), [onEdit, entity]);
+    const { inlineActions, menuActions } = useMemo(() => {
+        const inline: Extract<Action<TData>, { onClick: unknown }>[] = [];
+        const menu: Action<TData>[] = [];
 
-    const handleCopy = useCallback(async () => {
-        try {
-            await navigator.clipboard.writeText(copyValue);
-            toast.success(t("copied", { key: String(copyKey) }));
-        } catch {
-            toast.error(t("copyFailed"));
+        for (const action of actions) {
+            if (isSimpleAction(action) && action.display === ActionDisplay.Inline) {
+                inline.push(action);
+            } else {
+                menu.push(action);
+            }
         }
-    }, [copyValue, copyKey, t]);
 
-    const boundPromotedActions = useMemo(
-        () =>
-            promotedActions?.map((action) => ({
-                ...action,
-                onClick: () => action.onClick(entity),
-            })),
-        [promotedActions, entity]
-    );
+        return { inlineActions: inline, menuActions: menu };
+    }, [actions]);
 
     return (
         <div className="flex items-center gap-1">
-            <button
-                type="button"
-                onClick={handleEdit}
-                className="text-muted-foreground hover:text-foreground hover:bg-foreground/5 flex h-8 w-8 items-center justify-center rounded-sm transition-colors"
-            >
-                <span className="sr-only">{t("edit", { label })}</span>
-                <SquarePen className="h-4 w-4" strokeWidth={1.5} />
-            </button>
-            {boundPromotedActions?.map((action) => (
-                <button
+            {inlineActions.map((action) => (
+                <Button
                     key={action.key}
-                    type="button"
-                    onClick={action.onClick}
-                    className="text-muted-foreground hover:text-foreground hover:bg-foreground/5 flex h-8 w-8 items-center justify-center rounded-sm transition-colors"
+                    variant="ghost"
+                    className="h-8 w-8 p-0"
+                    onClick={() => action.onClick(entity)}
                 >
                     <span className="sr-only">{action.label}</span>
-                    <action.icon className="h-4 w-4" />
-                </button>
+                    {action.icon && <action.icon className="h-4 w-4" />}
+                </Button>
             ))}
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <button
-                        type="button"
-                        className="text-muted-foreground hover:text-foreground hover:bg-foreground/5 flex h-8 w-8 items-center justify-center rounded-sm transition-colors"
-                    >
-                        <span className="sr-only">{t("openMenu")}</span>
-                        <MoreHorizontal className="h-4 w-4" strokeWidth={1.5} />
-                    </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="border-foreground/20 min-w-[160px]">
-                    <DropdownMenuLabel className="text-muted-foreground font-mono text-[10px] tracking-[1px] uppercase">
-                        {t("actions")}
-                    </DropdownMenuLabel>
-                    <DropdownMenuItem
-                        disabled={copyValue === ""}
-                        onClick={handleCopy}
-                        className="font-body text-sm"
-                    >
-                        <Copy className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
-                        {t("copy", { key: String(copyKey) })}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleEdit} className="font-body text-sm">
-                        <SquarePen className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
-                        {t("edit", { label })}
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+            {menuActions.length > 0 && (
+                <DropdownMenu open={open} onOpenChange={setOpen}>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">{t("openMenu")}</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
+                        {menuActions.map((action) =>
+                            isSimpleAction(action) ? (
+                                <DropdownMenuItem
+                                    key={action.key}
+                                    onClick={() => action.onClick(entity)}
+                                    className={
+                                        action.variant === ActionVariant.Destructive
+                                            ? "text-destructive"
+                                            : undefined
+                                    }
+                                >
+                                    {action.icon && <action.icon className="h-4 w-4" />}
+                                    {action.label}
+                                </DropdownMenuItem>
+                            ) : (
+                                <Fragment key={action.key}>
+                                    {action.render(entity, closeMenu)}
+                                </Fragment>
+                            )
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )}
         </div>
     );
 }
@@ -129,18 +108,10 @@ const ActionsCell = memo(ActionsCellInner) as <TData extends Record<string, unkn
 export function makeActionsColumn<TData extends Record<string, unknown>>(
     options: ActionsColumnOptions<TData>
 ): ColumnDef<TData> {
-    const { label, copyKey, onEdit, promotedActions } = options;
+    const { actions } = options;
 
     return {
         id: "actions",
-        cell: ({ row }) => (
-            <ActionsCell
-                entity={row.original}
-                label={label}
-                copyKey={copyKey}
-                onEdit={onEdit}
-                promotedActions={promotedActions}
-            />
-        ),
+        cell: ({ row }) => <ActionsCell entity={row.original} actions={actions} />,
     };
 }
