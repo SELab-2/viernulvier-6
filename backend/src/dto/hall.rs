@@ -1,9 +1,10 @@
 use database::{
     Database,
-    models::hall::{Hall, HallCreate},
+    models::{cursor::CursorData, hall::{Hall, HallCreate}},
 };
 use o2o::o2o;
 use serde::{Deserialize, Serialize};
+use tracing::debug;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -19,31 +20,26 @@ impl HallPayload {
         db: &Database,
         id_cursor: Option<String>,
         limit: u32,
-        _search: HallSearchQuery,
+        search: HallSearchQuery,
     ) -> Result<PaginatedResponse<Self>, AppError> {
-        let id_cursor: Option<Uuid> = id_cursor.and_then(|b64| {
-            let bytes: [u8; 16] = BASE64_URL_SAFE.decode(b64).ok()?.try_into().ok()?;
-            Some(Uuid::from_bytes(bytes))
+        let cursor: Option<CursorData> = id_cursor.and_then(|b64| {
+            let bytes = BASE64_URL_SAFE.decode(b64).ok()?;
+            serde_json::from_slice(&bytes).ok()
         });
 
-        let limit = limit as usize;
-        let mut data: Vec<_> = db
-            .halls()
-            .all(limit + 1, id_cursor)
-            .await?
-            .into_iter()
-            .map(Self::from)
-            .collect();
+        let (halls, next_cursor) = db.halls().all(limit, cursor, search.into()).await?;
+        let halls: Vec<_> = halls.into_iter().map(Self::from).collect();
 
-        // only return a cursor if there are more items
-        let next_cursor = if data.len() == limit + 1 {
-            data.pop();
-            data.last().map(|h| BASE64_URL_SAFE.encode(h.id))
-        } else {
-            None
-        };
+        let next_cursor_data = next_cursor.and_then(|c| {
+            let data = serde_json::to_vec(&c).ok()?;
+            Some(BASE64_URL_SAFE.encode(data))
+        });
 
-        Ok(PaginatedResponse { data, next_cursor })
+        debug!("Returning {} halls", halls.len());
+        Ok(PaginatedResponse {
+            data: halls,
+            next_cursor: next_cursor_data,
+        })
     }
 
     pub async fn by_id(db: &Database, id: Uuid) -> Result<Self, AppError> {
