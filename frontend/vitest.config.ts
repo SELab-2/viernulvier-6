@@ -7,6 +7,11 @@ export default defineConfig({
         setupFiles: ["./test/setup.ts"],
         clearMocks: true,
         restoreMocks: true,
+        server: {
+            deps: {
+                inline: ["next-intl"],
+            },
+        },
         exclude: [
             "**/node_modules/**",
             "**/dist/**",
@@ -28,6 +33,7 @@ export default defineConfig({
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),
+            "next/navigation": path.resolve(__dirname, "./node_modules/next/navigation.js"),
         },
     },
 });
