@@ -22,19 +22,6 @@ function formatDate(dateStr: string, locale: string): string {
     });
 }
 
-function formatPeriod(start: string | null, end: string | null, locale: string): string | null {
-    const loc = locale === "en" ? "en-GB" : "nl-BE";
-    const opts: Intl.DateTimeFormatOptions = { month: "long", year: "numeric" };
-
-    if (start && end) {
-        return `${new Date(start).toLocaleDateString(loc, opts)} — ${new Date(end).toLocaleDateString(loc, opts)}`;
-    }
-    if (start) {
-        return new Date(start).toLocaleDateString(loc, opts);
-    }
-    return null;
-}
-
 // TODO: replace with real data from API when backend supports public article relations
 const STATIC_CONNECTED_ENTITIES = [
     { type: "Productie", label: "The Second Woman — Natali Broods" },
@@ -98,27 +85,17 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
                     </Link>
 
                     {/* Article header */}
-                    <header className="border-foreground mb-8 border-b-[3px] pb-6">
-                        {/* Subject period */}
-                        {(article.subjectPeriodStart || article.subjectPeriodEnd) && (
-                            <span className="text-muted-foreground mb-3 block font-mono text-[9px] tracking-[2px] uppercase">
-                                {formatPeriod(
-                                    article.subjectPeriodStart,
-                                    article.subjectPeriodEnd,
-                                    locale
-                                )}
-                            </span>
-                        )}
-
+                    <header className="mb-8 pb-6">
                         <h1 className="font-display text-foreground text-[32px] leading-[1.1] font-bold tracking-[-0.025em] sm:text-[44px] md:text-[56px]">
                             {article.title ?? t("untitled")}
                         </h1>
 
                         {/* Dateline bar */}
                         <div className="border-foreground text-foreground mt-6 flex items-center justify-between border-y py-1.5 font-mono text-[9px] tracking-widest uppercase sm:text-[10px]">
-                            <span>{formatDate(article.createdAt, locale)}</span>
+                            <span>
+                                {formatDate(article.publishedAt ?? article.createdAt, locale)}
+                            </span>
                             <span>{t("datelineBrand")}</span>
-                            <span>{formatDate(article.updatedAt, locale)}</span>
                         </div>
                     </header>
 
@@ -132,7 +109,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
                         <h2 className="text-foreground mb-5 font-mono text-[10px] font-medium tracking-[2px] uppercase">
                             {t("connectedTo")}
                         </h2>
-                        <div className="grid grid-cols-1 gap-px sm:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-px">
                             {STATIC_CONNECTED_ENTITIES.map((entity) => (
                                 <div
                                     key={entity.label}
@@ -150,7 +127,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
                     </section>
 
                     {/* Related articles — TODO: replace static data with API */}
-                    <section className="border-foreground/20 mx-auto mt-10 max-w-[750px] border-t pt-8 pb-4">
+                    <section className="mx-auto mt-10 max-w-[750px] pt-8 pb-4">
                         <div className="mb-5 flex items-center gap-2.5">
                             <h2 className="text-foreground font-mono text-[10px] font-medium tracking-[2px] uppercase">
                                 {t("moreStories")}
