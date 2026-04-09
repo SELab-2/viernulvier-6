@@ -26,6 +26,10 @@ const messages = {
         },
         year: {
             label: "Year",
+            rangeMode: "Year range",
+            exactMode: "Exact dates",
+            rangeFrom: "Start year",
+            rangeTo: "End year",
         },
     },
 };
