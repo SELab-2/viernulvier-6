@@ -48,6 +48,7 @@ export interface BulkAction {
     key: string;
     label: string;
     icon?: ReactNode;
-    onClick: () => void;
+    onClick?: () => void;
     variant?: ActionVariant;
+    disabled?: boolean;
 }
