@@ -86,9 +86,9 @@ export const useGetAllMedia = (options?: {
     offset?: number;
 }) => {
     return useQuery({
-        queryKey: queryKeys.media.all(),
+        queryKey: queryKeys.media.all({ limit: options?.limit, offset: options?.offset }),
         queryFn: () => fetchAllMedia({ limit: options?.limit, offset: options?.offset }),
-        enabled: options?.enabled,
+        enabled: options?.enabled ?? true,
     });
 };
 

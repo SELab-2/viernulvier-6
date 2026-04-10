@@ -46,7 +46,8 @@ export const queryKeys = {
         relations: (id: string) => ["articles", id, "relations"] as const,
     },
     media: {
-        all: () => ["media"] as const,
+        all: (params?: { limit?: number; offset?: number }) =>
+            params ? (["media", params] as const) : (["media"] as const),
         detail: (id: string) => ["media", id] as const,
         entity: (entityType: string, entityId: string, params?: EntityMediaParams) =>
             params
