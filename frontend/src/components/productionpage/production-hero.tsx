@@ -1,10 +1,31 @@
+import Image from "next/image";
+
 import { getLocalizedField } from "@/lib/locale";
 import type { Production } from "@/types/models/production.types";
+import type { Media } from "@/types/models/media.types";
 
-export function ProductionHero({ production, locale }: { production: Production; locale: string }) {
+export function ProductionHero({
+    production,
+    locale,
+    media = [],
+}: {
+    production: Production;
+    locale: string;
+    media?: Media[];
+}) {
     const title = getLocalizedField(production, "title", locale) ?? production.slug;
     const artist = getLocalizedField(production, "artist", locale);
     const hasEnglishTitle = production.translations.some((t) => t.languageCode === "en" && t.title);
+
+    const coverImage = media.find((m) => m.url) ?? null;
+    const coverAlt =
+        (locale === "nl"
+            ? coverImage?.altTextNl
+            : locale === "fr"
+              ? coverImage?.altTextFr
+              : coverImage?.altTextEn) ??
+        title ??
+        "";
 
     // tags
     const tags = [production.uitdatabankTheme, production.uitdatabankType].filter(
@@ -85,10 +106,20 @@ export function ProductionHero({ production, locale }: { production: Production;
 
             {/* Right side (Image) */}
             <div className="relative order-1 min-h-[300px] overflow-hidden bg-[#ccc6bc] lg:order-2 lg:min-h-auto">
-                {/* Fallback pattern/gradient if no image */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                {coverImage?.url ? (
+                    <Image
+                        src={coverImage.url}
+                        alt={coverAlt}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 1024px) 100vw, 480px"
+                        priority
+                    />
+                ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                )}
                 <div className="bg-foreground/70 text-background/80 absolute right-0 bottom-0 left-0 p-3 font-mono text-[8px] tracking-[1.2px] uppercase">
-                    © Archief VIERNULVIER
+                    © {coverImage?.creditNl ?? "Archief VIERNULVIER"}
                 </div>
             </div>
         </div>

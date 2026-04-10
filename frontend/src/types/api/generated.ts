@@ -1209,6 +1209,8 @@ export interface components {
         };
         PaginatedResponse_ProductionPayload: {
             data: {
+                /** @description Cover image URL resolved from the entity_media link (output-only). */
+                cover_image_url?: string | null;
                 eticket_info?: string | null;
                 /** Format: uuid */
                 id: string;
@@ -1236,6 +1238,8 @@ export interface components {
             next_cursor?: string | null;
         };
         ProductionPayload: {
+            /** @description Cover image URL resolved from the entity_media link (output-only). */
+            cover_image_url?: string | null;
             eticket_info?: string | null;
             /** Format: uuid */
             id: string;
@@ -1315,6 +1319,8 @@ export interface components {
             name: string;
             subtitle: string;
         };
+        /** @enum {string} */
+        Sort: "recent" | "oldest" | "relevance";
         SpacePayload: {
             /** Format: uuid */
             id: string;
@@ -2904,6 +2910,17 @@ export interface operations {
             query?: {
                 cursor?: string | null;
                 limit?: number;
+                q?: string | null;
+                discipline?: string | null;
+                format?: string | null;
+                theme?: string | null;
+                audience?: string | null;
+                artist?: string | null;
+                location?: string | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                sort?: null | components["schemas"]["Sort"];
+                after?: string | null;
             };
             header?: never;
             path?: never;

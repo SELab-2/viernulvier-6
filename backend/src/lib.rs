@@ -23,7 +23,7 @@ use crate::config::AppConfig;
 use crate::error::AppError;
 use crate::handlers::{
     admin, article, artist, auth, collection, event, hall, location, media, production, series,
-    space, taxonomy, version,
+    space, taxonomy, version, queries::sort::Sort,
 };
 
 pub mod config;
@@ -42,7 +42,7 @@ pub struct AppState {
 #[derive(OpenApi)]
 #[openapi(
     modifiers(&SecurityAddon),
-    components(schemas(EntityType, Facet)),
+    components(schemas(EntityType, Facet, Sort)),
     tags(
         (name = "viernulvier_api", description = "API Endpoints"),
         (name = "Collections", description = "A saved, titled selection of archive items with a shareable URL. No login required to view."),

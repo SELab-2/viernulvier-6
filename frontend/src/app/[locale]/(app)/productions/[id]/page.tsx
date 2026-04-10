@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 
 import { useGetProduction, useGetProductions } from "@/hooks/api/useProductions";
 import { useGetEventsByProduction } from "@/hooks/api/useEvents";
+import { useGetEntityMedia } from "@/hooks/api/useMedia";
 import { getLocalizedField } from "@/lib/locale";
 import { Link, useRouter } from "@/i18n/routing";
 
@@ -42,6 +43,7 @@ export default function ProductionPage({
     const { data: production, isLoading: isProdLoading, isError } = useGetProduction(id);
     const { data: events = [], isLoading: isEventsLoading } = useGetEventsByProduction(id);
     const { data: productionsResult, isLoading: isAllProdLoading } = useGetProductions();
+    const { data: media = [] } = useGetEntityMedia("production", id);
 
     const isLoading = isProdLoading || isEventsLoading || isAllProdLoading;
 
@@ -99,12 +101,12 @@ export default function ProductionPage({
             </div>
 
             {/* Hero */}
-            <ProductionHero production={production} locale={locale} />
+            <ProductionHero production={production} locale={locale} media={media} />
 
             {/* Content Grid */}
             <div className="border-foreground flex min-h-[600px] flex-col border-b-2 lg:flex-row">
                 <div className="border-border animate-in fade-in slide-in-from-bottom-2 fill-mode-both flex-1 border-b p-6 pb-16 delay-150 duration-500 sm:p-10 lg:border-r lg:border-b-0 lg:pr-[50px]">
-                    <ProductionArticle production={production} locale={locale} />
+                    <ProductionArticle production={production} locale={locale} media={media} />
                 </div>
                 <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both flex w-full shrink-0 flex-col gap-0 p-6 delay-200 duration-500 sm:p-[30px_24px] lg:w-[320px]">
                     <ProductionSidebar production={production} events={events} locale={locale} />

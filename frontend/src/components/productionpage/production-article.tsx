@@ -1,5 +1,8 @@
+import Image from "next/image";
+
 import { getLocalizedField } from "@/lib/locale";
 import type { Production } from "@/types/models/production.types";
+import type { Media } from "@/types/models/media.types";
 
 function stripHtmlAndDecode(html: string | null | undefined): string {
     if (!html) return "";
@@ -87,9 +90,11 @@ function TextBlocks({ text, className }: { text: string; className?: string }) {
 export function ProductionArticle({
     production,
     locale,
+    media = [],
 }: {
     production: Production;
     locale: string;
+    media?: Media[];
 }) {
     const description = stripHtmlAndDecode(getLocalizedField(production, "description", locale));
     const descriptionExtra = stripHtmlAndDecode(
@@ -165,18 +170,37 @@ export function ProductionArticle({
                 )}
             </div>
 
-            {/* Gallery placeholder */}
-            <div className="my-8 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <div className="group aspect-[4/3] overflow-hidden bg-[#ccc6bc]">
-                    <div className="h-full w-full bg-gradient-to-tr from-[#CCC6BC] to-[#B5AEA4] grayscale-[15%] transition-all duration-300 group-hover:grayscale-0" />
+            {/* Gallery */}
+            {media.length > 0 && (
+                <div className="my-8 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    {media.map((m) => {
+                        const alt =
+                            (locale === "nl"
+                                ? m.altTextNl
+                                : locale === "fr"
+                                  ? m.altTextFr
+                                  : m.altTextEn) ?? "";
+                        return (
+                            <div
+                                key={m.id}
+                                className="group relative aspect-[4/3] overflow-hidden bg-[#ccc6bc]"
+                            >
+                                {m.url ? (
+                                    <Image
+                                        src={m.url}
+                                        alt={alt}
+                                        fill
+                                        className="object-cover grayscale-[15%] transition-all duration-300 group-hover:grayscale-0"
+                                        sizes="(max-width: 640px) 100vw, 33vw"
+                                    />
+                                ) : (
+                                    <div className="h-full w-full bg-gradient-to-tr from-[#CCC6BC] to-[#B5AEA4]" />
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
-                <div className="group aspect-[4/3] overflow-hidden bg-[#ccc6bc]">
-                    <div className="h-full w-full bg-gradient-to-tr from-[#CCC6BC] to-[#B5AEA4] grayscale-[15%] transition-all duration-300 group-hover:grayscale-0" />
-                </div>
-                <div className="group aspect-[4/3] overflow-hidden bg-[#ccc6bc]">
-                    <div className="h-full w-full bg-gradient-to-tr from-[#CCC6BC] to-[#B5AEA4] grayscale-[15%] transition-all duration-300 group-hover:grayscale-0" />
-                </div>
-            </div>
+            )}
 
             {/* Videos */}
             {videos.length > 0 && (
