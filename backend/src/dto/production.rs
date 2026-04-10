@@ -36,7 +36,7 @@ impl ProductionPayload {
 
         // get productions from the database, including cursor
         let (productions, next_cursor) = db.productions().all(limit, cursor, search.into()).await?;
-        let productions: Vec<_> = productions.into_iter().map(Self::from).collect();
+        let mut productions: Vec<_> = productions.into_iter().map(Self::from).collect();
         // encode the next cursor
         let next_cursor_data = next_cursor.and_then(|c| {
             let data = serde_json::to_vec(&c).ok()?;
