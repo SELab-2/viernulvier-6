@@ -4,6 +4,7 @@ import type { Production } from "@/types/models/production.types";
 export function ProductionHero({ production, locale }: { production: Production; locale: string }) {
     const title = getLocalizedField(production, "title", locale) ?? production.slug;
     const artist = getLocalizedField(production, "artist", locale);
+    const hasEnglishTitle = production.translations.some((t) => t.languageCode === "en" && t.title);
 
     // tags
     const tags = [production.uitdatabankTheme, production.uitdatabankType].filter(
@@ -76,9 +77,7 @@ export function ProductionHero({ production, locale }: { production: Production;
                             Taal
                         </div>
                         <div className="font-body text-foreground text-[13px] leading-[1.4] font-medium">
-                            {production.translations.some((t) => t.languageCode === "en")
-                                ? "EN / NL"
-                                : "NL"}
+                            {hasEnglishTitle ? "EN / NL" : "NL"}
                         </div>
                     </div>
                 </div>
