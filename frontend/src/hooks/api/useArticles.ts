@@ -24,6 +24,16 @@ import {
 
 import { queryKeys } from "./query-keys";
 
+const fetchArticlesPublished = async (): Promise<ArticleListItem[]> => {
+    const { data } = await api.get<ArticleListResponse[]>("/articles");
+    return mapArticleListItems(data);
+};
+
+const fetchArticleBySlug = async (slug: string): Promise<Article> => {
+    const { data } = await api.get<ArticleResponse>(`/articles/${slug}`);
+    return mapArticle(data);
+};
+
 const fetchArticlesCms = async (): Promise<ArticleListItem[]> => {
     const { data } = await api.get<ArticleListResponse[]>("/articles/cms");
     return mapArticleListItems(data);
@@ -37,6 +47,21 @@ const fetchArticleById = async (id: string): Promise<Article> => {
 const fetchArticleRelations = async (id: string): Promise<ArticleRelations> => {
     const { data } = await api.get<ArticleRelationsResponse>(`/articles/cms/${id}/relations`);
     return mapArticleRelations(data);
+};
+
+export const useGetArticles = () => {
+    return useQuery({
+        queryKey: queryKeys.articles.published,
+        queryFn: fetchArticlesPublished,
+    });
+};
+
+export const useGetArticleBySlug = (slug: string, options?: { enabled?: boolean }) => {
+    return useQuery({
+        queryKey: queryKeys.articles.bySlug(slug),
+        queryFn: () => fetchArticleBySlug(slug),
+        enabled: Boolean(slug) && (options?.enabled ?? true),
+    });
 };
 
 export const useGetArticlesCms = () => {

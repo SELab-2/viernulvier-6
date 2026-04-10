@@ -20,7 +20,15 @@
     "Masthead": {
         "address": "Sint-Pietersnieuwstraat 23, Ghent",
         "subtitle": "De Vooruit — Founded 1883",
-        "genres": "Theatre · Dance · Music · Performance · Nightlife"
+        "genres": "Theatre · Dance · Music · Performance · Nightlife",
+        "nav": {
+            "productions": "Productions",
+            "artists": "Artists",
+            "articles": "Articles",
+            "posters": "Posters",
+            "collection": "Collection",
+            "about": "About"
+        }
     },
     "Search": {
         "placeholder": "Search the archive...",
@@ -412,5 +420,29 @@
         "edition": "Edition 404",
         "articleBrand": "Archives Department",
         "price": "Price: Priceless"
+    },
+    "Articles": {
+        "heroEyebrow": "Stories from the archive",
+        "heroTitle": "Articles & Stories",
+        "heroSubtitle": "Stories from behind the scenes of De Vooruit",
+        "datelineEdition": "Archive Edition",
+        "datelineBrand": "Archives Department",
+        "datelinePrice": "Price: Priceless",
+        "loading": "Loading articles...",
+        "noArticlesTitle": "No stories yet",
+        "noArticlesText": "There are currently no published articles. Check back later for new stories from the archive.",
+        "listLabel": "{count, plural, one {# article} other {# articles}}",
+        "untitled": "Untitled",
+        "readMore": "Read more",
+        "backToArticles": "Back to articles",
+        "notFoundTitle": "Article not found",
+        "notFoundText": "This article does not exist or is no longer available.",
+        "connectedTo": "Connected to",
+        "moreStories": "More articles",
+        "relatedEntities": "Related",
+        "relatedProductions": "Productions",
+        "relatedArtists": "Artists",
+        "relatedLocations": "Locations",
+        "relatedEvents": "Events"
     }
 }

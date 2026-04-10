@@ -28,6 +28,7 @@ export const mapArticle = (response: ArticleResponse): Article => ({
     content: toArticleContent(response.content),
     createdAt: response.created_at,
     updatedAt: response.updated_at,
+    publishedAt: toNullable(response.published_at),
     subjectPeriodStart: toNullable(response.subject_period_start),
     subjectPeriodEnd: toNullable(response.subject_period_end),
 });
@@ -38,6 +39,7 @@ export const mapArticleListItem = (response: ArticleListResponse): ArticleListIt
     status: response.status,
     title: toNullable(response.title),
     updatedAt: response.updated_at,
+    publishedAt: toNullable(response.published_at),
     subjectPeriodStart: toNullable(response.subject_period_start),
     subjectPeriodEnd: toNullable(response.subject_period_end),
 });
