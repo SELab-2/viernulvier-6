@@ -15,13 +15,14 @@ impl HallPayload {
     pub async fn all(
         db: &Database,
         id_cursor: Option<String>,
-        limit: usize,
+        limit: u32,
     ) -> Result<PaginatedResponse<Self>, AppError> {
         let id_cursor: Option<Uuid> = id_cursor.and_then(|b64| {
             let bytes: [u8; 16] = BASE64_URL_SAFE.decode(b64).ok()?.try_into().ok()?;
             Some(Uuid::from_bytes(bytes))
         });
 
+        let limit = limit as usize;
         let mut data: Vec<_> = db
             .halls()
             .all(limit + 1, id_cursor)
