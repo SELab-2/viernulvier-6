@@ -1210,7 +1210,7 @@ export interface components {
         PaginatedResponse_ProductionPayload: {
             data: {
                 /** @description Cover image URL resolved from the entity_media link (output-only). */
-                cover_image_url?: string | null;
+                readonly cover_image_url?: string | null;
                 eticket_info?: string | null;
                 /** Format: uuid */
                 id: string;
@@ -1239,7 +1239,7 @@ export interface components {
         };
         ProductionPayload: {
             /** @description Cover image URL resolved from the entity_media link (output-only). */
-            cover_image_url?: string | null;
+            readonly cover_image_url?: string | null;
             eticket_info?: string | null;
             /** Format: uuid */
             id: string;
