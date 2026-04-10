@@ -1,6 +1,6 @@
 import { usePreviewContext } from "@/contexts/PreviewContext";
 import { ProductionPreviewData } from "@/types/production-preview.types";
-import { Production, ProductionRow } from "@/types/models/production.types";
+import { Production } from "@/types/models/production.types";
 import { Event } from "@/types/models/event.types";
 import { ensureProduction } from "@/lib/production-converter";
 
