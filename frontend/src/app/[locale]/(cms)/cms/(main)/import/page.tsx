@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/cms/PageHeader";
 
 export default function ImportPage() {
     const t = useTranslations("Cms.Import");
-    const tHeader = useTranslations("Cms.PageHeader");
+    const tEditions = useTranslations("Cms.editions");
     const contentRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -28,7 +28,7 @@ export default function ImportPage() {
 
     return (
         <div className="flex h-full flex-col px-4 py-3">
-            <PageHeader eyebrow={tHeader("importEyebrow")} title={t("title")} />
+            <PageHeader eyebrow={tEditions("edition6")} title={t("title")} />
 
             {/* Content - scrollable */}
             <div ref={contentRef} className="flex-1 overflow-auto">

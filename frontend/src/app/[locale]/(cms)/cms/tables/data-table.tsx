@@ -260,8 +260,8 @@ export function DataTable<TData, TValue>({
                                                 header.column.id === "expander"
                                                 ? "w-px px-2 py-2 whitespace-nowrap"
                                                 : header.column.id === "actions"
-                                                  ? "text-foreground px-3 py-2 text-right font-mono text-[10px] tracking-[1.2px] uppercase"
-                                                  : "text-foreground max-w-[300px] px-3 py-2 font-mono text-[10px] tracking-[1.2px] break-words whitespace-normal uppercase"
+                                                  ? "text-background px-3 py-2 text-right font-mono text-[10px] tracking-[1.2px] uppercase"
+                                                  : "text-background max-w-[300px] px-3 py-2 font-mono text-[10px] tracking-[1.2px] break-words whitespace-normal uppercase"
                                         )}
                                     >
                                         {header.isPlaceholder

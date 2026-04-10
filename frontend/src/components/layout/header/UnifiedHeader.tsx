@@ -31,7 +31,7 @@ function UserMenu() {
                 onClick={() => setOpen(!open)}
                 className="group flex items-center gap-2 font-mono text-[9px] tracking-[1.4px] uppercase transition-colors"
             >
-                <span className="text-muted-foreground group-hover:text-foreground hidden max-w-[100px] truncate sm:inline">
+                <span className="text-muted-foreground group-hover:text-foreground hidden whitespace-nowrap sm:inline">
                     {user.email}
                 </span>
                 <span className="text-foreground flex h-6 w-6 items-center justify-center">

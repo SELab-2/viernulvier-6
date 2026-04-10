@@ -6,11 +6,11 @@ import { PerformersTable } from "../../tables/performers/performers-table";
 
 export default function PerformersPage() {
     const t = useTranslations("Cms.Performers");
-    const tHeader = useTranslations("Cms.PageHeader");
+    const tEditions = useTranslations("Cms.editions");
 
     return (
         <div className="flex h-full flex-col px-4 py-3">
-            <PageHeader eyebrow={tHeader("performersEyebrow")} title={t("title")} />
+            <PageHeader eyebrow={tEditions("edition4")} title={t("title")} />
 
             {/* Table - scrollable */}
             <div className="flex-1 overflow-auto">

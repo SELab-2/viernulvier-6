@@ -1,34 +1,70 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { Archive } from "lucide-react";
 import type { Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
 import { makeProductionColumns, productionFields, toProductionUpdateInput } from "./columns";
 import type { ProductionRow } from "@/types/models/production.types";
-import { SelectionToolbar } from "../selection-toolbar";
+import { ActionBar } from "../action-bar";
 import { useParentChildSelection } from "../use-parent-child-selection";
 import { makeEventColumns, eventFields, toEventUpdateInput } from "./event-columns";
 import { Spinner } from "@/components/ui/spinner";
-import { useGetProductions, useUpdateProduction } from "@/hooks/api/useProductions";
+import { useGetInfiniteProductions, useUpdateProduction } from "@/hooks/api/useProductions";
 import { useGetEvents, useUpdateEvent } from "@/hooks/api/useEvents";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
 import type { PickerItem } from "@/lib/collection-picker-utils";
 import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
-import { Archive } from "lucide-react";
 
 export function ProductionsTable() {
     const t = useTranslations("Cms.Productions");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
-    const { data: productionsResult } = useGetProductions();
+    const loadMoreRef = useRef<HTMLDivElement>(null);
+
+    const {
+        data: infiniteData,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = useGetInfiniteProductions();
+
     const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
-    const productions = useMemo(() => productionsResult?.data ?? [], [productionsResult?.data]);
-    const allEvents = useMemo(() => eventsResult?.data ?? [], [eventsResult?.data]);
+
+    // Flatten all pages into a single array
+    const allProductions = useMemo(
+        () => infiniteData?.pages.flatMap((page) => page.data) ?? [],
+        [infiniteData]
+    );
+
+    const allEvents = useMemo(() => eventsResult?.data ?? [], [eventsResult]);
     const updateProduction = useUpdateProduction();
     const updateEvent = useUpdateEvent();
+
+    // Load more handler
+    const loadMore = useCallback(() => {
+        if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+        }
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+    // Intersection observer for infinite scroll
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) loadMore();
+            },
+            { threshold: 0.1, rootMargin: "100px" }
+        );
+        const currentRef = loadMoreRef.current;
+        if (currentRef) observer.observe(currentRef);
+        return () => {
+            if (currentRef) observer.unobserve(currentRef);
+        };
+    }, [loadMore]);
 
     const [editProduction, setEditProduction] = useState<ProductionRow | null>(null);
     const [editEvent, setEditEvent] = useState<Event | null>(null);
@@ -76,8 +112,8 @@ export function ProductionsTable() {
     const getProductionRowId = useCallback((row: Production) => row.id, []);
 
     const selectedProductions = useMemo(
-        () => productions.filter((production) => parentSelection[production.id]),
-        [parentSelection, productions]
+        () => allProductions.filter((production) => parentSelection[production.id]),
+        [parentSelection, allProductions]
     );
 
     const eventsById = useMemo(
@@ -143,51 +179,39 @@ export function ProductionsTable() {
         ]
     );
 
-    // Selection toolbar groups with our styling but main's collections feature
-    const selectionGroups = useMemo(() => {
-        const groups: Parameters<typeof SelectionToolbar>[0]["groups"] = [];
-        if (selectedProductionCount > 0) {
-            groups.push({
-                countKey: "productionsSelected" as const,
-                count: selectedProductionCount,
-                inlineActions: [
-                    {
-                        label: tCollections("addToCollection"),
-                        icon: <Archive className="h-3.5 w-3.5" />,
-                        onClick: () => setCollectionDialogOpen(true),
-                    },
-                ],
-                overflowActions: [],
-            });
-        }
-        if (selectedEventCount > 0) {
-            groups.push({
-                countKey: "eventsSelected" as const,
-                count: selectedEventCount,
-                inlineActions: [
-                    {
-                        label: tCollections("addToCollection"),
-                        icon: <Archive className="h-3.5 w-3.5" />,
-                        onClick: () => setCollectionDialogOpen(true),
-                    },
-                ],
-                overflowActions: [],
-            });
-        }
-        return groups;
-    }, [selectedProductionCount, selectedEventCount, tCollections]);
+    const actions = useMemo(
+        () => [
+            {
+                key: "add-to-collection",
+                label: tCollections("addToCollection"),
+                icon: <Archive className="h-3.5 w-3.5" />,
+                onClick: () => setCollectionDialogOpen(true),
+            },
+            {
+                key: "delete",
+                label: "Delete",
+            },
+        ],
+        [tCollections]
+    );
 
     return (
         <div className="flex h-full flex-col">
-            {/* Our styled SelectionToolbar with collections feature - sticky */}
             <div className="bg-background sticky top-0 z-10">
-                <SelectionToolbar groups={selectionGroups} onClear={clearSelection} />
+                <ActionBar
+                    entityCounts={[
+                        { countKey: "productionsSelected", count: selectedProductionCount },
+                        { countKey: "eventsSelected", count: selectedEventCount },
+                    ]}
+                    actions={actions}
+                    onClear={clearSelection}
+                />
             </div>
 
             <div className="flex-1 overflow-auto">
                 <DataTable
                     columns={productionCols}
-                    data={productions}
+                    data={allProductions}
                     getRowCanExpand={getRowCanExpand}
                     renderSubRows={renderEvents}
                     rowSelection={parentSelection}
@@ -195,6 +219,13 @@ export function ProductionsTable() {
                     expanderLabels={expanderLabels}
                     getRowId={getProductionRowId}
                 />
+
+                {/* Infinite scroll trigger */}
+                {hasNextPage && (
+                    <div ref={loadMoreRef} className="flex justify-center py-4">
+                        <Spinner className="text-muted-foreground h-5 w-5" />
+                    </div>
+                )}
             </div>
 
             {editProduction && (

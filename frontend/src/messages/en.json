@@ -211,6 +211,8 @@
             "locationsDescription": "Manage locations and halls",
             "performers": "Performers",
             "performersDescription": "Manage artists and performers",
+            "collections": "Collections",
+            "collectionsDescription": "Manage content collections",
             "ingest": "Ingest",
             "ingestDescription": "Upload and process archive materials",
             "import": "Import",
@@ -235,15 +237,7 @@
         "SectionCard": {
             "comingSoon": "Coming soon"
         },
-        "PageHeader": {
-            "productionsEyebrow": "Ed. 01 — Productions",
-            "locationsEyebrow": "Ed. 02 — Locations",
-            "articlesEyebrow": "Ed. 03 — Articles",
-            "performersEyebrow": "Ed. 04 — Performers",
-            "ingestEyebrow": "Ed. 05 — Ingest",
-            "importEyebrow": "Ed. 06 — Import",
-            "collectionsEyebrow": "Collections"
-        },
+        "PageHeader": {},
         "Productions": {
             "title": "Productions",
             "subtitle": "Manage all productions and scheduled events",

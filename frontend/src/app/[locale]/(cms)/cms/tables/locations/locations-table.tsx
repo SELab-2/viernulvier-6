@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { Archive } from "lucide-react";
 import type { Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
@@ -11,9 +12,8 @@ import { makeLocationColumns, locationFields, toLocationUpdateInput } from "./co
 import { makeHallColumns, hallFields, toHallUpdateInput } from "./hall-columns";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
 import { Spinner } from "@/components/ui/spinner";
-import { useGetLocations, useUpdateLocation } from "@/hooks/api/useLocations";
+import { useGetInfiniteLocations, useUpdateLocation } from "@/hooks/api/useLocations";
 import { useGetHalls, useUpdateHall } from "@/hooks/api/useHalls";
-import { ActionVariant } from "@/types/cms/actions";
 import type { Location } from "@/types/models/location.types";
 import type { Hall } from "@/types/models/hall.types";
 
@@ -21,13 +21,48 @@ export function LocationsTable() {
     const t = useTranslations("Cms.Locations");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
-    const tBar = useTranslations("Cms.ActionBar");
-    const { data: locationsResult, isLoading: locationsLoading } = useGetLocations();
+    const loadMoreRef = useRef<HTMLDivElement>(null);
+
+    const {
+        data: infiniteData,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = useGetInfiniteLocations();
+
     const { data: hallsResult, isLoading: hallsLoading } = useGetHalls();
-    const locations = useMemo(() => locationsResult?.data ?? [], [locationsResult?.data]);
-    const allHalls = useMemo(() => hallsResult?.data ?? [], [hallsResult?.data]);
+
+    // Flatten all pages into a single array
+    const locations = useMemo(
+        () => infiniteData?.pages.flatMap((page) => page.data) ?? [],
+        [infiniteData]
+    );
+
+    const allHalls = useMemo(() => hallsResult?.data ?? [], [hallsResult]);
     const updateLocation = useUpdateLocation();
     const updateHall = useUpdateHall();
+
+    // Load more handler
+    const loadMore = useCallback(() => {
+        if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+        }
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+    // Intersection observer for infinite scroll
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) loadMore();
+            },
+            { threshold: 0.1, rootMargin: "100px" }
+        );
+        const currentRef = loadMoreRef.current;
+        if (currentRef) observer.observe(currentRef);
+        return () => {
+            if (currentRef) observer.unobserve(currentRef);
+        };
+    }, [loadMore]);
 
     const [editLocation, setEditLocation] = useState<Location | null>(null);
     const [editHall, setEditHall] = useState<Hall | null>(null);
@@ -119,23 +154,21 @@ export function LocationsTable() {
             {
                 key: "add-to-collection",
                 label: tCollections("addToCollection"),
+                icon: <Archive className="h-3.5 w-3.5" />,
                 onClick: () => setCollectionDialogOpen(true),
             },
             {
                 key: "delete",
-                label: tBar("delete"),
-                variant: ActionVariant.Destructive,
+                label: "Delete",
             },
         ],
-        [tCollections, tBar]
+        [tCollections]
     );
 
     return (
         <div className="flex h-full flex-col">
             <div className="bg-background sticky top-0 z-10">
                 <ActionBar
-                    totalCount={locations.length}
-                    totalCountKey="totalLocations"
                     entityCounts={[
                         { countKey: "locationsSelected", count: selectedLocationCount },
                         { countKey: "hallsSelected", count: selectedHallCount },
@@ -148,7 +181,6 @@ export function LocationsTable() {
                 <DataTable
                     columns={locationCols}
                     data={locations}
-                    loading={locationsLoading}
                     renderSubComponent={renderHalls}
                     getRowCanExpand={getRowCanExpand}
                     expanderLabels={expanderLabels}
@@ -156,6 +188,13 @@ export function LocationsTable() {
                     onRowSelectionChange={setParentSelection}
                     getRowId={getLocationRowId}
                 />
+
+                {/* Infinite scroll trigger */}
+                {hasNextPage && (
+                    <div ref={loadMoreRef} className="flex justify-center py-4">
+                        <Spinner className="text-muted-foreground h-5 w-5" />
+                    </div>
+                )}
             </div>
             <CollectionPickerDialog
                 open={collectionDialogOpen}

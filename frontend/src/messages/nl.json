@@ -211,6 +211,8 @@
             "locationsDescription": "Beheer locaties en zalen",
             "performers": "Uitvoerders",
             "performersDescription": "Beheer artiesten en uitvoerders",
+            "collections": "Collecties",
+            "collectionsDescription": "Beheer inhoudscollecties",
             "ingest": "Ingest",
             "ingestDescription": "Upload en verwerk archiefmaterialen",
             "import": "Import",
@@ -235,15 +237,7 @@
         "SectionCard": {
             "comingSoon": "Binnenkort"
         },
-        "PageHeader": {
-            "productionsEyebrow": "Ed. 01 — Producties",
-            "locationsEyebrow": "Ed. 02 — Locaties",
-            "articlesEyebrow": "Ed. 03 — Artikelen",
-            "performersEyebrow": "Ed. 04 — Uitvoerders",
-            "ingestEyebrow": "Ed. 05 — Ingest",
-            "importEyebrow": "Ed. 06 — Import",
-            "collectionsEyebrow": "Collecties"
-        },
+        "PageHeader": {},
         "Productions": {
             "title": "Producties",
             "subtitle": "Beheer alle producties en geplande evenementen",

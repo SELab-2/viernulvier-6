@@ -25,7 +25,7 @@ const navItems = [
     { key: "locations", href: "/cms/locations", icon: MapPin, editionKey: "edition2" },
     { key: "articles", href: "/cms/articles", icon: Newspaper, editionKey: "edition3" },
     { key: "performers", href: "/cms/performers", icon: Users, editionKey: "edition4" },
-    { key: "collections", href: "/cms/collections", icon: FolderArchive, editionKey: "edition4" },
+    { key: "collections", href: "/cms/collections", icon: FolderArchive, editionKey: "edition5" },
 ];
 
 const utilityItems = [
