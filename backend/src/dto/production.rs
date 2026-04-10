@@ -171,7 +171,7 @@ pub struct ProductionPayload {
     pub translations: Vec<ProductionTranslationPayload>,
 
     /// Cover image URL resolved from the entity_media link (output-only).
-    #[serde(default)]
+    #[schema(read_only)]
     pub cover_image_url: Option<String>,
 }
 
