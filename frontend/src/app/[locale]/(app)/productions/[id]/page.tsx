@@ -68,12 +68,13 @@ export default function ProductionPage({
     const { data: apiEvents = [], isLoading: isEventsLoading } = useGetEventsByProduction(id);
     const { data: productionsResult, isLoading: isAllProdLoading } = useGetProductions();
 
-    // Only use preview data if explicitly in preview mode (?preview=1)
+    // Always call preview hooks (they handle preview mode internally)
     const previewProduction = useProductionWithPreview(id, apiProduction);
     const previewEvents = useProductionEventsWithPreview(id, apiEvents);
     const hasPreviewData = useHasPreview("production", id);
 
-    const production = isPreviewMode ? previewProduction : apiProduction;
+    // In preview mode, use preview data if available, otherwise fall back to API
+    const production = isPreviewMode ? (previewProduction ?? apiProduction) : apiProduction;
     const events = isPreviewMode ? (previewEvents ?? apiEvents) : apiEvents;
     const isPreview = isPreviewMode && hasPreviewData;
 

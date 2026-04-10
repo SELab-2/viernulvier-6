@@ -86,12 +86,13 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
 
     const { data: apiArticle, isLoading, isError } = useGetArticleBySlug(slug);
 
-    // Only use preview data if explicitly in preview mode (?preview=1)
+    // Always call preview hooks (they handle preview mode internally)
     const previewArticle = useArticleWithPreview(slug, apiArticle);
     const previewRelations = useArticleRelationsWithPreview(slug);
     const hasPreviewData = useHasPreview("article", slug);
 
-    const article = isPreviewMode ? previewArticle : apiArticle;
+    // In preview mode, use preview data if available, otherwise fall back to API
+    const article = isPreviewMode ? (previewArticle ?? apiArticle) : apiArticle;
     const isPreview = isPreviewMode && hasPreviewData;
 
     // Show preview relations if in preview mode, otherwise empty (until API is ready)

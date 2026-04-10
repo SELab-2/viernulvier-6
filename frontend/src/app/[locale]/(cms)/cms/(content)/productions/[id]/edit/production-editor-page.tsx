@@ -107,13 +107,8 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
         return { ...baseProduction, ...edits };
     }, [baseProduction, edits]);
 
-    // Use ref to access current production value without causing re-renders
-    const productionRef = useRef(production);
-
-    // Keep ref in sync with current production value
-    useEffect(() => {
-        productionRef.current = production;
-    }, [production]);
+    // Ref to track last synced production hash for preview
+    const lastSyncedProductionRef = useRef<string | null>(null);
 
     // Get events for this production
     const productionEvents = useMemo(() => {
@@ -121,26 +116,30 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
         return eventsResult.data.filter((e) => e.productionId === id);
     }, [eventsResult, id]);
 
-    // Sync preview data to localStorage whenever edits change and preview is open
+    // Sync preview data to localStorage whenever production changes and preview is open
     useEffect(() => {
-        if (productionRef.current && isPreviewOpen) {
-            const productionForPreview = convertProductionRowToProduction(productionRef.current);
-            const previewData: ProductionPreviewData = {
-                production: productionForPreview,
-                events: productionEvents,
-            };
-            setPreview("production", productionRef.current.id, previewData, locale);
-        }
-    }, [edits, productionEvents, isPreviewOpen, setPreview, locale]);
+        if (!production || !isPreviewOpen) return;
+
+        // Create a hash of the current production to check if it changed
+        const productionHash = JSON.stringify(production);
+        if (productionHash === lastSyncedProductionRef.current) return;
+
+        lastSyncedProductionRef.current = productionHash;
+        const productionForPreview = convertProductionRowToProduction(production);
+        const previewData: ProductionPreviewData = {
+            production: productionForPreview,
+            events: productionEvents,
+        };
+        setPreview("production", production.id, previewData, locale);
+    }, [production, productionEvents, isPreviewOpen, setPreview, locale]);
 
     const handleSave = async () => {
-        const currentProduction = productionRef.current;
-        if (!currentProduction) return;
+        if (!production) return;
 
         try {
-            const updateInput = toProductionUpdateInput(currentProduction);
+            const updateInput = toProductionUpdateInput(production);
             await updateProduction.mutateAsync(updateInput);
-            clearPreviewFor("production", currentProduction.id);
+            clearPreviewFor("production", production.id);
             setEdits({});
             toast.success(t("saveSuccess"));
         } catch {
@@ -149,19 +148,18 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
     };
 
     const togglePreview = useCallback(() => {
-        const currentProduction = productionRef.current;
-        if (!currentProduction) return;
+        if (!production) return;
 
         if (!isPreviewOpen) {
-            const productionForPreview = convertProductionRowToProduction(currentProduction);
+            const productionForPreview = convertProductionRowToProduction(production);
             const previewData: ProductionPreviewData = {
                 production: productionForPreview,
                 events: productionEvents,
             };
-            setPreview("production", currentProduction.id, previewData, locale);
+            setPreview("production", production.id, previewData, locale);
         }
         setIsPreviewOpen((prev) => !prev);
-    }, [productionEvents, isPreviewOpen, setPreview, locale]);
+    }, [production, productionEvents, isPreviewOpen, setPreview, locale]);
 
     const handleChange = (key: keyof ProductionRow, value: string | null) => {
         setEdits((prev) => ({ ...prev, [key]: value }));
