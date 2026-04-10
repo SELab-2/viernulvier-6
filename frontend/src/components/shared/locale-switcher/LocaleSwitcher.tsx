@@ -2,21 +2,21 @@
 
 import { useLocale } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { usePathname } from "@/i18n/routing";
+import { usePathname, useRouter } from "@/i18n/routing";
 
 export function LocaleSwitcher() {
     const locale = useLocale();
+    const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
     function onSelectChange(nextLocale: string) {
-        // Build full URL with query params - NEVER strip them
+        // Build URL with query params
         const queryString = searchParams.toString();
-        const newPath = `/${nextLocale}${pathname}`;
-        const url = queryString ? `${newPath}?${queryString}` : newPath;
+        const url = queryString ? `${pathname}?${queryString}` : pathname;
 
-        // Use native navigation to preserve all query params
-        window.location.href = url;
+        // Navigate to new locale while preserving query params
+        router.push(url, { locale: nextLocale });
     }
 
     return (
