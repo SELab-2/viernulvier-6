@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use ormlite::{Insert, Model};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -495,6 +497,38 @@ impl<'a> MediaRepo<'a> {
             .fetch_all(self.db)
             .await?;
         Ok(rows.into_iter().map(|r| r.0).collect())
+    }
+
+    /// Batch-fetch the cover image s3_key for multiple entities of the same type.
+    /// Returns a map from entity_id → s3_key. For each entity, prefers the row
+    /// where is_cover_image = true; falls back to the first item by sort_order.
+    pub async fn cover_s3_keys_for_entities(
+        &self,
+        entity_type: EntityType,
+        entity_ids: &[Uuid],
+    ) -> Result<HashMap<Uuid, String>, DatabaseError> {
+        if entity_ids.is_empty() {
+            return Ok(HashMap::new());
+        }
+
+        let rows: Vec<(Uuid, String)> = sqlx::query_as(
+            r#"
+            SELECT DISTINCT ON (em.entity_id)
+                em.entity_id,
+                m.s3_key
+            FROM entity_media em
+            JOIN media m ON m.id = em.media_id
+            WHERE em.entity_type = $1
+              AND em.entity_id = ANY($2)
+            ORDER BY em.entity_id, em.is_cover_image DESC, em.sort_order ASC
+            "#,
+        )
+        .bind(entity_type as EntityType)
+        .bind(entity_ids)
+        .fetch_all(self.db)
+        .await?;
+
+        Ok(rows.into_iter().collect())
     }
 
     pub async fn delete_by_s3_keys(&self, keys: &[String]) -> Result<u64, DatabaseError> {

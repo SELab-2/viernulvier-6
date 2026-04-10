@@ -20,6 +20,8 @@ import { ArchiveSidebar } from "@/components/searchpage/archive-sidebar";
 import { ProductionList } from "@/components/searchpage/production-list";
 import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
 
+const ARCHIVE_MIN_YEAR = 1980;
+
 export default function SearchPage() {
     const locale = useLocale();
     const t = useTranslations("Search");
@@ -86,6 +88,8 @@ export default function SearchPage() {
         };
     }, [loadMore]);
 
+    const maxYear = useMemo(() => new Date().getFullYear(), []);
+
     if (isLoading && allProductions.length === 0) {
         return (
             <>
@@ -114,7 +118,12 @@ export default function SearchPage() {
             <ResultsBar shownCount={allProductions.length} totalCount={allProductions.length} />
 
             <div className="flex min-h-[calc(100vh-300px)] overflow-hidden">
-                <ArchiveSidebar locations={locationsData} facets={facets ?? []} />
+                <ArchiveSidebar
+                    locations={locationsData}
+                    facets={facets ?? []}
+                    minYear={ARCHIVE_MIN_YEAR}
+                    maxYear={maxYear}
+                />
                 <main className="min-w-0 flex-1 overflow-hidden">
                     {allProductions.length === 0 && !isLoading ? (
                         <VintageEmptyState

@@ -1,8 +1,26 @@
-import { describe, expect, it, afterEach } from "vitest";
+import { describe, expect, it, afterEach, vi } from "vitest";
 import { render, screen, cleanup } from "../../../../test/utils/test-utils";
-import { ProductionList } from "@/components/searchpage/production-list/ProductionList";
 import { NextIntlClientProvider } from "next-intl";
 import type { Production } from "@/types/models/production.types";
+
+vi.mock("@/i18n/routing", () => ({
+    Link: ({
+        children,
+        href,
+        ...rest
+    }: {
+        children: React.ReactNode;
+        href: string;
+        className?: string;
+        onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
+    }) => (
+        <a href={href} {...rest}>
+            {children}
+        </a>
+    ),
+}));
+
+import { ProductionList } from "@/components/searchpage/production-list/ProductionList";
 
 const messages = {
     Events: {
@@ -37,6 +55,7 @@ describe("ProductionList component", () => {
             uitdatabankTheme: null,
             uitdatabankType: null,
             translations: [],
+            coverImageUrl: null,
         },
         {
             id: "2",
@@ -48,6 +67,7 @@ describe("ProductionList component", () => {
             uitdatabankTheme: null,
             uitdatabankType: null,
             translations: [],
+            coverImageUrl: null,
         },
     ];
 
@@ -61,5 +81,32 @@ describe("ProductionList component", () => {
 
         expect(screen.getByText("prod-1")).toBeInTheDocument();
         expect(screen.getByText("prod-2")).toBeInTheDocument();
+    });
+
+    it("renders cover image when coverImageUrl is provided", () => {
+        const productionsWithImage: Production[] = [
+            {
+                ...mockProductions[0],
+                coverImageUrl: "https://s3.example.com/media/cover.jpg",
+            },
+        ];
+
+        renderWithIntl(<ProductionList productions={productionsWithImage} locale="en" />);
+
+        const img = screen.getByRole("img");
+        expect(img).toBeInTheDocument();
+        expect(img).toHaveAttribute("alt", "prod-1");
+    });
+
+    it("renders placeholder gradient when coverImageUrl is null", () => {
+        const { container } = renderWithIntl(
+            <ProductionList productions={mockProductions} locale="en" />
+        );
+
+        const images = container.querySelectorAll("img");
+        expect(images).toHaveLength(0);
+
+        const gradients = container.querySelectorAll(".bg-gradient-to-br");
+        expect(gradients.length).toBeGreaterThan(0);
     });
 });

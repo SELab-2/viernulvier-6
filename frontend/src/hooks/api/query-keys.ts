@@ -1,4 +1,5 @@
 import { PaginationParams } from "@/types/api/api.types";
+import { EntityMediaParams } from "@/types/models/media.types";
 
 const buildQueryKey = (
     base: readonly string[],
@@ -43,6 +44,15 @@ export const queryKeys = {
         all: ["articles"] as const,
         detail: (id: string) => ["articles", id] as const,
         relations: (id: string) => ["articles", id, "relations"] as const,
+    },
+    media: {
+        all: (params?: { limit?: number; offset?: number }) =>
+            params ? (["media", params] as const) : (["media"] as const),
+        detail: (id: string) => ["media", id] as const,
+        entity: (entityType: string, entityId: string, params?: EntityMediaParams) =>
+            params
+                ? (["media", "entity", entityType, entityId, params] as const)
+                : (["media", "entity", entityType, entityId] as const),
     },
     taxonomy: {
         facets: (entityType?: string) =>
