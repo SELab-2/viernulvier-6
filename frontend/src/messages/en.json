@@ -142,6 +142,7 @@
         "locations": "Locations",
         "articles": "Articles",
         "performers": "Performers",
+        "collections": "Collections",
         "ingest": "Ingest",
         "import": "Import",
         "TabBar": {

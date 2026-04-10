@@ -4,7 +4,15 @@ import { useCallback, useMemo, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Link, usePathname } from "@/i18n/routing";
-import { Clapperboard, MapPin, Newspaper, Users, Database, FileUp } from "lucide-react";
+import {
+    Clapperboard,
+    MapPin,
+    Newspaper,
+    Users,
+    Database,
+    FileUp,
+    FolderArchive,
+} from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -17,6 +25,7 @@ const navItems = [
     { key: "locations", href: "/cms/locations", icon: MapPin, editionKey: "edition2" },
     { key: "articles", href: "/cms/articles", icon: Newspaper, editionKey: "edition3" },
     { key: "performers", href: "/cms/performers", icon: Users, editionKey: "edition4" },
+    { key: "collections", href: "/cms/collections", icon: FolderArchive, editionKey: "edition4" },
 ];
 
 const utilityItems = [
@@ -29,6 +38,7 @@ const ENTITY_TYPE_MAP: Record<string, EntityType | null> = {
     "/cms/articles": "article",
     "/cms/performers": "artist",
     "/cms/locations": null,
+    "/cms/collections": null,
 };
 
 interface FacetFiltersProps {
