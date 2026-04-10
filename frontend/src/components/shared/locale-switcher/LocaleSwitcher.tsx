@@ -2,32 +2,21 @@
 
 import { useLocale } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { usePathname, useRouter } from "@/i18n/routing";
+import { usePathname } from "@/i18n/routing";
 
 export function LocaleSwitcher() {
     const locale = useLocale();
-    const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
     function onSelectChange(nextLocale: string) {
-        // Build URL with query params
+        // Build full URL with query params - NEVER strip them
         const queryString = searchParams.toString();
+        const newPath = `/${nextLocale}${pathname}`;
+        const url = queryString ? `${newPath}?${queryString}` : newPath;
 
-        // When in iframe/preview mode, always preserve the preview param
-        const isInIframe = typeof window !== "undefined" && window.self !== window.top;
-        const hasPreviewParam = searchParams.get("preview") === "1";
-
-        let url = pathname;
-        if (queryString) {
-            url = `${pathname}?${queryString}`;
-        } else if (isInIframe && !hasPreviewParam) {
-            // If in iframe but no preview param, check if we should add it
-            // (this can happen if the param was lost during navigation)
-            url = `${pathname}?preview=1`;
-        }
-
-        router.replace(url, { locale: nextLocale });
+        // Use native navigation to preserve all query params
+        window.location.href = url;
     }
 
     return (
