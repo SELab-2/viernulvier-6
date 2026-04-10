@@ -12,6 +12,7 @@ const baseProduction: Production = {
     eticketInfo: null,
     uitdatabankTheme: null,
     uitdatabankType: null,
+    coverImageUrl: null,
     translations: [
         {
             languageCode: "nl",

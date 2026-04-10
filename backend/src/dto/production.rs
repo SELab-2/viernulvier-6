@@ -1,6 +1,7 @@
 use database::{
     Database,
     models::{
+        entity_type::EntityType,
         cursor::CursorData,
         production::{
             Production, ProductionCreate, ProductionTranslationData, ProductionWithTranslations,
@@ -24,6 +25,7 @@ impl ProductionPayload {
         db: &Database,
         id_cursor: Option<String>,
         limit: u32,
+        public_url: Option<&str>,
         search: ProductionSearchQuery,
     ) -> Result<PaginatedResponse<Self>, AppError> {
         let cursor: Option<CursorData> = id_cursor.and_then(|b64| {
@@ -34,12 +36,26 @@ impl ProductionPayload {
 
         // get productions from the database, including cursor
         let (productions, next_cursor) = db.productions().all(limit, cursor, search.into()).await?;
-        let productions: Vec<_> = productions.into_iter().map(Self::from).collect();
+        let mut productions: Vec<_> = productions.into_iter().map(Self::from).collect();
         // encode the next cursor
         let next_cursor_data = next_cursor.and_then(|c| {
             let data = serde_json::to_vec(&c).ok()?;
             Some(BASE64_URL_SAFE.encode(data))
         });
+
+        if let Some(base) = public_url {
+            let ids: Vec<Uuid> = productions.iter().map(|p| p.id).collect();
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Production, &ids)
+                .await?;
+            for p in &mut productions {
+                if let Some(s3_key) = cover_keys.get(&p.id) {
+                    p.cover_image_url =
+                        Some(format!("{}/{}", base.trim_end_matches('/'), s3_key));
+                }
+            }
+        }
 
         debug!("Returning {} productions", productions.len());
         Ok(PaginatedResponse {
@@ -48,8 +64,21 @@ impl ProductionPayload {
         })
     }
 
-    pub async fn by_id(db: &Database, id: Uuid) -> Result<Self, AppError> {
-        Ok(db.productions().by_id(id).await?.into())
+    pub async fn by_id(db: &Database, id: Uuid, public_url: Option<&str>) -> Result<Self, AppError> {
+        let mut payload: Self = db.productions().by_id(id).await?.into();
+
+        if let Some(base) = public_url {
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Production, &[id])
+                .await?;
+            if let Some(s3_key) = cover_keys.get(&id) {
+                payload.cover_image_url =
+                    Some(format!("{}/{}", base.trim_end_matches('/'), s3_key));
+            }
+        }
+
+        Ok(payload)
     }
 
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {
@@ -140,6 +169,10 @@ pub struct ProductionPayload {
     pub uitdatabank_type: Option<String>,
 
     pub translations: Vec<ProductionTranslationPayload>,
+
+    /// Cover image URL resolved from the entity_media link (output-only).
+    #[serde(skip_deserializing)]
+    pub cover_image_url: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -192,6 +225,7 @@ impl From<ProductionWithTranslations> for ProductionPayload {
             uitdatabank_theme: pwt.production.uitdatabank_theme,
             uitdatabank_type: pwt.production.uitdatabank_type,
             translations,
+            cover_image_url: None,
         }
     }
 }

@@ -27,6 +27,7 @@ export type Production = {
     uitdatabankTheme: string | null;
     uitdatabankType: string | null;
     translations: ProductionTranslation[];
+    coverImageUrl: string | null;
 };
 
 export type ProductionTranslationInput = {
