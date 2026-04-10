@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 import { getLocalizedField } from "@/lib/locale";
 import type { Production } from "@/types/models/production.types";
@@ -13,6 +16,8 @@ export function ProductionHero({
     locale: string;
     media?: Media[];
 }) {
+    const t = useTranslations("ProductionPage");
+
     const title = getLocalizedField(production, "title", locale) ?? production.slug;
     const artist = getLocalizedField(production, "artist", locale);
     const hasEnglishTitle = production.translations.some((t) => t.languageCode === "en" && t.title);
@@ -38,7 +43,7 @@ export function ProductionHero({
                 {/* Eyebrow */}
                 <div className="mb-5 flex items-center gap-2.5">
                     <span className="border-foreground bg-foreground text-background border-[1.2px] px-2.5 py-1 font-mono text-[9px] font-medium tracking-[2px] uppercase">
-                        Productie
+                        {t("eyebrow")}
                     </span>
                     {production.uitdatabankType && (
                         <span className="border-foreground text-foreground border-[1.2px] px-2.5 py-1 font-mono text-[9px] font-medium tracking-[2px] uppercase">
@@ -46,7 +51,7 @@ export function ProductionHero({
                         </span>
                     )}
                     <span className="text-muted-foreground ml-auto font-mono text-[10px] tracking-[1.2px] sm:ml-0">
-                        Archief nr. {production.sourceId ?? production.id.substring(0, 5)}
+                        {t("archiveNumber")} {production.sourceId ?? production.id.substring(0, 5)}
                     </span>
                 </div>
 
@@ -79,7 +84,7 @@ export function ProductionHero({
                 <div className="border-muted/25 flex border-t pt-4">
                     <div className="border-muted/25 mr-5 flex-1 border-r pr-5">
                         <div className="text-muted-foreground mb-1 font-mono text-[8px] tracking-[1.6px] uppercase">
-                            Type
+                            {t("metaType")}
                         </div>
                         <div className="font-body text-foreground text-[13px] leading-[1.4] font-medium">
                             {production.uitdatabankType ?? "-"}
@@ -87,7 +92,7 @@ export function ProductionHero({
                     </div>
                     <div className="border-muted/25 mr-5 flex-1 border-r pr-5">
                         <div className="text-muted-foreground mb-1 font-mono text-[8px] tracking-[1.6px] uppercase">
-                            Thema
+                            {t("metaTheme")}
                         </div>
                         <div className="font-body text-foreground text-[13px] leading-[1.4] font-medium">
                             {production.uitdatabankTheme ?? "-"}
@@ -95,10 +100,10 @@ export function ProductionHero({
                     </div>
                     <div className="flex-1">
                         <div className="text-muted-foreground mb-1 font-mono text-[8px] tracking-[1.6px] uppercase">
-                            Taal
+                            {t("metaLanguage")}
                         </div>
                         <div className="font-body text-foreground text-[13px] leading-[1.4] font-medium">
-                            {hasEnglishTitle ? "EN / NL" : "NL"}
+                            {hasEnglishTitle ? t("languageNlEn") : t("languageNl")}
                         </div>
                     </div>
                 </div>
@@ -119,7 +124,7 @@ export function ProductionHero({
                     <div className="absolute inset-0 bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
                 )}
                 <div className="bg-foreground/70 text-background/80 absolute right-0 bottom-0 left-0 p-3 font-mono text-[8px] tracking-[1.2px] uppercase">
-                    © {coverImage?.creditNl ?? "Archief VIERNULVIER"}
+                    © {coverImage?.creditNl ?? t("imageCaptionFallback")}
                 </div>
             </div>
         </div>

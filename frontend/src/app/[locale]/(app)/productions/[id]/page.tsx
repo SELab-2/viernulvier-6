@@ -26,6 +26,7 @@ export default function ProductionPage({
     const { id } = use(params);
     const locale = useLocale();
     const tSearch = useTranslations("Search");
+    const tProd = useTranslations("ProductionPage");
     const router = useRouter();
 
     const [headerQuery, setHeaderQuery] = useState("");
@@ -51,7 +52,7 @@ export default function ProductionPage({
         if (!productionsResult?.data || !production) return [];
         return productionsResult.data
             .filter(
-                (p) => p.id !== production.id && p.uitdatabankType === production.uitdatabankType
+                (p) => p.id !== production.id // && p.uitdatabankType === production.uitdatabankType // Maybe filter here later
             )
             .slice(0, 4);
     }, [productionsResult, production]);
@@ -70,7 +71,7 @@ export default function ProductionPage({
                     searchPlaceholder={tSearch("placeholder")}
                     searchHint={tSearch("hint")}
                 />
-                <LoadingState message="Laden..." />
+                <LoadingState message={tProd("loading")} />
             </>
         );
     }
@@ -90,11 +91,11 @@ export default function ProductionPage({
             {/* Breadcrumb */}
             <div className="border-muted/25 text-muted-foreground flex items-center gap-2 border-b px-6 py-3 font-mono text-[9px] tracking-[1.4px] uppercase sm:px-10">
                 <Link href="/search" className="hover:text-foreground transition-colors">
-                    Archief
+                    {tProd("breadcrumbArchive")}
                 </Link>
                 <span className="opacity-50">/</span>
                 <Link href="/search" className="hover:text-foreground transition-colors">
-                    Producties
+                    {tProd("breadcrumbProductions")}
                 </Link>
                 <span className="opacity-50">/</span>
                 <span className="text-foreground max-w-[200px] truncate">{title}</span>

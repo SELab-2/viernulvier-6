@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 import { getLocalizedField } from "@/lib/locale";
 import type { Production } from "@/types/models/production.types";
@@ -96,6 +99,8 @@ export function ProductionArticle({
     locale: string;
     media?: Media[];
 }) {
+    const t = useTranslations("ProductionPage");
+
     const description = stripHtmlAndDecode(getLocalizedField(production, "description", locale));
     const descriptionExtra = stripHtmlAndDecode(
         getLocalizedField(production, "descriptionExtra", locale)
@@ -118,7 +123,7 @@ export function ProductionArticle({
             {/* Section Rule */}
             <div className="mb-5 flex items-center gap-3.5">
                 <h2 className="text-muted-foreground font-mono text-[9px] font-medium tracking-[2px] whitespace-nowrap uppercase">
-                    Over de productie
+                    {t("about")}
                 </h2>
                 <div className="bg-muted/25 h-px flex-1" />
             </div>
@@ -164,9 +169,7 @@ export function ProductionArticle({
 
                 {/* Fallback if no description */}
                 {!description && !descriptionShort && !descriptionExtra && !teaser && (
-                    <p className="text-muted-foreground italic">
-                        Geen beschrijving beschikbaar in deze taal.
-                    </p>
+                    <p className="text-muted-foreground italic">{t("noDescription")}</p>
                 )}
             </div>
 
@@ -207,7 +210,7 @@ export function ProductionArticle({
                 <div className="mt-10 mb-10">
                     <div className="mb-5 flex items-center gap-3.5">
                         <h2 className="text-muted-foreground font-mono text-[9px] font-medium tracking-[2px] whitespace-nowrap uppercase">
-                            Video
+                            {t("video")}
                         </h2>
                         <div className="bg-muted/25 h-px flex-1" />
                     </div>
@@ -221,7 +224,7 @@ export function ProductionArticle({
                                 className="group border-border hover:border-foreground flex flex-col border p-4 transition-colors"
                             >
                                 <span className="text-muted-foreground group-hover:text-foreground mb-2 font-mono text-[10px] uppercase">
-                                    Externe video link ↗
+                                    {t("externalVideoLink")}
                                 </span>
                                 <span className="font-body text-foreground truncate text-[13px]">
                                     {v}
@@ -235,7 +238,7 @@ export function ProductionArticle({
             {/* Credits Section */}
             <div className="mt-10 mb-5 flex items-center gap-3.5">
                 <h2 className="text-muted-foreground font-mono text-[9px] font-medium tracking-[2px] whitespace-nowrap uppercase">
-                    Credits
+                    {t("credits")}
                 </h2>
                 <div className="bg-muted/25 h-px flex-1" />
             </div>
@@ -243,7 +246,7 @@ export function ProductionArticle({
             <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
                 <div className="mb-2">
                     <div className="text-muted-foreground mb-0.5 font-mono text-[8px] tracking-[1.6px] uppercase">
-                        Productie
+                        {t("creditProduction")}
                     </div>
                     <div
                         className="font-body text-foreground text-[13px] font-medium"
@@ -254,7 +257,7 @@ export function ProductionArticle({
                 </div>
                 <div className="mb-2">
                     <div className="text-muted-foreground mb-0.5 font-mono text-[8px] tracking-[1.6px] uppercase">
-                        Artiest
+                        {t("creditArtist")}
                     </div>
                     <div
                         className="font-body text-foreground text-[13px] font-medium"
