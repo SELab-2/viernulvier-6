@@ -65,6 +65,26 @@ describe("production mapper", () => {
         expect(en?.title).toBe("EN");
     });
 
+    it("maps cover_image_url to coverImageUrl", () => {
+        const mapped = mapProduction({
+            id: "id-1",
+            slug: "slug",
+            translations: [],
+            cover_image_url: "https://s3.example.com/media/cover.jpg",
+        });
+        expect(mapped.coverImageUrl).toBe("https://s3.example.com/media/cover.jpg");
+    });
+
+    it("normalizes missing cover_image_url to null", () => {
+        const mapped = mapProduction({
+            id: "id-1",
+            slug: "slug",
+            translations: [],
+            cover_image_url: undefined,
+        });
+        expect(mapped.coverImageUrl).toBeNull();
+    });
+
     it("maps create/update input to api payload", () => {
         const createPayload = mapCreateProductionInput({
             slug: "new",

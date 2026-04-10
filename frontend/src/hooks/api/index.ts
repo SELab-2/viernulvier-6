@@ -6,6 +6,7 @@ export * from "./useEditors";
 export * from "./useEvents";
 export * from "./useHalls";
 export * from "./useLocations";
+export * from "./useMedia";
 export * from "./useProductions";
 export * from "./useSpaces";
 export * from "./useTaxonomy";

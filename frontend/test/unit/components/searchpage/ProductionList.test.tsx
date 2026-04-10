@@ -37,6 +37,7 @@ describe("ProductionList component", () => {
             uitdatabankTheme: null,
             uitdatabankType: null,
             translations: [],
+            coverImageUrl: null,
         },
         {
             id: "2",
@@ -48,6 +49,7 @@ describe("ProductionList component", () => {
             uitdatabankTheme: null,
             uitdatabankType: null,
             translations: [],
+            coverImageUrl: null,
         },
     ];
 
@@ -61,5 +63,32 @@ describe("ProductionList component", () => {
 
         expect(screen.getByText("prod-1")).toBeInTheDocument();
         expect(screen.getByText("prod-2")).toBeInTheDocument();
+    });
+
+    it("renders cover image when coverImageUrl is provided", () => {
+        const productionsWithImage: Production[] = [
+            {
+                ...mockProductions[0],
+                coverImageUrl: "https://s3.example.com/media/cover.jpg",
+            },
+        ];
+
+        renderWithIntl(<ProductionList productions={productionsWithImage} locale="en" />);
+
+        const img = screen.getByRole("img");
+        expect(img).toBeInTheDocument();
+        expect(img).toHaveAttribute("alt", "prod-1");
+    });
+
+    it("renders placeholder gradient when coverImageUrl is null", () => {
+        const { container } = renderWithIntl(
+            <ProductionList productions={mockProductions} locale="en" />
+        );
+
+        const images = container.querySelectorAll("img");
+        expect(images).toHaveLength(0);
+
+        const gradients = container.querySelectorAll(".bg-gradient-to-br");
+        expect(gradients.length).toBeGreaterThan(0);
     });
 });
