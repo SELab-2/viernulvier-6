@@ -1,8 +1,26 @@
-import { describe, expect, it, afterEach } from "vitest";
+import { describe, expect, it, afterEach, vi } from "vitest";
 import { render, screen, cleanup } from "../../../../test/utils/test-utils";
-import { ProductionList } from "@/components/searchpage/production-list/ProductionList";
 import { NextIntlClientProvider } from "next-intl";
 import type { Production } from "@/types/models/production.types";
+
+vi.mock("@/i18n/routing", () => ({
+    Link: ({
+        children,
+        href,
+        ...rest
+    }: {
+        children: React.ReactNode;
+        href: string;
+        className?: string;
+        onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
+    }) => (
+        <a href={href} {...rest}>
+            {children}
+        </a>
+    ),
+}));
+
+import { ProductionList } from "@/components/searchpage/production-list/ProductionList";
 
 const messages = {
     Events: {

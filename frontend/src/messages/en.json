@@ -85,7 +85,42 @@
             "plantentuin": "Botanical Garden"
         },
         "year": {
-            "label": "Year"
+            "label": "Year",
+            "rangeFrom": "Start year",
+            "rangeTo": "End year",
+            "rangeMode": "Year range",
+            "exactMode": "Exact dates",
+            "startYear": "Start year",
+            "endYear": "End year",
+            "monthsShort": [
+                "Jan",
+                "Feb",
+                "Mar",
+                "Apr",
+                "May",
+                "Jun",
+                "Jul",
+                "Aug",
+                "Sep",
+                "Oct",
+                "Nov",
+                "Dec"
+            ],
+            "monthsLong": [
+                "January",
+                "February",
+                "March",
+                "April",
+                "May",
+                "June",
+                "July",
+                "August",
+                "September",
+                "October",
+                "November",
+                "December"
+            ],
+            "weekdays": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
         },
         "clearAll": "Clear all"
     },
