@@ -1,12 +1,13 @@
 use axum::{
     Json,
-    extract::{Path, Query},
+    extract::{Path, Query, State},
     http::StatusCode,
 };
 use database::Database;
 use uuid::Uuid;
 
 use crate::{
+    AppState,
     dto::{
         event::EventPayload,
         paginated::PaginatedResponse,
@@ -34,11 +35,14 @@ use crate::{
     )
 )]
 pub async fn get_all(
+    State(state): State<AppState>,
     db: Database,
     Query(pagination): Query<PaginationQuery>,
     Query(search): Query<ProductionSearchQuery>,
 ) -> JsonResponse<PaginatedResponse<ProductionPayload>> {
-    ProductionPayload::all(&db, pagination.cursor, pagination.limit, search)
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+  
+    ProductionPayload::all(&db, pagination.cursor, pagination.limit, public_url, search)
         .await?
         .json()
 }
@@ -57,8 +61,15 @@ pub async fn get_all(
         (status = 404, description = "Not found")
     )
 )]
-pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<ProductionPayload> {
-    ProductionPayload::by_id(&db, id).await?.json()
+pub async fn get_one(
+    State(state): State<AppState>,
+    db: Database,
+    Path(id): Path<Uuid>,
+) -> JsonResponse<ProductionPayload> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    let payload = ProductionPayload::by_id(&db, id, public_url).await?;
+
+    payload.json()
 }
 
 #[utoipa::path(

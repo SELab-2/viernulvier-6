@@ -64,6 +64,7 @@ export const mapProduction = (response: ProductionResponse): Production => {
         uitdatabankTheme: toNullable(response.uitdatabank_theme),
         uitdatabankType: toNullable(response.uitdatabank_type),
         translations: (response.translations ?? []).map((t: ApiTranslation) => mapTranslation(t)),
+        coverImageUrl: toNullable(response.cover_image_url),
     };
 };
 

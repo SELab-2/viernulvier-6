@@ -44,7 +44,8 @@ export default function HomePage() {
 
     const { data: productionsResult } = useGetProductions();
     const productions = productionsResult?.data ?? [];
-    const latestProductions = productions.slice(0, 4);
+    const featuredProductions = productions.slice(0, 3);
+    const latestProductions = productions.slice(3, 7);
 
     return (
         <>
@@ -82,7 +83,7 @@ export default function HomePage() {
 
             {/* Featured */}
             <section className="px-4 pt-8 sm:px-[30px] sm:pt-12">
-                <FeaturedSection />
+                <FeaturedSection productions={featuredProductions} locale={locale} />
             </section>
 
             {/* Latest productions */}

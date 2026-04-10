@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { Link } from "@/i18n/routing";
@@ -108,9 +109,18 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
                 }`}
                 style={{ animation: "fadein 0.3s ease both" }}
             >
-                {/* TODO: replace with actual production image from API when available */}
                 <div className="bg-muted relative h-[52px] w-[68px] shrink-0 overflow-hidden sm:h-[62px] sm:w-[86px]">
-                    <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                    {production.coverImageUrl ? (
+                        <Image
+                            src={production.coverImageUrl}
+                            alt={title}
+                            fill
+                            className="object-cover"
+                            sizes="86px"
+                        />
+                    ) : (
+                        <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                    )}
                 </div>
 
                 <div className="min-w-0 flex-1">
