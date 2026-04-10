@@ -12,7 +12,8 @@ use crate::{
         paginated::PaginatedResponse,
     },
     handlers::{
-        IntoApiResponse, JsonResponse, JsonStatusResponse, PaginationQuery, StatusResponse,
+        IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse,
+        queries::pagination::PaginationQuery,
     },
 };
 

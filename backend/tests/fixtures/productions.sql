@@ -52,6 +52,7 @@ INSERT INTO productions (
     '2026-12-01 21:15:00+01',
     'live'
 );
+INSERT INTO languages (code) VALUES ('st');
 
 INSERT INTO production_translations (
     production_id,
@@ -62,12 +63,15 @@ INSERT INTO production_translations (
     tagline,
     description
 ) VALUES
-('11111111-1111-1111-1111-111111111111', 'nl', 'Workshop Reeks', 'Heavy Metal Breien', 'Gents Breicollectief', 'Wol en staal.', 'Een unieke combinatie van DIY en headbangen.'),
+('11111111-1111-1111-1111-111111111111', 'nl', 'Workshop Reeks', 'Heavy Metal Breien SEARCH', 'Gents Breicollectief', 'Wol en staal.', 'Een unieke combinatie van DIY en headbangen.'),
 ('11111111-1111-1111-1111-111111111111', 'en', 'Workshop Series', 'Heavy Metal Knitting', 'Ghent Knitting Collective', NULL, 'A unique combination of DIY and headbanging.'),
+('11111111-1111-1111-1111-111111111111', 'st', NULL, 'TITLE_SEARCH_TEST', 'ARTIST_SEARCH_TEST', NULL, NULL),
 ('22222222-2222-2222-2222-222222222222', 'nl', 'Debat', 'Digitale Dystopie', 'Tech Kritiek vzw', 'Is de toekomst binair?', 'Een gesprek over de toekomst van AI.'),
 ('22222222-2222-2222-2222-222222222222', 'en', 'Debate', 'Digital Dystopia', 'Tech Criticism NGO', NULL, 'A conversation about the future of AI.'),
-('33333333-3333-3333-3333-333333333333', 'nl', NULL, 'Minimaal Event', 'Anonieme Kunstenaar', NULL, NULL),
+('22222222-2222-2222-2222-222222222222', 'st', NULL, 'TITLE_SEARCH_TEST', 'ARTIST_SEARCH_TEST', NULL, NULL),
+('33333333-3333-3333-3333-333333333333', 'nl', NULL, 'Minimaal Event SEARCH', 'Anonieme Kunstenaar', NULL, NULL),
 ('33333333-3333-3333-3333-333333333333', 'en', NULL, 'Minimal Event', 'Anonymous Artist', NULL, NULL),
+('33333333-3333-3333-3333-333333333333', 'st', NULL, 'TITLE_SEARCH_TEST', 'ARTIST_SEARCH_TEST', NULL, NULL),
 ('44444444-4444-4444-4444-444444444444', 'nl', 'Concert', 'Jazz Nacht', 'Blue Note Quintet', 'Improvisatie op zijn best.', 'De beste jazz in het hart van Gent.'),
 ('44444444-4444-4444-4444-444444444444', 'en', 'Concert', 'Jazz Night', 'Blue Note Quintet', NULL, 'The best jazz in the heart of Ghent.'),
 ('55555555-5555-5555-5555-555555555555', 'nl', 'Dans', 'Beweging in Beeld', 'Kinesis', 'Voel de zwaartekracht.', 'Een experimentele dansvoorstelling.'),
