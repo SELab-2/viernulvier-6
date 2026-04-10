@@ -38,7 +38,10 @@ const nextConfig: NextConfig = {
             // Fallback for local dev: allow any *.localhost origin (Garage S3).
             // NODE_ENV is "production" in built images so this never applies there.
             ...(isDev && !s3Parsed
-                ? [{ protocol: "http" as const, hostname: "**.localhost" }]
+                ? [
+                      { protocol: "http" as const, hostname: "**.localhost" },
+                      { protocol: "http" as const, hostname: "localhost", port: "3900" },
+                  ]
                 : []),
         ],
     },

@@ -192,7 +192,24 @@ describe("ArchiveSidebar component", () => {
 
     it("renders provided locations and toggles them", async () => {
         const user = userEvent.setup();
-        const locations = [{ id: "loc1", name: "Venue A", address: "Street 1" }];
+        const locations: import("@/types/models/location.types").Location[] = [
+            {
+                id: "loc1",
+                name: "Venue A",
+                address: "Street 1",
+                sourceId: null,
+                code: null,
+                street: null,
+                number: null,
+                postalCode: null,
+                city: null,
+                country: null,
+                phone1: null,
+                phone2: null,
+                isOwnedByViernulvier: null,
+                uitdatabankId: null,
+            },
+        ];
         renderWithIntl(<ArchiveSidebar locations={locations} />);
 
         const locBtn = screen.getByRole("button", { name: "Venue A" });

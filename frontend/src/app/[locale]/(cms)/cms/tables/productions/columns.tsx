@@ -138,7 +138,7 @@ export function toProductionUpdateInput(row: ProductionRow): ProductionUpdateInp
 }
 
 export function makeProductionColumns(options: {
-    onEdit: (row: ProductionRow) => void;
+    onEdit: (production: Production) => void;
     t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>;
 }): ColumnDef<Production>[] {
     const { onEdit, t } = options;
@@ -149,7 +149,7 @@ export function makeProductionColumns(options: {
             label: t("edit", { label: "production" }),
             icon: SquarePen,
             display: ActionDisplay.Inline,
-            onClick: (p) => onEdit(toProductionRow(p)),
+            onClick: (p) => onEdit(p),
         },
         {
             key: "copy-slug",

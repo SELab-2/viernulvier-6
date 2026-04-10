@@ -288,7 +288,15 @@
             "showEvents": "Show events",
             "hideEvents": "Hide events",
             "editProduction": "Edit production",
-            "editEvent": "Edit event"
+            "editEvent": "Edit event",
+            "backToList": "Back to productions",
+            "save": "Save",
+            "saving": "Saving…",
+            "saveSuccess": "Production saved.",
+            "saveFailed": "Failed to save production.",
+            "preview": "Preview",
+            "hidePreview": "Hide Preview",
+            "previewLabel": "Preview"
         },
         "Locations": {
             "title": "Locations",
@@ -310,6 +318,9 @@
             "saving": "Saving…",
             "saveSuccess": "Article saved.",
             "saveFailed": "Failed to save article.",
+            "preview": "Preview",
+            "hidePreview": "Hide Preview",
+            "previewLabel": "Preview",
             "backToList": "Back to articles",
             "statusLabel": "Status",
             "slug": "Slug",
@@ -421,6 +432,10 @@
         "articleBrand": "Archives Department",
         "price": "Price: Priceless"
     },
+    "Preview": {
+        "previewMode": "Preview",
+        "exitPreview": "Click to exit preview mode"
+    },
     "Articles": {
         "heroEyebrow": "Stories from the archive",
         "heroTitle": "Articles & Stories",
@@ -438,6 +453,8 @@
         "notFoundTitle": "Article not found",
         "notFoundText": "This article does not exist or is no longer available.",
         "connectedTo": "Connected to",
+        "noConnections": "No connections added yet",
+        "connectionsComingSoon": "Connections coming soon",
         "moreStories": "More articles",
         "relatedEntities": "Related",
         "relatedProductions": "Productions",

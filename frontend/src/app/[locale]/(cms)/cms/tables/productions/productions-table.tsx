@@ -1,18 +1,18 @@
 "use client";
 
 import { useCallback, useMemo, useState, useRef, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Archive } from "lucide-react";
 import type { Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
-import { makeProductionColumns, productionFields, toProductionUpdateInput } from "./columns";
-import type { ProductionRow } from "@/types/models/production.types";
+import { makeProductionColumns } from "./columns";
+import { eventFields, toEventUpdateInput } from "./event-columns";
 import { ActionBar } from "../action-bar";
 import { useParentChildSelection } from "../use-parent-child-selection";
-import { makeEventColumns, eventFields, toEventUpdateInput } from "./event-columns";
+import { makeEventColumns } from "./event-columns";
 import { Spinner } from "@/components/ui/spinner";
-import { useGetInfiniteProductions, useUpdateProduction } from "@/hooks/api/useProductions";
+import { useGetInfiniteProductions } from "@/hooks/api/useProductions";
 import { useGetEvents, useUpdateEvent } from "@/hooks/api/useEvents";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
 import type { PickerItem } from "@/lib/collection-picker-utils";
@@ -23,6 +23,7 @@ export function ProductionsTable() {
     const t = useTranslations("Cms.Productions");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
+    const locale = useLocale();
     const loadMoreRef = useRef<HTMLDivElement>(null);
 
     const {
@@ -41,7 +42,6 @@ export function ProductionsTable() {
     );
 
     const allEvents = useMemo(() => eventsResult?.data ?? [], [eventsResult]);
-    const updateProduction = useUpdateProduction();
     const updateEvent = useUpdateEvent();
 
     // Load more handler
@@ -66,7 +66,6 @@ export function ProductionsTable() {
         };
     }, [loadMore]);
 
-    const [editProduction, setEditProduction] = useState<ProductionRow | null>(null);
     const [editEvent, setEditEvent] = useState<Event | null>(null);
     const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
 
@@ -91,9 +90,20 @@ export function ProductionsTable() {
         clearSelection,
     } = useParentChildSelection<Production>(eventsByProduction);
 
+    const handleEditProduction = useCallback(
+        (production: Production) => {
+            // Navigate to the dedicated editor page
+            window.location.href = `/${locale}/cms/productions/${production.id}/edit`;
+        },
+        [locale]
+    );
+
     const productionCols = useMemo(
-        () => [selectColumn, ...makeProductionColumns({ onEdit: setEditProduction, t: tActions })],
-        [selectColumn, tActions]
+        () => [
+            selectColumn,
+            ...makeProductionColumns({ onEdit: handleEditProduction, t: tActions }),
+        ],
+        [selectColumn, tActions, handleEditProduction]
     );
 
     const eventCols = useMemo(
@@ -227,20 +237,6 @@ export function ProductionsTable() {
                     </div>
                 )}
             </div>
-
-            {editProduction && (
-                <EditSheet
-                    open={!!editProduction}
-                    onOpenChange={(open) => !open && setEditProduction(null)}
-                    title={t("editProduction")}
-                    entity={editProduction}
-                    fields={productionFields}
-                    onSave={async (values) => {
-                        await updateProduction.mutateAsync(toProductionUpdateInput(values));
-                        setEditProduction(null);
-                    }}
-                />
-            )}
 
             {editEvent && (
                 <EditSheet

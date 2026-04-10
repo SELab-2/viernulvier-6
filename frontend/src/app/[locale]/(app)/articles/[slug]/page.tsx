@@ -2,16 +2,19 @@
 
 import { use, useState, useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft, Calendar, MapPin, Users, Ticket } from "lucide-react";
 
 import { useGetArticleBySlug } from "@/hooks/api/useArticles";
+import { useHasPreview } from "@/hooks/usePreviewData";
+import { useArticleWithPreview, useArticleRelationsWithPreview } from "@/hooks/useArticlePreview";
 import { Link } from "@/i18n/routing";
 
 import { SearchHeader } from "@/components/homepage/search-header";
 import { TiptapRenderer } from "@/components/articles";
 import { LoadingState } from "@/components/shared/loading-state";
 import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
+import { PreviewBadge } from "@/components/preview";
 
 function formatDate(dateStr: string, locale: string): string {
     const loc = locale === "en" ? "en-GB" : "nl-BE";
@@ -22,18 +25,41 @@ function formatDate(dateStr: string, locale: string): string {
     });
 }
 
-// TODO: replace with real data from API when backend supports public article relations
-const STATIC_CONNECTED_ENTITIES = [
-    { type: "Productie", label: "The Second Woman — Natali Broods" },
-    { type: "Locatie", label: "De Vooruit — Domzaal" },
-    { type: "Artiest", label: "Natali Broods" },
-];
-
+// Static related articles - TODO: replace with API
 const STATIC_RELATED_ARTICLES = [
     { title: "De Balzaal door de jaren heen", period: "1960 — 1980", date: "12 mrt 2026" },
     { title: "Achter de schermen van Fresh Juice", period: "Voorjaar 2026", date: "28 feb 2026" },
     { title: "40 jaar Nightlife in De Vooruit", period: "1983 — 2023", date: "15 jan 2026" },
 ];
+
+interface ConnectedEntityProps {
+    type: "production" | "artist" | "location" | "event";
+    label: string;
+    count?: number;
+}
+
+function ConnectedEntity({ type, label, count }: ConnectedEntityProps) {
+    const icons = {
+        production: Ticket,
+        artist: Users,
+        location: MapPin,
+        event: Calendar,
+    };
+    const Icon = icons[type];
+
+    return (
+        <div className="border-muted/35 group hover:bg-muted/5 flex items-center gap-3 border-b p-3 transition-colors">
+            <span className="border-foreground text-foreground flex shrink-0 items-center gap-1 border px-1.5 py-0.5 font-mono text-[8px] tracking-[1.1px] uppercase">
+                <Icon className="h-3 w-3" />
+                {type}
+            </span>
+            <span className="font-display text-foreground text-[15px] leading-snug font-bold tracking-[-0.01em]">
+                {label}
+                {count && count > 1 ? ` (${count})` : ""}
+            </span>
+        </div>
+    );
+}
 
 export default function ArticleDetailPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = use(params);
@@ -55,7 +81,26 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
         [router]
     );
 
-    const { data: article, isLoading, isError } = useGetArticleBySlug(slug);
+    const searchParams = useSearchParams();
+    const isPreviewMode = searchParams.get("preview") === "1";
+
+    const { data: apiArticle, isLoading, isError } = useGetArticleBySlug(slug);
+
+    // Only use preview data if explicitly in preview mode (?preview=1)
+    const previewArticle = useArticleWithPreview(slug, apiArticle);
+    const previewRelations = useArticleRelationsWithPreview(slug);
+    const hasPreviewData = useHasPreview("article", slug);
+
+    const article = isPreviewMode ? previewArticle : apiArticle;
+    const isPreview = isPreviewMode && hasPreviewData;
+
+    // Show preview relations if in preview mode, otherwise empty (until API is ready)
+    const hasConnections =
+        previewRelations &&
+        (previewRelations.productionIds.length > 0 ||
+            previewRelations.artistIds.length > 0 ||
+            previewRelations.locationIds.length > 0 ||
+            previewRelations.eventIds.length > 0);
 
     return (
         <>
@@ -67,13 +112,13 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
                 searchHint={tSearch("hint")}
             />
 
-            {isLoading && <LoadingState message={t("loading")} />}
+            {isLoading && !isPreview && <LoadingState message={t("loading")} />}
 
-            {isError && (
+            {isError && !isPreview && (
                 <VintageEmptyState title={t("notFoundTitle")} description={t("notFoundText")} />
             )}
 
-            {!isLoading && article && (
+            {(article || isPreview) && (
                 <article className="mx-auto max-w-[1100px] px-4 py-8 sm:px-10 sm:py-12">
                     {/* Back link */}
                     <Link
@@ -87,46 +132,88 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
                     {/* Article header */}
                     <header className="mb-8 pb-6">
                         <h1 className="font-display text-foreground text-[32px] leading-[1.1] font-bold tracking-[-0.025em] sm:text-[44px] md:text-[56px]">
-                            {article.title ?? t("untitled")}
+                            {article?.title ?? t("untitled")}
                         </h1>
 
                         {/* Dateline bar */}
                         <div className="border-foreground text-foreground mt-6 flex items-center justify-between border-y py-1.5 font-mono text-[9px] tracking-widest uppercase sm:text-[10px]">
-                            <span>
-                                {formatDate(article.publishedAt ?? article.createdAt, locale)}
-                            </span>
-                            <span>{t("datelineBrand")}</span>
+                            <div className="flex items-center gap-3">
+                                <span>
+                                    {article &&
+                                        formatDate(
+                                            article.publishedAt ?? article.createdAt,
+                                            locale
+                                        )}
+                                </span>
+                                {article?.subjectPeriodStart && (
+                                    <span className="text-muted-foreground">
+                                        {article.subjectPeriodStart}
+                                        {article.subjectPeriodEnd
+                                            ? ` — ${article.subjectPeriodEnd}`
+                                            : ""}
+                                    </span>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <PreviewBadge entityType="article" entityId={slug} />
+                                <span>{t("datelineBrand")}</span>
+                            </div>
                         </div>
                     </header>
 
                     {/* Content */}
                     <div className="mx-auto max-w-[750px]">
-                        <TiptapRenderer content={article.content} />
+                        {article?.content && <TiptapRenderer content={article.content} />}
                     </div>
 
-                    {/* Connected entities — TODO: replace static data with API when backend supports public relations */}
+                    {/* Connected entities */}
                     <section className="border-foreground/20 mx-auto mt-12 max-w-[750px] border-t pt-8">
                         <h2 className="text-foreground mb-5 font-mono text-[10px] font-medium tracking-[2px] uppercase">
                             {t("connectedTo")}
                         </h2>
                         <div className="grid grid-cols-1 gap-px">
-                            {STATIC_CONNECTED_ENTITIES.map((entity) => (
-                                <div
-                                    key={entity.label}
-                                    className="border-muted/35 group hover:bg-muted/5 flex items-center gap-3 border-b p-3 transition-colors"
-                                >
-                                    <span className="border-foreground text-foreground shrink-0 border px-1.5 py-0.5 font-mono text-[8px] tracking-[1.1px] uppercase">
-                                        {entity.type}
-                                    </span>
-                                    <span className="font-display text-foreground text-[15px] leading-snug font-bold tracking-[-0.01em]">
-                                        {entity.label}
-                                    </span>
-                                </div>
-                            ))}
+                            {isPreview && hasConnections ? (
+                                // Show preview relations
+                                <>
+                                    {previewRelations.productionIds.length > 0 && (
+                                        <ConnectedEntity
+                                            type="production"
+                                            label={`${previewRelations.productionIds.length} production${previewRelations.productionIds.length > 1 ? "s" : ""}`}
+                                        />
+                                    )}
+                                    {previewRelations.artistIds.length > 0 && (
+                                        <ConnectedEntity
+                                            type="artist"
+                                            label={`${previewRelations.artistIds.length} artist${previewRelations.artistIds.length > 1 ? "s" : ""}`}
+                                        />
+                                    )}
+                                    {previewRelations.locationIds.length > 0 && (
+                                        <ConnectedEntity
+                                            type="location"
+                                            label={`${previewRelations.locationIds.length} location${previewRelations.locationIds.length > 1 ? "s" : ""}`}
+                                        />
+                                    )}
+                                    {previewRelations.eventIds.length > 0 && (
+                                        <ConnectedEntity
+                                            type="event"
+                                            label={`${previewRelations.eventIds.length} event${previewRelations.eventIds.length > 1 ? "s" : ""}`}
+                                        />
+                                    )}
+                                </>
+                            ) : isPreview && !hasConnections ? (
+                                <p className="text-muted-foreground py-4 font-mono text-[10px] tracking-wide">
+                                    {t("noConnections")}
+                                </p>
+                            ) : (
+                                // Show placeholder for non-preview
+                                <p className="text-muted-foreground py-4 font-mono text-[10px] tracking-wide">
+                                    {t("connectionsComingSoon")}
+                                </p>
+                            )}
                         </div>
                     </section>
 
-                    {/* Related articles — TODO: replace static data with API */}
+                    {/* Related articles */}
                     <section className="mx-auto mt-10 max-w-[750px] pt-8 pb-4">
                         <div className="mb-5 flex items-center gap-2.5">
                             <h2 className="text-foreground font-mono text-[10px] font-medium tracking-[2px] uppercase">

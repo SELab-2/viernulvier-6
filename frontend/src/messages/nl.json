@@ -288,7 +288,15 @@
             "showEvents": "Voorstellingen tonen",
             "hideEvents": "Voorstellingen verbergen",
             "editProduction": "Productie bewerken",
-            "editEvent": "Voorstelling bewerken"
+            "editEvent": "Voorstelling bewerken",
+            "backToList": "Terug naar producties",
+            "save": "Opslaan",
+            "saving": "Bezig met opslaan…",
+            "saveSuccess": "Productie opgeslagen.",
+            "saveFailed": "Opslaan mislukt.",
+            "preview": "Voorbeeld",
+            "hidePreview": "Voorbeeld verbergen",
+            "previewLabel": "Voorbeeld"
         },
         "Locations": {
             "title": "Locaties",
@@ -310,6 +318,9 @@
             "saving": "Bezig met opslaan…",
             "saveSuccess": "Artikel opgeslagen.",
             "saveFailed": "Opslaan mislukt.",
+            "preview": "Voorbeeld",
+            "hidePreview": "Verberg Voorbeeld",
+            "previewLabel": "Voorbeeld",
             "backToList": "Terug naar artikelen",
             "statusLabel": "Status",
             "slug": "Slug",
@@ -421,6 +432,10 @@
         "articleBrand": "Archiefdienst",
         "price": "Prijs: Onschatbaar"
     },
+    "Preview": {
+        "previewMode": "Voorbeeld",
+        "exitPreview": "Klik om voorbeeldmodus te verlaten"
+    },
     "Articles": {
         "heroEyebrow": "Verhalen uit het archief",
         "heroTitle": "Artikels & Verhalen",
@@ -438,6 +453,8 @@
         "notFoundTitle": "Artikel niet gevonden",
         "notFoundText": "Dit artikel bestaat niet of is niet langer beschikbaar.",
         "connectedTo": "Gekoppeld aan",
+        "noConnections": "Nog geen koppelingen toegevoegd",
+        "connectionsComingSoon": "Koppelingen binnenkort beschikbaar",
         "moreStories": "Meer artikels",
         "relatedEntities": "Gerelateerd",
         "relatedProductions": "Producties",

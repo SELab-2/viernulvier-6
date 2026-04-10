@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { ArrowLeft, Save } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useTranslations, useLocale } from "next-intl";
+import { ArrowLeft, Eye, EyeOff, Save } from "lucide-react";
 import { toast } from "sonner";
 
 import { ArticleMetadataPanel } from "@/components/cms/article-metadata-panel";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/routing";
+import { usePreviewContext } from "@/contexts/PreviewContext";
 import {
     useGetArticle,
     useGetArticleRelations,
@@ -18,6 +19,7 @@ import {
     useUpdateArticleRelations,
 } from "@/hooks/api/useArticles";
 import { Article, ArticleRelations } from "@/types/models/article.types";
+import { ArticlePreviewData } from "@/types/article-preview.types";
 
 interface ArticleEditorPageProps {
     id: string;
@@ -25,6 +27,9 @@ interface ArticleEditorPageProps {
 
 export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
     const t = useTranslations("Cms.Articles");
+    const locale = useLocale();
+    const { setPreview, clearPreviewFor } = usePreviewContext();
+
     const { data: fetchedArticle, isLoading: articleLoading } = useGetArticle(id);
     const { data: fetchedRelations, isLoading: relationsLoading } = useGetArticleRelations(id);
     const updateArticle = useUpdateArticle();
@@ -32,15 +37,32 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
 
     const [edits, setEdits] = useState<Partial<Article>>({});
     const [relationEdits, setRelationEdits] = useState<ArticleRelations | null>(null);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
-    const article = fetchedArticle ? { ...fetchedArticle, ...edits } : null;
-    const relations = relationEdits ??
-        fetchedRelations ?? {
-            productionIds: [],
-            artistIds: [],
-            locationIds: [],
-            eventIds: [],
-        };
+    const article = useMemo(
+        () => (fetchedArticle ? { ...fetchedArticle, ...edits } : null),
+        [fetchedArticle, edits]
+    );
+
+    const relations = useMemo(
+        () =>
+            relationEdits ??
+            fetchedRelations ?? {
+                productionIds: [],
+                artistIds: [],
+                locationIds: [],
+                eventIds: [],
+            },
+        [relationEdits, fetchedRelations]
+    );
+
+    // Sync preview data to localStorage whenever data changes and preview is open
+    useEffect(() => {
+        if (article && isPreviewOpen) {
+            const previewData: ArticlePreviewData = { article, relations };
+            setPreview("article", article.slug, previewData, locale);
+        }
+    }, [article, relations, isPreviewOpen, setPreview, locale]);
 
     const handleSave = async () => {
         if (!article) return;
@@ -50,11 +72,24 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                 updateArticle.mutateAsync(article),
                 updateRelations.mutateAsync(relations),
             ]);
+            // Clear preview after successful save
+            clearPreviewFor("article", article.slug);
             toast.success(t("saveSuccess"));
         } catch {
             toast.error(t("saveFailed"));
         }
     };
+
+    const togglePreview = useCallback(() => {
+        if (!article) return;
+
+        if (!isPreviewOpen) {
+            // Opening preview - set initial data with both article and relations
+            const previewData: ArticlePreviewData = { article, relations };
+            setPreview("article", article.slug, previewData, locale);
+        }
+        setIsPreviewOpen((prev) => !prev);
+    }, [article, relations, isPreviewOpen, setPreview, locale]);
 
     const patchArticle = (patch: Partial<Article>) => {
         setEdits((prev) => ({ ...prev, ...patch }));
@@ -70,6 +105,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
     }
 
     const isSaving = updateArticle.isPending || updateRelations.isPending;
+    const hasChanges = Object.keys(edits).length > 0 || relationEdits !== null;
 
     return (
         <div className="flex h-full flex-col">
@@ -83,6 +119,28 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                     {t("backToList")}
                 </Link>
                 <div className="flex-1" />
+                <Button
+                    variant={isPreviewOpen ? "secondary" : "outline"}
+                    size="sm"
+                    onClick={togglePreview}
+                    disabled={!article.slug}
+                    className="gap-2"
+                >
+                    {isPreviewOpen ? (
+                        <>
+                            <EyeOff className="h-4 w-4" />
+                            {t("hidePreview")}
+                        </>
+                    ) : (
+                        <>
+                            <Eye className="h-4 w-4" />
+                            {t("preview")}
+                        </>
+                    )}
+                    {!isPreviewOpen && hasChanges && (
+                        <span className="bg-primary h-2 w-2 rounded-full" />
+                    )}
+                </Button>
                 <Button onClick={handleSave} disabled={isSaving} size="sm">
                     <Save className="mr-2 h-4 w-4" />
                     {isSaving ? t("saving") : t("save")}
@@ -102,7 +160,11 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
             {/* Main content area */}
             <div className="flex flex-1 overflow-hidden">
                 {/* Editor */}
-                <div className="flex flex-1 flex-col overflow-hidden p-4">
+                <div
+                    className={`flex flex-col overflow-hidden p-4 transition-all duration-300 ${
+                        isPreviewOpen ? "w-[35%]" : "flex-1"
+                    }`}
+                >
                     <TiptapEditor
                         content={article.content}
                         onChange={(json) => patchArticle({ content: json })}
@@ -110,8 +172,8 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                     />
                 </div>
 
-                {/* Metadata panel */}
-                <aside className="w-72 shrink-0 overflow-y-auto border-l">
+                {/* Metadata panel - always visible */}
+                <aside className="w-64 shrink-0 overflow-y-auto border-l">
                     <ArticleMetadataPanel
                         article={article}
                         relations={relations}
@@ -119,6 +181,25 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                         onRelationsChange={setRelationEdits}
                     />
                 </aside>
+
+                {/* Preview Panel - right side */}
+                {isPreviewOpen && (
+                    <div className="border-muted w-[calc(100%-35%-16rem)] min-w-[400px] shrink-0 overflow-hidden border-l">
+                        <div className="bg-muted flex items-center justify-between px-4 py-3 shadow-[0_1px_0_0_hsl(var(--border))]">
+                            <span className="text-background font-mono text-[10px] font-medium tracking-[1.2px] uppercase">
+                                {t("previewLabel")}
+                            </span>
+                        </div>
+                        <div className="h-[calc(100%-45px)] overflow-auto bg-white">
+                            <iframe
+                                src={`/${locale}/articles/${article.slug}?preview=1`}
+                                className="h-full w-full"
+                                title={t("previewLabel")}
+                                sandbox="allow-same-origin allow-scripts"
+                            />
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
