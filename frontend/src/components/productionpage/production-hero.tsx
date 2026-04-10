@@ -82,23 +82,23 @@ export function ProductionHero({
 
                 {/* Meta strip */}
                 <div className="border-muted/25 flex border-t pt-4">
-                    <div className="border-muted/25 mr-5 flex-1 border-r pr-5">
+                    <div className="border-muted/25 mr-5 min-w-0 flex-1 border-r pr-5">
                         <div className="text-muted-foreground mb-1 font-mono text-[8px] tracking-[1.6px] uppercase">
                             {t("metaType")}
                         </div>
-                        <div className="font-body text-foreground text-[13px] leading-[1.4] font-medium">
+                        <div className="font-body text-foreground truncate text-[13px] leading-[1.4] font-medium">
                             {production.uitdatabankType ?? "-"}
                         </div>
                     </div>
-                    <div className="border-muted/25 mr-5 flex-1 border-r pr-5">
+                    <div className="border-muted/25 mr-5 min-w-0 flex-1 border-r pr-5">
                         <div className="text-muted-foreground mb-1 font-mono text-[8px] tracking-[1.6px] uppercase">
                             {t("metaTheme")}
                         </div>
-                        <div className="font-body text-foreground text-[13px] leading-[1.4] font-medium">
+                        <div className="font-body text-foreground truncate text-[13px] leading-[1.4] font-medium">
                             {production.uitdatabankTheme ?? "-"}
                         </div>
                     </div>
-                    <div className="flex-1">
+                    <div className="min-w-0 flex-1">
                         <div className="text-muted-foreground mb-1 font-mono text-[8px] tracking-[1.6px] uppercase">
                             {t("metaLanguage")}
                         </div>
