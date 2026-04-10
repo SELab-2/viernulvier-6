@@ -172,6 +172,14 @@
         "loggedOut": "Logged out successfully"
     },
     "Cms": {
+        "overview": "Overview",
+        "productions": "Productions",
+        "locations": "Locations",
+        "articles": "Articles",
+        "performers": "Performers",
+        "collections": "Collections",
+        "ingest": "Ingest",
+        "import": "Import",
         "TabBar": {
             "overview": "CMS Overview",
             "content": "Manage content",
@@ -203,6 +211,14 @@
             "bulkEdit": "Bulk edit",
             "delete": "Delete"
         },
+        "SelectionToolbar": {
+            "clearSelection": "Clear",
+            "moreActions": "More actions",
+            "productionsSelected": "{count, plural, one {# production} other {# productions}}",
+            "eventsSelected": "{count, plural, one {# event} other {# events}}",
+            "locationsSelected": "{count, plural, one {# location} other {# locations}}",
+            "hallsSelected": "{count, plural, one {# hall} other {# halls}}"
+        },
         "ActionsColumn": {
             "openMenu": "Open menu",
             "actions": "Actions",
@@ -216,21 +232,69 @@
             "no": "No",
             "selectPlaceholder": "Select\u2026",
             "cancel": "Cancel",
-            "saveChanges": "Save changes"
+            "saveChanges": "Save changes",
+            "editMode": "Edit mode"
         },
+        "Overview": {
+            "title": "CMS Overview",
+            "subtitle": "Manage content and settings",
+            "productions": "Productions",
+            "productionsDescription": "Manage productions and events",
+            "articles": "Articles",
+            "articlesDescription": "Manage news articles",
+            "locations": "Locations",
+            "locationsDescription": "Manage locations and halls",
+            "performers": "Performers",
+            "performersDescription": "Manage artists and performers",
+            "collections": "Collections",
+            "collectionsDescription": "Manage content collections",
+            "ingest": "Ingest",
+            "ingestDescription": "Upload and process archive materials",
+            "import": "Import",
+            "importDescription": "Import data from external sources",
+            "items": "items",
+            "openSection": "Open section",
+            "backToOverview": "Back to overview"
+        },
+        "editions": {
+            "edition1": "Ed. 01",
+            "edition2": "Ed. 02",
+            "edition3": "Ed. 03",
+            "edition4": "Ed. 04",
+            "edition5": "Ed. 05",
+            "edition6": "Ed. 06"
+        },
+        "sidebar": {
+            "contentManagement": "Content Management",
+            "content": "Content",
+            "system": "System"
+        },
+        "SectionCard": {
+            "comingSoon": "Coming soon"
+        },
+        "PageHeader": {},
         "Productions": {
+            "title": "Productions",
+            "subtitle": "Manage all productions and scheduled events",
+            "items": "items",
             "showEvents": "Show events",
             "hideEvents": "Hide events",
             "editProduction": "Edit production",
             "editEvent": "Edit event"
         },
         "Locations": {
+            "title": "Locations",
+            "subtitle": "Manage venues, theaters and their individual halls",
+            "items": "locations",
             "showHalls": "Show halls",
             "hideHalls": "Hide halls",
             "editLocation": "Edit location",
             "editHall": "Edit hall"
         },
         "Articles": {
+            "title": "Articles",
+            "subtitle": "Manage news articles",
+            "comingSoon": "Coming soon",
             "notAvailable": "Articles API is not yet available. No data to display.",
             "newArticle": "New article",
             "createFailed": "Failed to create article.",
@@ -242,14 +306,31 @@
             "statusLabel": "Status",
             "slug": "Slug",
             "subjectPeriod": "Subject period",
-            "title": "Title",
+            "titleColumn": "Title",
             "relatedProductions": "Related productions",
             "relatedArtists": "Related artists",
             "relatedLocations": "Related locations",
             "relatedEvents": "Related events"
         },
         "Performers": {
+            "title": "Performers",
+            "subtitle": "Manage artists",
+            "comingSoon": "Coming soon",
             "notAvailable": "Performers API is not yet available. No data to display."
+        },
+        "Ingest": {
+            "title": "Ingest",
+            "subtitle": "Bulk import of media files and archive materials",
+            "comingSoon": "Coming soon",
+            "notAvailable": "Ingest functionality",
+            "description": "This feature is still under development. Soon you will be able to upload and process media files here."
+        },
+        "Import": {
+            "title": "Import",
+            "subtitle": "Automatic import from external data sources",
+            "comingSoon": "Coming soon",
+            "notAvailable": "Import functionality",
+            "description": "This feature is still under development. Soon you will be able to import data from external sources such as UiTdatabank here."
         },
         "Collections": {
             "title": "Collections",

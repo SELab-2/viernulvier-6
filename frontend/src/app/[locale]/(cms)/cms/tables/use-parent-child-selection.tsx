@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ColumnDef, OnChangeFn, RowSelectionState } from "@tanstack/react-table";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Dispatch, SetStateAction } from "react";
@@ -18,6 +18,16 @@ export function useParentChildSelection<TParent extends { id: string }>(
     const [parentSelection, setParentSelection] = useState<RowSelectionState>({});
     const [childSelection, setChildSelection] = useState<Map<string, RowSelectionState>>(new Map());
 
+    // Use refs to access latest state without triggering re-renders of the column definition
+    const childSelectionRef = useRef(childSelection);
+    const childrenByParentIdRef = useRef(childrenByParentId);
+    useEffect(() => {
+        childSelectionRef.current = childSelection;
+    }, [childSelection]);
+    useEffect(() => {
+        childrenByParentIdRef.current = childrenByParentId;
+    }, [childrenByParentId]);
+
     // Stable per-parent child selection handlers. Created once per parentId and cached
     // in a ref.
     const childHandlersRef = useRef<Map<string, OnChangeFn<RowSelectionState>>>(new Map());
@@ -36,31 +46,34 @@ export function useParentChildSelection<TParent extends { id: string }>(
         return handler;
     }, []);
 
+    // Stable reference to getChildHandler
+    const getChildHandlerRef = useRef(getChildHandler);
+    useEffect(() => {
+        getChildHandlerRef.current = getChildHandler;
+    }, [getChildHandler]);
+
+    // Stable select column - never recreate the column definition
     const selectColumn = useMemo<ColumnDef<TParent>>(
         () => ({
             id: "select",
             header: () => null,
             cell: ({ row }) => {
                 const parentId = row.original.id;
-                const childSel = childSelection.get(parentId) ?? {};
+                // Read from refs to get latest state without re-rendering
+                const childSel = childSelectionRef.current.get(parentId) ?? {};
                 const selectedChildCount = Object.values(childSel).filter(Boolean).length;
                 const isChecked = row.getIsSelected();
                 const isIndeterminate = !isChecked && selectedChildCount > 0;
+                const children = childrenByParentIdRef.current.get(parentId) ?? [];
+                const handleChildSelect = getChildHandlerRef.current;
 
                 return (
                     <Checkbox
                         checked={isChecked ? true : isIndeterminate ? "indeterminate" : false}
                         onCheckedChange={(value) => {
                             row.toggleSelected(!!value);
-                            getChildHandler(parentId)(
-                                value
-                                    ? Object.fromEntries(
-                                          (childrenByParentId.get(parentId) ?? []).map((c) => [
-                                              c.id,
-                                              true,
-                                          ])
-                                      )
-                                    : {}
+                            handleChildSelect(parentId)(
+                                value ? Object.fromEntries(children.map((c) => [c.id, true])) : {}
                             );
                         }}
                         aria-label="Select row"
@@ -70,7 +83,7 @@ export function useParentChildSelection<TParent extends { id: string }>(
             enableSorting: false,
             enableHiding: false,
         }),
-        [childSelection, childrenByParentId, getChildHandler]
+        [] // Never recreate - use refs for all dynamic values
     );
 
     const selectedParentCount = Object.values(parentSelection).filter(Boolean).length;
