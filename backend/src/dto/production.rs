@@ -1,7 +1,10 @@
 use database::{
     Database,
-    models::production::{
-        Production, ProductionCreate, ProductionTranslationData, ProductionWithTranslations,
+    models::{
+        entity_type::EntityType,
+        production::{
+            Production, ProductionCreate, ProductionTranslationData, ProductionWithTranslations,
+        },
     },
 };
 use serde::{Deserialize, Serialize};
@@ -17,6 +20,7 @@ impl ProductionPayload {
         db: &Database,
         id_cursor: Option<String>,
         limit: usize,
+        public_url: Option<&str>,
     ) -> Result<PaginatedResponse<Self>, AppError> {
         let id_cursor: Option<Uuid> = id_cursor.and_then(|b64| {
             let bytes: [u8; 16] = BASE64_URL_SAFE.decode(b64).ok()?.try_into().ok()?;
@@ -39,11 +43,38 @@ impl ProductionPayload {
             None
         };
 
+        if let Some(base) = public_url {
+            let ids: Vec<Uuid> = data.iter().map(|p| p.id).collect();
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Production, &ids)
+                .await?;
+            for p in &mut data {
+                if let Some(s3_key) = cover_keys.get(&p.id) {
+                    p.cover_image_url =
+                        Some(format!("{}/{}", base.trim_end_matches('/'), s3_key));
+                }
+            }
+        }
+
         Ok(PaginatedResponse { data, next_cursor })
     }
 
-    pub async fn by_id(db: &Database, id: Uuid) -> Result<Self, AppError> {
-        Ok(db.productions().by_id(id).await?.into())
+    pub async fn by_id(db: &Database, id: Uuid, public_url: Option<&str>) -> Result<Self, AppError> {
+        let mut payload: Self = db.productions().by_id(id).await?.into();
+
+        if let Some(base) = public_url {
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Production, &[id])
+                .await?;
+            if let Some(s3_key) = cover_keys.get(&id) {
+                payload.cover_image_url =
+                    Some(format!("{}/{}", base.trim_end_matches('/'), s3_key));
+            }
+        }
+
+        Ok(payload)
     }
 
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {
