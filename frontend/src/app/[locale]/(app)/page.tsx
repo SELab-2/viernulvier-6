@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import Link from "next/link";
 
 import { useGetProductions } from "@/hooks/api/useProductions";

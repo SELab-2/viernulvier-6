@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { useRouter } from "@/i18n/routing";
+
 import { useCreateCollection } from "@/hooks/api";
 import { slugify } from "@/lib/slugify";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,6 @@ interface CreateCollectionDialogProps {
 
 export function CreateCollectionDialog({ open, onOpenChange }: CreateCollectionDialogProps) {
     const t = useTranslations("Cms.Collections");
-    const router = useRouter();
     const createCollection = useCreateCollection();
 
     const [titleNl, setTitleNl] = useState("");
@@ -64,10 +63,9 @@ export function CreateCollectionDialog({ open, onOpenChange }: CreateCollectionD
                 ],
             },
             {
-                onSuccess: (collection) => {
+                onSuccess: () => {
                     toast.success(t("metadataSaved"));
                     handleOpenChange(false);
-                    router.push(`/cms/collections/${collection.id}`);
                 },
                 onError: () => {
                     toast.error(t("metadataError"));

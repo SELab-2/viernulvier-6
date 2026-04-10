@@ -15,7 +15,8 @@ use crate::{
     },
     error::ErrorResponse,
     handlers::{
-        IntoApiResponse, JsonResponse, JsonStatusResponse, PaginationQuery, StatusResponse,
+        IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse,
+        queries::{pagination::PaginationQuery, production::ProductionSearchQuery},
     },
 };
 
@@ -26,7 +27,8 @@ use crate::{
     operation_id = "get_all_productions",
     description = "Get all productions",
     params(
-        PaginationQuery
+        PaginationQuery,
+        ProductionSearchQuery
     ),
     responses(
         (status = 200, description = "Success", body = PaginatedResponse<ProductionPayload>)
@@ -36,12 +38,13 @@ pub async fn get_all(
     State(state): State<AppState>,
     db: Database,
     Query(pagination): Query<PaginationQuery>,
+    Query(search): Query<ProductionSearchQuery>,
 ) -> JsonResponse<PaginatedResponse<ProductionPayload>> {
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
-    let response =
-        ProductionPayload::all(&db, pagination.cursor, pagination.limit, public_url).await?;
-
-    response.json()
+  
+    ProductionPayload::all(&db, pagination.cursor, pagination.limit, public_url, search)
+        .await?
+        .json()
 }
 
 #[utoipa::path(

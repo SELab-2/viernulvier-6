@@ -120,7 +120,6 @@ interface DataTableProps<TData, TValue> {
     getRowCanExpand?: (row: Row<TData>) => boolean;
     expanderLabels?: ExpanderLabels;
     compact?: boolean;
-    toolbar?: ReactNode;
     rowSelection?: RowSelectionState;
     onRowSelectionChange?: OnChangeFn<RowSelectionState>;
     getRowId?: (row: TData) => string;
@@ -135,7 +134,6 @@ export function DataTable<TData, TValue>({
     getRowCanExpand,
     expanderLabels,
     compact = false,
-    toolbar,
     rowSelection,
     onRowSelectionChange,
     getRowId,
@@ -264,7 +262,6 @@ export function DataTable<TData, TValue>({
     return (
         <TooltipProvider>
             <div className={compact ? undefined : "overflow-hidden rounded-md border"}>
-                {toolbar !== undefined && <div className="border-b px-4 py-2">{toolbar}</div>}
                 <Table
                     className={
                         compact

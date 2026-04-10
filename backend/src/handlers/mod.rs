@@ -1,6 +1,5 @@
 use axum::{Json, http::StatusCode};
-use serde::{Deserialize, Serialize};
-use utoipa::IntoParams;
+use serde::Serialize;
 
 use crate::error::AppError;
 
@@ -18,6 +17,11 @@ pub mod series;
 pub mod space;
 pub mod taxonomy;
 pub mod version;
+pub mod queries {
+    pub mod pagination;
+    pub mod production;
+    pub mod sort;
+}
 
 pub type JsonResponse<T> = Result<Json<T>, AppError>;
 pub type JsonStatusResponse<T> = Result<(StatusCode, Json<T>), AppError>;
@@ -36,15 +40,4 @@ impl<T: Serialize> IntoApiResponse for T {
     fn json(self) -> JsonResponse<Self> {
         Ok(Json(self))
     }
-}
-
-#[derive(Deserialize, IntoParams)]
-pub struct PaginationQuery {
-    pub cursor: Option<String>,
-    #[serde(default = "default_limit")]
-    pub limit: usize,
-}
-
-fn default_limit() -> usize {
-    20
 }

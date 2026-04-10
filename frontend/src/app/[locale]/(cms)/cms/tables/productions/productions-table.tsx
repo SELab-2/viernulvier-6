@@ -5,21 +5,24 @@ import { useTranslations } from "next-intl";
 import type { Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
+import { ActionBar } from "../action-bar";
 import { makeProductionColumns, productionFields, toProductionUpdateInput } from "./columns";
 import type { ProductionRow } from "@/types/models/production.types";
-import { SelectionToolbar } from "../selection-toolbar";
 import { useParentChildSelection } from "../use-parent-child-selection";
 import { makeEventColumns, eventFields, toEventUpdateInput } from "./event-columns";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { useGetProductions, useUpdateProduction } from "@/hooks/api/useProductions";
 import { useGetEvents, useUpdateEvent } from "@/hooks/api/useEvents";
+import { ActionVariant } from "@/types/cms/actions";
 import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
 
 export function ProductionsTable() {
     const t = useTranslations("Cms.Productions");
     const tCollections = useTranslations("Cms.Collections");
+    const tActions = useTranslations("Cms.ActionsColumn");
+    const tBar = useTranslations("Cms.ActionBar");
     const { data: productionsResult, isLoading: productionsLoading } = useGetProductions();
     const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
     const productions = useMemo(() => productionsResult?.data ?? [], [productionsResult?.data]);
@@ -29,8 +32,7 @@ export function ProductionsTable() {
 
     const [editProduction, setEditProduction] = useState<ProductionRow | null>(null);
     const [editEvent, setEditEvent] = useState<Event | null>(null);
-    const [productionDialogOpen, setProductionDialogOpen] = useState(false);
-    const [eventDialogOpen, setEventDialogOpen] = useState(false);
+    const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
 
     const eventsByProduction = useMemo(() => {
         const map = new Map<string, Event[]>();
@@ -54,11 +56,14 @@ export function ProductionsTable() {
     } = useParentChildSelection<Production>(eventsByProduction);
 
     const productionCols = useMemo(
-        () => [selectColumn, ...makeProductionColumns({ onEdit: setEditProduction })],
-        [selectColumn]
+        () => [selectColumn, ...makeProductionColumns({ onEdit: setEditProduction, t: tActions })],
+        [selectColumn, tActions]
     );
 
-    const eventCols = useMemo(() => makeEventColumns({ onEdit: setEditEvent }), []);
+    const eventCols = useMemo(
+        () => makeEventColumns({ onEdit: setEditEvent, t: tActions }),
+        [tActions]
+    );
 
     const expanderLabels = useMemo(() => ({ show: t("showEvents"), hide: t("hideEvents") }), [t]);
 
@@ -91,6 +96,28 @@ export function ProductionsTable() {
         return selected;
     }, [childSelection, eventsById]);
 
+    const collectionPickerItems = useMemo(
+        () => [
+            ...selectedProductions.map((production) => ({
+                contentId: production.id,
+                contentType: "production" as const,
+                label:
+                    production.translations.find((translation) => translation.languageCode === "nl")
+                        ?.title ||
+                    production.translations.find((translation) => translation.languageCode === "en")
+                        ?.title ||
+                    production.slug,
+            })),
+            ...selectedEvents.map((event) => ({
+                contentId: event.id,
+                contentType: "event" as const,
+                label: `${new Date(event.startsAt).toLocaleDateString()} ${new Date(event.startsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
+                parentProductionId: event.productionId,
+            })),
+        ],
+        [selectedProductions, selectedEvents]
+    );
+
     const renderEvents = useCallback(
         (row: Row<Production>) => {
             if (eventsLoading) {
@@ -122,73 +149,51 @@ export function ProductionsTable() {
         ]
     );
 
+    const actions = useMemo(
+        () => [
+            {
+                key: "add-to-collection",
+                label: tCollections("addToCollection"),
+                onClick: () => setCollectionDialogOpen(true),
+            },
+            {
+                key: "delete",
+                label: tBar("delete"),
+                variant: ActionVariant.Destructive,
+            },
+        ],
+        [tCollections, tBar]
+    );
+
     return (
         <>
-            <DataTable
-                columns={productionCols}
-                data={productions}
-                loading={productionsLoading}
-                renderSubComponent={renderEvents}
-                getRowCanExpand={getRowCanExpand}
-                expanderLabels={expanderLabels}
-                toolbar={
-                    <SelectionToolbar
-                        groups={[
-                            {
-                                countKey: "productionsSelected",
-                                count: selectedProductionCount,
-                                inlineActions: [
-                                    {
-                                        label: tCollections("addToCollection"),
-                                        onClick: () => setProductionDialogOpen(true),
-                                    },
-                                ],
-                                overflowActions: [],
-                            },
-                            {
-                                countKey: "eventsSelected",
-                                count: selectedEventCount,
-                                inlineActions: [
-                                    {
-                                        label: tCollections("addToCollection"),
-                                        onClick: () => setEventDialogOpen(true),
-                                    },
-                                ],
-                                overflowActions: [],
-                            },
-                        ]}
-                        onClear={clearSelection}
-                    />
-                }
-                rowSelection={parentSelection}
-                onRowSelectionChange={setParentSelection}
-                getRowId={getProductionRowId}
+            <ActionBar
+                totalCount={productions.length}
+                totalCountKey="totalProductions"
+                entityCounts={[
+                    { countKey: "productionsSelected", count: selectedProductionCount },
+                    { countKey: "eventsSelected", count: selectedEventCount },
+                ]}
+                actions={actions}
+                onClear={clearSelection}
             />
+            <div className="min-h-0 flex-1 overflow-auto">
+                <DataTable
+                    columns={productionCols}
+                    data={productions}
+                    loading={productionsLoading}
+                    renderSubComponent={renderEvents}
+                    getRowCanExpand={getRowCanExpand}
+                    expanderLabels={expanderLabels}
+                    rowSelection={parentSelection}
+                    onRowSelectionChange={setParentSelection}
+                    getRowId={getProductionRowId}
+                />
+            </div>
             <CollectionPickerDialog
-                open={productionDialogOpen}
-                onOpenChange={setProductionDialogOpen}
-                items={selectedProductions.map((production) => ({
-                    contentId: production.id,
-                    contentType: "production" as const,
-                    label:
-                        production.translations.find(
-                            (translation) => translation.languageCode === "nl"
-                        )?.title ||
-                        production.translations.find(
-                            (translation) => translation.languageCode === "en"
-                        )?.title ||
-                        production.slug,
-                }))}
-            />
-            <CollectionPickerDialog
-                open={eventDialogOpen}
-                onOpenChange={setEventDialogOpen}
-                items={selectedEvents.map((event) => ({
-                    contentId: event.id,
-                    contentType: "event" as const,
-                    label: `${new Date(event.startsAt).toLocaleDateString()} ${new Date(event.startsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
-                    parentProductionId: event.productionId,
-                }))}
+                open={collectionDialogOpen}
+                onOpenChange={setCollectionDialogOpen}
+                items={collectionPickerItems}
             />
             <EditSheet
                 open={!!editProduction}
@@ -196,7 +201,7 @@ export function ProductionsTable() {
                 entity={editProduction}
                 fields={productionFields}
                 title={t("editProduction")}
-                onSave={(data) => updateProduction.mutate(toProductionUpdateInput(data))}
+                onSave={(data) => updateProduction.mutateAsync(toProductionUpdateInput(data))}
             />
             <EditSheet
                 open={!!editEvent}
@@ -204,7 +209,7 @@ export function ProductionsTable() {
                 entity={editEvent}
                 fields={eventFields}
                 title={t("editEvent")}
-                onSave={(data) => updateEvent.mutate(toEventUpdateInput(data))}
+                onSave={(data) => updateEvent.mutateAsync(toEventUpdateInput(data))}
             />
         </>
     );

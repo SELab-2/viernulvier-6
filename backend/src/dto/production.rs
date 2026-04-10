@@ -2,54 +2,54 @@ use database::{
     Database,
     models::{
         entity_type::EntityType,
+        cursor::CursorData,
         production::{
             Production, ProductionCreate, ProductionTranslationData, ProductionWithTranslations,
         },
     },
 };
 use serde::{Deserialize, Serialize};
+use tracing::debug;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use base64::{Engine, prelude::BASE64_URL_SAFE};
 
-use crate::{dto::paginated::PaginatedResponse, error::AppError};
+use crate::{
+    dto::paginated::PaginatedResponse, error::AppError,
+    handlers::queries::production::ProductionSearchQuery,
+};
 
 impl ProductionPayload {
     pub async fn all(
         db: &Database,
         id_cursor: Option<String>,
-        limit: usize,
+        limit: u32,
         public_url: Option<&str>,
+        search: ProductionSearchQuery,
     ) -> Result<PaginatedResponse<Self>, AppError> {
-        let id_cursor: Option<Uuid> = id_cursor.and_then(|b64| {
-            let bytes: [u8; 16] = BASE64_URL_SAFE.decode(b64).ok()?.try_into().ok()?;
-            Some(Uuid::from_bytes(bytes))
+        let cursor: Option<CursorData> = id_cursor.and_then(|b64| {
+            // we drop invalid cursor data
+            let bytes = BASE64_URL_SAFE.decode(b64).ok()?;
+            serde_json::from_slice(&bytes).ok()
         });
 
-        let mut data: Vec<_> = db
-            .productions()
-            .all(limit + 1, id_cursor)
-            .await?
-            .into_iter()
-            .map(Self::from)
-            .collect();
-
-        // only return a cursor if there are more items
-        let next_cursor = if data.len() == limit + 1 {
-            data.pop();
-            data.last().map(|p| BASE64_URL_SAFE.encode(p.id))
-        } else {
-            None
-        };
+        // get productions from the database, including cursor
+        let (productions, next_cursor) = db.productions().all(limit, cursor, search.into()).await?;
+        let productions: Vec<_> = productions.into_iter().map(Self::from).collect();
+        // encode the next cursor
+        let next_cursor_data = next_cursor.and_then(|c| {
+            let data = serde_json::to_vec(&c).ok()?;
+            Some(BASE64_URL_SAFE.encode(data))
+        });
 
         if let Some(base) = public_url {
-            let ids: Vec<Uuid> = data.iter().map(|p| p.id).collect();
+            let ids: Vec<Uuid> = productions.iter().map(|p| p.id).collect();
             let cover_keys = db
                 .media()
                 .cover_s3_keys_for_entities(EntityType::Production, &ids)
                 .await?;
-            for p in &mut data {
+            for p in &mut productions {
                 if let Some(s3_key) = cover_keys.get(&p.id) {
                     p.cover_image_url =
                         Some(format!("{}/{}", base.trim_end_matches('/'), s3_key));
@@ -57,7 +57,11 @@ impl ProductionPayload {
             }
         }
 
-        Ok(PaginatedResponse { data, next_cursor })
+        debug!("Returning {} productions", productions.len());
+        Ok(PaginatedResponse {
+            data: productions,
+            next_cursor: next_cursor_data,
+        })
     }
 
     pub async fn by_id(db: &Database, id: Uuid, public_url: Option<&str>) -> Result<Self, AppError> {
