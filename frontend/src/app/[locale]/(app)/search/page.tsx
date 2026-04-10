@@ -13,7 +13,7 @@ import type { Production } from "@/types/models/production.types";
 import type { PaginatedResult } from "@/types/api/api.types";
 
 import { LoadingState } from "@/components/shared/loading-state";
-import { SearchHeader } from "@/components/homepage/search-header";
+import { UnifiedHeader } from "@/components/layout/header";
 import { SearchHero } from "@/components/searchpage/search-hero";
 import { ResultsBar } from "@/components/searchpage/results-bar";
 import { ArchiveSidebar } from "@/components/searchpage/archive-sidebar";
@@ -31,6 +31,7 @@ export default function SearchPage() {
 
     const [cursorHistory, setCursorHistory] = useState<(string | null)[]>([null]);
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
+    const [searchQuery, setSearchQuery] = useState("");
 
     const currentCursor = cursorHistory[currentPageIndex];
 
@@ -92,7 +93,7 @@ export default function SearchPage() {
     if (isLoading && allProductions.length === 0) {
         return (
             <>
-                <SearchHeader
+                <UnifiedHeader
                     query=""
                     onQueryChange={() => {}}
                     searchPlaceholder={t("placeholder")}
@@ -105,9 +106,9 @@ export default function SearchPage() {
 
     return (
         <>
-            <SearchHeader
-                query=""
-                onQueryChange={() => {}}
+            <UnifiedHeader
+                query={searchQuery}
+                onQueryChange={setSearchQuery}
                 searchPlaceholder={t("placeholder")}
                 searchHint={t("hint")}
             />

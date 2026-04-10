@@ -1,1 +1,1 @@
-export * from "./ArchiveSidebar";
+export { ArchiveSidebar } from "./ArchiveSidebar";

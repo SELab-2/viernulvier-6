@@ -1,10 +1,10 @@
-import { CmsTabBar } from "../cms-tab-bar";
+import { CmsSidebar } from "@/components/cms";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex h-full flex-col">
-            <CmsTabBar />
-            <div className="min-h-0 flex-1 overflow-auto">{children}</div>
+        <div className="flex h-full flex-col overflow-hidden lg:flex-row">
+            <CmsSidebar />
+            <main className="flex-1 overflow-hidden p-4 lg:p-8">{children}</main>
         </div>
     );
 }

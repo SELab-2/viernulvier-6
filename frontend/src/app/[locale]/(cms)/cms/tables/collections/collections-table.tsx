@@ -64,16 +64,18 @@ export function CollectionsTable() {
     }
 
     return (
-        <div className="p-4">
-            <div className="flex items-center justify-end pb-2">
+        <div className="flex h-full flex-col">
+            <div className="bg-background sticky top-0 z-10 flex items-center justify-end py-2">
                 <Button onClick={() => setCreateOpen(true)}>{t("newCollection")}</Button>
             </div>
-            <DataTable
-                columns={columns}
-                data={rows}
-                loading={isLoading}
-                onRowClick={handleRowClick}
-            />
+            <div className="flex-1 overflow-auto">
+                <DataTable
+                    columns={columns}
+                    data={rows}
+                    loading={isLoading}
+                    onRowClick={handleRowClick}
+                />
+            </div>
             <CreateCollectionDialog open={createOpen} onOpenChange={setCreateOpen} />
         </div>
     );
