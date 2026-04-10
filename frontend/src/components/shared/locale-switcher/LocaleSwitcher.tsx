@@ -1,15 +1,20 @@
 "use client";
 
 import { useLocale } from "next-intl";
+import { useSearchParams } from "next/navigation";
 import { usePathname, useRouter } from "@/i18n/routing";
 
 export function LocaleSwitcher() {
     const locale = useLocale();
     const router = useRouter();
     const pathname = usePathname();
+    const searchParams = useSearchParams();
 
     function onSelectChange(nextLocale: string) {
-        router.replace(pathname, { locale: nextLocale });
+        // Preserve query params (like ?preview=1) when switching locale
+        const queryString = searchParams.toString();
+        const url = queryString ? `${pathname}?${queryString}` : pathname;
+        router.replace(url, { locale: nextLocale });
     }
 
     return (
