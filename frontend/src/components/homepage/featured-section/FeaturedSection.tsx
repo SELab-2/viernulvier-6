@@ -64,7 +64,6 @@ function FeaturedCard({
                         src={production.coverImageUrl}
                         alt={title}
                         fill
-                        unoptimized // TODO: Does not work without it (400) but need to fix in prod
                         className="object-cover"
                         sizes={
                             isFirst

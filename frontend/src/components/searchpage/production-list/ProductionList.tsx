@@ -114,7 +114,6 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
                             src={production.coverImageUrl}
                             alt={title}
                             fill
-                            unoptimized // TODO: Does not work without it (400) but need to fix in prodOn th
                             className="object-cover"
                             sizes="86px"
                         />
