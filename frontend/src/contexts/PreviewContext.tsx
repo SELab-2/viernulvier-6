@@ -108,6 +108,31 @@ export function PreviewProvider({ children }: PreviewProviderProps) {
         return () => window.removeEventListener("storage", handleStorageChange);
     }, []);
 
+    // Periodic sync for iframe contexts (storage events can be unreliable)
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        // Only run in iframe contexts
+        if (window.self === window.top) return;
+
+        const syncFromStorage = () => {
+            const stored = loadPreviewFromStorage();
+            setActivePreview((current) => {
+                // Only update if different to avoid unnecessary re-renders
+                if (JSON.stringify(current) !== JSON.stringify(stored)) {
+                    return stored;
+                }
+                return current;
+            });
+        };
+
+        // Sync immediately on mount and then periodically
+        syncFromStorage();
+        const interval = setInterval(syncFromStorage, 500);
+
+        return () => clearInterval(interval);
+    }, []);
+
     const setPreview = useCallback(
         <T,>(entityType: PreviewEntityType, entityId: string, data: T, locale: string): void => {
             setActivePreview({
