@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api-client";
 import {
@@ -41,6 +41,17 @@ export const useGetProductions = (options?: {
     return useQuery({
         queryKey: queryKeys.productions.all(options?.pagination),
         queryFn: () => fetchProductions(options?.pagination),
+        ...options,
+    });
+};
+
+export const useGetInfiniteProductions = (options?: { enabled?: boolean }) => {
+    return useInfiniteQuery({
+        queryKey: ["productions", "infinite"],
+        queryFn: async ({ pageParam }) =>
+            fetchProductions(pageParam ? { cursor: pageParam } : undefined),
+        getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+        initialPageParam: null as string | null,
         ...options,
     });
 };

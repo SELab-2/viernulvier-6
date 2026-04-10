@@ -57,13 +57,40 @@ export function makeCollectionColumns(options: {
     ];
 
     return [
-        { accessorKey: "titleNl", header: "Title (NL)" },
-        { accessorKey: "descriptionNl", header: "Description (NL)" },
-        { accessorKey: "itemCount", header: "Items" },
+        {
+            accessorKey: "titleNl",
+            header: "Title (NL)",
+            cell: ({ getValue }) => (
+                <span className="font-display text-sm tracking-tight">{getValue() as string}</span>
+            ),
+        },
+        {
+            accessorKey: "descriptionNl",
+            header: "Description (NL)",
+            cell: ({ getValue }) => (
+                <span className="text-muted-foreground max-w-[300px] truncate text-sm">
+                    {getValue() as string}
+                </span>
+            ),
+        },
+        {
+            accessorKey: "itemCount",
+            header: "Items",
+            cell: ({ getValue }) => (
+                <span className="text-muted-foreground font-mono text-xs">
+                    {getValue() as number}
+                </span>
+            ),
+        },
         {
             id: "updatedAt",
             header: "Updated",
             accessorFn: (row) => formatter.format(new Date(row.updatedAt)),
+            cell: ({ getValue }) => (
+                <span className="text-muted-foreground font-mono text-xs">
+                    {getValue() as string}
+                </span>
+            ),
         },
         makeActionsColumn<CollectionRow>({ actions }),
     ];

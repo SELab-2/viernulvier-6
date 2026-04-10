@@ -186,19 +186,36 @@ export function makeProductionColumns(options: {
             id: "titleNl",
             header: "Title (NL)",
             accessorFn: (row) => row.translations.find((t) => t.languageCode === "nl")?.title ?? "",
+            cell: ({ getValue }) => (
+                <span className="font-display text-sm tracking-tight">{getValue() as string}</span>
+            ),
         },
         {
             id: "titleEn",
             header: "Title (EN)",
             accessorFn: (row) => row.translations.find((t) => t.languageCode === "en")?.title ?? "",
+            cell: ({ getValue }) => (
+                <span className="font-display text-sm tracking-tight">{getValue() as string}</span>
+            ),
         },
         {
             id: "artistNl",
             header: "Artist",
             accessorFn: (row) =>
                 row.translations.find((t) => t.languageCode === "nl")?.artist ?? "",
+            cell: ({ getValue }) => (
+                <span className="font-body text-sm">{getValue() as string}</span>
+            ),
         },
-        { accessorKey: "slug", header: "Slug" },
+        {
+            accessorKey: "slug",
+            header: "Slug",
+            cell: ({ getValue }) => (
+                <span className="text-muted-foreground font-mono text-xs tracking-[0.02em]">
+                    {getValue() as string}
+                </span>
+            ),
+        },
         makeActionsColumn<Production>({ actions }),
     ];
 }
