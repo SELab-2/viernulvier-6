@@ -56,7 +56,7 @@ impl<'a> ProductionRepo<'a> {
                 let mut query = sqlx::QueryBuilder::new("WITH matched_translations AS (");
 
                 query
-                    .push("SELECT production_id, MAX( ")
+                    .push("SELECT production_id, MIN( ")
                     .push_bind(&search_q)
                     .push(" <<-> full_search_text) ")
                     .push(" as distance_score ") // lower is better
@@ -71,13 +71,13 @@ impl<'a> ProductionRepo<'a> {
                     && let Some(score) = cursor.score
                 {
                     // HAVING score > cursor.score
-                    query.push(" HAVING MAX( ");
+                    query.push(" HAVING MIN( ");
                     query.push_bind(&search_q);
                     query.push(" <<-> full_search_text) > ");
                     query.push_bind(score);
 
                     // OR (score = cursor.score AND id < cursor.id)
-                    query.push(" OR (MAX( ");
+                    query.push(" OR (MIN( ");
                     query.push_bind(&search_q);
                     query.push(" <<-> full_search_text) = ");
                     query.push_bind(score);
