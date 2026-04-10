@@ -64,6 +64,84 @@ async fn get_paginated(db: PgPool) {
 
 #[sqlx::test(fixtures("productions"))]
 #[test_log::test]
+async fn get_search_single_result(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/productions?q=jazz").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 1);
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "44444444-4444-4444-4444-444444444444"
+    );
+    assert!(data.next_cursor.is_none());
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn get_search_no_results(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/productions?q=rustlang").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert!(
+        data.data.is_empty(),
+        "expected no results for unmatched search term"
+    );
+    assert!(data.next_cursor.is_none());
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn get_search_paginated(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/productions?q=TITLE_SEARCH_TEST&limit=2").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // page 1
+    let page1: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(page1.data.len(), 2, "page 1 should respect the limit of 2");
+    assert!(page1.next_cursor.is_some(), "there should be a next cursor");
+
+    let cursor = page1.next_cursor.unwrap();
+
+    // page 2
+    let response = app
+        .get(&format!(
+            "/productions?q=TITLE_SEARCH_TEST&limit=2&cursor={cursor}"
+        ))
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let page2: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(
+        page2.data.len(),
+        1,
+        "page 2 should have the 1 remaining item"
+    );
+    assert!(
+        page2.next_cursor.is_none(),
+        "last page should have no cursor"
+    );
+
+    let mut all_ids = vec![page1.data[0].id, page1.data[1].id, page2.data[0].id];
+    let original_length = all_ids.len();
+    all_ids.sort();
+    all_ids.dedup();
+    assert_eq!(
+        all_ids.len(),
+        original_length,
+        "all paginated search results must be unique"
+    );
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
 async fn get_one_success(db: PgPool) {
     let app = TestRouter::new(db);
     let target_id = Uuid::from_str("11111111-1111-1111-1111-111111111111").unwrap();
