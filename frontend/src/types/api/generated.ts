@@ -736,6 +736,8 @@ export interface components {
         ArticleListPayload: {
             /** Format: uuid */
             id: string;
+            /** Format: date-time */
+            published_at?: string | null;
             slug: string;
             status: components["schemas"]["ArticleStatus"];
             /** Format: date */
@@ -752,6 +754,8 @@ export interface components {
             created_at: string;
             /** Format: uuid */
             id: string;
+            /** Format: date-time */
+            published_at?: string | null;
             slug: string;
             status: components["schemas"]["ArticleStatus"];
             /** Format: date */

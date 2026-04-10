@@ -11,7 +11,7 @@ import { LocaleSwitcher } from "@/components/shared/locale-switcher";
 const NAV_LINKS = [
     { key: "productions", href: "/" },
     { key: "artists", href: "#" },
-    { key: "articles", href: "#" },
+    { key: "articles", href: "/articles" },
     { key: "posters", href: "#" },
     { key: "collection", href: "#" },
     { key: "about", href: "#" },
