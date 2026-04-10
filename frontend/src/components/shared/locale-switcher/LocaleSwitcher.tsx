@@ -11,9 +11,22 @@ export function LocaleSwitcher() {
     const searchParams = useSearchParams();
 
     function onSelectChange(nextLocale: string) {
-        // Preserve query params (like ?preview=1) when switching locale
+        // Build URL with query params
         const queryString = searchParams.toString();
-        const url = queryString ? `${pathname}?${queryString}` : pathname;
+
+        // When in iframe/preview mode, always preserve the preview param
+        const isInIframe = typeof window !== "undefined" && window.self !== window.top;
+        const hasPreviewParam = searchParams.get("preview") === "1";
+
+        let url = pathname;
+        if (queryString) {
+            url = `${pathname}?${queryString}`;
+        } else if (isInIframe && !hasPreviewParam) {
+            // If in iframe but no preview param, check if we should add it
+            // (this can happen if the param was lost during navigation)
+            url = `${pathname}?preview=1`;
+        }
+
         router.replace(url, { locale: nextLocale });
     }
 
