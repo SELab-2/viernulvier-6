@@ -64,7 +64,7 @@ jobs:
             kayasem/${{ vars.PROJECT_NAME }}-docs:${{ github.sha }}
 
   deploy:
-    runs-on: self-hosted
+    runs-on: kaya-sem-house
     environment: production
     needs: build-push
 

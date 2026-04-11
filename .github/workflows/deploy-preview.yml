@@ -32,7 +32,7 @@ jobs:
       github.event.action != 'closed' &&
       github.event.action != 'unlabeled' &&
       contains(github.event.pull_request.labels.*.name, 'preview')
-    runs-on: self-hosted
+    runs-on: kaya-sem-house
     environment: preview
     needs: [run_backend_tests, run_frontend_tests]
 
