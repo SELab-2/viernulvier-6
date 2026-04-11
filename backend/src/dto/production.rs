@@ -2,7 +2,7 @@ use database::{
     Database,
     models::{
         entity_type::EntityType,
-        cursor::CursorData,
+        filtering::cursor::CursorData,
         production::{
             Production, ProductionCreate, ProductionTranslationData, ProductionWithTranslations,
         },
@@ -51,8 +51,7 @@ impl ProductionPayload {
                 .await?;
             for p in &mut productions {
                 if let Some(s3_key) = cover_keys.get(&p.id) {
-                    p.cover_image_url =
-                        Some(format!("{}/{}", base.trim_end_matches('/'), s3_key));
+                    p.cover_image_url = Some(format!("{}/{}", base.trim_end_matches('/'), s3_key));
                 }
             }
         }
@@ -64,7 +63,11 @@ impl ProductionPayload {
         })
     }
 
-    pub async fn by_id(db: &Database, id: Uuid, public_url: Option<&str>) -> Result<Self, AppError> {
+    pub async fn by_id(
+        db: &Database,
+        id: Uuid,
+        public_url: Option<&str>,
+    ) -> Result<Self, AppError> {
         let mut payload: Self = db.productions().by_id(id).await?.into();
 
         if let Some(base) = public_url {

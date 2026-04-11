@@ -8,12 +8,14 @@ use uuid::Uuid;
 use crate::{
     error::DatabaseError,
     models::{
-        cursor::CursorData,
+        entity_type::EntityType,
+        filtering::cursor::CursorData,
         production::{
-            Production, ProductionCreate, ProductionSearch, ProductionTranslation,
+            Production, ProductionCreate, ProductionFilters, ProductionTranslation,
             ProductionTranslationData, ProductionWithScore, ProductionWithTranslations,
         },
     },
+    repos::query_filters::facets::AddFacetFilters,
 };
 
 pub struct ProductionRepo<'a> {
@@ -53,84 +55,15 @@ impl<'a> ProductionRepo<'a> {
         &self,
         limit: u32,
         cursor: Option<CursorData>,
-        search: ProductionSearch,
+        filters: ProductionFilters,
     ) -> Result<(Vec<ProductionWithTranslations>, Option<CursorData>), DatabaseError> {
         // make the limit 1 higher to check for next pages
         let limit: i64 = (limit + 1).into();
 
         let (productions, next_cursor): (Vec<Production>, Option<CursorData>) =
-            if let Some(search_q) = search.q {
+            if let Some(ref search_q) = filters.search {
                 debug!("querying productions with search: '{search_q}'");
-
-                let mut query = sqlx::QueryBuilder::new("WITH matched_translations AS (");
-                query
-                    .push("SELECT production_id, MIN( ")
-                    .push_bind(&search_q)
-                    .push(" <<-> full_search_text) ")
-                    .push(" as distance_score ") // lower is better
-                    .push(" FROM production_translations ")
-                    .push(" WHERE ")
-                    .push_bind(&search_q)
-                    .push(" <% full_search_text")
-                    .push(" GROUP BY production_id ");
-
-                // use the cursor if there is one
-                if let Some(cursor) = cursor
-                    && let Some(score) = cursor.score
-                {
-                    // HAVING score > cursor.score
-                    query.push(" HAVING MIN( ");
-                    query.push_bind(&search_q);
-                    query.push(" <<-> full_search_text) > ");
-                    query.push_bind(score);
-
-                    // OR (score = cursor.score AND id < cursor.id)
-                    query.push(" OR (MIN( ");
-                    query.push_bind(&search_q);
-                    query.push(" <<-> full_search_text) = ");
-                    query.push_bind(score);
-                    query.push(" AND production_id < ");
-                    query.push_bind(cursor.id);
-                    query.push(") ");
-                }
-
-                query
-                    .push(" ORDER BY distance_score ASC, production_id DESC LIMIT ")
-                    .push_bind(limit)
-                    .push(" ) ");
-
-                // the rest of the query using the CTE
-                query.push(
-                    "
-                SELECT p.*, distance_score
-                FROM productions p
-                INNER JOIN matched_translations m ON p.id = m.production_id
-                ORDER BY m.distance_score ASC, p.id DESC;
-                ",
-                );
-
-                debug!("productions query: {}", query.sql());
-
-                let mut productions_with_score: Vec<ProductionWithScore> =
-                    query.build_query_as().fetch_all(self.db).await?;
-
-                // calculate the next cursor if there are items on the next page
-                let next_cursor = if productions_with_score.len() == limit as usize {
-                    productions_with_score.pop();
-                    productions_with_score.last().map(|p| CursorData {
-                        id: p.production.id,
-                        score: Some(p.distance_score),
-                    })
-                } else {
-                    None
-                };
-
-                let productions = productions_with_score
-                    .into_iter()
-                    .map(|p| p.production)
-                    .collect();
-
-                (productions, next_cursor)
+                self.all_search(limit, cursor, search_q, &filters).await?
             } else {
                 debug!("querying productions normally");
                 let mut select = Production::select().limit(limit as usize).order_desc("id");
@@ -183,6 +116,102 @@ impl<'a> ProductionRepo<'a> {
             .collect();
 
         Ok((productions_with_translations, next_cursor))
+    }
+
+    async fn all_search(
+        &self,
+        limit: i64,
+        cursor: Option<CursorData>,
+        search_q: &str,
+        filters: &ProductionFilters,
+    ) -> Result<(Vec<Production>, Option<CursorData>), DatabaseError> {
+        let mut query = sqlx::QueryBuilder::new("WITH matched_translations AS (");
+        query
+            .push("SELECT production_id, MIN( ")
+            .push_bind(search_q)
+            .push(" <<-> full_search_text) ")
+            .push(" as distance_score ") // lower is better
+            .push(" FROM production_translations ")
+            .push(" WHERE ")
+            .push_bind(search_q)
+            .push(" <% full_search_text ")
+            .apply_facet_filters(EntityType::Production, "production_id", &filters.facets);
+
+        if filters.date_from.is_some() || filters.date_to.is_some() {
+            query
+                .push(" AND EXISTS (SELECT 1 FROM events ")
+                .push(" WHERE events.production_id = production_id ");
+
+            if let Some(date_from) = filters.date_from {
+                query.push(" AND starts_at >= ").push_bind(date_from);
+            }
+
+            if let Some(date_to) = filters.date_to {
+                query.push(" AND starts_at <= ").push_bind(date_to);
+            }
+
+            query.push(" ) ");
+        }
+
+        query.push(" GROUP BY production_id ");
+
+        // use the cursor if there is one
+        if let Some(cursor) = cursor
+            && let Some(score) = cursor.score
+        {
+            // HAVING score > cursor.score
+            query.push(" HAVING MIN( ");
+            query.push_bind(search_q);
+            query.push(" <<-> full_search_text) > ");
+            query.push_bind(score);
+
+            // OR (score = cursor.score AND id < cursor.id)
+            query.push(" OR (MIN( ");
+            query.push_bind(search_q);
+            query.push(" <<-> full_search_text) = ");
+            query.push_bind(score);
+            query.push(" AND production_id < ");
+            query.push_bind(cursor.id);
+            query.push(") ");
+        }
+
+        query
+            .push(" ORDER BY distance_score ASC, production_id DESC LIMIT ")
+            .push_bind(limit)
+            .push(" ) ");
+
+        // the rest of the query using the CTE
+        query.push(
+            "
+        SELECT p.*, distance_score
+        FROM productions p
+        INNER JOIN matched_translations m ON p.id = m.production_id
+        ORDER BY m.distance_score ASC, p.id DESC;
+        ",
+        );
+
+        debug!("productions query: {}", query.sql());
+
+        let mut productions_with_score: Vec<ProductionWithScore> =
+            query.build_query_as().fetch_all(self.db).await?;
+
+        // calculate the next cursor if there are items on the next page
+        let next_cursor = if productions_with_score.len() == limit as usize {
+            productions_with_score.pop();
+            productions_with_score.last().map(|p| CursorData {
+                id: p.production.id,
+                score: Some(p.distance_score),
+            })
+        } else {
+            None
+        };
+
+        let productions = productions_with_score
+            .into_iter()
+            .map(|p| p.production)
+            .collect();
+
+        Ok((productions, next_cursor))
     }
 
     pub async fn insert(

@@ -17,12 +17,12 @@ pub mod models {
     pub mod artist;
     pub mod collection;
     pub mod collection_item;
-    pub mod cursor;
     pub mod entity_media;
     pub mod entity_type;
     pub mod event;
     pub mod event_price;
     pub mod facet;
+    pub mod filtering;
     pub mod hall;
     pub mod internal_state;
     pub mod location;
@@ -33,7 +33,6 @@ pub mod models {
     pub mod production;
     pub mod series;
     pub mod session;
-    pub mod sort;
     pub mod space;
     pub mod tag;
     pub mod tagging;
@@ -59,6 +58,9 @@ pub mod repos {
     pub mod space;
     pub mod tag;
     pub mod user;
+    pub mod query_filters {
+        pub mod facets;
+    }
 }
 
 pub mod error;

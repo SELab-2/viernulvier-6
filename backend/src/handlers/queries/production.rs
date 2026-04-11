@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use database::models::production::ProductionSearch;
+use database::models::{filtering::facets::FacetFilters, production::ProductionFilters};
 use serde::Deserialize;
 use utoipa::IntoParams;
 
@@ -22,14 +22,16 @@ pub struct ProductionSearchQuery {
     pub sort: Option<Sort>,
 }
 
-impl From<ProductionSearchQuery> for ProductionSearch {
+impl From<ProductionSearchQuery> for ProductionFilters {
     fn from(value: ProductionSearchQuery) -> Self {
         Self {
-            q: value.q,
-            disciplines: value.discipline.as_deref().map(split_strip),
-            formats: value.format.as_deref().map(split_strip),
-            themes: value.theme.as_deref().map(split_strip),
-            audiences: value.audience.as_deref().map(split_strip),
+            search: value.q,
+            facets: FacetFilters {
+                disciplines: value.discipline.as_deref().map(split_strip),
+                formats: value.format.as_deref().map(split_strip),
+                themes: value.theme.as_deref().map(split_strip),
+                audiences: value.audience.as_deref().map(split_strip),
+            },
             locations: value.location.as_deref().map(split_strip),
             date_from: value.date_from,
             date_to: value.date_to,

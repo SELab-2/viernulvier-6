@@ -3,7 +3,7 @@ use ormlite::Model;
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::models::sort::Sort;
+use crate::models::filtering::{facets::FacetFilters, sort::Sort};
 
 #[derive(Debug, Model, PartialEq)]
 #[ormlite(insert = "ProductionCreate")]
@@ -77,13 +77,10 @@ pub struct ProductionWithTranslations {
     pub translations: Vec<ProductionTranslation>,
 }
 
-pub struct ProductionSearch {
-    pub q: Option<String>,
-    // facets
-    pub disciplines: Option<Vec<String>>,
-    pub formats: Option<Vec<String>>,
-    pub themes: Option<Vec<String>>,
-    pub audiences: Option<Vec<String>>,
+/// Possible filters for productions
+pub struct ProductionFilters {
+    pub search: Option<String>,
+    pub facets: FacetFilters,
     // search on location
     pub locations: Option<Vec<String>>,
     // date of a production's events
