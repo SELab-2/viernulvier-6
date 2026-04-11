@@ -15,7 +15,7 @@ jobs:
     secrets: inherit
 
   build-push:
-    runs-on: self-hosted
+    runs-on: prod
     environment: production
     needs: [run_backend_tests, run_frontend_tests]
 
