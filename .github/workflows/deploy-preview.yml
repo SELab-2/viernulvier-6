@@ -80,6 +80,8 @@ jobs:
 
       - name: Start preview stack
         env:
+          DOCKER_BUILDKIT: "1"
+          COMPOSE_DOCKER_CLI_BUILD: "1"
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
           docker compose --env-file .env --env-file infra/preview/.env.preview \
