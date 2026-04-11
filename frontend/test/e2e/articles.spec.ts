@@ -71,7 +71,7 @@ test.describe("Articles Page", () => {
         await expect(page.getByText("The Second Woman — Natali Broods")).toBeVisible();
 
         // Static related articles section
-        await expect(page.getByText("Meer verhalen")).toBeVisible();
+        await expect(page.getByText("Meer artikels")).toBeVisible();
         await expect(page.getByText("De Balzaal door de jaren heen")).toBeVisible();
     });
 
