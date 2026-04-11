@@ -25,6 +25,15 @@ jobs:
           cd frontend
           npm ci
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install Playwright browsers
+        run: cd frontend && npx playwright install --with-deps chromium
+
       - name: Run Typecheck
         run: |
           cd frontend
@@ -57,7 +66,7 @@ jobs:
         working-directory: frontend
         env:
           NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
-          NEXT_PUBLIC_API_URL: "http://localhost:3001"
+          NEXT_PUBLIC_API_URL: "http://localhost:3001/api"
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
