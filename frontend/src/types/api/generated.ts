@@ -1225,6 +1225,7 @@ export interface components {
                 intermission_at?: string | null;
                 /** Format: int32 */
                 max_tickets_per_order?: number | null;
+                prices?: components["schemas"]["EventPricePayload"][];
                 /** Format: uuid */
                 production_id: string;
                 /** Format: int32 */
