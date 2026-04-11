@@ -172,6 +172,7 @@ pub struct ProductionPayload {
 
     /// Cover image URL resolved from the entity_media link (output-only).
     #[serde(skip_deserializing)]
+    #[schema(read_only)]
     pub cover_image_url: Option<String>,
 }
 
