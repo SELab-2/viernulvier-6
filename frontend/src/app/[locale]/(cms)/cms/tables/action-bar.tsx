@@ -11,20 +11,12 @@ export interface EntityCount {
 }
 
 interface ActionBarProps {
-    totalCount: number;
-    totalCountKey: string;
     entityCounts: EntityCount[];
     actions: BulkAction[];
     onClear: () => void;
 }
 
-export function ActionBar({
-    totalCount,
-    totalCountKey,
-    entityCounts,
-    actions,
-    onClear,
-}: ActionBarProps) {
+export function ActionBar({ entityCounts, actions, onClear }: ActionBarProps) {
     const t = useTranslations("Cms.ActionBar");
 
     const activeCounts = entityCounts.filter((e) => e.count > 0);
@@ -54,7 +46,7 @@ export function ActionBar({
                             onClick={action.onClick}
                             disabled={action.disabled || !action.onClick}
                         >
-                            {action.icon}
+                            {action.icon && <span className="mr-1.5">{action.icon}</span>}
                             {action.label}
                         </Button>
                     ))}
@@ -63,11 +55,7 @@ export function ActionBar({
                         {t("clearSelection")}
                     </Button>
                 </>
-            ) : (
-                <span className="text-muted-foreground text-sm">
-                    {t(totalCountKey, { count: totalCount })}
-                </span>
-            )}
+            ) : null}
         </div>
     );
 }

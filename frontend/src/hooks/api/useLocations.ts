@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api-client";
 import {
@@ -32,6 +32,17 @@ export const useGetLocations = (options?: { enabled?: boolean; pagination?: Pagi
     return useQuery({
         queryKey: queryKeys.locations.all(options?.pagination),
         queryFn: () => fetchLocations(options?.pagination),
+        ...options,
+    });
+};
+
+export const useGetInfiniteLocations = (options?: { enabled?: boolean }) => {
+    return useInfiniteQuery({
+        queryKey: ["locations", "infinite"],
+        queryFn: async ({ pageParam }) =>
+            fetchLocations(pageParam ? { cursor: pageParam } : undefined),
+        getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+        initialPageParam: null as string | null,
         ...options,
     });
 };

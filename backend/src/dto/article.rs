@@ -22,6 +22,7 @@ pub struct ArticlePayload {
     pub content: Option<Value>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub published_at: Option<DateTime<Utc>>,
     pub subject_period_start: Option<NaiveDate>,
     pub subject_period_end: Option<NaiveDate>,
 }
@@ -36,6 +37,7 @@ impl From<Article> for ArticlePayload {
             content: a.content,
             created_at: a.created_at,
             updated_at: a.updated_at,
+            published_at: a.published_at,
             subject_period_start: a.subject_period_start,
             subject_period_end: a.subject_period_end,
         }
@@ -78,10 +80,17 @@ impl ArticleUpdatePayload {
             )));
         }
 
+        let published_at = if self.status == ArticleStatus::Published && existing.published_at.is_none() {
+            Some(Utc::now())
+        } else {
+            existing.published_at
+        };
+
         let article = Article {
             id: existing.id,
             created_at: existing.created_at,
             updated_at: Utc::now(),
+            published_at,
             slug: self.slug,
             status: self.status,
             title: self.title,
@@ -100,6 +109,7 @@ pub struct ArticleListPayload {
     pub status: ArticleStatus,
     pub title: Option<String>,
     pub updated_at: DateTime<Utc>,
+    pub published_at: Option<DateTime<Utc>>,
     pub subject_period_start: Option<NaiveDate>,
     pub subject_period_end: Option<NaiveDate>,
 }
@@ -112,6 +122,7 @@ impl From<Article> for ArticleListPayload {
             status: a.status,
             title: a.title,
             updated_at: a.updated_at,
+            published_at: a.published_at,
             subject_period_start: a.subject_period_start,
             subject_period_end: a.subject_period_end,
         }
@@ -181,6 +192,7 @@ impl ArticlePostPayload {
             subject_period_end: None,
             created_at: now,
             updated_at: now,
+            published_at: None,
         };
 
         Ok(db.articles().insert(create).await?.into())

@@ -32,7 +32,7 @@ jobs:
       github.event.action != 'closed' &&
       github.event.action != 'unlabeled' &&
       contains(github.event.pull_request.labels.*.name, 'preview')
-    runs-on: self-hosted
+    runs-on: kaya-sem-house
     environment: preview
     needs: [run_backend_tests, run_frontend_tests]
 
@@ -80,6 +80,8 @@ jobs:
 
       - name: Start preview stack
         env:
+          DOCKER_BUILDKIT: "1"
+          COMPOSE_DOCKER_CLI_BUILD: "1"
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
           docker compose --env-file .env --env-file infra/preview/.env.preview \
@@ -138,7 +140,7 @@ jobs:
        contains(github.event.pull_request.labels.*.name, 'preview')) ||
       (github.event.action == 'unlabeled' &&
        github.event.label.name == 'preview')
-    runs-on: self-hosted
+    runs-on: kaya-sem-house
     environment: preview
     steps:
       - name: Clean up workspace

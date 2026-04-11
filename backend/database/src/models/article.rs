@@ -29,6 +29,7 @@ pub struct Article {
     pub id: Uuid,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub published_at: Option<DateTime<Utc>>,
     pub slug: String,
     pub status: ArticleStatus,
     pub title: Option<String>,

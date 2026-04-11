@@ -7,6 +7,7 @@ use axum::{Router, routing::get};
 use database::Database;
 use database::models::entity_type::EntityType;
 use database::models::facet::Facet;
+use handlers::queries::sort::Sort;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info, warn};
 
