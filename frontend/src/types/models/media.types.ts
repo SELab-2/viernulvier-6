@@ -85,3 +85,13 @@ export type UploadUrlResult = {
     uploadUrl: string;
     expiresIn: number;
 };
+
+export type MediaSearchParams = {
+    q?: string;
+    entityType?: string;
+    entityId?: string;
+    role?: string;
+    sort?: "recent" | "oldest" | "relevance";
+    cursor?: string | null;
+    limit?: number;
+};

@@ -1,7 +1,9 @@
+import { PaginatedResult } from "@/types/api/api.types";
 import {
     AttachMediaRequestType,
     MediaPayloadResponse,
     MediaVariantPayloadResponse,
+    PaginatedMediaResponse,
     UploadUrlRequestType,
     GenerateUploadUrlResponse,
 } from "@/types/api/media.api.types";
@@ -59,6 +61,13 @@ export const mapMedia = (m: MediaPayloadResponse): Media => ({
 });
 
 export const mapMediaList = (list: MediaPayloadResponse[]): Media[] => list.map(mapMedia);
+
+export const mapPaginatedMediaResult = (
+    response: PaginatedMediaResponse
+): PaginatedResult<Media> => ({
+    data: mapMediaList(response.data),
+    nextCursor: response.next_cursor ?? null,
+});
 
 export const mapAttachMediaInput = (input: AttachMediaInput): AttachMediaRequestType => ({
     s3_key: input.s3Key,

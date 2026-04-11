@@ -4,6 +4,7 @@ import {
     mapMedia,
     mapMediaVariant,
     mapMediaList,
+    mapPaginatedMediaResult,
     mapAttachMediaInput,
     mapUploadUrlInput,
     mapUploadUrlResult,
@@ -203,6 +204,37 @@ describe("media mapper", () => {
             expect(result.s3Key).toBe("media/abc.jpg");
             expect(result.uploadUrl).toBe("https://s3.example.com/presigned");
             expect(result.expiresIn).toBe(300);
+        });
+    });
+
+    describe("mapPaginatedMediaResult", () => {
+        it("maps paginated response with data and next_cursor", () => {
+            const result = mapPaginatedMediaResult({
+                data: [apiMedia, { ...apiMedia, id: "m-2" }],
+                next_cursor: "eyJpZCI6Im0tMiJ9",
+            });
+            expect(result.data).toHaveLength(2);
+            expect(result.data[0].id).toBe("m-1");
+            expect(result.data[1].id).toBe("m-2");
+            expect(result.nextCursor).toBe("eyJpZCI6Im0tMiJ9");
+        });
+
+        it("maps null next_cursor correctly", () => {
+            const result = mapPaginatedMediaResult({
+                data: [apiMedia],
+                next_cursor: null,
+            });
+            expect(result.data).toHaveLength(1);
+            expect(result.nextCursor).toBeNull();
+        });
+
+        it("handles empty data array", () => {
+            const result = mapPaginatedMediaResult({
+                data: [],
+                next_cursor: null,
+            });
+            expect(result.data).toHaveLength(0);
+            expect(result.nextCursor).toBeNull();
         });
     });
 });
