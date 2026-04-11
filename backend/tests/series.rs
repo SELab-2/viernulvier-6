@@ -260,9 +260,7 @@ async fn add_productions_not_found_series(db: PgPool) {
     }))
     .expect("Failed to deserialize");
 
-    let response = app
-        .post("/series/nonexistent/productions", &payload)
-        .await;
+    let response = app.post("/series/nonexistent/productions", &payload).await;
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
@@ -276,9 +274,7 @@ async fn add_productions_invalid_production_id(db: PgPool) {
     }))
     .expect("Failed to deserialize");
 
-    let response = app
-        .post("/series/palmarium/productions", &payload)
-        .await;
+    let response = app.post("/series/palmarium/productions", &payload).await;
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
@@ -312,10 +308,7 @@ async fn remove_production_not_found(db: PgPool) {
     let app = TestRouter::as_editor(db).await;
 
     let response = app
-        .delete(&format!(
-            "/series/palmarium/productions/{}",
-            Uuid::nil()
-        ))
+        .delete(&format!("/series/palmarium/productions/{}", Uuid::nil()))
         .await;
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }

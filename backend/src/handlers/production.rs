@@ -41,7 +41,7 @@ pub async fn get_all(
     Query(search): Query<ProductionSearchQuery>,
 ) -> JsonResponse<PaginatedResponse<ProductionPayload>> {
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
-  
+
     ProductionPayload::all(&db, pagination.cursor, pagination.limit, public_url, search)
         .await?
         .json()

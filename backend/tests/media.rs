@@ -177,21 +177,23 @@ async fn delete_media_cascades_properly(db: PgPool) {
 async fn cleanup_orphans(db: PgPool) {
     let app = TestRouter::as_editor(db.clone()).await;
     // Both 'aaaaaaaa' and 'bbbbbbbb' are currently linked to the production in the fixture.
-    
+
     // Unlink 'aaaaaaaa' from production
     let media_id = Uuid::parse_str("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa").unwrap();
     let prod_id = Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap();
-    
-    let unlink_res = app.delete(&format!("/media/entity/production/{prod_id}/{media_id}")).await;
+
+    let unlink_res = app
+        .delete(&format!("/media/entity/production/{prod_id}/{media_id}"))
+        .await;
     assert_eq!(unlink_res.status(), StatusCode::NO_CONTENT);
-    
+
     // Now trigger cleanup
     let cleanup_res = app.post("/media/cleanup", &json!({})).await;
     assert_eq!(cleanup_res.status(), StatusCode::OK);
-    
+
     let cleanup_data: serde_json::Value = cleanup_res.into_struct().await;
     assert!(cleanup_data["deleted_count"].as_i64().unwrap() > 0);
-    
+
     // 'aaaaaaaa' should be gone because it became an orphan
     let response = app.get(&format!("/media/{media_id}")).await;
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
