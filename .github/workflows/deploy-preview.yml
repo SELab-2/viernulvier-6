@@ -138,7 +138,7 @@ jobs:
        contains(github.event.pull_request.labels.*.name, 'preview')) ||
       (github.event.action == 'unlabeled' &&
        github.event.label.name == 'preview')
-    runs-on: self-hosted
+    runs-on: kaya-sem-house
     environment: preview
     steps:
       - name: Clean up workspace
