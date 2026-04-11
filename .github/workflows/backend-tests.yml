@@ -4,7 +4,7 @@ on: workflow_call
 
 jobs:
   test:
-    runs-on: self-hosted
+    runs-on: kaya-sem-house
     container:
       image: rust:1.94-bookworm
       env:
