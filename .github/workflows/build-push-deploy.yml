@@ -94,6 +94,12 @@ jobs:
       - name: Ensure traefik network exists
         run: docker network inspect traefik >/dev/null 2>&1 || docker network create traefik
 
+      - name: Ensure preview Traefik is running
+        run: |
+          if [ -z "$(docker compose -f infra/traefik/docker-compose.yml ps -q traefik)" ]; then
+            docker compose -f infra/traefik/docker-compose.yml up -d
+          fi
+
       - name: Generate production env
         uses: ./.github/actions/generate-prod-env
         with:
