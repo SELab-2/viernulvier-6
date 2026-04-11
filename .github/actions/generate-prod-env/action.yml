@@ -54,9 +54,9 @@ runs:
         GARAGE_S3_BUCKET: "${{ inputs.garage_s3_bucket }}"
         PROD_API_KEY_404: "${{ inputs.api_key_404 }}"
         PROD_JWT_SECRET: "${{ inputs.jwt_secret }}"
-      
+
       run: |
-        PROD_DATABASE_URL="postgres://${PROD_DB_USER}:${PROD_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}_database:5432/${PROD_DB_NAME}"
+        PROD_DATABASE_URL="postgres://${PROD_DB_USER}:${PROD_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}-database:5432/${PROD_DB_NAME}"
 
         cat > .env <<EOF
         COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME
