@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use ormlite::{Insert, Model};
-use sqlx::PgPool;
+use sqlx::{PgPool, Postgres, QueryBuilder};
 use tracing::debug;
 use uuid::Uuid;
 
@@ -66,23 +66,7 @@ impl<'a> ProductionRepo<'a> {
                 self.all_search(limit, cursor, search_q, &filters).await?
             } else {
                 debug!("querying productions normally");
-                let mut select = Production::select().limit(limit as usize).order_desc("id");
-                if let Some(cursor) = cursor {
-                    select = select.where_("id < $1").bind(cursor.id);
-                }
-                let mut productions = select.fetch_all(self.db).await?;
-
-                let next_cursor = if productions.len() == limit as usize {
-                    productions.pop();
-                    productions.last().map(|p| CursorData {
-                        id: p.id,
-                        score: None,
-                    })
-                } else {
-                    None
-                };
-
-                (productions, next_cursor)
+                self.all_normal(limit, cursor, &filters).await?
             };
 
         if productions.is_empty() {
@@ -118,6 +102,9 @@ impl<'a> ProductionRepo<'a> {
         Ok((productions_with_translations, next_cursor))
     }
 
+    /// returns all production id's of productions matching the given filters
+    ///
+    /// to be used when there is a search query present
     async fn all_search(
         &self,
         limit: i64,
@@ -210,6 +197,46 @@ impl<'a> ProductionRepo<'a> {
             .into_iter()
             .map(|p| p.production)
             .collect();
+
+        Ok((productions, next_cursor))
+    }
+
+    /// returns all production id's of productions matching the given filters
+    ///
+    /// to be used when there is **NO** search query present
+    async fn all_normal(
+        &self,
+        limit: i64,
+        cursor: Option<CursorData>,
+        filters: &ProductionFilters,
+    ) -> Result<(Vec<Production>, Option<CursorData>), DatabaseError> {
+        let mut query = QueryBuilder::new("SELECT * FROM PRODUCTIONS WHERE 1=1 ");
+
+        // cursor
+        if let Some(cursor) = cursor {
+            query.push(" AND id < ").push_bind(cursor.id);
+        }
+
+        // facet filters
+        query.apply_facet_filters(EntityType::Production, "id", &filters.facets);
+
+        // date filters
+        apply_date_filters(&mut query, filters);
+
+        query.push("ORDER BY id DESC LIMIT ").push_bind(limit);
+
+        let mut productions: Vec<Production> = query.build_query_as().fetch_all(self.db).await?;
+
+        // find the next cursor if there is one
+        let next_cursor = if productions.len() == limit as usize {
+            productions.pop();
+            productions.last().map(|p| CursorData {
+                id: p.id,
+                score: None,
+            })
+        } else {
+            None
+        };
 
         Ok((productions, next_cursor))
     }
@@ -405,5 +432,23 @@ impl<'a> ProductionRepo<'a> {
         .await?;
 
         Ok(())
+    }
+}
+
+fn apply_date_filters(query: &mut QueryBuilder<Postgres>, filters: &ProductionFilters) {
+    if filters.date_from.is_some() || filters.date_to.is_some() {
+        query
+            .push(" AND EXISTS (SELECT 1 FROM events ")
+            .push(" WHERE events.production_id = production_id ");
+
+        if let Some(date_from) = filters.date_from {
+            query.push(" AND starts_at >= ").push_bind(date_from);
+        }
+
+        if let Some(date_to) = filters.date_to {
+            query.push(" AND starts_at <= ").push_bind(date_to);
+        }
+
+        query.push(" ) ");
     }
 }
