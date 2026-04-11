@@ -1,0 +1,101 @@
+INSERT INTO prices (
+    id,
+    source_id,
+    created_at,
+    updated_at,
+    price_type,
+    visibility,
+    code,
+    description_nl,
+    description_en,
+    minimum,
+    maximum,
+    step,
+    display_order,
+    auto_select_combo,
+    include_in_price_range,
+    cineville_box,
+    membership
+) VALUES (
+    '66666666-6666-6666-6666-666666666666',
+    6001,
+    '2026-03-01 10:00:00+01',
+    '2026-03-01 10:00:00+01',
+    'ticket',
+    'public',
+    'standard',
+    'Standaard',
+    'Standard',
+    0,
+    NULL,
+    1,
+    1,
+    false,
+    true,
+    false,
+    NULL
+);
+
+INSERT INTO price_ranks (
+    id,
+    source_id,
+    created_at,
+    updated_at,
+    description_nl,
+    description_en,
+    code,
+    position,
+    sold_out_buffer
+) VALUES (
+    '77777777-7777-7777-7777-777777777777',
+    7001,
+    '2026-03-01 10:00:00+01',
+    '2026-03-01 10:00:00+01',
+    'Rang 1',
+    'Rank 1',
+    'rank_1',
+    1,
+    NULL
+);
+
+INSERT INTO event_prices (
+    id,
+    source_id,
+    event_id,
+    price_id,
+    rank_id,
+    created_at,
+    updated_at,
+    available,
+    amount_cents,
+    box_office_id,
+    contingent_id,
+    expires_at
+) VALUES (
+    '88888888-8888-8888-8888-888888888888',
+    8001,
+    '33333333-3333-3333-3333-333333333333',
+    '66666666-6666-6666-6666-666666666666',
+    '77777777-7777-7777-7777-777777777777',
+    '2026-03-01 10:00:00+01',
+    '2026-03-01 10:00:00+01',
+    42,
+    1850,
+    'BOX-PRICE-001',
+    12,
+    '2026-05-01 18:00:00+02'
+),
+(
+    '99999999-9999-9999-9999-999999999999',
+    8002,
+    '44444444-4444-4444-4444-444444444444',
+    '66666666-6666-6666-6666-666666666666',
+    '77777777-7777-7777-7777-777777777777',
+    '2026-03-02 10:00:00+01',
+    '2026-03-02 10:00:00+01',
+    10,
+    1500,
+    'BOX-PRICE-002',
+    NULL,
+    '2026-05-15 18:00:00+02'
+);

@@ -49,6 +49,14 @@ impl<'a> EventRepo<'a> {
         Ok(event.update_all_fields(self.db).await?)
     }
 
+    pub async fn by_source_id(&self, source_id: i32) -> Result<Option<Event>, DatabaseError> {
+        Ok(Event::select()
+            .where_("source_id = $1")
+            .bind(source_id)
+            .fetch_optional(self.db)
+            .await?)
+    }
+
     pub async fn delete(&self, id: Uuid) -> Result<(), DatabaseError> {
         let res = sqlx::query("DELETE FROM events WHERE id = $1")
             .bind(id)

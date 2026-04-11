@@ -950,6 +950,50 @@ export interface components {
             message: string;
             success: boolean;
         };
+        EventNestedPricePayload: {
+            auto_select_combo: boolean;
+            cineville_box: boolean;
+            code?: string | null;
+            /** Format: date-time */
+            created_at?: string | null;
+            description_en?: string | null;
+            description_nl?: string | null;
+            /** Format: uuid */
+            id?: string | null;
+            include_in_price_range: boolean;
+            /** Format: int32 */
+            maximum?: number | null;
+            membership?: string | null;
+            /** Format: int32 */
+            minimum: number;
+            /** Format: int32 */
+            order: number;
+            /** Format: int32 */
+            source_id?: number | null;
+            /** Format: int32 */
+            step: number;
+            type: string;
+            /** Format: date-time */
+            updated_at?: string | null;
+            visibility: string;
+        };
+        EventNestedPriceRankPayload: {
+            code: string;
+            /** Format: date-time */
+            created_at?: string | null;
+            description_en?: string | null;
+            description_nl?: string | null;
+            /** Format: uuid */
+            id?: string | null;
+            /** Format: int32 */
+            position: number;
+            /** Format: int32 */
+            sold_out_buffer?: number | null;
+            /** Format: int32 */
+            source_id?: number | null;
+            /** Format: date-time */
+            updated_at?: string | null;
+        };
         EventPayload: {
             box_office_id?: string | null;
             /** Format: date-time */
@@ -966,6 +1010,7 @@ export interface components {
             intermission_at?: string | null;
             /** Format: int32 */
             max_tickets_per_order?: number | null;
+            prices?: components["schemas"]["EventPricePayload"][];
             /** Format: uuid */
             production_id: string;
             /** Format: int32 */
@@ -992,6 +1037,7 @@ export interface components {
             intermission_at?: string | null;
             /** Format: int32 */
             max_tickets_per_order?: number | null;
+            prices?: components["schemas"]["EventPricePayload"][];
             /** Format: uuid */
             production_id: string;
             /** Format: int32 */
@@ -1003,6 +1049,27 @@ export interface components {
             /** Format: date-time */
             updated_at: string;
             vendor_id?: string | null;
+        };
+        EventPricePayload: {
+            /** Format: int32 */
+            amount_cents: number;
+            /** Format: int32 */
+            available: number;
+            box_office_id?: string | null;
+            /** Format: int32 */
+            contingent_id?: number | null;
+            /** Format: date-time */
+            created_at?: string | null;
+            /** Format: date-time */
+            expires_at?: string | null;
+            /** Format: uuid */
+            id?: string | null;
+            price: components["schemas"]["EventNestedPricePayload"];
+            rank: components["schemas"]["EventNestedPriceRankPayload"];
+            /** Format: int32 */
+            source_id?: number | null;
+            /** Format: date-time */
+            updated_at?: string | null;
         };
         /** @enum {string} */
         Facet: "discipline" | "format" | "theme" | "audience";

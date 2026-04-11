@@ -1,3 +1,45 @@
+export type EventPrice = {
+    id: string | null;
+    sourceId: number | null;
+    createdAt: string | null;
+    updatedAt: string | null;
+    available: number;
+    amountCents: number;
+    boxOfficeId: string | null;
+    contingentId: number | null;
+    expiresAt: string | null;
+    price: {
+        id: string | null;
+        sourceId: number | null;
+        createdAt: string | null;
+        updatedAt: string | null;
+        type: string;
+        visibility: string;
+        code: string | null;
+        descriptionNl: string | null;
+        descriptionEn: string | null;
+        minimum: number;
+        maximum: number | null;
+        step: number;
+        order: number;
+        autoSelectCombo: boolean;
+        includeInPriceRange: boolean;
+        cinevilleBox: boolean;
+        membership: string | null;
+    };
+    rank: {
+        id: string | null;
+        sourceId: number | null;
+        createdAt: string | null;
+        updatedAt: string | null;
+        descriptionNl: string | null;
+        descriptionEn: string | null;
+        code: string;
+        position: number;
+        soldOutBuffer: number | null;
+    };
+};
+
 export type Event = {
     id: string;
     sourceId: number | null;
@@ -14,6 +56,7 @@ export type Event = {
     productionId: string;
     status: string;
     hallId: string | null;
+    prices: EventPrice[];
 };
 
 export type EventCreateInput = {
@@ -29,6 +72,7 @@ export type EventCreateInput = {
     productionId: string;
     status: string;
     hallId?: string | null;
+    prices?: EventPrice[];
 };
 
 export type EventUpdateInput = EventCreateInput & {
