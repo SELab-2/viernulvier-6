@@ -7,6 +7,7 @@ use axum::{Router, routing::get};
 use database::Database;
 use database::models::entity_type::EntityType;
 use database::models::facet::Facet;
+use handlers::queries::sort::Sort;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info, warn};
 
@@ -42,7 +43,7 @@ pub struct AppState {
 #[derive(OpenApi)]
 #[openapi(
     modifiers(&SecurityAddon),
-    components(schemas(EntityType, Facet)),
+    components(schemas(EntityType, Facet, Sort)),
     tags(
         (name = "viernulvier_api", description = "API Endpoints"),
         (name = "Collections", description = "A saved, titled selection of archive items with a shareable URL. No login required to view."),

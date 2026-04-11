@@ -22,5 +22,8 @@
     "dev:cleanup": "docker compose -f infra/dev/docker-compose.dev.yml --env-file infra/dev/.env down -v --remove-orphans",
     "preview": "docker network create traefik 2>/dev/null || true && docker compose -f infra/traefik/docker-compose.yml --env-file .env up -d && docker compose -f infra/preview/docker-compose.preview.yml --env-file .env --env-file infra/preview/.env up -d",
     "preview:stop": "docker compose -f infra/preview/docker-compose.preview.yml --env-file .env --env-file infra/preview/.env down && docker compose -f infra/traefik/docker-compose.yml --env-file .env down"
+  },
+  "dependencies": {
+    "all": "^0.0.0"
   }
 }
