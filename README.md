@@ -1,4 +1,5 @@
-[![codecov](https://codecov.io/gh/SELab-2/viernulvier-6/graph/badge.svg?token=Z5Fi36Jin3)](https://codecov.io/gh/SELab-2/viernulvier-6)
+[![codecov](https://codecov.io/gh/SELab-2/viernulvier-6/graph/badge.svg?token=Z5Fi36Jin3)](https://codecov.io/gh/SELab-2/viernulvier-6) [![CI/CD Pipeline Production](https://github.com/SELab-2/viernulvier-6/actions/workflows/build-push-deploy.yml/badge.svg)](https://github.com/SELab-2/viernulvier-6/actions/workflows/build-push-deploy.yml)
+
 # viernulvier-6
 
 | Service  | Status                                                                     | Uptime (30d)                                                                                          | Avg Response                                                                           | Cert Expiry                                                                       |
