@@ -73,7 +73,7 @@ jobs:
             kayasem/${{ vars.PROJECT_NAME }}-docs:${{ github.sha }}
 
   deploy:
-    runs-on: self-hosted
+    runs-on: prod
     environment: production
     needs: build-push
 
