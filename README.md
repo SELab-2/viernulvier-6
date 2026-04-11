@@ -2,10 +2,6 @@
 
 # viernulvier-6
 
-## External Services
-
-- [Uptime Monitor](http://46.224.176.244:3001/status/viernulvier-archief)
-
 ## Local Development
 
 ### Prerequisites
