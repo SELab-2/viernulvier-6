@@ -1,24 +1,39 @@
+use chrono::NaiveDate;
 use database::models::production::ProductionSearch;
-use o2o::o2o;
 use serde::Deserialize;
 use utoipa::IntoParams;
 
-use crate::handlers::queries::sort::Sort;
+use crate::handlers::queries::{sort::Sort, split_strip::split_strip};
 
-#[derive(o2o, Deserialize, IntoParams)]
-#[owned_into(ProductionSearch)]
+#[derive(Deserialize, IntoParams)]
 pub struct ProductionSearchQuery {
     pub q: Option<String>,
+    // facets
     pub discipline: Option<String>,
     pub format: Option<String>,
     pub theme: Option<String>,
     pub audience: Option<String>,
-    pub artist: Option<String>,
+    // search on location
     pub location: Option<String>,
-    pub date_from: Option<String>,
-    pub date_to: Option<String>,
-
-    #[owned_into(~.map(Into::into))] // map the query sort to the database sort
+    // date of a production's events
+    pub date_from: Option<NaiveDate>,
+    pub date_to: Option<NaiveDate>,
+    // sort direction
     pub sort: Option<Sort>,
-    pub after: Option<String>,
+}
+
+impl From<ProductionSearchQuery> for ProductionSearch {
+    fn from(value: ProductionSearchQuery) -> Self {
+        Self {
+            q: value.q,
+            disciplines: value.discipline.as_deref().map(split_strip),
+            formats: value.format.as_deref().map(split_strip),
+            themes: value.theme.as_deref().map(split_strip),
+            audiences: value.audience.as_deref().map(split_strip),
+            locations: value.location.as_deref().map(split_strip),
+            date_from: value.date_from,
+            date_to: value.date_to,
+            sort: value.sort.map(Sort::into),
+        }
+    }
 }

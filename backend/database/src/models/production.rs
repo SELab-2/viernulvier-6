@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use ormlite::Model;
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -78,14 +79,16 @@ pub struct ProductionWithTranslations {
 
 pub struct ProductionSearch {
     pub q: Option<String>,
-    pub discipline: Option<String>,
-    pub format: Option<String>,
-    pub theme: Option<String>,
-    pub audience: Option<String>,
-    pub artist: Option<String>,
-    pub location: Option<String>,
-    pub date_from: Option<String>,
-    pub date_to: Option<String>,
+    // facets
+    pub disciplines: Option<Vec<String>>,
+    pub formats: Option<Vec<String>>,
+    pub themes: Option<Vec<String>>,
+    pub audiences: Option<Vec<String>>,
+    // search on location
+    pub locations: Option<Vec<String>>,
+    // date of a production's events
+    pub date_from: Option<NaiveDate>,
+    pub date_to: Option<NaiveDate>,
+
     pub sort: Option<Sort>,
-    pub after: Option<String>,
 }

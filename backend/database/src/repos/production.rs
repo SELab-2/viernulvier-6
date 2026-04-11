@@ -61,8 +61,8 @@ impl<'a> ProductionRepo<'a> {
         let (productions, next_cursor): (Vec<Production>, Option<CursorData>) =
             if let Some(search_q) = search.q {
                 debug!("querying productions with search: '{search_q}'");
-                let mut query = sqlx::QueryBuilder::new("WITH matched_translations AS (");
 
+                let mut query = sqlx::QueryBuilder::new("WITH matched_translations AS (");
                 query
                     .push("SELECT production_id, MIN( ")
                     .push_bind(&search_q)
