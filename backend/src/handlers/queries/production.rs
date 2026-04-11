@@ -35,7 +35,7 @@ impl From<ProductionSearchQuery> for ProductionFilters {
             locations: value.location.as_deref().map(split_strip),
             date_from: value.date_from,
             date_to: value.date_to,
-            sort: value.sort.map(Sort::into),
+            sort: value.sort.unwrap_or_default().into(),
         }
     }
 }

@@ -87,5 +87,5 @@ pub struct ProductionFilters {
     pub date_from: Option<NaiveDate>,
     pub date_to: Option<NaiveDate>,
 
-    pub sort: Option<Sort>,
+    pub sort: Sort,
 }

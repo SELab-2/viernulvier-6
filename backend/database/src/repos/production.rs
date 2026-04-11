@@ -9,7 +9,7 @@ use crate::{
     error::DatabaseError,
     models::{
         entity_type::EntityType,
-        filtering::cursor::CursorData,
+        filtering::{cursor::CursorData, sort::Sort},
         production::{
             Production, ProductionCreate, ProductionFilters, ProductionTranslation,
             ProductionTranslationData, ProductionWithScore, ProductionWithTranslations,
@@ -140,42 +140,60 @@ impl<'a> ProductionRepo<'a> {
             query.push(" ) ");
         }
 
-        query.push(" GROUP BY production_id ");
-
-        // use the cursor if there is one
-        if let Some(cursor) = cursor
-            && let Some(score) = cursor.score
-        {
-            // HAVING score > cursor.score
-            query.push(" HAVING MIN( ");
-            query.push_bind(search_q);
-            query.push(" <<-> full_search_text) > ");
-            query.push_bind(score);
-
-            // OR (score = cursor.score AND id < cursor.id)
-            query.push(" OR (MIN( ");
-            query.push_bind(search_q);
-            query.push(" <<-> full_search_text) = ");
-            query.push_bind(score);
-            query.push(" AND production_id < ");
-            query.push_bind(cursor.id);
-            query.push(") ");
+        if let Some(ref cursor) = cursor {
+            match filters.sort {
+                Sort::Oldest => {
+                    query.push(" AND production_id > ").push_bind(cursor.id);
+                }
+                Sort::Recent => {
+                    query.push(" AND production_id < ").push_bind(cursor.id);
+                }
+                Sort::Relevance => {} // explicitly do nothing
+            };
         }
 
-        query
-            .push(" ORDER BY distance_score ASC, production_id DESC LIMIT ")
-            .push_bind(limit)
-            .push(" ) ");
+        query.push(" GROUP BY production_id ");
+
+        if let Some(ref cursor) = cursor {
+            match filters.sort {
+                Sort::Oldest | Sort::Recent => {}
+                Sort::Relevance => {
+                    if let Some(score) = cursor.score {
+                        // HAVING score > cursor.score
+                        query.push(" HAVING MIN( ");
+                        query.push_bind(search_q);
+                        query.push(" <<-> full_search_text) > ");
+                        query.push_bind(score);
+
+                        // OR (score = cursor.score AND id < cursor.id)
+                        query.push(" OR (MIN( ");
+                        query.push_bind(search_q);
+                        query.push(" <<-> full_search_text) = ");
+                        query.push_bind(score);
+                        query.push(" AND production_id < ");
+                        query.push_bind(cursor.id);
+                        query.push(") ");
+                    }
+                }
+            }
+        }
+
+        let sort_sql = match filters.sort {
+            Sort::Oldest => "production_id ASC",
+            Sort::Recent => "production_id DESC",
+            Sort::Relevance => "distance_score ASC, production_id DESC",
+        };
+
+        query.push(format_args!(" ORDER BY {sort_sql}"));
+        query.push(" LIMIT ").push_bind(limit).push(" ) ");
+        // END CTE
 
         // the rest of the query using the CTE
-        query.push(
-            "
-        SELECT p.*, distance_score
-        FROM productions p
-        INNER JOIN matched_translations m ON p.id = m.production_id
-        ORDER BY m.distance_score ASC, p.id DESC;
-        ",
-        );
+        query
+            .push(" SELECT p.*, distance_score ")
+            .push(" FROM productions p ")
+            .push(" INNER JOIN matched_translations m ON p.id = m.production_id")
+            .push(format_args!(" ORDER BY {sort_sql}"));
 
         debug!("productions query: {}", query.sql());
 
@@ -210,11 +228,18 @@ impl<'a> ProductionRepo<'a> {
         cursor: Option<CursorData>,
         filters: &ProductionFilters,
     ) -> Result<(Vec<Production>, Option<CursorData>), DatabaseError> {
+        let (cursor_cmp, order_direction) = match filters.sort {
+            Sort::Oldest => (">", "ASC"),
+            Sort::Recent | Sort::Relevance => ("<", "DESC"),
+        };
+
         let mut query = QueryBuilder::new("SELECT * FROM PRODUCTIONS WHERE 1=1 ");
 
         // cursor
         if let Some(cursor) = cursor {
-            query.push(" AND id < ").push_bind(cursor.id);
+            query
+                .push(format_args!(" AND id {cursor_cmp} ")) // > or <
+                .push_bind(cursor.id);
         }
 
         // facet filters
@@ -223,7 +248,9 @@ impl<'a> ProductionRepo<'a> {
         // date filters
         apply_date_filters(&mut query, filters);
 
-        query.push("ORDER BY id DESC LIMIT ").push_bind(limit);
+        query
+            .push(format_args!(" ORDER BY id {order_direction} LIMIT "))
+            .push_bind(limit);
 
         let mut productions: Vec<Production> = query.build_query_as().fetch_all(self.db).await?;
 
