@@ -385,7 +385,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description List media records with pagination for CMS browsing. */
+        /** @description List and search media records with cursor-based pagination. */
         get: operations["get_all_media"];
         put?: never;
         post?: never;
@@ -1225,6 +1225,7 @@ export interface components {
                 intermission_at?: string | null;
                 /** Format: int32 */
                 max_tickets_per_order?: number | null;
+                prices?: components["schemas"]["EventPricePayload"][];
                 /** Format: uuid */
                 production_id: string;
                 /** Format: int32 */
@@ -1275,6 +1276,47 @@ export interface components {
                 source_id?: number | null;
                 street?: string | null;
                 uitdatabank_id?: string | null;
+            }[];
+            next_cursor?: string | null;
+        };
+        PaginatedResponse_MediaPayload: {
+            data: {
+                alt_text_en?: string | null;
+                alt_text_fr?: string | null;
+                alt_text_nl?: string | null;
+                checksum?: string | null;
+                /** Format: date-time */
+                created_at: string;
+                credit_en?: string | null;
+                credit_fr?: string | null;
+                credit_nl?: string | null;
+                crops: components["schemas"]["MediaVariantPayload"][];
+                derivative_type?: string | null;
+                description_en?: string | null;
+                description_fr?: string | null;
+                description_nl?: string | null;
+                /** Format: int64 */
+                file_size?: number | null;
+                gallery_type?: string | null;
+                /** Format: double */
+                geo_latitude?: number | null;
+                /** Format: double */
+                geo_longitude?: number | null;
+                /** Format: int32 */
+                height?: number | null;
+                /** Format: uuid */
+                id: string;
+                mime_type: string;
+                /** Format: uuid */
+                parent_id?: string | null;
+                source_system: string;
+                source_uri?: string | null;
+                /** Format: date-time */
+                updated_at: string;
+                /** @description Direct public URL to the media file (S3 or external) */
+                url?: string | null;
+                /** Format: int32 */
+                width?: number | null;
             }[];
             next_cursor?: string | null;
         };
@@ -2688,7 +2730,15 @@ export interface operations {
     };
     get_all_media: {
         parameters: {
-            query?: never;
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+                q?: string | null;
+                entity_type?: null | components["schemas"]["EntityType"];
+                entity_id?: string | null;
+                role?: string | null;
+                sort?: null | components["schemas"]["Sort"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2701,7 +2751,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MediaPayload"][];
+                    "application/json": components["schemas"]["PaginatedResponse_MediaPayload"];
                 };
             };
         };
