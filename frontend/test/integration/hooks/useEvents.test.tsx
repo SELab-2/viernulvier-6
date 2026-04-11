@@ -20,6 +20,7 @@ describe("useGetEvents", () => {
         expect(Array.isArray(result.current.data?.data)).toBe(true);
         expect(result.current.data?.data[0]).toHaveProperty("id");
         expect(result.current.data?.data[0]).toHaveProperty("status");
+        expect(result.current.data?.data[0]).toHaveProperty("prices");
     });
 
     it("returns paginated result with data array and nextCursor", async () => {

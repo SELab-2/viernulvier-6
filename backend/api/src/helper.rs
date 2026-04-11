@@ -30,6 +30,31 @@ pub fn extract_source_id(hyperlink: &str) -> Option<i32> {
     id
 }
 
+/// Helper to parse the 'amount' string inside a price to an integer representing the amount of
+/// cents. Prices are stored as integer cents to avoid floating-point precision and rounding
+/// issues when working with monetary values.
+pub fn parse_amount_cents(amount: &str) -> Option<i32> {
+    let (whole, fractional) = amount.split_once('.')?;
+    if fractional.len() != 2
+        || !whole.bytes().all(|b| b.is_ascii_digit() || b == b'-')
+        || !fractional.bytes().all(|b| b.is_ascii_digit())
+    {
+        warn!("Failed to parse amount as cents: {}", amount);
+        return None;
+    }
+
+    let whole = whole.parse::<i32>().ok()?;
+    let fractional = fractional.parse::<i32>().ok()?;
+
+    whole.checked_mul(100).and_then(|value| {
+        if whole < 0 {
+            value.checked_sub(fractional)
+        } else {
+            value.checked_add(fractional)
+        }
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -47,5 +72,22 @@ mod tests {
         assert_eq!(extract_source_id("/api/v1/spaces/"), None);
         assert_eq!(extract_source_id(""), None);
         assert_eq!(extract_source_id("/"), None);
+    }
+
+    #[test]
+    fn test_parse_amount_cents_valid_inputs() {
+        assert_eq!(parse_amount_cents("0.00"), Some(0));
+        assert_eq!(parse_amount_cents("10.00"), Some(1000));
+        assert_eq!(parse_amount_cents("10.50"), Some(1050));
+        assert_eq!(parse_amount_cents("10.75"), Some(1075));
+        assert_eq!(parse_amount_cents("-1.25"), Some(-125));
+    }
+
+    #[test]
+    fn test_parse_amount_cents_invalid_inputs() {
+        assert_eq!(parse_amount_cents("10"), None);
+        assert_eq!(parse_amount_cents("10.5"), None);
+        assert_eq!(parse_amount_cents("10.500"), None);
+        assert_eq!(parse_amount_cents("abc"), None);
     }
 }
