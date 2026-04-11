@@ -2,13 +2,15 @@ use std::collections::HashMap;
 
 use ormlite::{Insert, Model};
 use sqlx::PgPool;
+use tracing::debug;
 use uuid::Uuid;
 
 use crate::{
     error::DatabaseError,
     models::{
+        cursor::CursorData,
         entity_type::EntityType,
-        media::{Media, MediaCreate},
+        media::{Media, MediaCreate, MediaSearch, MediaWithScore},
     },
 };
 
@@ -45,8 +47,8 @@ impl<'a> MediaRepo<'a> {
                 id, created_at, updated_at,
                 s3_key, mime_type, file_size,
                 width, height, checksum,
-                alt_text_nl, alt_text_en, alt_text_fr, 
-                description_nl, description_en, description_fr, 
+                alt_text_nl, alt_text_en, alt_text_fr,
+                description_nl, description_en, description_fr,
                 credit_nl, credit_en, credit_fr,
                 geo_latitude, geo_longitude,
                 parent_id, derivative_type, gallery_type, source_id,
@@ -60,6 +62,163 @@ impl<'a> MediaRepo<'a> {
         .bind(offset as i64)
         .fetch_all(self.db)
         .await?)
+    }
+
+    pub async fn search(
+        &self,
+        limit: u32,
+        cursor: Option<CursorData>,
+        search: MediaSearch,
+    ) -> Result<(Vec<Media>, Option<CursorData>), DatabaseError> {
+        let limit: i64 = (limit + 1).into();
+
+        // Determine whether we need to join entity_media for filtering
+        let needs_entity_join =
+            search.entity_type.is_some() || search.entity_id.is_some() || search.role.is_some();
+
+        let (media, next_cursor): (Vec<Media>, Option<CursorData>) =
+            if let Some(search_q) = search.q {
+                debug!("querying media with search: '{search_q}'");
+
+                let mut query = sqlx::QueryBuilder::new(
+                    "SELECT m.id, m.created_at, m.updated_at, \
+                     m.s3_key, m.mime_type, m.file_size, \
+                     m.width, m.height, m.checksum, \
+                     m.alt_text_nl, m.alt_text_en, m.alt_text_fr, \
+                     m.description_nl, m.description_en, m.description_fr, \
+                     m.credit_nl, m.credit_en, m.credit_fr, \
+                     m.geo_latitude, m.geo_longitude, \
+                     m.parent_id, m.derivative_type, m.gallery_type, m.source_id, \
+                     m.source_system, m.source_uri, m.source_updated_at, ",
+                );
+
+                // distance score
+                query.push("(");
+                query.push_bind(&search_q);
+                query.push(" <<-> m.full_search_text) as distance_score ");
+
+                query.push("FROM media m ");
+
+                if needs_entity_join {
+                    query.push("INNER JOIN entity_media em ON em.media_id = m.id ");
+                }
+
+                query.push("WHERE ");
+                query.push_bind(&search_q);
+                query.push(" <% m.full_search_text ");
+
+                if let Some(entity_type) = &search.entity_type {
+                    query.push(" AND em.entity_type = ");
+                    query.push_bind(*entity_type);
+                }
+
+                if let Some(entity_id) = &search.entity_id {
+                    query.push(" AND em.entity_id = ");
+                    query.push_bind(*entity_id);
+                }
+
+                if let Some(role) = &search.role {
+                    query.push(" AND em.role = ");
+                    query.push_bind(role);
+                }
+
+                if let Some(cursor) = cursor
+                    && let Some(score) = cursor.score
+                {
+                    query.push(" AND ((");
+                    query.push_bind(&search_q);
+                    query.push(" <<-> m.full_search_text) > ");
+                    query.push_bind(score);
+                    query.push(" OR ((");
+                    query.push_bind(&search_q);
+                    query.push(" <<-> m.full_search_text) = ");
+                    query.push_bind(score);
+                    query.push(" AND m.id < ");
+                    query.push_bind(cursor.id);
+                    query.push(")) ");
+                }
+
+                query.push("ORDER BY distance_score ASC, m.id DESC LIMIT ");
+                query.push_bind(limit);
+
+                debug!("media search query: {}", query.sql());
+
+                let mut results: Vec<MediaWithScore> =
+                    query.build_query_as().fetch_all(self.db).await?;
+
+                let next_cursor = if results.len() == limit as usize {
+                    results.pop();
+                    results.last().map(|r| CursorData {
+                        id: r.media.id,
+                        score: Some(r.distance_score),
+                    })
+                } else {
+                    None
+                };
+
+                let media = results.into_iter().map(|r| r.media).collect();
+                (media, next_cursor)
+            } else {
+                debug!("querying media without search");
+
+                let mut query = sqlx::QueryBuilder::new(
+                    "SELECT m.id, m.created_at, m.updated_at, \
+                     m.s3_key, m.mime_type, m.file_size, \
+                     m.width, m.height, m.checksum, \
+                     m.alt_text_nl, m.alt_text_en, m.alt_text_fr, \
+                     m.description_nl, m.description_en, m.description_fr, \
+                     m.credit_nl, m.credit_en, m.credit_fr, \
+                     m.geo_latitude, m.geo_longitude, \
+                     m.parent_id, m.derivative_type, m.gallery_type, m.source_id, \
+                     m.source_system, m.source_uri, m.source_updated_at \
+                     FROM media m ",
+                );
+
+                if needs_entity_join {
+                    query.push("INNER JOIN entity_media em ON em.media_id = m.id ");
+                }
+
+                query.push("WHERE 1=1 ");
+
+                if let Some(entity_type) = &search.entity_type {
+                    query.push(" AND em.entity_type = ");
+                    query.push_bind(*entity_type);
+                }
+
+                if let Some(entity_id) = &search.entity_id {
+                    query.push(" AND em.entity_id = ");
+                    query.push_bind(*entity_id);
+                }
+
+                if let Some(role) = &search.role {
+                    query.push(" AND em.role = ");
+                    query.push_bind(role);
+                }
+
+                if let Some(cursor) = cursor {
+                    query.push(" AND m.id < ");
+                    query.push_bind(cursor.id);
+                }
+
+                query.push(" ORDER BY m.id DESC LIMIT ");
+                query.push_bind(limit);
+
+                let mut media: Vec<Media> = query.build_query_as().fetch_all(self.db).await?;
+
+                let next_cursor = if media.len() == limit as usize {
+                    media.pop();
+                    media.last().map(|m| CursorData {
+                        id: m.id,
+                        score: None,
+                    })
+                } else {
+                    None
+                };
+
+                (media, next_cursor)
+            };
+
+        Ok((media, next_cursor))
     }
 
     pub async fn insert(&self, media: MediaCreate) -> Result<Media, DatabaseError> {
@@ -213,13 +372,12 @@ impl<'a> MediaRepo<'a> {
         }
 
         // 3. Get variants for all IDs
-        let variants: Vec<String> = sqlx::query_scalar(
-            "SELECT s3_key FROM media_variant WHERE media_id = ANY($1)"
-        )
-        .bind(&all_ids)
-        .fetch_all(&mut *tx)
-        .await?;
-        
+        let variants: Vec<String> =
+            sqlx::query_scalar("SELECT s3_key FROM media_variant WHERE media_id = ANY($1)")
+                .bind(&all_ids)
+                .fetch_all(&mut *tx)
+                .await?;
+
         s3_keys.extend(variants);
 
         // 4. Delete variants
@@ -448,11 +606,12 @@ impl<'a> MediaRepo<'a> {
             s3_keys.push(orphan.s3_key.clone());
 
             // collect s3_keys from derivatives first
-            let derivatives = sqlx::query_as::<_, Media>("SELECT * FROM media WHERE parent_id = $1")
-                .bind(orphan.id)
-                .fetch_all(&mut *tx)
-                .await?;
-                
+            let derivatives =
+                sqlx::query_as::<_, Media>("SELECT * FROM media WHERE parent_id = $1")
+                    .bind(orphan.id)
+                    .fetch_all(&mut *tx)
+                    .await?;
+
             for d in derivatives {
                 all_ids.push(d.id);
                 s3_keys.push(d.s3_key);
@@ -460,12 +619,11 @@ impl<'a> MediaRepo<'a> {
         }
 
         // Get all variants for all collected IDs
-        let variants: Vec<String> = sqlx::query_scalar(
-            "SELECT s3_key FROM media_variant WHERE media_id = ANY($1)"
-        )
-        .bind(&all_ids)
-        .fetch_all(&mut *tx)
-        .await?;
+        let variants: Vec<String> =
+            sqlx::query_scalar("SELECT s3_key FROM media_variant WHERE media_id = ANY($1)")
+                .bind(&all_ids)
+                .fetch_all(&mut *tx)
+                .await?;
 
         s3_keys.extend(variants);
 
@@ -539,20 +697,22 @@ impl<'a> MediaRepo<'a> {
         let mut tx = self.db.begin().await?;
 
         // 1. Find the IDs to be deleted
-        let media_ids: Vec<Uuid> = sqlx::query_scalar("SELECT id FROM media WHERE s3_key = ANY($1)")
-            .bind(keys)
-            .fetch_all(&mut *tx)
-            .await?;
+        let media_ids: Vec<Uuid> =
+            sqlx::query_scalar("SELECT id FROM media WHERE s3_key = ANY($1)")
+                .bind(keys)
+                .fetch_all(&mut *tx)
+                .await?;
 
         if media_ids.is_empty() {
             return Ok(0);
         }
 
         // 2. We need to collect all derivative IDs
-        let derivative_ids: Vec<Uuid> = sqlx::query_scalar("SELECT id FROM media WHERE parent_id = ANY($1)")
-            .bind(&media_ids)
-            .fetch_all(&mut *tx)
-            .await?;
+        let derivative_ids: Vec<Uuid> =
+            sqlx::query_scalar("SELECT id FROM media WHERE parent_id = ANY($1)")
+                .bind(&media_ids)
+                .fetch_all(&mut *tx)
+                .await?;
 
         let mut all_ids = media_ids.clone();
         all_ids.extend(derivative_ids);

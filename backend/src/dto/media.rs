@@ -1,13 +1,16 @@
+use base64::{Engine, prelude::BASE64_URL_SAFE};
 use chrono::{DateTime, Utc};
 use database::{
     Database,
-    models::{media::Media, media_variant::MediaVariant},
+    models::{cursor::CursorData, media::Media, media_variant::MediaVariant},
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::error::AppError;
+use crate::{
+    dto::paginated::PaginatedResponse, error::AppError, handlers::queries::media::MediaSearchQuery,
+};
 
 impl MediaPayload {
     /// Build a MediaPayload from a database model, computing the public URL.
@@ -47,6 +50,36 @@ impl MediaPayload {
             source_uri: m.source_uri,
             crops: Vec::new(),
         }
+    }
+
+    pub async fn search(
+        db: &Database,
+        id_cursor: Option<String>,
+        limit: u32,
+        public_url: Option<&str>,
+        search: MediaSearchQuery,
+    ) -> Result<PaginatedResponse<Self>, AppError> {
+        let cursor: Option<CursorData> = id_cursor.and_then(|b64| {
+            let bytes = BASE64_URL_SAFE.decode(b64).ok()?;
+            serde_json::from_slice(&bytes).ok()
+        });
+
+        let (media, next_cursor) = db.media().search(limit, cursor, search.into()).await?;
+
+        let next_cursor_data = next_cursor.and_then(|c| {
+            let data = serde_json::to_vec(&c).ok()?;
+            Some(BASE64_URL_SAFE.encode(data))
+        });
+
+        let payloads: Vec<Self> = media
+            .into_iter()
+            .map(|m| Self::from_model(m, public_url))
+            .collect();
+
+        Ok(PaginatedResponse {
+            data: payloads,
+            next_cursor: next_cursor_data,
+        })
     }
 
     pub async fn by_id(db: &Database, id: Uuid) -> Result<Media, AppError> {

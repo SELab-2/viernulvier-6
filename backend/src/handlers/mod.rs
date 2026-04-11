@@ -18,6 +18,7 @@ pub mod space;
 pub mod taxonomy;
 pub mod version;
 pub mod queries {
+    pub mod media;
     pub mod pagination;
     pub mod production;
     pub mod sort;

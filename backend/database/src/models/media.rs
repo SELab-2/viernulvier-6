@@ -1,6 +1,9 @@
 use chrono::{DateTime, Utc};
 use ormlite::Model;
+use sqlx::FromRow;
 use uuid::Uuid;
+
+use crate::models::{entity_type::EntityType, sort::Sort};
 
 #[derive(Debug, Model, PartialEq)]
 #[ormlite(insert = "MediaCreate")]
@@ -42,4 +45,19 @@ pub struct Media {
     pub source_system: String,
     pub source_uri: Option<String>,
     pub source_updated_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, PartialEq, FromRow)]
+pub struct MediaWithScore {
+    #[sqlx(flatten)]
+    pub media: Media,
+    pub distance_score: f32,
+}
+
+pub struct MediaSearch {
+    pub q: Option<String>,
+    pub entity_type: Option<EntityType>,
+    pub entity_id: Option<Uuid>,
+    pub role: Option<String>,
+    pub sort: Option<Sort>,
 }

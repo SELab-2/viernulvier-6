@@ -12,12 +12,18 @@ use uuid::Uuid;
 use crate::{
     AppState,
     config::S3Config,
-    dto::media::{
-        AttachMediaRequest, MediaPayload, MediaVariantPayload, ReconcileResponse, UploadUrlRequest,
-        UploadUrlResponse,
+    dto::{
+        media::{
+            AttachMediaRequest, MediaPayload, MediaVariantPayload, ReconcileResponse,
+            UploadUrlRequest, UploadUrlResponse,
+        },
+        paginated::PaginatedResponse,
     },
     error::AppError,
-    handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
+    handlers::{
+        IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse,
+        queries::{media::MediaSearchQuery, pagination::PaginationQuery},
+    },
 };
 
 #[utoipa::path(
@@ -25,40 +31,26 @@ use crate::{
     path = "/media",
     tag = "Media",
     operation_id = "get_all_media",
-    description = "List media records with pagination for CMS browsing.",
+    description = "List and search media records with cursor-based pagination.",
+    params(
+        PaginationQuery,
+        MediaSearchQuery
+    ),
     responses(
-        (status = 200, description = "Success", body = [MediaPayload])
+        (status = 200, description = "Success", body = PaginatedResponse<MediaPayload>)
     )
 )]
 pub async fn get_all(
     State(state): State<AppState>,
     db: Database,
-    Query(params): Query<GetMediaListQuery>,
-) -> JsonResponse<Vec<MediaPayload>> {
-    let limit = params.limit.unwrap_or(50).clamp(1, 200);
-    let offset = params.offset.unwrap_or(0);
-    let media = db
-        .media()
-        .paginated(limit as usize, offset as usize)
-        .await?;
+    Query(pagination): Query<PaginationQuery>,
+    Query(search): Query<MediaSearchQuery>,
+) -> JsonResponse<PaginatedResponse<MediaPayload>> {
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
-    let mut payloads: Vec<MediaPayload> = Vec::with_capacity(media.len());
-    for m in media {
-        let mut payload = MediaPayload::from_model(m, public_url);
-        let variants = db.media_variants().for_media(payload.id).await?;
-        payload.crops = variants
-            .into_iter()
-            .map(|v| MediaVariantPayload::from_model(v, public_url))
-            .collect();
-        payloads.push(payload);
-    }
-    Ok(Json(payloads))
-}
 
-#[derive(Debug, serde::Deserialize)]
-pub struct GetMediaListQuery {
-    pub limit: Option<u32>,
-    pub offset: Option<u32>,
+    MediaPayload::search(&db, pagination.cursor, pagination.limit, public_url, search)
+        .await?
+        .json()
 }
 
 #[utoipa::path(
