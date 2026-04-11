@@ -46,6 +46,7 @@ export function toEventUpdateInput(entity: Event): EventUpdateInput {
         maxTicketsPerOrder: entity.maxTicketsPerOrder,
         hallId: entity.hallId,
         createdAt: entity.createdAt,
+        prices: entity.prices,
     };
 }
 
