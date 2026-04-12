@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { SquarePen } from "lucide-react";
+import { ImageIcon, SquarePen } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
@@ -139,9 +139,10 @@ export function toProductionUpdateInput(row: ProductionRow): ProductionUpdateInp
 
 export function makeProductionColumns(options: {
     onEdit: (row: ProductionRow) => void;
+    onMedia: (production: Production) => void;
     t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>;
 }): ColumnDef<Production>[] {
-    const { onEdit, t } = options;
+    const { onEdit, onMedia, t } = options;
 
     const actions: Action<Production>[] = [
         {
@@ -150,6 +151,13 @@ export function makeProductionColumns(options: {
             icon: SquarePen,
             display: ActionDisplay.Inline,
             onClick: (p) => onEdit(toProductionRow(p)),
+        },
+        {
+            key: "media",
+            label: t("media", { label: "production" }),
+            icon: ImageIcon,
+            display: ActionDisplay.Inline,
+            onClick: (p) => onMedia(p),
         },
         {
             key: "copy-slug",

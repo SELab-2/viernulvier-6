@@ -233,7 +233,8 @@
             "copy": "{key} kopiëren",
             "copied": "{key} gekopieerd",
             "copyFailed": "Kopiëren naar klembord mislukt",
-            "edit": "{label} bewerken"
+            "edit": "{label} bewerken",
+            "media": "Media"
         },
         "EditSheet": {
             "yes": "Ja",
@@ -415,6 +416,24 @@
             "uploadError": "Uploaden van media mislukt",
             "detachSuccess": "Media ontkoppeld",
             "detachError": "Ontkoppelen van media mislukt"
+        },
+        "ProductionMedia": {
+            "title": "Media productie",
+            "editMode": "Mediabeheer",
+            "roles": {
+                "cover": "Omslagfoto",
+                "poster": "Poster",
+                "gallery": "Galerij"
+            },
+            "browse": "Bladeren",
+            "upload": "Uploaden",
+            "empty": "Geen media toegewezen.",
+            "detach": "Ontkoppelen",
+            "detachSuccess": "Media ontkoppeld",
+            "detachError": "Ontkoppelen van media mislukt",
+            "attachSuccess": "Media gekoppeld",
+            "uploadSuccess": "Media geüpload",
+            "uploadError": "Uploaden van media mislukt"
         }
     },
     "Admin": {
