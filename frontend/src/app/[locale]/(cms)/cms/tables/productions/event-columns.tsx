@@ -1,8 +1,13 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { SquarePen } from "lucide-react";
+import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
 import type { FieldDef } from "../edit-sheet";
+import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
+import { Action, ActionDisplay } from "@/types/cms/actions";
 import type { Event, EventUpdateInput } from "@/types/models/event.types";
 
 function formatDateTime(iso: string | null): string {
@@ -40,10 +45,53 @@ export function toEventUpdateInput(entity: Event): EventUpdateInput {
         uitdatabankId: entity.uitdatabankId,
         maxTicketsPerOrder: entity.maxTicketsPerOrder,
         hallId: entity.hallId,
+        createdAt: entity.createdAt,
+        prices: entity.prices,
     };
 }
 
-export function makeEventColumns(options: { onEdit: (entity: Event) => void }): ColumnDef<Event>[] {
+export function makeEventColumns(options: {
+    onEdit: (entity: Event) => void;
+    t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>;
+}): ColumnDef<Event>[] {
+    const { onEdit, t } = options;
+
+    const actions: Action<Event>[] = [
+        {
+            key: "edit",
+            label: t("edit", { label: "event" }),
+            icon: SquarePen,
+            display: ActionDisplay.Inline,
+            onClick: onEdit,
+        },
+        {
+            key: "copy-id",
+            label: t("copy", { key: "ID" }),
+            onClick: async (e) => {
+                try {
+                    await navigator.clipboard.writeText(e.id);
+                    toast.success(t("copied", { key: "ID" }));
+                } catch {
+                    toast.error(t("copyFailed"));
+                }
+            },
+        },
+        {
+            key: "add-to-collection",
+            render: (event, closeMenu) => (
+                <CollectionPickerSubmenu
+                    item={{
+                        contentId: event.id,
+                        contentType: "event",
+                        label: formatDateTime(event.startsAt),
+                        parentProductionId: event.productionId,
+                    }}
+                    onComplete={closeMenu}
+                />
+            ),
+        },
+    ];
+
     return [
         {
             accessorKey: "startsAt",
@@ -57,10 +105,6 @@ export function makeEventColumns(options: { onEdit: (entity: Event) => void }): 
         },
         { accessorKey: "status", header: "Status" },
         { accessorKey: "hallId", header: "Hall" },
-        makeActionsColumn<Event>({
-            label: "event",
-            copyKey: "id",
-            onEdit: options.onEdit,
-        }),
+        makeActionsColumn<Event>({ actions }),
     ];
 }

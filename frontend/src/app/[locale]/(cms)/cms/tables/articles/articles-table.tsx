@@ -1,8 +1,58 @@
 "use client";
 
+import { useMemo } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
+import { Plus } from "lucide-react";
+
+import { DataTable } from "../data-table";
+import { makeArticleColumns } from "./columns";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "@/i18n/routing";
+import { useCreateArticle, useGetArticlesCms } from "@/hooks/api/useArticles";
 
 export function ArticlesTable() {
     const t = useTranslations("Cms.Articles");
-    return <div className="text-muted-foreground text-sm">{t("notAvailable")}</div>;
+    const router = useRouter();
+    const { data: articles = [], isLoading } = useGetArticlesCms();
+    const createArticle = useCreateArticle();
+
+    const tActions = useTranslations("Cms.ActionsColumn");
+    const columns = useMemo(
+        () =>
+            makeArticleColumns(
+                (article) => router.push(`/cms/articles/${article.id}/edit`),
+                tActions,
+                t
+            ),
+        [router, tActions, t]
+    );
+
+    const handleNew = () => {
+        createArticle.mutate(
+            { title: undefined },
+            {
+                onSuccess: (article) => {
+                    router.push(`/cms/articles/${article.id}/edit`);
+                },
+                onError: () => {
+                    toast.error(t("createFailed"));
+                },
+            }
+        );
+    };
+
+    return (
+        <div className="flex h-full flex-col">
+            <div className="bg-background sticky top-0 z-10 flex justify-end py-2">
+                <Button onClick={handleNew} disabled={createArticle.isPending} size="sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    {t("newArticle")}
+                </Button>
+            </div>
+            <div className="flex-1 overflow-auto">
+                <DataTable columns={columns} data={articles} loading={isLoading} />
+            </div>
+        </div>
+    );
 }

@@ -20,7 +20,15 @@
     "Masthead": {
         "address": "Sint-Pietersnieuwstraat 23, Ghent",
         "subtitle": "De Vooruit — Founded 1883",
-        "genres": "Theatre · Dance · Music · Performance · Nightlife"
+        "genres": "Theatre · Dance · Music · Performance · Nightlife",
+        "nav": {
+            "productions": "Productions",
+            "artists": "Artists",
+            "articles": "Articles",
+            "posters": "Posters",
+            "collection": "Collection",
+            "about": "About"
+        }
     },
     "Search": {
         "placeholder": "Search the archive...",
@@ -34,6 +42,9 @@
         "noResultsTitle": "Nothing here but cobwebs",
         "noResultsText": "No productions found for \"{query}\". Try a different search.",
         "articleImageCaption": "The forgotten Vooruit building...",
+        "loading": "Loading...",
+        "loadingMoreForSearch": "Loading more productions for search... ({loaded} loaded)",
+        "partialResults": "Showing results from {loaded} loaded productions. Results may be incomplete.",
         "tags": {
             "dance": "Dance",
             "theater": "Theatre",
@@ -82,15 +93,50 @@
             "plantentuin": "Botanical Garden"
         },
         "year": {
-            "label": "Year"
+            "label": "Year",
+            "rangeFrom": "Start year",
+            "rangeTo": "End year",
+            "rangeMode": "Year range",
+            "exactMode": "Exact dates",
+            "startYear": "Start year",
+            "endYear": "End year",
+            "monthsShort": [
+                "Jan",
+                "Feb",
+                "Mar",
+                "Apr",
+                "May",
+                "Jun",
+                "Jul",
+                "Aug",
+                "Sep",
+                "Oct",
+                "Nov",
+                "Dec"
+            ],
+            "monthsLong": [
+                "January",
+                "February",
+                "March",
+                "April",
+                "May",
+                "June",
+                "July",
+                "August",
+                "September",
+                "October",
+                "November",
+                "December"
+            ],
+            "weekdays": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
         },
         "clearAll": "Clear all"
     },
     "Home": {
         "loading": "Loading archive...",
         "hero": {
-            "title": "The story of De Vooruit",
-            "subtitle": "Over a century of theatre, dance, music and nightlife in the heart of Ghent.",
+            "title": "The VIERNULVIER archive",
+            "subtitle": "Over 40 years of theatre, dance, music and nightlife in Ghent.",
             "searchPlaceholder": "Search the archive\u2026"
         },
         "tags": {
@@ -101,8 +147,7 @@
         },
         "about": {
             "title": "Arts Centre VIERNULVIER",
-            "text": "Since 1883, De Vooruit has been a breeding ground for art, culture and society. From revolutionary parties to contemporary performance \u2014 the archive preserves it all.",
-            "address": "Sint-Pietersnieuwstraat 23 \u00b7 9000 Ghent"
+            "text": "Since 1883, De Vooruit has been a breeding ground for art, culture and society. From revolutionary parties to contemporary performance. The archive preserves it all."
         },
         "latest": {
             "label": "Latest productions",
@@ -135,9 +180,18 @@
         "loggedOut": "Logged out successfully"
     },
     "Cms": {
+        "overview": "Overview",
+        "productions": "Productions",
+        "locations": "Locations",
+        "articles": "Articles",
+        "performers": "Performers",
+        "collections": "Collections",
+        "ingest": "Ingest",
+        "import": "Import",
         "TabBar": {
             "overview": "CMS Overview",
             "content": "Manage content",
+            "collections": "Collections",
             "ingest": "Ingest",
             "import": "Automatic import"
         },
@@ -154,13 +208,24 @@
         "DataTable": {
             "noResults": "No results."
         },
-        "SelectionToolbar": {
+        "ActionBar": {
             "clearSelection": "Clear selection",
+            "totalProductions": "{count, plural, one {# production} other {# productions}}",
+            "totalLocations": "{count, plural, one {# location} other {# locations}}",
+            "productionsSelected": "{count, plural, one {# production} other {# productions}} selected",
+            "eventsSelected": "{count, plural, one {# event} other {# events}} selected",
+            "locationsSelected": "{count, plural, one {# location} other {# locations}} selected",
+            "hallsSelected": "{count, plural, one {# hall} other {# halls}} selected",
+            "bulkEdit": "Bulk edit",
+            "delete": "Delete"
+        },
+        "SelectionToolbar": {
+            "clearSelection": "Clear",
+            "moreActions": "More actions",
             "productionsSelected": "{count, plural, one {# production} other {# productions}}",
             "eventsSelected": "{count, plural, one {# event} other {# events}}",
             "locationsSelected": "{count, plural, one {# location} other {# locations}}",
-            "hallsSelected": "{count, plural, one {# hall} other {# halls}}",
-            "moreActions": "More actions"
+            "hallsSelected": "{count, plural, one {# hall} other {# halls}}"
         },
         "ActionsColumn": {
             "openMenu": "Open menu",
@@ -175,25 +240,155 @@
             "no": "No",
             "selectPlaceholder": "Select\u2026",
             "cancel": "Cancel",
-            "saveChanges": "Save changes"
+            "saveChanges": "Save changes",
+            "editMode": "Edit mode"
         },
+        "Overview": {
+            "title": "CMS Overview",
+            "subtitle": "Manage content and settings",
+            "productions": "Productions",
+            "productionsDescription": "Manage productions and events",
+            "articles": "Articles",
+            "articlesDescription": "Manage news articles",
+            "locations": "Locations",
+            "locationsDescription": "Manage locations and halls",
+            "performers": "Performers",
+            "performersDescription": "Manage artists and performers",
+            "collections": "Collections",
+            "collectionsDescription": "Manage content collections",
+            "ingest": "Ingest",
+            "ingestDescription": "Upload and process archive materials",
+            "import": "Import",
+            "importDescription": "Import data from external sources",
+            "items": "items",
+            "openSection": "Open section",
+            "backToOverview": "Back to overview"
+        },
+        "editions": {
+            "edition1": "Ed. 01",
+            "edition2": "Ed. 02",
+            "edition3": "Ed. 03",
+            "edition4": "Ed. 04",
+            "edition5": "Ed. 05",
+            "edition6": "Ed. 06"
+        },
+        "sidebar": {
+            "contentManagement": "Content Management",
+            "content": "Content",
+            "system": "System"
+        },
+        "SectionCard": {
+            "comingSoon": "Coming soon"
+        },
+        "PageHeader": {},
         "Productions": {
+            "title": "Productions",
+            "subtitle": "Manage all productions and scheduled events",
+            "items": "items",
             "showEvents": "Show events",
             "hideEvents": "Hide events",
             "editProduction": "Edit production",
             "editEvent": "Edit event"
         },
         "Locations": {
+            "title": "Locations",
+            "subtitle": "Manage venues, theaters and their individual halls",
+            "items": "locations",
             "showHalls": "Show halls",
             "hideHalls": "Hide halls",
             "editLocation": "Edit location",
             "editHall": "Edit hall"
         },
         "Articles": {
-            "notAvailable": "Articles API is not yet available. No data to display."
+            "title": "Articles",
+            "subtitle": "Manage news articles",
+            "comingSoon": "Coming soon",
+            "notAvailable": "Articles API is not yet available. No data to display.",
+            "newArticle": "New article",
+            "createFailed": "Failed to create article.",
+            "save": "Save",
+            "saving": "Saving…",
+            "saveSuccess": "Article saved.",
+            "saveFailed": "Failed to save article.",
+            "backToList": "Back to articles",
+            "statusLabel": "Status",
+            "slug": "Slug",
+            "subjectPeriod": "Subject period",
+            "titleColumn": "Title",
+            "relatedProductions": "Related productions",
+            "relatedArtists": "Related artists",
+            "relatedLocations": "Related locations",
+            "relatedEvents": "Related events"
         },
         "Performers": {
+            "title": "Performers",
+            "subtitle": "Manage artists",
+            "comingSoon": "Coming soon",
             "notAvailable": "Performers API is not yet available. No data to display."
+        },
+        "Ingest": {
+            "title": "Ingest",
+            "subtitle": "Bulk import of media files and archive materials",
+            "comingSoon": "Coming soon",
+            "notAvailable": "Ingest functionality",
+            "description": "This feature is still under development. Soon you will be able to upload and process media files here."
+        },
+        "Import": {
+            "title": "Import",
+            "subtitle": "Automatic import from external data sources",
+            "comingSoon": "Coming soon",
+            "notAvailable": "Import functionality",
+            "description": "This feature is still under development. Soon you will be able to import data from external sources such as UiTdatabank here."
+        },
+        "Collections": {
+            "title": "Collections",
+            "newCollection": "New collection",
+            "noCollections": "No collections yet.",
+            "noItems": "No items yet. Add items from the Content tab.",
+            "goToContent": "Go to content",
+            "itemCount": "{count, plural, one {# item} other {# items}}",
+            "itemsTitle": "Items ({count})",
+            "slug": "Slug",
+            "titleNl": "Title (NL)",
+            "titleEn": "Title (EN)",
+            "descriptionNl": "Description (NL)",
+            "descriptionEn": "Description (EN)",
+            "shareableLink": "Shareable link",
+            "copyLink": "Copy link",
+            "linkCopied": "Link copied",
+            "save": "Save",
+            "saving": "Saving…",
+            "loading": "Loading…",
+            "cancel": "Cancel",
+            "open": "Open",
+            "metadataSaved": "Collection saved",
+            "metadataError": "Failed to save collection",
+            "itemsSaved": "Items saved",
+            "itemsError": "Failed to save items",
+            "copyError": "Failed to copy link",
+            "events": "Events",
+            "invalidSlug": "Title must contain at least one letter or number",
+            "deleteCollection": "Delete collection",
+            "deleteConfirm": "Are you sure you want to delete \"{title}\"? All items will be removed.",
+            "backToCollections": "Back to collections",
+            "addToCollection": "Add to collection",
+            "addAndOpen": "Add and open collection",
+            "createNewCollection": "Create new collection",
+            "searchCollections": "Search collections…",
+            "selectedItems": "{count, plural, one {# selected item} other {# selected items}}",
+            "alreadyInCollection": "{title} is already in this collection",
+            "addedToCollection": "Added to \"{collection}\"",
+            "addedToCollectionMultiple": "Added {count} items to \"{collection}\"",
+            "removeItem": "Remove item",
+            "commentNl": "Comment (NL)",
+            "commentEn": "Comment (EN)",
+            "contentTypes": {
+                "production": "Production",
+                "event": "Event",
+                "blogpost": "Article",
+                "artist": "Artist",
+                "location": "Location"
+            }
         }
     },
     "Admin": {
@@ -220,6 +415,30 @@
         "backToHome": "Back to the archive",
         "articleImageCaption": "The forgotten Vooruit building..."
     },
+    "ProductionPage": {
+        "eyebrow": "Production",
+        "archiveNumber": "Archive no.",
+        "metaType": "Type",
+        "metaTheme": "Theme",
+        "metaLanguage": "Language",
+        "languageNlEn": "EN / NL",
+        "languageNl": "NL",
+        "imageCaptionFallback": "VIERNULVIER Archive",
+        "about": "About this production",
+        "noDescription": "No description available in this language.",
+        "video": "Video",
+        "externalVideoLink": "External video link ↗",
+        "credits": "Credits",
+        "creditProduction": "Production",
+        "creditArtist": "Artist",
+        "relatedTitle": "More from the archive",
+        "relatedViewAll": "View all →",
+        "relatedArchive": "Archive",
+        "relatedProductionFallback": "Production",
+        "breadcrumbArchive": "Archive",
+        "breadcrumbProductions": "Productions",
+        "loading": "Loading..."
+    },
     "NewsArticleComponent": {
         "subTitle": "Vooruit Archive",
         "edition": "Edition 404",
@@ -237,5 +456,29 @@
         "loading": "Loading location...",
         "notFound": "Location not found.",
         "error": "Something went wrong while loading this location."
+    },
+    "Articles": {
+        "heroEyebrow": "Stories from the archive",
+        "heroTitle": "Articles & Stories",
+        "heroSubtitle": "Stories from behind the scenes of De Vooruit",
+        "datelineEdition": "Archive Edition",
+        "datelineBrand": "Archives Department",
+        "datelinePrice": "Price: Priceless",
+        "loading": "Loading articles...",
+        "noArticlesTitle": "No stories yet",
+        "noArticlesText": "There are currently no published articles. Check back later for new stories from the archive.",
+        "listLabel": "{count, plural, one {# article} other {# articles}}",
+        "untitled": "Untitled",
+        "readMore": "Read more",
+        "backToArticles": "Back to articles",
+        "notFoundTitle": "Article not found",
+        "notFoundText": "This article does not exist or is no longer available.",
+        "connectedTo": "Connected to",
+        "moreStories": "More articles",
+        "relatedEntities": "Related",
+        "relatedProductions": "Productions",
+        "relatedArtists": "Artists",
+        "relatedLocations": "Locations",
+        "relatedEvents": "Events"
     }
 }

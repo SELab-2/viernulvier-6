@@ -79,6 +79,9 @@ rand = "0.10"
 sha2 = "0.10.9"
 hex = "0.4.3"
 time = "0.3.47"
+aws-sdk-s3 = { version = "1", features = ["behavior-version-latest"] }
+aws-config = { version = "1", features = ["behavior-version-latest"] }
+slug = "0.1.6"
 
 [dev-dependencies]
 http-body-util = "0.1.2"

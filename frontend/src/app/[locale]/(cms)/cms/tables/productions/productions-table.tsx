@@ -1,30 +1,74 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { Archive } from "lucide-react";
 import type { Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
 import { makeProductionColumns, productionFields, toProductionUpdateInput } from "./columns";
 import type { ProductionRow } from "@/types/models/production.types";
-import { SelectionToolbar } from "../selection-toolbar";
+import { ActionBar } from "../action-bar";
 import { useParentChildSelection } from "../use-parent-child-selection";
 import { makeEventColumns, eventFields, toEventUpdateInput } from "./event-columns";
 import { Spinner } from "@/components/ui/spinner";
-import { useGetProductions, useUpdateProduction } from "@/hooks/api/useProductions";
+import { useGetInfiniteProductions, useUpdateProduction } from "@/hooks/api/useProductions";
 import { useGetEvents, useUpdateEvent } from "@/hooks/api/useEvents";
+import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
+import type { PickerItem } from "@/lib/collection-picker-utils";
 import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
 
 export function ProductionsTable() {
     const t = useTranslations("Cms.Productions");
-    const { data: productions = [], isLoading: productionsLoading } = useGetProductions();
-    const { data: allEvents = [], isLoading: eventsLoading } = useGetEvents();
+    const tCollections = useTranslations("Cms.Collections");
+    const tActions = useTranslations("Cms.ActionsColumn");
+    const loadMoreRef = useRef<HTMLDivElement>(null);
+
+    const {
+        data: infiniteData,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = useGetInfiniteProductions();
+
+    const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
+
+    // Flatten all pages into a single array
+    const allProductions = useMemo(
+        () => infiniteData?.pages.flatMap((page) => page.data) ?? [],
+        [infiniteData]
+    );
+
+    const allEvents = useMemo(() => eventsResult?.data ?? [], [eventsResult]);
     const updateProduction = useUpdateProduction();
     const updateEvent = useUpdateEvent();
 
+    // Load more handler
+    const loadMore = useCallback(() => {
+        if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+        }
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+    // Intersection observer for infinite scroll
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) loadMore();
+            },
+            { threshold: 0.1, rootMargin: "100px" }
+        );
+        const currentRef = loadMoreRef.current;
+        if (currentRef) observer.observe(currentRef);
+        return () => {
+            if (currentRef) observer.unobserve(currentRef);
+        };
+    }, [loadMore]);
+
     const [editProduction, setEditProduction] = useState<ProductionRow | null>(null);
     const [editEvent, setEditEvent] = useState<Event | null>(null);
+    const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
 
     const eventsByProduction = useMemo(() => {
         const map = new Map<string, Event[]>();
@@ -48,19 +92,67 @@ export function ProductionsTable() {
     } = useParentChildSelection<Production>(eventsByProduction);
 
     const productionCols = useMemo(
-        () => [selectColumn, ...makeProductionColumns({ onEdit: setEditProduction })],
-        [selectColumn]
+        () => [selectColumn, ...makeProductionColumns({ onEdit: setEditProduction, t: tActions })],
+        [selectColumn, tActions]
     );
 
-    const eventCols = useMemo(() => makeEventColumns({ onEdit: setEditEvent }), []);
+    const eventCols = useMemo(
+        () => makeEventColumns({ onEdit: setEditEvent, t: tActions }),
+        [tActions]
+    );
+
+    const expanderLabels = useMemo(() => ({ show: t("showEvents"), hide: t("hideEvents") }), [t]);
+
+    const getRowCanExpand = useCallback(
+        (row: Row<Production>) => (eventsByProduction.get(row.original.id)?.length ?? 0) > 0,
+        [eventsByProduction]
+    );
 
     const getEventRowId = useCallback((row: Event) => row.id, []);
+    const getProductionRowId = useCallback((row: Production) => row.id, []);
+
+    const selectedProductions = useMemo(
+        () => allProductions.filter((production) => parentSelection[production.id]),
+        [parentSelection, allProductions]
+    );
+
+    const eventsById = useMemo(
+        () => new Map(allEvents.map((event) => [event.id, event])),
+        [allEvents]
+    );
+    const selectedEvents = useMemo(() => {
+        const selected: Event[] = [];
+        for (const selection of childSelection.values()) {
+            for (const [eventId, isSelected] of Object.entries(selection)) {
+                if (!isSelected) continue;
+                const event = eventsById.get(eventId);
+                if (event) selected.push(event);
+            }
+        }
+        return selected;
+    }, [childSelection, eventsById]);
+
+    const collectionPickerItems: PickerItem[] = useMemo(
+        () => [
+            ...selectedProductions.map((p) => ({
+                contentType: "production" as const,
+                contentId: p.id,
+                label: p.slug,
+            })),
+            ...selectedEvents.map((e) => ({
+                contentType: "event" as const,
+                contentId: e.id,
+                label: e.id.slice(0, 8),
+            })),
+        ],
+        [selectedProductions, selectedEvents]
+    );
 
     const renderEvents = useCallback(
         (row: Row<Production>) => {
             if (eventsLoading) {
                 return (
-                    <div className="bg-muted/30 flex items-center py-1 pr-6 pl-12">
+                    <div className="flex items-center py-1 pr-6 pl-14">
                         <Spinner className="text-muted-foreground size-3" />
                     </div>
                 );
@@ -87,55 +179,88 @@ export function ProductionsTable() {
         ]
     );
 
+    const actions = useMemo(
+        () => [
+            {
+                key: "add-to-collection",
+                label: tCollections("addToCollection"),
+                icon: <Archive className="h-3.5 w-3.5" />,
+                onClick: () => setCollectionDialogOpen(true),
+            },
+            {
+                key: "delete",
+                label: "Delete",
+            },
+        ],
+        [tCollections]
+    );
+
     return (
-        <>
-            <DataTable
-                columns={productionCols}
-                data={productions}
-                loading={productionsLoading}
-                renderSubComponent={renderEvents}
-                getRowCanExpand={(row) =>
-                    (eventsByProduction.get(row.original.id)?.length ?? 0) > 0
-                }
-                expanderLabels={{ show: t("showEvents"), hide: t("hideEvents") }}
-                toolbar={
-                    <SelectionToolbar
-                        groups={[
-                            {
-                                countKey: "productionsSelected",
-                                count: selectedProductionCount,
-                                inlineActions: [],
-                                overflowActions: [],
-                            },
-                            {
-                                countKey: "eventsSelected",
-                                count: selectedEventCount,
-                                inlineActions: [],
-                                overflowActions: [],
-                            },
-                        ]}
-                        onClear={clearSelection}
-                    />
-                }
-                rowSelection={parentSelection}
-                onRowSelectionChange={setParentSelection}
+        <div className="flex h-full flex-col">
+            <div className="bg-background sticky top-0 z-10">
+                <ActionBar
+                    entityCounts={[
+                        { countKey: "productionsSelected", count: selectedProductionCount },
+                        { countKey: "eventsSelected", count: selectedEventCount },
+                    ]}
+                    actions={actions}
+                    onClear={clearSelection}
+                />
+            </div>
+
+            <div className="flex-1 overflow-auto">
+                <DataTable
+                    columns={productionCols}
+                    data={allProductions}
+                    getRowCanExpand={getRowCanExpand}
+                    renderSubRows={renderEvents}
+                    rowSelection={parentSelection}
+                    onRowSelectionChange={setParentSelection}
+                    expanderLabels={expanderLabels}
+                    getRowId={getProductionRowId}
+                />
+
+                {/* Infinite scroll trigger */}
+                {hasNextPage && (
+                    <div ref={loadMoreRef} className="flex justify-center py-4">
+                        <Spinner className="text-muted-foreground h-5 w-5" />
+                    </div>
+                )}
+            </div>
+
+            {editProduction && (
+                <EditSheet
+                    open={!!editProduction}
+                    onOpenChange={(open) => !open && setEditProduction(null)}
+                    title={t("editProduction")}
+                    entity={editProduction}
+                    fields={productionFields}
+                    onSave={async (values) => {
+                        await updateProduction.mutateAsync(toProductionUpdateInput(values));
+                        setEditProduction(null);
+                    }}
+                />
+            )}
+
+            {editEvent && (
+                <EditSheet
+                    open={!!editEvent}
+                    onOpenChange={(open) => !open && setEditEvent(null)}
+                    title={t("editEvent")}
+                    entity={editEvent}
+                    fields={eventFields}
+                    onSave={async (values) => {
+                        await updateEvent.mutateAsync(toEventUpdateInput(values));
+                        setEditEvent(null);
+                    }}
+                />
+            )}
+
+            <CollectionPickerDialog
+                open={collectionDialogOpen}
+                onOpenChange={setCollectionDialogOpen}
+                items={collectionPickerItems}
             />
-            <EditSheet
-                open={!!editProduction}
-                onOpenChange={(open) => !open && setEditProduction(null)}
-                entity={editProduction}
-                fields={productionFields}
-                title={t("editProduction")}
-                onSave={(data) => updateProduction.mutate(toProductionUpdateInput(data))}
-            />
-            <EditSheet
-                open={!!editEvent}
-                onOpenChange={(open) => !open && setEditEvent(null)}
-                entity={editEvent}
-                fields={eventFields}
-                title={t("editEvent")}
-                onSave={(data) => updateEvent.mutate(toEventUpdateInput(data))}
-            />
-        </>
+        </div>
     );
 }

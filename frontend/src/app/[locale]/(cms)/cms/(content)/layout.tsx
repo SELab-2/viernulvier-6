@@ -1,17 +1,10 @@
-import { Suspense } from "react";
-import { AppSidebar } from "@/components/app-sidebar";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { CmsSidebar } from "@/components/cms";
 
 export default function ContentLayout({ children }: { children: React.ReactNode }) {
     return (
-        <SidebarProvider className="h-full min-h-0">
-            <Suspense>
-                <AppSidebar />
-            </Suspense>
-            <main className="flex-1 overflow-auto p-4">
-                <SidebarTrigger />
-                {children}
-            </main>
-        </SidebarProvider>
+        <div className="flex h-full flex-col overflow-hidden lg:flex-row">
+            <CmsSidebar />
+            <main className="flex-1 overflow-hidden p-4 lg:p-8">{children}</main>
+        </div>
     );
 }

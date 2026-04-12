@@ -4,7 +4,7 @@ on: workflow_call
 
 jobs:
   test:
-    runs-on: self-hosted
+    runs-on: kaya-sem-house
     container:
       image: rust:1.94-bookworm
       env:
@@ -40,8 +40,14 @@ jobs:
         with:
           workspaces: backend
 
+      - name: Cache cargo binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin
+          key: cargo-bin-sqlx-0.8
+
       - name: Install sqlx-cli
-        run: cargo install sqlx-cli --no-default-features --features native-tls,postgres
+        run: command -v sqlx || cargo install sqlx-cli --no-default-features --features native-tls,postgres
 
       - name: Run migrations
         run: cd backend && sqlx migrate run

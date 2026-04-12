@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 
 import { hasLocale } from "next-intl";
 import { getMessages, getTimeZone, setRequestLocale } from "next-intl/server";
@@ -9,7 +9,6 @@ import { siteConfig } from "@/config/site.config";
 
 import { routing } from "@/i18n/routing";
 
-import { Footer } from "@/components/layout";
 import { Providers } from "@/providers";
 
 export async function generateMetadata({
@@ -38,7 +37,7 @@ export default async function LocaleLayout({
     const { locale } = await params;
 
     if (!hasLocale(routing.locales, locale)) {
-        notFound();
+        redirect(`/en`);
     }
 
     setRequestLocale(locale);
@@ -48,8 +47,7 @@ export default async function LocaleLayout({
 
     return (
         <Providers messages={messages} locale={locale} timeZone={timeZone}>
-            <main className="flex-1">{children}</main>
-            <Footer />
+            {children}
         </Providers>
     );
 }

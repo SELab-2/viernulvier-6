@@ -1,8 +1,13 @@
+pub mod article;
+pub mod artist;
 pub mod collection;
 pub mod event;
+pub mod event_price;
 pub mod facet;
 pub mod hall;
 pub mod location;
 pub mod paginated;
+pub mod media;
 pub mod production;
+pub mod series;
 pub mod space;

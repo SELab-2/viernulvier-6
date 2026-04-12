@@ -1,0 +1,3 @@
+DROP INDEX trgm_idx_production_translations_search;
+
+ALTER TABLE production_translations DROP COLUMN full_search_text;

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM articles_about_events WHERE article_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2391ed4ed05cd2a207e7e9fe82b2a6c4e49b4ee3575ec1ca5655e52b6445228f"
+}

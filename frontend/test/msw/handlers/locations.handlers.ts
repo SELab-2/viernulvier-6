@@ -1,10 +1,9 @@
 import { http, HttpResponse } from "msw";
 
-import { LocationResponse } from "@/types/api/location.api.types";
-
+import type { components } from "@/types/api/generated";
 import { apiUrl } from "../../utils/env";
 
-const location = {
+const location: components["schemas"]["LocationPayload"] = {
     id: "67c95f6a-8bb8-43d6-a4bc-f7e18b86f404",
     source_id: 101,
     name: "Main Venue",
@@ -18,15 +17,18 @@ const location = {
     phone_2: null,
     is_owned_by_viernulvier: true,
     uitdatabank_id: "udb-main",
-    translations: [{ language_code: "nl", description: "Hoofdlocatie", history: null }],
-} satisfies LocationResponse;
+    translations: [],
+};
 
 export const locationHandlers = [
     http.get(apiUrl("/locations"), () => {
-        return HttpResponse.json({ data: [location], next_cursor: null });
+        return HttpResponse.json({
+            data: [location],
+            next_cursor: null,
+        } satisfies components["schemas"]["PaginatedResponse_LocationPayload"]);
     }),
     http.get(apiUrl(`/locations/${location.id}`), () => {
-        return HttpResponse.json(location);
+        return HttpResponse.json(location satisfies components["schemas"]["LocationPayload"]);
     }),
     http.post(apiUrl("/locations"), async ({ request }) => {
         const body = await request.json();
@@ -35,7 +37,7 @@ export const locationHandlers = [
                 ...location,
                 ...(body as Record<string, unknown>),
                 id: "f7c95f6a-8bb8-43d6-a4bc-f7e18b86f4aa",
-            },
+            } satisfies components["schemas"]["LocationPayload"],
             { status: 201 }
         );
     }),
@@ -44,7 +46,7 @@ export const locationHandlers = [
         return HttpResponse.json({
             ...location,
             ...(body as Record<string, unknown>),
-        });
+        } satisfies components["schemas"]["LocationPayload"]);
     }),
     http.delete(apiUrl(`/locations/${location.id}`), () => {
         return new HttpResponse(null, { status: 204 });

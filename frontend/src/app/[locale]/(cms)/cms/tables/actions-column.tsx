@@ -1,9 +1,10 @@
 "use client";
 
+import { Fragment, memo, useMemo, type ReactNode } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -12,73 +13,105 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Action, ActionDisplay, ActionVariant } from "@/types/cms/actions";
 
-type CopyableKeys<TData> = {
-    [K in keyof TData]: TData[K] extends string | number | null | undefined ? K : never;
-}[keyof TData];
+function isSimpleAction<T>(action: Action<T>): action is Extract<Action<T>, { onClick: unknown }> {
+    return "onClick" in action;
+}
 
 interface ActionsColumnOptions<TData> {
-    label: string;
-    copyKey: CopyableKeys<TData>;
-    onEdit: (entity: TData) => void;
+    actions: Action<TData>[];
 }
 
 interface ActionsCellProps<TData> {
     entity: TData;
-    label: string;
-    copyKey: CopyableKeys<TData>;
-    onEdit: (entity: TData) => void;
+    actions: Action<TData>[];
 }
 
-function ActionsCell<TData extends Record<string, unknown>>({
+function ActionsCellInner<TData extends Record<string, unknown>>({
     entity,
-    label,
-    copyKey,
-    onEdit,
+    actions,
 }: ActionsCellProps<TData>) {
     const t = useTranslations("Cms.ActionsColumn");
-    const copyValue = String(entity[copyKey] ?? "");
+    const [open, setOpen] = useState(false);
+    const closeMenu = () => setOpen(false);
+
+    const { inlineActions, menuActions } = useMemo(() => {
+        const inline: Extract<Action<TData>, { onClick: unknown }>[] = [];
+        const menu: Action<TData>[] = [];
+
+        for (const action of actions) {
+            if (isSimpleAction(action) && action.display === ActionDisplay.Inline) {
+                inline.push(action);
+            } else {
+                menu.push(action);
+            }
+        }
+
+        return { inlineActions: inline, menuActions: menu };
+    }, [actions]);
 
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">{t("openMenu")}</span>
-                    <MoreHorizontal className="h-4 w-4" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
-                <DropdownMenuItem
-                    disabled={copyValue === ""}
-                    onClick={async () => {
-                        try {
-                            await navigator.clipboard.writeText(copyValue);
-                            toast.success(t("copied", { key: String(copyKey) }));
-                        } catch {
-                            toast.error(t("copyFailed"));
-                        }
-                    }}
+        <div className="flex items-center gap-1">
+            {inlineActions.map((action) => (
+                <Button
+                    key={action.key}
+                    variant="ghost"
+                    className="h-8 w-8 p-0"
+                    onClick={() => action.onClick(entity)}
                 >
-                    {t("copy", { key: String(copyKey) })}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEdit(entity)}>
-                    {t("edit", { label })}
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
+                    <span className="sr-only">{action.label}</span>
+                    {action.icon && <action.icon className="h-4 w-4" />}
+                </Button>
+            ))}
+            {menuActions.length > 0 && (
+                <DropdownMenu open={open} onOpenChange={setOpen}>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">{t("openMenu")}</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
+                        {menuActions.map((action) =>
+                            isSimpleAction(action) ? (
+                                <DropdownMenuItem
+                                    key={action.key}
+                                    onClick={() => action.onClick(entity)}
+                                    className={
+                                        action.variant === ActionVariant.Destructive
+                                            ? "text-destructive"
+                                            : undefined
+                                    }
+                                >
+                                    {action.icon && <action.icon className="h-4 w-4" />}
+                                    {action.label}
+                                </DropdownMenuItem>
+                            ) : (
+                                <Fragment key={action.key}>
+                                    {action.render(entity, closeMenu)}
+                                </Fragment>
+                            )
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )}
+        </div>
     );
 }
+
+const ActionsCell = memo(ActionsCellInner) as <TData extends Record<string, unknown>>(
+    props: ActionsCellProps<TData>
+) => ReactNode;
 
 export function makeActionsColumn<TData extends Record<string, unknown>>(
     options: ActionsColumnOptions<TData>
 ): ColumnDef<TData> {
-    const { label, copyKey, onEdit } = options;
+    const { actions } = options;
 
     return {
         id: "actions",
-        cell: ({ row }) => (
-            <ActionsCell entity={row.original} label={label} copyKey={copyKey} onEdit={onEdit} />
-        ),
+        cell: ({ row }) => <ActionsCell entity={row.original} actions={actions} />,
     };
 }

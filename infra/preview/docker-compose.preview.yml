@@ -5,16 +5,18 @@ services:
       args:
         - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_SITE_URL}/${PREVIEW_NAME}/api
+        - NEXT_PUBLIC_MEDIA_URL=${NEXT_PUBLIC_SITE_URL}/${PREVIEW_NAME}/s3
         - PREVIEW_NAME=${PREVIEW_NAME}
         - CODECOV_TOKEN=${CODECOV_TOKEN}
     container_name: ${COMPOSE_PROJECT_NAME}-frontend
     environment:
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_SITE_URL}/${PREVIEW_NAME}/api
+      NEXT_PUBLIC_MEDIA_URL: ${NEXT_PUBLIC_SITE_URL}/${PREVIEW_NAME}/s3
       PREVIEW_NAME: ${PREVIEW_NAME}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${PREVIEW_NAME}.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}`) && !PathPrefix(`/${PREVIEW_NAME}/docs`) && !PathPrefix(`/${PREVIEW_NAME}/api`)"
+      - "traefik.http.routers.${PREVIEW_NAME}.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}`) && !PathPrefix(`/${PREVIEW_NAME}/docs`) && !PathPrefix(`/${PREVIEW_NAME}/api`) && !PathPrefix(`/${PREVIEW_NAME}/s3`)"
       - "traefik.http.routers.${PREVIEW_NAME}.entrypoints=websecure"
       - "traefik.http.services.${PREVIEW_NAME}.loadbalancer.server.port=3000"
       - "traefik.http.routers.${PREVIEW_NAME}.tls.certresolver=letsencrypt"
@@ -60,6 +62,7 @@ services:
       S3_ACCESS_KEY: ${GARAGE_S3_ACCESS_KEY}
       S3_SECRET_KEY: ${GARAGE_S3_SECRET_KEY}
       S3_BUCKET: ${GARAGE_S3_BUCKET}
+      S3_PUBLIC_URL: ${NEXT_PUBLIC_SITE_URL}/${PREVIEW_NAME}/s3
       JWT_SECRET: ${PREVIEW_JWT_SECRET}
       API_KEY_404: ${PREVIEW_API_KEY_404}
       ALLOWED_ORIGINS: ${NEXT_PUBLIC_SITE_URL}
@@ -83,7 +86,7 @@ services:
 
   db:
     image: postgres:18
-    container_name: ${COMPOSE_PROJECT_NAME}-db
+    container_name: ${COMPOSE_PROJECT_NAME}-database
     environment:
       POSTGRES_USER: ${PREVIEW_DB_USER}
       POSTGRES_PASSWORD: ${PREVIEW_DB_PASSWORD}
@@ -102,7 +105,7 @@ services:
 
   garage:
     image: dxflrs/garage:v2.2.0
-    container_name: ${COMPOSE_PROJECT_NAME}_garage
+    container_name: ${COMPOSE_PROJECT_NAME}-garage
     restart: unless-stopped
     environment:
       - GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET}
@@ -111,18 +114,34 @@ services:
       - garage_meta:/var/lib/garage/meta
       - garage_data:/var/lib/garage/data
     networks:
-      - internal
+      traefik:
+        aliases:
+          - ${GARAGE_S3_BUCKET}.s3.garage.localhost
+      internal: {}
+    labels:
+      - "traefik.enable=true"
+      # S3 Web endpoint (port 3902) for public file serving
+      # Note: Garage web endpoint uses Host header to determine bucket
+      # We rewrite the Host header to match the bucket name
+      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/s3`)"
+      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.entrypoints=websecure"
+      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.priority=250"
+      - "traefik.http.middlewares.${PREVIEW_NAME}-s3-web-strip.stripprefix.prefixes=/${PREVIEW_NAME}/s3"
+      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.middlewares=${PREVIEW_NAME}-s3-web-strip"
+      - "traefik.http.services.${PREVIEW_NAME}-s3-web.loadbalancer.server.url=http://${GARAGE_S3_BUCKET}.s3.garage.localhost:3902"
+      - "traefik.http.services.${PREVIEW_NAME}-s3-web.loadbalancer.passhostheader=false"
 
   garage-init:
     image: alpine:3.21
-    container_name: ${COMPOSE_PROJECT_NAME}_garage_init
+    container_name: ${COMPOSE_PROJECT_NAME}-garage-init
     environment:
       - GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET}
       - GARAGE_S3_ACCESS_KEY=${GARAGE_S3_ACCESS_KEY}
       - GARAGE_S3_SECRET_KEY=${GARAGE_S3_SECRET_KEY}
       - GARAGE_S3_BUCKET=${GARAGE_S3_BUCKET}
       - GARAGE_ZONE=${GARAGE_ZONE:-dc1}
-      - GARAGE_CAPACITY=${GARAGE_CAPACITY:-1GiB}
+      - GARAGE_CAPACITY=${GARAGE_CAPACITY:-500MB}
     volumes:
       - ./garage.toml:/etc/garage.toml:ro
       - garage_meta:/var/lib/garage/meta
@@ -182,6 +201,9 @@ services:
         $$G bucket info "$$GARAGE_S3_BUCKET" 2>/dev/null || \
           $$G bucket create "$$GARAGE_S3_BUCKET"
         $$G bucket allow "$$GARAGE_S3_BUCKET" --key "$$GARAGE_S3_ACCESS_KEY" --read --write || true
+
+        echo "Enabling website access on bucket..."
+        $$G bucket website "$$GARAGE_S3_BUCKET" --allow || true
 
         echo "Init complete!"
 

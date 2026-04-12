@@ -96,7 +96,23 @@ Both pipelines run on **self-hosted runners** with direct Docker access.
 
 ---
 
-## 5. Environment Generation
+---
+
+## 5. Automated Testing & Codecov
+
+Before any application image is built or preview is deployed, our CI/CD pipelines trigger automated testing workflows:
+
+- **`backend-tests.yml`**: Runs cargo unit tests, linting (clippy), formatting checks, and uploads the Rust coverage report.
+- **`frontend-tests.yml`**:
+  1. Runs typechecking and Vitest unit/integration tests.
+  2. Uploads the Vitest test coverage to **Codecov**.
+  3. Installs Playwright browsers.
+  4. Runs the Playwright End-to-End (E2E) tests against the built Next.js server.
+  5. Uploads a visual HTML report of the Playwright E2E run as a GitHub Artifact if the job succeeds or fails.
+
+Both pipelines send their coverage metrics (LCOV) directly to Codecov using the `CODECOV_TOKEN` GitHub Action secret. The pipelines are strict; if any test or typecheck fails, the PR preview deployment or Production deployment is blocked automatically.
+
+## 6. Environment Generation
 
 We use composite actions to generate `.env` files from GitHub secrets:
 
@@ -107,7 +123,7 @@ This keeps secrets out of the repository while making them available to Docker C
 
 ---
 
-## 6. Image Registry
+## 7. Image Registry
 
 All images are pushed to **Docker Hub**:
 

@@ -4,7 +4,8 @@ use uuid::Uuid;
 
 use crate::{
     dto::collection::{
-        CollectionItemPayload, CollectionItemPostPayload, CollectionPayload, CollectionPostPayload,
+        CollectionItemPayload, CollectionItemPostPayload, CollectionItemsBulkPayload,
+        CollectionPayload, CollectionPostPayload,
     },
     error::{AppError, ErrorResponse},
     handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
@@ -131,6 +132,33 @@ pub async fn post_item(
     Json(item): Json<CollectionItemPostPayload>,
 ) -> JsonStatusResponse<CollectionItemPayload> {
     item.add_to(&db, id).await?.json_created()
+}
+
+#[utoipa::path(
+    method(put),
+    path = "/collections/{id}/items",
+    tag = "Collections",
+    operation_id = "bulk_update_collection_items",
+    description = "Replace the positions and translations of all items in a collection in one atomic call. Requires editor authentication. Send the full ordered list; positions are applied as given.",
+    params(
+        ("id" = Uuid, Path, description = "Collection UUID")
+    ),
+    responses(
+        (status = 204, description = "No Content"),
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    ),
+    security(
+        ("cookie_auth" = [])
+    )
+)]
+pub async fn put_items(
+    db: Database,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<CollectionItemsBulkPayload>,
+) -> StatusResponse {
+    payload.apply(&db, id).await?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 #[utoipa::path(

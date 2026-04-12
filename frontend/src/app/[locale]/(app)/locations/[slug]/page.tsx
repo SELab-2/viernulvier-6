@@ -21,8 +21,10 @@ export default function LocationPage() {
     const [headerQuery, setHeaderQuery] = useState("");
 
     const { data: location, isLoading: locationLoading, isError } = useGetLocationBySlug(slug);
-    const { data: spaces = [] } = useGetSpaces();
-    const { data: halls = [] } = useGetHalls();
+    const { data: spacesResult } = useGetSpaces();
+    const { data: hallsResult } = useGetHalls();
+    const spaces = useMemo(() => spacesResult?.data ?? [], [spacesResult]);
+    const halls = useMemo(() => hallsResult?.data ?? [], [hallsResult]);
 
     const locationHalls = useMemo(() => {
         if (!location) return [];

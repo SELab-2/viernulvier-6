@@ -1,5 +1,8 @@
 use ormlite::Model;
+use sqlx::FromRow;
 use uuid::Uuid;
+
+use crate::models::sort::Sort;
 
 #[derive(Debug, Model, PartialEq)]
 #[ormlite(insert = "ProductionCreate")]
@@ -16,6 +19,13 @@ pub struct Production {
 
     pub uitdatabank_theme: Option<String>,
     pub uitdatabank_type: Option<String>,
+}
+
+#[derive(Debug, PartialEq, FromRow)]
+pub struct ProductionWithScore {
+    #[sqlx(flatten)]
+    pub production: Production,
+    pub distance_score: f32,
 }
 
 /// A single row from `production_translations`.
@@ -64,4 +74,18 @@ pub struct ProductionTranslationData {
 pub struct ProductionWithTranslations {
     pub production: Production,
     pub translations: Vec<ProductionTranslation>,
+}
+
+pub struct ProductionSearch {
+    pub q: Option<String>,
+    pub discipline: Option<String>,
+    pub format: Option<String>,
+    pub theme: Option<String>,
+    pub audience: Option<String>,
+    pub artist: Option<String>,
+    pub location: Option<String>,
+    pub date_from: Option<String>,
+    pub date_to: Option<String>,
+    pub sort: Option<Sort>,
+    pub after: Option<String>,
 }

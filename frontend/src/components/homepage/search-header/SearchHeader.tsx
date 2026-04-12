@@ -27,6 +27,7 @@ export function SearchHeader({
     const locale = useLocale();
     const isHome = pathname === "/" || pathname === "";
     const isSearch = pathname.startsWith("/search");
+    const isArticles = pathname.startsWith("/articles");
 
     const navLinkClass = (active: boolean) =>
         `font-mono text-[9px] tracking-[1.4px] uppercase transition-colors ${
@@ -110,6 +111,9 @@ export function SearchHeader({
                     <Link href="/search" className={navLinkClass(isSearch)}>
                         Archief
                     </Link>
+                    <Link href="/articles" className={navLinkClass(isArticles)}>
+                        Artikels
+                    </Link>
                     <span className="bg-border h-3 w-px" />
                     <ThemeSwitcher />
                     {localeSwitcher}
@@ -151,6 +155,13 @@ export function SearchHeader({
                         className={navLinkClass(isSearch)}
                     >
                         Archief
+                    </Link>
+                    <Link
+                        href="/articles"
+                        onClick={() => setMenuOpen(false)}
+                        className={navLinkClass(isArticles)}
+                    >
+                        Artikels
                     </Link>
                 </nav>
             )}

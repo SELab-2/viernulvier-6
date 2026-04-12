@@ -73,6 +73,14 @@ fe-test:
 fe-cov:
     cd frontend && npm run test:coverage
 
+# Run frontend End-to-End (E2E) tests via Playwright
+fe-test-e2e:
+    cd frontend && npm run test:e2e
+
+# Open Playwright UI for interactive E2E testing
+fe-test-e2e-ui:
+    cd frontend && npm run test:e2e:ui
+
 # Build the Next.js frontend for production
 fe-build:
     cd frontend && npm run build
