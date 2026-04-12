@@ -205,6 +205,47 @@ export const useUpdateMedia = () => {
     });
 };
 
+export const useUploadMedia = () => {
+    const generateUploadUrl = useGenerateUploadUrl();
+    const attachMedia = useAttachMedia();
+
+    return useMutation({
+        mutationFn: async ({
+            file,
+            entityType,
+            entityId,
+            metadata,
+        }: {
+            file: File;
+            entityType: string;
+            entityId: string;
+            metadata?: Omit<AttachMediaInput, "s3Key" | "mimeType">;
+        }): Promise<Media> => {
+            const { s3Key, uploadUrl } = await generateUploadUrl.mutateAsync({
+                filename: file.name,
+                mimeType: file.type,
+            });
+
+            await fetch(uploadUrl, {
+                method: "PUT",
+                body: file,
+                headers: { "Content-Type": file.type },
+            });
+
+            return attachMedia.mutateAsync({
+                entityType,
+                entityId,
+                input: {
+                    s3Key,
+                    mimeType: file.type,
+                    fileSize: file.size,
+                    ...metadata,
+                },
+            });
+        },
+    });
+};
+
 export const useDeleteMedia = () => {
     const queryClient = useQueryClient();
 
