@@ -51,7 +51,12 @@ impl ApiEvent {
         extract_source_id(&self.hall)
     }
 
-    pub fn to_create(self, production_id: Uuid, hall_id: Option<Uuid>) -> EventCreate {
+    pub fn to_create(
+        self,
+        production_id: Uuid,
+        hall_id: Option<Uuid>,
+        status: String,
+    ) -> EventCreate {
         EventCreate {
             source_id: extract_source_id(&self.id),
             created_at: self.created_at,
@@ -67,7 +72,7 @@ impl ApiEvent {
                 .max_tickets_per_order
                 .map(|v| v.try_into().expect("max_tickets_per_order out of range")),
             production_id,
-            status: self.status,
+            status,
             hall_id,
         }
     }

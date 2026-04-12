@@ -1,10 +1,16 @@
+use std::collections::HashMap;
+
 use database::{Database, error::DatabaseError};
 use tracing::warn;
 
 use crate::models::event::ApiEvent;
 
 impl ApiEvent {
-    pub async fn insert(self, db: &Database) -> Result<(), DatabaseError> {
+    pub async fn insert(
+        self,
+        db: &Database,
+        status_map: &HashMap<String, String>,
+    ) -> Result<(), DatabaseError> {
         let Some(prod_source_id) = self.production_source_id() else {
             warn!("Events: event has no production source_id, skipping");
             return Ok(());
@@ -25,7 +31,15 @@ impl ApiEvent {
             None
         };
 
-        let event_create = self.to_create(production.production.id, hall_uuid);
+        let Some(status) = status_map.get(&self.status).cloned() else {
+            warn!(
+                "Events: unknown status IRI '{}' for event {}, skipping",
+                self.status, self.id
+            );
+            return Ok(());
+        };
+
+        let event_create = self.to_create(production.production.id, hall_uuid, status);
         db.events().insert(event_create).await?;
         Ok(())
     }
