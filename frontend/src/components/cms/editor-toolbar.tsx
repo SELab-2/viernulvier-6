@@ -17,13 +17,18 @@ import {
     Link,
     Link2Off,
     Check,
+    ImagePlus,
 } from "lucide-react";
 import { Popover } from "radix-ui";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { MediaPickerDialog } from "@/components/cms/media-picker-dialog";
+import { useAttachMedia } from "@/hooks/api/useMedia";
+import type { Media } from "@/types/models/media.types";
 import { cn } from "@/lib/utils";
 
 interface ToolbarButtonProps {
@@ -58,11 +63,16 @@ function ToolbarButton({ onClick, active, disabled, label, children }: ToolbarBu
 
 interface EditorToolbarProps {
     editor: Editor | null;
+    entityType?: string;
+    entityId?: string;
 }
 
-export function EditorToolbar({ editor }: EditorToolbarProps) {
+export function EditorToolbar({ editor, entityType, entityId }: EditorToolbarProps) {
     const [linkUrl, setLinkUrl] = useState("");
     const [linkOpen, setLinkOpen] = useState(false);
+    const [imagePickerOpen, setImagePickerOpen] = useState(false);
+
+    const attachMedia = useAttachMedia();
 
     const state = useEditorState({
         editor,
@@ -97,6 +107,31 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
         editor.chain().extendMarkRange("link").unsetLink().run();
         setLinkOpen(false);
     };
+
+    const handleImageSelect = async (media: Media) => {
+        if (!entityType || !entityId) return;
+        try {
+            await attachMedia.mutateAsync({
+                entityType,
+                entityId,
+                input: { s3Key: media.s3Key, mimeType: media.mimeType, role: "inline" },
+            });
+            editor
+                .chain()
+                .focus()
+                .setMediaImage({
+                    src: media.url ?? "",
+                    mediaId: media.id,
+                    alt: media.altTextNl ?? "",
+                })
+                .run();
+            setImagePickerOpen(false);
+        } catch {
+            toast.error("Failed to insert image. Please try again.");
+        }
+    };
+
+    const showImageButton = Boolean(entityType) && Boolean(entityId);
 
     return (
         <TooltipProvider delayDuration={600}>
@@ -267,6 +302,27 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
                         </Popover.Content>
                     </Popover.Portal>
                 </Popover.Root>
+
+                {/* Image */}
+                {showImageButton && (
+                    <>
+                        <Separator orientation="vertical" className="mx-1 h-5" />
+                        <ToolbarButton
+                            onClick={() => setImagePickerOpen(true)}
+                            disabled={attachMedia.isPending}
+                            label="Insert image"
+                        >
+                            <ImagePlus className="h-3.5 w-3.5" />
+                        </ToolbarButton>
+                        <MediaPickerDialog
+                            entityType={entityType!}
+                            entityId={entityId!}
+                            open={imagePickerOpen}
+                            onOpenChange={setImagePickerOpen}
+                            onSelect={handleImageSelect}
+                        />
+                    </>
+                )}
             </div>
         </TooltipProvider>
     );
