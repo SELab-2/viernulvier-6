@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { Search, Menu, X, ChevronDown, LogOut, User } from "lucide-react";
-import { useLocale } from "next-intl";
 import Link from "next/link";
 
 import { Link as I18nLink, usePathname } from "@/i18n/routing";
 import { ThemeSwitcher } from "@/components/shared/theme-switcher";
+import { LocaleSwitcherLinks } from "@/components/shared/locale-switcher-links";
 import { useUser, useLogout } from "@/hooks/useAuth";
 import { UserRole } from "@/types/models/user.types";
 
@@ -72,7 +72,6 @@ export function UnifiedHeader({
 }: UnifiedHeaderProps) {
     const [menuOpen, setMenuOpen] = useState(false);
     const pathname = usePathname();
-    const locale = useLocale();
     const { data: user } = useUser();
     const isHome = pathname === "/" || pathname === "";
     const isSearch = pathname.startsWith("/search");
@@ -85,33 +84,7 @@ export function UnifiedHeader({
                 : "text-muted-foreground hover:text-foreground"
         }`;
 
-    const localeSwitcher = (
-        <span className="flex items-center gap-1 font-mono text-[10px] tracking-[1.4px] uppercase">
-            <I18nLink
-                href={pathname}
-                locale="nl"
-                className={`transition-colors ${
-                    locale === "nl"
-                        ? "text-foreground font-medium"
-                        : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-                NL
-            </I18nLink>
-            <span className="text-muted-foreground text-[8px]">/</span>
-            <I18nLink
-                href={pathname}
-                locale="en"
-                className={`transition-colors ${
-                    locale === "en"
-                        ? "text-foreground font-medium"
-                        : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-                EN
-            </I18nLink>
-        </span>
-    );
+    const localeSwitcher = <LocaleSwitcherLinks />;
 
     return (
         <header className="border-foreground border-b-2">
