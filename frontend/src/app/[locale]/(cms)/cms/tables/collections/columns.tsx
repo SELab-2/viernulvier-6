@@ -5,6 +5,7 @@ import { ExternalLink, Link2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
+import { LocalizedText, resolveLocalized } from "../localized-text";
 import { Action, ActionVariant } from "@/types/cms/actions";
 import { CollectionRow } from "@/types/models/collection.types";
 
@@ -15,6 +16,7 @@ export function makeCollectionColumns(options: {
     t: ReturnType<typeof useTranslations<"Cms.Collections">>;
 }): ColumnDef<CollectionRow>[] {
     const { onDelete, onOpen, locale, t } = options;
+    const isEn = locale === "en";
 
     const formatter = new Intl.DateTimeFormat(undefined, {
         year: "numeric",
@@ -58,20 +60,44 @@ export function makeCollectionColumns(options: {
 
     return [
         {
-            accessorKey: "titleNl",
-            header: "Title (NL)",
-            cell: ({ getValue }) => (
-                <span className="font-display text-sm tracking-tight">{getValue() as string}</span>
-            ),
+            id: "title",
+            header: "Title",
+            accessorFn: (row) => {
+                const primary = isEn ? row.titleEn : row.titleNl;
+                const fallback = isEn ? row.titleNl : row.titleEn;
+                return resolveLocalized(primary, fallback).value;
+            },
+            cell: ({ row }) => {
+                const primary = isEn ? row.original.titleEn : row.original.titleNl;
+                const fallback = isEn ? row.original.titleNl : row.original.titleEn;
+                return (
+                    <LocalizedText
+                        primary={primary}
+                        fallback={fallback}
+                        className="font-display text-sm tracking-tight"
+                    />
+                );
+            },
         },
         {
-            accessorKey: "descriptionNl",
-            header: "Description (NL)",
-            cell: ({ getValue }) => (
-                <span className="text-muted-foreground max-w-[300px] truncate text-sm">
-                    {getValue() as string}
-                </span>
-            ),
+            id: "description",
+            header: "Description",
+            accessorFn: (row) => {
+                const primary = isEn ? row.descriptionEn : row.descriptionNl;
+                const fallback = isEn ? row.descriptionNl : row.descriptionEn;
+                return resolveLocalized(primary, fallback).value;
+            },
+            cell: ({ row }) => {
+                const primary = isEn ? row.original.descriptionEn : row.original.descriptionNl;
+                const fallback = isEn ? row.original.descriptionNl : row.original.descriptionEn;
+                return (
+                    <LocalizedText
+                        primary={primary}
+                        fallback={fallback}
+                        className="max-w-[300px] truncate text-sm"
+                    />
+                );
+            },
         },
         {
             accessorKey: "itemCount",

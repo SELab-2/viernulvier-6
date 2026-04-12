@@ -29,7 +29,7 @@ export function ActionBar({ entityCounts, actions, onClear }: ActionBarProps) {
                     {activeCounts.map((entity, i) => (
                         <div key={entity.countKey} className="contents">
                             {i > 0 && <div className="bg-border h-5 w-px shrink-0" />}
-                            <span className="text-muted-foreground text-sm">
+                            <span className="text-muted-foreground font-mono text-[10px] tracking-[1.5px] uppercase">
                                 {t(entity.countKey, { count: entity.count })}
                             </span>
                         </div>
@@ -45,13 +45,21 @@ export function ActionBar({ entityCounts, actions, onClear }: ActionBarProps) {
                             size="sm"
                             onClick={action.onClick}
                             disabled={action.disabled || !action.onClick}
+                            className="cursor-pointer rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
                         >
-                            {action.icon && <span className="mr-1.5">{action.icon}</span>}
+                            {action.icon && (
+                                <span className="[&>svg]:h-3.5 [&>svg]:w-3.5">{action.icon}</span>
+                            )}
                             {action.label}
                         </Button>
                     ))}
-                    <Button variant="ghost" size="sm" onClick={onClear} className="ml-auto">
-                        <X className="h-4 w-4" />
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onClear}
+                        className="text-muted-foreground hover:text-foreground ml-auto cursor-pointer rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                    >
+                        <X className="h-3.5 w-3.5" />
                         {t("clearSelection")}
                     </Button>
                 </>

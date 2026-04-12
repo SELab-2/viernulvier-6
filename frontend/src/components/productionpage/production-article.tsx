@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 
 import { getLocalizedField } from "@/lib/locale";
+import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
 import type { Production } from "@/types/models/production.types";
 import type { Media } from "@/types/models/media.types";
 
@@ -118,6 +120,12 @@ export function ProductionArticle({
 
     const videos = [production.video1, production.video2].filter(Boolean) as string[];
 
+    const [spotlightOpen, setSpotlightOpen] = useState(false);
+    const [spotlightIndex, setSpotlightIndex] = useState(0);
+    const spotlightItems: SpotlightItem[] = media
+        .filter((m) => m.url)
+        .map((m) => ({ kind: "media" as const, media: m }));
+
     return (
         <div className="max-w-3xl">
             {/* Section Rule */}
@@ -176,33 +184,56 @@ export function ProductionArticle({
             {/* Gallery */}
             {media.length > 0 && (
                 <div className="my-8 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                    {media.map((m) => {
+                    {media.map((m, i) => {
                         const alt =
                             (locale === "nl"
                                 ? m.altTextNl
                                 : locale === "fr"
                                   ? m.altTextFr
                                   : m.altTextEn) ?? "";
-                        return (
-                            <div
+                        const spotlightIdx = spotlightItems.findIndex(
+                            (it) => it.kind === "media" && it.media.id === m.id
+                        );
+                        return m.url && spotlightIdx >= 0 ? (
+                            <button
+                                type="button"
                                 key={m.id}
-                                className="group relative aspect-[4/3] overflow-hidden bg-[#ccc6bc]"
+                                onClick={() => {
+                                    setSpotlightIndex(spotlightIdx);
+                                    setSpotlightOpen(true);
+                                }}
+                                className="group relative aspect-[4/3] cursor-zoom-in overflow-hidden bg-[#ccc6bc]"
+                                aria-label={alt || "Open image"}
                             >
-                                {m.url ? (
-                                    <Image
-                                        src={m.url}
-                                        alt={alt}
-                                        fill
-                                        className="object-cover grayscale-[15%] transition-all duration-300 group-hover:grayscale-0"
-                                        sizes="(max-width: 640px) 100vw, 33vw"
-                                    />
-                                ) : (
-                                    <div className="h-full w-full bg-gradient-to-tr from-[#CCC6BC] to-[#B5AEA4]" />
-                                )}
+                                <Image
+                                    src={m.url}
+                                    alt={alt}
+                                    fill
+                                    className="object-cover grayscale-[15%] transition-all duration-300 group-hover:grayscale-0"
+                                    sizes="(max-width: 640px) 100vw, 33vw"
+                                />
+                            </button>
+                        ) : (
+                            <div
+                                key={m.id ?? `placeholder-${i}`}
+                                className="relative aspect-[4/3] overflow-hidden bg-[#ccc6bc]"
+                            >
+                                <div className="h-full w-full bg-gradient-to-tr from-[#CCC6BC] to-[#B5AEA4]" />
                             </div>
                         );
                     })}
                 </div>
+            )}
+
+            {spotlightItems.length > 0 && (
+                <ImageSpotlight
+                    items={spotlightItems}
+                    index={spotlightIndex}
+                    onIndexChange={setSpotlightIndex}
+                    open={spotlightOpen}
+                    onOpenChange={setSpotlightOpen}
+                    eyebrow={t("about")}
+                />
             )}
 
             {/* Videos */}

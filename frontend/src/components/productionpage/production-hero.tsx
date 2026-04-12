@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 
 import { getLocalizedField } from "@/lib/locale";
+import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
 import type { Production } from "@/types/models/production.types";
 import type { Media } from "@/types/models/media.types";
 
@@ -36,6 +38,11 @@ export function ProductionHero({
     const tags = [production.uitdatabankTheme, production.uitdatabankType].filter(
         (tag): tag is string => Boolean(tag)
     );
+
+    const [spotlightOpen, setSpotlightOpen] = useState(false);
+    const spotlightItems: SpotlightItem[] = coverImage
+        ? [{ kind: "media", media: coverImage }]
+        : [];
 
     return (
         <div className="border-foreground animate-in fade-in slide-in-from-bottom-2 fill-mode-both grid grid-cols-1 gap-0 border-b-2 duration-500 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_480px]">
@@ -112,21 +119,37 @@ export function ProductionHero({
             {/* Right side (Image) */}
             <div className="relative order-1 min-h-[300px] overflow-hidden bg-[#ccc6bc] lg:order-2 lg:min-h-auto">
                 {coverImage?.url ? (
-                    <Image
-                        src={coverImage.url}
-                        alt={coverAlt}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 1024px) 100vw, 480px"
-                        priority
-                    />
+                    <button
+                        type="button"
+                        onClick={() => setSpotlightOpen(true)}
+                        className="absolute inset-0 cursor-zoom-in"
+                        aria-label={coverAlt || "Open cover image"}
+                    >
+                        <Image
+                            src={coverImage.url}
+                            alt={coverAlt}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 1024px) 100vw, 480px"
+                            priority
+                        />
+                    </button>
                 ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
                 )}
-                <div className="bg-foreground/70 text-background/80 absolute right-0 bottom-0 left-0 p-3 font-mono text-[8px] tracking-[1.2px] uppercase">
+                <div className="bg-foreground/70 text-background/80 pointer-events-none absolute right-0 bottom-0 left-0 p-3 font-mono text-[8px] tracking-[1.2px] uppercase">
                     © {coverImage?.creditNl ?? t("imageCaptionFallback")}
                 </div>
             </div>
+            {spotlightItems.length > 0 && (
+                <ImageSpotlight
+                    items={spotlightItems}
+                    index={0}
+                    open={spotlightOpen}
+                    onOpenChange={setSpotlightOpen}
+                    eyebrow={t("eyebrow")}
+                />
+            )}
         </div>
     );
 }
