@@ -45,11 +45,11 @@ impl<'a> HallRepo<'a> {
 
             query
                 .push_bind(&search_q)
-                .push(" <<-> full_search_text AS distance_score ")
+                .push(" <<-> h.name AS distance_score ")
                 .push("FROM halls h ")
                 .push("WHERE ")
                 .push_bind(&search_q)
-                .push(" <% full_search_text ");
+                .push(" <% h.name ");
 
             if let Some(cursor) = cursor
                 && let Some(score) = cursor.score
@@ -57,13 +57,13 @@ impl<'a> HallRepo<'a> {
                 query
                     .push("AND ((")
                     .push_bind(&search_q)
-                    .push(" <<-> full_search_text) > ")
+                    .push(" <<-> h.name) > ")
                     .push_bind(score);
 
                 query
                     .push(" OR ((")
                     .push_bind(&search_q)
-                    .push(" <<-> full_search_text) = ")
+                    .push(" <<-> h.name) = ")
                     .push_bind(score)
                     .push(" AND id < ")
                     .push_bind(cursor.id)
