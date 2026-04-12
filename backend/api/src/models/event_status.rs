@@ -6,17 +6,23 @@ use crate::models::localized_text::ApiLocalizedText;
 pub struct ApiEventStatus {
     #[serde(rename = "@id")]
     pub id: String,
-    pub short_name: String,
-    pub name: ApiLocalizedText,
+    #[serde(default)]
+    pub short_name: Option<String>,
+    #[serde(default)]
+    pub name: Option<ApiLocalizedText>,
 }
 
 impl ApiEventStatus {
     pub fn display(&self) -> String {
-        if !self.short_name.is_empty() {
-            self.short_name.clone()
-        } else {
-            self.name.nl.clone().unwrap_or_default()
+        if let Some(s) = self.short_name.as_ref()
+            && !s.is_empty()
+        {
+            return s.clone();
         }
+        self.name
+            .as_ref()
+            .and_then(|n| n.nl.clone())
+            .unwrap_or_default()
     }
 }
 

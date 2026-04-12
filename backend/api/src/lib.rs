@@ -91,7 +91,7 @@ impl ApiImporter {
             .await
             .unwrap_or_else(|e| {
                 warn!("error when fetching last api update timestamp: {e}. updating all.");
-                "2000-01-01T00:00:00Z".into()
+                "1900-01-01T00:00:00Z".into()
             })
     }
 
@@ -287,7 +287,9 @@ impl ApiImporter {
         // lookup for the rest of this import run. Without this the status
         // column ends up storing the raw IRI like "/api/v1/events/statuses/1".
         let mut status_map: HashMap<String, String> = HashMap::new();
-        let mut statuses = pin!(self.paginated_collection::<ApiEventStatus>("/events/statuses", ""));
+        let mut statuses = pin!(
+            self.paginated_collection::<ApiEventStatus>("/events/statuses", "2000-01-01T00:00:00Z")
+        );
         while let Some(batch_result) = statuses.next().await {
             for s in batch_result? {
                 status_map.insert(s.id.clone(), s.display());
