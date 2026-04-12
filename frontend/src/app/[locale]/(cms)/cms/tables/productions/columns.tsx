@@ -6,7 +6,7 @@ import { SquarePen } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
-import { LocalizedText, resolveLocalized } from "../localized-text";
+import { LocalizedText, resolveLocalized } from "@/components/ui/localized-text";
 import type { FieldDef } from "../edit-sheet";
 import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
 import { Action, ActionDisplay } from "@/types/cms/actions";
@@ -148,6 +148,11 @@ export function makeProductionColumns(options: {
     const { onEdit, t, locale, onOpenSpotlight } = options;
     const otherLocale = locale === "nl" ? "en" : "nl";
 
+    const translationPair = (row: Production, field: "title" | "artist") => ({
+        primary: row.translations.find((tr) => tr.languageCode === locale)?.[field] ?? "",
+        fallback: row.translations.find((tr) => tr.languageCode === otherLocale)?.[field] ?? "",
+    });
+
     const actions: Action<Production>[] = [
         {
             key: "edit",
@@ -236,18 +241,11 @@ export function makeProductionColumns(options: {
             id: "title",
             header: "Title",
             accessorFn: (row) => {
-                const primary =
-                    row.translations.find((t) => t.languageCode === locale)?.title ?? "";
-                const fallback =
-                    row.translations.find((t) => t.languageCode === otherLocale)?.title ?? "";
+                const { primary, fallback } = translationPair(row, "title");
                 return resolveLocalized(primary, fallback).value;
             },
             cell: ({ row }) => {
-                const primary =
-                    row.original.translations.find((t) => t.languageCode === locale)?.title ?? "";
-                const fallback =
-                    row.original.translations.find((t) => t.languageCode === otherLocale)?.title ??
-                    "";
+                const { primary, fallback } = translationPair(row.original, "title");
                 return (
                     <LocalizedText
                         primary={primary}
@@ -261,18 +259,11 @@ export function makeProductionColumns(options: {
             id: "artist",
             header: "Artist",
             accessorFn: (row) => {
-                const primary =
-                    row.translations.find((t) => t.languageCode === locale)?.artist ?? "";
-                const fallback =
-                    row.translations.find((t) => t.languageCode === otherLocale)?.artist ?? "";
+                const { primary, fallback } = translationPair(row, "artist");
                 return resolveLocalized(primary, fallback).value;
             },
             cell: ({ row }) => {
-                const primary =
-                    row.original.translations.find((t) => t.languageCode === locale)?.artist ?? "";
-                const fallback =
-                    row.original.translations.find((t) => t.languageCode === otherLocale)?.artist ??
-                    "";
+                const { primary, fallback } = translationPair(row.original, "artist");
                 return (
                     <LocalizedText
                         primary={primary}

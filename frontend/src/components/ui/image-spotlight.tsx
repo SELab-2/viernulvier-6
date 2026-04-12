@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { useLocale } from "next-intl";
+import Image from "next/image";
+import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { resolveLocalized } from "@/app/[locale]/(cms)/cms/tables/localized-text";
+import { resolveLocalized } from "@/components/ui/localized-text";
 import type { Media } from "@/types/models/media.types";
 
 export type SpotlightItem =
@@ -108,6 +109,7 @@ export function ImageSpotlight({
     eyebrow,
 }: ImageSpotlightProps) {
     const locale = useLocale();
+    const t = useTranslations("ImageSpotlight");
     const count = items.length;
     const safeIndex = count > 0 ? Math.min(Math.max(index, 0), count - 1) : 0;
     const current = items[safeIndex];
@@ -146,7 +148,7 @@ export function ImageSpotlight({
 
     const addedLabel = resolved.addedAt ? formatAdded(resolved.addedAt, locale) : "";
     const dims = resolved.width && resolved.height ? `${resolved.width}×${resolved.height}` : "";
-    const eyebrowLabel = eyebrow ?? "Archive";
+    const eyebrowLabel = eyebrow ?? t("archive");
     const srTitle = resolved.alt || resolved.caption || eyebrowLabel;
 
     return (
@@ -171,10 +173,10 @@ export function ImageSpotlight({
 
                     <DialogPrimitive.Close
                         className={cn(EYEBROW_BTN, "absolute top-6 right-6 md:top-10 md:right-10")}
-                        aria-label="Close"
+                        aria-label={t("close")}
                     >
                         <X className="h-3.5 w-3.5" />
-                        Close
+                        {t("close")}
                     </DialogPrimitive.Close>
 
                     {hasMany && (
@@ -186,10 +188,10 @@ export function ImageSpotlight({
                                     EYEBROW_BTN,
                                     "absolute top-1/2 left-6 -translate-y-1/2 md:left-10"
                                 )}
-                                aria-label="Previous image"
+                                aria-label={t("previousImage")}
                             >
                                 <ChevronLeft className="h-3.5 w-3.5" />
-                                Prev
+                                {t("previous")}
                             </button>
                             <button
                                 type="button"
@@ -198,20 +200,23 @@ export function ImageSpotlight({
                                     EYEBROW_BTN,
                                     "absolute top-1/2 right-6 -translate-y-1/2 md:right-10"
                                 )}
-                                aria-label="Next image"
+                                aria-label={t("nextImage")}
                             >
-                                Next
+                                {t("next")}
                                 <ChevronRight className="h-3.5 w-3.5" />
                             </button>
                         </>
                     )}
 
-                    <figure className="flex max-h-[75vh] min-h-0 w-full max-w-[1400px] items-center justify-center">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                    <figure className="relative flex max-h-[75vh] min-h-0 w-full max-w-[1400px] flex-1 items-center justify-center">
+                        <Image
                             src={resolved.src}
                             alt={resolved.alt}
-                            className="max-h-full max-w-full object-contain"
+                            fill
+                            sizes="(max-width: 1400px) 100vw, 1400px"
+                            className="object-contain"
+                            priority
+                            unoptimized={resolved.src.startsWith("data:")}
                         />
                     </figure>
 

@@ -34,7 +34,6 @@ The sidebar (`CmsSidebar`) reads `usePathname` to set the active item and uses `
 data-table.tsx          reusable TanStack Table wrapper, handles expand/collapse
 actions-column.tsx      factory: makeActionsColumn({ actions })
 edit-sheet.tsx          generic EditSheet<TData> + FieldDef<TData> type
-localized-text.tsx      LocalizedText + resolveLocalized for locale-aware cells
 selection-toolbar.tsx   newspaper-styled bulk selection toolbar
 
 productions/
@@ -81,6 +80,6 @@ Adding a new field type means adding a case to `FieldRow` in `edit-sheet.tsx`.
 
 ## Locale-aware columns
 
-Tables backed by entities with per-locale fields (e.g. `Production.translations`, `CollectionRow.{titleNl,titleEn}`) render a single `Title`/`Description` column resolved against the active `useLocale()`. When the primary-locale value is empty, the column falls back to the other locale and renders it in muted italic via `LocalizedText` (`tables/localized-text.tsx`). Factories receive `locale: string` in their options.
+Tables backed by entities with per-locale fields (e.g. `Production.translations`, `CollectionRow.{titleNl,titleEn}`) render a single `Title`/`Description` column resolved against the active `useLocale()`. When the primary-locale value is empty, the column falls back to the other locale and renders it in muted italic via `LocalizedText` (`@/components/ui/localized-text`). Factories receive `locale: string` in their options.
 
 The Productions table also renders a leading 40×40 cover preview column using `coverImageUrl` with a `bg-muted` placeholder when null.

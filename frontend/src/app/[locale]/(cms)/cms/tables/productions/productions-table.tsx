@@ -284,7 +284,7 @@ export function ProductionsTable() {
                 onOpenChange={(open) => {
                     if (!open) setSpotlight(null);
                 }}
-                eyebrow="Production"
+                eyebrow={t("eyebrow")}
             />
         </div>
     );

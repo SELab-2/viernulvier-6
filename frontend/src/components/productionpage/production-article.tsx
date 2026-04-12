@@ -203,7 +203,7 @@ export function ProductionArticle({
                                     setSpotlightOpen(true);
                                 }}
                                 className="group relative aspect-[4/3] cursor-zoom-in overflow-hidden bg-[#ccc6bc]"
-                                aria-label={alt || "Open image"}
+                                aria-label={alt || t("openGalleryImage")}
                             >
                                 <Image
                                     src={m.url}

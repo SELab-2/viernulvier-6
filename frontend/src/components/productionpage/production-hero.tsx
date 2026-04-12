@@ -33,6 +33,15 @@ export function ProductionHero({
               : coverImage?.altTextEn) ??
         title ??
         "";
+    const credit =
+        (locale === "nl"
+            ? coverImage?.creditNl
+            : locale === "fr"
+              ? coverImage?.creditFr
+              : coverImage?.creditEn) ??
+        coverImage?.creditNl ??
+        coverImage?.creditEn ??
+        null;
 
     // tags
     const tags = [production.uitdatabankTheme, production.uitdatabankType].filter(
@@ -123,7 +132,7 @@ export function ProductionHero({
                         type="button"
                         onClick={() => setSpotlightOpen(true)}
                         className="absolute inset-0 cursor-zoom-in"
-                        aria-label={coverAlt || "Open cover image"}
+                        aria-label={coverAlt || t("openCoverImage")}
                     >
                         <Image
                             src={coverImage.url}
@@ -138,7 +147,7 @@ export function ProductionHero({
                     <div className="absolute inset-0 bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
                 )}
                 <div className="bg-foreground/70 text-background/80 pointer-events-none absolute right-0 bottom-0 left-0 p-3 font-mono text-[8px] tracking-[1.2px] uppercase">
-                    © {coverImage?.creditNl ?? t("imageCaptionFallback")}
+                    © {credit ?? t("imageCaptionFallback")}
                 </div>
             </div>
             {spotlightItems.length > 0 && (

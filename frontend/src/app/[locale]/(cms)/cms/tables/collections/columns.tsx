@@ -5,7 +5,7 @@ import { ExternalLink, Link2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
-import { LocalizedText, resolveLocalized } from "../localized-text";
+import { LocalizedText, resolveLocalized } from "@/components/ui/localized-text";
 import { Action, ActionVariant } from "@/types/cms/actions";
 import { CollectionRow } from "@/types/models/collection.types";
 
@@ -17,6 +17,15 @@ export function makeCollectionColumns(options: {
 }): ColumnDef<CollectionRow>[] {
     const { onDelete, onOpen, locale, t } = options;
     const isEn = locale === "en";
+
+    const fieldPair = (row: CollectionRow, field: "title" | "description") => {
+        const nl = row[`${field}Nl` as const] as string;
+        const en = row[`${field}En` as const] as string;
+        return {
+            primary: isEn ? en : nl,
+            fallback: isEn ? nl : en,
+        };
+    };
 
     const formatter = new Intl.DateTimeFormat(undefined, {
         year: "numeric",
@@ -63,13 +72,11 @@ export function makeCollectionColumns(options: {
             id: "title",
             header: "Title",
             accessorFn: (row) => {
-                const primary = isEn ? row.titleEn : row.titleNl;
-                const fallback = isEn ? row.titleNl : row.titleEn;
+                const { primary, fallback } = fieldPair(row, "title");
                 return resolveLocalized(primary, fallback).value;
             },
             cell: ({ row }) => {
-                const primary = isEn ? row.original.titleEn : row.original.titleNl;
-                const fallback = isEn ? row.original.titleNl : row.original.titleEn;
+                const { primary, fallback } = fieldPair(row.original, "title");
                 return (
                     <LocalizedText
                         primary={primary}
@@ -83,13 +90,11 @@ export function makeCollectionColumns(options: {
             id: "description",
             header: "Description",
             accessorFn: (row) => {
-                const primary = isEn ? row.descriptionEn : row.descriptionNl;
-                const fallback = isEn ? row.descriptionNl : row.descriptionEn;
+                const { primary, fallback } = fieldPair(row, "description");
                 return resolveLocalized(primary, fallback).value;
             },
             cell: ({ row }) => {
-                const primary = isEn ? row.original.descriptionEn : row.original.descriptionNl;
-                const fallback = isEn ? row.original.descriptionNl : row.original.descriptionEn;
+                const { primary, fallback } = fieldPair(row.original, "description");
                 return (
                     <LocalizedText
                         primary={primary}
