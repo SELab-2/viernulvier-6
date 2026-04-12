@@ -17,6 +17,7 @@ const location: components["schemas"]["LocationPayload"] = {
     phone_2: null,
     is_owned_by_viernulvier: true,
     uitdatabank_id: "udb-main",
+    translations: [],
 };
 
 export const locationHandlers = [

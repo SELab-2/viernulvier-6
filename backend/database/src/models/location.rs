@@ -22,3 +22,25 @@ pub struct Location {
     pub uitdatabank_id: Option<String>,
     pub slug: Option<String>,
 }
+
+/// A single row from `location_translations`.
+#[derive(Debug, sqlx::FromRow, PartialEq, Clone)]
+pub struct LocationTranslation {
+    pub location_id: Uuid,
+    pub language_code: String,
+    pub description: Option<String>,
+    pub history: Option<String>,
+}
+
+/// Per-language content to insert or upsert — no location_id (supplied by the repo).
+pub struct LocationTranslationData {
+    pub language_code: String,
+    pub description: Option<String>,
+    pub history: Option<String>,
+}
+
+/// Location with all its translations — the standard return type for repo reads.
+pub struct LocationWithTranslations {
+    pub location: Location,
+    pub translations: Vec<LocationTranslation>,
+}

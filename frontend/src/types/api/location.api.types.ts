@@ -14,3 +14,4 @@ export type LocationUpdateRequest = components["schemas"]["LocationPayload"];
 // Convenience aliases - these reference the operation-specific types
 export type LocationResponse = GetLocationByIdResponse;
 export type PaginatedLocationResponse = GetAllLocationsResponse;
+export type LocationTranslationResponse = components["schemas"]["LocationTranslationPayload"];

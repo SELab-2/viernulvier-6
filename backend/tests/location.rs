@@ -74,6 +74,30 @@ async fn get_one_success(db: PgPool) {
     let data: LocationPayload = response.into_struct().await;
     assert_eq!(data.id, target_id);
     assert_eq!(data.name.as_deref(), Some("De Vooruit"));
+    assert_eq!(data.translations.len(), 2);
+}
+
+#[sqlx::test(fixtures("locations"))]
+#[test_log::test]
+async fn get_by_slug_success(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/locations/slug/de-vooruit").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: LocationPayload = response.into_struct().await;
+    assert_eq!(data.name.as_deref(), Some("De Vooruit"));
+    assert_eq!(data.slug.as_deref(), Some("de-vooruit"));
+    assert_eq!(data.translations.len(), 2);
+}
+
+#[sqlx::test(fixtures("locations"))]
+#[test_log::test]
+async fn get_by_slug_not_found(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/locations/slug/nonexistent").await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
 #[sqlx::test]
@@ -116,7 +140,8 @@ async fn put_success(db: PgPool) {
     let update_payload: LocationPayload = serde_json::from_value(json!({
         "id": target_id,
         "name": "Bijgewerkte Locatie",
-        "city": "Gent"
+        "city": "Gent",
+        "translations": []
     }))
     .expect("Failed to deserialize mock LocationPayload");
 
@@ -138,7 +163,8 @@ async fn put_not_found(db: PgPool) {
     let app = TestRouter::as_editor(db).await;
 
     let missing_location: LocationPayload = serde_json::from_value(json!({
-        "id": Uuid::nil()
+        "id": Uuid::nil(),
+        "translations": []
     }))
     .expect("Failed to deserialize mock LocationPayload");
 
@@ -190,7 +216,8 @@ fn mock_post_payload() -> LocationPostPayload {
     serde_json::from_value(json!({
         "name": "Test Locatie",
         "city": "Gent",
-        "country": "Belgium"
+        "country": "Belgium",
+        "translations": []
     }))
     .expect("Failed to deserialize mock LocationPostPayload")
 }

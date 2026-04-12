@@ -208,6 +208,8 @@ describe("ArchiveSidebar component", () => {
                 phone2: null,
                 isOwnedByViernulvier: null,
                 uitdatabankId: null,
+                slug: null,
+                translations: [],
             },
         ];
         renderWithIntl(<ArchiveSidebar locations={locations} />);

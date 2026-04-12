@@ -360,6 +360,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/locations/slug/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get location by slug */
+        get: operations["get_location_by_slug"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/locations/{id}": {
         parameters: {
             query?: never;
@@ -1126,6 +1143,7 @@ export interface components {
             /** Format: int32 */
             source_id?: number | null;
             street?: string | null;
+            translations: components["schemas"]["LocationTranslationPayload"][];
             uitdatabank_id?: string | null;
         };
         LocationPostPayload: {
@@ -1142,7 +1160,14 @@ export interface components {
             /** Format: int32 */
             source_id?: number | null;
             street?: string | null;
+            translations: components["schemas"]["LocationTranslationPayload"][];
             uitdatabank_id?: string | null;
+        };
+        /** @description The per-language content for a location. */
+        LocationTranslationPayload: {
+            description?: string | null;
+            history?: string | null;
+            language_code: string;
         };
         LoginRequest: {
             email: string;
@@ -1275,6 +1300,7 @@ export interface components {
                 /** Format: int32 */
                 source_id?: number | null;
                 street?: string | null;
+                translations: components["schemas"]["LocationTranslationPayload"][];
                 uitdatabank_id?: string | null;
             }[];
             next_cursor?: string | null;
@@ -2617,6 +2643,36 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
+            };
+        };
+    };
+    get_location_by_slug: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Location slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocationPayload"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

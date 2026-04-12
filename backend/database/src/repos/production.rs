@@ -255,12 +255,17 @@ impl<'a> ProductionRepo<'a> {
         .await?)
     }
 
+    /// Insert or update translations for a production. Clears all translations when the list is empty.
     async fn upsert_translations(
         &self,
         production_id: Uuid,
         translations: &[ProductionTranslationData],
     ) -> Result<(), DatabaseError> {
         if translations.is_empty() {
+            sqlx::query("DELETE FROM production_translations WHERE production_id = $1")
+                .bind(production_id)
+                .execute(self.db)
+                .await?;
             return Ok(());
         }
 
