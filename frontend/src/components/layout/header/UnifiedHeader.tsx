@@ -76,6 +76,7 @@ export function UnifiedHeader({
     const { data: user } = useUser();
     const isHome = pathname === "/" || pathname === "";
     const isSearch = pathname.startsWith("/search");
+    const isArticles = pathname.startsWith("/articles");
     const isCms = pathname.startsWith("/cms") || pathname.startsWith("/admin");
 
     const navLinkClass = (active: boolean) =>
@@ -160,6 +161,9 @@ export function UnifiedHeader({
                     <I18nLink href="/search" className={navLinkClass(isSearch)}>
                         Archief
                     </I18nLink>
+                    <I18nLink href="/articles" className={navLinkClass(isArticles)}>
+                        Artikels
+                    </I18nLink>
                     {user && (
                         <>
                             <span className="bg-border h-3 w-px" />
@@ -215,6 +219,13 @@ export function UnifiedHeader({
                         className={navLinkClass(isSearch)}
                     >
                         Archief
+                    </I18nLink>
+                    <I18nLink
+                        href="/articles"
+                        onClick={() => setMenuOpen(false)}
+                        className={navLinkClass(isArticles)}
+                    >
+                        Artikels
                     </I18nLink>
                     {user && (
                         <>
