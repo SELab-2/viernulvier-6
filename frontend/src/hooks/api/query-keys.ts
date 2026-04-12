@@ -15,6 +15,7 @@ export const queryKeys = {
     locations: {
         all: (pagination?: PaginationParams) => buildQueryKey(["locations"], pagination),
         detail: (id: string) => ["locations", id] as const,
+        bySlug: (slug: string) => ["locations", "slug", slug] as const,
     },
     productions: {
         all: (pagination?: PaginationParams) => buildQueryKey(["productions"], pagination),
