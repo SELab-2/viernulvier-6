@@ -263,7 +263,7 @@ pub async fn logout(
         .build();
 
     let refresh_cookie = Cookie::build(("refresh_token", ""))
-        .path("/refresh")
+        .path("/auth/refresh")
         .max_age(Duration::ZERO)
         .build();
 
