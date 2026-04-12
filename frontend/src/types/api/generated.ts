@@ -712,6 +712,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tags/{entity_type}/{entity_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get all tags on an entity, grouped by facet */
+        get: operations["get_entity_tags"];
+        /** @description Replace all tags on an entity */
+        put: operations["replace_entity_tags"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/taxonomy/facets": {
         parameters: {
             query?: never;
@@ -959,6 +977,18 @@ export interface components {
             email: string;
             id: string;
             role: components["schemas"]["UserRole"];
+        };
+        EntityFacetResponse: {
+            slug: string;
+            tags: components["schemas"]["EntityTagResponse"][];
+            translations: components["schemas"]["FacetTranslationPayload"][];
+        };
+        EntityTagResponse: {
+            inherited: boolean;
+            slug: string;
+            /** Format: int32 */
+            sort_order: number;
+            translations: components["schemas"]["TagTranslationPayload"][];
         };
         /** @enum {string} */
         EntityType: "production" | "artist" | "article" | "media" | "location" | "event" | "series";
@@ -1388,6 +1418,9 @@ export interface components {
             missing_in_db: string[];
             missing_in_s3: string[];
             s3_key_count: number;
+        };
+        ReplaceTagsRequest: {
+            tag_slugs: string[];
         };
         SeriesPayload: {
             /** Format: date-time */
@@ -3657,6 +3690,90 @@ export interface operations {
                 };
             };
             /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_entity_tags: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Entity type */
+                entity_type: components["schemas"]["EntityType"];
+                /** @description Entity UUID */
+                entity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntityFacetResponse"][];
+                };
+            };
+            /** @description Entity type does not support tagging */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    replace_entity_tags: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Entity type */
+                entity_type: components["schemas"]["EntityType"];
+                /** @description Entity UUID */
+                entity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceTagsRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntityFacetResponse"][];
+                };
+            };
+            /** @description Invalid tag slug or non-taggable entity type */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Entity not found */
             404: {
                 headers: {
                     [name: string]: unknown;
