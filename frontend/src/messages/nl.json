@@ -8,7 +8,15 @@
     },
     "Header": {
         "logout": "Uitloggen",
-        "loggingOut": "..."
+        "loggingOut": "...",
+        "signOut": "Uitloggen",
+        "nav": {
+            "home": "Home",
+            "archive": "Archief",
+            "articles": "Artikels",
+            "cms": "CMS",
+            "admin": "Admin"
+        }
     },
     "LocaleSwitcher": {
         "label": "Taal selecteren"

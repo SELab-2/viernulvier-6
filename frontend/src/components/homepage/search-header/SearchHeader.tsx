@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Search, Menu, X } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { Link, usePathname } from "@/i18n/routing";
 import { ThemeSwitcher } from "@/components/shared/theme-switcher";
@@ -25,6 +25,7 @@ export function SearchHeader({
     const [menuOpen, setMenuOpen] = useState(false);
     const pathname = usePathname();
     const locale = useLocale();
+    const t = useTranslations("Header.nav");
     const isHome = pathname === "/" || pathname === "";
     const isSearch = pathname.startsWith("/search");
     const isArticles = pathname.startsWith("/articles");
@@ -106,13 +107,13 @@ export function SearchHeader({
                 {/* Nav + utilities */}
                 <div className="border-muted/30 ml-6 flex shrink-0 items-center gap-4 border-l pl-6 sm:ml-7 sm:gap-5 sm:pl-7">
                     <Link href="/" className={navLinkClass(isHome)}>
-                        Home
+                        {t("home")}
                     </Link>
                     <Link href="/search" className={navLinkClass(isSearch)}>
-                        Archief
+                        {t("archive")}
                     </Link>
                     <Link href="/articles" className={navLinkClass(isArticles)}>
-                        Artikels
+                        {t("articles")}
                     </Link>
                     <span className="bg-border h-3 w-px" />
                     <ThemeSwitcher />
@@ -147,21 +148,21 @@ export function SearchHeader({
                         onClick={() => setMenuOpen(false)}
                         className={navLinkClass(isHome)}
                     >
-                        Home
+                        {t("home")}
                     </Link>
                     <Link
                         href="/search"
                         onClick={() => setMenuOpen(false)}
                         className={navLinkClass(isSearch)}
                     >
-                        Archief
+                        {t("archive")}
                     </Link>
                     <Link
                         href="/articles"
                         onClick={() => setMenuOpen(false)}
                         className={navLinkClass(isArticles)}
                     >
-                        Artikels
+                        {t("articles")}
                     </Link>
                 </nav>
             )}
