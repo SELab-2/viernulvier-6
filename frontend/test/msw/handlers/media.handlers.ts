@@ -8,6 +8,7 @@ const media: components["schemas"]["MediaPayload"] = {
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-02T00:00:00Z",
     url: "https://s3.example.com/media/test.jpg",
+    s3_key: "media/test.jpg",
     mime_type: "image/jpeg",
     file_size: 120000,
     width: 1920,

@@ -4,11 +4,19 @@ import { useCallback, useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { ImageIcon, ImagePlusIcon, StarIcon, Trash2Icon, XIcon } from "lucide-react";
+import { ImageIcon, ImagePlusIcon, PencilIcon, StarIcon, Trash2Icon, XIcon } from "lucide-react";
 
-import { useGetEntityMedia, useUnlinkMedia, useUploadMedia } from "@/hooks/api";
+import {
+    useAttachMedia,
+    useGetEntityMedia,
+    useUnlinkMedia,
+    useUpdateMedia,
+    useUploadMedia,
+} from "@/hooks/api";
 import type { Media } from "@/types/models/media.types";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -48,7 +56,6 @@ const groupByRole = (media: Media[]): Record<MediaRole, Media[]> => {
         if (role && role in groups) {
             groups[role] = [...groups[role], item];
         } else {
-            // Media without a role goes to gallery
             groups.gallery = [...groups.gallery, item];
         }
     }
@@ -72,8 +79,11 @@ export function ProductionMediaSheet({
 
     const unlinkMedia = useUnlinkMedia();
     const uploadMedia = useUploadMedia();
+    const attachMedia = useAttachMedia();
+    const updateMedia = useUpdateMedia();
 
     const [pickerRole, setPickerRole] = useState<MediaRole | null>(null);
+    const [editingMedia, setEditingMedia] = useState<Media | null>(null);
 
     const grouped = groupByRole(entityMedia);
 
@@ -86,17 +96,46 @@ export function ProductionMediaSheet({
                     mediaId,
                 });
                 toast.success(t("detachSuccess"));
+                if (editingMedia?.id === mediaId) setEditingMedia(null);
             } catch {
                 toast.error(t("detachError"));
             }
         },
-        [unlinkMedia, productionId, t]
+        [unlinkMedia, productionId, t, editingMedia]
     );
 
-    const handlePickerSelect = useCallback(() => {
-        setPickerRole(null);
-        toast.success(t("attachSuccess"));
-    }, [t]);
+    const handlePickerSelect = useCallback(
+        async (media: Media) => {
+            if (!pickerRole) return;
+            try {
+                await attachMedia.mutateAsync({
+                    entityType: "production",
+                    entityId: productionId,
+                    input: {
+                        s3Key: media.s3Key,
+                        mimeType: media.mimeType,
+                        role: pickerRole,
+                        isCoverImage: pickerRole === "cover",
+                        altTextNl: media.altTextNl,
+                        altTextEn: media.altTextEn,
+                        altTextFr: media.altTextFr,
+                        creditNl: media.creditNl,
+                        creditEn: media.creditEn,
+                        creditFr: media.creditFr,
+                        fileSize: media.fileSize,
+                        width: media.width,
+                        height: media.height,
+                        checksum: media.checksum,
+                    },
+                });
+                toast.success(t("attachSuccess"));
+            } catch {
+                toast.error(t("attachError"));
+            }
+            setPickerRole(null);
+        },
+        [attachMedia, productionId, pickerRole, t]
+    );
 
     const handleUploadForRole = useCallback(
         async (file: File, role: MediaRole) => {
@@ -116,6 +155,19 @@ export function ProductionMediaSheet({
             }
         },
         [uploadMedia, productionId, t]
+    );
+
+    const handleSaveMetadata = useCallback(
+        async (media: Media) => {
+            try {
+                await updateMedia.mutateAsync(media);
+                toast.success(t("metadataSaved"));
+                setEditingMedia(null);
+            } catch {
+                toast.error(t("metadataError"));
+            }
+        },
+        [updateMedia, t]
     );
 
     return (
@@ -146,9 +198,19 @@ export function ProductionMediaSheet({
                                     onDetach={handleDetach}
                                     onUpload={(file) => handleUploadForRole(file, role)}
                                     onOpenPicker={() => setPickerRole(role)}
+                                    onEdit={setEditingMedia}
                                     isUploading={uploadMedia.isPending}
                                 />
                             ))
+                        )}
+
+                        {editingMedia && (
+                            <MediaMetadataForm
+                                media={editingMedia}
+                                onSave={handleSaveMetadata}
+                                onCancel={() => setEditingMedia(null)}
+                                isSaving={updateMedia.isPending}
+                            />
                         )}
                     </div>
                 </SheetContent>
@@ -177,6 +239,7 @@ type RoleSectionProps = {
     onDetach: (mediaId: string) => void;
     onUpload: (file: File) => void;
     onOpenPicker: () => void;
+    onEdit: (media: Media) => void;
     isUploading: boolean;
 };
 
@@ -192,6 +255,7 @@ function RoleSection({
     onDetach,
     onUpload,
     onOpenPicker,
+    onEdit,
     isUploading,
 }: RoleSectionProps) {
     const t = useTranslations("Cms.ProductionMedia");
@@ -256,11 +320,16 @@ function RoleSection({
                     <p className="text-muted-foreground text-xs">{t("empty")}</p>
                 </div>
             ) : isSingle ? (
-                <SingleMediaCard media={media[0]} onDetach={onDetach} />
+                <SingleMediaCard media={media[0]} onDetach={onDetach} onEdit={onEdit} />
             ) : (
                 <div className="grid grid-cols-3 gap-2">
                     {media.map((item) => (
-                        <MediaThumbnail key={item.id} media={item} onDetach={onDetach} />
+                        <MediaThumbnail
+                            key={item.id}
+                            media={item}
+                            onDetach={onDetach}
+                            onEdit={onEdit}
+                        />
                     ))}
                 </div>
             )}
@@ -273,9 +342,10 @@ function RoleSection({
 type SingleMediaCardProps = {
     media: Media;
     onDetach: (mediaId: string) => void;
+    onEdit: (media: Media) => void;
 };
 
-function SingleMediaCard({ media, onDetach }: SingleMediaCardProps) {
+function SingleMediaCard({ media, onDetach, onEdit }: SingleMediaCardProps) {
     const t = useTranslations("Cms.ProductionMedia");
     const url = mediaThumbnailUrl(media);
 
@@ -308,15 +378,26 @@ function SingleMediaCard({ media, onDetach }: SingleMediaCardProps) {
                         <p className="text-muted-foreground text-[10px]">{media.mimeType}</p>
                     )}
                 </div>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive hover:text-destructive h-7 shrink-0"
-                    onClick={() => onDetach(media.id)}
-                    aria-label={t("detach")}
-                >
-                    <Trash2Icon className="size-3.5" />
-                </Button>
+                <div className="flex shrink-0 gap-1">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7"
+                        onClick={() => onEdit(media)}
+                        aria-label={t("editMetadata")}
+                    >
+                        <PencilIcon className="size-3.5" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive h-7"
+                        onClick={() => onDetach(media.id)}
+                        aria-label={t("detach")}
+                    >
+                        <Trash2Icon className="size-3.5" />
+                    </Button>
+                </div>
             </div>
         </div>
     );
@@ -327,9 +408,10 @@ function SingleMediaCard({ media, onDetach }: SingleMediaCardProps) {
 type MediaThumbnailProps = {
     media: Media;
     onDetach: (mediaId: string) => void;
+    onEdit: (media: Media) => void;
 };
 
-function MediaThumbnail({ media, onDetach }: MediaThumbnailProps) {
+function MediaThumbnail({ media, onDetach, onEdit }: MediaThumbnailProps) {
     const t = useTranslations("Cms.ProductionMedia");
     const url = mediaThumbnailUrl(media);
 
@@ -348,14 +430,129 @@ function MediaThumbnail({ media, onDetach }: MediaThumbnailProps) {
                     <ImageIcon className="text-muted-foreground size-5" />
                 </div>
             )}
-            <button
-                type="button"
-                className="absolute top-1 right-1 hidden rounded-full bg-red-600 p-1 text-white group-hover:block"
-                onClick={() => onDetach(media.id)}
-                aria-label={t("detach")}
-            >
-                <XIcon className="size-3" />
-            </button>
+            <div className="absolute top-1 right-1 hidden gap-1 group-hover:flex">
+                <button
+                    type="button"
+                    className="rounded-full bg-black/60 p-1 text-white hover:bg-black/80"
+                    onClick={() => onEdit(media)}
+                    aria-label={t("editMetadata")}
+                >
+                    <PencilIcon className="size-3" />
+                </button>
+                <button
+                    type="button"
+                    className="rounded-full bg-red-600 p-1 text-white hover:bg-red-700"
+                    onClick={() => onDetach(media.id)}
+                    aria-label={t("detach")}
+                >
+                    <XIcon className="size-3" />
+                </button>
+            </div>
+        </div>
+    );
+}
+
+// ── MediaMetadataForm ───────────────────────────────────────────────
+
+type MediaMetadataFormProps = {
+    media: Media;
+    onSave: (media: Media) => void;
+    onCancel: () => void;
+    isSaving: boolean;
+};
+
+function MediaMetadataForm({ media, onSave, onCancel, isSaving }: MediaMetadataFormProps) {
+    const t = useTranslations("Cms.ProductionMedia");
+    const [values, setValues] = useState({ ...media });
+
+    const update = <K extends keyof Media>(key: K, value: Media[K]) => {
+        setValues((prev) => ({ ...prev, [key]: value }));
+    };
+
+    return (
+        <div className="border-foreground/10 space-y-4 rounded border p-4">
+            <div className="flex items-center justify-between">
+                <h3 className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
+                    {t("editMetadata")}
+                </h3>
+                <button
+                    type="button"
+                    onClick={onCancel}
+                    className="text-muted-foreground hover:text-foreground"
+                >
+                    <XIcon className="size-4" />
+                </button>
+            </div>
+
+            {media.url && (
+                <div className="relative mx-auto aspect-video w-40 overflow-hidden rounded">
+                    <Image src={media.url} alt="" fill className="object-cover" sizes="160px" />
+                </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+                <MetadataField
+                    label={t("altTextNl")}
+                    value={values.altTextNl ?? ""}
+                    onChange={(v) => update("altTextNl", v || null)}
+                />
+                <MetadataField
+                    label={t("altTextEn")}
+                    value={values.altTextEn ?? ""}
+                    onChange={(v) => update("altTextEn", v || null)}
+                />
+                <MetadataField
+                    label={t("altTextFr")}
+                    value={values.altTextFr ?? ""}
+                    onChange={(v) => update("altTextFr", v || null)}
+                />
+                <MetadataField
+                    label={t("creditNl")}
+                    value={values.creditNl ?? ""}
+                    onChange={(v) => update("creditNl", v || null)}
+                />
+                <MetadataField
+                    label={t("creditEn")}
+                    value={values.creditEn ?? ""}
+                    onChange={(v) => update("creditEn", v || null)}
+                />
+                <MetadataField
+                    label={t("creditFr")}
+                    value={values.creditFr ?? ""}
+                    onChange={(v) => update("creditFr", v || null)}
+                />
+            </div>
+
+            <div className="flex justify-end gap-2">
+                <Button variant="outline" size="sm" onClick={onCancel} disabled={isSaving}>
+                    {t("cancel")}
+                </Button>
+                <Button size="sm" onClick={() => onSave(values)} disabled={isSaving}>
+                    {isSaving && <Spinner className="mr-1.5 size-3" />}
+                    {t("save")}
+                </Button>
+            </div>
+        </div>
+    );
+}
+
+// ── MetadataField ───────────────────────────────────────────────────
+
+type MetadataFieldProps = {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+};
+
+function MetadataField({ label, value, onChange }: MetadataFieldProps) {
+    return (
+        <div className="space-y-1">
+            <Label className="text-xs">{label}</Label>
+            <Input
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                className="h-7 text-xs"
+            />
         </div>
     );
 }

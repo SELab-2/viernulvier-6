@@ -30,6 +30,7 @@ describe("media mapper", () => {
         created_at: "2026-01-01T00:00:00Z",
         updated_at: "2026-01-02T00:00:00Z",
         url: "https://s3.example.com/image.jpg",
+        s3_key: "media/image.jpg",
         mime_type: "image/jpeg",
         file_size: 120000,
         width: 1920,

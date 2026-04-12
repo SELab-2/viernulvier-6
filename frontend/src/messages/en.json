@@ -433,7 +433,19 @@
             "detachError": "Failed to unlink media",
             "attachSuccess": "Media linked",
             "uploadSuccess": "Media uploaded",
-            "uploadError": "Failed to upload media"
+            "uploadError": "Failed to upload media",
+            "editMetadata": "Edit metadata",
+            "metadataSaved": "Metadata saved",
+            "metadataError": "Failed to save metadata",
+            "attachError": "Failed to link media",
+            "save": "Save",
+            "cancel": "Cancel",
+            "altTextNl": "Alt text (NL)",
+            "altTextEn": "Alt text (EN)",
+            "altTextFr": "Alt text (FR)",
+            "creditNl": "Credits (NL)",
+            "creditEn": "Credits (EN)",
+            "creditFr": "Credits (FR)"
         }
     },
     "Admin": {

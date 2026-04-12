@@ -1181,6 +1181,8 @@ export interface components {
             mime_type: string;
             /** Format: uuid */
             parent_id?: string | null;
+            /** @description The S3 object key (needed to link existing media to another entity) */
+            s3_key: string;
             source_system: string;
             source_uri?: string | null;
             /** Format: date-time */
@@ -1309,6 +1311,8 @@ export interface components {
                 mime_type: string;
                 /** Format: uuid */
                 parent_id?: string | null;
+                /** @description The S3 object key (needed to link existing media to another entity) */
+                s3_key: string;
                 source_system: string;
                 source_uri?: string | null;
                 /** Format: date-time */

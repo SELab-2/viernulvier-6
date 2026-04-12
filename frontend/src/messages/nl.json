@@ -433,7 +433,19 @@
             "detachError": "Ontkoppelen van media mislukt",
             "attachSuccess": "Media gekoppeld",
             "uploadSuccess": "Media geüpload",
-            "uploadError": "Uploaden van media mislukt"
+            "uploadError": "Uploaden van media mislukt",
+            "editMetadata": "Metadata bewerken",
+            "metadataSaved": "Metadata opgeslagen",
+            "metadataError": "Opslaan van metadata mislukt",
+            "attachError": "Koppelen van media mislukt",
+            "save": "Opslaan",
+            "cancel": "Annuleren",
+            "altTextNl": "Alt-tekst (NL)",
+            "altTextEn": "Alt-tekst (EN)",
+            "altTextFr": "Alt-tekst (FR)",
+            "creditNl": "Credits (NL)",
+            "creditEn": "Credits (EN)",
+            "creditFr": "Credits (FR)"
         }
     },
     "Admin": {
