@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { resolveMediaContent } from "@/lib/tiptap/resolve-media-content";
+import { resolveMediaContent, type TiptapNode } from "@/lib/tiptap/resolve-media-content";
 
 const DOC_WITH_IMAGE = {
     type: "doc",

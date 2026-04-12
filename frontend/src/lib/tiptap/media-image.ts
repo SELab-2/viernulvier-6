@@ -8,14 +8,8 @@ type SetMediaImageOptions = {
     title?: string;
 };
 
-export const MediaImage = Image.extend({
-    addOptions() {
-        return {
-            ...this.parent?.(),
-            inline: true,
-        };
-    },
-
+// Configure inline:true so images live inside paragraphs, then extend with mediaId
+export const MediaImage = Image.configure({ inline: true }).extend({
     addAttributes() {
         return {
             ...this.parent?.(),

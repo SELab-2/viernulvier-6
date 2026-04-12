@@ -3,6 +3,12 @@ import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { MediaImage } from "@/lib/tiptap/media-image";
 
+type ContentNode = {
+    type: string;
+    attrs?: Record<string, unknown>;
+    content?: ContentNode[];
+};
+
 function makeEditor() {
     return new Editor({
         extensions: [StarterKit, MediaImage],
@@ -27,7 +33,7 @@ describe("MediaImage extension", () => {
             alt: "Alt text",
         });
 
-        const json = editor.getJSON();
+        const json = editor.getJSON() as ContentNode;
         const imageNode = json.content?.[0]?.content?.[0];
         expect(imageNode?.type).toBe("image");
         expect(imageNode?.attrs?.mediaId).toBe("abc-123");
@@ -39,7 +45,7 @@ describe("MediaImage extension", () => {
         editor = makeEditor();
         editor.commands.setMediaImage({ src: "https://cdn.example/b.jpg" });
 
-        const json = editor.getJSON();
+        const json = editor.getJSON() as ContentNode;
         const imageNode = json.content?.[0]?.content?.[0];
         // Tiptap omits attrs that equal their default from getJSON — null default means absent
         expect(imageNode?.attrs?.mediaId ?? null).toBeNull();

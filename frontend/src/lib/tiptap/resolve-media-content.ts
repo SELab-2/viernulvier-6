@@ -1,4 +1,4 @@
-type TiptapNode = {
+export type TiptapNode = {
     type: string;
     attrs?: Record<string, unknown>;
     content?: TiptapNode[];
@@ -8,8 +8,8 @@ type TiptapNode = {
 export function resolveMediaContent(
     content: Record<string, unknown>,
     mediaMap: Record<string, string>
-): Record<string, unknown> {
-    return resolveNode(content as TiptapNode, mediaMap) as Record<string, unknown>;
+): TiptapNode {
+    return resolveNode(content as TiptapNode, mediaMap);
 }
 
 function resolveNode(node: TiptapNode, mediaMap: Record<string, string>): TiptapNode {
