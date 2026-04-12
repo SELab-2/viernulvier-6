@@ -91,3 +91,32 @@ fn group_into_facets(rows: Vec<TaxonomyRow>) -> Vec<FacetResponse> {
 
     facets
 }
+
+// ── Entity-specific tag types (includes `inherited` flag) ──
+
+#[derive(Serialize, Deserialize, ToSchema, Clone)]
+pub struct EntityTagResponse {
+    pub slug: String,
+    pub sort_order: i32,
+    pub inherited: bool,
+    pub translations: Vec<TagTranslationPayload>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema, Clone)]
+pub struct EntityFacetResponse {
+    pub slug: String,
+    pub translations: Vec<FacetTranslationPayload>,
+    pub tags: Vec<EntityTagResponse>,
+}
+
+impl EntityFacetResponse {
+    pub fn from_jsonb(value: serde_json::Value) -> Result<Vec<Self>, AppError> {
+        serde_json::from_value(value)
+            .map_err(|e| AppError::Internal(format!("entity_facets JSONB parse error: {e}")))
+    }
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct ReplaceTagsRequest {
+    pub tag_slugs: Vec<String>,
+}
