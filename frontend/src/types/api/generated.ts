@@ -754,6 +754,8 @@ export interface components {
         ArticleListPayload: {
             /** Format: uuid */
             id: string;
+            /** Format: date-time */
+            published_at?: string | null;
             slug: string;
             status: components["schemas"]["ArticleStatus"];
             /** Format: date */
@@ -770,6 +772,8 @@ export interface components {
             created_at: string;
             /** Format: uuid */
             id: string;
+            /** Format: date-time */
+            published_at?: string | null;
             slug: string;
             status: components["schemas"]["ArticleStatus"];
             /** Format: date */
@@ -976,6 +980,50 @@ export interface components {
             message: string;
             success: boolean;
         };
+        EventNestedPricePayload: {
+            auto_select_combo: boolean;
+            cineville_box: boolean;
+            code?: string | null;
+            /** Format: date-time */
+            created_at?: string | null;
+            description_en?: string | null;
+            description_nl?: string | null;
+            /** Format: uuid */
+            id?: string | null;
+            include_in_price_range: boolean;
+            /** Format: int32 */
+            maximum?: number | null;
+            membership?: string | null;
+            /** Format: int32 */
+            minimum: number;
+            /** Format: int32 */
+            order: number;
+            /** Format: int32 */
+            source_id?: number | null;
+            /** Format: int32 */
+            step: number;
+            type: string;
+            /** Format: date-time */
+            updated_at?: string | null;
+            visibility: string;
+        };
+        EventNestedPriceRankPayload: {
+            code: string;
+            /** Format: date-time */
+            created_at?: string | null;
+            description_en?: string | null;
+            description_nl?: string | null;
+            /** Format: uuid */
+            id?: string | null;
+            /** Format: int32 */
+            position: number;
+            /** Format: int32 */
+            sold_out_buffer?: number | null;
+            /** Format: int32 */
+            source_id?: number | null;
+            /** Format: date-time */
+            updated_at?: string | null;
+        };
         EventPayload: {
             box_office_id?: string | null;
             /** Format: date-time */
@@ -992,6 +1040,7 @@ export interface components {
             intermission_at?: string | null;
             /** Format: int32 */
             max_tickets_per_order?: number | null;
+            prices?: components["schemas"]["EventPricePayload"][];
             /** Format: uuid */
             production_id: string;
             /** Format: int32 */
@@ -1018,6 +1067,7 @@ export interface components {
             intermission_at?: string | null;
             /** Format: int32 */
             max_tickets_per_order?: number | null;
+            prices?: components["schemas"]["EventPricePayload"][];
             /** Format: uuid */
             production_id: string;
             /** Format: int32 */
@@ -1029,6 +1079,27 @@ export interface components {
             /** Format: date-time */
             updated_at: string;
             vendor_id?: string | null;
+        };
+        EventPricePayload: {
+            /** Format: int32 */
+            amount_cents: number;
+            /** Format: int32 */
+            available: number;
+            box_office_id?: string | null;
+            /** Format: int32 */
+            contingent_id?: number | null;
+            /** Format: date-time */
+            created_at?: string | null;
+            /** Format: date-time */
+            expires_at?: string | null;
+            /** Format: uuid */
+            id?: string | null;
+            price: components["schemas"]["EventNestedPricePayload"];
+            rank: components["schemas"]["EventNestedPriceRankPayload"];
+            /** Format: int32 */
+            source_id?: number | null;
+            /** Format: date-time */
+            updated_at?: string | null;
         };
         /** @enum {string} */
         Facet: "discipline" | "format" | "theme" | "audience";
@@ -1184,6 +1255,7 @@ export interface components {
                 intermission_at?: string | null;
                 /** Format: int32 */
                 max_tickets_per_order?: number | null;
+                prices?: components["schemas"]["EventPricePayload"][];
                 /** Format: uuid */
                 production_id: string;
                 /** Format: int32 */
@@ -1239,6 +1311,8 @@ export interface components {
         };
         PaginatedResponse_ProductionPayload: {
             data: {
+                /** @description Cover image URL resolved from the entity_media link (output-only). */
+                readonly cover_image_url?: string | null;
                 eticket_info?: string | null;
                 /** Format: uuid */
                 id: string;
@@ -1266,6 +1340,8 @@ export interface components {
             next_cursor?: string | null;
         };
         ProductionPayload: {
+            /** @description Cover image URL resolved from the entity_media link (output-only). */
+            readonly cover_image_url?: string | null;
             eticket_info?: string | null;
             /** Format: uuid */
             id: string;
@@ -1348,6 +1424,8 @@ export interface components {
             name: string;
             subtitle: string;
         };
+        /** @enum {string} */
+        Sort: "recent" | "oldest" | "relevance";
         SpacePayload: {
             /** Format: uuid */
             id: string;
@@ -2937,6 +3015,17 @@ export interface operations {
             query?: {
                 cursor?: string | null;
                 limit?: number;
+                q?: string | null;
+                discipline?: string | null;
+                format?: string | null;
+                theme?: string | null;
+                audience?: string | null;
+                artist?: string | null;
+                location?: string | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                sort?: null | components["schemas"]["Sort"];
+                after?: string | null;
             };
             header?: never;
             path?: never;

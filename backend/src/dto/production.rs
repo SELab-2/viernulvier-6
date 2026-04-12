@@ -1,49 +1,84 @@
 use database::{
     Database,
-    models::production::{
-        Production, ProductionCreate, ProductionTranslationData, ProductionWithTranslations,
+    models::{
+        entity_type::EntityType,
+        cursor::CursorData,
+        production::{
+            Production, ProductionCreate, ProductionTranslationData, ProductionWithTranslations,
+        },
     },
 };
 use serde::{Deserialize, Serialize};
+use tracing::debug;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use base64::{Engine, prelude::BASE64_URL_SAFE};
 
-use crate::{dto::paginated::PaginatedResponse, error::AppError};
+use crate::{
+    dto::paginated::PaginatedResponse, error::AppError,
+    handlers::queries::production::ProductionSearchQuery,
+};
 
 impl ProductionPayload {
     pub async fn all(
         db: &Database,
         id_cursor: Option<String>,
-        limit: usize,
+        limit: u32,
+        public_url: Option<&str>,
+        search: ProductionSearchQuery,
     ) -> Result<PaginatedResponse<Self>, AppError> {
-        let id_cursor: Option<Uuid> = id_cursor.and_then(|b64| {
-            let bytes: [u8; 16] = BASE64_URL_SAFE.decode(b64).ok()?.try_into().ok()?;
-            Some(Uuid::from_bytes(bytes))
+        let cursor: Option<CursorData> = id_cursor.and_then(|b64| {
+            // we drop invalid cursor data
+            let bytes = BASE64_URL_SAFE.decode(b64).ok()?;
+            serde_json::from_slice(&bytes).ok()
         });
 
-        let mut data: Vec<_> = db
-            .productions()
-            .all(limit + 1, id_cursor)
-            .await?
-            .into_iter()
-            .map(Self::from)
-            .collect();
+        // get productions from the database, including cursor
+        let (productions, next_cursor) = db.productions().all(limit, cursor, search.into()).await?;
+        let mut productions: Vec<_> = productions.into_iter().map(Self::from).collect();
+        // encode the next cursor
+        let next_cursor_data = next_cursor.and_then(|c| {
+            let data = serde_json::to_vec(&c).ok()?;
+            Some(BASE64_URL_SAFE.encode(data))
+        });
 
-        // only return a cursor if there are more items
-        let next_cursor = if data.len() == limit + 1 {
-            data.pop();
-            data.last().map(|p| BASE64_URL_SAFE.encode(p.id))
-        } else {
-            None
-        };
+        if let Some(base) = public_url {
+            let ids: Vec<Uuid> = productions.iter().map(|p| p.id).collect();
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Production, &ids)
+                .await?;
+            for p in &mut productions {
+                if let Some(s3_key) = cover_keys.get(&p.id) {
+                    p.cover_image_url =
+                        Some(format!("{}/{}", base.trim_end_matches('/'), s3_key));
+                }
+            }
+        }
 
-        Ok(PaginatedResponse { data, next_cursor })
+        debug!("Returning {} productions", productions.len());
+        Ok(PaginatedResponse {
+            data: productions,
+            next_cursor: next_cursor_data,
+        })
     }
 
-    pub async fn by_id(db: &Database, id: Uuid) -> Result<Self, AppError> {
-        Ok(db.productions().by_id(id).await?.into())
+    pub async fn by_id(db: &Database, id: Uuid, public_url: Option<&str>) -> Result<Self, AppError> {
+        let mut payload: Self = db.productions().by_id(id).await?.into();
+
+        if let Some(base) = public_url {
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Production, &[id])
+                .await?;
+            if let Some(s3_key) = cover_keys.get(&id) {
+                payload.cover_image_url =
+                    Some(format!("{}/{}", base.trim_end_matches('/'), s3_key));
+            }
+        }
+
+        Ok(payload)
     }
 
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {
@@ -134,6 +169,11 @@ pub struct ProductionPayload {
     pub uitdatabank_type: Option<String>,
 
     pub translations: Vec<ProductionTranslationPayload>,
+
+    /// Cover image URL resolved from the entity_media link (output-only).
+    #[serde(default)]
+    #[schema(read_only, nullable)]
+    pub cover_image_url: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -186,6 +226,7 @@ impl From<ProductionWithTranslations> for ProductionPayload {
             uitdatabank_theme: pwt.production.uitdatabank_theme,
             uitdatabank_type: pwt.production.uitdatabank_type,
             translations,
+            cover_image_url: None,
         }
     }
 }

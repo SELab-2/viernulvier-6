@@ -17,9 +17,15 @@ export function ArticlesTable() {
     const { data: articles = [], isLoading } = useGetArticlesCms();
     const createArticle = useCreateArticle();
 
+    const tActions = useTranslations("Cms.ActionsColumn");
     const columns = useMemo(
-        () => makeArticleColumns((article) => router.push(`/cms/articles/${article.id}/edit`)),
-        [router]
+        () =>
+            makeArticleColumns(
+                (article) => router.push(`/cms/articles/${article.id}/edit`),
+                tActions,
+                t
+            ),
+        [router, tActions, t]
     );
 
     const handleNew = () => {
@@ -37,14 +43,16 @@ export function ArticlesTable() {
     };
 
     return (
-        <div className="space-y-4">
-            <div className="flex justify-end">
+        <div className="flex h-full flex-col">
+            <div className="bg-background sticky top-0 z-10 flex justify-end py-2">
                 <Button onClick={handleNew} disabled={createArticle.isPending} size="sm">
                     <Plus className="mr-2 h-4 w-4" />
                     {t("newArticle")}
                 </Button>
             </div>
-            <DataTable columns={columns} data={articles} loading={isLoading} />
+            <div className="flex-1 overflow-auto">
+                <DataTable columns={columns} data={articles} loading={isLoading} />
+            </div>
         </div>
     );
 }

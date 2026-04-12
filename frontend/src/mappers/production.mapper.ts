@@ -1,8 +1,10 @@
 import {
+    PaginatedProductionResponse,
     ProductionCreateRequest,
     ProductionResponse,
     ProductionUpdateRequest,
 } from "@/types/api/production.api.types";
+import { PaginatedResult } from "@/types/api/api.types";
 import {
     Production,
     ProductionCreateInput,
@@ -62,11 +64,22 @@ export const mapProduction = (response: ProductionResponse): Production => {
         uitdatabankTheme: toNullable(response.uitdatabank_theme),
         uitdatabankType: toNullable(response.uitdatabank_type),
         translations: (response.translations ?? []).map((t: ApiTranslation) => mapTranslation(t)),
+        coverImageUrl: toNullable(response.cover_image_url),
     };
 };
 
 export const mapProductions = (response: ProductionResponse[]): Production[] =>
     response.map(mapProduction);
+
+export const mapPaginatedProductions = (response: PaginatedProductionResponse): Production[] =>
+    mapProductions(response.data);
+
+export const mapPaginatedProductionsResult = (
+    response: PaginatedProductionResponse
+): PaginatedResult<Production> => ({
+    data: mapProductions(response.data),
+    nextCursor: response.next_cursor ?? null,
+});
 
 const mapTranslationInput = (t: ProductionTranslationInput): ApiTranslation => ({
     language_code: t.languageCode,

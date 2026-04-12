@@ -1,14 +1,6 @@
-[![codecov](https://codecov.io/gh/SELab-2/viernulvier-6/graph/badge.svg?token=Z5Fi36Jin3)](https://codecov.io/gh/SELab-2/viernulvier-6)
+[![codecov](https://codecov.io/gh/SELab-2/viernulvier-6/graph/badge.svg?token=Z5Fi36Jin3)](https://codecov.io/gh/SELab-2/viernulvier-6) [![CI/CD Pipeline Production](https://github.com/SELab-2/viernulvier-6/actions/workflows/build-push-deploy.yml/badge.svg)](https://github.com/SELab-2/viernulvier-6/actions/workflows/build-push-deploy.yml)
+
 # viernulvier-6
-
-| Service  | Status                                                                     | Uptime (30d)                                                                                          | Avg Response                                                                           | Cert Expiry                                                                       |
-| -------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Frontend | ![Status](http://46.224.176.244:3001/api/badge/1/status?style=flat-square) | ![Uptime](http://46.224.176.244:3001/api/badge/1/uptime/720?style=flat-square&label=30&labelSuffix=d) | ![Avg Response](http://46.224.176.244:3001/api/badge/1/avg-response?style=flat-square) | ![Cert Expiry](http://46.224.176.244:3001/api/badge/1/cert-exp?style=flat-square) |
-| Backend  | ![Status](http://46.224.176.244:3001/api/badge/4/status?style=flat-square) | ![Uptime](http://46.224.176.244:3001/api/badge/4/uptime/720?style=flat-square&label=30&labelSuffix=d) | ![Avg Response](http://46.224.176.244:3001/api/badge/4/avg-response?style=flat-square) | ![Cert Expiry](http://46.224.176.244:3001/api/badge/4/cert-exp?style=flat-square) |
-
-## External Services
-
-- [Uptime Monitor](http://46.224.176.244:3001/status/viernulvier-archief)
 
 ## Local Development
 

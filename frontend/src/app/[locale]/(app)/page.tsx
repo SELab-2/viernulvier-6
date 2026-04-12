@@ -1,15 +1,13 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import Link from "next/link";
 
 import { useGetProductions } from "@/hooks/api/useProductions";
-import { useGetEvents } from "@/hooks/api/useEvents";
-import type { Event } from "@/types/models/event.types";
 
-import { SearchHeader } from "@/components/homepage/search-header";
+import { UnifiedHeader } from "@/components/layout/header";
 import { SearchBar } from "@/components/homepage/search-bar";
 import { FeaturedSection } from "@/components/homepage/featured-section";
 import { ProductionItem } from "@/components/searchpage/production-list";
@@ -44,23 +42,14 @@ export default function HomePage() {
         [router]
     );
 
-    const { data: productions } = useGetProductions();
-    const { data: events } = useGetEvents();
-    const latestProductions = (productions ?? []).slice(0, 4);
-
-    const eventsByProduction = useMemo(() => {
-        const map = new Map<string, Event[]>();
-        (events ?? []).forEach((event) => {
-            const existing = map.get(event.productionId) ?? [];
-            existing.push(event);
-            map.set(event.productionId, existing);
-        });
-        return map;
-    }, [events]);
+    const { data: productionsResult } = useGetProductions();
+    const productions = productionsResult?.data ?? [];
+    const featuredProductions = productions.slice(0, 3);
+    const latestProductions = productions.slice(3, 7);
 
     return (
         <>
-            <SearchHeader
+            <UnifiedHeader
                 query={headerQuery}
                 onQueryChange={setHeaderQuery}
                 onSearch={handleHeaderSearch}
@@ -94,7 +83,7 @@ export default function HomePage() {
 
             {/* Featured */}
             <section className="px-4 pt-8 sm:px-[30px] sm:pt-12">
-                <FeaturedSection />
+                <FeaturedSection productions={featuredProductions} locale={locale} />
             </section>
 
             {/* Latest productions */}
@@ -117,7 +106,6 @@ export default function HomePage() {
                                 key={production.id}
                                 production={production}
                                 locale={locale}
-                                events={eventsByProduction.get(production.id)}
                             />
                         ))}
                     </div>

@@ -1,4 +1,10 @@
-import { HallCreateRequest, HallResponse, HallUpdateRequest } from "@/types/api/hall.api.types";
+import {
+    HallCreateRequest,
+    HallResponse,
+    HallUpdateRequest,
+    PaginatedHallResponse,
+} from "@/types/api/hall.api.types";
+import { PaginatedResult } from "@/types/api/api.types";
 import { Hall, HallCreateInput, HallUpdateInput } from "@/types/models/hall.types";
 
 import { toNullable } from "./utils";
@@ -19,6 +25,16 @@ export const mapHall = (response: HallResponse): Hall => {
 };
 
 export const mapHalls = (response: HallResponse[]): Hall[] => response.map(mapHall);
+
+export const mapPaginatedHalls = (response: PaginatedHallResponse): Hall[] =>
+    mapHalls(response.data);
+
+export const mapPaginatedHallsResult = (
+    response: PaginatedHallResponse
+): PaginatedResult<Hall> => ({
+    data: mapHalls(response.data),
+    nextCursor: response.next_cursor ?? null,
+});
 
 export const mapCreateHallInput = (input: HallCreateInput): HallCreateRequest => {
     return {

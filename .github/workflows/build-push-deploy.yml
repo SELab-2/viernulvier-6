@@ -15,7 +15,7 @@ jobs:
     secrets: inherit
 
   build-push:
-    runs-on: self-hosted
+    runs-on: prod
     environment: production
     needs: [run_backend_tests, run_frontend_tests]
 
@@ -31,11 +31,16 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build and push backend
         uses: docker/build-push-action@v6
         with:
           context: ./backend
           push: true
+          cache-from: type=local,src=/tmp/.buildx-cache/backend
+          cache-to: type=local,dest=/tmp/.buildx-cache/backend,mode=max
           tags: |
             kayasem/${{ vars.PROJECT_NAME }}-backend:latest
             kayasem/${{ vars.PROJECT_NAME }}-backend:${{ github.sha }}
@@ -45,9 +50,12 @@ jobs:
         with:
           context: ./frontend
           push: true
+          cache-from: type=local,src=/tmp/.buildx-cache/frontend
+          cache-to: type=local,dest=/tmp/.buildx-cache/frontend,mode=max
           build-args: |
             "NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}"
             "NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}/api"
+            "NEXT_PUBLIC_MEDIA_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}/s3"
             "CODECOV_TOKEN=${{ secrets.CODECOV_TOKEN }}"
           tags: |
             kayasem/${{ vars.PROJECT_NAME }}-frontend:latest
@@ -58,12 +66,14 @@ jobs:
         with:
           context: ./docs
           push: true
+          cache-from: type=local,src=/tmp/.buildx-cache/docs
+          cache-to: type=local,dest=/tmp/.buildx-cache/docs,mode=max
           tags: |
             kayasem/${{ vars.PROJECT_NAME }}-docs:latest
             kayasem/${{ vars.PROJECT_NAME }}-docs:${{ github.sha }}
 
   deploy:
-    runs-on: self-hosted
+    runs-on: prod
     environment: production
     needs: build-push
 
@@ -83,6 +93,12 @@ jobs:
 
       - name: Ensure traefik network exists
         run: docker network inspect traefik >/dev/null 2>&1 || docker network create traefik
+
+      - name: Ensure preview Traefik is running
+        run: |
+          if [ -z "$(docker compose -f infra/traefik/docker-compose.yml ps -q traefik)" ]; then
+            docker compose -f infra/traefik/docker-compose.yml up -d
+          fi
 
       - name: Generate production env
         uses: ./.github/actions/generate-prod-env

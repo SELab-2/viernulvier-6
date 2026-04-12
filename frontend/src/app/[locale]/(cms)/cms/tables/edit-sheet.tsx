@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import {
     Select,
     SelectContent,
@@ -62,11 +60,15 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
 
     if (field.readOnly) {
         return (
-            <div className="flex flex-col gap-1">
-                <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+            <div className="flex flex-col gap-1.5">
+                <span className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
                     {field.label}
                 </span>
-                <p className="text-sm">{stringValue || "—"}</p>
+                <div className="border-foreground/10 bg-foreground/[0.02] rounded-sm border px-3 py-2">
+                    <code className="text-muted-foreground font-mono text-xs">
+                        {stringValue || "—"}
+                    </code>
+                </div>
             </div>
         );
     }
@@ -74,12 +76,17 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
     if (field.type === "text") {
         return (
             <div className="flex flex-col gap-1.5">
-                <Label htmlFor={fieldId}>{field.label}</Label>
+                <Label
+                    htmlFor={fieldId}
+                    className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase"
+                >
+                    {field.label}
+                </Label>
                 <Input
                     id={fieldId}
                     value={stringValue}
                     onChange={(e) => onChange(e.target.value)}
-                    className="h-8 text-sm"
+                    className="border-foreground/20 focus-visible:ring-foreground/30 h-9 text-sm"
                 />
             </div>
         );
@@ -94,7 +101,12 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
 
         return (
             <div className="flex flex-col gap-1.5">
-                <Label htmlFor={fieldId}>{field.label}</Label>
+                <Label
+                    htmlFor={fieldId}
+                    className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase"
+                >
+                    {field.label}
+                </Label>
                 <Select
                     value={selectValue}
                     onValueChange={(v) => {
@@ -105,10 +117,13 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
                         }
                     }}
                 >
-                    <SelectTrigger id={fieldId} size="sm" className="w-full">
+                    <SelectTrigger
+                        id={fieldId}
+                        className="border-foreground/20 focus:ring-foreground/30 h-9 w-full text-sm"
+                    >
                         <SelectValue placeholder={t("selectPlaceholder")} />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="border-foreground/20">
                         <SelectItem value={NULL_SENTINEL}>—</SelectItem>
                         {booleanOptions.map((opt) => (
                             <SelectItem key={opt.value} value={opt.value}>
@@ -125,12 +140,20 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
 
     return (
         <div className="flex flex-col gap-1.5">
-            <Label htmlFor={fieldId}>{field.label}</Label>
+            <Label
+                htmlFor={fieldId}
+                className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase"
+            >
+                {field.label}
+            </Label>
             <Select value={stringValue} onValueChange={onChange}>
-                <SelectTrigger id={fieldId} size="sm" className="w-full">
+                <SelectTrigger
+                    id={fieldId}
+                    className="border-foreground/20 focus:ring-foreground/30 h-9 w-full text-sm"
+                >
                     <SelectValue placeholder={t("selectPlaceholder")} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="border-foreground/20">
                     {options.map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>
                             {opt.label}
@@ -169,7 +192,7 @@ function SheetFormBody<TData extends { id: string } & Record<string, unknown>>({
 
     return (
         <>
-            <div className="flex flex-col gap-5 overflow-y-auto px-6 py-5">
+            <div className="flex flex-col gap-5 overflow-y-auto px-6 py-6">
                 {fields.map((field) => (
                     <FieldRow
                         key={String(field.key)}
@@ -179,15 +202,24 @@ function SheetFormBody<TData extends { id: string } & Record<string, unknown>>({
                     />
                 ))}
             </div>
-            <Separator />
-            <SheetFooter className="flex-row justify-end gap-2 px-6 py-4">
-                <Button variant="outline" size="sm" onClick={onClose}>
-                    {t("cancel")}
-                </Button>
-                <Button size="sm" onClick={handleSave}>
-                    {t("saveChanges")}
-                </Button>
-            </SheetFooter>
+            <div className="border-foreground/10 border-t px-6 py-4">
+                <SheetFooter className="flex-row justify-end gap-3 sm:justify-end">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="border-foreground/20 hover:bg-foreground/5 px-4 py-2 font-mono text-[10px] tracking-[1px] uppercase transition-colors"
+                    >
+                        {t("cancel")}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleSave}
+                        className="bg-foreground text-background hover:bg-foreground/90 px-4 py-2 font-mono text-[10px] tracking-[1px] uppercase transition-colors"
+                    >
+                        {t("saveChanges")}
+                    </button>
+                </SheetFooter>
+            </div>
         </>
     );
 }
@@ -201,16 +233,25 @@ export function EditSheet<TData extends { id: string } & Record<string, unknown>
     description,
     onSave,
 }: EditSheetProps<TData>) {
+    const t = useTranslations("Cms.EditSheet");
     const formKey = entity?.id ?? null;
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="flex flex-col gap-0 p-0 sm:max-w-md">
-                <SheetHeader className="px-6 pt-6 pb-4">
-                    <SheetTitle>{title}</SheetTitle>
-                    {description && <SheetDescription>{description}</SheetDescription>}
+            <SheetContent className="border-foreground/20 flex flex-col gap-0 border-l p-0 sm:max-w-md">
+                <SheetHeader className="border-foreground/10 border-b px-6 pt-6 pb-4">
+                    <div className="text-muted-foreground mb-2 font-mono text-[9px] tracking-[2px] uppercase">
+                        {t("editMode")}
+                    </div>
+                    <SheetTitle className="font-display text-2xl font-bold tracking-tight">
+                        {title}
+                    </SheetTitle>
+                    {description && (
+                        <SheetDescription className="font-body text-muted-foreground text-sm">
+                            {description}
+                        </SheetDescription>
+                    )}
                 </SheetHeader>
-                <Separator />
                 {entity !== null && (
                     <SheetFormBody
                         key={formKey}

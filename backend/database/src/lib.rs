@@ -4,11 +4,11 @@ use tracing::info;
 use crate::{
     error::DatabaseError,
     repos::{
-        article::ArticleRepo, artist::ArtistRepo, collection::CollectionRepo,
-        event::EventRepo, hall::HallRepo, internal_state::InternalStateRepo,
+        article::ArticleRepo, artist::ArtistRepo, collection::CollectionRepo, event::EventRepo,
+        event_price::EventPriceRepo, hall::HallRepo, internal_state::InternalStateRepo,
         location::LocationRepo, media::MediaRepo, media_variant::MediaVariantRepo,
-        production::ProductionRepo, series::SeriesRepo, sessions::SessionRepo,
-        space::SpaceRepo, tag::TagRepo, user::UserRepo,
+        price::PriceRepo, price_rank::PriceRankRepo, production::ProductionRepo,
+        series::SeriesRepo, sessions::SessionRepo, space::SpaceRepo, tag::TagRepo, user::UserRepo,
     },
 };
 
@@ -17,18 +17,23 @@ pub mod models {
     pub mod artist;
     pub mod collection;
     pub mod collection_item;
+    pub mod cursor;
     pub mod entity_media;
     pub mod entity_type;
     pub mod event;
+    pub mod event_price;
     pub mod facet;
     pub mod hall;
     pub mod internal_state;
     pub mod location;
     pub mod media;
     pub mod media_variant;
+    pub mod price;
+    pub mod price_rank;
     pub mod production;
     pub mod series;
     pub mod session;
+    pub mod sort;
     pub mod space;
     pub mod tag;
     pub mod tagging;
@@ -40,11 +45,14 @@ pub mod repos {
     pub mod artist;
     pub mod collection;
     pub mod event;
+    pub mod event_price;
     pub mod hall;
     pub mod internal_state;
     pub mod location;
     pub mod media;
     pub mod media_variant;
+    pub mod price;
+    pub mod price_rank;
     pub mod production;
     pub mod series;
     pub mod sessions;
@@ -138,5 +146,17 @@ impl Database {
 
     pub fn media_variants<'a>(&'a self) -> MediaVariantRepo<'a> {
         MediaVariantRepo::new(&self.db)
+    }
+
+    pub fn prices<'a>(&'a self) -> PriceRepo<'a> {
+        PriceRepo::new(&self.db)
+    }
+
+    pub fn price_ranks<'a>(&'a self) -> PriceRankRepo<'a> {
+        PriceRankRepo::new(&self.db)
+    }
+
+    pub fn event_prices<'a>(&'a self) -> EventPriceRepo<'a> {
+        EventPriceRepo::new(&self.db)
     }
 }

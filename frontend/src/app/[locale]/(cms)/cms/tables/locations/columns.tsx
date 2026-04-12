@@ -1,10 +1,14 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { SquarePen } from "lucide-react";
+import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
 import { BooleanCell } from "../boolean-cell";
 import type { FieldDef } from "../edit-sheet";
 import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
+import { Action, ActionDisplay } from "@/types/cms/actions";
 import type { Location, LocationUpdateInput } from "@/types/models/location.types";
 
 export const locationFields: FieldDef<Location>[] = [
@@ -46,22 +50,34 @@ export function toLocationUpdateInput(entity: Location): LocationUpdateInput {
 
 export function makeLocationColumns(options: {
     onEdit: (entity: Location) => void;
+    t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>;
 }): ColumnDef<Location>[] {
-    return [
-        { accessorKey: "name", header: "Name" },
-        { accessorKey: "code", header: "Code" },
-        { accessorKey: "address", header: "Address" },
-        { accessorKey: "phone1", header: "Phone" },
+    const { onEdit, t } = options;
+
+    const actions: Action<Location>[] = [
         {
-            accessorKey: "isOwnedByViernulvier",
-            header: "Owned",
-            cell: ({ getValue }) => <BooleanCell value={getValue<boolean | null>()} />,
+            key: "edit",
+            label: t("edit", { label: "location" }),
+            icon: SquarePen,
+            display: ActionDisplay.Inline,
+            onClick: onEdit,
         },
-        makeActionsColumn<Location>({
-            label: "location",
-            copyKey: "name",
-            onEdit: options.onEdit,
-            extraMenuItems: (location, closeMenu) => (
+        {
+            key: "copy-name",
+            label: t("copy", { key: "name" }),
+            onClick: async (location) => {
+                const value = location.name ?? "";
+                try {
+                    await navigator.clipboard.writeText(value);
+                    toast.success(t("copied", { key: "name" }));
+                } catch {
+                    toast.error(t("copyFailed"));
+                }
+            },
+        },
+        {
+            key: "add-to-collection",
+            render: (location, closeMenu) => (
                 <CollectionPickerSubmenu
                     item={{
                         contentId: location.id,
@@ -71,6 +87,49 @@ export function makeLocationColumns(options: {
                     onComplete={closeMenu}
                 />
             ),
-        }),
+        },
+    ];
+
+    return [
+        {
+            accessorKey: "name",
+            header: "Naam",
+            cell: ({ getValue }) => (
+                <span className="font-display max-w-[200px] text-base font-medium tracking-tight break-words">
+                    {String(getValue() || "—")}
+                </span>
+            ),
+        },
+        {
+            accessorKey: "code",
+            header: "Code",
+            cell: ({ getValue }) => (
+                <code className="bg-foreground/5 text-muted-foreground rounded px-1.5 py-0.5 font-mono text-[10px]">
+                    {String(getValue() || "—")}
+                </code>
+            ),
+        },
+        {
+            accessorKey: "address",
+            header: "Adres",
+            cell: ({ getValue }) => (
+                <span className="text-muted-foreground max-w-[200px] text-sm break-words">
+                    {String(getValue() || "—")}
+                </span>
+            ),
+        },
+        {
+            accessorKey: "phone1",
+            header: "Telefoon",
+            cell: ({ getValue }) => (
+                <span className="font-mono text-[11px]">{String(getValue() || "—")}</span>
+            ),
+        },
+        {
+            accessorKey: "isOwnedByViernulvier",
+            header: "Eigendom",
+            cell: ({ getValue }) => <BooleanCell value={getValue<boolean | null>()} />,
+        },
+        makeActionsColumn<Location>({ actions }),
     ];
 }

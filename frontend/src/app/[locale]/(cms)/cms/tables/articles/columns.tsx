@@ -1,9 +1,13 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { SquarePen } from "lucide-react";
+import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import { StatusBadge } from "@/components/cms/status-badge";
 import { makeActionsColumn } from "../actions-column";
+import { Action, ActionDisplay } from "@/types/cms/actions";
 import { ArticleListItem } from "@/types/models/article.types";
 
 function formatDate(date: string | null): string {
@@ -17,8 +21,33 @@ function formatDate(date: string | null): string {
 }
 
 export function makeArticleColumns(
-    onEdit: (article: ArticleListItem) => void
+    onEdit: (article: ArticleListItem) => void,
+    t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>,
+    tArticles: ReturnType<typeof useTranslations<"Cms.Articles">>
 ): ColumnDef<ArticleListItem>[] {
+    const actions: Action<ArticleListItem>[] = [
+        {
+            key: "edit",
+            label: t("edit", { label: "article" }),
+            icon: SquarePen,
+            display: ActionDisplay.Inline,
+            onClick: onEdit,
+        },
+        {
+            key: "copy-slug",
+            label: t("copy", { key: "slug" }),
+            onClick: async (article) => {
+                const value = article.slug ?? "";
+                try {
+                    await navigator.clipboard.writeText(value);
+                    toast.success(t("copied", { key: "slug" }));
+                } catch {
+                    toast.error(t("copyFailed"));
+                }
+            },
+        },
+    ];
+
     return [
         {
             accessorKey: "status",
@@ -27,9 +56,15 @@ export function makeArticleColumns(
         },
         {
             accessorKey: "title",
-            header: "Title",
+            header: tArticles("titleColumn"),
             cell: ({ row }) =>
-                row.original.title ?? <span className="text-muted-foreground">—</span>,
+                row.original.title ? (
+                    <span className="font-display text-sm tracking-tight">
+                        {row.original.title}
+                    </span>
+                ) : (
+                    <span className="text-muted-foreground">—</span>
+                ),
         },
         {
             id: "subjectPeriod",
@@ -40,12 +75,12 @@ export function makeArticleColumns(
                     return <span className="text-muted-foreground">—</span>;
                 }
                 return (
-                    <span>
+                    <span className="text-muted-foreground font-mono text-xs">
                         {formatDate(subjectPeriodStart)} – {formatDate(subjectPeriodEnd)}
                     </span>
                 );
             },
         },
-        makeActionsColumn({ label: "article", copyKey: "slug", onEdit }),
+        makeActionsColumn({ actions }),
     ];
 }

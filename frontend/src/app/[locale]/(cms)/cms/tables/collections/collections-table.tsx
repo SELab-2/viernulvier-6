@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useRouter } from "@/i18n/routing";
 import { DataTable } from "../data-table";
@@ -14,6 +14,7 @@ import { CollectionRow } from "@/types/models/collection.types";
 
 export function CollectionsTable() {
     const t = useTranslations("Cms.Collections");
+    const locale = useLocale();
     const router = useRouter();
     const { data: collections = [], isLoading } = useGetCollections();
     const deleteCollection = useDeleteCollection();
@@ -21,6 +22,11 @@ export function CollectionsTable() {
     const [createOpen, setCreateOpen] = useState(false);
 
     const handleRowClick = useCallback(
+        (row: CollectionRow) => router.push(`/cms/collections/${row.id}`),
+        [router]
+    );
+
+    const handleOpen = useCallback(
         (row: CollectionRow) => router.push(`/cms/collections/${row.id}`),
         [router]
     );
@@ -41,8 +47,8 @@ export function CollectionsTable() {
     );
 
     const columns = useMemo(
-        () => makeCollectionColumns({ onDelete: handleDelete }),
-        [handleDelete]
+        () => makeCollectionColumns({ onDelete: handleDelete, onOpen: handleOpen, locale, t }),
+        [handleDelete, handleOpen, locale, t]
     );
 
     if (!isLoading && rows.length === 0) {
@@ -58,18 +64,18 @@ export function CollectionsTable() {
     }
 
     return (
-        <div className="p-4">
-            <DataTable
-                columns={columns}
-                data={rows}
-                loading={isLoading}
-                onRowClick={handleRowClick}
-                toolbar={
-                    <div className="flex items-center justify-end">
-                        <Button onClick={() => setCreateOpen(true)}>{t("newCollection")}</Button>
-                    </div>
-                }
-            />
+        <div className="flex h-full flex-col">
+            <div className="bg-background sticky top-0 z-10 flex items-center justify-end py-2">
+                <Button onClick={() => setCreateOpen(true)}>{t("newCollection")}</Button>
+            </div>
+            <div className="flex-1 overflow-auto">
+                <DataTable
+                    columns={columns}
+                    data={rows}
+                    loading={isLoading}
+                    onRowClick={handleRowClick}
+                />
+            </div>
             <CreateCollectionDialog open={createOpen} onOpenChange={setCreateOpen} />
         </div>
     );

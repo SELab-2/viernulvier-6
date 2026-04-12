@@ -20,7 +20,15 @@
     "Masthead": {
         "address": "Sint-Pietersnieuwstraat 23, Gent",
         "subtitle": "De Vooruit — Opgericht 1883",
-        "genres": "Theater · Dans · Muziek · Performance · Nightlife"
+        "genres": "Theater · Dans · Muziek · Performance · Nightlife",
+        "nav": {
+            "productions": "Producties",
+            "artists": "Artiesten",
+            "articles": "Artikels",
+            "posters": "Affiches",
+            "collection": "Collectie",
+            "about": "Over ons"
+        }
     },
     "Search": {
         "placeholder": "Zoeken in het archief...",
@@ -34,6 +42,9 @@
         "noResultsTitle": "Hier hangen enkel spinnenwebben",
         "noResultsText": "Geen producties gevonden voor \"{query}\". Probeer een andere zoekopdracht.",
         "articleImageCaption": "Het vergeten Vooruit gebouw...",
+        "loading": "Laden...",
+        "loadingMoreForSearch": "Meer producties laden voor zoeken... ({loaded} geladen)",
+        "partialResults": "Resultaten van {loaded} geladen producties. Resultaten kunnen onvolledig zijn.",
         "tags": {
             "dance": "Dans",
             "theater": "Theater",
@@ -82,7 +93,42 @@
             "plantentuin": "Plantentuin"
         },
         "year": {
-            "label": "Jaar"
+            "label": "Jaar",
+            "rangeFrom": "Startjaar",
+            "rangeTo": "Eindjaar",
+            "rangeMode": "Jaarbereik",
+            "exactMode": "Exacte datums",
+            "startYear": "Startjaar",
+            "endYear": "Eindjaar",
+            "monthsShort": [
+                "Jan",
+                "Feb",
+                "Mrt",
+                "Apr",
+                "Mei",
+                "Jun",
+                "Jul",
+                "Aug",
+                "Sep",
+                "Okt",
+                "Nov",
+                "Dec"
+            ],
+            "monthsLong": [
+                "Januari",
+                "Februari",
+                "Maart",
+                "April",
+                "Mei",
+                "Juni",
+                "Juli",
+                "Augustus",
+                "September",
+                "Oktober",
+                "November",
+                "December"
+            ],
+            "weekdays": ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"]
         },
         "clearAll": "Wis alles"
     },
@@ -134,6 +180,14 @@
         "loggedOut": "Succesvol uitgelogd."
     },
     "Cms": {
+        "overview": "Overzicht",
+        "productions": "Producties",
+        "locations": "Locaties",
+        "articles": "Artikelen",
+        "performers": "Uitvoerders",
+        "collections": "Collecties",
+        "ingest": "Ingest",
+        "import": "Import",
         "TabBar": {
             "overview": "CMS Overzicht",
             "content": "Inhoud beheren",
@@ -154,13 +208,24 @@
         "DataTable": {
             "noResults": "Geen resultaten."
         },
-        "SelectionToolbar": {
+        "ActionBar": {
             "clearSelection": "Selectie wissen",
+            "totalProductions": "{count, plural, one {# productie} other {# producties}}",
+            "totalLocations": "{count, plural, one {# locatie} other {# locaties}}",
+            "productionsSelected": "{count, plural, one {# productie} other {# producties}} geselecteerd",
+            "eventsSelected": "{count, plural, one {# voorstelling} other {# voorstellingen}} geselecteerd",
+            "locationsSelected": "{count, plural, one {# locatie} other {# locaties}} geselecteerd",
+            "hallsSelected": "{count, plural, one {# zaal} other {# zalen}} geselecteerd",
+            "bulkEdit": "Bulk bewerken",
+            "delete": "Verwijderen"
+        },
+        "SelectionToolbar": {
+            "clearSelection": "Wissen",
+            "moreActions": "Meer acties",
             "productionsSelected": "{count, plural, one {# productie} other {# producties}}",
             "eventsSelected": "{count, plural, one {# voorstelling} other {# voorstellingen}}",
             "locationsSelected": "{count, plural, one {# locatie} other {# locaties}}",
-            "hallsSelected": "{count, plural, one {# zaal} other {# zalen}}",
-            "moreActions": "Meer acties"
+            "hallsSelected": "{count, plural, one {# zaal} other {# zalen}}"
         },
         "ActionsColumn": {
             "openMenu": "Menu openen",
@@ -175,21 +240,69 @@
             "no": "Nee",
             "selectPlaceholder": "Selecteer\u2026",
             "cancel": "Annuleren",
-            "saveChanges": "Wijzigingen opslaan"
+            "saveChanges": "Wijzigingen opslaan",
+            "editMode": "Bewerk modus"
         },
+        "Overview": {
+            "title": "CMS Overzicht",
+            "subtitle": "Beheer inhoud en instellingen",
+            "productions": "Producties",
+            "productionsDescription": "Beheer producties en evenementen",
+            "articles": "Artikelen",
+            "articlesDescription": "Beheer nieuwsartikelen",
+            "locations": "Locaties",
+            "locationsDescription": "Beheer locaties en zalen",
+            "performers": "Uitvoerders",
+            "performersDescription": "Beheer artiesten en uitvoerders",
+            "collections": "Collecties",
+            "collectionsDescription": "Beheer inhoudscollecties",
+            "ingest": "Ingest",
+            "ingestDescription": "Upload en verwerk archiefmaterialen",
+            "import": "Import",
+            "importDescription": "Importeer data van externe bronnen",
+            "items": "items",
+            "openSection": "Open sectie",
+            "backToOverview": "Terug naar overzicht"
+        },
+        "editions": {
+            "edition1": "Ed. 01",
+            "edition2": "Ed. 02",
+            "edition3": "Ed. 03",
+            "edition4": "Ed. 04",
+            "edition5": "Ed. 05",
+            "edition6": "Ed. 06"
+        },
+        "sidebar": {
+            "contentManagement": "Content Management",
+            "content": "Inhoud",
+            "system": "Systeem"
+        },
+        "SectionCard": {
+            "comingSoon": "Binnenkort"
+        },
+        "PageHeader": {},
         "Productions": {
+            "title": "Producties",
+            "subtitle": "Beheer alle producties en geplande evenementen",
+            "items": "items",
             "showEvents": "Voorstellingen tonen",
             "hideEvents": "Voorstellingen verbergen",
             "editProduction": "Productie bewerken",
             "editEvent": "Voorstelling bewerken"
         },
         "Locations": {
+            "title": "Locaties",
+            "subtitle": "Beheer locaties, theaters en hun individuele zalen",
+            "items": "locaties",
             "showHalls": "Zalen tonen",
             "hideHalls": "Zalen verbergen",
             "editLocation": "Locatie bewerken",
             "editHall": "Zaal bewerken"
         },
         "Articles": {
+            "title": "Artikelen",
+            "subtitle": "Beheer nieuwsartikelen",
+            "comingSoon": "Binnenkort beschikbaar",
             "notAvailable": "Artikelen-API is nog niet beschikbaar. Geen gegevens om weer te geven.",
             "newArticle": "Nieuw artikel",
             "createFailed": "Aanmaken van artikel mislukt.",
@@ -201,14 +314,31 @@
             "statusLabel": "Status",
             "slug": "Slug",
             "subjectPeriod": "Periode",
-            "title": "Titel",
+            "titleColumn": "Titel",
             "relatedProductions": "Gerelateerde producties",
             "relatedArtists": "Gerelateerde artiesten",
             "relatedLocations": "Gerelateerde locaties",
             "relatedEvents": "Gerelateerde voorstellingen"
         },
         "Performers": {
+            "title": "Uitvoerders",
+            "subtitle": "Beheer artiesten",
+            "comingSoon": "Binnenkort beschikbaar",
             "notAvailable": "Uitvoerders-API is nog niet beschikbaar. Geen gegevens om weer te geven."
+        },
+        "Ingest": {
+            "title": "Ingest",
+            "subtitle": "Bulk import van mediabestanden en archiefmaterialen",
+            "comingSoon": "Binnenkort beschikbaar",
+            "notAvailable": "Ingest functionaliteit",
+            "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier mediabestanden uploaden en verwerken."
+        },
+        "Import": {
+            "title": "Import",
+            "subtitle": "Automatische import van externe databronnen",
+            "comingSoon": "Binnenkort beschikbaar",
+            "notAvailable": "Import functionaliteit",
+            "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier data importeren van externe bronnen zoals UiTdatabank."
         },
         "Collections": {
             "title": "Collecties",
@@ -285,10 +415,58 @@
         "backToHome": "Terug naar het archief",
         "articleImageCaption": "Het vergeten Vooruit gebouw..."
     },
+    "ProductionPage": {
+        "eyebrow": "Productie",
+        "archiveNumber": "Archief nr.",
+        "metaType": "Type",
+        "metaTheme": "Thema",
+        "metaLanguage": "Taal",
+        "languageNlEn": "EN / NL",
+        "languageNl": "NL",
+        "imageCaptionFallback": "Archief VIERNULVIER",
+        "about": "Over de productie",
+        "noDescription": "Geen beschrijving beschikbaar in deze taal.",
+        "video": "Video",
+        "externalVideoLink": "Externe video link ↗",
+        "credits": "Credits",
+        "creditProduction": "Productie",
+        "creditArtist": "Artiest",
+        "relatedTitle": "Meer uit het archief",
+        "relatedViewAll": "Bekijk alles →",
+        "relatedArchive": "Archief",
+        "relatedProductionFallback": "Productie",
+        "breadcrumbArchive": "Archief",
+        "breadcrumbProductions": "Producties",
+        "loading": "Laden..."
+    },
     "NewsArticleComponent": {
         "subTitle": "Vooruit Archief",
         "edition": "Editie 404",
         "articleBrand": "Archiefdienst",
         "price": "Prijs: Onschatbaar"
+    },
+    "Articles": {
+        "heroEyebrow": "Verhalen uit het archief",
+        "heroTitle": "Artikels & Verhalen",
+        "heroSubtitle": "Verhalen achter de schermen van De Vooruit",
+        "datelineEdition": "Archief Editie",
+        "datelineBrand": "Archiefdienst",
+        "datelinePrice": "Prijs: Onschatbaar",
+        "loading": "Artikels laden...",
+        "noArticlesTitle": "Nog geen verhalen",
+        "noArticlesText": "Er zijn momenteel geen gepubliceerde artikels. Kom later terug voor nieuwe verhalen uit het archief.",
+        "listLabel": "{count, plural, one {# artikel} other {# artikels}}",
+        "untitled": "Zonder titel",
+        "readMore": "Lees meer",
+        "backToArticles": "Terug naar artikels",
+        "notFoundTitle": "Artikel niet gevonden",
+        "notFoundText": "Dit artikel bestaat niet of is niet langer beschikbaar.",
+        "connectedTo": "Gekoppeld aan",
+        "moreStories": "Meer artikels",
+        "relatedEntities": "Gerelateerd",
+        "relatedProductions": "Producties",
+        "relatedArtists": "Artiesten",
+        "relatedLocations": "Locaties",
+        "relatedEvents": "Voorstellingen"
     }
 }
