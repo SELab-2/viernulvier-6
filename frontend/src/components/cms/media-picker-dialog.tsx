@@ -344,15 +344,22 @@ function MediaGrid({ media, isLoading, selectedId, onSelect, onDetach }: MediaGr
                 const isSelected = item.id === selectedId;
 
                 return (
-                    <button
+                    <div
                         key={item.id}
-                        type="button"
-                        className={`group relative aspect-square overflow-hidden rounded border-2 transition-colors ${
+                        role="button"
+                        tabIndex={0}
+                        className={`group relative aspect-square cursor-pointer overflow-hidden rounded border-2 transition-colors ${
                             isSelected
                                 ? "border-primary ring-primary/20 ring-2"
                                 : "hover:border-muted-foreground/30 border-transparent"
                         }`}
                         onClick={() => onSelect(item)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                onSelect(item);
+                            }
+                        }}
                     >
                         {url ? (
                             <Image
@@ -385,7 +392,7 @@ function MediaGrid({ media, isLoading, selectedId, onSelect, onDetach }: MediaGr
                                 <XIcon className="size-3" />
                             </button>
                         )}
-                    </button>
+                    </div>
                 );
             })}
         </div>
