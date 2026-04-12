@@ -1,11 +1,12 @@
 "use client";
 
-import { use, useState, useCallback } from "react";
+import { use, useState, useCallback, useMemo } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { useGetArticleBySlug } from "@/hooks/api/useArticles";
+import { useGetEntityMedia } from "@/hooks/api/useMedia";
 import { Link } from "@/i18n/routing";
 
 import { SearchHeader } from "@/components/homepage/search-header";
@@ -57,6 +58,16 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
 
     const { data: article, isLoading, isError } = useGetArticleBySlug(slug);
 
+    const { data: inlineMedia = [] } = useGetEntityMedia("article", article?.id ?? "", {
+        enabled: !!article?.id,
+        params: { role: "inline" },
+    });
+
+    const mediaMap = useMemo(
+        () => Object.fromEntries(inlineMedia.map((m) => [m.id, m.url ?? ""])),
+        [inlineMedia]
+    );
+
     return (
         <>
             <SearchHeader
@@ -101,7 +112,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
 
                     {/* Content */}
                     <div className="mx-auto max-w-[750px]">
-                        <TiptapRenderer content={article.content} />
+                        <TiptapRenderer content={article.content} mediaMap={mediaMap} />
                     </div>
 
                     {/* Connected entities — TODO: replace static data with API when backend supports public relations */}
