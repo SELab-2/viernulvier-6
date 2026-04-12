@@ -2,7 +2,9 @@ use database::{Database, error::DatabaseError};
 
 use crate::models::location::ApiLocation;
 
-pub async fn insert_location(db: &Database, location: ApiLocation) -> Result<(), DatabaseError> {
-    db.locations().insert(location.into(), vec![]).await?;
-    Ok(())
+impl ApiLocation {
+    pub async fn insert(self, db: &Database) -> Result<(), DatabaseError> {
+        db.locations().insert(self.into(), vec![]).await?;
+        Ok(())
+    }
 }

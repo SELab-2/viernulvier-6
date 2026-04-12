@@ -193,10 +193,7 @@ impl ApiImporter {
                     (production.poster_gallery.clone(), "poster"),
                 ];
 
-                let production_source_id =
-                    crate::insert::productions::insert_production(&self.db, production)
-                        .await
-                        .unwrap();
+                let production_source_id = production.insert(&self.db).await.unwrap();
 
                 let Some(source_id) = production_source_id else {
                     continue;
@@ -232,9 +229,7 @@ impl ApiImporter {
             let amt = locations.len();
             info!("Locations: got {amt} from api");
             for location in locations {
-                crate::insert::locations::insert_location(&self.db, location)
-                    .await
-                    .unwrap();
+                location.insert(&self.db).await.unwrap();
             }
             info!("Locations: inserted {amt} into db");
         }
@@ -253,9 +248,7 @@ impl ApiImporter {
             let amt = spaces.len();
             info!("Spaces: got {amt} from api");
             for space in spaces {
-                crate::insert::spaces::insert_space(&self.db, space)
-                    .await
-                    .unwrap();
+                space.insert(&self.db).await.unwrap();
             }
             info!("Spaces: inserted {amt} into db");
         }
@@ -274,9 +267,7 @@ impl ApiImporter {
             let amt = halls.len();
             info!("Halls: got {amt} from api");
             for hall in halls {
-                crate::insert::halls::insert_hall(&self.db, hall)
-                    .await
-                    .unwrap();
+                hall.insert(&self.db).await.unwrap();
             }
             info!("Halls: inserted {amt} into db");
         }
@@ -295,9 +286,7 @@ impl ApiImporter {
             let amt = events.len();
             info!("Events: got {amt} from api");
             for event in events {
-                crate::insert::events::insert_event(&self.db, event)
-                    .await
-                    .unwrap();
+                event.insert(&self.db).await.unwrap();
             }
             info!("Events: inserted {amt} into db");
         }
@@ -315,9 +304,7 @@ impl ApiImporter {
             let amt = prices.len();
             info!("Prices: got {amt} from api");
             for price in prices {
-                crate::insert::prices::insert_price(&self.db, price)
-                    .await
-                    .unwrap();
+                price.insert(&self.db).await.unwrap();
             }
             info!("Prices: inserted {amt} into db");
         }
@@ -337,9 +324,7 @@ impl ApiImporter {
             let amt = ranks.len();
             info!("PriceRanks: got {amt} from api");
             for rank in ranks {
-                crate::insert::price_ranks::insert_price_rank(&self.db, rank)
-                    .await
-                    .unwrap();
+                rank.insert(&self.db).await.unwrap();
             }
             info!("PriceRanks: inserted {amt} into db");
         }
@@ -359,9 +344,7 @@ impl ApiImporter {
             let amt = event_prices.len();
             info!("EventPrices: got {amt} from api");
             for event_price in event_prices {
-                crate::insert::event_prices::insert_event_price(&self.db, event_price)
-                    .await
-                    .unwrap();
+                event_price.insert(&self.db).await.unwrap();
             }
             info!("EventPrices: inserted {amt} into db");
         }

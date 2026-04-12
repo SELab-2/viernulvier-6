@@ -1,7 +1,5 @@
-//! Per-entity DB insert logic extracted from `ApiImporter`.
-//!
-//! each function takes a `&Database` plus one already-parsed `Api*` struct and performs the FK lookups + insert
-//! Shared between the live importer (HTTP-driven) and the offline seed binary
+//! each submodule provides an inherent `insert` method on its `Api*` struct
+//! that performs the FK lookups + insert. Shared between the live importer
 
 pub mod event_prices;
 pub mod events;
