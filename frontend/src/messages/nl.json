@@ -415,11 +415,47 @@
         "backToHome": "Terug naar het archief",
         "articleImageCaption": "Het vergeten Vooruit gebouw..."
     },
+    "ProductionPage": {
+        "eyebrow": "Productie",
+        "archiveNumber": "Archief nr.",
+        "metaType": "Type",
+        "metaTheme": "Thema",
+        "metaLanguage": "Taal",
+        "languageNlEn": "EN / NL",
+        "languageNl": "NL",
+        "imageCaptionFallback": "Archief VIERNULVIER",
+        "about": "Over de productie",
+        "noDescription": "Geen beschrijving beschikbaar in deze taal.",
+        "video": "Video",
+        "externalVideoLink": "Externe video link ↗",
+        "credits": "Credits",
+        "creditProduction": "Productie",
+        "creditArtist": "Artiest",
+        "relatedTitle": "Meer uit het archief",
+        "relatedViewAll": "Bekijk alles →",
+        "relatedArchive": "Archief",
+        "relatedProductionFallback": "Productie",
+        "breadcrumbArchive": "Archief",
+        "breadcrumbProductions": "Producties",
+        "loading": "Laden..."
+    },
     "NewsArticleComponent": {
         "subTitle": "Vooruit Archief",
         "edition": "Editie 404",
         "articleBrand": "Archiefdienst",
         "price": "Prijs: Onschatbaar"
+    },
+    "Location": {
+        "about": "Over",
+        "history": "Geschiedenis",
+        "halls": "Zalen",
+        "seated": "Zitplaatsen",
+        "openSeating": "Vrije plaatskeuze",
+        "searchArchive": "Bekijk alle voorstellingen op deze locatie",
+        "searchNotImplemented": "Zoeken op locatie is nog niet beschikbaar.",
+        "loading": "Locatie laden...",
+        "notFound": "Locatie niet gevonden.",
+        "error": "Er ging iets mis bij het laden van deze locatie."
     },
     "Articles": {
         "heroEyebrow": "Verhalen uit het archief",

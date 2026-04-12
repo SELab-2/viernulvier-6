@@ -15,7 +15,18 @@ pub enum EntityType {
 }
 
 impl EntityType {
-    /// Returns the join table name for articles about this entity type, if applicable.
+    pub fn table(&self) -> &'static str {
+        match self {
+            Self::Production => "productions",
+            Self::Artist => "artists",
+            Self::Article => "articles",
+            Self::Media => "media",
+            Self::Location => "locations",
+            Self::Event => "events",
+            Self::Series => "series",
+        }
+    }
+
     pub fn article_join_table(&self) -> Option<&'static str> {
         match self {
             Self::Production => Some("articles_about_productions"),
@@ -27,7 +38,6 @@ impl EntityType {
         }
     }
 
-    /// Returns the foreign-key column in the article join table, if applicable.
     pub fn article_id_column(&self) -> Option<&'static str> {
         match self {
             Self::Production => Some("production_id"),

@@ -415,11 +415,47 @@
         "backToHome": "Back to the archive",
         "articleImageCaption": "The forgotten Vooruit building..."
     },
+    "ProductionPage": {
+        "eyebrow": "Production",
+        "archiveNumber": "Archive no.",
+        "metaType": "Type",
+        "metaTheme": "Theme",
+        "metaLanguage": "Language",
+        "languageNlEn": "EN / NL",
+        "languageNl": "NL",
+        "imageCaptionFallback": "VIERNULVIER Archive",
+        "about": "About this production",
+        "noDescription": "No description available in this language.",
+        "video": "Video",
+        "externalVideoLink": "External video link ↗",
+        "credits": "Credits",
+        "creditProduction": "Production",
+        "creditArtist": "Artist",
+        "relatedTitle": "More from the archive",
+        "relatedViewAll": "View all →",
+        "relatedArchive": "Archive",
+        "relatedProductionFallback": "Production",
+        "breadcrumbArchive": "Archive",
+        "breadcrumbProductions": "Productions",
+        "loading": "Loading..."
+    },
     "NewsArticleComponent": {
         "subTitle": "Vooruit Archive",
         "edition": "Edition 404",
         "articleBrand": "Archives Department",
         "price": "Price: Priceless"
+    },
+    "Location": {
+        "about": "About",
+        "history": "History",
+        "halls": "Halls",
+        "seated": "Seated",
+        "openSeating": "Open seating",
+        "searchArchive": "View all productions at this location",
+        "searchNotImplemented": "Search filtering by location is not yet available.",
+        "loading": "Loading location...",
+        "notFound": "Location not found.",
+        "error": "Something went wrong while loading this location."
     },
     "Articles": {
         "heroEyebrow": "Stories from the archive",
