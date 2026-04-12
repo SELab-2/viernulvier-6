@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 
@@ -122,9 +122,19 @@ export function ProductionArticle({
 
     const [spotlightOpen, setSpotlightOpen] = useState(false);
     const [spotlightIndex, setSpotlightIndex] = useState(0);
-    const spotlightItems: SpotlightItem[] = media
-        .filter((m) => m.url)
-        .map((m) => ({ kind: "media" as const, media: m }));
+    const spotlightItems: SpotlightItem[] = useMemo(
+        () => media.filter((m) => m.url).map((m) => ({ kind: "media" as const, media: m })),
+        [media]
+    );
+    const spotlightIndexMap = useMemo(
+        () =>
+            new Map(
+                spotlightItems
+                    .map((it, idx) => (it.kind === "media" ? ([it.media.id, idx] as const) : null))
+                    .filter((entry): entry is [string, number] => entry !== null)
+            ),
+        [spotlightItems]
+    );
 
     return (
         <div className="max-w-3xl">
@@ -191,9 +201,7 @@ export function ProductionArticle({
                                 : locale === "fr"
                                   ? m.altTextFr
                                   : m.altTextEn) ?? "";
-                        const spotlightIdx = spotlightItems.findIndex(
-                            (it) => it.kind === "media" && it.media.id === m.id
-                        );
+                        const spotlightIdx = spotlightIndexMap.get(m.id) ?? -1;
                         return m.url && spotlightIdx >= 0 ? (
                             <button
                                 type="button"
