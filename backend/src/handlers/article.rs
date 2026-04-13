@@ -15,7 +15,10 @@ use crate::{
         ArticleUpdatePayload,
     },
     error::ErrorResponse,
-    handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
+    handlers::{
+        IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse,
+        queries::{article::ArticleSearchQuery, pagination::PaginationQuery},
+    },
 };
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -33,13 +36,15 @@ pub struct ArticleListParams {
     tag = "Articles",
     operation_id = "get_all_articles",
     description = "Get published articles with optional filters",
-    params(ArticleListParams),
+    params(PaginationQuery, ArticleSearchQuery, ArticleListParams),
     responses(
         (status = 200, description = "Success", body = [ArticleListPayload])
     )
 )]
 pub async fn get_all(
     db: Database,
+    Query(_pagination): Query<PaginationQuery>,
+    Query(_search): Query<ArticleSearchQuery>,
     Query(params): Query<ArticleListParams>,
 ) -> JsonResponse<Vec<ArticleListPayload>> {
     ArticleListPayload::list_published(
