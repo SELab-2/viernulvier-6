@@ -56,45 +56,31 @@ export function ArchiveSidebar({
     const [checkedLocations, setCheckedLocations] = useState<Set<string>>(new Set());
 
     const [dateMode, setDateMode] = useState<DateFilterMode>("year");
-    const [yearRange, setYearRange] = useState<[number, number]>(() => {
-        const b = yearBoundsFromStats(undefined, { minYear: minYearProp, maxYear: maxYearProp });
-        return [b.minYear, b.maxYear];
-    });
-    const [dateRange, setDateRange] = useState<[Date, Date]>(() => {
-        const b = yearBoundsFromStats(undefined, { minYear: minYearProp, maxYear: maxYearProp });
-        return [new Date(b.minYear, 0, 1), new Date(b.maxYear, 11, 31)];
-    });
+    /** `null` = full range for current archive bounds (updates automatically when /stats arrives). */
+    const [yearRangeDraft, setYearRangeDraft] = useState<[number, number] | null>(null);
+    const [dateRangeDraft, setDateRangeDraft] = useState<[Date, Date] | null>(null);
 
-    const appliedStatsRef = useRef(false);
+    const yearRange = useMemo((): [number, number] => {
+        const full: [number, number] = [bounds.minYear, bounds.maxYear];
+        if (yearRangeDraft === null) return full;
+        const lo = Math.max(bounds.minYear, Math.min(yearRangeDraft[0], bounds.maxYear));
+        const hi = Math.max(bounds.minYear, Math.min(yearRangeDraft[1], bounds.maxYear));
+        if (lo <= hi) return [lo, hi];
+        return full;
+    }, [yearRangeDraft, bounds.minYear, bounds.maxYear]);
 
-    useEffect(() => {
-        // First time /stats returns: replace fallback bounds (max was current year) with real
-        // oldest/newest years so the right thumb matches the archive upper bound, not "today".
-        if (stats && !appliedStatsRef.current) {
-            appliedStatsRef.current = true;
-            setYearRange([bounds.minYear, bounds.maxYear]);
-            setDateRange([new Date(bounds.minYear, 0, 1), new Date(bounds.maxYear, 11, 31)]);
-            return;
-        }
-
-        setYearRange((prev) => {
-            const lo = Math.max(bounds.minYear, Math.min(prev[0], bounds.maxYear));
-            const hi = Math.max(bounds.minYear, Math.min(prev[1], bounds.maxYear));
-            if (lo <= hi) return [lo, hi];
-            return [bounds.minYear, bounds.maxYear];
-        });
-        setDateRange((prev) => {
-            const minD = new Date(bounds.minYear, 0, 1);
-            const maxD = new Date(bounds.maxYear, 11, 31);
-            let start = prev[0] < minD ? minD : prev[0] > maxD ? maxD : prev[0];
-            let end = prev[1] > maxD ? maxD : prev[1] < minD ? minD : prev[1];
-            if (start > end) {
-                start = minD;
-                end = maxD;
-            }
-            return [start, end];
-        });
-    }, [stats, bounds.minYear, bounds.maxYear]);
+    const dateRange = useMemo((): [Date, Date] => {
+        const minD = new Date(bounds.minYear, 0, 1);
+        const maxD = new Date(bounds.maxYear, 11, 31);
+        const full: [Date, Date] = [minD, maxD];
+        if (dateRangeDraft === null) return full;
+        const start =
+            dateRangeDraft[0] < minD ? minD : dateRangeDraft[0] > maxD ? maxD : dateRangeDraft[0];
+        const end =
+            dateRangeDraft[1] > maxD ? maxD : dateRangeDraft[1] < minD ? minD : dateRangeDraft[1];
+        if (start > end) return full;
+        return [start, end];
+    }, [dateRangeDraft, bounds.minYear, bounds.maxYear]);
 
     const effectiveDateRange = useMemo<[Date, Date]>(
         () =>
@@ -105,12 +91,12 @@ export function ArchiveSidebar({
     );
 
     const switchToExact = () => {
-        setDateRange([new Date(yearRange[0], 0, 1), new Date(yearRange[1], 11, 31)]);
+        setDateRangeDraft([new Date(yearRange[0], 0, 1), new Date(yearRange[1], 11, 31)]);
         setDateMode("exact");
     };
 
     const switchToYear = () => {
-        setYearRange([dateRange[0].getFullYear(), dateRange[1].getFullYear()]);
+        setYearRangeDraft([dateRange[0].getFullYear(), dateRange[1].getFullYear()]);
         setDateMode("year");
     };
 
@@ -172,9 +158,9 @@ export function ArchiveSidebar({
         setCheckedCategories(new Set());
         setCheckedLocations(new Set());
         setDateMode("year");
-        setYearRange([bounds.minYear, bounds.maxYear]);
-        setDateRange([new Date(bounds.minYear, 0, 1), new Date(bounds.maxYear, 11, 31)]);
-    }, [bounds.minYear, bounds.maxYear]);
+        setYearRangeDraft(null);
+        setDateRangeDraft(null);
+    }, []);
 
     const sidebarContent = (
         <>
@@ -296,7 +282,7 @@ export function ArchiveSidebar({
                             min={bounds.minYear}
                             max={bounds.maxYear}
                             value={yearRange}
-                            onChange={setYearRange}
+                            onChange={setYearRangeDraft}
                             ariaLabelStart={t("year.rangeFrom")}
                             ariaLabelEnd={t("year.rangeTo")}
                         />
@@ -310,7 +296,7 @@ export function ArchiveSidebar({
                             endDate={dateRange[1]}
                             minDate={minDate}
                             maxDate={maxDate}
-                            onChange={(start, end) => setDateRange([start, end])}
+                            onChange={(start, end) => setDateRangeDraft([start, end])}
                         />
                     </div>
                 )}
