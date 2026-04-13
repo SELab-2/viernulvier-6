@@ -25,6 +25,14 @@ impl<'a> LocationRepo<'a> {
         Self { db }
     }
 
+    pub async fn count(&self) -> Result<i64, DatabaseError> {
+        let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM locations")
+            .fetch_one(self.db)
+            .await?;
+
+        Ok(count)
+    }
+
     pub async fn by_id(&self, id: Uuid) -> Result<LocationWithTranslations, DatabaseError> {
         let location = Location::select()
             .where_("id = $1")

@@ -18,6 +18,17 @@ impl<'a> ArticleRepo<'a> {
         Self { db }
     }
 
+    pub async fn count(&self) -> Result<i64, DatabaseError> {
+        let count = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM articles WHERE status = $1",
+        )
+        .bind(ArticleStatus::Published)
+        .fetch_one(self.db)
+        .await?;
+
+        Ok(count)
+    }
+
     pub async fn all(&self) -> Result<Vec<Article>, DatabaseError> {
         Ok(Article::select()
             .order_asc("updated_at")

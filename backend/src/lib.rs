@@ -22,9 +22,10 @@ use utoipa_swagger_ui::{Config, SwaggerUi};
 
 use crate::config::AppConfig;
 use crate::error::AppError;
+use crate::dto::stats::StatsPayload;
 use crate::handlers::{
     admin, article, artist, auth, collection, event, hall, location, media, production, series,
-    space, tagging, taxonomy, version,
+    space, tagging, stats, taxonomy, version,
 };
 
 pub mod config;
@@ -43,11 +44,12 @@ pub struct AppState {
 #[derive(OpenApi)]
 #[openapi(
     modifiers(&SecurityAddon),
-    components(schemas(EntityType, Facet, Sort)),
+    components(schemas(EntityType, Facet, Sort, StatsPayload)),
     tags(
         (name = "viernulvier_api", description = "API Endpoints"),
         (name = "Collections", description = "A saved, titled selection of archive items with a shareable URL. No login required to view."),
-        (name = "Series", description = "Thematic/programmatic groupings of productions.")
+        (name = "Series", description = "Thematic/programmatic groupings of productions."),
+        (name = "Stats", description = "Aggregate public site statistics.")
     )
 )]
 pub struct ApiDoc;
@@ -216,6 +218,8 @@ fn public_routes() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         // version
         .routes(routes!(version::get))
+        // stats
+        .routes(routes!(stats::get))
         // auth
         .routes(routes!(auth::login))
         .routes(routes!(auth::refresh))
