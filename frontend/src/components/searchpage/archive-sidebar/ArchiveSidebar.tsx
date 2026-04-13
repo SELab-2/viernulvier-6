@@ -91,7 +91,11 @@ export function ArchiveSidebar({
     );
 
     const switchToExact = () => {
-        setDateRangeDraft([new Date(yearRange[0], 0, 1), new Date(yearRange[1], 11, 31)]);
+        setDateRangeDraft(
+            yearRangeDraft === null
+                ? null
+                : [new Date(yearRange[0], 0, 1), new Date(yearRange[1], 11, 31)]
+        );
         setDateMode("exact");
     };
 

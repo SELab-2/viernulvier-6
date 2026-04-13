@@ -4,13 +4,18 @@ import userEvent from "@testing-library/user-event";
 import { ArchiveSidebar } from "@/components/searchpage/archive-sidebar/ArchiveSidebar";
 import { NextIntlClientProvider } from "next-intl";
 import type { Facet } from "@/types/models/taxonomy.types";
+import type { StatsPayload } from "@/types/api/stats.api.types";
 
-vi.mock("@/hooks/api/useStats", () => ({
-    useGetStats: () => ({
-        data: undefined,
+const { useGetStatsMock } = vi.hoisted(() => ({
+    useGetStatsMock: vi.fn(() => ({
+        data: undefined as StatsPayload | undefined,
         isLoading: false,
         isError: false,
-    }),
+    })),
+}));
+
+vi.mock("@/hooks/api/useStats", () => ({
+    useGetStats: useGetStatsMock,
 }));
 
 const messages = {
@@ -85,6 +90,11 @@ describe("ArchiveSidebar component", () => {
     beforeEach(() => {
         // jsdom does not implement scrollIntoView (needed by DateRangePicker)
         window.HTMLElement.prototype.scrollIntoView = vi.fn();
+        useGetStatsMock.mockReturnValue({
+            data: undefined,
+            isLoading: false,
+            isError: false,
+        });
     });
 
     afterEach(() => {
@@ -310,6 +320,48 @@ describe("ArchiveSidebar component", () => {
 
         await user.click(screen.getByRole("button", { name: "Year range" }));
         expect(screen.getAllByRole("slider")).toHaveLength(2);
+    });
+
+    it("updates year range labels when /stats arrives after mount (null draft tracks new bounds)", async () => {
+        const currentYear = new Date().getFullYear();
+
+        useGetStatsMock.mockReturnValue({
+            data: undefined,
+            isLoading: false,
+            isError: false,
+        });
+
+        const { rerender } = renderWithIntl(<ArchiveSidebar />);
+
+        expect(screen.getByText("1980")).toBeInTheDocument();
+        expect(screen.getByText(String(currentYear))).toBeInTheDocument();
+
+        const statsPayload: StatsPayload = {
+            oldest_event: "2016-06-15T12:00:00.000Z",
+            newest_event: "2023-08-01T12:00:00.000Z",
+            event_count: 10,
+            production_count: 5,
+            location_count: 3,
+            article_count: 2,
+        };
+
+        useGetStatsMock.mockReturnValue({
+            data: statsPayload,
+            isLoading: false,
+            isError: false,
+        });
+
+        rerender(
+            <NextIntlClientProvider locale="en" messages={messages}>
+                <ArchiveSidebar />
+            </NextIntlClientProvider>
+        );
+
+        await waitFor(() => {
+            expect(screen.getByText("2016")).toBeInTheDocument();
+        });
+        expect(screen.getByText("2023")).toBeInTheDocument();
+        expect(screen.queryByText("1980")).not.toBeInTheDocument();
     });
 
     // ── Mobile open/close ─────────────────────────────────────────────────────

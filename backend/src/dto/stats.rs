@@ -34,7 +34,7 @@ impl StatsPayload {
             async move { db_events_count.events().count().await },
             async move { db_productions.productions().count().await },
             async move { db_locations.locations().count().await },
-            async move { db_articles.articles().count().await },
+            async move { db_articles.articles().count_published().await },
         )?;
         let (oldest_event, newest_event) = event_bounds;
 
