@@ -14,6 +14,7 @@ use crate::{
         ArticleListPayload, ArticlePayload, ArticlePostPayload, ArticleRelationsPayload,
         ArticleUpdatePayload,
     },
+    dto::paginated::PaginatedResponse,
     error::ErrorResponse,
     handlers::{
         IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse,
@@ -38,17 +39,20 @@ pub struct ArticleListParams {
     description = "Get published articles with optional filters",
     params(PaginationQuery, ArticleSearchQuery, ArticleListParams),
     responses(
-        (status = 200, description = "Success", body = [ArticleListPayload])
+        (status = 200, description = "Success", body = PaginatedResponse<ArticleListPayload>)
     )
 )]
 pub async fn get_all(
     db: Database,
-    Query(_pagination): Query<PaginationQuery>,
-    Query(_search): Query<ArticleSearchQuery>,
+    Query(pagination): Query<PaginationQuery>,
+    Query(search): Query<ArticleSearchQuery>,
     Query(params): Query<ArticleListParams>,
-) -> JsonResponse<Vec<ArticleListPayload>> {
+) -> JsonResponse<PaginatedResponse<ArticleListPayload>> {
     ArticleListPayload::list_published(
         &db,
+        pagination.cursor,
+        pagination.limit,
+        search,
         params.subject_start,
         params.subject_end,
         params.tag_slug,
