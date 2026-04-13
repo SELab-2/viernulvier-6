@@ -5,6 +5,14 @@ import { ArchiveSidebar } from "@/components/searchpage/archive-sidebar/ArchiveS
 import { NextIntlClientProvider } from "next-intl";
 import type { Facet } from "@/types/models/taxonomy.types";
 
+vi.mock("@/hooks/api/useStats", () => ({
+    useGetStats: () => ({
+        data: undefined,
+        isLoading: false,
+        isError: false,
+    }),
+}));
+
 const messages = {
     Sidebar: {
         title: "Filter",

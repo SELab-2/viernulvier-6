@@ -7,9 +7,11 @@ import { SlidersHorizontal, X } from "lucide-react";
 import type { Location } from "@/types/models/location.types";
 import type { Facet } from "@/types/models/taxonomy.types";
 import { getLabel } from "@/lib/utils";
+import { useGetStats } from "@/hooks/api/useStats";
 
 import { YearRangeSlider } from "./YearRangeSlider";
 import { DateRangePicker } from "./DateRangePicker";
+import { yearBoundsFromStats } from "./statsYearBounds";
 
 const CATEGORIES = ["artists", "productions", "articles", "posters"] as const;
 
@@ -31,12 +33,21 @@ interface ArchiveSidebarProps {
 export function ArchiveSidebar({
     locations = [],
     facets = [],
-    minYear = 1980,
-    maxYear = new Date().getFullYear(),
+    minYear: minYearProp,
+    maxYear: maxYearProp,
     onFilterChange,
 }: ArchiveSidebarProps) {
     const t = useTranslations("Sidebar");
     const locale = useLocale();
+    const { data: stats } = useGetStats();
+
+    const bounds = useMemo(
+        () => yearBoundsFromStats(stats, { minYear: minYearProp, maxYear: maxYearProp }),
+        [stats, minYearProp, maxYearProp]
+    );
+
+    const minDate = useMemo(() => new Date(bounds.minYear, 0, 1), [bounds.minYear]);
+    const maxDate = useMemo(() => new Date(bounds.maxYear, 11, 31), [bounds.maxYear]);
     const [mobileOpen, setMobileOpen] = useState(false);
     const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
     const [checkedCategories, setCheckedCategories] = useState<Set<string>>(
@@ -44,18 +55,46 @@ export function ArchiveSidebar({
     );
     const [checkedLocations, setCheckedLocations] = useState<Set<string>>(new Set());
 
-    const validatedMinYear = Math.min(minYear, maxYear);
-    const validatedMaxYear = Math.max(minYear, maxYear);
-
-    const minDate = new Date(validatedMinYear, 0, 1);
-    const maxDate = new Date(validatedMaxYear, 11, 31);
-
     const [dateMode, setDateMode] = useState<DateFilterMode>("year");
-    const [yearRange, setYearRange] = useState<[number, number]>([
-        validatedMinYear,
-        validatedMaxYear,
-    ]);
-    const [dateRange, setDateRange] = useState<[Date, Date]>([minDate, maxDate]);
+    const [yearRange, setYearRange] = useState<[number, number]>(() => {
+        const b = yearBoundsFromStats(undefined, { minYear: minYearProp, maxYear: maxYearProp });
+        return [b.minYear, b.maxYear];
+    });
+    const [dateRange, setDateRange] = useState<[Date, Date]>(() => {
+        const b = yearBoundsFromStats(undefined, { minYear: minYearProp, maxYear: maxYearProp });
+        return [new Date(b.minYear, 0, 1), new Date(b.maxYear, 11, 31)];
+    });
+
+    const appliedStatsRef = useRef(false);
+
+    useEffect(() => {
+        // First time /stats returns: replace fallback bounds (max was current year) with real
+        // oldest/newest years so the right thumb matches the archive upper bound, not "today".
+        if (stats && !appliedStatsRef.current) {
+            appliedStatsRef.current = true;
+            setYearRange([bounds.minYear, bounds.maxYear]);
+            setDateRange([new Date(bounds.minYear, 0, 1), new Date(bounds.maxYear, 11, 31)]);
+            return;
+        }
+
+        setYearRange((prev) => {
+            const lo = Math.max(bounds.minYear, Math.min(prev[0], bounds.maxYear));
+            const hi = Math.max(bounds.minYear, Math.min(prev[1], bounds.maxYear));
+            if (lo <= hi) return [lo, hi];
+            return [bounds.minYear, bounds.maxYear];
+        });
+        setDateRange((prev) => {
+            const minD = new Date(bounds.minYear, 0, 1);
+            const maxD = new Date(bounds.maxYear, 11, 31);
+            let start = prev[0] < minD ? minD : prev[0] > maxD ? maxD : prev[0];
+            let end = prev[1] > maxD ? maxD : prev[1] < minD ? minD : prev[1];
+            if (start > end) {
+                start = minD;
+                end = maxD;
+            }
+            return [start, end];
+        });
+    }, [stats, bounds.minYear, bounds.maxYear]);
 
     const effectiveDateRange = useMemo<[Date, Date]>(
         () =>
@@ -133,9 +172,9 @@ export function ArchiveSidebar({
         setCheckedCategories(new Set());
         setCheckedLocations(new Set());
         setDateMode("year");
-        setYearRange([validatedMinYear, validatedMaxYear]);
-        setDateRange([new Date(validatedMinYear, 0, 1), new Date(validatedMaxYear, 11, 31)]);
-    }, [validatedMinYear, validatedMaxYear]);
+        setYearRange([bounds.minYear, bounds.maxYear]);
+        setDateRange([new Date(bounds.minYear, 0, 1), new Date(bounds.maxYear, 11, 31)]);
+    }, [bounds.minYear, bounds.maxYear]);
 
     const sidebarContent = (
         <>
@@ -254,8 +293,8 @@ export function ArchiveSidebar({
                             <span>{yearRange[1]}</span>
                         </div>
                         <YearRangeSlider
-                            min={validatedMinYear}
-                            max={validatedMaxYear}
+                            min={bounds.minYear}
+                            max={bounds.maxYear}
                             value={yearRange}
                             onChange={setYearRange}
                             ariaLabelStart={t("year.rangeFrom")}

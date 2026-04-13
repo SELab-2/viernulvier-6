@@ -12,6 +12,7 @@ const buildQueryKey = (
 export const queryKeys = {
     user: ["user"] as const,
     version: ["version"] as const,
+    stats: ["stats"] as const,
     locations: {
         all: (pagination?: PaginationParams) => buildQueryKey(["locations"], pagination),
         detail: (id: string) => ["locations", id] as const,
