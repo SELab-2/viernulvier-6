@@ -6,6 +6,8 @@ use serde_json::Value;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use crate::models::entity_type::EntityType;
+
 #[derive(Debug)]
 pub struct ArticleRelations {
     pub production_ids: Vec<Uuid>,
@@ -48,4 +50,9 @@ pub struct ArticleWithScore {
 
 pub struct ArticleSearch {
     pub q: Option<String>,
+    pub subject_start: Option<NaiveDate>,
+    pub subject_end: Option<NaiveDate>,
+    pub tag_slug: Option<String>,
+    pub related_entity_id: Option<Uuid>,
+    pub related_entity_type: Option<EntityType>,
 }

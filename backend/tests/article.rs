@@ -10,10 +10,32 @@ use viernulvier_api::dto::article::{
     ArticleListPayload, ArticlePayload, ArticlePostPayload, ArticleRelationsPayload,
     ArticleUpdatePayload,
 };
+use viernulvier_api::dto::paginated::PaginatedResponse;
 
 use crate::common::{into_struct::IntoStruct, router::TestRouter};
 
 mod common;
+
+async fn insert_published_article(
+    db: &PgPool,
+    id: Uuid,
+    slug: &str,
+    title: &str,
+    updated_at: &str,
+) {
+    sqlx::query(
+        "INSERT INTO articles (
+            id, slug, status, title, content, subject_period_start, subject_period_end, created_at, updated_at
+        ) VALUES ($1, $2, 'published', $3, '{\"type\": \"doc\", \"content\": []}'::jsonb, NULL, NULL, $4::timestamptz, $4::timestamptz)",
+    )
+    .bind(id)
+    .bind(slug)
+    .bind(title)
+    .bind(updated_at)
+    .execute(db)
+    .await
+    .unwrap();
+}
 
 #[sqlx::test(fixtures("articles"))]
 #[test_log::test]
@@ -23,9 +45,163 @@ async fn get_all_returns_only_published(db: PgPool) {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let data: Vec<ArticleListPayload> = response.into_struct().await;
-    assert!(data.len() >= 1);
-    assert!(data.iter().any(|a| a.slug == "published-article"));
+    let data: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    assert!(!data.data.is_empty());
+    assert!(data.data.iter().any(|a| a.slug == "published-article"));
+    assert!(data.next_cursor.is_none());
+}
+
+#[sqlx::test(fixtures("articles"))]
+#[test_log::test]
+async fn get_all_paginates(db: PgPool) {
+    insert_published_article(
+        &db,
+        Uuid::from_str("dddddddd-dddd-dddd-dddd-dddddddddddd").unwrap(),
+        "second-published-article",
+        "ARTICLE_SEARCH_TEST second",
+        "2026-03-04 10:00:00+00",
+    )
+    .await;
+    insert_published_article(
+        &db,
+        Uuid::from_str("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee").unwrap(),
+        "third-published-article",
+        "ARTICLE_SEARCH_TEST third",
+        "2026-03-05 10:00:00+00",
+    )
+    .await;
+    insert_published_article(
+        &db,
+        Uuid::from_str("ffffffff-ffff-ffff-ffff-ffffffffffff").unwrap(),
+        "fourth-published-article",
+        "ARTICLE_SEARCH_TEST fourth",
+        "2026-03-06 10:00:00+00",
+    )
+    .await;
+
+    let app = TestRouter::new(db);
+
+    let page1: PaginatedResponse<ArticleListPayload> =
+        app.get("/articles?limit=2").await.into_struct().await;
+    assert_eq!(page1.data.len(), 2);
+    assert!(page1.next_cursor.is_some());
+
+    let page2: PaginatedResponse<ArticleListPayload> = app
+        .get(&format!(
+            "/articles?limit=2&cursor={}",
+            page1.next_cursor.clone().unwrap()
+        ))
+        .await
+        .into_struct()
+        .await;
+    assert_eq!(page2.data.len(), 2);
+    assert!(page2.next_cursor.is_some());
+
+    let page3: PaginatedResponse<ArticleListPayload> = app
+        .get(&format!(
+            "/articles?limit=2&cursor={}",
+            page2.next_cursor.clone().unwrap()
+        ))
+        .await
+        .into_struct()
+        .await;
+    assert_eq!(page3.data.len(), 1);
+    assert!(page3.next_cursor.is_none());
+
+    let mut all_ids = vec![
+        page1.data[0].id,
+        page1.data[1].id,
+        page2.data[0].id,
+        page2.data[1].id,
+        page3.data[0].id,
+    ];
+    let original_length = all_ids.len();
+    all_ids.sort();
+    all_ids.dedup();
+    assert_eq!(all_ids.len(), original_length);
+}
+
+#[sqlx::test(fixtures("articles"))]
+#[test_log::test]
+async fn get_all_search_single_result(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/articles?q=Published").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 1);
+    assert_eq!(data.data[0].slug, "published-article");
+    assert!(data.next_cursor.is_none());
+}
+
+#[sqlx::test(fixtures("articles"))]
+#[test_log::test]
+async fn get_all_search_no_results(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/articles?q=rustlang").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    assert!(data.data.is_empty());
+    assert!(data.next_cursor.is_none());
+}
+
+#[sqlx::test(fixtures("articles"))]
+#[test_log::test]
+async fn get_all_search_paginates(db: PgPool) {
+    insert_published_article(
+        &db,
+        Uuid::from_str("dddddddd-dddd-dddd-dddd-dddddddddddd").unwrap(),
+        "second-published-article",
+        "ARTICLE_SEARCH_TEST second",
+        "2026-03-04 10:00:00+00",
+    )
+    .await;
+    insert_published_article(
+        &db,
+        Uuid::from_str("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee").unwrap(),
+        "third-published-article",
+        "ARTICLE_SEARCH_TEST third",
+        "2026-03-05 10:00:00+00",
+    )
+    .await;
+    insert_published_article(
+        &db,
+        Uuid::from_str("ffffffff-ffff-ffff-ffff-ffffffffffff").unwrap(),
+        "fourth-published-article",
+        "ARTICLE_SEARCH_TEST fourth",
+        "2026-03-06 10:00:00+00",
+    )
+    .await;
+
+    let app = TestRouter::new(db);
+
+    let page1: PaginatedResponse<ArticleListPayload> = app
+        .get("/articles?q=ARTICLE_SEARCH_TEST&limit=2")
+        .await
+        .into_struct()
+        .await;
+    assert_eq!(page1.data.len(), 2);
+    assert!(page1.next_cursor.is_some());
+
+    let page2: PaginatedResponse<ArticleListPayload> = app
+        .get(&format!(
+            "/articles?q=ARTICLE_SEARCH_TEST&limit=2&cursor={}",
+            page1.next_cursor.clone().unwrap()
+        ))
+        .await
+        .into_struct()
+        .await;
+    assert_eq!(page2.data.len(), 1);
+    assert!(page2.next_cursor.is_none());
+
+    let mut all_ids = vec![page1.data[0].id, page1.data[1].id, page2.data[0].id];
+    let original_length = all_ids.len();
+    all_ids.sort();
+    all_ids.dedup();
+    assert_eq!(all_ids.len(), original_length);
 }
 
 #[sqlx::test(fixtures("articles"))]
@@ -331,15 +507,15 @@ async fn get_all_filters_by_subject_dates(db: PgPool) {
         .get("/articles?subject_start=2026-01-01&subject_end=2026-06-30")
         .await;
     assert_eq!(response.status(), StatusCode::OK);
-    let data: Vec<ArticleListPayload> = response.into_struct().await;
-    assert!(data.iter().any(|a| a.slug == "published-article"));
+    let data: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    assert!(data.data.iter().any(|a| a.slug == "published-article"));
 
     let response = app
         .get("/articles?subject_start=2027-01-01&subject_end=2027-12-31")
         .await;
     assert_eq!(response.status(), StatusCode::OK);
-    let data: Vec<ArticleListPayload> = response.into_struct().await;
-    assert!(!data.iter().any(|a| a.slug == "published-article"));
+    let data: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    assert!(!data.data.iter().any(|a| a.slug == "published-article"));
 }
 
 #[sqlx::test(fixtures("articles", "article_taggings"))]
@@ -349,14 +525,14 @@ async fn get_all_filters_by_tag(db: PgPool) {
 
     let response = app.get("/articles?tag_slug=theatre").await;
     assert_eq!(response.status(), StatusCode::OK);
-    let data: Vec<ArticleListPayload> = response.into_struct().await;
-    assert_eq!(data.len(), 1);
-    assert_eq!(data[0].slug, "published-article");
+    let data: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 1);
+    assert_eq!(data.data[0].slug, "published-article");
 
     let response = app.get("/articles?tag_slug=dance").await;
     assert_eq!(response.status(), StatusCode::OK);
-    let data: Vec<ArticleListPayload> = response.into_struct().await;
-    assert!(data.is_empty());
+    let data: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    assert!(data.data.is_empty());
 }
 
 #[sqlx::test(fixtures("articles", "productions"))]
@@ -384,9 +560,9 @@ async fn get_all_filters_by_related_production(db: PgPool) {
         ))
         .await;
     assert_eq!(response.status(), StatusCode::OK);
-    let data: Vec<ArticleListPayload> = response.into_struct().await;
-    assert_eq!(data.len(), 1);
-    assert_eq!(data[0].slug, "published-article");
+    let data: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 1);
+    assert_eq!(data.data[0].slug, "published-article");
 
     let other_id = Uuid::from_str("22222222-2222-2222-2222-222222222222").unwrap();
     let response = app
@@ -395,8 +571,8 @@ async fn get_all_filters_by_related_production(db: PgPool) {
         ))
         .await;
     assert_eq!(response.status(), StatusCode::OK);
-    let data: Vec<ArticleListPayload> = response.into_struct().await;
-    assert!(data.is_empty());
+    let data: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    assert!(data.data.is_empty());
 }
 
 #[sqlx::test]

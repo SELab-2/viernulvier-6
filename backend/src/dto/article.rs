@@ -2,7 +2,7 @@ use chrono::{DateTime, NaiveDate, Utc};
 use base64::{Engine, prelude::BASE64_URL_SAFE};
 use database::{
     Database,
-    models::{article::{Article, ArticleCreate, ArticleRelations, ArticleSearch, ArticleStatus}, cursor::CursorData, entity_type::EntityType},
+    models::{article::{Article, ArticleCreate, ArticleRelations, ArticleSearch, ArticleStatus}, cursor::CursorData},
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 use slug::slugify;
 
-use crate::{dto::paginated::PaginatedResponse, error::AppError, handlers::queries::article::ArticleSearchQuery};
+use crate::{dto::paginated::PaginatedResponse, error::AppError};
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ArticlePayload {
@@ -145,12 +145,7 @@ impl ArticleListPayload {
         db: &Database,
         id_cursor: Option<String>,
         limit: u32,
-        search: ArticleSearchQuery,
-        subject_start: Option<NaiveDate>,
-        subject_end: Option<NaiveDate>,
-        tag_slug: Option<String>,
-        related_entity_id: Option<Uuid>,
-        related_entity_type: Option<EntityType>,
+        search: ArticleSearch,
     ) -> Result<PaginatedResponse<Self>, AppError> {
         let cursor: Option<CursorData> = id_cursor.and_then(|b64| {
             let bytes = BASE64_URL_SAFE.decode(b64).ok()?;
@@ -162,12 +157,7 @@ impl ArticleListPayload {
             .search_published(
                 limit,
                 cursor,
-                ArticleSearch { q: search.q },
-                subject_start,
-                subject_end,
-                tag_slug,
-                related_entity_id,
-                related_entity_type,
+                search,
             )
             .await?;
 

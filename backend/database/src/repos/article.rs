@@ -167,16 +167,20 @@ impl<'a> ArticleRepo<'a> {
         limit: u32,
         cursor: Option<CursorData>,
         search: ArticleSearch,
-        subject_start: Option<NaiveDate>,
-        subject_end: Option<NaiveDate>,
-        tag_slug: Option<String>,
-        related_entity_id: Option<Uuid>,
-        related_entity_type: Option<EntityType>,
     ) -> Result<(Vec<Article>, Option<CursorData>), DatabaseError> {
         let limit: i64 = (limit + 1).into();
 
+        let ArticleSearch {
+            q,
+            subject_start,
+            subject_end,
+            tag_slug,
+            related_entity_id,
+            related_entity_type,
+        } = search;
+
         let mut builder = sqlx::QueryBuilder::new("SELECT a.*");
-        if let Some(ref search_q) = search.q {
+        if let Some(ref search_q) = q {
             builder
                 .push(", ")
                 .push_bind(search_q)
@@ -217,10 +221,10 @@ impl<'a> ArticleRepo<'a> {
             builder.push(")");
         }
 
-        let (articles, next_cursor) = if let Some(search_q) = search.q {
+        let (articles, next_cursor) = if let Some(ref search_q) = q {
             builder
                 .push(" AND ")
-                .push_bind(&search_q)
+                .push_bind(search_q)
                 .push(" <% a.full_search_text");
 
             if let Some(cursor) = cursor
@@ -228,13 +232,13 @@ impl<'a> ArticleRepo<'a> {
             {
                 builder
                     .push(" AND ((")
-                    .push_bind(&search_q)
+                    .push_bind(search_q)
                     .push(" <<-> a.full_search_text) > ")
                     .push_bind(score);
 
                 builder
                     .push(" OR ((")
-                    .push_bind(&search_q)
+                    .push_bind(search_q)
                     .push(" <<-> a.full_search_text) = ")
                     .push_bind(score)
                     .push(" AND a.id < ")

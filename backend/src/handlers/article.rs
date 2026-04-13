@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
 };
 use chrono::NaiveDate;
-use database::{Database, models::entity_type::EntityType};
+use database::{Database, models::{article::ArticleSearch, entity_type::EntityType}};
 use serde::Deserialize;
 use utoipa::IntoParams;
 use uuid::Uuid;
@@ -52,12 +52,14 @@ pub async fn get_all(
         &db,
         pagination.cursor,
         pagination.limit,
-        search,
-        params.subject_start,
-        params.subject_end,
-        params.tag_slug,
-        params.related_entity_id,
-        params.related_entity_type,
+        ArticleSearch {
+            q: search.q,
+            subject_start: params.subject_start,
+            subject_end: params.subject_end,
+            tag_slug: params.tag_slug,
+            related_entity_id: params.related_entity_id,
+            related_entity_type: params.related_entity_type,
+        },
     )
     .await?
     .json()
