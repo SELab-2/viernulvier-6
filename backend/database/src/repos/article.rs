@@ -5,7 +5,10 @@ use uuid::Uuid;
 
 use crate::{
     error::DatabaseError,
-    models::article::{Article, ArticleCreate, ArticleRelations, ArticleStatus},
+    models::{
+        article::{Article, ArticleCreate, ArticleRelations, ArticleSearch, ArticleStatus, ArticleWithScore},
+        cursor::CursorData,
+    },
     models::entity_type::EntityType,
 };
 
@@ -157,6 +160,137 @@ impl<'a> ArticleRepo<'a> {
             .build_query_as::<Article>()
             .fetch_all(self.db)
             .await?)
+    }
+
+    pub async fn search_published(
+        &self,
+        limit: u32,
+        cursor: Option<CursorData>,
+        search: ArticleSearch,
+        subject_start: Option<NaiveDate>,
+        subject_end: Option<NaiveDate>,
+        tag_slug: Option<String>,
+        related_entity_id: Option<Uuid>,
+        related_entity_type: Option<EntityType>,
+    ) -> Result<(Vec<Article>, Option<CursorData>), DatabaseError> {
+        let limit: i64 = (limit + 1).into();
+
+        let mut builder = sqlx::QueryBuilder::new("SELECT a.*");
+        if let Some(ref search_q) = search.q {
+            builder
+                .push(", ")
+                .push_bind(search_q)
+                .push(" <<-> a.full_search_text AS distance_score");
+        }
+
+        builder.push(" FROM articles a WHERE a.status = 'published'");
+
+        if let Some(end) = subject_end {
+            builder.push(" AND (a.subject_period_start IS NULL OR a.subject_period_start <= ");
+            builder.push_bind(end);
+            builder.push(")");
+        }
+        if let Some(start) = subject_start {
+            builder.push(" AND (a.subject_period_end IS NULL OR a.subject_period_end >= ");
+            builder.push_bind(start);
+            builder.push(")");
+        }
+
+        if let Some(slug) = tag_slug {
+            builder.push(
+                " AND EXISTS (SELECT 1 FROM taggings t JOIN tags tg ON tg.id = t.tag_id WHERE t.entity_id = a.id AND t.entity_type = 'article' AND tg.slug = ",
+            );
+            builder.push_bind(slug);
+            builder.push(")");
+        }
+
+        if let (Some(entity_id), Some(entity_type)) = (related_entity_id, related_entity_type)
+            && let (Some(table), Some(col)) = (
+                entity_type.article_join_table(),
+                entity_type.article_id_column(),
+            )
+        {
+            builder.push(format!(
+                " AND EXISTS (SELECT 1 FROM {table} r WHERE r.article_id = a.id AND r.{col} = "
+            ));
+            builder.push_bind(entity_id);
+            builder.push(")");
+        }
+
+        let (articles, next_cursor) = if let Some(search_q) = search.q {
+            builder
+                .push(" AND ")
+                .push_bind(&search_q)
+                .push(" <% a.full_search_text");
+
+            if let Some(cursor) = cursor
+                && let Some(score) = cursor.score
+            {
+                builder
+                    .push(" AND ((")
+                    .push_bind(&search_q)
+                    .push(" <<-> a.full_search_text) > ")
+                    .push_bind(score);
+
+                builder
+                    .push(" OR ((")
+                    .push_bind(&search_q)
+                    .push(" <<-> a.full_search_text) = ")
+                    .push_bind(score)
+                    .push(" AND a.id < ")
+                    .push_bind(cursor.id)
+                    .push("))");
+            }
+
+            builder
+                .push(" ORDER BY distance_score ASC, a.id DESC LIMIT ")
+                .push_bind(limit);
+
+            let mut articles_with_score: Vec<ArticleWithScore> =
+                builder.build_query_as().fetch_all(self.db).await?;
+
+            let next_cursor = if articles_with_score.len() == limit as usize {
+                articles_with_score.pop();
+                articles_with_score.last().map(|article| CursorData {
+                    id: article.article.id,
+                    score: Some(article.distance_score),
+                })
+            } else {
+                None
+            };
+
+            let articles = articles_with_score
+                .into_iter()
+                .map(|article| article.article)
+                .collect();
+
+            (articles, next_cursor)
+        } else {
+            if let Some(cursor) = cursor {
+                builder.push(" AND a.id < ");
+                builder.push_bind(cursor.id);
+            }
+
+            builder
+                .push(" ORDER BY a.id DESC LIMIT ")
+                .push_bind(limit);
+
+            let mut articles: Vec<Article> = builder.build_query_as().fetch_all(self.db).await?;
+
+            let next_cursor = if articles.len() == limit as usize {
+                articles.pop();
+                articles.last().map(|article| CursorData {
+                    id: article.id,
+                    score: None,
+                })
+            } else {
+                None
+            };
+
+            (articles, next_cursor)
+        };
+
+        Ok((articles, next_cursor))
     }
 
     pub async fn get_relations(&self, article_id: Uuid) -> Result<ArticleRelations, DatabaseError> {

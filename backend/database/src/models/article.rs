@@ -1,5 +1,6 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use ormlite::Model;
+use sqlx::FromRow;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use utoipa::ToSchema;
@@ -36,4 +37,15 @@ pub struct Article {
     pub content: Option<Value>,
     pub subject_period_start: Option<NaiveDate>,
     pub subject_period_end: Option<NaiveDate>,
+}
+
+#[derive(Debug, PartialEq, FromRow)]
+pub struct ArticleWithScore {
+    #[sqlx(flatten)]
+    pub article: Article,
+    pub distance_score: f32,
+}
+
+pub struct ArticleSearch {
+    pub q: Option<String>,
 }
