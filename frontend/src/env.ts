@@ -5,11 +5,13 @@ export const env = createEnv({
     client: {
         NEXT_PUBLIC_SITE_URL: z.string().url(),
         NEXT_PUBLIC_API_URL: z.string().url(),
+        NEXT_PUBLIC_MEDIA_URL: z.string().url(),
         //NEXT_PUBLIC_GA_ID: z.string().optional()
     },
     runtimeEnv: {
         NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
         NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+        NEXT_PUBLIC_MEDIA_URL: process.env.NEXT_PUBLIC_MEDIA_URL,
         //NEXT_PUBLIC_GA_ID: process.env.NEXT_PUBLIC_GA_ID
     },
 });
