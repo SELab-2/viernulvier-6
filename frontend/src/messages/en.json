@@ -319,7 +319,17 @@
             "relatedProductions": "Related productions",
             "relatedArtists": "Related artists",
             "relatedLocations": "Related locations",
-            "relatedEvents": "Related events"
+            "relatedEvents": "Related events",
+            "coverImage": "Cover image",
+            "coverEmpty": "No cover image",
+            "coverPick": "Pick",
+            "coverUpload": "Upload",
+            "coverChange": "Change",
+            "coverRemove": "Remove cover",
+            "coverSetSuccess": "Cover image set.",
+            "coverSetError": "Failed to set cover image.",
+            "coverRemovedSuccess": "Cover image removed.",
+            "coverRemovedError": "Failed to remove cover image."
         },
         "Performers": {
             "title": "Performers",

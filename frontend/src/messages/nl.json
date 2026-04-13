@@ -319,7 +319,17 @@
             "relatedProductions": "Gerelateerde producties",
             "relatedArtists": "Gerelateerde artiesten",
             "relatedLocations": "Gerelateerde locaties",
-            "relatedEvents": "Gerelateerde voorstellingen"
+            "relatedEvents": "Gerelateerde voorstellingen",
+            "coverImage": "Omslagafbeelding",
+            "coverEmpty": "Geen omslagafbeelding",
+            "coverPick": "Kiezen",
+            "coverUpload": "Uploaden",
+            "coverChange": "Wijzigen",
+            "coverRemove": "Verwijder omslag",
+            "coverSetSuccess": "Omslagafbeelding ingesteld.",
+            "coverSetError": "Omslagafbeelding instellen mislukt.",
+            "coverRemovedSuccess": "Omslagafbeelding verwijderd.",
+            "coverRemovedError": "Omslagafbeelding verwijderen mislukt."
         },
         "Performers": {
             "title": "Uitvoerders",
