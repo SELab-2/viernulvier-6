@@ -148,7 +148,10 @@ jobs:
     environment: preview
     steps:
       - name: Clean up workspace
-        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace alpine sh -c "chown -R $(id -u):$(id -g) /workspace"
+        continue-on-error: true
+
       - name: Checkout repo
         uses: actions/checkout@v4
 
