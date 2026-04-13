@@ -226,11 +226,16 @@ export const useUploadMedia = () => {
                 mimeType: file.type,
             });
 
-            await fetch(uploadUrl, {
+            const uploadResponse = await fetch(uploadUrl, {
                 method: "PUT",
                 body: file,
                 headers: { "Content-Type": file.type },
             });
+            if (!uploadResponse.ok) {
+                throw new Error(
+                    `S3 upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`
+                );
+            }
 
             return attachMedia.mutateAsync({
                 entityType,

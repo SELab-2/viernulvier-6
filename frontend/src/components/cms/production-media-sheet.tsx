@@ -54,9 +54,9 @@ const groupByRole = (media: Media[]): Record<MediaRole, Media[]> => {
     for (const item of media) {
         const role = item.galleryType as MediaRole | null;
         if (role && role in groups) {
-            groups[role] = [...groups[role], item];
+            groups[role].push(item);
         } else {
-            groups.gallery = [...groups.gallery, item];
+            groups.gallery.push(item);
         }
     }
 
@@ -206,6 +206,7 @@ export function ProductionMediaSheet({
 
                         {editingMedia && (
                             <MediaMetadataForm
+                                key={editingMedia.id}
                                 media={editingMedia}
                                 onSave={handleSaveMetadata}
                                 onCancel={() => setEditingMedia(null)}
