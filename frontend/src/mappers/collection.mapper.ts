@@ -64,6 +64,7 @@ export const toCollectionRow = (collection: Collection): CollectionRow => {
         titleNl: nl?.title ?? "",
         titleEn: en?.title ?? "",
         descriptionNl: nl?.description ?? "",
+        descriptionEn: en?.description ?? "",
         itemCount: collection.items.length,
         updatedAt: collection.updatedAt,
     };

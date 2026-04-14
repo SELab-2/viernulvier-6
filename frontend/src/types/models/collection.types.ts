@@ -54,6 +54,7 @@ export type CollectionRow = {
     titleNl: string;
     titleEn: string;
     descriptionNl: string;
+    descriptionEn: string;
     itemCount: number;
     updatedAt: string;
 };
