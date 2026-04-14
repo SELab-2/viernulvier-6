@@ -19,6 +19,7 @@ pub mod tagging;
 pub mod taxonomy;
 pub mod version;
 pub mod queries {
+    pub mod location;
     pub mod pagination;
     pub mod production;
     pub mod sort;
