@@ -135,12 +135,10 @@ async fn get_search_filter_audience(db: PgPool) {
 async fn get_search_filter_location(db: PgPool) {
     let app = TestRouter::new(db);
 
-    // Adjust the location string to match whatever slug/ID convention you use for "De Vooruit"
     let response = app.get("/productions?location=de-vooruit&limit=10").await;
     assert_eq!(response.status(), StatusCode::OK);
 
     let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
-    // Assuming 'jazz-night-de-vooruit' matches this location
     assert!(
         !data.data.is_empty(),
         "Expected at least one production for this location"
@@ -184,7 +182,6 @@ async fn get_search_filter_date_to(db: PgPool) {
 async fn get_search_sort(db: PgPool) {
     let app = TestRouter::new(db);
 
-    // Assuming your Sort enum deserializes from something like "asc" or "desc"
     let response = app.get("/productions?sort=recent&limit=10").await;
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -236,6 +233,117 @@ async fn get_search_filter_paginated(db: PgPool) {
     assert_ne!(
         page1.data[0].id, page2.data[0].id,
         "Pagination should yield distinct items"
+    );
+}
+
+#[sqlx::test(fixtures("productions", "events", "production_taggings"))]
+#[test_log::test]
+async fn get_search_combined_discipline_and_date(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app
+        .get("/productions?discipline=music&date_from=2026-05-10&limit=10")
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(
+        data.data.len(),
+        1,
+        "Expected exactly 1 production matching both music and the date range"
+    );
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "11111111-1111-1111-1111-111111111111"
+    );
+}
+
+#[sqlx::test(fixtures("productions", "production_taggings"))]
+#[test_log::test]
+async fn get_search_combined_text_and_format(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app
+        .get("/productions?q=metal&format=workshop&limit=10")
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(
+        data.data.len(),
+        1,
+        "Expected Heavy Metal Knitting to match both search and format"
+    );
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "11111111-1111-1111-1111-111111111111"
+    );
+}
+
+#[sqlx::test(fixtures("productions", "events", "production_taggings"))]
+#[test_log::test]
+async fn get_search_combined_mutually_exclusive_tags(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app
+        .get("/productions?discipline=music&theme=politics&limit=10")
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert!(
+        data.data.is_empty(),
+        "Expected no results when filtering by mutually exclusive tag combinations"
+    );
+}
+
+#[sqlx::test(fixtures("productions", "events"))]
+#[test_log::test]
+async fn get_search_combined_date_range(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app
+        .get("/productions?date_from=2026-05-10&date_to=2026-06-10&limit=10")
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(
+        data.data.len(),
+        2,
+        "Expected 2 productions within the specific date range"
+    );
+
+    let ids: Vec<String> = data.data.iter().map(|p| p.id.to_string()).collect();
+    assert!(ids.contains(&"11111111-1111-1111-1111-111111111111".to_string()));
+    assert!(ids.contains(&"22222222-2222-2222-2222-222222222222".to_string()));
+}
+
+#[sqlx::test(fixtures("productions", "events", "production_taggings"))]
+#[test_log::test]
+async fn get_search_combined_everything(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let query = "/productions\
+        ?q=heavy\
+        &discipline=music\
+        &format=workshop\
+        &date_from=2026-04-01\
+        &date_to=2026-05-31\
+        &limit=10";
+
+    let response = app.get(query).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(
+        data.data.len(),
+        1,
+        "Expected exactly 1 result for the highly specific combination filter"
+    );
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "11111111-1111-1111-1111-111111111111"
     );
 }
 
