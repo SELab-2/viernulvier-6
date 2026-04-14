@@ -1,4 +1,5 @@
 use ormlite::Model;
+use sqlx::FromRow;
 use uuid::Uuid;
 
 #[derive(Debug, Model, PartialEq)]
@@ -43,4 +44,15 @@ pub struct LocationTranslationData {
 pub struct LocationWithTranslations {
     pub location: Location,
     pub translations: Vec<LocationTranslation>,
+}
+
+pub struct LocationSearch {
+    pub q: Option<String>,
+}
+
+#[derive(Debug, PartialEq, FromRow)]
+pub struct LocationWithScore {
+    #[sqlx(flatten)]
+    pub location: Location,
+    pub distance_score: f32,
 }
