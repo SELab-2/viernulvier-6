@@ -397,33 +397,33 @@ impl<'a> ProductionRepo<'a> {
 
         sqlx::query(
             "INSERT INTO production_translations (
-                production_id, language_code,
-                supertitle, title, artist, meta_title, meta_description,
-                tagline, teaser, description, description_extra, description_2,
-                quote, quote_source, programme, info, description_short
-            )
-            SELECT $1, * FROM UNNEST(
-                $2::text[], $3::text[], $4::text[], $5::text[], $6::text[],
-                $7::text[], $8::text[], $9::text[], $10::text[], $11::text[],
-                $12::text[], $13::text[], $14::text[], $15::text[], $16::text[],
-                $17::text[]
-            )
-            ON CONFLICT (production_id, language_code) DO UPDATE SET
-                supertitle        = EXCLUDED.supertitle,
-                title             = EXCLUDED.title,
-                artist            = EXCLUDED.artist,
-                meta_title        = EXCLUDED.meta_title,
-                meta_description  = EXCLUDED.meta_description,
-                tagline           = EXCLUDED.tagline,
-                teaser            = EXCLUDED.teaser,
-                description       = EXCLUDED.description,
-                description_extra = EXCLUDED.description_extra,
-                description_2     = EXCLUDED.description_2,
-                quote             = EXCLUDED.quote,
-                quote_source      = EXCLUDED.quote_source,
-                programme         = EXCLUDED.programme,
-                info              = EXCLUDED.info,
-                description_short = EXCLUDED.description_short",
+                 production_id, language_code,
+                 supertitle, title, artist, meta_title, meta_description,
+                 tagline, teaser, description, description_extra, description_2,
+                 quote, quote_source, programme, info, description_short
+             )
+             SELECT $1, * FROM UNNEST(
+                 $2::text[], $3::text[], $4::text[], $5::text[], $6::text[],
+                 $7::text[], $8::text[], $9::text[], $10::text[], $11::text[],
+                 $12::text[], $13::text[], $14::text[], $15::text[], $16::text[],
+                 $17::text[]
+             )
+             ON CONFLICT (production_id, language_code) DO UPDATE SET
+                 supertitle        = EXCLUDED.supertitle,
+                 title             = EXCLUDED.title,
+                 artist            = EXCLUDED.artist,
+                 meta_title        = EXCLUDED.meta_title,
+                 meta_description  = EXCLUDED.meta_description,
+                 tagline           = EXCLUDED.tagline,
+                 teaser            = EXCLUDED.teaser,
+                 description       = EXCLUDED.description,
+                 description_extra = EXCLUDED.description_extra,
+                 description_2     = EXCLUDED.description_2,
+                 quote             = EXCLUDED.quote,
+                 quote_source      = EXCLUDED.quote_source,
+                 programme         = EXCLUDED.programme,
+                 info              = EXCLUDED.info,
+                 description_short = EXCLUDED.description_short",
         )
         .bind(production_id)
         .bind(&language_codes[..])
