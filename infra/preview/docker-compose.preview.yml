@@ -149,7 +149,6 @@ services:
       - garage_meta:/var/lib/garage/meta
       - garage_data:/var/lib/garage/data
     network_mode: service:garage
-    pid: service:garage
     depends_on:
       garage:
         condition: service_started
