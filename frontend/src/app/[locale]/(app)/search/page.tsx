@@ -27,11 +27,13 @@ export default function SearchPage() {
     const t = useTranslations("Search");
     const tHome = useTranslations("Home");
     const loadMoreRef = useRef<HTMLDivElement>(null);
+    const heroObserverRef = useRef<IntersectionObserver | null>(null);
     const queryClient = useQueryClient();
 
     const [cursorHistory, setCursorHistory] = useState<(string | null)[]>([null]);
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
     const [searchQuery, setSearchQuery] = useState("");
+    const [isHeroVisible, setIsHeroVisible] = useState(true);
 
     const currentCursor = cursorHistory[currentPageIndex];
 
@@ -88,6 +90,16 @@ export default function SearchPage() {
         };
     }, [loadMore]);
 
+    const heroRef = useCallback((node: HTMLDivElement | null) => {
+        heroObserverRef.current?.disconnect();
+        if (!node) return;
+        heroObserverRef.current = new IntersectionObserver(
+            (entries) => setIsHeroVisible(entries[0].isIntersecting),
+            { threshold: 0 }
+        );
+        heroObserverRef.current.observe(node);
+    }, []);
+
     const maxYear = useMemo(() => new Date().getFullYear(), []);
 
     if (isLoading && allProductions.length === 0) {
@@ -113,13 +125,11 @@ export default function SearchPage() {
                 searchHint={t("hint")}
             />
 
-            <SearchHero query="" onQueryChange={() => {}} />
-
-            <ResultsBar shownCount={allProductions.length} totalCount={allProductions.length} />
+            <SearchHero ref={heroRef} query={searchQuery} onQueryChange={setSearchQuery} />
 
             <div
                 className="flex min-h-[calc(100vh-300px)] items-start"
-                style={{ ["--results-bar-height" as string]: "41px" }}
+                style={{ ["--results-bar-height" as string]: "0px" }}
             >
                 <ArchiveSidebar
                     locations={locationsData}
@@ -127,7 +137,14 @@ export default function SearchPage() {
                     minYear={ARCHIVE_MIN_YEAR}
                     maxYear={maxYear}
                 />
-                <main className="min-w-0 flex-1 overflow-hidden">
+                <main className="min-w-0 flex-1">
+                    <ResultsBar
+                        shownCount={allProductions.length}
+                        totalCount={allProductions.length}
+                        query={searchQuery}
+                        onQueryChange={setSearchQuery}
+                        showSearch={!isHeroVisible}
+                    />
                     {allProductions.length === 0 && !isLoading ? (
                         <VintageEmptyState
                             title={t("noResultsTitle")}

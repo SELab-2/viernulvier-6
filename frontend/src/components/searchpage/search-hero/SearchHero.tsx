@@ -1,5 +1,6 @@
 "use client";
 
+import { forwardRef } from "react";
 import { Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -10,11 +11,17 @@ interface SearchHeroProps {
     onQueryChange: (query: string) => void;
 }
 
-export function SearchHero({ query, onQueryChange }: SearchHeroProps) {
+export const SearchHero = forwardRef<HTMLDivElement, SearchHeroProps>(function SearchHero(
+    { query, onQueryChange },
+    ref
+) {
     const t = useTranslations("Search");
 
     return (
-        <div className="border-muted/30 flex flex-col items-center gap-5 border-b px-4 py-10 text-center sm:gap-6 sm:px-10 sm:py-12">
+        <div
+            ref={ref}
+            className="border-muted/30 flex flex-col items-center gap-5 border-b px-4 py-10 text-center sm:gap-6 sm:px-10 sm:py-12"
+        >
             <h1 className="font-display text-foreground text-[28px] leading-[1.1] font-bold tracking-[-0.025em] sm:text-[38px]">
                 {t("heroTitle")}
                 <br />
@@ -57,4 +64,4 @@ export function SearchHero({ query, onQueryChange }: SearchHeroProps) {
             </div>
         </div>
     );
-}
+});

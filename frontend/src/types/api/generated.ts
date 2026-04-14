@@ -2425,6 +2425,7 @@ export interface operations {
             query?: {
                 cursor?: string | null;
                 limit?: number;
+                q?: string | null;
             };
             header?: never;
             path?: never;

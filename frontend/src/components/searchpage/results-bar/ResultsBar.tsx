@@ -2,16 +2,27 @@
 
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { Search } from "lucide-react";
 
 interface ResultsBarProps {
     shownCount: number;
     totalCount: number;
+    query: string;
+    onQueryChange: (query: string) => void;
+    showSearch: boolean;
 }
 
 const SORT_OPTIONS = ["recent", "oldest", "az"] as const;
 
-export function ResultsBar({ shownCount, totalCount }: ResultsBarProps) {
+export function ResultsBar({
+    shownCount,
+    totalCount,
+    query,
+    onQueryChange,
+    showSearch,
+}: ResultsBarProps) {
     const t = useTranslations("ResultsBar");
+    const tSearch = useTranslations("Search");
     const [activeSort, setActiveSort] = useState<string>("recent");
 
     const handleSort = useCallback((option: string) => {
@@ -20,11 +31,38 @@ export function ResultsBar({ shownCount, totalCount }: ResultsBarProps) {
     }, []);
 
     return (
-        <div className="border-muted/30 bg-background sticky top-0 z-10 flex items-center justify-between border-b px-4 py-2.5 sm:px-10">
-            <span className="text-muted-foreground font-mono text-[10px] tracking-[1.2px] uppercase">
+        <div className="border-muted/30 bg-background sticky top-0 z-10 flex items-center gap-4 border-b px-4 py-2.5 sm:px-7">
+            <span
+                className={`text-muted-foreground font-mono text-[10px] tracking-[1.2px] uppercase transition-opacity ${
+                    showSearch ? "hidden sm:inline" : "inline"
+                }`}
+            >
                 <strong className="text-foreground">{shownCount}</strong> /{" "}
                 <strong className="text-foreground">{totalCount.toLocaleString()}</strong>
             </span>
+
+            <div
+                className={`flex min-w-0 flex-1 transition-all duration-300 ease-out ${
+                    showSearch
+                        ? "translate-y-0 opacity-100"
+                        : "pointer-events-none -translate-y-1 opacity-0"
+                }`}
+                aria-hidden={!showSearch}
+            >
+                <div className="relative w-full max-w-[420px]">
+                    <Search className="stroke-muted-foreground pointer-events-none absolute top-1/2 left-0 h-3.5 w-3.5 -translate-y-1/2 fill-none stroke-[1.5]" />
+                    <input
+                        type="text"
+                        value={query}
+                        onChange={(e) => onQueryChange(e.target.value)}
+                        placeholder={tSearch("heroPlaceholder")}
+                        autoComplete="off"
+                        tabIndex={showSearch ? 0 : -1}
+                        className="font-display text-foreground placeholder:text-muted-foreground border-foreground/40 focus:border-primary w-full border-b bg-transparent py-0.5 pr-2 pl-5 text-[13px] outline-none placeholder:italic"
+                    />
+                </div>
+            </div>
+
             <div className="hidden items-center gap-4 sm:flex">
                 <span className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
                     {t("sortBy")}
