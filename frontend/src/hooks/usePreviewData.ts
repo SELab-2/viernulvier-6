@@ -20,12 +20,14 @@ import { useMounted } from "./useMounted";
  * @param entityType - Type of entity being previewed
  * @param entityId - Unique identifier (slug or id)
  * @param apiData - Data from the API (fallback)
+ * @param sessionId - Optional session id for tab-isolated previews
  * @returns Preview data if available, otherwise API data
  */
 export function usePreviewData<T>(
     entityType: PreviewEntityType,
     entityId: string,
-    apiData: T | undefined
+    apiData: T | undefined,
+    sessionId?: string
 ): T | undefined {
     const { getPreview } = usePreviewContext();
     const mounted = useMounted();
@@ -35,7 +37,7 @@ export function usePreviewData<T>(
         return apiData;
     }
 
-    const previewData = getPreview<T>(entityType, entityId);
+    const previewData = getPreview<T>(entityType, entityId, sessionId);
 
     // Return preview data if it exists, otherwise fall back to API data
     return previewData ?? apiData;
@@ -52,7 +54,11 @@ export function usePreviewData<T>(
  * const isPreview = useHasPreview("article", slug);
  * ```
  */
-export function useHasPreview(entityType: PreviewEntityType, entityId: string): boolean {
+export function useHasPreview(
+    entityType: PreviewEntityType,
+    entityId: string,
+    sessionId?: string
+): boolean {
     const { hasPreview } = usePreviewContext();
     const mounted = useMounted();
 
@@ -61,7 +67,7 @@ export function useHasPreview(entityType: PreviewEntityType, entityId: string): 
         return false;
     }
 
-    return hasPreview(entityType, entityId);
+    return hasPreview(entityType, entityId, sessionId);
 }
 
 /**
@@ -71,16 +77,9 @@ export function useHasPreview(entityType: PreviewEntityType, entityId: string): 
  */
 export function usePreviewInfo(
     entityType: PreviewEntityType,
-    entityId: string
+    entityId: string,
+    sessionId?: string
 ): { timestamp: number; locale: string } | null {
-    const { activePreview } = usePreviewContext();
-
-    if (activePreview?.entityType === entityType && activePreview?.entityId === entityId) {
-        return {
-            timestamp: activePreview.timestamp,
-            locale: activePreview.locale,
-        };
-    }
-
-    return null;
+    const { getPreviewInfo } = usePreviewContext();
+    return getPreviewInfo(entityType, entityId, sessionId);
 }

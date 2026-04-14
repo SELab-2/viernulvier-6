@@ -63,15 +63,16 @@ export default function ProductionPage({
 
     const searchParams = useSearchParams();
     const isPreviewMode = searchParams.get("preview") === "1";
+    const sessionId = searchParams.get("session") ?? undefined;
 
     const { data: apiProduction, isLoading: isProdLoading, isError } = useGetProduction(id);
     const { data: apiEvents = [], isLoading: isEventsLoading } = useGetEventsByProduction(id);
     const { data: productionsResult, isLoading: isAllProdLoading } = useGetProductions();
 
     // Always call preview hooks (they handle preview mode internally)
-    const previewProduction = useProductionWithPreview(id, apiProduction);
-    const previewEvents = useProductionEventsWithPreview(id, apiEvents);
-    const hasPreviewData = useHasPreview("production", id);
+    const previewProduction = useProductionWithPreview(id, apiProduction, sessionId);
+    const previewEvents = useProductionEventsWithPreview(id, apiEvents, sessionId);
+    const hasPreviewData = useHasPreview("production", id, sessionId);
 
     // In preview mode, use preview data if available, otherwise fall back to API
     const production = isPreviewMode ? (previewProduction ?? apiProduction) : apiProduction;
@@ -134,7 +135,7 @@ export default function ProductionPage({
                 {isPreview && (
                     <>
                         <span className="opacity-50">/</span>
-                        <PreviewBadge entityType="production" entityId={id} />
+                        <PreviewBadge entityType="production" entityId={id} sessionId={sessionId} />
                     </>
                 )}
             </div>

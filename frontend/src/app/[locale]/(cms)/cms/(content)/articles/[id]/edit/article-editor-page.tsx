@@ -38,6 +38,12 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
     const [edits, setEdits] = useState<Partial<Article>>({});
     const [relationEdits, setRelationEdits] = useState<ArticleRelations | null>(null);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [previewSessionId] = useState(() => {
+        if (typeof crypto !== "undefined" && crypto.randomUUID) {
+            return crypto.randomUUID();
+        }
+        return Math.random().toString(36).slice(2) + Date.now().toString(36);
+    });
 
     const article = useMemo(
         () => (fetchedArticle ? { ...fetchedArticle, ...edits } : null),
@@ -60,9 +66,18 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
     useEffect(() => {
         if (article && isPreviewOpen) {
             const previewData: ArticlePreviewData = { article, relations };
-            setPreview("article", article.slug, previewData, locale);
+            setPreview("article", article.slug, previewData, locale, previewSessionId);
         }
-    }, [article, relations, isPreviewOpen, setPreview, locale]);
+    }, [article, relations, isPreviewOpen, setPreview, locale, previewSessionId]);
+
+    // Clean up preview data when the editor unmounts
+    useEffect(() => {
+        return () => {
+            if (article) {
+                clearPreviewFor("article", article.slug, previewSessionId);
+            }
+        };
+    }, [article, previewSessionId, clearPreviewFor]);
 
     const handleSave = async () => {
         if (!article) return;
@@ -73,7 +88,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                 updateRelations.mutateAsync(relations),
             ]);
             // Clear preview after successful save
-            clearPreviewFor("article", article.slug);
+            clearPreviewFor("article", article.slug, previewSessionId);
             toast.success(t("saveSuccess"));
         } catch {
             toast.error(t("saveFailed"));
@@ -86,10 +101,10 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
         if (!isPreviewOpen) {
             // Opening preview - set initial data with both article and relations
             const previewData: ArticlePreviewData = { article, relations };
-            setPreview("article", article.slug, previewData, locale);
+            setPreview("article", article.slug, previewData, locale, previewSessionId);
         }
         setIsPreviewOpen((prev) => !prev);
-    }, [article, relations, isPreviewOpen, setPreview, locale]);
+    }, [article, relations, isPreviewOpen, setPreview, locale, previewSessionId]);
 
     const patchArticle = (patch: Partial<Article>) => {
         setEdits((prev) => ({ ...prev, ...patch }));
@@ -192,7 +207,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                         </div>
                         <div className="h-[calc(100%-45px)] overflow-auto bg-white">
                             <iframe
-                                src={`/${locale}/articles/${article.slug}?preview=1`}
+                                src={`/${locale}/articles/${article.slug}?preview=1&session=${previewSessionId}`}
                                 className="h-full w-full"
                                 title={t("previewLabel")}
                                 sandbox="allow-same-origin allow-scripts"

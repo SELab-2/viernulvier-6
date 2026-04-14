@@ -94,6 +94,12 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
     const [edits, setEdits] = useState<Partial<ProductionRow>>({});
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [activeLang, setActiveLang] = useState<Lang>("nl");
+    const [previewSessionId] = useState(() => {
+        if (typeof crypto !== "undefined" && crypto.randomUUID) {
+            return crypto.randomUUID();
+        }
+        return Math.random().toString(36).slice(2) + Date.now().toString(36);
+    });
 
     // Convert API production to ProductionRow format
     const baseProduction = useMemo(() => {
@@ -130,8 +136,15 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
             production: productionForPreview,
             events: productionEvents,
         };
-        setPreview("production", production.id, previewData, locale);
-    }, [production, productionEvents, isPreviewOpen, setPreview, locale]);
+        setPreview("production", production.id, previewData, locale, previewSessionId);
+    }, [production, productionEvents, isPreviewOpen, setPreview, locale, previewSessionId]);
+
+    // Clean up preview data when the editor unmounts
+    useEffect(() => {
+        return () => {
+            clearPreviewFor("production", id, previewSessionId);
+        };
+    }, [id, previewSessionId, clearPreviewFor]);
 
     const handleSave = async () => {
         if (!production) return;
@@ -156,10 +169,10 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                 production: productionForPreview,
                 events: productionEvents,
             };
-            setPreview("production", production.id, previewData, locale);
+            setPreview("production", production.id, previewData, locale, previewSessionId);
         }
         setIsPreviewOpen((prev) => !prev);
-    }, [production, productionEvents, isPreviewOpen, setPreview, locale]);
+    }, [production, productionEvents, isPreviewOpen, setPreview, locale, previewSessionId]);
 
     const handleChange = (key: keyof ProductionRow, value: string | null) => {
         setEdits((prev) => ({ ...prev, [key]: value }));
@@ -341,7 +354,7 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                         </div>
                         <div className="h-[calc(100%-45px)] overflow-auto bg-white">
                             <iframe
-                                src={`/${locale}/productions/${production.id}?preview=1`}
+                                src={`/${locale}/productions/${production.id}?preview=1&session=${previewSessionId}`}
                                 className="h-full w-full"
                                 title={t("previewLabel")}
                                 sandbox="allow-same-origin allow-scripts"

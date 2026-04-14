@@ -10,13 +10,13 @@ import { useMounted } from "./useMounted";
  * Hook to get production preview data including events.
  * Returns null if no preview exists.
  */
-export function useProductionPreview(id: string): ProductionPreviewData | null {
+export function useProductionPreview(id: string, sessionId?: string): ProductionPreviewData | null {
     const { getPreview } = usePreviewContext();
     const mounted = useMounted();
 
     if (!mounted) return null;
 
-    const data = getPreview<ProductionPreviewData>("production", id);
+    const data = getPreview<ProductionPreviewData>("production", id, sessionId);
     return data;
 }
 
@@ -27,9 +27,10 @@ export function useProductionPreview(id: string): ProductionPreviewData | null {
  */
 export function useProductionWithPreview(
     id: string,
-    apiProduction: Production | undefined
+    apiProduction: Production | undefined,
+    sessionId?: string
 ): Production | undefined {
-    const preview = useProductionPreview(id);
+    const preview = useProductionPreview(id, sessionId);
     if (preview) {
         // Preview data could be ProductionRow or Production, ensure it's Production
         return ensureProduction(preview.production);
@@ -42,9 +43,10 @@ export function useProductionWithPreview(
  */
 export function useProductionEventsWithPreview(
     id: string,
-    apiEvents: Event[] | undefined
+    apiEvents: Event[] | undefined,
+    sessionId?: string
 ): Event[] | undefined {
-    const preview = useProductionPreview(id);
+    const preview = useProductionPreview(id, sessionId);
     if (preview) return preview.events;
     return apiEvents;
 }

@@ -83,13 +83,14 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
 
     const searchParams = useSearchParams();
     const isPreviewMode = searchParams.get("preview") === "1";
+    const sessionId = searchParams.get("session") ?? undefined;
 
     const { data: apiArticle, isLoading, isError } = useGetArticleBySlug(slug);
 
     // Always call preview hooks (they handle preview mode internally)
-    const previewArticle = useArticleWithPreview(slug, apiArticle);
-    const previewRelations = useArticleRelationsWithPreview(slug);
-    const hasPreviewData = useHasPreview("article", slug);
+    const previewArticle = useArticleWithPreview(slug, apiArticle, sessionId);
+    const previewRelations = useArticleRelationsWithPreview(slug, sessionId);
+    const hasPreviewData = useHasPreview("article", slug, sessionId);
 
     // In preview mode, use preview data if available, otherwise fall back to API
     const article = isPreviewMode ? (previewArticle ?? apiArticle) : apiArticle;
@@ -156,7 +157,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
                                 )}
                             </div>
                             <div className="flex items-center gap-2">
-                                <PreviewBadge entityType="article" entityId={slug} />
+                                <PreviewBadge entityType="article" entityId={slug} sessionId={sessionId} />
                                 <span>{t("datelineBrand")}</span>
                             </div>
                         </div>

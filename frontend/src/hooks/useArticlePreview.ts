@@ -8,13 +8,13 @@ import { useMounted } from "./useMounted";
  * Hook to get article preview data including relations.
  * Returns null if no preview exists.
  */
-export function useArticlePreview(slug: string): ArticlePreviewData | null {
+export function useArticlePreview(slug: string, sessionId?: string): ArticlePreviewData | null {
     const { getPreview } = usePreviewContext();
     const mounted = useMounted();
 
     if (!mounted) return null;
 
-    const data = getPreview<ArticlePreviewData>("article", slug);
+    const data = getPreview<ArticlePreviewData>("article", slug, sessionId);
     return data;
 }
 
@@ -24,9 +24,10 @@ export function useArticlePreview(slug: string): ArticlePreviewData | null {
  */
 export function useArticleWithPreview(
     slug: string,
-    apiArticle: Article | undefined
+    apiArticle: Article | undefined,
+    sessionId?: string
 ): Article | undefined {
-    const preview = useArticlePreview(slug);
+    const preview = useArticlePreview(slug, sessionId);
     if (preview) return preview.article;
     return apiArticle;
 }
@@ -34,8 +35,11 @@ export function useArticleWithPreview(
 /**
  * Hook to get article relations from preview or return defaults.
  */
-export function useArticleRelationsWithPreview(slug: string): ArticleRelations | null {
-    const preview = useArticlePreview(slug);
+export function useArticleRelationsWithPreview(
+    slug: string,
+    sessionId?: string
+): ArticleRelations | null {
+    const preview = useArticlePreview(slug, sessionId);
     if (preview) return preview.relations;
     return null;
 }

@@ -9,8 +9,8 @@ export function LocaleSwitcherLinks() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    const isPreview = searchParams.get("preview") === "1";
-    const href = isPreview ? `${pathname}?preview=1` : pathname;
+    const queryString = searchParams.toString();
+    const href = queryString ? `${pathname}?${queryString}` : pathname;
 
     return (
         <span className="flex items-center gap-1 font-mono text-[10px] tracking-[1.4px] uppercase">
