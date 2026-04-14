@@ -31,9 +31,9 @@ export function ResultsBar({
     }, []);
 
     return (
-        <div className="border-muted/30 bg-background sticky top-0 z-10 flex items-center gap-4 border-b px-4 py-2.5 sm:px-7">
+        <div className="border-muted/30 bg-background sticky top-0 z-10 flex items-center gap-4 border-b px-4 py-4 sm:px-7">
             <span
-                className={`text-muted-foreground font-mono text-[10px] tracking-[1.2px] uppercase transition-opacity ${
+                className={`text-muted-foreground font-mono text-[12px] tracking-[1.2px] uppercase transition-opacity ${
                     showSearch ? "hidden sm:inline" : "inline"
                 }`}
             >
@@ -50,7 +50,7 @@ export function ResultsBar({
                 aria-hidden={!showSearch}
             >
                 <div className="relative w-full max-w-[420px]">
-                    <Search className="stroke-muted-foreground pointer-events-none absolute top-1/2 left-0 h-3.5 w-3.5 -translate-y-1/2 fill-none stroke-[1.5]" />
+                    <Search className="stroke-muted-foreground pointer-events-none absolute top-1/2 left-0 h-4 w-4 -translate-y-1/2 fill-none stroke-[1.5]" />
                     <input
                         type="text"
                         value={query}
@@ -58,20 +58,20 @@ export function ResultsBar({
                         placeholder={tSearch("heroPlaceholder")}
                         autoComplete="off"
                         tabIndex={showSearch ? 0 : -1}
-                        className="font-display text-foreground placeholder:text-muted-foreground border-foreground/40 focus:border-primary w-full border-b bg-transparent py-0.5 pr-2 pl-5 text-[13px] outline-none placeholder:italic"
+                        className="font-display text-foreground placeholder:text-muted-foreground border-foreground/40 focus:border-primary w-full border-b bg-transparent py-1 pr-2 pl-6 text-[15px] outline-none placeholder:italic"
                     />
                 </div>
             </div>
 
             <div className="hidden items-center gap-4 sm:flex">
-                <span className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
+                <span className="text-muted-foreground font-mono text-[11px] tracking-[1.2px] uppercase">
                     {t("sortBy")}
                 </span>
                 {SORT_OPTIONS.map((option) => (
                     <button
                         key={option}
                         onClick={() => handleSort(option)}
-                        className={`cursor-pointer border-b pb-0.5 font-mono text-[9px] tracking-[1.2px] uppercase transition-all ${
+                        className={`cursor-pointer border-b pb-0.5 font-mono text-[11px] tracking-[1.2px] uppercase transition-all ${
                             activeSort === option
                                 ? "border-foreground text-foreground"
                                 : "text-muted-foreground hover:text-foreground border-transparent"
