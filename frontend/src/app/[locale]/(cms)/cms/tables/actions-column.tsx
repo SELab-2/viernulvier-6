@@ -57,7 +57,7 @@ function ActionsCellInner<TData extends Record<string, unknown>>({
                 <Button
                     key={action.key}
                     variant="ghost"
-                    className="h-8 w-8 p-0"
+                    className="h-8 w-8 cursor-pointer p-0"
                     onClick={() => action.onClick(entity)}
                 >
                     <span className="sr-only">{action.label}</span>
@@ -67,7 +67,7 @@ function ActionsCellInner<TData extends Record<string, unknown>>({
             {menuActions.length > 0 && (
                 <DropdownMenu open={open} onOpenChange={setOpen}>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
+                        <Button variant="ghost" className="h-8 w-8 cursor-pointer p-0">
                             <span className="sr-only">{t("openMenu")}</span>
                             <MoreHorizontal className="h-4 w-4" />
                         </Button>
