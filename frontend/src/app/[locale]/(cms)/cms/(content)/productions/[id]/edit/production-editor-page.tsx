@@ -352,10 +352,10 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                                 {t("previewLabel")}
                             </span>
                         </div>
-                        <div className="h-[calc(100%-45px)] overflow-auto bg-white">
+                        <div className="bg-background h-[calc(100%-45px)] overflow-auto">
                             <iframe
                                 src={`/${locale}/productions/${production.id}?preview=1&session=${previewSessionId}`}
-                                className="h-full w-full"
+                                className="bg-background h-full w-full"
                                 title={t("previewLabel")}
                                 sandbox="allow-same-origin allow-scripts"
                             />
