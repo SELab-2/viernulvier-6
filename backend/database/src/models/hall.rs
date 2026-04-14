@@ -1,4 +1,5 @@
 use ormlite::Model;
+use sqlx::FromRow;
 use uuid::Uuid;
 
 #[derive(Debug, Model, PartialEq)]
@@ -19,4 +20,15 @@ pub struct Hall {
 
     // references
     pub space_id: Option<Uuid>, // foreign key of the associated space
+}
+
+pub struct HallSearch {
+    pub q: Option<String>,
+}
+
+#[derive(Debug, PartialEq, FromRow)]
+pub struct HallWithScore {
+    #[sqlx(flatten)]
+    pub hall: Hall,
+    pub distance_score: f32,
 }
