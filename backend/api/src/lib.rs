@@ -535,11 +535,6 @@ impl ApiImporter {
 
             for crop in item.crops {
                 if let (Some(name), Some(url)) = (crop.name, crop.url) {
-                    let mut variant_s3_key = String::new();
-                    let mut variant_mime_type = None;
-                    let mut variant_file_size = None;
-                    let mut variant_checksum = None;
-
                     if name == "hd_ready" || name == "FE3_header" {
                         let format = item.format.as_deref().unwrap_or("");
                         let format_info = get_format_info(format);
@@ -549,7 +544,7 @@ impl ApiImporter {
                             "media/production/{production_source_id}/{gallery_type}/crop_{name}_{file_uuid}.{ext}"
                         );
 
-                        if let Ok((checksum, file_size)) = self
+                        match self
                             .download_and_upload_to_key(
                                 s3_client,
                                 s3_bucket,
@@ -559,25 +554,28 @@ impl ApiImporter {
                             )
                             .await
                         {
-                            variant_s3_key = crop_s3_key;
-                            variant_mime_type = Some(format_info.mime.to_string());
-                            variant_file_size = Some(file_size);
-                            variant_checksum = Some(checksum);
+                            Ok((checksum, file_size, width, height)) => {
+                                let upsert = database::repos::media_variant::CropVariantUpsert {
+                                    media_id: media.id,
+                                    crop_name: name,
+                                    s3_key: crop_s3_key,
+                                    mime_type: Some(format_info.mime.to_string()),
+                                    file_size: Some(file_size),
+                                    width,
+                                    height,
+                                    checksum: Some(checksum),
+                                    source_uri: Some(url),
+                                };
+                                let _ = self.db.media_variants().upsert_crop(upsert).await;
+                            }
+                            Err(e) => {
+                                tracing::warn!(
+                                    "Failed to download/upload crop '{name}' for media {}: {e}",
+                                    media.id
+                                );
+                            }
                         }
                     }
-
-                    let upsert = database::repos::media_variant::CropVariantUpsert {
-                        media_id: media.id,
-                        crop_name: name,
-                        s3_key: variant_s3_key,
-                        mime_type: variant_mime_type,
-                        file_size: variant_file_size,
-                        width: None,
-                        height: None,
-                        checksum: variant_checksum,
-                        source_uri: Some(url),
-                    };
-                    let _ = self.db.media_variants().upsert_crop(upsert).await;
                 }
             }
         }
@@ -598,7 +596,7 @@ impl ApiImporter {
         let s3_key =
             format!("media/production/{production_source_id}/{gallery_type}/{file_uuid}.{ext}");
 
-        let (checksum, file_size) = self
+        let (checksum, file_size, _, _) = self
             .download_and_upload_to_key(s3_client, s3_bucket, cdn_url, &s3_key, format)
             .await?;
 
@@ -612,7 +610,7 @@ impl ApiImporter {
         source_url: &str,
         s3_key: &str,
         format: &str,
-    ) -> Result<(String, i64), ImporterError> {
+    ) -> Result<(String, i64, Option<i32>, Option<i32>), ImporterError> {
         let response = self
             .client
             .get(source_url)
@@ -642,6 +640,9 @@ impl ApiImporter {
         drop(file);
         let checksum = hex::encode(hasher.finalize());
 
+        let (width, height) = imagesize::size(temp_file.path())
+            .map_or((None, None), |d| (Some(d.width as i32), Some(d.height as i32)));
+
         let byte_stream = aws_sdk_s3::primitives::ByteStream::from_path(temp_file.path())
             .await
             .map_err(|e| ImporterError::S3(e.to_string()))?;
@@ -656,7 +657,7 @@ impl ApiImporter {
             .await
             .map_err(|e| ImporterError::S3(e.to_string()))?;
 
-        Ok((checksum, file_size))
+        Ok((checksum, file_size, width, height))
     }
 }
 
