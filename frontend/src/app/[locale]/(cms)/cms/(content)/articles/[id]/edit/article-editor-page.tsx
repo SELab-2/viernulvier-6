@@ -37,7 +37,12 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
 
     const [edits, setEdits] = useState<Partial<Article>>({});
     const [relationEdits, setRelationEdits] = useState<ArticleRelations | null>(null);
-    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(() => {
+        if (typeof window !== "undefined" && window.innerWidth >= 1024) {
+            return true;
+        }
+        return false;
+    });
     const [previewSessionId] = useState(() => {
         if (typeof crypto !== "undefined" && crypto.randomUUID) {
             return crypto.randomUUID();

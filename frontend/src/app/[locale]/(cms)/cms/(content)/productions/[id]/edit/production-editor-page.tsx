@@ -92,7 +92,12 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
     const updateProduction = useUpdateProduction();
 
     const [edits, setEdits] = useState<Partial<ProductionRow>>({});
-    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(() => {
+        if (typeof window !== "undefined" && window.innerWidth >= 1024) {
+            return true;
+        }
+        return false;
+    });
     const [activeLang, setActiveLang] = useState<Lang>("nl");
     const [previewSessionId] = useState(() => {
         if (typeof crypto !== "undefined" && crypto.randomUUID) {
