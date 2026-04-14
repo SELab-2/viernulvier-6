@@ -117,7 +117,10 @@ export default function SearchPage() {
 
             <ResultsBar shownCount={allProductions.length} totalCount={allProductions.length} />
 
-            <div className="flex min-h-[calc(100vh-300px)] overflow-hidden">
+            <div
+                className="flex min-h-[calc(100vh-300px)] items-start"
+                style={{ ["--results-bar-height" as string]: "41px" }}
+            >
                 <ArchiveSidebar
                     locations={locationsData}
                     facets={facets ?? []}
