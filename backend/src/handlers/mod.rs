@@ -20,6 +20,7 @@ pub mod taxonomy;
 pub mod version;
 pub mod queries {
     pub mod location;
+    pub mod hall;
     pub mod pagination;
     pub mod production;
     pub mod sort;
