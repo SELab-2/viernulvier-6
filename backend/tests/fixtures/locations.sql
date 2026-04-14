@@ -2,7 +2,7 @@ INSERT INTO locations (id, source_id, name, city, country, slug) VALUES
 (
     '10000000-0000-0000-0000-000000000001',
     1001,
-    'De Vooruit',
+    'De Vooruit SEARCH',
     'Gent',
     'Belgium',
     'de-vooruit'
@@ -10,24 +10,24 @@ INSERT INTO locations (id, source_id, name, city, country, slug) VALUES
 (
     '10000000-0000-0000-0000-000000000002',
     1002,
-    'De Bijloke',
-    'Gent',
+    'LOCATION_SEARCH_TEST',
+    'CITY_SEARCH_TEST',
     'Belgium',
     'de-bijloke'
 ),
 (
     '10000000-0000-0000-0000-000000000003',
     1003,
-    'Capitole',
-    'Gent',
+    'LOCATION_SEARCH_TEST',
+    'CITY_SEARCH_TEST',
     'Belgium',
     NULL
 ),
 (
     '10000000-0000-0000-0000-000000000004',
     1004,
-    'NTGent',
-    'Gent',
+    'LOCATION_SEARCH_TEST',
+    'CITY_SEARCH_TEST',
     'Belgium',
     NULL
 ),

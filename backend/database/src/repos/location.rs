@@ -2,13 +2,17 @@ use std::collections::HashMap;
 
 use ormlite::{Insert, Model};
 use sqlx::PgPool;
+use tracing::debug;
 use uuid::Uuid;
 
 use crate::{
     error::DatabaseError,
-    models::location::{
-        Location, LocationCreate, LocationTranslation, LocationTranslationData,
-        LocationWithTranslations,
+    models::{
+        cursor::CursorData,
+        location::{
+            Location, LocationCreate, LocationSearch, LocationTranslation,
+            LocationTranslationData, LocationWithScore, LocationWithTranslations,
+        },
     },
 };
 
@@ -55,19 +59,99 @@ impl<'a> LocationRepo<'a> {
 
     pub async fn all(
         &self,
-        limit: usize,
-        id_cursor: Option<Uuid>,
-    ) -> Result<Vec<LocationWithTranslations>, DatabaseError> {
-        let mut select = Location::select().limit(limit).order_desc("id");
+        limit: u32,
+        cursor: Option<CursorData>,
+        search: LocationSearch,
+    ) -> Result<(Vec<LocationWithTranslations>, Option<CursorData>), DatabaseError> {
+        let limit: i64 = (limit + 1).into();
 
-        if let Some(id_cursor) = id_cursor {
-            select = select.where_("id < $1").bind(id_cursor);
-        }
+        let (locations, next_cursor): (Vec<Location>, Option<CursorData>) =
+            if let Some(search_q) = search.q {
+                debug!("querying locations with search: '{search_q}'");
 
-        let locations = select.fetch_all(self.db).await?;
+                let mut query = sqlx::QueryBuilder::new("SELECT l.*, ");
+                query
+                    .push_bind(&search_q)
+                    .push(" <<-> full_search_text AS distance_score ")
+                    .push("FROM locations l ")
+                    .push("WHERE ")
+                    .push_bind(&search_q)
+                    .push(" <% full_search_text ");
+
+                // use the cursor if there is one
+                if let Some(cursor) = cursor
+                    && let Some(score) = cursor.score
+                {
+                    // distance_score > cursor.score
+                    query
+                        .push("AND ((")
+                        .push_bind(&search_q)
+                        .push(" <<-> full_search_text) > ")
+                        .push_bind(score);
+
+                    // OR (distance_score = cursor.score AND id < cursor.id)
+                    query
+                        .push(" OR ((")
+                        .push_bind(&search_q)
+                        .push(" <<-> full_search_text) = ")
+                        .push_bind(score)
+                        .push(" AND id < ")
+                        .push_bind(cursor.id)
+                        .push(")) ");
+                }
+
+                query
+                    .push("ORDER BY distance_score ASC, id DESC LIMIT ")
+                    .push_bind(limit);
+
+                debug!("locations query: {}", query.sql());
+
+                let mut locations_with_score: Vec<LocationWithScore> =
+                    query.build_query_as().fetch_all(self.db).await?;
+
+                // calculate the next cursor if there are items on the next page
+                let next_cursor = if locations_with_score.len() == limit as usize {
+                    locations_with_score.pop();
+                    locations_with_score.last().map(|l| CursorData {
+                        id: l.location.id,
+                        score: Some(l.distance_score),
+                    })
+                } else {
+                    None
+                };
+
+                let locations = locations_with_score
+                    .into_iter()
+                    .map(|l| l.location)
+                    .collect();
+
+                (locations, next_cursor)
+            } else {
+                debug!("querying locations normally");
+
+                let mut select = Location::select().limit(limit as usize).order_desc("id");
+
+                if let Some(cursor) = cursor {
+                    select = select.where_("id < $1").bind(cursor.id);
+                }
+
+                let mut locations = select.fetch_all(self.db).await?;
+
+                let next_cursor = if locations.len() == limit as usize {
+                    locations.pop();
+                    locations.last().map(|l| CursorData {
+                        id: l.id,
+                        score: None,
+                    })
+                } else {
+                    None
+                };
+
+                (locations, next_cursor)
+            };
 
         if locations.is_empty() {
-            return Ok(vec![]);
+            return Ok((vec![], next_cursor));
         }
 
         let ids: Vec<Uuid> = locations.iter().map(|l| l.id).collect();
@@ -83,7 +167,7 @@ impl<'a> LocationRepo<'a> {
             translation_map.entry(t.location_id).or_default().push(t);
         }
 
-        Ok(locations
+        let locations = locations
             .into_iter()
             .map(|l| {
                 let translations = translation_map.remove(&l.id).unwrap_or_default();
@@ -92,7 +176,9 @@ impl<'a> LocationRepo<'a> {
                     translations,
                 }
             })
-            .collect())
+            .collect();
+
+        Ok((locations, next_cursor))
     }
 
     pub async fn insert(

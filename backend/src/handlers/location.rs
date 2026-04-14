@@ -14,7 +14,7 @@ use crate::{
     error::ErrorResponse,
     handlers::{
         IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse,
-        queries::pagination::PaginationQuery,
+        queries::{location::LocationSearchQuery, pagination::PaginationQuery},
     },
 };
 
@@ -25,7 +25,8 @@ use crate::{
     operation_id = "get_all_locations",
     description = "Get all locations",
     params(
-        PaginationQuery
+        PaginationQuery,
+        LocationSearchQuery
     ),
     responses(
         (status = 200, description = "Success", body = PaginatedResponse<LocationPayload>)
@@ -34,8 +35,9 @@ use crate::{
 pub async fn get_all(
     db: Database,
     Query(pagination): Query<PaginationQuery>,
+    Query(search): Query<LocationSearchQuery>,
 ) -> JsonResponse<PaginatedResponse<LocationPayload>> {
-    LocationPayload::all(&db, pagination.cursor, pagination.limit)
+    LocationPayload::all(&db, pagination.cursor, pagination.limit, search)
         .await?
         .json()
 }

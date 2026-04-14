@@ -1173,7 +1173,7 @@ export interface components {
             /** Format: int32 */
             source_id?: number | null;
             street?: string | null;
-            translations: components["schemas"]["LocationTranslationPayload"][];
+            translations?: components["schemas"]["LocationTranslationPayload"][];
             uitdatabank_id?: string | null;
         };
         LocationPostPayload: {
@@ -1190,7 +1190,7 @@ export interface components {
             /** Format: int32 */
             source_id?: number | null;
             street?: string | null;
-            translations: components["schemas"]["LocationTranslationPayload"][];
+            translations?: components["schemas"]["LocationTranslationPayload"][];
             uitdatabank_id?: string | null;
         };
         /** @description The per-language content for a location. */
@@ -1330,7 +1330,7 @@ export interface components {
                 /** Format: int32 */
                 source_id?: number | null;
                 street?: string | null;
-                translations: components["schemas"]["LocationTranslationPayload"][];
+                translations?: components["schemas"]["LocationTranslationPayload"][];
                 uitdatabank_id?: string | null;
             }[];
             next_cursor?: string | null;
@@ -1345,7 +1345,7 @@ export interface components {
                 slug: string;
                 /** Format: int32 */
                 source_id?: number | null;
-                translations: components["schemas"]["ProductionTranslationPayload"][];
+                translations?: components["schemas"]["ProductionTranslationPayload"][];
                 uitdatabank_theme?: string | null;
                 uitdatabank_type?: string | null;
                 video_1?: string | null;
@@ -1374,7 +1374,7 @@ export interface components {
             slug: string;
             /** Format: int32 */
             source_id?: number | null;
-            translations: components["schemas"]["ProductionTranslationPayload"][];
+            translations?: components["schemas"]["ProductionTranslationPayload"][];
             uitdatabank_theme?: string | null;
             uitdatabank_type?: string | null;
             video_1?: string | null;
@@ -1385,7 +1385,7 @@ export interface components {
             slug: string;
             /** Format: int32 */
             source_id?: number | null;
-            translations: components["schemas"]["ProductionTranslationPayload"][];
+            translations?: components["schemas"]["ProductionTranslationPayload"][];
             uitdatabank_theme?: string | null;
             uitdatabank_type?: string | null;
             video_1?: string | null;
@@ -2588,6 +2588,7 @@ export interface operations {
             query?: {
                 cursor?: string | null;
                 limit?: number;
+                q?: string | null;
             };
             header?: never;
             path?: never;
