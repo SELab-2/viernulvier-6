@@ -8,7 +8,15 @@
     },
     "Header": {
         "logout": "Logout",
-        "loggingOut": "..."
+        "loggingOut": "...",
+        "signOut": "Sign out",
+        "nav": {
+            "home": "Home",
+            "archive": "Archive",
+            "articles": "Articles",
+            "cms": "CMS",
+            "admin": "Admin"
+        }
     },
     "LocaleSwitcher": {
         "label": "Select language"
