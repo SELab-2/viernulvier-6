@@ -13,7 +13,7 @@ use sha2::{Digest, Sha256};
 use tracing::{info, warn};
 
 use crate::error::ImporterError;
-use crate::helper::{extract_source_id, parse_amount_cents};
+use crate::helper::extract_source_id;
 use crate::models::{
     collection::ApiCollection,
     event::ApiEvent,
@@ -23,13 +23,14 @@ use crate::models::{
     media::{ApiMediaGallery, ApiMediaItem},
     price::ApiPrice,
     price_rank::ApiPriceRank,
-    production::{ApiProduction, ProductionImportData},
+    production::ApiProduction,
     space::ApiSpace,
 };
 use uuid::Uuid;
 
 pub mod error;
 mod helper;
+pub mod insert;
 pub mod models {
     pub mod collection;
     pub mod event;
@@ -186,24 +187,13 @@ impl ApiImporter {
             let amt = productions.len();
             info!("Productions: got {amt} from api");
             for production in productions {
-                let production_source_id = production
-                    .id
-                    .split('/')
-                    .next_back()
-                    .and_then(|s| s.parse::<i32>().ok());
-
                 let galleries = [
                     (production.media_gallery.clone(), "media"),
                     (production.review_gallery.clone(), "review"),
                     (production.poster_gallery.clone(), "poster"),
                 ];
 
-                let data: ProductionImportData = production.into();
-                self.db
-                    .productions()
-                    .insert(data.production, data.translations)
-                    .await
-                    .unwrap();
+                let production_source_id = production.insert(&self.db).await.unwrap();
 
                 let Some(source_id) = production_source_id else {
                     continue;
@@ -239,7 +229,7 @@ impl ApiImporter {
             let amt = locations.len();
             info!("Locations: got {amt} from api");
             for location in locations {
-                self.db.locations().insert(location.into(), vec![]).await.unwrap();
+                location.insert(&self.db).await.unwrap();
             }
             info!("Locations: inserted {amt} into db");
         }
@@ -258,21 +248,7 @@ impl ApiImporter {
             let amt = spaces.len();
             info!("Spaces: got {amt} from api");
             for space in spaces {
-                // first load in the related location and extract its id
-                let location_source_id = extract_source_id(&space.location).unwrap();
-
-                let location = self
-                    .db
-                    .locations()
-                    .by_source_id(location_source_id)
-                    .await
-                    .unwrap()
-                    .unwrap();
-
-                // construct a SpaceCreate out of it
-                let space_create = space.to_create(location.location.id);
-
-                self.db.spaces().insert(space_create).await.unwrap();
+                space.insert(&self.db).await.unwrap();
             }
             info!("Spaces: inserted {amt} into db");
         }
@@ -291,30 +267,7 @@ impl ApiImporter {
             let amt = halls.len();
             info!("Halls: got {amt} from api");
             for hall in halls {
-                let source_id = hall.space.as_deref().and_then(extract_source_id);
-                let space_uuid = match source_id {
-                    Some(id) => {
-                        // get the uuid of the space with a source id from the db
-                        let db_uuid = self
-                            .db
-                            .spaces()
-                            .by_source_id(id)
-                            .await
-                            .unwrap()
-                            .map(|s| s.id);
-
-                        if db_uuid.is_none() {
-                            warn!("Halls: Space source_id {id} expected but not found in db");
-                        }
-                        db_uuid
-                    }
-                    None => None,
-                };
-
-                // construct a HallCreate out of it
-                let hall_create = hall.to_create(space_uuid);
-
-                self.db.halls().insert(hall_create).await.unwrap();
+                hall.insert(&self.db).await.unwrap();
             }
             info!("Halls: inserted {amt} into db");
         }
@@ -333,38 +286,7 @@ impl ApiImporter {
             let amt = events.len();
             info!("Events: got {amt} from api");
             for event in events {
-                let Some(prod_source_id) = event.production_source_id() else {
-                    warn!("Events: event has no production source_id, skipping");
-                    continue;
-                };
-
-                let Some(production) = self
-                    .db
-                    .productions()
-                    .by_source_id(prod_source_id)
-                    .await
-                    .unwrap()
-                else {
-                    warn!(
-                        "Events: production source_id {prod_source_id} not found in db, skipping"
-                    );
-                    continue;
-                };
-
-                let hall_uuid = if let Some(hall_source_id) = event.hall_source_id() {
-                    let hall_opt = self.db.halls().by_source_id(hall_source_id).await.unwrap();
-
-                    if hall_opt.is_none() {
-                        warn!("Events: hall source_id {hall_source_id} not found in db");
-                    }
-
-                    hall_opt.map(|h| h.id)
-                } else {
-                    None
-                };
-
-                let event_create = event.to_create(production.production.id, hall_uuid);
-                self.db.events().insert(event_create).await.unwrap();
+                event.insert(&self.db).await.unwrap();
             }
             info!("Events: inserted {amt} into db");
         }
@@ -382,17 +304,7 @@ impl ApiImporter {
             let amt = prices.len();
             info!("Prices: got {amt} from api");
             for price in prices {
-                let source_id = extract_source_id(&price.id);
-
-                if let Some(source_id) = source_id
-                    && let Some(existing) = self.db.prices().by_source_id(source_id).await.unwrap()
-                {
-                    let model = price.to_model(existing.id);
-                    self.db.prices().update(model).await.unwrap();
-                    continue;
-                }
-
-                self.db.prices().insert(price.into()).await.unwrap();
+                price.insert(&self.db).await.unwrap();
             }
             info!("Prices: inserted {amt} into db");
         }
@@ -412,18 +324,7 @@ impl ApiImporter {
             let amt = ranks.len();
             info!("PriceRanks: got {amt} from api");
             for rank in ranks {
-                let source_id = extract_source_id(&rank.id);
-
-                if let Some(source_id) = source_id
-                    && let Some(existing) =
-                        self.db.price_ranks().by_source_id(source_id).await.unwrap()
-                {
-                    let model = rank.to_model(existing.id);
-                    self.db.price_ranks().update(model).await.unwrap();
-                    continue;
-                }
-
-                self.db.price_ranks().insert(rank.into()).await.unwrap();
+                rank.insert(&self.db).await.unwrap();
             }
             info!("PriceRanks: inserted {amt} into db");
         }
@@ -443,94 +344,7 @@ impl ApiImporter {
             let amt = event_prices.len();
             info!("EventPrices: got {amt} from api");
             for event_price in event_prices {
-                let Some(amount_cents) = parse_amount_cents(&event_price.amount) else {
-                    warn!(
-                        "EventPrices: invalid amount '{}' for event price {}, skipping",
-                        event_price.amount, event_price.id
-                    );
-                    continue;
-                };
-
-                let Some(event_source_id) = extract_source_id(&event_price.event) else {
-                    warn!("EventPrices: event_price has no event source_id, skipping");
-                    continue;
-                };
-
-                let Some(price_source_id) = extract_source_id(&event_price.price) else {
-                    warn!("EventPrices: event_price has no price source_id, skipping");
-                    continue;
-                };
-
-                let Some(rank_source_id) = extract_source_id(&event_price.rank) else {
-                    warn!("EventPrices: event_price has no rank source_id, skipping");
-                    continue;
-                };
-
-                let Some(event) = self
-                    .db
-                    .events()
-                    .by_source_id(event_source_id)
-                    .await
-                    .unwrap()
-                else {
-                    warn!(
-                        "EventPrices: event source_id {event_source_id} not found in db, skipping"
-                    );
-                    continue;
-                };
-
-                let Some(price) = self
-                    .db
-                    .prices()
-                    .by_source_id(price_source_id)
-                    .await
-                    .unwrap()
-                else {
-                    warn!(
-                        "EventPrices: price source_id {price_source_id} not found in db, skipping"
-                    );
-                    continue;
-                };
-
-                let Some(rank) = self
-                    .db
-                    .price_ranks()
-                    .by_source_id(rank_source_id)
-                    .await
-                    .unwrap()
-                else {
-                    warn!("EventPrices: rank source_id {rank_source_id} not found in db, skipping");
-                    continue;
-                };
-
-                let source_id = extract_source_id(&event_price.id);
-
-                if let Some(source_id) = source_id
-                    && let Some(existing) = self
-                        .db
-                        .event_prices()
-                        .by_source_id(source_id)
-                        .await
-                        .unwrap()
-                {
-                    let model = event_price.to_model(
-                        existing.id,
-                        event.id,
-                        price.id,
-                        rank.id,
-                        amount_cents,
-                    );
-                    self.db.event_prices().update(model).await.unwrap();
-                    continue;
-                }
-
-                let event_price_create =
-                    event_price.to_create(event.id, price.id, rank.id, amount_cents);
-                self.db
-                    .event_prices()
-                    .insert(event_price_create)
-                    .await
-                    .unwrap();
+                event_price.insert(&self.db).await.unwrap();
             }
             info!("EventPrices: inserted {amt} into db");
         }
