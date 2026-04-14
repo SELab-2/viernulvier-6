@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { useGetArticles } from "@/hooks/api/useArticles";
 
-import { SearchHeader } from "@/components/homepage/search-header";
+import { UnifiedHeader } from "@/components/layout/header";
 import { ArticleCard } from "@/components/articles";
 import { LoadingState } from "@/components/shared/loading-state";
 import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
@@ -34,7 +34,7 @@ export default function ArticlesPage() {
 
     return (
         <>
-            <SearchHeader
+            <UnifiedHeader
                 query={headerQuery}
                 onQueryChange={setHeaderQuery}
                 onSearch={handleHeaderSearch}

@@ -10,7 +10,7 @@ import { useGetEntityMedia } from "@/hooks/api/useMedia";
 import { getLocalizedField } from "@/lib/locale";
 import { Link, useRouter } from "@/i18n/routing";
 
-import { SearchHeader } from "@/components/homepage/search-header";
+import { UnifiedHeader } from "@/components/layout/header";
 import { LoadingState } from "@/components/shared/loading-state";
 
 import { ProductionHero } from "@/components/productionpage/production-hero";
@@ -64,7 +64,7 @@ export default function ProductionPage({
     if (isLoading || !production) {
         return (
             <>
-                <SearchHeader
+                <UnifiedHeader
                     query={headerQuery}
                     onQueryChange={setHeaderQuery}
                     onSearch={handleHeaderSearch}
@@ -80,7 +80,7 @@ export default function ProductionPage({
 
     return (
         <div className="bg-background text-foreground font-body min-h-screen">
-            <SearchHeader
+            <UnifiedHeader
                 query={headerQuery}
                 onQueryChange={setHeaderQuery}
                 onSearch={handleHeaderSearch}

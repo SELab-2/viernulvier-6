@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { MapPin, Phone, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
-import { SearchHeader } from "@/components/homepage/search-header";
+import { UnifiedHeader } from "@/components/layout/header";
 import { LoadingState } from "@/components/shared/loading-state";
 import { useGetLocationBySlug } from "@/hooks/api/useLocations";
 import { useGetSpaces } from "@/hooks/api/useSpaces";
@@ -42,7 +42,7 @@ export default function LocationPage() {
     if (locationLoading) {
         return (
             <>
-                <SearchHeader
+                <UnifiedHeader
                     query={headerQuery}
                     onQueryChange={setHeaderQuery}
                     searchPlaceholder={tSearch("placeholder")}
@@ -56,7 +56,7 @@ export default function LocationPage() {
     if (isError) {
         return (
             <>
-                <SearchHeader
+                <UnifiedHeader
                     query={headerQuery}
                     onQueryChange={setHeaderQuery}
                     searchPlaceholder={tSearch("placeholder")}
@@ -72,7 +72,7 @@ export default function LocationPage() {
     if (!location) {
         return (
             <>
-                <SearchHeader
+                <UnifiedHeader
                     query={headerQuery}
                     onQueryChange={setHeaderQuery}
                     searchPlaceholder={tSearch("placeholder")}
@@ -87,7 +87,7 @@ export default function LocationPage() {
 
     return (
         <>
-            <SearchHeader
+            <UnifiedHeader
                 query={headerQuery}
                 onQueryChange={setHeaderQuery}
                 searchPlaceholder={tSearch("placeholder")}
