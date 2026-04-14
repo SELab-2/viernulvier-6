@@ -19,6 +19,8 @@ struct StatsBody {
     production_count: i64,
     location_count: i64,
     article_count: i64,
+    artist_count: i64,
+    collection_count: i64,
 }
 
 async fn expected_stats_from_db(db: &PgPool) -> StatsBody {
@@ -50,6 +52,16 @@ async fn expected_stats_from_db(db: &PgPool) -> StatsBody {
             .await
             .unwrap();
 
+    let artist_count: i64 = sqlx::query_scalar("SELECT COUNT(*)::bigint FROM artists")
+        .fetch_one(db)
+        .await
+        .unwrap();
+
+    let collection_count: i64 = sqlx::query_scalar("SELECT COUNT(*)::bigint FROM collections")
+        .fetch_one(db)
+        .await
+        .unwrap();
+
     StatsBody {
         oldest_event,
         newest_event,
@@ -57,6 +69,8 @@ async fn expected_stats_from_db(db: &PgPool) -> StatsBody {
         production_count,
         location_count,
         article_count,
+        artist_count,
+        collection_count,
     }
 }
 
@@ -121,6 +135,19 @@ async fn get_stats_published_articles_only(db: PgPool) {
         total > published,
         "fixture should include non-published rows when total > published count"
     );
+}
+
+#[sqlx::test(fixtures("artists", "collections"))]
+#[test_log::test]
+async fn get_stats_artist_and_collection_counts(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/stats").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body: StatsBody = response.into_struct().await;
+    let expected = expected_stats_from_db(app.db()).await;
+    assert_eq!(body.artist_count, expected.artist_count);
+    assert_eq!(body.collection_count, expected.collection_count);
 }
 
 #[sqlx::test]
