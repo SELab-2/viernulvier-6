@@ -1,10 +1,14 @@
 use ormlite::{Insert, Model};
 use sqlx::PgPool;
+use tracing::debug;
 use uuid::Uuid;
 
 use crate::{
     error::DatabaseError,
-    models::hall::{Hall, HallCreate},
+    models::{
+        cursor::CursorData,
+        hall::{Hall, HallCreate, HallSearch, HallWithScore},
+    },
 };
 
 pub struct HallRepo<'a> {
@@ -27,18 +31,92 @@ impl<'a> HallRepo<'a> {
 
     pub async fn all(
         &self,
-        limit: usize,
-        id_cursor: Option<Uuid>,
-    ) -> Result<Vec<Hall>, DatabaseError> {
-        let mut select = Hall::select().limit(limit).order_desc("id");
+        limit: u32,
+        cursor: Option<CursorData>,
+        search: HallSearch,
+    ) -> Result<(Vec<Hall>, Option<CursorData>), DatabaseError> {
+        let limit: i64 = (limit + 1).into();
 
-        if let Some(id_cursor) = id_cursor {
-            select = select.where_("id < $1").bind(id_cursor);
-        }
+        let (halls, next_cursor): (Vec<Hall>, Option<CursorData>) = if let Some(search_q) = search.q
+        {
+            debug!("querying halls with search: '{search_q}'");
 
-        let halls = select.fetch_all(self.db).await?;
+            let mut query = sqlx::QueryBuilder::new("SELECT h.*, ");
 
-        Ok(halls)
+            query
+                .push_bind(&search_q)
+                .push(" <<-> h.name AS distance_score ")
+                .push("FROM halls h ")
+                .push("WHERE ")
+                .push_bind(&search_q)
+                .push(" <% h.name ");
+
+            if let Some(cursor) = cursor
+                && let Some(score) = cursor.score
+            {
+                query
+                    .push("AND ((")
+                    .push_bind(&search_q)
+                    .push(" <<-> h.name) > ")
+                    .push_bind(score);
+
+                query
+                    .push(" OR ((")
+                    .push_bind(&search_q)
+                    .push(" <<-> h.name) = ")
+                    .push_bind(score)
+                    .push(" AND id < ")
+                    .push_bind(cursor.id)
+                    .push(")) ");
+            }
+
+            query
+                .push("ORDER BY distance_score ASC, id DESC LIMIT ")
+                .push_bind(limit);
+
+            debug!("halls query: {}", query.sql());
+
+            let mut halls_with_score: Vec<HallWithScore> =
+                query.build_query_as().fetch_all(self.db).await?;
+
+            let next_cursor = if halls_with_score.len() == limit as usize {
+                halls_with_score.pop();
+                halls_with_score.last().map(|h| CursorData {
+                    id: h.hall.id,
+                    score: Some(h.distance_score),
+                })
+            } else {
+                None
+            };
+
+            let halls = halls_with_score.into_iter().map(|h| h.hall).collect();
+
+            (halls, next_cursor)
+        } else {
+            debug!("querying halls normally");
+
+            let mut select = Hall::select().limit(limit as usize).order_desc("id");
+
+            if let Some(cursor) = cursor {
+                select = select.where_("id < $1").bind(cursor.id);
+            }
+
+            let mut halls = select.fetch_all(self.db).await?;
+
+            let next_cursor = if halls.len() == limit as usize {
+                halls.pop();
+                halls.last().map(|h| CursorData {
+                    id: h.id,
+                    score: None,
+                })
+            } else {
+                None
+            };
+
+            (halls, next_cursor)
+        };
+
+        Ok((halls, next_cursor))
     }
 
     pub async fn insert(&self, hall: HallCreate) -> Result<Hall, DatabaseError> {
