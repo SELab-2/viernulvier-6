@@ -138,7 +138,7 @@ fn translations_to_data(
 }
 
 /// The per-language content for a production.
-#[derive(Serialize, Deserialize, ToSchema, Clone)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, Clone, PartialEq, Eq)]
 pub struct ProductionTranslationPayload {
     pub language_code: String,
     pub supertitle: Option<String>,
@@ -158,7 +158,7 @@ pub struct ProductionTranslationPayload {
     pub description_short: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, PartialEq, Eq)]
 pub struct ProductionPayload {
     pub id: Uuid,
     pub source_id: Option<i32>,

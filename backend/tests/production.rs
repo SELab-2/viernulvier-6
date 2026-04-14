@@ -179,7 +179,7 @@ async fn get_search_filter_date_to(db: PgPool) {
 
 #[sqlx::test(fixtures("productions"))]
 #[test_log::test]
-async fn get_search_sort(db: PgPool) {
+async fn get_search_sort_recent(db: PgPool) {
     let app = TestRouter::new(db);
 
     let response = app.get("/productions?sort=recent&limit=10").await;
@@ -191,6 +191,132 @@ async fn get_search_sort(db: PgPool) {
     assert_eq!(
         data.data[0].id.to_string(),
         "55555555-5555-5555-5555-555555555555"
+    );
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn get_search_sort_oldest(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/productions?sort=oldest&limit=10").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert!(!data.data.is_empty(), "Expected results to test sorting");
+
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "11111111-1111-1111-1111-111111111111"
+    );
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn get_search_and_sort(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response_recent = app
+        .get("/productions?q=TITLE_SEARCH_TEST&sort=recent&limit=10")
+        .await;
+    assert_eq!(response_recent.status(), StatusCode::OK);
+
+    let data_recent: PaginatedResponse<ProductionPayload> = response_recent.into_struct().await;
+    assert_eq!(data_recent.data.len(), 3);
+    assert_eq!(
+        data_recent.data.first().unwrap().id.to_string(),
+        "33333333-3333-3333-3333-333333333333",
+        "recent sort should put 3333 first"
+    );
+
+    // inverse sort
+    let response_oldest = app
+        .get("/productions?q=TITLE_SEARCH_TEST&sort=oldest&limit=10")
+        .await;
+    assert_eq!(response_oldest.status(), StatusCode::OK);
+
+    let data_oldest: PaginatedResponse<ProductionPayload> = response_oldest.into_struct().await;
+    assert_eq!(data_oldest.data.len(), 3);
+    assert_eq!(
+        data_oldest.data.first().unwrap().id.to_string(),
+        "11111111-1111-1111-1111-111111111111",
+        "oldest sort should put 1111 first"
+    );
+    assert_eq!(data_oldest.data[0], data_recent.data[2]);
+    assert_eq!(data_oldest.data[1], data_recent.data[1]);
+    assert_eq!(data_oldest.data[2], data_recent.data[0]);
+}
+
+#[sqlx::test(fixtures("productions", "production_taggings"))]
+#[test_log::test]
+async fn get_filter_and_sort(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app
+        .get("/productions?discipline=music&sort=oldest&limit=10")
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 2);
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "11111111-1111-1111-1111-111111111111",
+        "1111 should appear before 4444 when filtered by music and sorted by oldest"
+    );
+    assert_eq!(
+        data.data[1].id.to_string(),
+        "44444444-4444-4444-4444-444444444444",
+    );
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn get_sort_paginated(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    // Start with oldest, limit to 2 to force pagination
+    let response = app.get("/productions?sort=oldest&limit=2").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let page1: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(page1.data.len(), 2);
+    assert_eq!(
+        page1.data[0].id.to_string(),
+        "11111111-1111-1111-1111-111111111111",
+        "First item of page 1 should be the absolute oldest"
+    );
+    assert!(page1.next_cursor.is_some(), "Expected a cursor for page 2");
+
+    let cursor = page1.next_cursor.unwrap();
+
+    // Fetch page 2 using the cursor AND maintaining the sort parameter
+    let url = format!("/productions?sort=oldest&limit=2&cursor={cursor}");
+    let response = app.get(&url).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let page2: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert!(!page2.data.is_empty(), "Page 2 should contain data");
+
+    // Ensure the cursor correctly advanced the set and didn't reset to the default sort
+    assert_ne!(
+        page1.data[0].id, page2.data[0].id,
+        "Page 2 should contain distinct items from Page 1 under custom sort"
+    );
+
+    // Verify all IDs across both pages are unique
+    let mut all_ids = vec![page1.data[0].id, page1.data[1].id, page2.data[0].id];
+    if page2.data.len() > 1 {
+        all_ids.push(page2.data[1].id);
+    }
+
+    let original_length = all_ids.len();
+    all_ids.sort();
+    all_ids.dedup();
+    assert_eq!(
+        all_ids.len(),
+        original_length,
+        "Cursor pagination with custom sort yielded duplicate records"
     );
 }
 
@@ -238,7 +364,7 @@ async fn get_search_filter_paginated(db: PgPool) {
 
 #[sqlx::test(fixtures("productions", "events", "production_taggings"))]
 #[test_log::test]
-async fn get_search_combined_discipline_and_date(db: PgPool) {
+async fn get_search_discipline_and_date(db: PgPool) {
     let app = TestRouter::new(db);
 
     let response = app
@@ -260,7 +386,7 @@ async fn get_search_combined_discipline_and_date(db: PgPool) {
 
 #[sqlx::test(fixtures("productions", "production_taggings"))]
 #[test_log::test]
-async fn get_search_combined_text_and_format(db: PgPool) {
+async fn get_search_text_and_format(db: PgPool) {
     let app = TestRouter::new(db);
 
     let response = app
@@ -282,7 +408,7 @@ async fn get_search_combined_text_and_format(db: PgPool) {
 
 #[sqlx::test(fixtures("productions", "events", "production_taggings"))]
 #[test_log::test]
-async fn get_search_combined_mutually_exclusive_tags(db: PgPool) {
+async fn get_search_mutually_exclusive_tags(db: PgPool) {
     let app = TestRouter::new(db);
 
     let response = app
@@ -299,7 +425,7 @@ async fn get_search_combined_mutually_exclusive_tags(db: PgPool) {
 
 #[sqlx::test(fixtures("productions", "events"))]
 #[test_log::test]
-async fn get_search_combined_date_range(db: PgPool) {
+async fn get_search_date_range(db: PgPool) {
     let app = TestRouter::new(db);
 
     let response = app
@@ -321,7 +447,7 @@ async fn get_search_combined_date_range(db: PgPool) {
 
 #[sqlx::test(fixtures("productions", "events", "production_taggings"))]
 #[test_log::test]
-async fn get_search_combined_everything(db: PgPool) {
+async fn get_search_everything(db: PgPool) {
     let app = TestRouter::new(db);
 
     let query = "/productions\
