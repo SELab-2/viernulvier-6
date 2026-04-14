@@ -34,6 +34,10 @@ export interface PaginationParams {
     limit?: number;
 }
 
+export interface SearchPaginationParams extends PaginationParams {
+    q?: string;
+}
+
 export interface PaginatedResult<T> {
     data: T[];
     nextCursor: string | null;
