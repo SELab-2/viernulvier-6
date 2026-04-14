@@ -13,7 +13,7 @@ import {
     GetProductionByIdResponse,
     UpdateProductionResponse,
 } from "@/types/api/production.api.types";
-import { PaginationParams, PaginatedResult } from "@/types/api/api.types";
+import { PaginatedResult, SearchPaginationParams } from "@/types/api/api.types";
 import {
     Production,
     ProductionCreateInput,
@@ -23,7 +23,7 @@ import {
 import { queryKeys } from "./query-keys";
 
 const fetchProductions = async (
-    params?: PaginationParams
+    params?: SearchPaginationParams
 ): Promise<PaginatedResult<Production>> => {
     const { data } = await api.get<GetAllProductionsResponse>("/productions", { params });
     return mapPaginatedProductionsResult(data);
@@ -36,11 +36,11 @@ const fetchProductionById = async (id: string): Promise<Production> => {
 
 export const useGetProductions = (options?: {
     enabled?: boolean;
-    pagination?: PaginationParams;
+    params?: SearchPaginationParams;
 }) => {
     return useQuery({
-        queryKey: queryKeys.productions.all(options?.pagination),
-        queryFn: () => fetchProductions(options?.pagination),
+        queryKey: queryKeys.productions.all(options?.params),
+        queryFn: () => fetchProductions(options?.params),
         ...options,
     });
 };
