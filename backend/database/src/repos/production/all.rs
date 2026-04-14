@@ -89,27 +89,27 @@ impl<'a> ProductionRepo<'a> {
             .push_bind(search_q)
             .push(" <<-> full_search_text) ")
             .push(" as distance_score ") // lower is better
-            .push(" FROM production_translations ")
+            .push(" FROM production_translations pt ")
             .push(" WHERE ")
             .push_bind(search_q)
             .push(" <% full_search_text ") // only keep items that matched a minimum amount
-            .apply_facet_filters(EntityType::Production, "production_id", &filters.facets);
+            .apply_facet_filters(EntityType::Production, "pt.production_id", &filters.facets);
 
-        apply_date_filters(&mut query, filters);
+        apply_date_filters(&mut query, "pt.production_id", filters);
 
         if let Some(ref cursor) = cursor {
             match filters.sort {
                 Sort::Oldest => {
-                    query.push(" AND production_id > ").push_bind(cursor.id);
+                    query.push(" AND pt.production_id > ").push_bind(cursor.id);
                 }
                 Sort::Recent => {
-                    query.push(" AND production_id < ").push_bind(cursor.id);
+                    query.push(" AND pt.production_id < ").push_bind(cursor.id);
                 }
                 Sort::Relevance => {} // explicitly do nothing, handled after GROUP BY
             };
         }
 
-        query.push(" GROUP BY production_id ");
+        query.push(" GROUP BY pt.production_id ");
 
         // if the sort is relevance, we need to use the score component of the cursor
         if let Some(ref cursor) = cursor
@@ -129,7 +129,7 @@ impl<'a> ProductionRepo<'a> {
                     query.push_bind(search_q);
                     query.push(" <<-> full_search_text) = ");
                     query.push_bind(score);
-                    query.push(" AND production_id < ");
+                    query.push(" AND pt.production_id < ");
                     query.push_bind(cursor.id);
                     query.push(") ");
                 }
@@ -191,24 +191,26 @@ impl<'a> ProductionRepo<'a> {
             Sort::Recent | Sort::Relevance => ("<", "DESC"),
         };
 
-        let mut query = QueryBuilder::new("SELECT * FROM PRODUCTIONS WHERE 1=1 ");
+        let mut query = QueryBuilder::new("SELECT * FROM PRODUCTIONS p WHERE 1=1 ");
 
         // cursor
         if let Some(cursor) = cursor {
             query
-                .push(format_args!(" AND id {cursor_cmp} ")) // > or <
+                .push(format_args!(" AND p.id {cursor_cmp} ")) // > or <
                 .push_bind(cursor.id);
         }
 
         // facet filters
-        query.apply_facet_filters(EntityType::Production, "id", &filters.facets);
+        query.apply_facet_filters(EntityType::Production, "p.id", &filters.facets);
 
         // date filters
-        apply_date_filters(&mut query, filters);
+        apply_date_filters(&mut query, "p.id", filters);
 
         query
-            .push(format_args!(" ORDER BY id {order_direction} LIMIT "))
+            .push(format_args!(" ORDER BY p.id {order_direction} LIMIT "))
             .push_bind(limit);
+
+        debug!("productions query: {}", query.sql());
 
         let mut productions: Vec<Production> = query.build_query_as().fetch_all(self.db).await?;
 
@@ -227,18 +229,22 @@ impl<'a> ProductionRepo<'a> {
     }
 }
 
-fn apply_date_filters(query: &mut QueryBuilder<Postgres>, filters: &ProductionFilters) {
+fn apply_date_filters(
+    query: &mut QueryBuilder<Postgres>,
+    id_column: &str,
+    filters: &ProductionFilters,
+) {
     if filters.date_from.is_some() || filters.date_to.is_some() {
         query
             .push(" AND EXISTS (SELECT 1 FROM events ")
-            .push(" WHERE events.production_id = production_id ");
+            .push(format_args!(" WHERE events.production_id = {id_column} "));
 
         if let Some(date_from) = filters.date_from {
-            query.push(" AND starts_at >= ").push_bind(date_from);
+            query.push(" AND events.starts_at >= ").push_bind(date_from);
         }
 
         if let Some(date_to) = filters.date_to {
-            query.push(" AND starts_at <= ").push_bind(date_to);
+            query.push(" AND events.starts_at <= ").push_bind(date_to);
         }
 
         query.push(" ) ");
