@@ -19,16 +19,8 @@ pub struct StatsPayload {
 
 impl StatsPayload {
     pub async fn collect(db: &Database) -> Result<Self, AppError> {
-        let db_events_bounds = db.clone();
-        let db_events_count = db.clone();
-        let db_productions = db.clone();
-        let db_locations = db.clone();
-        let db_articles = db.clone();
-        let db_artists = db.clone();
-        let db_collections = db.clone();
-
         let (
-            event_bounds,
+            (oldest_event, newest_event),
             event_count,
             production_count,
             location_count,
@@ -36,16 +28,14 @@ impl StatsPayload {
             artist_count,
             collection_count,
         ) = tokio::try_join!(
-            async move { db_events_bounds.events().bounds().await },
-            async move { db_events_count.events().count().await },
-            async move { db_productions.productions().count().await },
-            async move { db_locations.locations().count().await },
-            async move { db_articles.articles().count_published().await },
-            async move { db_artists.artists().count().await },
-            async move { db_collections.collections().count().await },
+            async { db.events().bounds().await },
+            async { db.events().count().await },
+            async { db.productions().count().await },
+            async { db.locations().count().await },
+            async { db.articles().count_published().await },
+            async { db.artists().count().await },
+            async { db.collections().count().await },
         )?;
-        let (oldest_event, newest_event) = event_bounds;
-
         Ok(Self {
             oldest_event,
             newest_event,

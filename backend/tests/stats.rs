@@ -1,4 +1,4 @@
-//! Integration tests for `GET /stats` (see `PLAN_STATS_ENDPOINT.md`).
+//! Integration tests for `GET /stats`.
 
 use axum::http::{StatusCode, header};
 use chrono::{DateTime, Utc};
@@ -23,148 +23,15 @@ struct StatsBody {
     collection_count: i64,
 }
 
-async fn expected_stats_from_db(db: &PgPool) -> StatsBody {
-    let (oldest_event, newest_event) = sqlx::query_as::<_, (Option<DateTime<Utc>>, Option<DateTime<Utc>>)>(
-        "SELECT MIN(starts_at), MAX(starts_at) FROM events",
-    )
-    .fetch_one(db)
-    .await
-    .unwrap();
-
-    let event_count: i64 = sqlx::query_scalar("SELECT COUNT(*)::bigint FROM events")
-        .fetch_one(db)
-        .await
-        .unwrap();
-
-    let production_count: i64 = sqlx::query_scalar("SELECT COUNT(*)::bigint FROM productions")
-        .fetch_one(db)
-        .await
-        .unwrap();
-
-    let location_count: i64 = sqlx::query_scalar("SELECT COUNT(*)::bigint FROM locations")
-        .fetch_one(db)
-        .await
-        .unwrap();
-
-    let article_count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*)::bigint FROM articles WHERE status = 'published'")
-            .fetch_one(db)
-            .await
-            .unwrap();
-
-    let artist_count: i64 = sqlx::query_scalar("SELECT COUNT(*)::bigint FROM artists")
-        .fetch_one(db)
-        .await
-        .unwrap();
-
-    let collection_count: i64 = sqlx::query_scalar("SELECT COUNT(*)::bigint FROM collections")
-        .fetch_one(db)
-        .await
-        .unwrap();
-
-    StatsBody {
-        oldest_event,
-        newest_event,
-        event_count,
-        production_count,
-        location_count,
-        article_count,
-        artist_count,
-        collection_count,
-    }
+fn utc(s: &str) -> DateTime<Utc> {
+    DateTime::parse_from_rfc3339(s)
+        .expect("valid RFC3339")
+        .with_timezone(&Utc)
 }
 
-#[sqlx::test(fixtures("events", "locations", "articles"))]
+#[sqlx::test(fixtures("stats"))]
 #[test_log::test]
-async fn get_stats_returns_ok(db: PgPool) {
-    let app = TestRouter::new(db);
-    let response = app.get("/stats").await;
-    assert_eq!(response.status(), StatusCode::OK);
-    let _: StatsBody = response.into_struct().await;
-}
-
-#[sqlx::test(fixtures("events", "locations", "articles"))]
-#[test_log::test]
-async fn get_stats_counts(db: PgPool) {
-    let app = TestRouter::new(db);
-    let response = app.get("/stats").await;
-    assert_eq!(response.status(), StatusCode::OK);
-
-    let body: StatsBody = response.into_struct().await;
-    let expected = expected_stats_from_db(app.db()).await;
-    assert_eq!(body, expected);
-}
-
-#[sqlx::test(fixtures("events"))]
-#[test_log::test]
-async fn get_stats_event_bounds(db: PgPool) {
-    let app = TestRouter::new(db);
-    let response = app.get("/stats").await;
-    assert_eq!(response.status(), StatusCode::OK);
-
-    let body: StatsBody = response.into_struct().await;
-    let expected = expected_stats_from_db(app.db()).await;
-    assert_eq!(body.oldest_event, expected.oldest_event);
-    assert_eq!(body.newest_event, expected.newest_event);
-    assert_eq!(body.event_count, expected.event_count);
-}
-
-#[sqlx::test(fixtures("articles"))]
-#[test_log::test]
-async fn get_stats_published_articles_only(db: PgPool) {
-    let app = TestRouter::new(db);
-    let response = app.get("/stats").await;
-    assert_eq!(response.status(), StatusCode::OK);
-
-    let body: StatsBody = response.into_struct().await;
-    let pool = app.db();
-
-    let published: i64 =
-        sqlx::query_scalar("SELECT COUNT(*)::bigint FROM articles WHERE status = 'published'")
-            .fetch_one(pool)
-            .await
-            .unwrap();
-
-    assert_eq!(body.article_count, published);
-
-    let total: i64 = sqlx::query_scalar("SELECT COUNT(*)::bigint FROM articles")
-        .fetch_one(pool)
-        .await
-        .unwrap();
-    assert!(
-        total > published,
-        "fixture should include non-published rows when total > published count"
-    );
-}
-
-#[sqlx::test(fixtures("artists", "collections"))]
-#[test_log::test]
-async fn get_stats_artist_and_collection_counts(db: PgPool) {
-    let app = TestRouter::new(db);
-    let response = app.get("/stats").await;
-    assert_eq!(response.status(), StatusCode::OK);
-
-    let body: StatsBody = response.into_struct().await;
-    let expected = expected_stats_from_db(app.db()).await;
-    assert_eq!(body.artist_count, expected.artist_count);
-    assert_eq!(body.collection_count, expected.collection_count);
-}
-
-#[sqlx::test]
-#[test_log::test]
-async fn get_stats_empty_database(db: PgPool) {
-    let app = TestRouter::new(db);
-    let response = app.get("/stats").await;
-    assert_eq!(response.status(), StatusCode::OK);
-
-    let body: StatsBody = response.into_struct().await;
-    let expected = expected_stats_from_db(app.db()).await;
-    assert_eq!(body, expected);
-}
-
-#[sqlx::test(fixtures("events"))]
-#[test_log::test]
-async fn get_stats_has_cache_headers(db: PgPool) {
+async fn get_stats_matches_fixture(db: PgPool) {
     let app = TestRouter::new(db);
     let response = app.get("/stats").await;
     assert_eq!(response.status(), StatusCode::OK);
@@ -176,4 +43,49 @@ async fn get_stats_has_cache_headers(db: PgPool) {
         .to_str()
         .expect("Cache-Control utf-8");
     assert_eq!(cache, PUBLIC_CACHE_HEADER);
+
+    let body: StatsBody = response.into_struct().await;
+    let expected = StatsBody {
+        oldest_event: Some(utc("2026-04-10T18:00:00Z")),
+        newest_event: Some(utc("2026-07-15T17:00:00Z")),
+        event_count: 3,
+        production_count: 2,
+        location_count: 4,
+        // One published article seeded in the stats fixture, plus one from the
+        // `seed_article_kleurenstudies` migration.
+        article_count: 2,
+        artist_count: 2,
+        collection_count: 3,
+    };
+    assert_eq!(body, expected);
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn get_stats_empty_database(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/stats").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let cache = response
+        .headers()
+        .get(header::CACHE_CONTROL)
+        .expect("Cache-Control header")
+        .to_str()
+        .expect("Cache-Control utf-8");
+    assert_eq!(cache, PUBLIC_CACHE_HEADER);
+
+    let body: StatsBody = response.into_struct().await;
+    let expected = StatsBody {
+        oldest_event: None,
+        newest_event: None,
+        event_count: 0,
+        production_count: 0,
+        location_count: 0,
+        // Migrations seed one published article.
+        article_count: 1,
+        artist_count: 0,
+        collection_count: 0,
+    };
+    assert_eq!(body, expected);
 }
