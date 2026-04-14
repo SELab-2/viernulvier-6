@@ -37,12 +37,16 @@ jobs:
     needs: [run_backend_tests, run_frontend_tests]
 
     steps:
-      - name: Clean up runner directories
-        run: sudo chown -R $USER:$USER /opt/hostedtoolcache || true
-        continue-on-error: true
+      # We should not edit perms of this, if this breaks SSH into server and delete manually and let actions rebuild
+      # - name: Clean up runner directories
+      #  run: sudo chown -R $USER:$USER /opt/hostedtoolcache || true
+      #  continue-on-error: true
 
       - name: Clean up workspace
-        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace alpine sh -c "chown -R $(id -u):$(id -g) /workspace"
+        continue-on-error: true
+
       - name: Checkout repo
         uses: actions/checkout@v4
 
@@ -144,7 +148,10 @@ jobs:
     environment: preview
     steps:
       - name: Clean up workspace
-        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace alpine sh -c "chown -R $(id -u):$(id -g) /workspace"
+        continue-on-error: true
+
       - name: Checkout repo
         uses: actions/checkout@v4
 

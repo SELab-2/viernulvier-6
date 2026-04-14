@@ -70,6 +70,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      garage-init:
+        condition: service_completed_successfully
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${PREVIEW_NAME}-api.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/api`)"
@@ -159,7 +161,7 @@ services:
         # Copy garage binary from garage container
         cp /proc/1/root/garage /usr/local/bin/garage
         chmod +x /usr/local/bin/garage
-
+        
         G="garage -c /etc/garage.toml"
 
         # Wait for garage to generate node key first
