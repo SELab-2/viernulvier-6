@@ -199,7 +199,7 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                     className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
                 >
                     <ArrowLeft className="h-4 w-4" />
-                    {t("backToList")}
+                    <span className="hidden sm:inline">{t("backToList")}</span>
                 </Link>
                 <div className="flex-1" />
                 <Button
@@ -211,12 +211,12 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                     {isPreviewOpen ? (
                         <>
                             <EyeOff className="h-4 w-4" />
-                            {t("hidePreview")}
+                            <span className="hidden sm:inline">{t("hidePreview")}</span>
                         </>
                     ) : (
                         <>
                             <Eye className="h-4 w-4" />
-                            {t("preview")}
+                            <span className="hidden sm:inline">{t("preview")}</span>
                         </>
                     )}
                     {!isPreviewOpen && hasChanges && (
@@ -224,17 +224,19 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                     )}
                 </Button>
                 <Button onClick={handleSave} disabled={isSaving} size="sm">
-                    <Save className="mr-2 h-4 w-4" />
-                    {isSaving ? t("saving") : t("save")}
+                    <Save className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">{isSaving ? t("saving") : t("save")}</span>
                 </Button>
             </div>
 
             {/* Main content area */}
-            <div className="flex flex-1 overflow-hidden">
+            <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
                 {/* Editor */}
                 <div
                     className={`flex flex-col overflow-hidden transition-all duration-300 ${
-                        isPreviewOpen ? "w-[45%]" : "mx-auto max-w-3xl flex-1"
+                        isPreviewOpen
+                            ? "hidden lg:flex lg:w-[45%]"
+                            : "w-full lg:mx-auto lg:max-w-3xl lg:flex-1"
                     }`}
                 >
                     {/* Form fields */}
@@ -346,13 +348,13 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
 
                 {/* Preview Panel - right side */}
                 {isPreviewOpen && (
-                    <div className="border-muted w-[55%] min-w-[400px] shrink-0 overflow-hidden border-l">
+                    <div className="border-muted flex w-full flex-1 flex-col overflow-hidden border-t lg:w-[55%] lg:min-w-[400px] lg:border-t-0 lg:border-l">
                         <div className="bg-muted flex items-center justify-between px-4 py-3 shadow-[0_1px_0_0_hsl(var(--border))]">
                             <span className="text-background font-mono text-[10px] font-medium tracking-[1.2px] uppercase">
                                 {t("previewLabel")}
                             </span>
                         </div>
-                        <div className="bg-background h-[calc(100%-45px)] overflow-auto">
+                        <div className="bg-background flex-1 overflow-auto">
                             <iframe
                                 src={`/${locale}/productions/${production.id}?preview=1&session=${previewSessionId}`}
                                 className="bg-background h-full w-full"
