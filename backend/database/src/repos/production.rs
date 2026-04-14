@@ -121,24 +121,10 @@ impl<'a> ProductionRepo<'a> {
             .push(" FROM production_translations ")
             .push(" WHERE ")
             .push_bind(search_q)
-            .push(" <% full_search_text ")
+            .push(" <% full_search_text ") // only keep items that matched a minimum amount
             .apply_facet_filters(EntityType::Production, "production_id", &filters.facets);
 
-        if filters.date_from.is_some() || filters.date_to.is_some() {
-            query
-                .push(" AND EXISTS (SELECT 1 FROM events ")
-                .push(" WHERE events.production_id = production_id ");
-
-            if let Some(date_from) = filters.date_from {
-                query.push(" AND starts_at >= ").push_bind(date_from);
-            }
-
-            if let Some(date_to) = filters.date_to {
-                query.push(" AND starts_at <= ").push_bind(date_to);
-            }
-
-            query.push(" ) ");
-        }
+        apply_date_filters(&mut query, filters);
 
         if let Some(ref cursor) = cursor {
             match filters.sort {
@@ -148,32 +134,33 @@ impl<'a> ProductionRepo<'a> {
                 Sort::Recent => {
                     query.push(" AND production_id < ").push_bind(cursor.id);
                 }
-                Sort::Relevance => {} // explicitly do nothing
+                Sort::Relevance => {} // explicitly do nothing, handled after GROUP BY
             };
         }
 
         query.push(" GROUP BY production_id ");
 
-        if let Some(ref cursor) = cursor {
+        // if the sort is relevance, we need to use the score component of the cursor
+        if let Some(ref cursor) = cursor
+            && let Some(score) = cursor.score
+        {
             match filters.sort {
                 Sort::Oldest | Sort::Recent => {}
                 Sort::Relevance => {
-                    if let Some(score) = cursor.score {
-                        // HAVING score > cursor.score
-                        query.push(" HAVING MIN( ");
-                        query.push_bind(search_q);
-                        query.push(" <<-> full_search_text) > ");
-                        query.push_bind(score);
+                    // HAVING score > cursor.score
+                    query.push(" HAVING MIN( ");
+                    query.push_bind(search_q);
+                    query.push(" <<-> full_search_text) > ");
+                    query.push_bind(score);
 
-                        // OR (score = cursor.score AND id < cursor.id)
-                        query.push(" OR (MIN( ");
-                        query.push_bind(search_q);
-                        query.push(" <<-> full_search_text) = ");
-                        query.push_bind(score);
-                        query.push(" AND production_id < ");
-                        query.push_bind(cursor.id);
-                        query.push(") ");
-                    }
+                    // OR (score = cursor.score AND id < cursor.id)
+                    query.push(" OR (MIN( ");
+                    query.push_bind(search_q);
+                    query.push(" <<-> full_search_text) = ");
+                    query.push_bind(score);
+                    query.push(" AND production_id < ");
+                    query.push_bind(cursor.id);
+                    query.push(") ");
                 }
             }
         }
