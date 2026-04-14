@@ -8,7 +8,15 @@
     },
     "Header": {
         "logout": "Uitloggen",
-        "loggingOut": "..."
+        "loggingOut": "...",
+        "signOut": "Uitloggen",
+        "nav": {
+            "home": "Home",
+            "archive": "Archief",
+            "articles": "Artikels",
+            "cms": "CMS",
+            "admin": "Admin"
+        }
     },
     "LocaleSwitcher": {
         "label": "Taal selecteren"
@@ -36,7 +44,7 @@
         "heroEyebrow": "Archief — {count} producties",
         "heroTitle": "Doorzoek het archief",
         "heroTitleItalic": "van De Vooruit",
-        "heroPlaceholder": "Artiest, productie, jaar\u2026",
+        "heroPlaceholder": "Artiest, productie, jaar…",
         "quickSearch": "Snel zoeken:",
         "enter": "enter",
         "noResultsTitle": "Hier hangen enkel spinnenwebben",
@@ -137,7 +145,7 @@
         "hero": {
             "title": "Het archief van VIERNULVIER",
             "subtitle": "Meer dan 40 jaar theater, dans, muziek en nachtleven in Gent.",
-            "searchPlaceholder": "Zoek in het archief\u2026"
+            "searchPlaceholder": "Zoek in het archief…"
         },
         "tags": {
             "theater": "Theater",
@@ -230,15 +238,15 @@
         "ActionsColumn": {
             "openMenu": "Menu openen",
             "actions": "Acties",
-            "copy": "{key} kopi\u00ebren",
+            "copy": "{key} kopiëren",
             "copied": "{key} gekopieerd",
-            "copyFailed": "Kopi\u00ebren naar klembord mislukt",
+            "copyFailed": "Kopiëren naar klembord mislukt",
             "edit": "{label} bewerken"
         },
         "EditSheet": {
             "yes": "Ja",
             "no": "Nee",
-            "selectPlaceholder": "Selecteer\u2026",
+            "selectPlaceholder": "Selecteer…",
             "cancel": "Annuleren",
             "saveChanges": "Wijzigingen opslaan",
             "editMode": "Bewerk modus"
@@ -288,7 +296,8 @@
             "showEvents": "Voorstellingen tonen",
             "hideEvents": "Voorstellingen verbergen",
             "editProduction": "Productie bewerken",
-            "editEvent": "Voorstelling bewerken"
+            "editEvent": "Voorstelling bewerken",
+            "eyebrow": "Productie"
         },
         "Locations": {
             "title": "Locaties",
@@ -437,7 +446,9 @@
         "relatedProductionFallback": "Productie",
         "breadcrumbArchive": "Archief",
         "breadcrumbProductions": "Producties",
-        "loading": "Laden..."
+        "loading": "Laden…",
+        "openCoverImage": "Coverafbeelding openen",
+        "openGalleryImage": "Afbeelding openen"
     },
     "NewsArticleComponent": {
         "subTitle": "Vooruit Archief",
@@ -480,5 +491,14 @@
         "relatedArtists": "Artiesten",
         "relatedLocations": "Locaties",
         "relatedEvents": "Voorstellingen"
+    },
+    "ImageSpotlight": {
+        "close": "Sluiten",
+        "previous": "Vorige",
+        "next": "Volgende",
+        "previousImage": "Vorige afbeelding",
+        "nextImage": "Volgende afbeelding",
+        "archive": "Archief",
+        "openImage": "Afbeelding openen"
     }
 }
