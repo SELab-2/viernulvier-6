@@ -44,6 +44,24 @@ pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<Collect
 }
 
 #[utoipa::path(
+    method(get),
+    path = "/collections/slug/{slug}",
+    tag = "Collections",
+    operation_id = "get_collection_by_slug",
+    description = "Get a collection by slug",
+    params(
+        ("slug" = String, Path, description = "Collection slug")
+    ),
+    responses(
+        (status = 200, description = "Success", body = CollectionPayload),
+        (status = 404, description = "Not found")
+    )
+)]
+pub async fn get_one_by_slug(db: Database, Path(slug): Path<String>) -> JsonResponse<CollectionPayload> {
+    CollectionPayload::by_slug(&db, &slug).await?.json()
+}
+
+#[utoipa::path(
     method(post),
     path = "/collections",
     tag = "Collections",
