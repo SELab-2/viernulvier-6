@@ -117,7 +117,7 @@ services:
       - "traefik.http.services.main-s3-web.loadbalancer.passhostheader=false"
 
   garage-init:
-    image: alpine:3.21
+    image: dxflrs/garage:v2.2.0
     container_name: ${COMPOSE_PROJECT_NAME}_garage_init
     environment:
       - GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET}
@@ -140,10 +140,6 @@ services:
       - -eu
       - -c
       - |
-        # Copy garage binary from garage container
-        cp /proc/1/root/garage /usr/local/bin/garage
-        chmod +x /usr/local/bin/garage
-
         G="garage -c /etc/garage.toml"
 
         # Wait for garage to generate node key first
