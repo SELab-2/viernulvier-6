@@ -1551,11 +1551,11 @@ export interface operations {
     get_all_articles: {
         parameters: {
             query?: {
-                subject_start?: string | null;
-                subject_end?: string | null;
-                tag_slug?: string | null;
+                subject_start?: string;
+                subject_end?: string;
+                tag_slug?: string;
                 related_entity_id?: string | null;
-                related_entity_type?: null | components["schemas"]["EntityType"];
+                related_entity_type?: "production" | "artist" | "article" | "media" | "location" | "event" | "series";
             };
             header?: never;
             path?: never;
@@ -2466,6 +2466,7 @@ export interface operations {
             query?: {
                 cursor?: string | null;
                 limit?: number;
+                q?: string | null;
             };
             header?: never;
             path?: never;
@@ -2824,10 +2825,10 @@ export interface operations {
                 cursor?: string | null;
                 limit?: number;
                 q?: string | null;
-                entity_type?: null | components["schemas"]["EntityType"];
+                entity_type?: "production" | "artist" | "article" | "media" | "location" | "event" | "series";
                 entity_id?: string | null;
-                role?: string | null;
-                sort?: null | components["schemas"]["Sort"];
+                role?: string;
+                sort?: "recent" | "oldest" | "relevance";
             };
             header?: never;
             path?: never;
@@ -3122,15 +3123,15 @@ export interface operations {
                 cursor?: string | null;
                 limit?: number;
                 q?: string | null;
-                discipline?: string | null;
-                format?: string | null;
-                theme?: string | null;
-                audience?: string | null;
-                artist?: string | null;
-                location?: string | null;
-                date_from?: string | null;
-                date_to?: string | null;
-                sort?: null | components["schemas"]["Sort"];
+                discipline?: string;
+                format?: string;
+                theme?: string;
+                audience?: string;
+                artist?: string;
+                location?: string;
+                date_from?: string;
+                date_to?: string;
+                sort?: "recent" | "oldest" | "relevance";
                 after?: string | null;
             };
             header?: never;
@@ -3836,7 +3837,7 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description Filter facets by entity type */
-                entity_type?: null | components["schemas"]["EntityType"];
+                entity_type?: "production" | "artist" | "article" | "media" | "location" | "event" | "series";
             };
             header?: never;
             path?: never;
