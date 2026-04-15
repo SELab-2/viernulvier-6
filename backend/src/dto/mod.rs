@@ -11,3 +11,4 @@ pub mod media;
 pub mod production;
 pub mod series;
 pub mod space;
+pub mod stats;

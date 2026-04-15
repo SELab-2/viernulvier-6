@@ -747,6 +747,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Aggregate public site statistics (cached) */
+        get: operations["get_stats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/version": {
         parameters: {
             query?: never;
@@ -1452,6 +1469,20 @@ export interface components {
         };
         /** @enum {string} */
         Sort: "recent" | "oldest" | "relevance";
+        StatsPayload: {
+            /** Format: int64 */
+            article_count: number;
+            /** Format: int64 */
+            event_count: number;
+            /** Format: int64 */
+            location_count: number;
+            /** Format: date-time */
+            newest_event?: string | null;
+            /** Format: date-time */
+            oldest_event?: string | null;
+            /** Format: int64 */
+            production_count: number;
+        };
         SpacePayload: {
             /** Format: uuid */
             id: string;
@@ -3802,6 +3833,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FacetResponse"][];
+                };
+            };
+        };
+    };
+    get_stats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatsPayload"];
                 };
             };
         };
