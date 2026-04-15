@@ -329,7 +329,8 @@
             "relatedProductions": "Gerelateerde producties",
             "relatedArtists": "Gerelateerde artiesten",
             "relatedLocations": "Gerelateerde locaties",
-            "relatedEvents": "Gerelateerde voorstellingen"
+            "relatedEvents": "Gerelateerde voorstellingen",
+            "metadata": "Metadata"
         },
         "Performers": {
             "title": "Uitvoerders",

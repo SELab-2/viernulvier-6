@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { ArrowLeft, Eye, EyeOff, Save } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Save, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ArticleMetadataPanel } from "@/components/cms/article-metadata-panel";
@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/routing";
 import { usePreviewContext } from "@/contexts/PreviewContext";
 import { CmsMobileMenu } from "@/components/cms";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
     useGetArticle,
     useGetArticleRelations,
@@ -239,14 +240,8 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                     />
                 </div>
 
-                {/* Metadata panel - always visible */}
-                <aside
-                    className={`shrink-0 overflow-y-auto border-t lg:h-full lg:w-64 lg:border-t-0 lg:border-l ${
-                        isPreviewOpen
-                            ? "hidden lg:block"
-                            : "h-auto max-h-[35%] w-full lg:h-auto lg:max-h-none"
-                    }`}
-                >
+                {/* Desktop Metadata panel */}
+                <aside className="hidden shrink-0 overflow-y-auto border-t lg:block lg:h-full lg:w-64 lg:border-t-0 lg:border-l">
                     <ArticleMetadataPanel
                         article={article}
                         relations={relations}
@@ -254,6 +249,36 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                         onRelationsChange={setRelationEdits}
                     />
                 </aside>
+
+                {/* Mobile Metadata panel in Sheet */}
+                <div className="lg:hidden">
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <button
+                                type="button"
+                                className="border-border text-muted-foreground hover:text-foreground bg-background fixed right-4 bottom-4 z-40 flex cursor-pointer items-center gap-2 border px-4 py-2.5 font-mono text-[10px] tracking-[1.4px] uppercase shadow-lg transition-colors"
+                            >
+                                <Settings2 className="h-3.5 w-3.5" />
+                                {t("metadata")}
+                            </button>
+                        </SheetTrigger>
+                        <SheetContent side="right" className="w-[300px] p-0 sm:w-[360px]">
+                            <SheetHeader className="border-b px-4 py-3">
+                                <SheetTitle className="font-display text-lg font-bold tracking-tight">
+                                    {t("metadata")}
+                                </SheetTitle>
+                            </SheetHeader>
+                            <div className="overflow-y-auto p-4">
+                                <ArticleMetadataPanel
+                                    article={article}
+                                    relations={relations}
+                                    onArticleChange={patchArticle}
+                                    onRelationsChange={setRelationEdits}
+                                />
+                            </div>
+                        </SheetContent>
+                    </Sheet>
+                </div>
 
                 {/* Preview Panel - right side */}
                 {isPreviewOpen && (

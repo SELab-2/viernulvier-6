@@ -329,7 +329,8 @@
             "relatedProductions": "Related productions",
             "relatedArtists": "Related artists",
             "relatedLocations": "Related locations",
-            "relatedEvents": "Related events"
+            "relatedEvents": "Related events",
+            "metadata": "Metadata"
         },
         "Performers": {
             "title": "Performers",
