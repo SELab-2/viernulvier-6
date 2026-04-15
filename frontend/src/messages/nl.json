@@ -330,7 +330,13 @@
             "relatedArtists": "Gerelateerde artiesten",
             "relatedLocations": "Gerelateerde locaties",
             "relatedEvents": "Gerelateerde voorstellingen",
-            "metadata": "Metadata"
+            "metadata": "Metadata",
+            "statusDraft": "Concept",
+            "statusPublished": "Gepubliceerd",
+            "statusArchived": "Gearchiveerd",
+            "noOptionsAvailable": "Geen opties beschikbaar",
+            "untitledEvent": "Naamloze voorstelling",
+            "contentPlaceholder": "Schrijf artikelinhoud…"
         },
         "Performers": {
             "title": "Uitvoerders",

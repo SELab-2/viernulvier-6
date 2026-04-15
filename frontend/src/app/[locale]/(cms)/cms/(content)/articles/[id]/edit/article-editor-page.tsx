@@ -236,7 +236,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                     <TiptapEditor
                         content={article.content}
                         onChange={(json) => patchArticle({ content: json })}
-                        placeholder="Write article content…"
+                        placeholder={t("contentPlaceholder")}
                     />
                 </div>
 

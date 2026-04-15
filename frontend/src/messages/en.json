@@ -330,7 +330,13 @@
             "relatedArtists": "Related artists",
             "relatedLocations": "Related locations",
             "relatedEvents": "Related events",
-            "metadata": "Metadata"
+            "metadata": "Metadata",
+            "statusDraft": "Draft",
+            "statusPublished": "Published",
+            "statusArchived": "Archived",
+            "noOptionsAvailable": "No options available",
+            "untitledEvent": "Untitled event",
+            "contentPlaceholder": "Write article content…"
         },
         "Performers": {
             "title": "Performers",
