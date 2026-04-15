@@ -6,7 +6,7 @@ use uuid::Uuid;
 use crate::{
     error::DatabaseError,
     models::{
-        cursor::CursorData,
+        filtering::cursor::CursorData,
         hall::{Hall, HallCreate, HallSearch, HallWithScore},
     },
 };

@@ -1,8 +1,9 @@
+use chrono::NaiveDate;
 use ormlite::Model;
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::models::sort::Sort;
+use crate::models::filtering::{facets::FacetFilters, sort::Sort};
 
 #[derive(Debug, Model, PartialEq)]
 #[ormlite(insert = "ProductionCreate")]
@@ -76,16 +77,15 @@ pub struct ProductionWithTranslations {
     pub translations: Vec<ProductionTranslation>,
 }
 
-pub struct ProductionSearch {
-    pub q: Option<String>,
-    pub discipline: Option<String>,
-    pub format: Option<String>,
-    pub theme: Option<String>,
-    pub audience: Option<String>,
-    pub artist: Option<String>,
-    pub location: Option<String>,
-    pub date_from: Option<String>,
-    pub date_to: Option<String>,
-    pub sort: Option<Sort>,
-    pub after: Option<String>,
+/// Possible filters for productions
+pub struct ProductionFilters {
+    pub search: Option<String>,
+    pub facets: FacetFilters,
+    // search on location
+    pub locations: Option<Vec<String>>,
+    // date of a production's events
+    pub date_from: Option<NaiveDate>,
+    pub date_to: Option<NaiveDate>,
+
+    pub sort: Sort,
 }
