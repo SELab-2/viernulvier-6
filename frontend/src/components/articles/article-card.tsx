@@ -37,9 +37,9 @@ export function ArticleCard({ article, locale }: ArticleCardProps) {
     const period = formatPeriod(article.subjectPeriodStart, article.subjectPeriodEnd, locale);
 
     return (
-        <Link href={`/articles/${article.slug}`}>
+        <Link href={`/articles/${article.slug}`} className="block w-full">
             <article
-                className="group border-muted/35 hover:bg-muted/5 flex cursor-pointer flex-col border-b p-4 transition-colors sm:p-5"
+                className="group border-muted/35 hover:bg-muted/5 flex w-full cursor-pointer flex-col overflow-hidden border-b p-4 transition-colors sm:p-5"
                 style={{ animation: "fadein 0.3s ease both" }}
             >
                 {period && (
@@ -48,7 +48,7 @@ export function ArticleCard({ article, locale }: ArticleCardProps) {
                     </span>
                 )}
 
-                <h3 className="font-display text-foreground mb-1 text-[20px] leading-[1.15] font-bold tracking-[-0.02em] sm:text-[24px]">
+                <h3 className="font-display text-foreground mb-1 min-w-0 text-[20px] leading-[1.15] font-bold tracking-[-0.02em] break-words sm:text-[24px]">
                     {article.title ?? t("untitled")}
                 </h3>
 
