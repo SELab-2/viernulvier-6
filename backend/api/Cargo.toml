@@ -15,6 +15,10 @@ path = "src/bin/fetch_404.rs"
 [lints]
 workspace = true
 
+[features]
+default = []
+ai-normalization = ["dep:scraper"]
+
 [dependencies]
 database = { path = "../database" }
 tracing = { workspace = true }
@@ -35,3 +39,7 @@ base64 = "0.22.1"
 tempfile = "3.27.0"
 imagesize = "0.13"
 thiserror.workspace = true
+scraper = { version = "0.20", optional = true }
+
+[dev-dependencies]
+wiremock = "0.6"
