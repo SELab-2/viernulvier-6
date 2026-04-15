@@ -45,7 +45,6 @@ pub struct AppState {
     modifiers(&SecurityAddon),
     components(schemas(EntityType, Facet, Sort)),
     tags(
-        (name = "viernulvier_api", description = "API Endpoints"),
         (name = "Collections", description = "A saved, titled selection of archive items with a shareable URL. No login required to view."),
         (name = "Series", description = "Thematic/programmatic groupings of productions."),
         (name = "Stats", description = "Aggregate public site statistics.")
