@@ -214,7 +214,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
             </div>
 
             {/* Title input */}
-            <div className="border-b px-4 py-3">
+            <div className={`border-b px-4 py-3 ${isPreviewOpen ? "hidden lg:block" : ""}`}>
                 <Input
                     value={article.title ?? ""}
                     onChange={(e) => patchArticle({ title: e.target.value || null })}
@@ -251,7 +251,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                 </aside>
 
                 {/* Mobile Metadata panel in Sheet */}
-                <div className="lg:hidden">
+                <div className={`lg:hidden ${isPreviewOpen ? "hidden" : ""}`}>
                     <Sheet>
                         <SheetTrigger asChild>
                             <button
