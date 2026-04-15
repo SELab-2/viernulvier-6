@@ -293,7 +293,7 @@ export function ProductionsTable() {
                     }}
                 />
             )}
-        
+
             <ImageSpotlight
                 items={spotlightItems}
                 index={0}
