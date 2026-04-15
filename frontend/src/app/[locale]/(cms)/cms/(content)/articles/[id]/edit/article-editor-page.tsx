@@ -262,13 +262,13 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                                 {t("metadata")}
                             </button>
                         </SheetTrigger>
-                        <SheetContent side="right" className="w-[300px] p-0 sm:w-[360px]">
+                        <SheetContent side="right" className="w-[85vw] p-0 sm:max-w-sm">
                             <SheetHeader className="border-b px-4 py-3">
                                 <SheetTitle className="font-display text-lg font-bold tracking-tight">
                                     {t("metadata")}
                                 </SheetTitle>
                             </SheetHeader>
-                            <div className="overflow-y-auto p-4">
+                            <div className="h-[calc(100%-60px)] overflow-y-auto">
                                 <ArticleMetadataPanel
                                     article={article}
                                     relations={relations}

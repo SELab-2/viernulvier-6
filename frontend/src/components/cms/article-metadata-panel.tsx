@@ -42,7 +42,7 @@ function RelationMultiSelect({ label, ids, options, onChange }: RelationMultiSel
                     options.map((opt) => (
                         <label
                             key={opt.id}
-                            className="flex cursor-pointer items-center gap-2 text-xs"
+                            className="flex min-w-0 cursor-pointer items-center gap-2 text-xs"
                         >
                             <input
                                 type="checkbox"
