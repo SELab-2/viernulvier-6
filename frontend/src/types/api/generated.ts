@@ -463,6 +463,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/media/entity/{entity_type}/{entity_id}/cover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Demote the current cover image back to the gallery role without removing the entity link. */
+        delete: operations["clear_cover_for_entity"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/media/entity/{entity_type}/{entity_id}/{media_id}": {
         parameters: {
             query?: never;
@@ -475,6 +492,23 @@ export interface paths {
         post?: never;
         /** @description Unlink media from an entity only (does not directly delete media row/object). Orphans are handled by cleanup/reconcile flows. */
         delete: operations["unlink_media_from_entity"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/entity/{entity_type}/{entity_id}/{media_id}/set-cover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Promote an already-linked media item to the cover role for an entity. Any existing cover is atomically demoted back to the gallery role. */
+        post: operations["set_cover_for_entity"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2869,6 +2903,15 @@ export interface operations {
                     "application/json": components["schemas"]["CleanupResponse"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     get_entity_media: {
@@ -2888,7 +2931,7 @@ export interface operations {
             header?: never;
             path: {
                 /** @description Entity type (production, event, blogpost, media, artist) */
-                entity_type: string;
+                entity_type: components["schemas"]["EntityType"];
                 /** @description Entity UUID */
                 entity_id: string;
             };
@@ -2913,7 +2956,7 @@ export interface operations {
             header?: never;
             path: {
                 /** @description Entity type (production, event, blogpost, media, artist) */
-                entity_type: string;
+                entity_type: components["schemas"]["EntityType"];
                 /** @description Entity UUID */
                 entity_id: string;
             };
@@ -2941,6 +2984,47 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    clear_cover_for_entity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Entity type */
+                entity_type: components["schemas"]["EntityType"];
+                /** @description Entity UUID */
+                entity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     unlink_media_from_entity: {
@@ -2949,7 +3033,7 @@ export interface operations {
             header?: never;
             path: {
                 /** @description Entity type (production, event, blogpost, media, artist) */
-                entity_type: string;
+                entity_type: components["schemas"]["EntityType"];
                 /** @description Entity UUID */
                 entity_id: string;
                 /** @description Media UUID */
@@ -2965,6 +3049,56 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    set_cover_for_entity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Entity type */
+                entity_type: components["schemas"]["EntityType"];
+                /** @description Entity UUID */
+                entity_id: string;
+                /** @description Media UUID to promote to cover */
+                media_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
             };
             /** @description Not found */
             404: {
@@ -2996,6 +3130,15 @@ export interface operations {
                     "application/json": components["schemas"]["ReconcileResponse"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     generate_upload_url: {
@@ -3018,6 +3161,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UploadUrlResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description S3 not configured */
@@ -3084,6 +3236,15 @@ export interface operations {
                     "application/json": components["schemas"]["MediaPayload"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -3111,6 +3272,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
             };
             /** @description Not found */
             404: {

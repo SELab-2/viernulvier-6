@@ -454,7 +454,14 @@
             "altTextFr": "Alt-tekst (FR)",
             "creditNl": "Credits (NL)",
             "creditEn": "Credits (EN)",
-            "creditFr": "Credits (FR)"
+            "creditFr": "Credits (FR)",
+            "viewFullSize": "Volledig formaat bekijken",
+            "emptyCover": "Geen omslagfoto — stel er één in via de galerij hieronder.",
+            "setAsCover": "Instellen als omslagfoto",
+            "setCoverSuccess": "Omslagfoto ingesteld",
+            "setCoverError": "Omslagfoto instellen mislukt",
+            "clearCoverSuccess": "Omslagfoto verwijderd",
+            "clearCoverError": "Omslagfoto verwijderen mislukt"
         }
     },
     "Admin": {

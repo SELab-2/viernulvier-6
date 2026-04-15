@@ -187,6 +187,44 @@ export const useUnlinkMedia = () => {
     });
 };
 
+export const useSetCoverMedia = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({
+            entityType,
+            entityId,
+            mediaId,
+        }: {
+            entityType: string;
+            entityId: string;
+            mediaId: string;
+        }) => {
+            await api.post(`/media/entity/${entityType}/${entityId}/${mediaId}/set-cover`);
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.media.entity(variables.entityType, variables.entityId),
+            });
+        },
+    });
+};
+
+export const useClearCoverMedia = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ entityType, entityId }: { entityType: string; entityId: string }) => {
+            await api.delete(`/media/entity/${entityType}/${entityId}/cover`);
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.media.entity(variables.entityType, variables.entityId),
+            });
+        },
+    });
+};
+
 export const useUpdateMedia = () => {
     const queryClient = useQueryClient();
 

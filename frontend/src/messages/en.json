@@ -454,7 +454,14 @@
             "altTextFr": "Alt text (FR)",
             "creditNl": "Credits (NL)",
             "creditEn": "Credits (EN)",
-            "creditFr": "Credits (FR)"
+            "creditFr": "Credits (FR)",
+            "viewFullSize": "View full size",
+            "emptyCover": "No cover image — set one using the star button in the gallery below.",
+            "setAsCover": "Set as cover image",
+            "setCoverSuccess": "Cover image set",
+            "setCoverError": "Failed to set cover image",
+            "clearCoverSuccess": "Cover image removed",
+            "clearCoverError": "Failed to remove cover image"
         }
     },
     "Admin": {
