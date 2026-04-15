@@ -9,7 +9,10 @@ jobs:
       image: mcr.microsoft.com/playwright:v1.59.1-jammy
     steps:
       - name: Clean up workspace
-        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace alpine sh -c "chown -R $(id -u):$(id -g) /workspace"
+        continue-on-error: true
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -67,6 +70,7 @@ jobs:
         env:
           NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
           NEXT_PUBLIC_API_URL: "http://localhost:3001/api"
+          NEXT_PUBLIC_MEDIA_URL: "http://dev-bucket.s3.garage.localhost:3902"
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
@@ -76,5 +80,6 @@ jobs:
           retention-days: 30
 
       - name: Clean up workspace
-        if: always()
-        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace alpine sh -c "chown -R $(id -u):$(id -g) /workspace"
+        continue-on-error: true

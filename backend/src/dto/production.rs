@@ -171,6 +171,7 @@ pub struct ProductionPayload {
     pub uitdatabank_theme: Option<String>,
     pub uitdatabank_type: Option<String>,
 
+    #[serde(default)]
     pub translations: Vec<ProductionTranslationPayload>,
 
     /// Cover image URL resolved from the entity_media link (output-only).
@@ -191,6 +192,7 @@ pub struct ProductionPostPayload {
     pub uitdatabank_theme: Option<String>,
     pub uitdatabank_type: Option<String>,
 
+    #[serde(default)]
     pub translations: Vec<ProductionTranslationPayload>,
 }
 

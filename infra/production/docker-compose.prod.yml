@@ -18,6 +18,8 @@ services:
     depends_on:
       database:
         condition: service_healthy
+      garage-init:
+        condition: service_completed_successfully
     networks:
       - app_network
       - traefik
@@ -142,7 +144,7 @@ services:
         # Copy garage binary from garage container
         cp /proc/1/root/garage /usr/local/bin/garage
         chmod +x /usr/local/bin/garage
-
+        
         G="garage -c /etc/garage.toml"
 
         # Wait for garage to generate node key first

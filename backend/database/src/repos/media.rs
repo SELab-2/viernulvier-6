@@ -11,8 +11,29 @@ use crate::{
         cursor::CursorData,
         entity_type::EntityType,
         media::{Media, MediaCreate, MediaSearch, MediaWithScore},
+        sort::Sort,
     },
 };
+
+fn push_entity_media_filters<'args>(
+    query: &mut sqlx::QueryBuilder<'args, sqlx::Postgres>,
+    entity_type: Option<&EntityType>,
+    entity_id: Option<&Uuid>,
+    role: Option<&'args str>,
+) {
+    if let Some(entity_type) = entity_type {
+        query.push(" AND em.entity_type = ");
+        query.push_bind(*entity_type);
+    }
+    if let Some(entity_id) = entity_id {
+        query.push(" AND em.entity_id = ");
+        query.push_bind(*entity_id);
+    }
+    if let Some(role) = role {
+        query.push(" AND em.role = ");
+        query.push_bind(role);
+    }
+}
 
 pub struct MediaRepo<'a> {
     db: &'a PgPool,
@@ -76,147 +97,159 @@ impl<'a> MediaRepo<'a> {
         let needs_entity_join =
             search.entity_type.is_some() || search.entity_id.is_some() || search.role.is_some();
 
-        let (media, next_cursor): (Vec<Media>, Option<CursorData>) =
-            if let Some(search_q) = search.q {
-                debug!("querying media with search: '{search_q}'");
+        // Relevance sort requires a search query and must not be overridden by a date-based sort.
+        // When the caller requests Recent/Oldest alongside a query, we honour the date sort and
+        // fall through to the id-based path (which adds the text-match filter).
+        let use_relevance =
+            search.q.is_some() && !matches!(search.sort, Some(Sort::Recent) | Some(Sort::Oldest));
 
-                let mut query = sqlx::QueryBuilder::new(
-                    "SELECT m.id, m.created_at, m.updated_at, \
-                     m.s3_key, m.mime_type, m.file_size, \
-                     m.width, m.height, m.checksum, \
-                     m.alt_text_nl, m.alt_text_en, m.alt_text_fr, \
-                     m.description_nl, m.description_en, m.description_fr, \
-                     m.credit_nl, m.credit_en, m.credit_fr, \
-                     m.geo_latitude, m.geo_longitude, \
-                     m.parent_id, m.derivative_type, m.gallery_type, m.source_id, \
-                     m.source_system, m.source_uri, m.source_updated_at, ",
-                );
+        let (media, next_cursor): (Vec<Media>, Option<CursorData>) = if use_relevance {
+            // SAFETY: use_relevance guarantees search.q is Some
+            let search_q = search.q.unwrap();
+            debug!("querying media with relevance search: '{search_q}'");
 
-                // distance score
-                query.push("(");
+            let mut query = sqlx::QueryBuilder::new(
+                "SELECT m.id, m.created_at, m.updated_at, \
+                 m.s3_key, m.mime_type, m.file_size, \
+                 m.width, m.height, m.checksum, \
+                 m.alt_text_nl, m.alt_text_en, m.alt_text_fr, \
+                 m.description_nl, m.description_en, m.description_fr, \
+                 m.credit_nl, m.credit_en, m.credit_fr, \
+                 m.geo_latitude, m.geo_longitude, \
+                 m.parent_id, m.derivative_type, m.gallery_type, m.source_id, \
+                 m.source_system, m.source_uri, m.source_updated_at, ",
+            );
+
+            query.push("(");
+            query.push_bind(&search_q);
+            query.push(" <<-> m.full_search_text) as distance_score ");
+            query.push("FROM media m ");
+
+            if needs_entity_join {
+                query.push("INNER JOIN entity_media em ON em.media_id = m.id ");
+            }
+
+            query.push("WHERE ");
+            query.push_bind(&search_q);
+            query.push(" <% m.full_search_text ");
+
+            push_entity_media_filters(
+                &mut query,
+                search.entity_type.as_ref(),
+                search.entity_id.as_ref(),
+                search.role.as_deref(),
+            );
+
+            if let Some(cursor) = cursor
+                && let Some(score) = cursor.score
+            {
+                query.push(" AND ((");
                 query.push_bind(&search_q);
-                query.push(" <<-> m.full_search_text) as distance_score ");
-
-                query.push("FROM media m ");
-
-                if needs_entity_join {
-                    query.push("INNER JOIN entity_media em ON em.media_id = m.id ");
-                }
-
-                query.push("WHERE ");
+                query.push(" <<-> m.full_search_text) > ");
+                query.push_bind(score);
+                query.push(" OR ((");
                 query.push_bind(&search_q);
-                query.push(" <% m.full_search_text ");
+                query.push(" <<-> m.full_search_text) = ");
+                query.push_bind(score);
+                query.push(" AND m.id < ");
+                query.push_bind(cursor.id);
+                query.push(")) ");
+            }
 
-                if let Some(entity_type) = &search.entity_type {
-                    query.push(" AND em.entity_type = ");
-                    query.push_bind(*entity_type);
-                }
+            query.push("ORDER BY distance_score ASC, m.id DESC LIMIT ");
+            query.push_bind(limit);
 
-                if let Some(entity_id) = &search.entity_id {
-                    query.push(" AND em.entity_id = ");
-                    query.push_bind(*entity_id);
-                }
+            debug!("media relevance query: {}", query.sql());
 
-                if let Some(role) = &search.role {
-                    query.push(" AND em.role = ");
-                    query.push_bind(role);
-                }
+            let mut results: Vec<MediaWithScore> =
+                query.build_query_as().fetch_all(self.db).await?;
 
-                if let Some(cursor) = cursor
-                    && let Some(score) = cursor.score
-                {
-                    query.push(" AND ((");
-                    query.push_bind(&search_q);
-                    query.push(" <<-> m.full_search_text) > ");
-                    query.push_bind(score);
-                    query.push(" OR ((");
-                    query.push_bind(&search_q);
-                    query.push(" <<-> m.full_search_text) = ");
-                    query.push_bind(score);
-                    query.push(" AND m.id < ");
-                    query.push_bind(cursor.id);
-                    query.push(")) ");
-                }
-
-                query.push("ORDER BY distance_score ASC, m.id DESC LIMIT ");
-                query.push_bind(limit);
-
-                debug!("media search query: {}", query.sql());
-
-                let mut results: Vec<MediaWithScore> =
-                    query.build_query_as().fetch_all(self.db).await?;
-
-                let next_cursor = if results.len() == limit as usize {
-                    results.pop();
-                    results.last().map(|r| CursorData {
-                        id: r.media.id,
-                        score: Some(r.distance_score),
-                    })
-                } else {
-                    None
-                };
-
-                let media = results.into_iter().map(|r| r.media).collect();
-                (media, next_cursor)
+            let next_cursor = if results.len() == limit as usize {
+                results.pop();
+                results.last().map(|r| CursorData {
+                    id: r.media.id,
+                    score: Some(r.distance_score),
+                })
             } else {
-                debug!("querying media without search");
-
-                let mut query = sqlx::QueryBuilder::new(
-                    "SELECT m.id, m.created_at, m.updated_at, \
-                     m.s3_key, m.mime_type, m.file_size, \
-                     m.width, m.height, m.checksum, \
-                     m.alt_text_nl, m.alt_text_en, m.alt_text_fr, \
-                     m.description_nl, m.description_en, m.description_fr, \
-                     m.credit_nl, m.credit_en, m.credit_fr, \
-                     m.geo_latitude, m.geo_longitude, \
-                     m.parent_id, m.derivative_type, m.gallery_type, m.source_id, \
-                     m.source_system, m.source_uri, m.source_updated_at \
-                     FROM media m ",
-                );
-
-                if needs_entity_join {
-                    query.push("INNER JOIN entity_media em ON em.media_id = m.id ");
-                }
-
-                query.push("WHERE 1=1 ");
-
-                if let Some(entity_type) = &search.entity_type {
-                    query.push(" AND em.entity_type = ");
-                    query.push_bind(*entity_type);
-                }
-
-                if let Some(entity_id) = &search.entity_id {
-                    query.push(" AND em.entity_id = ");
-                    query.push_bind(*entity_id);
-                }
-
-                if let Some(role) = &search.role {
-                    query.push(" AND em.role = ");
-                    query.push_bind(role);
-                }
-
-                if let Some(cursor) = cursor {
-                    query.push(" AND m.id < ");
-                    query.push_bind(cursor.id);
-                }
-
-                query.push(" ORDER BY m.id DESC LIMIT ");
-                query.push_bind(limit);
-
-                let mut media: Vec<Media> = query.build_query_as().fetch_all(self.db).await?;
-
-                let next_cursor = if media.len() == limit as usize {
-                    media.pop();
-                    media.last().map(|m| CursorData {
-                        id: m.id,
-                        score: None,
-                    })
-                } else {
-                    None
-                };
-
-                (media, next_cursor)
+                None
             };
+
+            let media = results.into_iter().map(|r| r.media).collect();
+            (media, next_cursor)
+        } else {
+            // Id-based path: no query, or query with an explicit date-based sort.
+            debug!(
+                "querying media by id (q={}, sort={:?})",
+                search.q.is_some(),
+                search.sort
+            );
+
+            let mut query = sqlx::QueryBuilder::new(
+                "SELECT m.id, m.created_at, m.updated_at, \
+                 m.s3_key, m.mime_type, m.file_size, \
+                 m.width, m.height, m.checksum, \
+                 m.alt_text_nl, m.alt_text_en, m.alt_text_fr, \
+                 m.description_nl, m.description_en, m.description_fr, \
+                 m.credit_nl, m.credit_en, m.credit_fr, \
+                 m.geo_latitude, m.geo_longitude, \
+                 m.parent_id, m.derivative_type, m.gallery_type, m.source_id, \
+                 m.source_system, m.source_uri, m.source_updated_at \
+                 FROM media m ",
+            );
+
+            if needs_entity_join {
+                query.push("INNER JOIN entity_media em ON em.media_id = m.id ");
+            }
+
+            query.push("WHERE 1=1 ");
+
+            // Optional text-match filter when q is set but sort is date-based
+            if let Some(ref search_q) = search.q {
+                query.push(" AND ");
+                query.push_bind(search_q.as_str());
+                query.push(" <% m.full_search_text ");
+            }
+
+            push_entity_media_filters(
+                &mut query,
+                search.entity_type.as_ref(),
+                search.entity_id.as_ref(),
+                search.role.as_deref(),
+            );
+
+            let (order_clause, cursor_cmp) = match search.sort {
+                Some(Sort::Oldest) => ("m.id ASC", ">"),
+                _ => ("m.id DESC", "<"),
+            };
+
+            if let Some(cursor) = cursor {
+                query.push(" AND m.id ");
+                query.push(cursor_cmp);
+                query.push(" ");
+                query.push_bind(cursor.id);
+            }
+
+            query.push(" ORDER BY ");
+            query.push(order_clause);
+            query.push(" LIMIT ");
+            query.push_bind(limit);
+
+            debug!("media id-based query: {}", query.sql());
+
+            let mut media: Vec<Media> = query.build_query_as().fetch_all(self.db).await?;
+
+            let next_cursor = if media.len() == limit as usize {
+                media.pop();
+                media.last().map(|m| CursorData {
+                    id: m.id,
+                    score: None,
+                })
+            } else {
+                None
+            };
+
+            (media, next_cursor)
+        };
 
         Ok((media, next_cursor))
     }

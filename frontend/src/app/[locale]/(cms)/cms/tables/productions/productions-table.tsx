@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState, useRef, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Archive } from "lucide-react";
 import type { Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
@@ -16,6 +16,7 @@ import { useGetInfiniteProductions, useUpdateProduction } from "@/hooks/api/useP
 import { useGetEvents, useUpdateEvent } from "@/hooks/api/useEvents";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
 import { ProductionMediaSheet } from "@/components/cms/production-media-sheet";
+import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
 import type { PickerItem } from "@/lib/collection-picker-utils";
 import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
@@ -24,6 +25,7 @@ export function ProductionsTable() {
     const t = useTranslations("Cms.Productions");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
+    const locale = useLocale();
     const loadMoreRef = useRef<HTMLDivElement>(null);
 
     const {
@@ -71,6 +73,11 @@ export function ProductionsTable() {
     const [editEvent, setEditEvent] = useState<Event | null>(null);
     const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
     const [mediaProduction, setMediaProduction] = useState<Production | null>(null);
+    const [spotlight, setSpotlight] = useState<{ src: string; alt: string } | null>(null);
+    const openSpotlight = useCallback((src: string, alt: string) => setSpotlight({ src, alt }), []);
+    const spotlightItems: SpotlightItem[] = spotlight
+        ? [{ kind: "plain", src: spotlight.src, alt: spotlight.alt }]
+        : [];
 
     const eventsByProduction = useMemo(() => {
         const map = new Map<string, Event[]>();
@@ -100,9 +107,11 @@ export function ProductionsTable() {
                 onEdit: setEditProduction,
                 onMedia: setMediaProduction,
                 t: tActions,
+                locale,
+                onOpenSpotlight: openSpotlight,
             }),
         ],
-        [selectColumn, tActions]
+        [selectColumn, tActions, locale, openSpotlight]
     );
 
     const eventCols = useMemo(
@@ -284,6 +293,16 @@ export function ProductionsTable() {
                     }}
                 />
             )}
+        
+            <ImageSpotlight
+                items={spotlightItems}
+                index={0}
+                open={spotlight !== null}
+                onOpenChange={(open) => {
+                    if (!open) setSpotlight(null);
+                }}
+                eyebrow={t("eyebrow")}
+            />
         </div>
     );
 }

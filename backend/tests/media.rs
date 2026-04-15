@@ -2,7 +2,7 @@ use axum::http::StatusCode;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
-use viernulvier_api::dto::media::MediaPayload;
+use viernulvier_api::dto::{media::MediaPayload, paginated::PaginatedResponse};
 
 use crate::common::into_struct::IntoStruct;
 use crate::common::router::TestRouter;
@@ -171,6 +171,105 @@ async fn delete_media_cascades_properly(db: PgPool) {
         .unwrap();
     assert_eq!(count, 0, "Variant should be manually cascaded away");
 }
+
+// ── GET /media ───────────────────────────────────────────────────────
+
+#[sqlx::test(fixtures("productions", "media"))]
+#[test_log::test]
+async fn list_media_returns_all_items(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/media").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let body: PaginatedResponse<MediaPayload> = response.into_struct().await;
+    assert_eq!(body.data.len(), 2);
+    assert!(body.next_cursor.is_none());
+}
+
+#[sqlx::test(fixtures("productions", "media"))]
+#[test_log::test]
+async fn list_media_sort_recent_returns_newest_first(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/media?sort=recent").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let body: PaginatedResponse<MediaPayload> = response.into_struct().await;
+    assert_eq!(body.data.len(), 2);
+    // bbbbbbbb > aaaaaaaa lexicographically, so id DESC puts bbbbbbbb first
+    assert_eq!(
+        body.data[0].id,
+        Uuid::parse_str("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb").unwrap()
+    );
+    assert_eq!(
+        body.data[1].id,
+        Uuid::parse_str("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa").unwrap()
+    );
+}
+
+#[sqlx::test(fixtures("productions", "media"))]
+#[test_log::test]
+async fn list_media_sort_oldest_returns_oldest_first(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/media?sort=oldest").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let body: PaginatedResponse<MediaPayload> = response.into_struct().await;
+    assert_eq!(body.data.len(), 2);
+    // aaaaaaaa < bbbbbbbb lexicographically, so id ASC puts aaaaaaaa first
+    assert_eq!(
+        body.data[0].id,
+        Uuid::parse_str("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa").unwrap()
+    );
+    assert_eq!(
+        body.data[1].id,
+        Uuid::parse_str("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb").unwrap()
+    );
+}
+
+#[sqlx::test(fixtures("productions", "media"))]
+#[test_log::test]
+async fn search_media_by_query_returns_matching_items(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/media?q=cover").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let body: PaginatedResponse<MediaPayload> = response.into_struct().await;
+    assert_eq!(body.data.len(), 1);
+    assert_eq!(
+        body.data[0].id,
+        Uuid::parse_str("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa").unwrap()
+    );
+}
+
+#[sqlx::test(fixtures("productions", "media"))]
+#[test_log::test]
+async fn search_media_with_date_sort_still_filters_by_query(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/media?q=cover&sort=recent").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let body: PaginatedResponse<MediaPayload> = response.into_struct().await;
+    // Text filter is applied even on id-based sort path
+    assert_eq!(body.data.len(), 1);
+    assert_eq!(
+        body.data[0].id,
+        Uuid::parse_str("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa").unwrap()
+    );
+}
+
+#[sqlx::test(fixtures("productions", "media"))]
+#[test_log::test]
+async fn search_media_no_match_returns_empty(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/media?q=nonexistentxyz").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let body: PaginatedResponse<MediaPayload> = response.into_struct().await;
+    assert!(body.data.is_empty());
+    assert!(body.next_cursor.is_none());
+}
+
+// ── cleanup_orphans ───────────────────────────────────────────────────
 
 #[sqlx::test(fixtures("productions", "media"))]
 #[test_log::test]
