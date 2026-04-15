@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/routing";
 import { usePreviewContext } from "@/contexts/PreviewContext";
+import { CmsMobileMenu } from "@/components/cms";
+import { LanguageSelector } from "@/components/cms/language-selector";
 import { useGetProduction, useUpdateProduction } from "@/hooks/api/useProductions";
 import { useGetEvents } from "@/hooks/api/useEvents";
 import { ProductionRow } from "@/types/models/production.types";
@@ -98,7 +100,7 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
         }
         return false;
     });
-    const [activeLang, setActiveLang] = useState<Lang>("nl");
+    const [activeLang, setActiveLang] = useState<Lang>(locale as Lang);
     const [previewSessionId] = useState(() => {
         if (typeof crypto !== "undefined" && crypto.randomUUID) {
             return crypto.randomUUID();
@@ -196,9 +198,12 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
     const hasChanges = Object.keys(edits).length > 0;
 
     return (
-        <div className="flex h-full flex-col">
+        <div className="flex h-full flex-col overflow-hidden">
             {/* Top bar */}
             <div className="flex items-center gap-3 border-b px-4 py-3">
+                <div className="flex items-center gap-2 lg:hidden">
+                    <CmsMobileMenu />
+                </div>
                 <Link
                     href="/cms/productions"
                     className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
@@ -240,7 +245,7 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                 <div
                     className={`flex flex-col overflow-hidden transition-all duration-300 ${
                         isPreviewOpen
-                            ? "hidden lg:flex lg:w-[45%]"
+                            ? "hidden lg:flex lg:w-[45%] lg:flex-1"
                             : "w-full lg:mx-auto lg:max-w-3xl lg:flex-1"
                     }`}
                 >
@@ -280,29 +285,10 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                             <section className="space-y-4">
                                 <div className="border-foreground/10 flex items-center justify-between border-b pb-2">
                                     <h2 className="text-sm font-semibold">Content</h2>
-                                    {/* Language selector */}
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            onClick={() => setActiveLang("nl")}
-                                            className={`px-3 py-1 text-xs font-medium transition-colors ${
-                                                activeLang === "nl"
-                                                    ? "bg-foreground text-background"
-                                                    : "text-muted-foreground hover:text-foreground"
-                                            }`}
-                                        >
-                                            Dutch
-                                        </button>
-                                        <button
-                                            onClick={() => setActiveLang("en")}
-                                            className={`px-3 py-1 text-xs font-medium transition-colors ${
-                                                activeLang === "en"
-                                                    ? "bg-foreground text-background"
-                                                    : "text-muted-foreground hover:text-foreground"
-                                            }`}
-                                        >
-                                            English
-                                        </button>
-                                    </div>
+                                    <LanguageSelector
+                                        activeLang={activeLang}
+                                        onChange={setActiveLang}
+                                    />
                                 </div>
 
                                 {/* Fields for active language */}
@@ -353,7 +339,7 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
 
                 {/* Preview Panel - right side */}
                 {isPreviewOpen && (
-                    <div className="border-muted flex w-full flex-1 flex-col overflow-hidden border-t lg:w-[55%] lg:min-w-[400px] lg:border-t-0 lg:border-l">
+                    <div className="border-muted flex min-h-[70vh] w-full flex-1 flex-col overflow-hidden border-t lg:min-h-0 lg:w-[55%] lg:min-w-[400px] lg:border-t-0 lg:border-l">
                         <div className="bg-muted flex items-center justify-between px-4 py-3 shadow-[0_1px_0_0_hsl(var(--border))]">
                             <span className="text-background font-mono text-[10px] font-medium tracking-[1.2px] uppercase">
                                 {t("previewLabel")}

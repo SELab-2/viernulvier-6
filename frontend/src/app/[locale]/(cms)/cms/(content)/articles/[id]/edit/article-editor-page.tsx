@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/routing";
 import { usePreviewContext } from "@/contexts/PreviewContext";
+import { CmsMobileMenu } from "@/components/cms";
 import {
     useGetArticle,
     useGetArticleRelations,
@@ -128,9 +129,12 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
     const hasChanges = Object.keys(edits).length > 0 || relationEdits !== null;
 
     return (
-        <div className="flex h-full flex-col">
+        <div className="flex h-full flex-col overflow-hidden">
             {/* Top bar */}
             <div className="flex items-center gap-3 border-b px-4 py-3">
+                <div className="flex items-center gap-2 lg:hidden">
+                    <CmsMobileMenu />
+                </div>
                 <Link
                     href="/cms/articles"
                     className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
@@ -182,7 +186,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                 {/* Editor */}
                 <div
                     className={`flex flex-col overflow-hidden p-4 transition-all duration-300 ${
-                        isPreviewOpen ? "hidden lg:flex lg:w-[35%]" : "w-full flex-1"
+                        isPreviewOpen ? "hidden lg:flex lg:w-[35%] lg:flex-1" : "w-full flex-1"
                     }`}
                 >
                     <TiptapEditor
@@ -208,7 +212,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
 
                 {/* Preview Panel - right side */}
                 {isPreviewOpen && (
-                    <div className="border-muted flex w-full flex-1 flex-col overflow-hidden border-t lg:w-[calc(100%-35%-16rem)] lg:min-w-[400px] lg:border-t-0 lg:border-l">
+                    <div className="border-muted flex min-h-[70vh] w-full flex-1 flex-col overflow-hidden border-t lg:min-h-0 lg:w-[calc(100%-35%-16rem)] lg:min-w-[400px] lg:border-t-0 lg:border-l">
                         <div className="bg-muted flex items-center justify-between px-4 py-3 shadow-[0_1px_0_0_hsl(var(--border))]">
                             <span className="text-background font-mono text-[10px] font-medium tracking-[1.2px] uppercase">
                                 {t("previewLabel")}
