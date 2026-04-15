@@ -336,7 +336,9 @@
             "statusArchived": "Archived",
             "noOptionsAvailable": "No options available",
             "untitledEvent": "Untitled event",
-            "contentPlaceholder": "Write article content…"
+            "contentPlaceholder": "Write article content…",
+            "statusColumn": "Status",
+            "dateRangeColumn": "Date range"
         },
         "Performers": {
             "title": "Performers",

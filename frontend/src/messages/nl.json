@@ -336,7 +336,9 @@
             "statusArchived": "Gearchiveerd",
             "noOptionsAvailable": "Geen opties beschikbaar",
             "untitledEvent": "Naamloze voorstelling",
-            "contentPlaceholder": "Schrijf artikelinhoud…"
+            "contentPlaceholder": "Schrijf artikelinhoud…",
+            "statusColumn": "Status",
+            "dateRangeColumn": "Periode"
         },
         "Performers": {
             "title": "Uitvoerders",
