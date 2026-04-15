@@ -43,48 +43,7 @@ impl<'a> MediaRepo<'a> {
         Self { db }
     }
 
-    pub async fn by_id(&self, id: Uuid) -> Result<Media, DatabaseError> {
-        Media::select()
-            .where_("id = $1")
-            .bind(id)
-            .fetch_optional(self.db)
-            .await?
-            .ok_or(DatabaseError::NotFound)
-    }
-
-    pub async fn all(&self, limit: usize) -> Result<Vec<Media>, DatabaseError> {
-        Ok(Media::select().limit(limit).fetch_all(self.db).await?)
-    }
-
-    pub async fn paginated(
-        &self,
-        limit: usize,
-        offset: usize,
-    ) -> Result<Vec<Media>, DatabaseError> {
-        Ok(sqlx::query_as::<_, Media>(
-            r#"
-            SELECT
-                id, created_at, updated_at,
-                s3_key, mime_type, file_size,
-                width, height, checksum,
-                alt_text_nl, alt_text_en, alt_text_fr,
-                description_nl, description_en, description_fr,
-                credit_nl, credit_en, credit_fr,
-                geo_latitude, geo_longitude,
-                parent_id, derivative_type, gallery_type, source_id,
-                source_system, source_uri, source_updated_at
-            FROM media
-            ORDER BY created_at DESC
-            LIMIT $1 OFFSET $2
-            "#,
-        )
-        .bind(limit as i64)
-        .bind(offset as i64)
-        .fetch_all(self.db)
-        .await?)
-    }
-
-    pub async fn search(
+    pub async fn all(
         &self,
         limit: u32,
         cursor: Option<CursorData>,
@@ -251,6 +210,15 @@ impl<'a> MediaRepo<'a> {
         };
 
         Ok((media, next_cursor))
+    }
+
+    pub async fn by_id(&self, id: Uuid) -> Result<Media, DatabaseError> {
+        Media::select()
+            .where_("id = $1")
+            .bind(id)
+            .fetch_optional(self.db)
+            .await?
+            .ok_or(DatabaseError::NotFound)
     }
 
     pub async fn insert(&self, media: MediaCreate) -> Result<Media, DatabaseError> {
