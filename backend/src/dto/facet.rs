@@ -52,7 +52,9 @@ fn group_into_facets(rows: Vec<TaxonomyRow>) -> Vec<FacetResponse> {
     let mut facets: Vec<FacetResponse> = Vec::new();
 
     for row in rows {
-        let facet = if let Some(f) = facets.iter_mut().find(|f| f.slug == row.facet_slug) { f } else {
+        let facet = if let Some(f) = facets.iter_mut().find(|f| f.slug == row.facet_slug) {
+            f
+        } else {
             facets.push(FacetResponse {
                 slug: row.facet_slug.clone(),
                 translations: Vec::new(),
@@ -73,7 +75,9 @@ fn group_into_facets(rows: Vec<TaxonomyRow>) -> Vec<FacetResponse> {
             });
         }
 
-        let tag = if let Some(t) = facet.tags.iter_mut().find(|t| t.slug == row.tag_slug) { t } else {
+        let tag = if let Some(t) = facet.tags.iter_mut().find(|t| t.slug == row.tag_slug) {
+            t
+        } else {
             facet.tags.push(TagResponse {
                 slug: row.tag_slug.clone(),
                 sort_order: row.tag_sort_order,

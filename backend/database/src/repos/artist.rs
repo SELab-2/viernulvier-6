@@ -20,7 +20,7 @@ impl<'a> ArtistRepo<'a> {
         .await?)
     }
 
-        pub async fn count(&self) -> Result<i64, DatabaseError> {
+    pub async fn count(&self) -> Result<i64, DatabaseError> {
         let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM artists")
             .fetch_one(self.db)
             .await?;

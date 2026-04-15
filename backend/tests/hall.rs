@@ -102,7 +102,9 @@ async fn get_search_paginated(db: PgPool) {
     let cursor = page1.next_cursor.unwrap();
 
     let response = app
-        .get(&format!("/halls?q=HALL_SEARCH_TEST&limit=2&cursor={cursor}"))
+        .get(&format!(
+            "/halls?q=HALL_SEARCH_TEST&limit=2&cursor={cursor}"
+        ))
         .await;
     assert_eq!(response.status(), StatusCode::OK);
 
