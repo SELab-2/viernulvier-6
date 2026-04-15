@@ -7,7 +7,7 @@ import type { Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
 import { makeProductionColumns } from "./columns";
-import { eventFields, toEventUpdateInput } from "./event-columns";
+import { makeEventFields, toEventUpdateInput } from "./event-columns";
 import { ActionBar } from "../action-bar";
 import { useParentChildSelection } from "../use-parent-child-selection";
 import { makeEventColumns } from "./event-columns";
@@ -101,14 +101,18 @@ export function ProductionsTable() {
     const productionCols = useMemo(
         () => [
             selectColumn,
-            ...makeProductionColumns({ onEdit: handleEditProduction, t: tActions }),
+            ...makeProductionColumns({
+                onEdit: handleEditProduction,
+                t: tActions,
+                tProductions: t,
+            }),
         ],
-        [selectColumn, tActions, handleEditProduction]
+        [selectColumn, tActions, handleEditProduction, t]
     );
 
     const eventCols = useMemo(
-        () => makeEventColumns({ onEdit: setEditEvent, t: tActions }),
-        [tActions]
+        () => makeEventColumns({ onEdit: setEditEvent, t: tActions, tProductions: t }),
+        [tActions, t]
     );
 
     const expanderLabels = useMemo(() => ({ show: t("showEvents"), hide: t("hideEvents") }), [t]);
@@ -199,10 +203,10 @@ export function ProductionsTable() {
             },
             {
                 key: "delete",
-                label: "Delete",
+                label: t("deleteAction"),
             },
         ],
-        [tCollections]
+        [tCollections, t]
     );
 
     return (
@@ -244,7 +248,7 @@ export function ProductionsTable() {
                     onOpenChange={(open) => !open && setEditEvent(null)}
                     title={t("editEvent")}
                     entity={editEvent}
-                    fields={eventFields}
+                    fields={makeEventFields(t)}
                     onSave={async (values) => {
                         await updateEvent.mutateAsync(toEventUpdateInput(values));
                         setEditEvent(null);

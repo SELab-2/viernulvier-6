@@ -38,55 +38,77 @@ interface FieldDef {
     enKey: keyof ProductionRow;
 }
 
-const BILINGUAL_FIELDS: FieldDef[] = [
-    { key: "title", label: "Title", type: "text", nlKey: "titleNl", enKey: "titleEn" },
-    { key: "artist", label: "Artist", type: "text", nlKey: "artistNl", enKey: "artistEn" },
-    {
-        key: "supertitle",
-        label: "Supertitle",
-        type: "text",
-        nlKey: "supertitleNl",
-        enKey: "supertitleEn",
-    },
-    { key: "tagline", label: "Tagline", type: "text", nlKey: "taglineNl", enKey: "taglineEn" },
-    { key: "teaser", label: "Teaser", type: "textarea", nlKey: "teaserNl", enKey: "teaserEn" },
-    {
-        key: "descriptionShort",
-        label: "Short Description",
-        type: "textarea",
-        nlKey: "descriptionShortNl",
-        enKey: "descriptionShortEn",
-    },
-    {
-        key: "description",
-        label: "Description",
-        type: "textarea",
-        nlKey: "descriptionNl",
-        enKey: "descriptionEn",
-    },
-    { key: "quote", label: "Quote", type: "text", nlKey: "quoteNl", enKey: "quoteEn" },
-    {
-        key: "quoteSource",
-        label: "Quote Source",
-        type: "text",
-        nlKey: "quoteSourceNl",
-        enKey: "quoteSourceEn",
-    },
-];
+function getBilingualFields(t: ReturnType<typeof useTranslations<"Cms.Productions">>): FieldDef[] {
+    return [
+        { key: "title", label: t("fieldTitle"), type: "text", nlKey: "titleNl", enKey: "titleEn" },
+        {
+            key: "artist",
+            label: t("fieldArtist"),
+            type: "text",
+            nlKey: "artistNl",
+            enKey: "artistEn",
+        },
+        {
+            key: "supertitle",
+            label: t("fieldSupertitle"),
+            type: "text",
+            nlKey: "supertitleNl",
+            enKey: "supertitleEn",
+        },
+        {
+            key: "tagline",
+            label: t("fieldTagline"),
+            type: "text",
+            nlKey: "taglineNl",
+            enKey: "taglineEn",
+        },
+        {
+            key: "teaser",
+            label: t("fieldTeaser"),
+            type: "textarea",
+            nlKey: "teaserNl",
+            enKey: "teaserEn",
+        },
+        {
+            key: "descriptionShort",
+            label: t("fieldDescriptionShort"),
+            type: "textarea",
+            nlKey: "descriptionShortNl",
+            enKey: "descriptionShortEn",
+        },
+        {
+            key: "description",
+            label: t("fieldDescription"),
+            type: "textarea",
+            nlKey: "descriptionNl",
+            enKey: "descriptionEn",
+        },
+        { key: "quote", label: t("fieldQuote"), type: "text", nlKey: "quoteNl", enKey: "quoteEn" },
+        {
+            key: "quoteSource",
+            label: t("fieldQuoteSource"),
+            type: "text",
+            nlKey: "quoteSourceNl",
+            enKey: "quoteSourceEn",
+        },
+    ];
+}
 
-const GENERAL_FIELDS: Array<{
+function getGeneralFields(t: ReturnType<typeof useTranslations<"Cms.Productions">>): Array<{
     key: keyof ProductionRow;
     label: string;
     type: "text";
     readOnly?: boolean;
-}> = [
-    { key: "slug", label: "Slug", type: "text", readOnly: true },
-    { key: "video1", label: "Video 1", type: "text" },
-    { key: "video2", label: "Video 2", type: "text" },
-    { key: "eticketInfo", label: "E-ticket Info", type: "text" },
-    { key: "uitdatabankTheme", label: "UiTdatabank Theme", type: "text" },
-    { key: "uitdatabankType", label: "UiTdatabank Type", type: "text" },
-];
+}> {
+    return [
+        { key: "slug", label: t("fieldSlug"), type: "text", readOnly: true },
+        { key: "video1", label: t("fieldVideo1"), type: "text" },
+        { key: "video2", label: t("fieldVideo2"), type: "text" },
+        { key: "eticketInfo", label: t("fieldEticketInfo"), type: "text" },
+        { key: "uitdatabankTheme", label: t("fieldUitdatabankTheme"), type: "text" },
+        { key: "uitdatabankType", label: t("fieldUitdatabankType"), type: "text" },
+    ];
+}
 
 export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
     const t = useTranslations("Cms.Productions");
@@ -311,16 +333,16 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                             {/* General Fields Section */}
                             <section className="space-y-4">
                                 <h2 className="border-foreground/10 border-b pb-2 text-sm font-semibold">
-                                    General
+                                    {t("generalSection")}
                                 </h2>
                                 <div className="grid gap-4">
-                                    {GENERAL_FIELDS.map((field) => (
+                                    {getGeneralFields(t).map((field) => (
                                         <div key={field.key}>
                                             <label className="mb-2 block text-sm font-medium">
                                                 {field.label}
                                                 {field.readOnly && (
                                                     <span className="text-muted-foreground ml-2 text-xs">
-                                                        (read-only)
+                                                        ({t("readOnly")})
                                                     </span>
                                                 )}
                                             </label>
@@ -340,7 +362,7 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                             {/* Bilingual Fields Section */}
                             <section className="space-y-4">
                                 <div className="border-foreground/10 flex items-center justify-between border-b pb-2">
-                                    <h2 className="text-sm font-semibold">Content</h2>
+                                    <h2 className="text-sm font-semibold">{t("contentSection")}</h2>
                                     <LanguageSelector
                                         activeLang={activeLang}
                                         onChange={handleLangChange}
@@ -349,7 +371,7 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
 
                                 {/* Fields for active language */}
                                 <div className="space-y-5">
-                                    {BILINGUAL_FIELDS.map((field) => {
+                                    {getBilingualFields(t).map((field) => {
                                         const fieldKey =
                                             activeLang === "nl" ? field.nlKey : field.enKey;
                                         return (

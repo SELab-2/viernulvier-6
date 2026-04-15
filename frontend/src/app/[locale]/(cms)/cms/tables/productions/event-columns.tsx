@@ -16,19 +16,23 @@ function formatDateTime(iso: string | null): string {
     return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
 }
 
-export const eventFields: FieldDef<Event>[] = [
-    { key: "id", label: "ID", type: "text", readOnly: true },
-    { key: "startsAt", label: "Starts at", type: "text" },
-    { key: "endsAt", label: "Ends at", type: "text" },
-    { key: "doorsAt", label: "Doors at", type: "text" },
-    { key: "intermissionAt", label: "Intermission at", type: "text" },
-    { key: "status", label: "Status", type: "text" },
-    { key: "hallId", label: "Hall ID", type: "text" },
-    { key: "maxTicketsPerOrder", label: "Max tickets per order", type: "text" },
-    { key: "vendorId", label: "Vendor ID", type: "text" },
-    { key: "boxOfficeId", label: "Box office ID", type: "text" },
-    { key: "uitdatabankId", label: "UiTdatabank ID", type: "text" },
-];
+export function makeEventFields(
+    t: ReturnType<typeof useTranslations<"Cms.Productions">>
+): FieldDef<Event>[] {
+    return [
+        { key: "id", label: t("fieldEventId"), type: "text", readOnly: true },
+        { key: "startsAt", label: t("fieldEventStartsAt"), type: "text" },
+        { key: "endsAt", label: t("fieldEventEndsAt"), type: "text" },
+        { key: "doorsAt", label: t("fieldEventDoorsAt"), type: "text" },
+        { key: "intermissionAt", label: t("fieldEventIntermissionAt"), type: "text" },
+        { key: "status", label: t("fieldEventStatus"), type: "text" },
+        { key: "hallId", label: t("fieldEventHallId"), type: "text" },
+        { key: "maxTicketsPerOrder", label: t("fieldEventMaxTickets"), type: "text" },
+        { key: "vendorId", label: t("fieldEventVendorId"), type: "text" },
+        { key: "boxOfficeId", label: t("fieldEventBoxOfficeId"), type: "text" },
+        { key: "uitdatabankId", label: t("fieldEventUitdatabankId"), type: "text" },
+    ];
+}
 
 export function toEventUpdateInput(entity: Event): EventUpdateInput {
     return {
@@ -52,8 +56,9 @@ export function toEventUpdateInput(entity: Event): EventUpdateInput {
 export function makeEventColumns(options: {
     onEdit: (entity: Event) => void;
     t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>;
+    tProductions: ReturnType<typeof useTranslations<"Cms.Productions">>;
 }): ColumnDef<Event>[] {
-    const { onEdit, t } = options;
+    const { onEdit, t, tProductions } = options;
 
     const actions: Action<Event>[] = [
         {
@@ -94,16 +99,16 @@ export function makeEventColumns(options: {
     return [
         {
             accessorKey: "startsAt",
-            header: "Start",
+            header: tProductions("eventStartColumn"),
             cell: ({ getValue }) => formatDateTime(getValue<string>()),
         },
         {
             accessorKey: "endsAt",
-            header: "End",
+            header: tProductions("eventEndColumn"),
             cell: ({ getValue }) => formatDateTime(getValue<string | null>()),
         },
-        { accessorKey: "status", header: "Status" },
-        { accessorKey: "hallId", header: "Hall" },
+        { accessorKey: "status", header: tProductions("eventStatusColumn") },
+        { accessorKey: "hallId", header: tProductions("eventHallColumn") },
         makeActionsColumn<Event>({ actions }),
     ];
 }

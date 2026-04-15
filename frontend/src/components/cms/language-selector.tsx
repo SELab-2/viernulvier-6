@@ -16,7 +16,7 @@ export function LanguageSelector({ activeLang, onChange }: LanguageSelectorProps
                         : "text-muted-foreground hover:text-foreground"
                 }`}
             >
-                Dutch
+                NL
             </button>
             <button
                 onClick={() => onChange("en")}
@@ -26,7 +26,7 @@ export function LanguageSelector({ activeLang, onChange }: LanguageSelectorProps
                         : "text-muted-foreground hover:text-foreground"
                 }`}
             >
-                English
+                EN
             </button>
         </div>
     );
