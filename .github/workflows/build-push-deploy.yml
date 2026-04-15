@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
 jobs:
   run_backend_tests:
     uses: ./.github/workflows/backend-tests.yml
@@ -21,7 +25,10 @@ jobs:
 
     steps:
       - name: Clean up workspace
-        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace alpine sh -c "chown -R $(id -u):$(id -g) /workspace"
+        continue-on-error: true
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -73,13 +80,16 @@ jobs:
             kayasem/${{ vars.PROJECT_NAME }}-docs:${{ github.sha }}
 
   deploy:
-    runs-on: self-hosted
+    runs-on: prod
     environment: production
     needs: build-push
 
     steps:
       - name: Clean up workspace
-        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace alpine sh -c "chown -R $(id -u):$(id -g) /workspace"
+        continue-on-error: true
+
       - name: Checkout repo
         uses: actions/checkout@v4
 
@@ -93,6 +103,12 @@ jobs:
 
       - name: Ensure traefik network exists
         run: docker network inspect traefik >/dev/null 2>&1 || docker network create traefik
+
+      - name: Ensure preview Traefik is running
+        run: |
+          if [ -z "$(docker compose -f infra/traefik/docker-compose.yml ps -q traefik)" ]; then
+            docker compose -f infra/traefik/docker-compose.yml up -d
+          fi
 
       - name: Generate production env
         uses: ./.github/actions/generate-prod-env

@@ -14,7 +14,7 @@ use crate::{
     error::ErrorResponse,
     handlers::{
         IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse,
-        queries::pagination::PaginationQuery,
+        queries::{location::LocationSearchQuery, pagination::PaginationQuery},
     },
 };
 
@@ -25,7 +25,8 @@ use crate::{
     operation_id = "get_all_locations",
     description = "Get all locations",
     params(
-        PaginationQuery
+        PaginationQuery,
+        LocationSearchQuery
     ),
     responses(
         (status = 200, description = "Success", body = PaginatedResponse<LocationPayload>)
@@ -34,8 +35,9 @@ use crate::{
 pub async fn get_all(
     db: Database,
     Query(pagination): Query<PaginationQuery>,
+    Query(search): Query<LocationSearchQuery>,
 ) -> JsonResponse<PaginatedResponse<LocationPayload>> {
-    LocationPayload::all(&db, pagination.cursor, pagination.limit)
+    LocationPayload::all(&db, pagination.cursor, pagination.limit, search)
         .await?
         .json()
 }
@@ -56,6 +58,27 @@ pub async fn get_all(
 )]
 pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<LocationPayload> {
     LocationPayload::by_id(&db, id).await?.json()
+}
+
+#[utoipa::path(
+    method(get),
+    path = "/locations/slug/{slug}",
+    tag = "Locations",
+    operation_id = "get_location_by_slug",
+    description = "Get location by slug",
+    params(
+        ("slug" = String, Path, description = "Location slug")
+    ),
+    responses(
+        (status = 200, description = "Success", body = LocationPayload),
+        (status = 404, description = "Not found")
+    )
+)]
+pub async fn get_by_slug(
+    db: Database,
+    Path(slug): Path<String>,
+) -> JsonResponse<LocationPayload> {
+    LocationPayload::by_slug(&db, &slug).await?.json()
 }
 
 #[utoipa::path(

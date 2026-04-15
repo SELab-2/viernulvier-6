@@ -14,7 +14,8 @@ import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialo
 import { Spinner } from "@/components/ui/spinner";
 import { useGetInfiniteLocations, useUpdateLocation } from "@/hooks/api/useLocations";
 import { useGetHalls, useUpdateHall } from "@/hooks/api/useHalls";
-import type { Location } from "@/types/models/location.types";
+import { useGetSpaces } from "@/hooks/api/useSpaces";
+import type { Location, LocationRow } from "@/types/models/location.types";
 import type { Hall } from "@/types/models/hall.types";
 
 export function LocationsTable() {
@@ -31,25 +32,24 @@ export function LocationsTable() {
     } = useGetInfiniteLocations();
 
     const { data: hallsResult, isLoading: hallsLoading } = useGetHalls();
+    const { data: spacesResult } = useGetSpaces();
 
-    // Flatten all pages into a single array
     const locations = useMemo(
         () => infiniteData?.pages.flatMap((page) => page.data) ?? [],
         [infiniteData]
     );
 
     const allHalls = useMemo(() => hallsResult?.data ?? [], [hallsResult]);
+    const allSpaces = useMemo(() => spacesResult?.data ?? [], [spacesResult]);
     const updateLocation = useUpdateLocation();
     const updateHall = useUpdateHall();
 
-    // Load more handler
     const loadMore = useCallback(() => {
         if (hasNextPage && !isFetchingNextPage) {
             fetchNextPage();
         }
     }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-    // Intersection observer for infinite scroll
     useEffect(() => {
         const observer = new IntersectionObserver(
             (entries) => {
@@ -64,20 +64,27 @@ export function LocationsTable() {
         };
     }, [loadMore]);
 
-    const [editLocation, setEditLocation] = useState<Location | null>(null);
+    const [editLocation, setEditLocation] = useState<LocationRow | null>(null);
     const [editHall, setEditHall] = useState<Hall | null>(null);
     const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
 
-    const hallsBySpace = useMemo(() => {
+    const hallsByLocation = useMemo(() => {
+        const spaceToLocation = new Map<string, string>();
+        for (const space of allSpaces) {
+            spaceToLocation.set(space.id, space.locationId);
+        }
+
         const map = new Map<string, Hall[]>();
         for (const hall of allHalls) {
             if (!hall.spaceId) continue;
-            const list = map.get(hall.spaceId) ?? [];
+            const locationId = spaceToLocation.get(hall.spaceId);
+            if (!locationId) continue;
+            const list = map.get(locationId) ?? [];
             list.push(hall);
-            map.set(hall.spaceId, list);
+            map.set(locationId, list);
         }
         return map;
-    }, [allHalls]);
+    }, [allHalls, allSpaces]);
 
     const {
         parentSelection,
@@ -88,7 +95,7 @@ export function LocationsTable() {
         selectedParentCount: selectedLocationCount,
         selectedChildCount: selectedHallCount,
         clearSelection,
-    } = useParentChildSelection<Location>(hallsBySpace);
+    } = useParentChildSelection<Location>(hallsByLocation);
 
     const locationCols = useMemo(
         () => [selectColumn, ...makeLocationColumns({ onEdit: setEditLocation, t: tActions })],
@@ -103,8 +110,8 @@ export function LocationsTable() {
     const expanderLabels = useMemo(() => ({ show: t("showHalls"), hide: t("hideHalls") }), [t]);
 
     const getRowCanExpand = useCallback(
-        (row: Row<Location>) => (hallsBySpace.get(row.original.id)?.length ?? 0) > 0,
-        [hallsBySpace]
+        (row: Row<Location>) => (hallsByLocation.get(row.original.id)?.length ?? 0) > 0,
+        [hallsByLocation]
     );
 
     const getLocationRowId = useCallback((row: Location) => row.id, []);
@@ -135,7 +142,7 @@ export function LocationsTable() {
                 );
             }
             const locationId = row.original.id;
-            const halls = hallsBySpace.get(locationId) ?? [];
+            const halls = hallsByLocation.get(locationId) ?? [];
             return (
                 <MemoSubTable
                     items={halls}
@@ -146,7 +153,7 @@ export function LocationsTable() {
                 />
             );
         },
-        [childSelection, getChildHandler, getHallRowId, hallCols, hallsBySpace, hallsLoading]
+        [childSelection, getChildHandler, getHallRowId, hallCols, hallsByLocation, hallsLoading]
     );
 
     const actions = useMemo(
@@ -189,7 +196,6 @@ export function LocationsTable() {
                     getRowId={getLocationRowId}
                 />
 
-                {/* Infinite scroll trigger */}
                 {hasNextPage && (
                     <div ref={loadMoreRef} className="flex justify-center py-4">
                         <Spinner className="text-muted-foreground h-5 w-5" />
