@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 
 import type { Production } from "@/types/models/production.types";
 import { getLocalizedField } from "@/lib/locale";
+import { Link } from "@/i18n/routing";
 
 interface FeaturedSectionProps {
     productions: Production[];
@@ -55,7 +56,10 @@ function FeaturedCard({
     const displayType = production.uitdatabankType ?? production.uitdatabankTheme;
 
     return (
-        <div className="group bg-background hover:bg-muted/5 relative cursor-pointer p-4 pb-5 transition-colors sm:p-5">
+        <Link
+            href={`/productions/${production.id}`}
+            className="group bg-background hover:bg-muted/5 relative block cursor-pointer p-4 pb-5 transition-colors sm:p-5"
+        >
             <div
                 className={`relative mb-3 h-[160px] w-full overflow-hidden bg-[#CCC6BC] ${isFirst ? "sm:h-[200px]" : "sm:h-[140px]"}`}
             >
@@ -105,6 +109,6 @@ function FeaturedCard({
                     {tagline}
                 </p>
             )}
-        </div>
+        </Link>
     );
 }
