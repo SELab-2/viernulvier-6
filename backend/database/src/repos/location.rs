@@ -8,10 +8,10 @@ use uuid::Uuid;
 use crate::{
     error::DatabaseError,
     models::{
-        cursor::CursorData,
+        filtering::cursor::CursorData,
         location::{
-            Location, LocationCreate, LocationSearch, LocationTranslation,
-            LocationTranslationData, LocationWithScore, LocationWithTranslations,
+            Location, LocationCreate, LocationSearch, LocationTranslation, LocationTranslationData,
+            LocationWithScore, LocationWithTranslations,
         },
     },
 };
@@ -195,8 +195,7 @@ impl<'a> LocationRepo<'a> {
         translations: Vec<LocationTranslationData>,
     ) -> Result<LocationWithTranslations, DatabaseError> {
         let location = location.insert(self.db).await?;
-        self.upsert_translations(location.id, &translations)
-            .await?;
+        self.upsert_translations(location.id, &translations).await?;
         let translation_rows = self.fetch_translations_for(location.id).await?;
 
         Ok(LocationWithTranslations {
@@ -232,8 +231,7 @@ impl<'a> LocationRepo<'a> {
         translations: Vec<LocationTranslationData>,
     ) -> Result<LocationWithTranslations, DatabaseError> {
         let location = location.update_all_fields(self.db).await?;
-        self.upsert_translations(location.id, &translations)
-            .await?;
+        self.upsert_translations(location.id, &translations).await?;
         let translation_rows = self.fetch_translations_for(location.id).await?;
 
         Ok(LocationWithTranslations {
@@ -289,10 +287,8 @@ impl<'a> LocationRepo<'a> {
             .iter()
             .map(|t| t.description.as_deref())
             .collect();
-        let histories: Vec<Option<&str>> = translations
-            .iter()
-            .map(|t| t.history.as_deref())
-            .collect();
+        let histories: Vec<Option<&str>> =
+            translations.iter().map(|t| t.history.as_deref()).collect();
 
         sqlx::query(
             "INSERT INTO location_translations (
