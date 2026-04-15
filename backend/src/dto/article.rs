@@ -80,11 +80,12 @@ impl ArticleUpdatePayload {
             )));
         }
 
-        let published_at = if self.status == ArticleStatus::Published && existing.published_at.is_none() {
-            Some(Utc::now())
-        } else {
-            existing.published_at
-        };
+        let published_at =
+            if self.status == ArticleStatus::Published && existing.published_at.is_none() {
+                Some(Utc::now())
+            } else {
+                existing.published_at
+            };
 
         let article = Article {
             id: existing.id,
