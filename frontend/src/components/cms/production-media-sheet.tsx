@@ -126,20 +126,17 @@ export function ProductionMediaSheet({
         [unlinkMedia, productionId, t, editingMedia, setEditingMedia]
     );
 
-    const handleClearCover = useCallback(
-        async (_: string) => {
-            try {
-                await clearCoverMedia.mutateAsync({
-                    entityType: "production",
-                    entityId: productionId,
-                });
-                toast.success(t("clearCoverSuccess"));
-            } catch {
-                toast.error(t("clearCoverError"));
-            }
-        },
-        [clearCoverMedia, productionId, t]
-    );
+    const handleClearCover = useCallback(async () => {
+        try {
+            await clearCoverMedia.mutateAsync({
+                entityType: "production",
+                entityId: productionId,
+            });
+            toast.success(t("clearCoverSuccess"));
+        } catch {
+            toast.error(t("clearCoverError"));
+        }
+    }, [clearCoverMedia, productionId, t]);
 
     const handlePickerSelect = useCallback(
         async (media: Media) => {
