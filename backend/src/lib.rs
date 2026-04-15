@@ -203,7 +203,7 @@ pub fn router(state: &AppState) -> Router<AppState> {
 
     let swagger_ui = SwaggerUi::new(docs_path)
         .url(openapi_json_path, api_spec)
-        .config(Config::default().doc_expansion("none").filter(true));
+        .config(Config::default().doc_expansion("none"));
 
     Router::new()
         .nest(&base_path, api_router)
