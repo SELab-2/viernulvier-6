@@ -51,6 +51,8 @@ export const queryKeys = {
     media: {
         all: (params?: MediaSearchParams) =>
             params ? (["media", params] as const) : (["media"] as const),
+        infinite: (params?: Omit<MediaSearchParams, "cursor">) =>
+            params ? (["media", "infinite", params] as const) : (["media", "infinite"] as const),
         detail: (id: string) => ["media", id] as const,
         entity: (entityType: string, entityId: string, params?: EntityMediaParams) =>
             params
