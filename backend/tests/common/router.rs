@@ -38,11 +38,6 @@ impl TestRouter {
         }
     }
 
-    /// Pool for direct SQL in tests (expected rows, aggregates, etc.).
-    pub fn db(&self) -> &PgPool {
-        &self.db
-    }
-
     pub async fn login(mut self, email: &str, role: UserRole) -> Self {
         let database = Database::new(self.db.clone());
         let config = AppConfig::load().unwrap();
