@@ -59,5 +59,5 @@ pub struct MediaSearch {
     pub entity_type: Option<EntityType>,
     pub entity_id: Option<Uuid>,
     pub role: Option<String>,
-    pub sort: Option<Sort>,
+    pub sort: Sort,
 }
