@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useMemo, useState, useCallback } from "react";
+import { use, useMemo, useState, useCallback, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { notFound, useSearchParams } from "next/navigation";
 
@@ -64,6 +64,13 @@ export default function ProductionPage({
     const searchParams = useSearchParams();
     const isPreviewMode = searchParams.get("preview") === "1";
     const sessionId = searchParams.get("session") ?? undefined;
+
+    // Sync preview locale to localStorage so the editor can stay in sync
+    useEffect(() => {
+        if (isPreviewMode) {
+            localStorage.setItem("cms_preview_locale", locale);
+        }
+    }, [isPreviewMode, locale]);
 
     const { data: apiProduction, isLoading: isProdLoading, isError } = useGetProduction(id);
     const { data: apiEvents = [], isLoading: isEventsLoading } = useGetEventsByProduction(id);

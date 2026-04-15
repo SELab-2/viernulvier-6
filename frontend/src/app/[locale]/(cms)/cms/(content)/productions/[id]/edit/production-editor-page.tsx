@@ -26,6 +26,8 @@ interface ProductionEditorPageProps {
 
 type Lang = "nl" | "en";
 
+const PREVIEW_LOCALE_KEY = "cms_preview_locale";
+
 interface FieldDef {
     key: string;
     label: string;
@@ -100,7 +102,13 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
         }
         return false;
     });
-    const [activeLang, setActiveLang] = useState<Lang>(locale as Lang);
+    const [activeLang, setActiveLang] = useState<Lang>(() => {
+        if (typeof window !== "undefined") {
+            const saved = localStorage.getItem(PREVIEW_LOCALE_KEY);
+            if (saved === "nl" || saved === "en") return saved;
+        }
+        return locale as Lang;
+    });
     const [previewSessionId] = useState(() => {
         if (typeof crypto !== "undefined" && crypto.randomUUID) {
             return crypto.randomUUID();
@@ -122,6 +130,48 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
 
     // Ref to track last synced production hash for preview
     const lastSyncedProductionRef = useRef<string | null>(null);
+
+    // Ref for preview iframe
+    const iframeRef = useRef<HTMLIFrameElement>(null);
+    const localeChangeSourceRef = useRef<"editor" | "storage" | null>(null);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const handleStorage = (event: StorageEvent) => {
+            if (event.key === PREVIEW_LOCALE_KEY) {
+                const next = event.newValue;
+                if (next === "nl" || next === "en") {
+                    localeChangeSourceRef.current = "storage";
+                    setActiveLang(next);
+                }
+            }
+        };
+        window.addEventListener("storage", handleStorage);
+        return () => window.removeEventListener("storage", handleStorage);
+    }, []);
+
+    const handleLangChange = useCallback((nextLang: Lang) => {
+        localeChangeSourceRef.current = "editor";
+        setActiveLang(nextLang);
+        localStorage.setItem(PREVIEW_LOCALE_KEY, nextLang);
+    }, []);
+
+    // Update iframe src only when the editor initiated the locale change
+    useEffect(() => {
+        if (!iframeRef.current || !isPreviewOpen || !production?.id) return;
+        if (localeChangeSourceRef.current === "storage") {
+            localeChangeSourceRef.current = null;
+            return;
+        }
+        const expectedPath = `/${activeLang}/productions/${production.id}?preview=1&session=${previewSessionId}`;
+        const currentPath = iframeRef.current.src
+            ? new URL(iframeRef.current.src).pathname + new URL(iframeRef.current.src).search
+            : "";
+        if (currentPath !== expectedPath) {
+            iframeRef.current.src = expectedPath;
+        }
+        localeChangeSourceRef.current = null;
+    }, [activeLang, isPreviewOpen, production?.id, previewSessionId]);
 
     // Get events for this production
     const productionEvents = useMemo(() => {
@@ -287,7 +337,7 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                                     <h2 className="text-sm font-semibold">Content</h2>
                                     <LanguageSelector
                                         activeLang={activeLang}
-                                        onChange={setActiveLang}
+                                        onChange={handleLangChange}
                                     />
                                 </div>
 
@@ -347,7 +397,7 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                         </div>
                         <div className="bg-background flex-1 overflow-auto">
                             <iframe
-                                src={`/${locale}/productions/${production.id}?preview=1&session=${previewSessionId}`}
+                                ref={iframeRef}
                                 className="bg-background h-full w-full"
                                 title={t("previewLabel")}
                                 sandbox="allow-same-origin allow-scripts"

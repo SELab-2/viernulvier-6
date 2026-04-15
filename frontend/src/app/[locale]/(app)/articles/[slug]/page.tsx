@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useCallback } from "react";
+import { use, useState, useCallback, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Calendar, MapPin, Users, Ticket } from "lucide-react";
@@ -85,6 +85,13 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
     const isPreviewMode = searchParams.get("preview") === "1";
     const sessionId = searchParams.get("session") ?? undefined;
 
+    // Sync preview locale to localStorage so the editor can stay in sync
+    useEffect(() => {
+        if (isPreviewMode) {
+            localStorage.setItem("cms_preview_locale", locale);
+        }
+    }, [isPreviewMode, locale]);
+
     const { data: apiArticle, isLoading, isError } = useGetArticleBySlug(slug);
 
     // Always call preview hooks (they handle preview mode internally)
@@ -157,7 +164,11 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
                                 )}
                             </div>
                             <div className="flex items-center gap-2">
-                                <PreviewBadge entityType="article" entityId={slug} sessionId={sessionId} />
+                                <PreviewBadge
+                                    entityType="article"
+                                    entityId={slug}
+                                    sessionId={sessionId}
+                                />
                                 <span>{t("datelineBrand")}</span>
                             </div>
                         </div>
