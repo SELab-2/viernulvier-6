@@ -14,11 +14,12 @@ function extractLocale(pathname: string): string {
 
 export default function proxy(request: NextRequest) {
     const token = request.cookies.get("access_token")?.value;
+    const sessionPresent = request.cookies.get("session_present")?.value;
     const pathname = request.nextUrl.pathname;
 
     const isProtectedRoute = pathname.includes("/cms");
 
-    if (isProtectedRoute && !token) {
+    if (isProtectedRoute && !token && !sessionPresent) {
         const locale = extractLocale(pathname);
         const redirectUrl = new URL(`/${locale}/login`, request.url);
         return NextResponse.redirect(redirectUrl);
