@@ -438,15 +438,16 @@ function SingleMediaCard({ media, onDetach, onEdit, onSpotlight }: SingleMediaCa
             {url ? (
                 <button
                     type="button"
-                    className="relative block aspect-video w-full cursor-zoom-in"
+                    className="block w-full cursor-zoom-in"
                     onClick={() => onSpotlight(media)}
                     aria-label={t("viewFullSize")}
                 >
                     <Image
                         src={url}
                         alt={media.altTextNl ?? media.altTextEn ?? ""}
-                        fill
-                        className="object-cover"
+                        width={800}
+                        height={450}
+                        className="aspect-video w-full object-cover"
                         sizes="(max-width: 448px) 100vw, 400px"
                     />
                 </button>
@@ -507,24 +508,25 @@ function MediaThumbnail({ media, onDetach, onEdit, onSpotlight, onSetCover }: Me
     const url = mediaThumbnailUrl(media);
 
     return (
-        <div className="group relative aspect-square overflow-hidden rounded border">
+        <div className="group relative overflow-hidden rounded border">
             {url ? (
                 <button
                     type="button"
-                    className="absolute inset-0 cursor-zoom-in"
+                    className="block w-full cursor-zoom-in"
                     onClick={() => onSpotlight(media)}
                     aria-label={t("viewFullSize")}
                 >
                     <Image
                         src={url}
                         alt={media.altTextNl ?? media.altTextEn ?? ""}
-                        fill
-                        className="object-cover"
+                        width={400}
+                        height={400}
+                        className="aspect-square w-full object-cover"
                         sizes="(max-width: 448px) 33vw, 130px"
                     />
                 </button>
             ) : (
-                <div className="bg-muted flex size-full items-center justify-center">
+                <div className="bg-muted flex aspect-square items-center justify-center">
                     <ImageIcon className="text-muted-foreground size-5" />
                 </div>
             )}
