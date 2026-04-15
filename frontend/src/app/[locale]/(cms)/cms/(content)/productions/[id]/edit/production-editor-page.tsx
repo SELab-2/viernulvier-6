@@ -26,7 +26,9 @@ interface ProductionEditorPageProps {
 
 type Lang = "nl" | "en";
 
-const PREVIEW_LOCALE_KEY = "cms_preview_locale";
+function previewLocaleKey(sessionId: string) {
+    return `cms_preview_locale:${sessionId}`;
+}
 
 interface FieldDef {
     key: string;
@@ -102,18 +104,18 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
         }
         return false;
     });
-    const [activeLang, setActiveLang] = useState<Lang>(() => {
-        if (typeof window !== "undefined") {
-            const saved = localStorage.getItem(PREVIEW_LOCALE_KEY);
-            if (saved === "nl" || saved === "en") return saved;
-        }
-        return locale as Lang;
-    });
     const [previewSessionId] = useState(() => {
         if (typeof crypto !== "undefined" && crypto.randomUUID) {
             return crypto.randomUUID();
         }
         return Math.random().toString(36).slice(2) + Date.now().toString(36);
+    });
+    const [activeLang, setActiveLang] = useState<Lang>(() => {
+        if (typeof window !== "undefined") {
+            const saved = localStorage.getItem(previewLocaleKey(previewSessionId));
+            if (saved === "nl" || saved === "en") return saved;
+        }
+        return locale as Lang;
     });
 
     // Convert API production to ProductionRow format
@@ -137,8 +139,9 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
 
     useEffect(() => {
         if (typeof window === "undefined") return;
+        const key = previewLocaleKey(previewSessionId);
         const handleStorage = (event: StorageEvent) => {
-            if (event.key === PREVIEW_LOCALE_KEY) {
+            if (event.key === key) {
                 const next = event.newValue;
                 if (next === "nl" || next === "en") {
                     localeChangeSourceRef.current = "storage";
@@ -148,13 +151,16 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
         };
         window.addEventListener("storage", handleStorage);
         return () => window.removeEventListener("storage", handleStorage);
-    }, []);
+    }, [previewSessionId]);
 
-    const handleLangChange = useCallback((nextLang: Lang) => {
-        localeChangeSourceRef.current = "editor";
-        setActiveLang(nextLang);
-        localStorage.setItem(PREVIEW_LOCALE_KEY, nextLang);
-    }, []);
+    const handleLangChange = useCallback(
+        (nextLang: Lang) => {
+            localeChangeSourceRef.current = "editor";
+            setActiveLang(nextLang);
+            localStorage.setItem(previewLocaleKey(previewSessionId), nextLang);
+        },
+        [previewSessionId]
+    );
 
     // Update iframe src only when the editor initiated the locale change
     useEffect(() => {

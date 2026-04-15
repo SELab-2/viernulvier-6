@@ -67,10 +67,10 @@ export default function ProductionPage({
 
     // Sync preview locale to localStorage so the editor can stay in sync
     useEffect(() => {
-        if (isPreviewMode) {
-            localStorage.setItem("cms_preview_locale", locale);
+        if (isPreviewMode && sessionId) {
+            localStorage.setItem(`cms_preview_locale:${sessionId}`, locale);
         }
-    }, [isPreviewMode, locale]);
+    }, [isPreviewMode, locale, sessionId]);
 
     const { data: apiProduction, isLoading: isProdLoading, isError } = useGetProduction(id);
     const { data: apiEvents = [], isLoading: isEventsLoading } = useGetEventsByProduction(id);

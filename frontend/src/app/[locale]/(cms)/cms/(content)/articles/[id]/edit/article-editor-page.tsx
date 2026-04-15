@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { ArrowLeft, Eye, EyeOff, Save } from "lucide-react";
 import { toast } from "sonner";
@@ -51,10 +51,47 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
         return Math.random().toString(36).slice(2) + Date.now().toString(36);
     });
 
+    const [previewLocale, setPreviewLocale] = useState<string>(() => {
+        if (typeof window !== "undefined") {
+            const saved = localStorage.getItem(`cms_preview_locale:${previewSessionId}`);
+            if (saved === "nl" || saved === "en") return saved;
+        }
+        return locale;
+    });
+
+    const iframeRef = useRef<HTMLIFrameElement>(null);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const key = `cms_preview_locale:${previewSessionId}`;
+        const handleStorage = (event: StorageEvent) => {
+            if (event.key === key) {
+                const next = event.newValue;
+                if (next === "nl" || next === "en") {
+                    setPreviewLocale(next);
+                }
+            }
+        };
+        window.addEventListener("storage", handleStorage);
+        return () => window.removeEventListener("storage", handleStorage);
+    }, [previewSessionId]);
+
     const article = useMemo(
         () => (fetchedArticle ? { ...fetchedArticle, ...edits } : null),
         [fetchedArticle, edits]
     );
+
+    useEffect(() => {
+        if (!iframeRef.current || !isPreviewOpen || !article) return;
+        const expectedPath = `/${previewLocale}/articles/${article.slug}?preview=1&session=${previewSessionId}`;
+        const currentPath = iframeRef.current.src
+            ? new URL(iframeRef.current.src).pathname + new URL(iframeRef.current.src).search
+            : "";
+        if (currentPath !== expectedPath) {
+            iframeRef.current.src = expectedPath;
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [previewLocale, isPreviewOpen, article?.slug, previewSessionId]);
 
     const relations = useMemo(
         () =>
@@ -220,7 +257,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                         </div>
                         <div className="bg-background flex-1 overflow-auto">
                             <iframe
-                                src={`/${locale}/articles/${article.slug}?preview=1&session=${previewSessionId}`}
+                                ref={iframeRef}
                                 className="bg-background h-full w-full"
                                 title={t("previewLabel")}
                                 sandbox="allow-same-origin allow-scripts"
