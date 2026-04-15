@@ -10,7 +10,7 @@ mod common;
 
 // ── GET /series ─────────────────────────────────────────────────────
 
-#[sqlx::test(fixtures("events", "series"))]
+#[sqlx::test(fixtures("productions", "events", "series"))]
 #[test_log::test]
 async fn get_all(db: PgPool) {
     let app = TestRouter::new(db);
@@ -32,7 +32,7 @@ async fn get_all(db: PgPool) {
 
 // ── GET /series/{slug} ──────────────────────────────────────────────
 
-#[sqlx::test(fixtures("events", "series"))]
+#[sqlx::test(fixtures("productions", "events", "series"))]
 #[test_log::test]
 async fn get_one_success(db: PgPool) {
     let app = TestRouter::new(db);
@@ -66,7 +66,7 @@ async fn get_one_not_found(db: PgPool) {
 
 // ── GET /productions/{id}/series ────────────────────────────────────
 
-#[sqlx::test(fixtures("events", "series"))]
+#[sqlx::test(fixtures("productions", "events", "series"))]
 #[test_log::test]
 async fn get_series_for_production(db: PgPool) {
     let app = TestRouter::new(db);
@@ -85,7 +85,7 @@ async fn get_series_for_production(db: PgPool) {
     assert_eq!(slugs, vec!["fresh-juice", "palmarium"]);
 }
 
-#[sqlx::test(fixtures("events", "series"))]
+#[sqlx::test(fixtures("productions", "events", "series"))]
 #[test_log::test]
 async fn get_series_for_production_empty(db: PgPool) {
     let app = TestRouter::new(db);
@@ -132,7 +132,7 @@ async fn post_success(db: PgPool) {
 
 // ── PUT /series ─────────────────────────────────────────────────────
 
-#[sqlx::test(fixtures("events", "series"))]
+#[sqlx::test(fixtures("productions", "events", "series"))]
 #[test_log::test]
 async fn put_success(db: PgPool) {
     let unauthenticated_app = TestRouter::new(db.clone());
@@ -201,7 +201,7 @@ async fn put_not_found(db: PgPool) {
 
 // ── DELETE /series/{slug} ───────────────────────────────────────────
 
-#[sqlx::test(fixtures("events", "series"))]
+#[sqlx::test(fixtures("productions", "events", "series"))]
 #[test_log::test]
 async fn delete_success(db: PgPool) {
     let unauthenticated_app = TestRouter::new(db.clone());
@@ -227,7 +227,7 @@ async fn delete_not_found(db: PgPool) {
 
 // ── POST /series/{slug}/productions ─────────────────────────────────
 
-#[sqlx::test(fixtures("events", "series"))]
+#[sqlx::test(fixtures("productions", "events", "series"))]
 #[test_log::test]
 async fn add_productions_success(db: PgPool) {
     let unauthenticated_app = TestRouter::new(db.clone());
@@ -250,7 +250,7 @@ async fn add_productions_success(db: PgPool) {
     assert_eq!(data.production_ids.len(), 2);
 }
 
-#[sqlx::test(fixtures("events", "series"))]
+#[sqlx::test(fixtures("productions", "events", "series"))]
 #[test_log::test]
 async fn add_productions_not_found_series(db: PgPool) {
     let app = TestRouter::as_editor(db).await;
@@ -264,7 +264,7 @@ async fn add_productions_not_found_series(db: PgPool) {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(fixtures("events", "series"))]
+#[sqlx::test(fixtures("productions", "events", "series"))]
 #[test_log::test]
 async fn add_productions_invalid_production_id(db: PgPool) {
     let app = TestRouter::as_editor(db).await;
@@ -280,7 +280,7 @@ async fn add_productions_invalid_production_id(db: PgPool) {
 
 // ── DELETE /series/{slug}/productions/{production_id} ───────────────
 
-#[sqlx::test(fixtures("events", "series"))]
+#[sqlx::test(fixtures("productions", "events", "series"))]
 #[test_log::test]
 async fn remove_production_success(db: PgPool) {
     let unauthenticated_app = TestRouter::new(db.clone());
@@ -302,7 +302,7 @@ async fn remove_production_success(db: PgPool) {
     assert_eq!(data.production_ids.len(), 1);
 }
 
-#[sqlx::test(fixtures("events", "series"))]
+#[sqlx::test(fixtures("productions", "events", "series"))]
 #[test_log::test]
 async fn remove_production_not_found(db: PgPool) {
     let app = TestRouter::as_editor(db).await;
@@ -315,7 +315,7 @@ async fn remove_production_not_found(db: PgPool) {
 
 // ── Derived period ──────────────────────────────────────────────────
 
-#[sqlx::test(fixtures("events", "series"))]
+#[sqlx::test(fixtures("productions", "events", "series"))]
 #[test_log::test]
 async fn derived_period_from_events(db: PgPool) {
     let app = TestRouter::new(db);
@@ -348,7 +348,7 @@ async fn empty_series_has_null_period(db: PgPool) {
 
 // ── Edge cases ──────────────────────────────────────────────────
 
-#[sqlx::test(fixtures("events", "series"))]
+#[sqlx::test(fixtures("productions", "events", "series"))]
 #[test_log::test]
 async fn post_duplicate_slug(db: PgPool) {
     let app = TestRouter::as_editor(db).await;
@@ -365,7 +365,7 @@ async fn post_duplicate_slug(db: PgPool) {
     assert_eq!(response.status(), StatusCode::CONFLICT);
 }
 
-#[sqlx::test(fixtures("events", "series"))]
+#[sqlx::test(fixtures("productions", "events", "series"))]
 #[test_log::test]
 async fn put_slug_conflict(db: PgPool) {
     let unauthenticated_app = TestRouter::new(db.clone());
@@ -392,7 +392,7 @@ async fn put_slug_conflict(db: PgPool) {
     assert_eq!(response.status(), StatusCode::CONFLICT);
 }
 
-#[sqlx::test(fixtures("events", "series"))]
+#[sqlx::test(fixtures("productions", "events", "series"))]
 #[test_log::test]
 async fn put_same_slug_no_conflict(db: PgPool) {
     let unauthenticated_app = TestRouter::new(db.clone());
@@ -420,7 +420,7 @@ async fn put_same_slug_no_conflict(db: PgPool) {
     assert_eq!(response.status(), StatusCode::OK);
 }
 
-#[sqlx::test(fixtures("events", "series"))]
+#[sqlx::test(fixtures("productions", "events", "series"))]
 #[test_log::test]
 async fn add_productions_idempotent(db: PgPool) {
     let app = TestRouter::as_editor(db).await;
@@ -437,7 +437,7 @@ async fn add_productions_idempotent(db: PgPool) {
     assert_eq!(data.production_ids.len(), 2);
 }
 
-#[sqlx::test(fixtures("events", "series"))]
+#[sqlx::test(fixtures("productions", "events", "series"))]
 #[test_log::test]
 async fn remove_production_nonexistent_series(db: PgPool) {
     let app = TestRouter::as_editor(db).await;
@@ -448,7 +448,7 @@ async fn remove_production_nonexistent_series(db: PgPool) {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(fixtures("events", "series"))]
+#[sqlx::test(fixtures("productions", "events", "series"))]
 #[test_log::test]
 async fn delete_series_cascades_join_rows(db: PgPool) {
     let app = TestRouter::as_editor(db).await;

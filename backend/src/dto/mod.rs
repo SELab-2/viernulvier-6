@@ -11,3 +11,4 @@ pub mod paginated;
 pub mod production;
 pub mod series;
 pub mod space;
+pub mod stats;

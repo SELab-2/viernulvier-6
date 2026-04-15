@@ -27,6 +27,14 @@ impl<'a> CollectionRepo<'a> {
         Self { db }
     }
 
+    pub async fn count(&self) -> Result<i64, DatabaseError> {
+        let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM collections")
+            .fetch_one(self.db)
+            .await?;
+
+        Ok(count)
+    }
+
     pub async fn all(&self) -> Result<Vec<CollectionWithTranslations>, DatabaseError> {
         let collections =
             sqlx::query_as::<_, Collection>("SELECT * FROM collections ORDER BY created_at DESC")
