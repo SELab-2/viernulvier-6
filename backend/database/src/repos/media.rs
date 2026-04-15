@@ -213,13 +213,12 @@ impl<'a> MediaRepo<'a> {
         }
 
         // 3. Get variants for all IDs
-        let variants: Vec<String> = sqlx::query_scalar(
-            "SELECT s3_key FROM media_variant WHERE media_id = ANY($1)"
-        )
-        .bind(&all_ids)
-        .fetch_all(&mut *tx)
-        .await?;
-        
+        let variants: Vec<String> =
+            sqlx::query_scalar("SELECT s3_key FROM media_variant WHERE media_id = ANY($1)")
+                .bind(&all_ids)
+                .fetch_all(&mut *tx)
+                .await?;
+
         s3_keys.extend(variants);
 
         // 4. Delete variants
@@ -448,11 +447,12 @@ impl<'a> MediaRepo<'a> {
             s3_keys.push(orphan.s3_key.clone());
 
             // collect s3_keys from derivatives first
-            let derivatives = sqlx::query_as::<_, Media>("SELECT * FROM media WHERE parent_id = $1")
-                .bind(orphan.id)
-                .fetch_all(&mut *tx)
-                .await?;
-                
+            let derivatives =
+                sqlx::query_as::<_, Media>("SELECT * FROM media WHERE parent_id = $1")
+                    .bind(orphan.id)
+                    .fetch_all(&mut *tx)
+                    .await?;
+
             for d in derivatives {
                 all_ids.push(d.id);
                 s3_keys.push(d.s3_key);
@@ -460,12 +460,11 @@ impl<'a> MediaRepo<'a> {
         }
 
         // Get all variants for all collected IDs
-        let variants: Vec<String> = sqlx::query_scalar(
-            "SELECT s3_key FROM media_variant WHERE media_id = ANY($1)"
-        )
-        .bind(&all_ids)
-        .fetch_all(&mut *tx)
-        .await?;
+        let variants: Vec<String> =
+            sqlx::query_scalar("SELECT s3_key FROM media_variant WHERE media_id = ANY($1)")
+                .bind(&all_ids)
+                .fetch_all(&mut *tx)
+                .await?;
 
         s3_keys.extend(variants);
 
@@ -539,20 +538,22 @@ impl<'a> MediaRepo<'a> {
         let mut tx = self.db.begin().await?;
 
         // 1. Find the IDs to be deleted
-        let media_ids: Vec<Uuid> = sqlx::query_scalar("SELECT id FROM media WHERE s3_key = ANY($1)")
-            .bind(keys)
-            .fetch_all(&mut *tx)
-            .await?;
+        let media_ids: Vec<Uuid> =
+            sqlx::query_scalar("SELECT id FROM media WHERE s3_key = ANY($1)")
+                .bind(keys)
+                .fetch_all(&mut *tx)
+                .await?;
 
         if media_ids.is_empty() {
             return Ok(0);
         }
 
         // 2. We need to collect all derivative IDs
-        let derivative_ids: Vec<Uuid> = sqlx::query_scalar("SELECT id FROM media WHERE parent_id = ANY($1)")
-            .bind(&media_ids)
-            .fetch_all(&mut *tx)
-            .await?;
+        let derivative_ids: Vec<Uuid> =
+            sqlx::query_scalar("SELECT id FROM media WHERE parent_id = ANY($1)")
+                .bind(&media_ids)
+                .fetch_all(&mut *tx)
+                .await?;
 
         let mut all_ids = media_ids.clone();
         all_ids.extend(derivative_ids);

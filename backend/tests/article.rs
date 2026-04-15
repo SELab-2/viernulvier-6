@@ -483,7 +483,10 @@ async fn put_updates_all_fields(db: PgPool) {
         Some(NaiveDate::from_ymd_opt(2026, 9, 30).unwrap())
     );
 
-    assert_eq!(data.created_at.date_naive(), NaiveDate::from_ymd_opt(2026, 3, 2).unwrap());
+    assert_eq!(
+        data.created_at.date_naive(),
+        NaiveDate::from_ymd_opt(2026, 3, 2).unwrap()
+    );
 
     let now = chrono::Utc::now();
     let age = (now - data.updated_at).num_seconds();

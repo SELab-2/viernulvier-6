@@ -24,7 +24,7 @@ use crate::config::AppConfig;
 use crate::error::AppError;
 use crate::handlers::{
     admin, article, artist, auth, collection, event, hall, location, media, production, series,
-    space, tagging, stats, taxonomy, version,
+    space, stats, tagging, taxonomy, version,
 };
 
 pub mod config;

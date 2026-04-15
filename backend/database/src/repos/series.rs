@@ -65,11 +65,10 @@ impl<'a> SeriesRepo<'a> {
         &self,
         slug: &str,
     ) -> Result<Option<SeriesWithTranslations>, DatabaseError> {
-        let Some(series) =
-            sqlx::query_as::<_, Series>("SELECT * FROM series WHERE slug = $1")
-                .bind(slug)
-                .fetch_optional(self.db)
-                .await?
+        let Some(series) = sqlx::query_as::<_, Series>("SELECT * FROM series WHERE slug = $1")
+            .bind(slug)
+            .fetch_optional(self.db)
+            .await?
         else {
             return Ok(None);
         };
@@ -164,10 +163,7 @@ impl<'a> SeriesRepo<'a> {
         Ok(Some(()))
     }
 
-    pub async fn production_ids_for(
-        &self,
-        series_id: Uuid,
-    ) -> Result<Vec<Uuid>, DatabaseError> {
+    pub async fn production_ids_for(&self, series_id: Uuid) -> Result<Vec<Uuid>, DatabaseError> {
         let ids = sqlx::query_scalar::<_, Uuid>(
             "SELECT production_id FROM series_productions WHERE series_id = $1",
         )
@@ -251,12 +247,11 @@ impl<'a> SeriesRepo<'a> {
             return Ok(());
         }
 
-        let found_count = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM productions WHERE id = ANY($1)",
-        )
-        .bind(production_ids)
-        .fetch_one(self.db)
-        .await?;
+        let found_count =
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM productions WHERE id = ANY($1)")
+                .bind(production_ids)
+                .fetch_one(self.db)
+                .await?;
 
         if found_count != production_ids.len() as i64 {
             return Err(DatabaseError::BadRequest(
@@ -345,10 +340,7 @@ impl<'a> SeriesRepo<'a> {
             .map(|t| t.language_code.as_str())
             .collect();
         let names: Vec<&str> = translations.iter().map(|t| t.name.as_str()).collect();
-        let subtitles: Vec<&str> = translations
-            .iter()
-            .map(|t| t.subtitle.as_str())
-            .collect();
+        let subtitles: Vec<&str> = translations.iter().map(|t| t.subtitle.as_str()).collect();
         let descriptions: Vec<&str> = translations
             .iter()
             .map(|t| t.description.as_str())
