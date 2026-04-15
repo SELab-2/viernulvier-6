@@ -203,7 +203,7 @@ services:
         echo "Creating bucket..."
         $$G bucket info "$$GARAGE_S3_BUCKET" 2>/dev/null || \
           $$G bucket create "$$GARAGE_S3_BUCKET"
-        $$G bucket allow "$$GARAGE_S3_BUCKET" --key "$$GARAGE_S3_ACCESS_KEY" --read --write || true
+        $$G bucket allow "$$GARAGE_S3_BUCKET" --key "$$GARAGE_S3_ACCESS_KEY" --read --write --owner || true
 
         echo "Enabling website access on bucket..."
         $$G bucket website "$$GARAGE_S3_BUCKET" --allow || true
@@ -218,7 +218,7 @@ services:
           --cors-configuration "{
             \"CORSRules\": [{
               \"AllowedOrigins\": [\"$$ALLOWED_ORIGIN\"],
-              \"AllowedMethods\": [\"GET\", \"PUT\", \"HEAD\"],
+              \"AllowedMethods\": [\"PUT\"],
               \"AllowedHeaders\": [\"*\"],
               \"ExposeHeaders\": [\"ETag\"],
               \"MaxAgeSeconds\": 3600
