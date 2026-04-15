@@ -24,7 +24,7 @@ use crate::config::AppConfig;
 use crate::error::AppError;
 use crate::handlers::{
     admin, article, artist, auth, collection, event, hall, location, media, production, series,
-    space, taxonomy, version,
+    space, tagging, taxonomy, version,
 };
 
 pub mod config;
@@ -223,6 +223,7 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // location
         .routes(routes!(location::get_all))
         .routes(routes!(location::get_one))
+        .routes(routes!(location::get_by_slug))
         // production
         .routes(routes!(production::get_all))
         .routes(routes!(production::get_one))
@@ -238,6 +239,8 @@ fn public_routes() -> OpenApiRouter<AppState> {
         .routes(routes!(event::get_one))
         // taxonomies
         .routes(routes!(taxonomy::get_facets))
+        // entity tags
+        .routes(routes!(tagging::get_tags))
         // media
         .routes(routes!(media::get_all))
         .routes(routes!(media::get_one))
@@ -302,6 +305,8 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(media::unlink_from_entity))
         .routes(routes!(media::cleanup_orphans))
         .routes(routes!(media::reconcile_storage))
+        // Tags
+        .routes(routes!(tagging::put_tags))
         // Articles (CMS)
         .routes(routes!(article::get_all_cms))
         .routes(routes!(article::get_one_cms))

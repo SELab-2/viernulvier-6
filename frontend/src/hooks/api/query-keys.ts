@@ -1,12 +1,12 @@
-import { PaginationParams } from "@/types/api/api.types";
+import { PaginationParams, SearchPaginationParams } from "@/types/api/api.types";
 import { EntityMediaParams } from "@/types/models/media.types";
 
 const buildQueryKey = (
     base: readonly string[],
-    pagination?: PaginationParams
+    params?: PaginationParams | SearchPaginationParams
 ): readonly unknown[] => {
-    if (!pagination) return base;
-    return [...base, pagination];
+    if (!params) return base;
+    return [...base, params];
 };
 
 export const queryKeys = {
@@ -15,9 +15,10 @@ export const queryKeys = {
     locations: {
         all: (pagination?: PaginationParams) => buildQueryKey(["locations"], pagination),
         detail: (id: string) => ["locations", id] as const,
+        bySlug: (slug: string) => ["locations", "slug", slug] as const,
     },
     productions: {
-        all: (pagination?: PaginationParams) => buildQueryKey(["productions"], pagination),
+        all: (params?: SearchPaginationParams) => buildQueryKey(["productions"], params),
         detail: (id: string) => ["productions", id] as const,
         events: (id: string) => ["productions", id, "events"] as const,
     },

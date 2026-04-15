@@ -9,10 +9,11 @@ import { BooleanCell } from "../boolean-cell";
 import type { FieldDef } from "../edit-sheet";
 import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
 import { Action, ActionDisplay } from "@/types/cms/actions";
-import type { Location, LocationUpdateInput } from "@/types/models/location.types";
+import type { Location, LocationRow, LocationUpdateInput } from "@/types/models/location.types";
 
-export const locationFields: FieldDef<Location>[] = [
+export const locationFields: FieldDef<LocationRow>[] = [
     { key: "id", label: "ID", type: "text", readOnly: true },
+    { key: "slug", label: "Slug", type: "text" },
     { key: "name", label: "Name", type: "text" },
     { key: "code", label: "Code", type: "text" },
     { key: "street", label: "Street", type: "text" },
@@ -28,12 +29,19 @@ export const locationFields: FieldDef<Location>[] = [
         type: "boolean",
     },
     { key: "uitdatabankId", label: "UiTdatabank ID", type: "text" },
+    { key: "descriptionNl", label: "Description (NL)", type: "text" },
+    { key: "descriptionEn", label: "Description (EN)", type: "text" },
+    { key: "historyNl", label: "History (NL)", type: "text" },
+    { key: "historyEn", label: "History (EN)", type: "text" },
 ];
 
-export function toLocationUpdateInput(entity: Location): LocationUpdateInput {
+export function toLocationRow(entity: Location): LocationRow {
+    const nl = entity.translations.find((t) => t.languageCode === "nl");
+    const en = entity.translations.find((t) => t.languageCode === "en");
     return {
         id: entity.id,
         sourceId: entity.sourceId,
+        slug: entity.slug,
         name: entity.name,
         code: entity.code,
         street: entity.street,
@@ -45,11 +53,47 @@ export function toLocationUpdateInput(entity: Location): LocationUpdateInput {
         phone2: entity.phone2,
         isOwnedByViernulvier: entity.isOwnedByViernulvier,
         uitdatabankId: entity.uitdatabankId,
+        address: entity.address,
+        descriptionNl: nl?.description ?? null,
+        descriptionEn: en?.description ?? null,
+        historyNl: nl?.history ?? null,
+        historyEn: en?.history ?? null,
+    };
+}
+
+export function toLocationUpdateInput(row: LocationRow): LocationUpdateInput {
+    return {
+        id: row.id,
+        sourceId: row.sourceId,
+        slug: row.slug,
+        name: row.name,
+        code: row.code,
+        street: row.street,
+        number: row.number,
+        postalCode: row.postalCode,
+        city: row.city,
+        country: row.country,
+        phone1: row.phone1,
+        phone2: row.phone2,
+        isOwnedByViernulvier: row.isOwnedByViernulvier,
+        uitdatabankId: row.uitdatabankId,
+        translations: [
+            {
+                languageCode: "nl",
+                description: row.descriptionNl,
+                history: row.historyNl,
+            },
+            {
+                languageCode: "en",
+                description: row.descriptionEn,
+                history: row.historyEn,
+            },
+        ],
     };
 }
 
 export function makeLocationColumns(options: {
-    onEdit: (entity: Location) => void;
+    onEdit: (row: LocationRow) => void;
     t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>;
 }): ColumnDef<Location>[] {
     const { onEdit, t } = options;
@@ -60,7 +104,7 @@ export function makeLocationColumns(options: {
             label: t("edit", { label: "location" }),
             icon: SquarePen,
             display: ActionDisplay.Inline,
-            onClick: onEdit,
+            onClick: (location) => onEdit(toLocationRow(location)),
         },
         {
             key: "copy-name",

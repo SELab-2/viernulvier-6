@@ -15,9 +15,12 @@ pub mod media;
 pub mod production;
 pub mod series;
 pub mod space;
+pub mod tagging;
 pub mod taxonomy;
 pub mod version;
 pub mod queries {
+    pub mod location;
+    pub mod hall;
     pub mod pagination;
     pub mod production;
     pub mod sort;
