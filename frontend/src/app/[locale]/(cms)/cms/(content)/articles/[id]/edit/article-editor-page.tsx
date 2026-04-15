@@ -60,6 +60,10 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
     });
 
     const iframeRef = useRef<HTMLIFrameElement>(null);
+    const previewLocaleRef = useRef<string>(previewLocale);
+    useEffect(() => {
+        previewLocaleRef.current = previewLocale;
+    }, [previewLocale]);
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -81,17 +85,17 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
         [fetchedArticle, edits]
     );
 
+    // Set iframe src when preview opens or article slug changes
     useEffect(() => {
         if (!iframeRef.current || !isPreviewOpen || !article) return;
-        const expectedPath = `/${previewLocale}/articles/${article.slug}?preview=1&session=${previewSessionId}`;
+        const expectedPath = `/${previewLocaleRef.current}/articles/${article.slug}?preview=1&session=${previewSessionId}`;
         const currentPath = iframeRef.current.src
             ? new URL(iframeRef.current.src).pathname + new URL(iframeRef.current.src).search
             : "";
         if (currentPath !== expectedPath) {
             iframeRef.current.src = expectedPath;
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [previewLocale, isPreviewOpen, article?.slug, previewSessionId]);
+    }, [isPreviewOpen, article?.slug, previewSessionId]);
 
     const relations = useMemo(
         () =>
