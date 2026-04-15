@@ -222,7 +222,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
             <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
                 {/* Editor */}
                 <div
-                    className={`flex flex-col overflow-hidden p-4 transition-all duration-300 ${
+                    className={`flex h-full min-h-0 flex-col overflow-hidden p-4 transition-all duration-300 ${
                         isPreviewOpen ? "hidden lg:flex lg:w-[35%] lg:flex-1" : "w-full flex-1"
                     }`}
                 >
