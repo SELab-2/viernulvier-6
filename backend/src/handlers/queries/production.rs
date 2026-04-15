@@ -20,12 +20,11 @@ pub struct ProductionSearchQuery {
     pub artist: Option<String>,
     #[param(value_type = String, required = false)]
     pub location: Option<String>,
-    #[param(value_type = String, required = false)]
-    pub date_from: Option<String>,
-    #[param(value_type = String, required = false)]
-    pub date_to: Option<String>,
+    #[param(value_type = NaiveDate, required = false)]
+    pub date_from: Option<NaiveDate>,
+    #[param(value_type = NaiveDate, required = false)]
+    pub date_to: Option<NaiveDate>,
 
-    #[owned_into(~.map(Into::into))] // map the query sort to the database sort
     #[param(value_type = Sort, inline, required = false)]
     pub sort: Option<Sort>,
 }

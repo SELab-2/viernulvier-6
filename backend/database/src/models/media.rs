@@ -3,7 +3,7 @@ use ormlite::Model;
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::models::{entity_type::EntityType, sort::Sort};
+use crate::models::{entity_type::EntityType, filtering::sort::Sort};
 
 #[derive(Debug, Model, PartialEq)]
 #[ormlite(insert = "MediaCreate")]

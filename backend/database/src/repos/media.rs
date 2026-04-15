@@ -8,10 +8,9 @@ use uuid::Uuid;
 use crate::{
     error::DatabaseError,
     models::{
-        cursor::CursorData,
+        filtering::{cursor::CursorData, sort::Sort},
         entity_type::EntityType,
-        media::{Media, MediaCreate, MediaSearch, MediaWithScore},
-        sort::Sort,
+        media::{Media, MediaCreate, MediaSearch, MediaWithScore}
     },
 };
 

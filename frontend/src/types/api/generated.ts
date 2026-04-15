@@ -712,6 +712,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Aggregate public site statistics (cached) */
+        get: operations["get_stats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tags/{entity_type}/{entity_id}": {
         parameters: {
             query?: never;
@@ -1508,6 +1525,24 @@ export interface components {
             name_nl: string;
             /** Format: int32 */
             source_id?: number | null;
+        };
+        StatsPayload: {
+            /** Format: int64 */
+            article_count: number;
+            /** Format: int64 */
+            artist_count: number;
+            /** Format: int64 */
+            collection_count: number;
+            /** Format: int64 */
+            event_count: number;
+            /** Format: int64 */
+            location_count: number;
+            /** Format: date-time */
+            newest_event?: string | null;
+            /** Format: date-time */
+            oldest_event?: string | null;
+            /** Format: int64 */
+            production_count: number;
         };
         TagResponse: {
             slug: string;
@@ -3132,7 +3167,6 @@ export interface operations {
                 date_from?: string;
                 date_to?: string;
                 sort?: "recent" | "oldest" | "relevance";
-                after?: string | null;
             };
             header?: never;
             path?: never;
@@ -3746,6 +3780,28 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    get_stats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    /** @description Public cache: max-age=3600 (1h), stale-while-revalidate=86400 (24h) */
+                    "Cache-Control"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatsPayload"];
+                };
             };
         };
     };

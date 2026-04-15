@@ -2,7 +2,7 @@ use base64::{Engine, prelude::BASE64_URL_SAFE};
 use chrono::{DateTime, Utc};
 use database::{
     Database,
-    models::{cursor::CursorData, media::Media, media_variant::MediaVariant},
+    models::{filtering::cursor::CursorData, media::Media, media_variant::MediaVariant},
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
