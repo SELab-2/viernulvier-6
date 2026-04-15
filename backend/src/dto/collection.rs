@@ -7,14 +7,21 @@ use database::{
             CollectionContentType, CollectionItemBulkUpdate, CollectionItemCreate,
             CollectionItemTranslationData, CollectionItemWithTranslations,
         },
+        cursor::CursorData,
     },
 };
+use base64::{Engine, prelude::BASE64_URL_SAFE};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use tracing::debug;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::error::AppError;
+use crate::{
+    dto::paginated::PaginatedResponse,
+    handlers::queries::collection::CollectionSearchQuery,
+    error::AppError,
+};
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct CollectionTranslationPayload {
@@ -150,8 +157,22 @@ fn collection_translations_to_data(
 }
 
 impl CollectionPayload {
-    pub async fn all(db: &Database) -> Result<Vec<Self>, AppError> {
-        let collections = db.collections().all().await?;
+    pub async fn all(
+        db: &Database,
+        id_cursor: Option<String>,
+        limit: u32,
+        search: CollectionSearchQuery,
+    ) -> Result<PaginatedResponse<Self>, AppError> {
+        let cursor: Option<CursorData> = id_cursor.and_then(|b64| {
+            let bytes = BASE64_URL_SAFE.decode(b64).ok()?;
+            serde_json::from_slice(&bytes).ok()
+        });
+
+        let (collections, next_cursor) = db
+            .collections()
+            .all(limit, cursor, search.into())
+            .await?;
+
         let ids: Vec<Uuid> = collections.iter().map(|c| c.collection.id).collect();
         let all_items = db.collections().items_for_collections(&ids).await?;
 
@@ -163,13 +184,24 @@ impl CollectionPayload {
                 .push(item);
         }
 
-        Ok(collections
+        let collections: Vec<Self> = collections
             .into_iter()
             .map(|cwt| {
                 let items = items_map.remove(&cwt.collection.id).unwrap_or_default();
                 build_payload(cwt, items)
             })
-            .collect())
+            .collect();
+
+        let next_cursor_data = next_cursor.and_then(|c| {
+            let data = serde_json::to_vec(&c).ok()?;
+            Some(BASE64_URL_SAFE.encode(data))
+        });
+
+        debug!("Returning {} collections", collections.len());
+        Ok(PaginatedResponse {
+            data: collections,
+            next_cursor: next_cursor_data,
+        })
     }
 
     pub async fn by_id(db: &Database, id: Uuid) -> Result<Self, AppError> {

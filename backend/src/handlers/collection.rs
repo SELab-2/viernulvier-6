@@ -1,14 +1,24 @@
-use axum::{Json, extract::Path, http::StatusCode};
+use axum::{
+    Json, 
+    extract::{Path, Query}, 
+    http::StatusCode
+};
 use database::Database;
 use uuid::Uuid;
 
 use crate::{
-    dto::collection::{
-        CollectionItemPayload, CollectionItemPostPayload, CollectionItemsBulkPayload,
-        CollectionPayload, CollectionPostPayload,
+    dto::{
+        collection::{
+            CollectionItemPayload, CollectionItemPostPayload, CollectionItemsBulkPayload,
+            CollectionPayload, CollectionPostPayload,
+        },
+        paginated::PaginatedResponse,
     },
     error::{AppError, ErrorResponse},
-    handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
+    handlers::{
+        IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse,
+        queries::{collection::CollectionSearchQuery, pagination::PaginationQuery},
+    },
 };
 
 #[utoipa::path(
@@ -17,12 +27,22 @@ use crate::{
     tag = "Collections",
     operation_id = "get_all_collections",
     description = "Return all collections with their items. Public endpoint, no authentication required. Each collection contains the full list of its items in position order.",
+    params(
+        PaginationQuery,
+        CollectionSearchQuery
+    ),
     responses(
-        (status = 200, description = "Success", body = [CollectionPayload])
+        (status = 200, description = "Success", body = PaginatedResponse<CollectionPayload>)
     )
 )]
-pub async fn get_all(db: Database) -> JsonResponse<Vec<CollectionPayload>> {
-    CollectionPayload::all(&db).await?.json()
+pub async fn get_all(
+    db: Database,
+    Query(pagination): Query<PaginationQuery>,
+    Query(search): Query<CollectionSearchQuery>,
+) -> JsonResponse<PaginatedResponse<CollectionPayload>> {
+    CollectionPayload::all(&db, pagination.cursor, pagination.limit, search)
+    .await?
+    .json()
 }
 
 #[utoipa::path(
