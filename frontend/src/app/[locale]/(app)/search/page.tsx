@@ -4,6 +4,8 @@ import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 
 import { useGetProductions } from "@/hooks/api/useProductions";
 import { useGetLocations } from "@/hooks/api/useLocations";
@@ -28,19 +30,46 @@ export default function SearchPage() {
     const tHome = useTranslations("Home");
     const loadMoreRef = useRef<HTMLDivElement>(null);
     const queryClient = useQueryClient();
+    const searchParams = useSearchParams();
+    const router = useRouter();
 
     const [cursorHistory, setCursorHistory] = useState<(string | null)[]>([null]);
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
-    const [searchQuery, setSearchQuery] = useState("");
+    const query = searchParams.get("q")?.trim() ?? "";
+    const [draftQuery, setDraftQuery] = useState(query);
 
     const currentCursor = cursorHistory[currentPageIndex];
+
+    useEffect(() => {
+        setDraftQuery(query);
+    }, [query]);
+
+    useEffect(() => {
+        setCursorHistory([null]);
+        setCurrentPageIndex(0);
+    }, [query]);
+
+    const handleSearch = useCallback(
+        (value: string) => {
+            const trimmed = value.trim();
+            if (trimmed) {
+                router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+            } else {
+                router.push("/search");
+            }
+        },
+        [router]
+    );
 
     const {
         data: productionsResult,
         isLoading: productionsLoading,
         isFetching,
     } = useGetProductions({
-        pagination: currentCursor ? { cursor: currentCursor } : undefined,
+        params: {
+            ...(query ? { q: query } : {}),
+            ...(currentCursor ? { cursor: currentCursor } : {}),
+        },
     });
     const { data: locationsResult, isLoading: locationsLoading } = useGetLocations();
     const { data: facets, isLoading: facetsLoading } = useGetFacets({
@@ -59,12 +88,15 @@ export default function SearchPage() {
             cursorHistory.slice(0, currentPageIndex + 1).flatMap((cursor) => {
                 const pagination = cursor ? { cursor } : undefined;
                 const cached = queryClient.getQueryData<PaginatedResult<Production>>(
-                    queryKeys.productions.all(pagination)
+                    queryKeys.productions.all({
+                        ...(query ? { q: query } : {}),
+                        ...(pagination ?? {}),
+                    })
                 );
                 return cached?.data ?? [];
             }),
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [cursorHistory, currentPageIndex, queryClient, productionsResult]
+        [cursorHistory, currentPageIndex, queryClient, productionsResult, query]
     );
 
     const loadMore = useCallback(() => {
@@ -94,7 +126,7 @@ export default function SearchPage() {
         return (
             <>
                 <UnifiedHeader
-                    query=""
+                    query={query}
                     onQueryChange={() => {}}
                     searchPlaceholder={t("placeholder")}
                     searchHint={t("hint")}
@@ -107,13 +139,13 @@ export default function SearchPage() {
     return (
         <>
             <UnifiedHeader
-                query={searchQuery}
-                onQueryChange={setSearchQuery}
+                query={query}
+                onQueryChange={() => {}}
                 searchPlaceholder={t("placeholder")}
                 searchHint={t("hint")}
             />
 
-            <SearchHero query="" onQueryChange={() => {}} />
+            <SearchHero query={draftQuery} onQueryChange={setDraftQuery} onSearch={handleSearch} />
 
             <ResultsBar shownCount={allProductions.length} totalCount={allProductions.length} />
 
@@ -128,7 +160,7 @@ export default function SearchPage() {
                     {allProductions.length === 0 && !isLoading ? (
                         <VintageEmptyState
                             title={t("noResultsTitle")}
-                            description={t("noResultsText", { query: "" })}
+                            description={t("noResultsText", { query })}
                             imagePath="/images/de_vooruit_decaying.png"
                             caption={t("articleImageCaption")}
                         />
