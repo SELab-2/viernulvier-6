@@ -518,8 +518,12 @@ impl ApiImporter {
         };
 
         if let Ok(media) = self.db.media().insert(media_create).await {
-            let role = media_role_from_gallery_type(gallery_type);
             let is_cover = item.position == Some(0);
+            let role = if is_cover && gallery_type == "media" {
+                "cover"
+            } else {
+                media_role_from_gallery_type(gallery_type)
+            };
             let _ = self
                 .db
                 .media()
@@ -534,46 +538,46 @@ impl ApiImporter {
                 .await;
 
             for crop in item.crops {
-                if let (Some(name), Some(url)) = (crop.name, crop.url) {
-                    if name == "hd_ready" || name == "FE3_header" {
-                        let format = item.format.as_deref().unwrap_or("");
-                        let format_info = get_format_info(format);
-                        let ext = format_info.extension;
-                        let file_uuid = Uuid::now_v7();
-                        let crop_s3_key = format!(
-                            "media/production/{production_source_id}/{gallery_type}/crop_{name}_{file_uuid}.{ext}"
-                        );
+                if let (Some(name), Some(url)) = (crop.name, crop.url)
+                    && (name == "hd_ready" || name == "FE3_header")
+                {
+                    let format = item.format.as_deref().unwrap_or("");
+                    let format_info = get_format_info(format);
+                    let ext = format_info.extension;
+                    let file_uuid = Uuid::now_v7();
+                    let crop_s3_key = format!(
+                        "media/production/{production_source_id}/{gallery_type}/crop_{name}_{file_uuid}.{ext}"
+                    );
 
-                        match self
-                            .download_and_upload_to_key(
-                                s3_client,
-                                s3_bucket,
-                                &url,
-                                &crop_s3_key,
-                                format,
-                            )
-                            .await
-                        {
-                            Ok((checksum, file_size, width, height)) => {
-                                let upsert = database::repos::media_variant::CropVariantUpsert {
-                                    media_id: media.id,
-                                    crop_name: name,
-                                    s3_key: crop_s3_key,
-                                    mime_type: Some(format_info.mime.to_string()),
-                                    file_size: Some(file_size),
-                                    width,
-                                    height,
-                                    checksum: Some(checksum),
-                                    source_uri: Some(url),
-                                };
-                                let _ = self.db.media_variants().upsert_crop(upsert).await;
-                            }
-                            Err(e) => {
-                                tracing::warn!(
-                                    "Failed to download/upload crop '{name}' for media {}: {e}",
-                                    media.id
-                                );
-                            }
+                    match self
+                        .download_and_upload_to_key(
+                            s3_client,
+                            s3_bucket,
+                            &url,
+                            &crop_s3_key,
+                            format,
+                        )
+                        .await
+                    {
+                        Ok((checksum, file_size, width, height)) => {
+                            let upsert = database::repos::media_variant::CropVariantUpsert {
+                                media_id: media.id,
+                                crop_name: name,
+                                s3_key: crop_s3_key,
+                                mime_type: Some(format_info.mime.to_string()),
+                                file_size: Some(file_size),
+                                width,
+                                height,
+                                checksum: Some(checksum),
+                                source_uri: Some(url),
+                            };
+                            let _ = self.db.media_variants().upsert_crop(upsert).await;
+                        }
+                        Err(e) => {
+                            tracing::warn!(
+                                "Failed to download/upload crop '{name}' for media {}: {e}",
+                                media.id
+                            );
                         }
                     }
                 }
