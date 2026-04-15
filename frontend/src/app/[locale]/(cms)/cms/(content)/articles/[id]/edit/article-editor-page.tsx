@@ -219,11 +219,13 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
             </div>
 
             {/* Main content area */}
-            <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
                 {/* Editor */}
                 <div
-                    className={`flex h-full min-h-0 flex-col overflow-hidden p-4 transition-all duration-300 ${
-                        isPreviewOpen ? "hidden lg:flex lg:w-[35%] lg:flex-1" : "w-full flex-1"
+                    className={`flex min-h-0 flex-col overflow-hidden p-4 transition-all duration-300 ${
+                        isPreviewOpen
+                            ? "hidden lg:flex lg:h-full lg:w-[35%] lg:flex-1"
+                            : "h-full w-full flex-1"
                     }`}
                 >
                     <TiptapEditor
@@ -235,8 +237,10 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
 
                 {/* Metadata panel - always visible */}
                 <aside
-                    className={`shrink-0 overflow-y-auto border-t lg:w-64 lg:border-t-0 lg:border-l ${
-                        isPreviewOpen ? "hidden lg:block" : "h-1/3 w-full lg:h-auto"
+                    className={`shrink-0 overflow-y-auto border-t lg:h-full lg:w-64 lg:border-t-0 lg:border-l ${
+                        isPreviewOpen
+                            ? "hidden lg:block"
+                            : "h-auto max-h-[35%] w-full lg:h-auto lg:max-h-none"
                     }`}
                 >
                     <ArticleMetadataPanel
@@ -249,7 +253,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
 
                 {/* Preview Panel - right side */}
                 {isPreviewOpen && (
-                    <div className="border-muted flex min-h-[70vh] w-full flex-1 flex-col overflow-hidden border-t lg:min-h-0 lg:w-[calc(100%-35%-16rem)] lg:min-w-[400px] lg:border-t-0 lg:border-l">
+                    <div className="border-muted flex h-full w-full flex-1 flex-col overflow-hidden border-t lg:min-h-0 lg:w-[calc(100%-35%-16rem)] lg:min-w-[400px] lg:border-t-0 lg:border-l">
                         <div className="bg-muted flex items-center justify-between px-4 py-3 shadow-[0_1px_0_0_hsl(var(--border))]">
                             <span className="text-background font-mono text-[10px] font-medium tracking-[1.2px] uppercase">
                                 {t("previewLabel")}
