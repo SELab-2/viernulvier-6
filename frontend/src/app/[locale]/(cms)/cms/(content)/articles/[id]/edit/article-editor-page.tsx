@@ -11,13 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/routing";
-import {
-    useGetArticle,
-    useGetArticleRelations,
-    useUpdateArticle,
-    useUpdateArticleRelations,
-} from "@/hooks/api/useArticles";
-import { Article, ArticleRelations } from "@/types/models/article.types";
+import { useGetArticle, useUpdateArticle } from "@/hooks/api/useArticles";
+import { Article } from "@/types/models/article.types";
 
 interface ArticleEditorPageProps {
     id: string;
@@ -26,30 +21,17 @@ interface ArticleEditorPageProps {
 export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
     const t = useTranslations("Cms.Articles");
     const { data: fetchedArticle, isLoading: articleLoading } = useGetArticle(id);
-    const { data: fetchedRelations, isLoading: relationsLoading } = useGetArticleRelations(id);
     const updateArticle = useUpdateArticle();
-    const updateRelations = useUpdateArticleRelations(id);
 
     const [edits, setEdits] = useState<Partial<Article>>({});
-    const [relationEdits, setRelationEdits] = useState<ArticleRelations | null>(null);
 
     const article = fetchedArticle ? { ...fetchedArticle, ...edits } : null;
-    const relations = relationEdits ??
-        fetchedRelations ?? {
-            productionIds: [],
-            artistIds: [],
-            locationIds: [],
-            eventIds: [],
-        };
 
     const handleSave = async () => {
         if (!article) return;
 
         try {
-            await Promise.all([
-                updateArticle.mutateAsync(article),
-                updateRelations.mutateAsync(relations),
-            ]);
+            await updateArticle.mutateAsync(article);
             toast.success(t("saveSuccess"));
         } catch {
             toast.error(t("saveFailed"));
@@ -60,7 +42,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
         setEdits((prev) => ({ ...prev, ...patch }));
     };
 
-    if (articleLoading || relationsLoading || !article) {
+    if (articleLoading || !article) {
         return (
             <div className="space-y-4 p-4">
                 <Skeleton className="h-8 w-48" />
@@ -69,7 +51,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
         );
     }
 
-    const isSaving = updateArticle.isPending || updateRelations.isPending;
+    const isSaving = updateArticle.isPending;
 
     return (
         <div className="flex h-full flex-col">
@@ -112,12 +94,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
 
                 {/* Metadata panel */}
                 <aside className="w-72 shrink-0 overflow-y-auto border-l">
-                    <ArticleMetadataPanel
-                        article={article}
-                        relations={relations}
-                        onArticleChange={patchArticle}
-                        onRelationsChange={setRelationEdits}
-                    />
+                    <ArticleMetadataPanel article={article} onArticleChange={patchArticle} />
                 </aside>
             </div>
         </div>
