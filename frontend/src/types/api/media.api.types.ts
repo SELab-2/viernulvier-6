@@ -8,5 +8,6 @@ export type AttachMediaResponse = components["schemas"]["MediaPayload"];
 export type GenerateUploadUrlResponse = components["schemas"]["UploadUrlResponse"];
 export type GetAllMediaResponse = components["schemas"]["MediaPayload"][];
 export type AttachMediaRequestType = components["schemas"]["AttachMediaRequest"];
+export type LinkMediaRequestType = components["schemas"]["LinkMediaRequest"];
 export type UploadUrlRequestType = components["schemas"]["UploadUrlRequest"];
 export type UpdateMediaRequestType = components["schemas"]["MediaPayload"];
