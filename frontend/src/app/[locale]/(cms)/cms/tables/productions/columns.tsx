@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
-import { SquarePen } from "lucide-react";
+import { ImageIcon, SquarePen } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
@@ -141,11 +141,12 @@ export function toProductionUpdateInput(row: ProductionRow): ProductionUpdateInp
 
 export function makeProductionColumns(options: {
     onEdit: (row: ProductionRow) => void;
+    onMedia: (production: Production) => void;
     t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>;
     locale: string;
     onOpenSpotlight?: (src: string, alt: string) => void;
 }): ColumnDef<Production>[] {
-    const { onEdit, t, locale, onOpenSpotlight } = options;
+    const { onEdit, onMedia, t, locale, onOpenSpotlight } = options;
     const otherLocale = locale === "nl" ? "en" : "nl";
 
     const translationPair = (row: Production, field: "title" | "artist") => ({
@@ -160,6 +161,13 @@ export function makeProductionColumns(options: {
             icon: SquarePen,
             display: ActionDisplay.Inline,
             onClick: (p) => onEdit(toProductionRow(p)),
+        },
+        {
+            key: "media",
+            label: t("media", { label: "production" }),
+            icon: ImageIcon,
+            display: ActionDisplay.Inline,
+            onClick: (p) => onMedia(p),
         },
         {
             key: "copy-slug",

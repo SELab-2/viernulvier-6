@@ -305,6 +305,8 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(media::delete))
         .routes(routes!(media::attach_to_entity))
         .routes(routes!(media::unlink_from_entity))
+        .routes(routes!(media::set_cover_for_entity))
+        .routes(routes!(media::clear_cover_for_entity))
         .routes(routes!(media::cleanup_orphans))
         .routes(routes!(media::reconcile_storage))
         // Tags

@@ -187,6 +187,44 @@ export const useUnlinkMedia = () => {
     });
 };
 
+export const useSetCoverMedia = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({
+            entityType,
+            entityId,
+            mediaId,
+        }: {
+            entityType: string;
+            entityId: string;
+            mediaId: string;
+        }) => {
+            await api.post(`/media/entity/${entityType}/${entityId}/${mediaId}/set-cover`);
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.media.entity(variables.entityType, variables.entityId),
+            });
+        },
+    });
+};
+
+export const useClearCoverMedia = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ entityType, entityId }: { entityType: string; entityId: string }) => {
+            await api.delete(`/media/entity/${entityType}/${entityId}/cover`);
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.media.entity(variables.entityType, variables.entityId),
+            });
+        },
+    });
+};
+
 export const useUpdateMedia = () => {
     const queryClient = useQueryClient();
 
@@ -201,6 +239,52 @@ export const useUpdateMedia = () => {
         onSuccess: (updated) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.media.all() });
             queryClient.setQueryData(queryKeys.media.detail(updated.id), updated);
+        },
+    });
+};
+
+export const useUploadMedia = () => {
+    const generateUploadUrl = useGenerateUploadUrl();
+    const attachMedia = useAttachMedia();
+
+    return useMutation({
+        mutationFn: async ({
+            file,
+            entityType,
+            entityId,
+            metadata,
+        }: {
+            file: File;
+            entityType: string;
+            entityId: string;
+            metadata?: Omit<AttachMediaInput, "s3Key" | "mimeType">;
+        }): Promise<Media> => {
+            const { s3Key, uploadUrl } = await generateUploadUrl.mutateAsync({
+                filename: file.name,
+                mimeType: file.type,
+            });
+
+            const uploadResponse = await fetch(uploadUrl, {
+                method: "PUT",
+                body: file,
+                headers: { "Content-Type": file.type },
+            });
+            if (!uploadResponse.ok) {
+                throw new Error(
+                    `S3 upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`
+                );
+            }
+
+            return attachMedia.mutateAsync({
+                entityType,
+                entityId,
+                input: {
+                    s3Key,
+                    mimeType: file.type,
+                    fileSize: file.size,
+                    ...metadata,
+                },
+            });
         },
     });
 };

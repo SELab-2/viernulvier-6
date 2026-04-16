@@ -27,6 +27,7 @@ impl MediaPayload {
             created_at: m.created_at,
             updated_at: m.updated_at,
             url,
+            s3_key: m.s3_key,
             mime_type: m.mime_type,
             file_size: m.file_size,
             width: m.width,
@@ -101,6 +102,8 @@ pub struct MediaPayload {
 
     /// Direct public URL to the media file (S3 or external)
     pub url: Option<String>,
+    /// The S3 object key (needed to link existing media to another entity)
+    pub s3_key: String,
 
     pub mime_type: String,
     pub file_size: Option<i64>,
