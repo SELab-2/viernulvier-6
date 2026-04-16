@@ -5,7 +5,8 @@ use axum::{
     http::StatusCode,
 };
 use database::{Database, models::entity_type::EntityType};
-use sha2::{Digest, Sha256};
+use hmac::{Hmac, Mac};
+use sha2::Sha256;
 use std::collections::HashSet;
 use std::time::Duration;
 use uuid::Uuid;
@@ -146,16 +147,23 @@ fn validate_upload_request(req: &UploadUrlRequest) -> Result<(), AppError> {
     Ok(())
 }
 
+type HmacSha256 = Hmac<Sha256>;
+
 pub fn generate_upload_token(secret: &str, s3_key: &str) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(secret.as_bytes());
-    hasher.update(b":");
-    hasher.update(s3_key.as_bytes());
-    hex::encode(hasher.finalize())
+    let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
+        .expect("HMAC can take key of any size");
+    mac.update(s3_key.as_bytes());
+    hex::encode(mac.finalize().into_bytes())
 }
 
 fn verify_upload_token(secret: &str, s3_key: &str, token: &str) -> bool {
-    generate_upload_token(secret, s3_key) == token
+    let Ok(expected) = hex::decode(token) else {
+        return false;
+    };
+    let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
+        .expect("HMAC can take key of any size");
+    mac.update(s3_key.as_bytes());
+    mac.verify_slice(&expected).is_ok()
 }
 
 #[utoipa::path(

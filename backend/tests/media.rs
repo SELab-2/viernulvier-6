@@ -1,6 +1,7 @@
 use axum::http::StatusCode;
 use serde_json::json;
-use sha2::{Digest, Sha256};
+use hmac::{Hmac, Mac};
+use sha2::Sha256;
 use sqlx::PgPool;
 use uuid::Uuid;
 use viernulvier_api::{config::AppConfig, dto::media::MediaPayload};
@@ -10,12 +11,13 @@ use crate::common::router::TestRouter;
 
 mod common;
 
+type HmacSha256 = Hmac<Sha256>;
+
 fn generate_upload_token(secret: &str, s3_key: &str) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(secret.as_bytes());
-    hasher.update(b":");
-    hasher.update(s3_key.as_bytes());
-    hex::encode(hasher.finalize())
+    let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
+        .expect("HMAC can take key of any size");
+    mac.update(s3_key.as_bytes());
+    hex::encode(mac.finalize().into_bytes())
 }
 
 #[sqlx::test(fixtures("productions", "media"))]
