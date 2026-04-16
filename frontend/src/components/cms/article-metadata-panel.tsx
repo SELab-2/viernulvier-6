@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 
+import { HelpCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -12,6 +13,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useGetArtists } from "@/hooks/api/useArtists";
 import { useGetProductions } from "@/hooks/api/useProductions";
 import { useGetLocations } from "@/hooks/api/useLocations";
@@ -121,7 +123,19 @@ export function ArticleMetadataPanel({
 
             {/* Subject period */}
             <div className="space-y-1">
-                <Label className="text-xs font-medium">{t("subjectPeriod")}</Label>
+                <div className="flex items-center gap-1.5">
+                    <Label className="text-xs font-medium">{t("subjectPeriod")}</Label>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <HelpCircle className="text-muted-foreground h-3.5 w-3.5 cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-56">
+                                {t("subjectPeriodHelp")}
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </div>
                 <div className="flex flex-col gap-1">
                     <Input
                         type="date"
@@ -140,6 +154,7 @@ export function ArticleMetadataPanel({
                         className="h-8 text-xs"
                     />
                 </div>
+                <p className="text-muted-foreground text-xs">{t("subjectPeriodCaption")}</p>
             </div>
 
             {/* Related productions */}

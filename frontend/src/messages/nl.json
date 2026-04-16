@@ -323,6 +323,8 @@
             "statusLabel": "Status",
             "slug": "Slug",
             "subjectPeriod": "Periode",
+            "subjectPeriodHelp": "De tijdsperiode waarover dit artikel gaat — bijv. wanneer de beschreven evenementen plaatsvonden. Enkel gebruikt voor sortering in het CMS, niet zichtbaar voor bezoekers.",
+            "subjectPeriodCaption": "Intern gebruik — niet zichtbaar voor bezoekers.",
             "titleColumn": "Titel",
             "relatedProductions": "Gerelateerde producties",
             "relatedArtists": "Gerelateerde artiesten",
