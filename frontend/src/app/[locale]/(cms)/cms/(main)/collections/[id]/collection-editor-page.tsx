@@ -11,7 +11,7 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { GripVertical, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Link, useRouter } from "@/i18n/routing";
 import {
@@ -338,6 +338,7 @@ function SortableItemRow({
 
 export function CollectionEditorPage({ id }: { id: string }) {
     const t = useTranslations("Cms.Collections");
+    const locale = useLocale();
     const router = useRouter();
 
     const { data: collection, isLoading } = useGetCollection(id);
@@ -573,7 +574,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
     const copyShareableLink = async () => {
         if (!metadata?.slug) return;
         try {
-            await navigator.clipboard.writeText(`${origin}/en/collections/${metadata.slug}`);
+            await navigator.clipboard.writeText(`${origin}/${locale}/collections/${metadata.slug}`);
             toast.success(t("linkCopied"));
         } catch {
             toast.error(t("copyError"));
@@ -682,7 +683,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
                             </Button>
                         </div>
                         <p className="text-muted-foreground text-xs">
-                            {origin}/en/collections/{metadata.slug}
+                            {origin}/{locale}/collections/{metadata.slug}
                         </p>
                     </div>
                 </div>
