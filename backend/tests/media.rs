@@ -226,7 +226,7 @@ async fn link_existing_media_to_entity(db: PgPool) {
         "media_id": media_id,
         "role": "poster",
         "sort_order": 5,
-        "is_cover_image": true
+        "is_cover_image": false
     });
 
     let response = app
