@@ -59,8 +59,8 @@ export function ScrollPositionSlider({
         });
     }
 
-    const SLIDER_HEIGHT_PX = 320;
-    const MIN_GAP_PX = 20;
+    const SLIDER_HEIGHT_PX = 544;
+    const MIN_GAP_PX = 34;
 
     const filteredYearRanges = yearRanges.filter((range, index) => {
         if (index === 0) return true;
@@ -106,71 +106,69 @@ export function ScrollPositionSlider({
     };
 
     return (
-        <div
-            ref={containerRef}
-            className="fixed top-1/2 left-4 z-40 h-[50vh] w-0.5 -translate-y-1/2 select-none"
-        >
-            <div className="bg-border relative h-full w-full">
+        <div ref={containerRef} className="relative z-40 h-full w-11 shrink-0 select-none sm:w-13">
+            {filteredYearRanges.map((range) => (
+                <div key={`label-${range.year}`}>
+                    <div
+                        className="text-muted-foreground pointer-events-none absolute right-2.5 left-0 text-right font-mono text-[11px] leading-none whitespace-nowrap"
+                        style={{
+                            top: `${frac(range.startIndex)}%`,
+                            transform: "translateY(-50%)",
+                        }}
+                    >
+                        {range.year}
+                    </div>
+                </div>
+            ))}
+
+            <div className="absolute inset-y-0 right-0 w-0.5">
+                <div className="bg-border relative h-full w-full">
+                    <div
+                        className="bg-foreground absolute w-full transition-all"
+                        style={{
+                            top: 0,
+                            bottom: `${100 - frac(isDragging ? dragIndex : currentIndex)}%`,
+                        }}
+                    />
+
+                    {yearRanges.map((range) => (
+                        <div key={`tick-${range.year}`}>
+                            <div
+                                className="bg-muted-foreground absolute left-1/2 h-2 w-2 -translate-x-1/2 rounded-full"
+                                style={{
+                                    top: `${frac(range.startIndex)}%`,
+                                }}
+                            />
+                        </div>
+                    ))}
+                </div>
+
                 <div
-                    className="bg-foreground absolute w-full transition-all"
+                    className="bg-foreground border-background pointer-events-none absolute left-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 border-2"
                     style={{
-                        top: 0,
-                        bottom: `${100 - frac(isDragging ? dragIndex : currentIndex)}%`,
+                        top: `${frac(isDragging ? dragIndex : currentIndex)}%`,
                     }}
                 />
 
-                {yearRanges.map((range) => (
-                    <div key={`tick-${range.year}`}>
-                        <div
-                            className="bg-muted-foreground absolute left-1/2 h-2 w-2 -translate-x-1/2 rounded-full"
-                            style={{
-                                top: `${frac(range.startIndex)}%`,
-                            }}
-                        />
-                    </div>
-                ))}
-
-                {filteredYearRanges.map((range) => (
-                    <div key={`label-${range.year}`}>
-                        <div
-                            className="text-muted-foreground pointer-events-none absolute font-mono text-[10px] whitespace-nowrap"
-                            style={{
-                                top: `${frac(range.startIndex)}%`,
-                                transform: "translateY(-50%)",
-                                left: "12px",
-                            }}
-                        >
-                            {range.year}
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            <div
-                className="bg-foreground border-background pointer-events-none absolute left-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 border-2"
-                style={{
-                    top: `${frac(isDragging ? dragIndex : currentIndex)}%`,
-                }}
-            />
-
-            <div
-                className="absolute inset-y-0 left-1/2 w-6 -translate-x-1/2 cursor-pointer"
-                onPointerDown={onPointerDown}
-                onPointerMove={onPointerMove}
-                onPointerUp={onPointerUp}
-                onPointerCancel={onPointerUp}
-            />
-
-            {isDragging && (
                 <div
-                    className="bg-background border-foreground absolute left-6 -translate-y-1/2 border-2 px-2 py-1 text-[12px] font-bold whitespace-nowrap"
-                    style={{
-                        top: `${frac(dragIndex)}%`,
-                    }}
-                >
-                    {months[dragIndex]}
-                </div>
-            )}
+                    className="absolute inset-y-0 left-1/2 w-6 -translate-x-1/2 cursor-pointer"
+                    onPointerDown={onPointerDown}
+                    onPointerMove={onPointerMove}
+                    onPointerUp={onPointerUp}
+                    onPointerCancel={onPointerUp}
+                />
+
+                {isDragging && (
+                    <div
+                        className="bg-background border-foreground absolute left-full z-50 ml-2 -translate-y-1/2 border-2 px-2 py-1 text-[12px] font-bold whitespace-nowrap"
+                        style={{
+                            top: `${frac(dragIndex)}%`,
+                        }}
+                    >
+                        {months[dragIndex]}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
