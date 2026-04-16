@@ -14,8 +14,8 @@ use crate::{
     AppState,
     config::S3Config,
     dto::media::{
-        AttachMediaRequest, MediaPayload, MediaVariantPayload, ReconcileResponse, UploadUrlRequest,
-        UploadUrlResponse,
+        AttachMediaRequest, LinkMediaRequest, MediaPayload, MediaVariantPayload, ReconcileResponse,
+        UploadUrlRequest, UploadUrlResponse,
     },
     error::AppError,
     handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
@@ -104,7 +104,6 @@ const ALLOWED_MIME_TYPES: &[&str] = &[
     "video/mp4",
     "application/pdf",
 ];
-const MAX_UPLOAD_SIZE_BYTES: i64 = 50 * 1024 * 1024; // 50 MiB
 
 fn validate_upload_request(req: &UploadUrlRequest) -> Result<(), AppError> {
     let ext = std::path::Path::new(&req.filename)
@@ -195,7 +194,7 @@ pub async fn generate_upload_url(
         .bucket(&s3_config.bucket)
         .key(&s3_key)
         .content_type(&req.mime_type)
-        .content_length(MAX_UPLOAD_SIZE_BYTES)
+        .content_length(state.config.max_upload_size_bytes)
         .presigned(presigning_config)
         .await
         .map_err(|e| AppError::Internal(format!("failed to generate presigned URL: {e}")))?;
@@ -438,6 +437,49 @@ pub async fn attach_to_entity(
 
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
     MediaPayload::from_model(media, public_url).json_created()
+}
+
+#[utoipa::path(
+    method(post),
+    path = "/media/entity/{entity_type}/{entity_id}/link",
+    tag = "Media",
+    operation_id = "link_media_to_entity",
+    description = "Link an existing media record to an entity. Does not modify media metadata or require an upload token.",
+    params(
+        ("entity_type" = String, Path, description = "Entity type (production, event, blogpost, media, artist)"),
+        ("entity_id" = Uuid, Path, description = "Entity UUID")
+    ),
+    request_body = LinkMediaRequest,
+    responses(
+        (status = 200, description = "Success", body = MediaPayload),
+        (status = 404, description = "Media not found"),
+        (status = 400, description = "Bad request")
+    )
+)]
+pub async fn link_to_entity(
+    State(state): State<AppState>,
+    db: Database,
+    Path((entity_type, entity_id)): Path<(String, Uuid)>,
+    Json(req): Json<LinkMediaRequest>,
+) -> JsonResponse<MediaPayload> {
+    let et = parse_entity_type(&entity_type)?;
+    let role = normalize_media_role_opt(req.role)?.unwrap_or_else(|| "gallery".to_string());
+
+    let media = db.media().by_id(req.media_id).await?;
+
+    db.media()
+        .link_to_entity(
+            et,
+            entity_id,
+            req.media_id,
+            &role,
+            req.sort_order.unwrap_or(0),
+            req.is_cover_image.unwrap_or(false),
+        )
+        .await?;
+
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    Ok(Json(MediaPayload::from_model(media, public_url)))
 }
 
 #[utoipa::path(

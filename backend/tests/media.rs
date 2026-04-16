@@ -212,3 +212,29 @@ async fn cleanup_orphans(db: PgPool) {
     let response = app.get(&format!("/media/{media_id}")).await;
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
+
+#[sqlx::test(fixtures("productions", "media"))]
+#[test_log::test]
+async fn link_existing_media_to_entity(db: PgPool) {
+    let app = TestRouter::as_editor(db.clone()).await;
+    let production_id = Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap();
+    let media_id = Uuid::parse_str("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa").unwrap();
+
+    let payload = json!({
+        "media_id": media_id,
+        "role": "poster",
+        "sort_order": 5,
+        "is_cover_image": true
+    });
+
+    let response = app
+        .post(
+            &format!("/media/entity/production/{production_id}/link"),
+            &payload,
+        )
+        .await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: MediaPayload = response.into_struct().await;
+    assert_eq!(data.id, media_id);
+}

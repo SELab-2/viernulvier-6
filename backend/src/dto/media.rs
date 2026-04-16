@@ -262,6 +262,14 @@ pub struct AttachMediaRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct LinkMediaRequest {
+    pub media_id: Uuid,
+    pub role: Option<String>,
+    pub sort_order: Option<i32>,
+    pub is_cover_image: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ReconcileResponse {
     pub applied: bool,
     pub db_key_count: usize,

@@ -463,6 +463,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/media/entity/{entity_type}/{entity_id}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Link an existing media record to an entity. Does not modify media metadata or require an upload token. */
+        post: operations["link_media_to_entity"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/media/entity/{entity_type}/{entity_id}/{media_id}": {
         parameters: {
             query?: never;
@@ -1174,6 +1191,14 @@ export interface components {
             /** Format: uuid */
             space_id?: string | null;
             vendor_id?: string | null;
+        };
+        LinkMediaRequest: {
+            is_cover_image?: boolean | null;
+            /** Format: uuid */
+            media_id: string;
+            role?: string | null;
+            /** Format: int32 */
+            sort_order?: number | null;
         };
         LocationPayload: {
             city?: string | null;
@@ -2921,6 +2946,49 @@ export interface operations {
             };
             /** @description Bad request */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    link_media_to_entity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Entity type (production, event, blogpost, media, artist) */
+                entity_type: string;
+                /** @description Entity UUID */
+                entity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkMediaRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaPayload"];
+                };
+            };
+            /** @description Bad request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Media not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
