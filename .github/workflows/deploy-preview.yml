@@ -78,8 +78,8 @@ jobs:
 
       - name: Ensure preview Traefik is running
         run: |
-          if [ -z "$(docker compose -f infra/traefik/docker-compose.yml ps -q traefik)" ]; then
-            docker compose -f infra/traefik/docker-compose.yml up -d
+          if [ -z "$(docker ps -q -f name=preview-traefik)" ]; then
+            docker compose -f infra/traefik/docker-compose.preview-traefik.yml up -d
           fi
 
       - name: Start preview stack

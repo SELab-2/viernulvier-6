@@ -1,0 +1,25 @@
+services:
+  traefik:
+    image: traefik:v3.6.8
+    # Fixed name so all PRs share one Traefik instance
+    container_name: preview-traefik
+    command:
+      - "--log.level=INFO"
+      - "--providers.docker=true"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.watch=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=traefik"
+      # HTTP only — Cloudflare tunnel terminates SSL externally
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: always
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external: true
