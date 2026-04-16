@@ -304,6 +304,7 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(media::put))
         .routes(routes!(media::delete))
         .routes(routes!(media::attach_to_entity))
+        .routes(routes!(media::link_to_entity))
         .routes(routes!(media::unlink_from_entity))
         .routes(routes!(media::cleanup_orphans))
         .routes(routes!(media::reconcile_storage))
