@@ -303,6 +303,72 @@ impl<'a> MediaRepo<'a> {
         Ok(())
     }
 
+    /// Demote the current cover for an entity back to the gallery role without removing the link.
+    pub async fn clear_cover(
+        &self,
+        entity_type: EntityType,
+        entity_id: Uuid,
+    ) -> Result<(), DatabaseError> {
+        sqlx::query(
+            r#"
+            UPDATE entity_media
+            SET is_cover_image = false,
+                role = CASE WHEN role = 'cover' THEN 'gallery' ELSE role END
+            WHERE entity_type = $1 AND entity_id = $2
+              AND (role = 'cover' OR is_cover_image = true)
+            "#,
+        )
+        .bind(entity_type as EntityType)
+        .bind(entity_id)
+        .execute(self.db)
+        .await?;
+        Ok(())
+    }
+
+    /// Atomically promote a linked media item to cover role for an entity.
+    /// Any existing cover for the entity is demoted back to the gallery role.
+    pub async fn set_cover(
+        &self,
+        entity_type: EntityType,
+        entity_id: Uuid,
+        media_id: Uuid,
+    ) -> Result<(), DatabaseError> {
+        let mut tx = self.db.begin().await?;
+
+        // Demote any existing cover back to gallery (handles both role='cover' and
+        // is_cover_image=true with other roles, e.g. from the importer)
+        sqlx::query(
+            r#"
+            UPDATE entity_media
+            SET is_cover_image = false,
+                role = CASE WHEN role = 'cover' THEN 'gallery' ELSE role END
+            WHERE entity_type = $1 AND entity_id = $2
+              AND (role = 'cover' OR is_cover_image = true)
+            "#,
+        )
+        .bind(entity_type as EntityType)
+        .bind(entity_id)
+        .execute(&mut *tx)
+        .await?;
+
+        // Promote the new media to cover
+        sqlx::query(
+            r#"
+            UPDATE entity_media
+            SET is_cover_image = true, role = 'cover'
+            WHERE entity_type = $1 AND entity_id = $2 AND media_id = $3
+            "#,
+        )
+        .bind(entity_type as EntityType)
+        .bind(entity_id)
+        .bind(media_id)
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(())
+    }
+
     /// Unlink a media item from an entity
     pub async fn unlink_from_entity(
         &self,
@@ -340,7 +406,7 @@ impl<'a> MediaRepo<'a> {
                 m.width, m.height, m.checksum,
                 m.alt_text_nl, m.alt_text_en, m.alt_text_fr, m.description_nl, m.description_en, m.description_fr, m.credit_nl, m.credit_en, m.credit_fr,
                 m.geo_latitude, m.geo_longitude,
-                m.parent_id, m.derivative_type, m.gallery_type, m.source_id,
+                m.parent_id, m.derivative_type, COALESCE(em.role, m.gallery_type) AS gallery_type, m.source_id,
                 m.source_system, m.source_uri, m.source_updated_at
             FROM media m
             JOIN entity_media em ON em.media_id = m.id
@@ -370,7 +436,7 @@ impl<'a> MediaRepo<'a> {
                 m.width, m.height, m.checksum,
                 m.alt_text_nl, m.alt_text_en, m.alt_text_fr, m.description_nl, m.description_en, m.description_fr, m.credit_nl, m.credit_en, m.credit_fr,
                 m.geo_latitude, m.geo_longitude,
-                m.parent_id, m.derivative_type, m.gallery_type, m.source_id,
+                m.parent_id, m.derivative_type, COALESCE(em.role, m.gallery_type) AS gallery_type, m.source_id,
                 m.source_system, m.source_uri, m.source_updated_at
             FROM media m
             JOIN entity_media em ON em.media_id = m.id

@@ -17,6 +17,7 @@ export type Media = {
     createdAt: string;
     updatedAt: string;
     url: string | null;
+    s3Key: string;
     mimeType: string;
     fileSize: number | null;
     width: number | null;

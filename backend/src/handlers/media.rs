@@ -94,8 +94,10 @@ pub async fn get_one(
     request_body = UploadUrlRequest,
     responses(
         (status = 200, description = "Success", body = UploadUrlResponse),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
         (status = 503, description = "S3 not configured")
-    )
+    ),
+    security(("cookie_auth" = []))
 )]
 pub async fn generate_upload_url(
     State(state): State<AppState>,
@@ -141,8 +143,10 @@ pub async fn generate_upload_url(
     ),
     responses(
         (status = 200, description = "Success", body = MediaPayload),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
         (status = 404, description = "Not found")
-    )
+    ),
+    security(("cookie_auth" = []))
 )]
 pub async fn put(
     State(state): State<AppState>,
@@ -169,8 +173,10 @@ pub async fn put(
     ),
     responses(
         (status = 204, description = "No Content"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
         (status = 404, description = "Not found")
-    )
+    ),
+    security(("cookie_auth" = []))
 )]
 pub async fn delete(
     State(state): State<AppState>,
@@ -205,7 +211,7 @@ pub async fn delete(
     operation_id = "get_entity_media",
     description = "Get media linked to an entity. Use role/pagination filters. If cover_only=true and no explicit cover is set, the first item by ordering is returned.",
     params(
-        ("entity_type" = String, Path, description = "Entity type (production, event, blogpost, media, artist)"),
+        ("entity_type" = EntityType, Path, description = "Entity type (production, event, blogpost, media, artist)"),
         ("entity_id" = Uuid, Path, description = "Entity UUID"),
         ("role" = Option<String>, Query, description = "Optional media role filter (e.g. gallery, poster, review, cover)"),
         ("cover_only" = Option<bool>, Query, description = "If true, return one cover item; falls back to first ordered item when no explicit cover exists"),
@@ -288,14 +294,16 @@ pub struct GetEntityMediaQuery {
     operation_id = "attach_media_to_entity",
     description = "Primary CMS write endpoint: create/update media metadata by s3_key and link it to an entity in one transaction.",
     params(
-        ("entity_type" = String, Path, description = "Entity type (production, event, blogpost, media, artist)"),
+        ("entity_type" = EntityType, Path, description = "Entity type (production, event, blogpost, media, artist)"),
         ("entity_id" = Uuid, Path, description = "Entity UUID")
     ),
     request_body = AttachMediaRequest,
     responses(
         (status = 201, description = "Created", body = MediaPayload),
-        (status = 400, description = "Bad request")
-    )
+        (status = 400, description = "Bad request"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse)
+    ),
+    security(("cookie_auth" = []))
 )]
 pub async fn attach_to_entity(
     State(state): State<AppState>,
@@ -356,14 +364,16 @@ pub async fn attach_to_entity(
     operation_id = "unlink_media_from_entity",
     description = "Unlink media from an entity only (does not directly delete media row/object). Orphans are handled by cleanup/reconcile flows.",
     params(
-        ("entity_type" = String, Path, description = "Entity type (production, event, blogpost, media, artist)"),
+        ("entity_type" = EntityType, Path, description = "Entity type (production, event, blogpost, media, artist)"),
         ("entity_id" = Uuid, Path, description = "Entity UUID"),
         ("media_id" = Uuid, Path, description = "Media UUID")
     ),
     responses(
         (status = 204, description = "No Content"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
         (status = 404, description = "Not found")
-    )
+    ),
+    security(("cookie_auth" = []))
 )]
 pub async fn unlink_from_entity(
     db: Database,
@@ -378,13 +388,67 @@ pub async fn unlink_from_entity(
 
 #[utoipa::path(
     method(post),
+    path = "/media/entity/{entity_type}/{entity_id}/{media_id}/set-cover",
+    tag = "Media",
+    operation_id = "set_cover_for_entity",
+    description = "Promote an already-linked media item to the cover role for an entity. Any existing cover is atomically demoted back to the gallery role.",
+    params(
+        ("entity_type" = EntityType, Path, description = "Entity type"),
+        ("entity_id" = Uuid, Path, description = "Entity UUID"),
+        ("media_id" = Uuid, Path, description = "Media UUID to promote to cover")
+    ),
+    responses(
+        (status = 204, description = "No Content"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
+        (status = 404, description = "Not found")
+    ),
+    security(("cookie_auth" = []))
+)]
+pub async fn set_cover_for_entity(
+    db: Database,
+    Path((entity_type, entity_id, media_id)): Path<(String, Uuid, Uuid)>,
+) -> StatusResponse {
+    let et = parse_entity_type(&entity_type)?;
+    db.media().set_cover(et, entity_id, media_id).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
+    method(delete),
+    path = "/media/entity/{entity_type}/{entity_id}/cover",
+    tag = "Media",
+    operation_id = "clear_cover_for_entity",
+    description = "Demote the current cover image back to the gallery role without removing the entity link.",
+    params(
+        ("entity_type" = EntityType, Path, description = "Entity type"),
+        ("entity_id" = Uuid, Path, description = "Entity UUID")
+    ),
+    responses(
+        (status = 204, description = "No Content"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse)
+    ),
+    security(("cookie_auth" = []))
+)]
+pub async fn clear_cover_for_entity(
+    db: Database,
+    Path((entity_type, entity_id)): Path<(String, Uuid)>,
+) -> StatusResponse {
+    let et = parse_entity_type(&entity_type)?;
+    db.media().clear_cover(et, entity_id).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
+    method(post),
     path = "/media/cleanup",
     tag = "Media",
     operation_id = "cleanup_orphaned_media",
     description = "Business cleanup: remove media rows with no entity links (orphans) and attempt to delete their S3 objects.",
     responses(
-        (status = 200, description = "Cleanup complete", body = CleanupResponse)
-    )
+        (status = 200, description = "Cleanup complete", body = CleanupResponse),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse)
+    ),
+    security(("cookie_auth" = []))
 )]
 pub async fn cleanup_orphans(
     State(state): State<AppState>,
@@ -419,8 +483,10 @@ pub async fn cleanup_orphans(
         ("apply" = Option<bool>, Query, description = "Apply destructive cleanup when true (default false)")
     ),
     responses(
-        (status = 200, description = "Reconciliation complete", body = ReconcileResponse)
-    )
+        (status = 200, description = "Reconciliation complete", body = ReconcileResponse),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse)
+    ),
+    security(("cookie_auth" = []))
 )]
 pub async fn reconcile_storage(
     State(state): State<AppState>,
