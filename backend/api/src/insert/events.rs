@@ -10,15 +10,15 @@ impl ApiEvent {
         self,
         db: &Database,
         status_map: &HashMap<String, String>,
-    ) -> Result<(), DatabaseError> {
+    ) -> Result<bool, DatabaseError> {
         let Some(prod_source_id) = self.production_source_id() else {
             warn!("Events: event has no production source_id, skipping");
-            return Ok(());
+            return Ok(false);
         };
 
         let Some(production) = db.productions().by_source_id(prod_source_id).await? else {
             warn!("Events: production source_id {prod_source_id} not found in db, skipping");
-            return Ok(());
+            return Ok(false);
         };
 
         let hall_uuid = if let Some(hall_source_id) = self.hall_source_id() {
@@ -36,11 +36,11 @@ impl ApiEvent {
                 "Events: unknown status IRI '{}' for event {}, skipping",
                 self.status, self.id
             );
-            return Ok(());
+            return Ok(false);
         };
 
         let event_create = self.to_create(production.production.id, hall_uuid, status);
         db.events().insert(event_create).await?;
-        Ok(())
+        Ok(true)
     }
 }

@@ -288,11 +288,12 @@ impl ApiImporter {
         // column ends up storing the raw IRI like "/api/v1/events/statuses/1".
         let mut status_map: HashMap<String, String> = HashMap::new();
         let mut statuses = pin!(
-            self.paginated_collection::<ApiEventStatus>("/events/statuses", "2000-01-01T00:00:00Z")
+            self.paginated_collection::<ApiEventStatus>("/events/statuses", "1900-01-01T00:00:00Z")
         );
         while let Some(batch_result) = statuses.next().await {
             for s in batch_result? {
-                status_map.insert(s.id.clone(), s.display());
+                let display = s.display();
+                status_map.insert(s.id, display);
             }
         }
         info!("Events: loaded {} status entries", status_map.len());
@@ -303,10 +304,13 @@ impl ApiImporter {
             let events = batch_result?;
             let amt = events.len();
             info!("Events: got {amt} from api");
+            let mut inserted: usize = 0;
             for event in events {
-                event.insert(&self.db, &status_map).await.unwrap();
+                if event.insert(&self.db, &status_map).await.unwrap() {
+                    inserted += 1;
+                }
             }
-            info!("Events: inserted {amt} into db");
+            info!("Events: inserted {inserted} of {amt} from api");
         }
 
         info!("Events: finished importing");
