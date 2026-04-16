@@ -21,6 +21,7 @@ export default function ArticlesPage() {
     const [headerQuery, setHeaderQuery] = useState("");
     const [currentMonthIndex, setCurrentMonthIndex] = useState(0);
     const [isSliderDragging, setIsSliderDragging] = useState(false);
+    const [showSlider, setShowSlider] = useState(false);
     const monthRefs = useRef<Map<string, HTMLDivElement>>(new Map());
     const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -75,6 +76,8 @@ export default function ArticlesPage() {
                         visibleMap.delete(label);
                     }
                 });
+
+                setShowSlider(visibleMap.size > 0);
 
                 if (visibleMap.size > 0 && !isSliderDragging) {
                     let topLabel = "";
@@ -135,7 +138,7 @@ export default function ArticlesPage() {
                 searchHint={tSearch("hint")}
             />
 
-            {!isLoading && articles && articles.length > 0 && (
+            {showSlider && !isLoading && articles && articles.length > 0 && (
                 <ScrollPositionSlider
                     months={monthsList}
                     currentIndex={currentMonthIndex}
