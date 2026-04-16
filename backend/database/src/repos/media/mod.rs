@@ -2,20 +2,19 @@ use std::collections::HashMap;
 
 use ormlite::{Insert, Model};
 use sqlx::PgPool;
-use tracing::debug;
 use uuid::Uuid;
 
 use crate::{
     error::DatabaseError,
     models::{
-        cursor::CursorData,
         entity_type::EntityType,
-        media::{Media, MediaCreate, MediaSearch, MediaWithScore},
-        sort::Sort,
+        media::{Media, MediaCreate},
     },
 };
 
-fn push_entity_media_filters<'args>(
+pub mod all;
+
+pub(crate) fn push_entity_media_filters<'args>(
     query: &mut sqlx::QueryBuilder<'args, sqlx::Postgres>,
     entity_type: Option<&EntityType>,
     entity_id: Option<&Uuid>,
@@ -53,207 +52,6 @@ impl<'a> MediaRepo<'a> {
             .ok_or(DatabaseError::NotFound)
     }
 
-    pub async fn all(&self, limit: usize) -> Result<Vec<Media>, DatabaseError> {
-        Ok(Media::select().limit(limit).fetch_all(self.db).await?)
-    }
-
-    pub async fn paginated(
-        &self,
-        limit: usize,
-        offset: usize,
-    ) -> Result<Vec<Media>, DatabaseError> {
-        Ok(sqlx::query_as::<_, Media>(
-            r#"
-            SELECT
-                id, created_at, updated_at,
-                s3_key, mime_type, file_size,
-                width, height, checksum,
-                alt_text_nl, alt_text_en, alt_text_fr,
-                description_nl, description_en, description_fr,
-                credit_nl, credit_en, credit_fr,
-                geo_latitude, geo_longitude,
-                parent_id, derivative_type, gallery_type, source_id,
-                source_system, source_uri, source_updated_at
-            FROM media
-            ORDER BY created_at DESC
-            LIMIT $1 OFFSET $2
-            "#,
-        )
-        .bind(limit as i64)
-        .bind(offset as i64)
-        .fetch_all(self.db)
-        .await?)
-    }
-
-    pub async fn search(
-        &self,
-        limit: u32,
-        cursor: Option<CursorData>,
-        search: MediaSearch,
-    ) -> Result<(Vec<Media>, Option<CursorData>), DatabaseError> {
-        let limit: i64 = (limit + 1).into();
-
-        // Determine whether we need to join entity_media for filtering
-        let needs_entity_join =
-            search.entity_type.is_some() || search.entity_id.is_some() || search.role.is_some();
-
-        // Relevance sort requires a search query and must not be overridden by a date-based sort.
-        // When the caller requests Recent/Oldest alongside a query, we honour the date sort and
-        // fall through to the id-based path (which adds the text-match filter).
-        let use_relevance =
-            search.q.is_some() && !matches!(search.sort, Some(Sort::Recent) | Some(Sort::Oldest));
-
-        let (media, next_cursor): (Vec<Media>, Option<CursorData>) = if use_relevance {
-            // SAFETY: use_relevance guarantees search.q is Some
-            let search_q = search.q.unwrap();
-            debug!("querying media with relevance search: '{search_q}'");
-
-            let mut query = sqlx::QueryBuilder::new(
-                "SELECT m.id, m.created_at, m.updated_at, \
-                 m.s3_key, m.mime_type, m.file_size, \
-                 m.width, m.height, m.checksum, \
-                 m.alt_text_nl, m.alt_text_en, m.alt_text_fr, \
-                 m.description_nl, m.description_en, m.description_fr, \
-                 m.credit_nl, m.credit_en, m.credit_fr, \
-                 m.geo_latitude, m.geo_longitude, \
-                 m.parent_id, m.derivative_type, m.gallery_type, m.source_id, \
-                 m.source_system, m.source_uri, m.source_updated_at, ",
-            );
-
-            query.push("(");
-            query.push_bind(&search_q);
-            query.push(" <<-> m.full_search_text) as distance_score ");
-            query.push("FROM media m ");
-
-            if needs_entity_join {
-                query.push("INNER JOIN entity_media em ON em.media_id = m.id ");
-            }
-
-            query.push("WHERE ");
-            query.push_bind(&search_q);
-            query.push(" <% m.full_search_text ");
-
-            push_entity_media_filters(
-                &mut query,
-                search.entity_type.as_ref(),
-                search.entity_id.as_ref(),
-                search.role.as_deref(),
-            );
-
-            if let Some(cursor) = cursor
-                && let Some(score) = cursor.score
-            {
-                query.push(" AND ((");
-                query.push_bind(&search_q);
-                query.push(" <<-> m.full_search_text) > ");
-                query.push_bind(score);
-                query.push(" OR ((");
-                query.push_bind(&search_q);
-                query.push(" <<-> m.full_search_text) = ");
-                query.push_bind(score);
-                query.push(" AND m.id < ");
-                query.push_bind(cursor.id);
-                query.push(")) ");
-            }
-
-            query.push("ORDER BY distance_score ASC, m.id DESC LIMIT ");
-            query.push_bind(limit);
-
-            debug!("media relevance query: {}", query.sql());
-
-            let mut results: Vec<MediaWithScore> =
-                query.build_query_as().fetch_all(self.db).await?;
-
-            let next_cursor = if results.len() == limit as usize {
-                results.pop();
-                results.last().map(|r| CursorData {
-                    id: r.media.id,
-                    score: Some(r.distance_score),
-                })
-            } else {
-                None
-            };
-
-            let media = results.into_iter().map(|r| r.media).collect();
-            (media, next_cursor)
-        } else {
-            // Id-based path: no query, or query with an explicit date-based sort.
-            debug!(
-                "querying media by id (q={}, sort={:?})",
-                search.q.is_some(),
-                search.sort
-            );
-
-            let mut query = sqlx::QueryBuilder::new(
-                "SELECT m.id, m.created_at, m.updated_at, \
-                 m.s3_key, m.mime_type, m.file_size, \
-                 m.width, m.height, m.checksum, \
-                 m.alt_text_nl, m.alt_text_en, m.alt_text_fr, \
-                 m.description_nl, m.description_en, m.description_fr, \
-                 m.credit_nl, m.credit_en, m.credit_fr, \
-                 m.geo_latitude, m.geo_longitude, \
-                 m.parent_id, m.derivative_type, m.gallery_type, m.source_id, \
-                 m.source_system, m.source_uri, m.source_updated_at \
-                 FROM media m ",
-            );
-
-            if needs_entity_join {
-                query.push("INNER JOIN entity_media em ON em.media_id = m.id ");
-            }
-
-            query.push("WHERE 1=1 ");
-
-            // Optional text-match filter when q is set but sort is date-based
-            if let Some(ref search_q) = search.q {
-                query.push(" AND ");
-                query.push_bind(search_q.as_str());
-                query.push(" <% m.full_search_text ");
-            }
-
-            push_entity_media_filters(
-                &mut query,
-                search.entity_type.as_ref(),
-                search.entity_id.as_ref(),
-                search.role.as_deref(),
-            );
-
-            let (order_clause, cursor_cmp) = match search.sort {
-                Some(Sort::Oldest) => ("m.id ASC", ">"),
-                _ => ("m.id DESC", "<"),
-            };
-
-            if let Some(cursor) = cursor {
-                query.push(" AND m.id ");
-                query.push(cursor_cmp);
-                query.push(" ");
-                query.push_bind(cursor.id);
-            }
-
-            query.push(" ORDER BY ");
-            query.push(order_clause);
-            query.push(" LIMIT ");
-            query.push_bind(limit);
-
-            debug!("media id-based query: {}", query.sql());
-
-            let mut media: Vec<Media> = query.build_query_as().fetch_all(self.db).await?;
-
-            let next_cursor = if media.len() == limit as usize {
-                media.pop();
-                media.last().map(|m| CursorData {
-                    id: m.id,
-                    score: None,
-                })
-            } else {
-                None
-            };
-
-            (media, next_cursor)
-        };
-
-        Ok((media, next_cursor))
-    }
-
     pub async fn insert(&self, media: MediaCreate) -> Result<Media, DatabaseError> {
         Ok(media.insert(self.db).await?)
     }
@@ -273,8 +71,8 @@ impl<'a> MediaRepo<'a> {
             r#"
             INSERT INTO media (
                 s3_key, mime_type, file_size, width, height, checksum,
-                alt_text_nl, alt_text_en, alt_text_fr, 
-                description_nl, description_en, description_fr, 
+                alt_text_nl, alt_text_en, alt_text_fr,
+                description_nl, description_en, description_fr,
                 credit_nl, credit_en, credit_fr,
                 geo_latitude, geo_longitude,
                 parent_id, derivative_type, gallery_type,
@@ -315,8 +113,8 @@ impl<'a> MediaRepo<'a> {
                 id, created_at, updated_at,
                 s3_key, mime_type, file_size,
                 width, height, checksum,
-                alt_text_nl, alt_text_en, alt_text_fr, 
-                description_nl, description_en, description_fr, 
+                alt_text_nl, alt_text_en, alt_text_fr,
+                description_nl, description_en, description_fr,
                 credit_nl, credit_en, credit_fr,
                 geo_latitude, geo_longitude,
                 parent_id, derivative_type, gallery_type, source_id,
@@ -757,7 +555,7 @@ impl<'a> MediaRepo<'a> {
     }
 
     /// Batch-fetch the cover image s3_key for multiple entities of the same type.
-    /// Returns a map from entity_id → s3_key. For each entity, prefers the row
+    /// Returns a map from entity_id -> s3_key. For each entity, prefers the row
     /// where is_cover_image = true; falls back to the first item by sort_order.
     pub async fn cover_s3_keys_for_entities(
         &self,

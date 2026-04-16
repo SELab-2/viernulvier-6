@@ -9,5 +9,6 @@ export * from "./useLocations";
 export * from "./useMedia";
 export * from "./useProductions";
 export * from "./useSpaces";
+export * from "./useStats";
 export * from "./useTaxonomy";
 export * from "./useVersion";

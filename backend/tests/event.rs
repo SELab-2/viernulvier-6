@@ -14,7 +14,7 @@ use crate::common::{into_struct::IntoStruct, router::TestRouter};
 
 mod common;
 
-#[sqlx::test(fixtures("events"))]
+#[sqlx::test(fixtures("productions", "events"))]
 #[test_log::test]
 async fn get_all(db: PgPool) {
     let app = TestRouter::new(db);
@@ -26,7 +26,7 @@ async fn get_all(db: PgPool) {
     assert_eq!(data.data.len(), 3);
 }
 
-#[sqlx::test(fixtures("events"))]
+#[sqlx::test(fixtures("productions", "events"))]
 #[test_log::test]
 async fn get_paginated(db: PgPool) {
     let app = TestRouter::new(db);
@@ -54,7 +54,7 @@ async fn get_paginated(db: PgPool) {
     assert!(page2.next_cursor.is_none(), "last page has no cursor");
 }
 
-#[sqlx::test(fixtures("events", "prices"))]
+#[sqlx::test(fixtures("productions", "events", "prices"))]
 #[test_log::test]
 async fn get_one_success(db: PgPool) {
     let app = TestRouter::new(db);
@@ -87,7 +87,7 @@ async fn get_one_not_found(db: PgPool) {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(fixtures("events"))]
+#[sqlx::test(fixtures("productions", "events"))]
 #[test_log::test]
 async fn get_by_production(db: PgPool) {
     let app = TestRouter::new(db);
@@ -102,7 +102,7 @@ async fn get_by_production(db: PgPool) {
     assert_eq!(data.len(), 2);
 }
 
-#[sqlx::test(fixtures("events"))]
+#[sqlx::test(fixtures("productions", "events"))]
 #[test_log::test]
 async fn post_success(db: PgPool) {
     let payload = mock_post_payload();
@@ -125,7 +125,7 @@ async fn post_success(db: PgPool) {
     assert!(!data.id.is_nil());
 }
 
-#[sqlx::test(fixtures("events", "prices"))]
+#[sqlx::test(fixtures("productions", "events", "prices"))]
 #[test_log::test]
 async fn put_success(db: PgPool) {
     let target_id = Uuid::from_str("33333333-3333-3333-3333-333333333333").unwrap();
@@ -210,7 +210,7 @@ async fn put_success(db: PgPool) {
     );
 }
 
-#[sqlx::test(fixtures("events", "prices"))]
+#[sqlx::test(fixtures("productions", "events", "prices"))]
 #[test_log::test]
 async fn put_success_removes_prices_when_empty_array_provided(db: PgPool) {
     let target_id = Uuid::from_str("33333333-3333-3333-3333-333333333333").unwrap();
@@ -236,7 +236,7 @@ async fn put_success_removes_prices_when_empty_array_provided(db: PgPool) {
     assert!(data.prices.is_empty());
 }
 
-#[sqlx::test(fixtures("events", "prices"))]
+#[sqlx::test(fixtures("productions", "events", "prices"))]
 #[test_log::test]
 async fn put_success_updates_existing_and_adds_new_price(db: PgPool) {
     let target_id = Uuid::from_str("33333333-3333-3333-3333-333333333333").unwrap();
@@ -342,7 +342,7 @@ async fn put_success_updates_existing_and_adds_new_price(db: PgPool) {
     );
 }
 
-#[sqlx::test(fixtures("events"))]
+#[sqlx::test(fixtures("productions", "events"))]
 #[test_log::test]
 async fn post_success_with_prices(db: PgPool) {
     let unauth_app = TestRouter::new(db.clone());
@@ -408,7 +408,7 @@ async fn post_success_with_prices(db: PgPool) {
     assert_eq!(price.rank.code, "tickets");
 }
 
-#[sqlx::test(fixtures("events", "prices"))]
+#[sqlx::test(fixtures("productions", "events", "prices"))]
 #[test_log::test]
 async fn put_rejects_event_price_from_another_event(db: PgPool) {
     let target_id = Uuid::from_str("33333333-3333-3333-3333-333333333333").unwrap();
@@ -473,7 +473,7 @@ async fn put_rejects_event_price_from_another_event(db: PgPool) {
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
-#[sqlx::test(fixtures("events"))]
+#[sqlx::test(fixtures("productions", "events"))]
 #[test_log::test]
 async fn post_rejects_malformed_nested_price_payload(db: PgPool) {
     let app = TestRouter::as_editor(db).await;
@@ -545,7 +545,7 @@ async fn put_not_found(db: PgPool) {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(fixtures("events"))]
+#[sqlx::test(fixtures("productions", "events"))]
 #[test_log::test]
 async fn delete_success(db: PgPool) {
     let target_id = Uuid::from_str("44444444-4444-4444-4444-444444444444").unwrap();

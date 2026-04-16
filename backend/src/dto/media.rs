@@ -2,7 +2,7 @@ use base64::{Engine, prelude::BASE64_URL_SAFE};
 use chrono::{DateTime, Utc};
 use database::{
     Database,
-    models::{cursor::CursorData, media::Media, media_variant::MediaVariant},
+    models::{filtering::cursor::CursorData, media::Media, media_variant::MediaVariant},
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -53,7 +53,7 @@ impl MediaPayload {
         }
     }
 
-    pub async fn search(
+    pub async fn all(
         db: &Database,
         id_cursor: Option<String>,
         limit: u32,
@@ -65,7 +65,7 @@ impl MediaPayload {
             serde_json::from_slice(&bytes).ok()
         });
 
-        let (media, next_cursor) = db.media().search(limit, cursor, search.into()).await?;
+        let (media, next_cursor) = db.media().all(limit, cursor, search.into()).await?;
 
         let next_cursor_data = next_cursor.and_then(|c| {
             let data = serde_json::to_vec(&c).ok()?;
@@ -85,10 +85,6 @@ impl MediaPayload {
 
     pub async fn by_id(db: &Database, id: Uuid) -> Result<Media, AppError> {
         Ok(db.media().by_id(id).await?)
-    }
-
-    pub async fn all(db: &Database, limit: usize) -> Result<Vec<Media>, AppError> {
-        Ok(db.media().all(limit).await?)
     }
 
     pub async fn delete(db: &Database, id: Uuid) -> Result<Vec<String>, AppError> {

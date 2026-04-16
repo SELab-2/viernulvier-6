@@ -48,7 +48,7 @@ pub async fn get_all(
 ) -> JsonResponse<PaginatedResponse<MediaPayload>> {
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
 
-    MediaPayload::search(&db, pagination.cursor, pagination.limit, public_url, search)
+    MediaPayload::all(&db, pagination.cursor, pagination.limit, public_url, search)
         .await?
         .json()
 }

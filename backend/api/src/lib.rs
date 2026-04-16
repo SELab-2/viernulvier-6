@@ -644,8 +644,9 @@ impl ApiImporter {
         drop(file);
         let checksum = hex::encode(hasher.finalize());
 
-        let (width, height) = imagesize::size(temp_file.path())
-            .map_or((None, None), |d| (Some(d.width as i32), Some(d.height as i32)));
+        let (width, height) = imagesize::size(temp_file.path()).map_or((None, None), |d| {
+            (Some(d.width as i32), Some(d.height as i32))
+        });
 
         let byte_stream = aws_sdk_s3::primitives::ByteStream::from_path(temp_file.path())
             .await
