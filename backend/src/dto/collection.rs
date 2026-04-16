@@ -1,3 +1,4 @@
+use base64::{Engine, prelude::BASE64_URL_SAFE};
 use chrono::{DateTime, Utc};
 use database::{
     Database,
@@ -10,7 +11,6 @@ use database::{
         cursor::CursorData,
     },
 };
-use base64::{Engine, prelude::BASE64_URL_SAFE};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::debug;
@@ -18,9 +18,8 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::{
-    dto::paginated::PaginatedResponse,
+    dto::paginated::PaginatedResponse, error::AppError,
     handlers::queries::collection::CollectionSearchQuery,
-    error::AppError,
 };
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -168,10 +167,7 @@ impl CollectionPayload {
             serde_json::from_slice(&bytes).ok()
         });
 
-        let (collections, next_cursor) = db
-            .collections()
-            .all(limit, cursor, search.into())
-            .await?;
+        let (collections, next_cursor) = db.collections().all(limit, cursor, search.into()).await?;
 
         let ids: Vec<Uuid> = collections.iter().map(|c| c.collection.id).collect();
         let all_items = db.collections().items_for_collections(&ids).await?;

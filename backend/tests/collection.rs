@@ -7,7 +7,7 @@ use viernulvier_api::dto::{
     collection::{
         CollectionItemPayload, CollectionItemPostPayload, CollectionPayload, CollectionPostPayload,
     },
-    paginated::PaginatedResponse
+    paginated::PaginatedResponse,
 };
 
 use crate::common::{into_struct::IntoStruct, router::TestRouter};
@@ -88,18 +88,38 @@ async fn get_search_paginated(db: PgPool) {
     // page 3
     let page3: PaginatedResponse<CollectionPayload> = response.into_struct().await;
 
-    println!("page1: {:?}", page1.data.iter().map(|c| c.slug.clone()).collect::<Vec<_>>());
-    println!("page2: {:?}", page2.data.iter().map(|c| c.slug.clone()).collect::<Vec<_>>());
-    println!("page3: {:?}", page3.data.iter().map(|c| c.slug.clone()).collect::<Vec<_>>());
+    println!(
+        "page1: {:?}",
+        page1
+            .data
+            .iter()
+            .map(|c| c.slug.clone())
+            .collect::<Vec<_>>()
+    );
+    println!(
+        "page2: {:?}",
+        page2
+            .data
+            .iter()
+            .map(|c| c.slug.clone())
+            .collect::<Vec<_>>()
+    );
+    println!(
+        "page3: {:?}",
+        page3
+            .data
+            .iter()
+            .map(|c| c.slug.clone())
+            .collect::<Vec<_>>()
+    );
     println!("page3 cursor: {:?}", page3.next_cursor);
     assert_eq!(page3.data.len(), 1, "page 3 should respect the limit of 1");
-    assert!(page3.next_cursor.is_none(), "last page should have no next cursor");
+    assert!(
+        page3.next_cursor.is_none(),
+        "last page should have no next cursor"
+    );
 
-    let mut all_ids = vec![
-        page1.data[0].id,
-        page2.data[0].id,
-        page3.data[0].id,
-    ];
+    let mut all_ids = vec![page1.data[0].id, page2.data[0].id, page3.data[0].id];
     let original_length = all_ids.len();
 
     all_ids.sort();

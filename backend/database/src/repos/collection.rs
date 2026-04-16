@@ -8,8 +8,8 @@ use crate::{
     error::DatabaseError,
     models::{
         collection::{
-            Collection, CollectionCreate, CollectionSearch, CollectionTranslation, CollectionTranslationData,
-            CollectionWithScore, CollectionWithTranslations,
+            Collection, CollectionCreate, CollectionSearch, CollectionTranslation,
+            CollectionTranslationData, CollectionWithScore, CollectionWithTranslations,
         },
         collection_item::{
             CollectionItem, CollectionItemBulkUpdate, CollectionItemCreate,
@@ -49,9 +49,7 @@ impl<'a> CollectionRepo<'a> {
             if let Some(search_q) = search.q {
                 debug!("querying collections with search: '{search_q}'");
 
-                let mut query = sqlx::QueryBuilder::new(
-                    "WITH matched_translations AS ("
-                );
+                let mut query = sqlx::QueryBuilder::new("WITH matched_translations AS (");
                 query
                     .push("SELECT collection_id, MIN(")
                     .push_bind(&search_q)
@@ -71,7 +69,6 @@ impl<'a> CollectionRepo<'a> {
                         .push_bind(&search_q)
                         .push(" <<-> full_search_text) > ")
                         .push_bind(score)
-
                         .push(" OR (MIN(")
                         .push_bind(&search_q)
                         .push(" <<-> full_search_text) = ")
@@ -86,12 +83,14 @@ impl<'a> CollectionRepo<'a> {
                     .push_bind(limit)
                     .push(") ");
 
-                query.push("
+                query.push(
+                    "
                     SELECT C.*, distance_score 
                     FROM collections c 
                     INNER JOIN matched_translations m ON c.id = m.collection_id 
                     ORDER BY m.distance_score ASC, c.id DESC
-                ");
+                ",
+                );
 
                 debug!("collections query: {}", query.sql());
 
@@ -133,7 +132,7 @@ impl<'a> CollectionRepo<'a> {
                     }
                     collections = filtered;
                 }
-                
+
                 let next_cursor = if collections.len() == limit as usize {
                     collections.pop();
                     collections.last().map(|c| CursorData {

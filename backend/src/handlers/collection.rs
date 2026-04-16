@@ -1,7 +1,7 @@
 use axum::{
-    Json, 
-    extract::{Path, Query}, 
-    http::StatusCode
+    Json,
+    extract::{Path, Query},
+    http::StatusCode,
 };
 use database::Database;
 use uuid::Uuid;
@@ -41,8 +41,8 @@ pub async fn get_all(
     Query(search): Query<CollectionSearchQuery>,
 ) -> JsonResponse<PaginatedResponse<CollectionPayload>> {
     CollectionPayload::all(&db, pagination.cursor, pagination.limit, search)
-    .await?
-    .json()
+        .await?
+        .json()
 }
 
 #[utoipa::path(
