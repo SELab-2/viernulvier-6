@@ -101,12 +101,16 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
     let db = Database::create_connect_migrate(&config.database_url).await?;
 
     let has_admin = db.users().has_admin().await?;
-    if !has_admin {
+    if has_admin {
+        info!("Admin user already exists, skipping bootstrap");
+    } else {
         let Some(password) = &config.admin_password else {
+            warn!("ADMIN_PASSWORD is required because no admin user exists yet");
             return Err(AppError::Internal(
                 "ADMIN_PASSWORD is required because no admin user exists yet".into(),
             ));
         };
+        info!("No admin user found, bootstrapping admin account");
         bootstrap_admin_if_missing(&db, &config.admin_email, password).await?;
     }
 

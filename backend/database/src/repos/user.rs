@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::{
     error::DatabaseError,
-    models::user::{User, UserCreate, UserPatch},
+    models::user::{User, UserCreate, UserPatch, UserRole},
 };
 
 pub struct UserRepo<'a> {
@@ -39,7 +39,8 @@ impl<'a> UserRepo<'a> {
     }
 
     pub async fn has_admin(&self) -> Result<bool, DatabaseError> {
-        let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM users WHERE role = 'admin'")
+        let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM users WHERE role = $1")
+            .bind(UserRole::Admin)
             .fetch_one(self.db)
             .await?;
         Ok(count > 0)
