@@ -38,6 +38,13 @@ impl<'a> UserRepo<'a> {
         Ok(user.insert(self.db).await?)
     }
 
+    pub async fn has_admin(&self) -> Result<bool, DatabaseError> {
+        let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM users WHERE role = 'admin'")
+            .fetch_one(self.db)
+            .await?;
+        Ok(count > 0)
+    }
+
     pub async fn patch(&self, user_id: Uuid, patch_user: UserPatch) -> Result<User, DatabaseError> {
         let mut user = self.by_id(user_id).await?;
         user.username = patch_user.username;

@@ -36,6 +36,12 @@ inputs:
   api_key_404:
     description: "API key for the viernulvier API"
     required: true
+  admin_email:
+    description: "Admin email for bootstrap"
+    required: true
+  admin_password:
+    description: "Admin password for bootstrap (required on first startup)"
+    required: true
 runs:
   using: "composite"
   steps:
@@ -54,6 +60,8 @@ runs:
         GARAGE_S3_BUCKET: "${{ inputs.garage_s3_bucket }}"
         PROD_API_KEY_404: "${{ inputs.api_key_404 }}"
         PROD_JWT_SECRET: "${{ inputs.jwt_secret }}"
+        PROD_ADMIN_EMAIL: "${{ inputs.admin_email }}"
+        PROD_ADMIN_PASSWORD: "${{ inputs.admin_password }}"
 
       run: |
         PROD_DATABASE_URL="postgres://${PROD_DB_USER}:${PROD_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}-database:5432/${PROD_DB_NAME}"
@@ -68,6 +76,8 @@ runs:
         PROD_JWT_SECRET=$PROD_JWT_SECRET
         NEXT_PUBLIC_SITE_URL=$PROD_SITE_URL
         PROD_API_KEY_404=$PROD_API_KEY_404
+        PROD_ADMIN_EMAIL=$PROD_ADMIN_EMAIL
+        PROD_ADMIN_PASSWORD=$PROD_ADMIN_PASSWORD
         GARAGE_RPC_SECRET=$GARAGE_RPC_SECRET
         GARAGE_S3_ACCESS_KEY=$GARAGE_S3_ACCESS_KEY
         GARAGE_S3_SECRET_KEY=$GARAGE_S3_SECRET_KEY
