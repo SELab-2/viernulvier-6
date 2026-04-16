@@ -13,6 +13,8 @@ pub struct AppConfig {
     pub refresh_token_expiry_days: i8,
     pub allowed_origins: Vec<String>,
     pub preview_name: String,
+    pub cookie_secure: bool,
+    pub cookie_same_site: String,
     pub s3: Option<S3Config>,
 }
 
@@ -84,6 +86,10 @@ impl AppConfig {
             refresh_token_expiry_days: 7,
             allowed_origins,
             preview_name: env::var("PREVIEW_NAME").unwrap_or_default(),
+            cookie_secure: env::var("COOKIE_SECURE")
+                .map(|v| v == "true")
+                .unwrap_or(true),
+            cookie_same_site: env::var("COOKIE_SAME_SITE").unwrap_or_else(|_| "strict".to_string()),
             s3,
         })
     }
