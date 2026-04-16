@@ -143,7 +143,7 @@ export default function ArticlesPage() {
                 </div>
             </section>
 
-            <section className="mx-auto max-w-[1000px] px-4 py-8 sm:px-10 sm:py-12">
+            <section className="mx-auto w-full max-w-[1280px] px-3 py-8 sm:px-6 sm:py-12">
                 {isLoading && <LoadingState message={t("loading")} />}
 
                 {!isLoading && (!articles || articles.length === 0) && (
@@ -155,13 +155,13 @@ export default function ArticlesPage() {
 
                 {!isLoading && articles && articles.length > 0 && (
                     <>
-                        <div className="text-muted-foreground border-muted/30 bg-background sticky top-0 z-30 -mx-4 mb-6 flex items-center gap-2.5 border-b px-4 py-3 font-mono text-[9px] font-medium tracking-[2px] uppercase sm:-mx-10 sm:px-10">
+                        <div className="text-muted-foreground border-muted/30 bg-background sticky top-0 z-30 -mx-3 mb-8 flex items-center gap-2.5 border-b px-3 py-3 font-mono text-[9px] font-medium tracking-[2px] uppercase sm:-mx-6 sm:px-6">
                             {t("listLabel", { count: articles.length })}
                             <span className="bg-muted/40 h-px min-w-0 flex-1" />
                         </div>
 
-                        <div className="flex w-full items-start gap-7 sm:gap-12">
-                            <div className="sticky top-[calc(0.75rem+0.75rem+0.875rem+1px+1rem)] z-20 -ml-2 hidden h-[85vh] min-h-112 shrink-0 self-start sm:-ml-4 sm:block">
+                        <div className="flex w-full items-start gap-6 sm:gap-12">
+                            <div className="sticky top-[calc(0.75rem+0.75rem+0.875rem+1px+1rem)] z-20 hidden h-[85vh] min-h-112 shrink-0 self-start sm:block">
                                 <ScrollPositionSlider
                                     months={monthsList}
                                     currentIndex={currentMonthIndex}
@@ -170,7 +170,7 @@ export default function ArticlesPage() {
                                 />
                             </div>
 
-                            <div className="min-w-0 flex-1 space-y-8">
+                            <div className="border-muted/25 min-w-0 flex-1 space-y-16 sm:border-l sm:pl-4 md:pl-5">
                                 {groupedArticles.map((yearGroup) => {
                                     const yearArticleCount = yearGroup.months.reduce(
                                         (sum, month) => sum + month.articles.length,
@@ -179,15 +179,22 @@ export default function ArticlesPage() {
 
                                     return (
                                         <div key={yearGroup.year} className="w-full">
-                                            <h2 className="font-display text-foreground mb-6 text-[28px] font-bold">
-                                                {yearGroup.year}{" "}
-                                                <span className="text-muted-foreground text-[18px] font-normal">
-                                                    {yearArticleCount} article
-                                                    {yearArticleCount !== 1 ? "s" : ""}
-                                                </span>
-                                            </h2>
+                                            <div className="border-foreground mb-8 w-full border-t-2 pt-3">
+                                                <div className="flex items-end justify-between gap-4">
+                                                    <h2 className="font-display text-foreground text-[52px] leading-[0.9] font-black tracking-[-0.05em] sm:text-[68px] md:text-[84px]">
+                                                        {yearGroup.year}
+                                                    </h2>
+                                                    <span className="text-muted-foreground mb-2 font-mono text-[10px] tracking-[2px] whitespace-nowrap uppercase sm:text-[11px]">
+                                                        {yearArticleCount}{" "}
+                                                        {yearArticleCount !== 1
+                                                            ? "entries"
+                                                            : "entry"}
+                                                    </span>
+                                                </div>
+                                                <div className="border-foreground mt-1 w-full border-b" />
+                                            </div>
 
-                                            <div className="border-muted/35 w-full border-l pl-6">
+                                            <div className="w-full space-y-12">
                                                 {yearGroup.months.map((monthGroup) => {
                                                     const label = `${monthGroup.monthName} ${yearGroup.year}`;
 
@@ -195,21 +202,21 @@ export default function ArticlesPage() {
                                                         <div
                                                             key={label}
                                                             ref={registerMonth(label)}
-                                                            className="mb-8 w-full"
+                                                            className="w-full"
                                                         >
-                                                            <h3 className="text-foreground font-display mb-4 w-full text-[18px] font-bold tracking-[-0.02em] sm:text-[20px]">
-                                                                {monthGroup.monthName}{" "}
-                                                                <span className="text-muted-foreground text-[14px] font-normal">
-                                                                    {monthGroup.articles.length}{" "}
-                                                                    article
-                                                                    {monthGroup.articles.length !==
-                                                                    1
-                                                                        ? "s"
-                                                                        : ""}
+                                                            <div className="bg-background sticky top-[calc(2.5rem+1px)] z-10 mb-5 flex items-center gap-4 py-2">
+                                                                <h3 className="text-foreground font-mono text-[11px] font-bold tracking-[4px] uppercase sm:text-[12px]">
+                                                                    {monthGroup.monthName}
+                                                                </h3>
+                                                                <span className="bg-muted/40 h-px flex-1" />
+                                                                <span className="text-muted-foreground font-mono text-[10px] tracking-[1.5px] uppercase">
+                                                                    {String(
+                                                                        monthGroup.articles.length
+                                                                    ).padStart(2, "0")}
                                                                 </span>
-                                                            </h3>
+                                                            </div>
 
-                                                            <div className="border-muted/35 w-full border-t">
+                                                            <div className="w-full">
                                                                 {monthGroup.articles.map(
                                                                     (article) => (
                                                                         <ArticleCard
