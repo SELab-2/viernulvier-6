@@ -682,9 +682,6 @@ export function CollectionEditorPage({ id }: { id: string }) {
                                 {t("copyLink")}
                             </Button>
                         </div>
-                        <p className="text-muted-foreground text-xs">
-                            {origin}/{locale}/collections/{metadata.slug}
-                        </p>
                     </div>
                 </div>
             </section>
