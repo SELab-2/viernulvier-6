@@ -4,6 +4,7 @@ import { FailedRequest, CustomAxiosRequestConfig } from "@/types/api/api.types";
 
 import { queryKeys } from "@/hooks/api";
 import { RefreshTokenResponse } from "@/types/api/auth.api.types";
+import { getBasePath } from "@/lib/base-path";
 
 export const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -56,8 +57,12 @@ api.interceptors.response.use(
                 processQueue(refreshError as AxiosError, null);
                 queryClient.removeQueries({ queryKey: queryKeys.user });
 
-                // Protected pages (e.g. /editor) already guard via useEffect and proxy.ts should redirect aswell.
-                // Reloading here would cause an infinite loop on public pages.
+                if (typeof window !== "undefined") {
+                    const { pathname } = window.location;
+                    if (pathname.includes("/cms") && !pathname.includes("/login")) {
+                        window.location.assign(`${getBasePath()}/login`);
+                    }
+                }
 
                 return Promise.reject(refreshError);
             } finally {
