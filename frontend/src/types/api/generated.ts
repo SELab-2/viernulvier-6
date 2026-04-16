@@ -874,6 +874,7 @@ export interface components {
             s3_key: string;
             /** Format: int32 */
             sort_order?: number | null;
+            upload_token: string;
             /** Format: int32 */
             width?: number | null;
         };
@@ -1528,6 +1529,8 @@ export interface components {
             expires_in: number;
             /** @description The S3 key where the file should be uploaded */
             s3_key: string;
+            /** @description HMAC token that must be presented when attaching this upload */
+            upload_token: string;
             /** @description Presigned PUT URL for direct upload */
             upload_url: string;
         };

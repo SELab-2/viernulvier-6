@@ -1,13 +1,22 @@
 use axum::http::StatusCode;
 use serde_json::json;
+use sha2::{Digest, Sha256};
 use sqlx::PgPool;
 use uuid::Uuid;
-use viernulvier_api::dto::media::MediaPayload;
+use viernulvier_api::{config::AppConfig, dto::media::MediaPayload};
 
 use crate::common::into_struct::IntoStruct;
 use crate::common::router::TestRouter;
 
 mod common;
+
+fn generate_upload_token(secret: &str, s3_key: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(secret.as_bytes());
+    hasher.update(b":");
+    hasher.update(s3_key.as_bytes());
+    hex::encode(hasher.finalize())
+}
 
 #[sqlx::test(fixtures("productions", "media"))]
 #[test_log::test]
@@ -101,8 +110,13 @@ async fn get_entity_media_respects_pagination(db: PgPool) {
 #[test_log::test]
 async fn attach_media_transactional_success(db: PgPool) {
     let production_id = Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap();
+    let config = AppConfig::load().unwrap();
+    let s3_key = "media/cms/test-attach.jpg";
+    let upload_token = generate_upload_token(&config.upload_secret, s3_key);
+
     let payload = json!({
-        "s3_key": "media/cms/test-attach.jpg",
+        "s3_key": s3_key,
+        "upload_token": upload_token,
         "mime_type": "image/jpeg",
         "role": "gallery",
         "sort_order": 0,

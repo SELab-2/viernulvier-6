@@ -5,6 +5,7 @@ use axum::{
     http::StatusCode,
 };
 use database::{Database, models::entity_type::EntityType};
+use sha2::{Digest, Sha256};
 use std::collections::HashSet;
 use std::time::Duration;
 use uuid::Uuid;
@@ -93,6 +94,71 @@ pub async fn get_one(
     Ok(Json(payload))
 }
 
+const ALLOWED_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png", "gif", "webp", "svg", "mp4", "pdf"];
+const ALLOWED_MIME_TYPES: &[&str] = &[
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/svg+xml",
+    "video/mp4",
+    "application/pdf",
+];
+const MAX_UPLOAD_SIZE_BYTES: i64 = 50 * 1024 * 1024; // 50 MiB
+
+fn validate_upload_request(req: &UploadUrlRequest) -> Result<(), AppError> {
+    let ext = std::path::Path::new(&req.filename)
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("bin")
+        .to_ascii_lowercase();
+
+    if !ALLOWED_EXTENSIONS.contains(&ext.as_str()) {
+        return Err(AppError::PayloadError(format!(
+            "file extension '{ext}' is not allowed"
+        )));
+    }
+
+    if !ALLOWED_MIME_TYPES.contains(&req.mime_type.as_str()) {
+        return Err(AppError::PayloadError(format!(
+            "MIME type '{}' is not allowed",
+            req.mime_type
+        )));
+    }
+
+    let expected_mime = match ext.as_str() {
+        "jpg" | "jpeg" => "image/jpeg",
+        "png" => "image/png",
+        "gif" => "image/gif",
+        "webp" => "image/webp",
+        "svg" => "image/svg+xml",
+        "mp4" => "video/mp4",
+        "pdf" => "application/pdf",
+        _ => "",
+    };
+
+    if !expected_mime.is_empty() && req.mime_type != expected_mime {
+        return Err(AppError::PayloadError(format!(
+            "MIME type '{}' does not match extension '{}'",
+            req.mime_type, ext
+        )));
+    }
+
+    Ok(())
+}
+
+pub fn generate_upload_token(secret: &str, s3_key: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(secret.as_bytes());
+    hasher.update(b":");
+    hasher.update(s3_key.as_bytes());
+    hex::encode(hasher.finalize())
+}
+
+fn verify_upload_token(secret: &str, s3_key: &str, token: &str) -> bool {
+    generate_upload_token(secret, s3_key) == token
+}
+
 #[utoipa::path(
     method(post),
     path = "/media/upload-url",
@@ -109,6 +175,8 @@ pub async fn generate_upload_url(
     State(state): State<AppState>,
     Json(req): Json<UploadUrlRequest>,
 ) -> Result<Json<UploadUrlResponse>, AppError> {
+    validate_upload_request(&req)?;
+
     let (s3_client, s3_config) = s3_client_and_config(&state)?;
 
     let ext = std::path::Path::new(&req.filename)
@@ -127,14 +195,18 @@ pub async fn generate_upload_url(
         .bucket(&s3_config.bucket)
         .key(&s3_key)
         .content_type(&req.mime_type)
+        .content_length(MAX_UPLOAD_SIZE_BYTES)
         .presigned(presigning_config)
         .await
         .map_err(|e| AppError::Internal(format!("failed to generate presigned URL: {e}")))?;
+
+    let upload_token = generate_upload_token(&state.config.upload_secret, &s3_key);
 
     Ok(Json(UploadUrlResponse {
         s3_key,
         upload_url: presigned.uri().to_string(),
         expires_in,
+        upload_token,
     }))
 }
 
@@ -311,6 +383,17 @@ pub async fn attach_to_entity(
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
     Json(req): Json<AttachMediaRequest>,
 ) -> JsonStatusResponse<MediaPayload> {
+    if !verify_upload_token(&state.config.upload_secret, &req.s3_key, &req.upload_token) {
+        return Err(AppError::PayloadError("invalid upload token".into()));
+    }
+
+    // Prevent metadata hijacking of existing media via ON CONFLICT (s3_key)
+    if db.media().by_s3_key(&req.s3_key).await?.is_some() {
+        return Err(AppError::Conflict(
+            "s3_key is already in use by another media item".into(),
+        ));
+    }
+
     let et = parse_entity_type(&entity_type)?;
     let role = normalize_media_role_opt(req.role)?.unwrap_or_else(|| "gallery".to_string());
 

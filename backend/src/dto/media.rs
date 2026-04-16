@@ -227,11 +227,14 @@ pub struct UploadUrlResponse {
     pub upload_url: String,
     /// URL expiration in seconds
     pub expires_in: u64,
+    /// HMAC token that must be presented when attaching this upload
+    pub upload_token: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct AttachMediaRequest {
     pub s3_key: String,
+    pub upload_token: String,
     pub mime_type: String,
     pub role: Option<String>,
     pub sort_order: Option<i32>,
