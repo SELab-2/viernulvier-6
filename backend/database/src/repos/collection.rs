@@ -50,38 +50,48 @@ impl<'a> CollectionRepo<'a> {
                 debug!("querying collections with search: '{search_q}'");
 
                 let mut query = sqlx::QueryBuilder::new(
-                    "SELECT DISTINCT c.*, "
+                    "WITH matched_translations AS ("
                 );
                 query
+                    .push("SELECT collection_id, MIN(")
                     .push_bind(&search_q)
-                    .push(" <<-> full_search_text AS distance_score ")
-                    .push("FROM collections c ")
-                    .push("JOIN collection_translations ct ON c.id = ct.collection_id ")
+                    .push(" <<-> full_search_text) AS distance_score ")
+                    .push("FROM collection_translations ")
                     .push("WHERE ")
                     .push_bind(&search_q)
-                    .push(" <% full_search_text ");
+                    .push(" <% full_search_text ")
+                    .push("GROUP BY collection_id ");
 
                 // use the cursor if there is one
                 if let Some(cursor) = cursor
                     && let Some(score) = cursor.score
                 {
                     query
-                        .push("AND ((")
+                        .push("HAVING MIN(")
                         .push_bind(&search_q)
                         .push(" <<-> full_search_text) > ")
                         .push_bind(score)
-                        .push(" OR ((")
+
+                        .push(" OR (MIN(")
                         .push_bind(&search_q)
                         .push(" <<-> full_search_text) = ")
                         .push_bind(score)
-                        .push(" AND id < ")
+                        .push(" AND collection_id < ")
                         .push_bind(cursor.id)
-                        .push(")) ");
+                        .push(") ");
                 }
 
                 query
-                    .push("ORDER BY distance_score ASC, id DESC LIMIT ")
-                    .push_bind(limit);
+                    .push("ORDER BY distance_score ASC, collection_id DESC LIMIT ")
+                    .push_bind(limit)
+                    .push(") ");
+
+                query.push("
+                    SELECT C.*, distance_score 
+                    FROM collections c 
+                    INNER JOIN matched_translations m ON c.id = m.collection_id 
+                    ORDER BY m.distance_score ASC, c.id DESC
+                ");
 
                 debug!("collections query: {}", query.sql());
 
