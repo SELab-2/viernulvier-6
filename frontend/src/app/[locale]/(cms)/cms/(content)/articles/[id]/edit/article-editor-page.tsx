@@ -96,7 +96,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
         if (currentPath !== expectedPath) {
             iframeRef.current.src = expectedPath;
         }
-    }, [isPreviewOpen, article?.slug, previewSessionId]);
+    }, [isPreviewOpen, article, article?.slug, previewSessionId]);
 
     const relations = useMemo(
         () =>

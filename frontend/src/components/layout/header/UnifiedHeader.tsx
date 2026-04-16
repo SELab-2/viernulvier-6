@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Search, Menu, X, ChevronDown, LogOut, User } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 
 import { Link as I18nLink, usePathname } from "@/i18n/routing";
@@ -74,7 +74,6 @@ export function UnifiedHeader({
 }: UnifiedHeaderProps) {
     const [menuOpen, setMenuOpen] = useState(false);
     const pathname = usePathname();
-    const locale = useLocale();
     const t = useTranslations("Header.nav");
     const { data: user } = useUser();
     const isHome = pathname === "/" || pathname === "";

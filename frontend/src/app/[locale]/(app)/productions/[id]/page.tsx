@@ -12,7 +12,6 @@ import {
     useProductionEventsWithPreview,
 } from "@/hooks/useProductionPreview";
 import { useGetEntityMedia } from "@/hooks/api/useMedia";
-import { getLocalizedField } from "@/lib/locale";
 import { Link, useRouter } from "@/i18n/routing";
 
 import { UnifiedHeader } from "@/components/layout/header";
