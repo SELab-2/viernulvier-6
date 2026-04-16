@@ -38,6 +38,9 @@ pub enum AppError {
 
     #[error("Conflict: {0}")]
     Conflict(String),
+
+    #[error("Cryptographic error: {0}")]
+    Crypto(String),
 }
 
 #[derive(Serialize, ToSchema)]

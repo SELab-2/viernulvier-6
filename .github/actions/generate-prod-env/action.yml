@@ -36,6 +36,10 @@ inputs:
   api_key_404:
     description: "API key for the viernulvier API"
     required: true
+  max_upload_size_mib:
+    description: "Max upload size in MiB for presigned S3 URLs (default 50)"
+    required: false
+    default: "50"
 runs:
   using: "composite"
   steps:
@@ -54,6 +58,7 @@ runs:
         GARAGE_S3_BUCKET: "${{ inputs.garage_s3_bucket }}"
         PROD_API_KEY_404: "${{ inputs.api_key_404 }}"
         PROD_JWT_SECRET: "${{ inputs.jwt_secret }}"
+        MAX_UPLOAD_SIZE_MIB: "${{ inputs.max_upload_size_mib }}"
 
       run: |
         PROD_DATABASE_URL="postgres://${PROD_DB_USER}:${PROD_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}-database:5432/${PROD_DB_NAME}"
@@ -72,6 +77,7 @@ runs:
         GARAGE_S3_ACCESS_KEY=$GARAGE_S3_ACCESS_KEY
         GARAGE_S3_SECRET_KEY=$GARAGE_S3_SECRET_KEY
         GARAGE_S3_BUCKET=$GARAGE_S3_BUCKET
+        MAX_UPLOAD_SIZE_MIB=$MAX_UPLOAD_SIZE_MIB
         EOF
 
         echo "Production .env generated."

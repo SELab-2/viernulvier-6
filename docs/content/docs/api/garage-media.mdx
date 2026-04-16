@@ -30,9 +30,14 @@ This project stores media files in **Garage (S3-compatible object storage)** and
 
 1. Request presigned URL
    - `POST /api/media/upload-url`
+   - Validates file extension and MIME type (allowed: `jpg`, `jpeg`, `png`, `gif`, `webp`, `svg`, `mp4`, `pdf`)
+   - Respects `MAX_UPLOAD_SIZE_MIB` environment variable (default: `50`)
+   - Returns an `upload_token` that must be presented in step 3
 2. Upload file directly from browser to Garage
 3. Attach metadata + link to entity in one transaction
    - `POST /api/media/entity/{entity_type}/{entity_id}/attach`
+   - Requires the `upload_token` from step 1 to prevent metadata hijacking
+   - Rejects requests for an already-existing `s3_key` with `409 Conflict`
 
 This keeps metadata and linking consistent for CMS operations.
 

@@ -4343,6 +4343,7 @@ dependencies = [
  "database",
  "dotenvy",
  "hex",
+ "hmac",
  "http-body-util",
  "jsonwebtoken",
  "mime",

@@ -463,6 +463,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/media/entity/{entity_type}/{entity_id}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Link an existing media record to an entity. Does not modify media metadata or require an upload token. */
+        post: operations["link_media_to_entity"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/media/entity/{entity_type}/{entity_id}/{media_id}": {
         parameters: {
             query?: never;
@@ -874,6 +891,7 @@ export interface components {
             s3_key: string;
             /** Format: int32 */
             sort_order?: number | null;
+            upload_token: string;
             /** Format: int32 */
             width?: number | null;
         };
@@ -1173,6 +1191,14 @@ export interface components {
             /** Format: uuid */
             space_id?: string | null;
             vendor_id?: string | null;
+        };
+        LinkMediaRequest: {
+            is_cover_image?: boolean | null;
+            /** Format: uuid */
+            media_id: string;
+            role?: string | null;
+            /** Format: int32 */
+            sort_order?: number | null;
         };
         LocationPayload: {
             city?: string | null;
@@ -1528,6 +1554,8 @@ export interface components {
             expires_in: number;
             /** @description The S3 key where the file should be uploaded */
             s3_key: string;
+            /** @description HMAC token that must be presented when attaching this upload */
+            upload_token: string;
             /** @description Presigned PUT URL for direct upload */
             upload_url: string;
         };
@@ -2918,6 +2946,49 @@ export interface operations {
             };
             /** @description Bad request */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    link_media_to_entity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Entity type (production, event, blogpost, media, artist) */
+                entity_type: string;
+                /** @description Entity UUID */
+                entity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkMediaRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaPayload"];
+                };
+            };
+            /** @description Bad request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Media not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
