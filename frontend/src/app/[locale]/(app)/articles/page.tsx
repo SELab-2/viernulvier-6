@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
@@ -8,7 +8,7 @@ import { useGetArticles } from "@/hooks/api/useArticles";
 import { groupArticlesByYearMonth } from "@/lib/utils";
 
 import { UnifiedHeader } from "@/components/layout/header";
-import { ArticleCard } from "@/components/articles";
+import { ArticleCard, ScrollPositionSlider } from "@/components/articles";
 import { LoadingState } from "@/components/shared/loading-state";
 import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
 
@@ -19,10 +19,23 @@ export default function ArticlesPage() {
     const router = useRouter();
 
     const [headerQuery, setHeaderQuery] = useState("");
-    const [currentLabel, setCurrentLabel] = useState<string>("");
-    const [showIndicator, setShowIndicator] = useState(false);
+    const [currentMonthIndex, setCurrentMonthIndex] = useState(0);
+    const [isSliderDragging, setIsSliderDragging] = useState(false);
     const monthRefs = useRef<Map<string, HTMLDivElement>>(new Map());
     const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const { data: articles, isLoading } = useGetArticles();
+
+    const groupedArticles = useMemo(() => {
+        if (!articles || articles.length === 0) return [];
+        return groupArticlesByYearMonth(articles);
+    }, [articles]);
+
+    const monthsList = useMemo(() => {
+        return groupedArticles.flatMap((yearGroup) =>
+            yearGroup.months.map((monthGroup) => `${monthGroup.monthName} ${yearGroup.year}`)
+        );
+    }, [groupedArticles]);
 
     const handleHeaderSearch = useCallback(
         (value: string) => {
@@ -35,7 +48,17 @@ export default function ArticlesPage() {
         [router]
     );
 
-    const { data: articles, isLoading } = useGetArticles();
+    const handleNavigateToMonth = useCallback(
+        (index: number) => {
+            setCurrentMonthIndex(index);
+            const monthLabel = monthsList[index];
+            const element = monthRefs.current.get(monthLabel);
+            if (element) {
+                element.scrollIntoView({ behavior: "auto", block: "start" });
+            }
+        },
+        [monthsList]
+    );
 
     useEffect(() => {
         if (!articles || articles.length === 0) return;
@@ -53,19 +76,25 @@ export default function ArticlesPage() {
                     }
                 });
 
-                if (visibleMap.size > 0) {
+                if (visibleMap.size > 0 && !isSliderDragging) {
                     let topLabel = "";
                     let topY = Infinity;
+                    let topIndex = 0;
+
                     monthRefs.current.forEach((el, key) => {
                         if (visibleMap.has(key)) {
                             const rect = el.getBoundingClientRect();
                             if (rect.top < topY) {
                                 topY = rect.top;
                                 topLabel = key;
+                                topIndex = monthsList.indexOf(key);
                             }
                         }
                     });
-                    if (topLabel) setCurrentLabel(topLabel);
+
+                    if (topLabel) {
+                        setCurrentMonthIndex(Math.max(0, topIndex));
+                    }
                 }
             },
             { rootMargin: "-10% 0px -70% 0px", threshold: [0, 0.1, 0.5, 1] }
@@ -74,9 +103,8 @@ export default function ArticlesPage() {
         monthRefs.current.forEach((el) => observer.observe(el));
 
         const onScroll = () => {
-            setShowIndicator(true);
             if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
-            hideTimeoutRef.current = setTimeout(() => setShowIndicator(false), 800);
+            hideTimeoutRef.current = setTimeout(() => {}, 800);
         };
 
         window.addEventListener("scroll", onScroll, { passive: true });
@@ -86,7 +114,7 @@ export default function ArticlesPage() {
             window.removeEventListener("scroll", onScroll);
             if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
         };
-    }, [articles]);
+    }, [articles, isSliderDragging, monthsList]);
 
     const registerMonth = (key: string) => (el: HTMLDivElement | null) => {
         if (el) {
@@ -107,18 +135,15 @@ export default function ArticlesPage() {
                 searchHint={tSearch("hint")}
             />
 
-            {/* Scroll indicator */}
-            {currentLabel && (
-                <div
-                    className={`border-foreground bg-background text-foreground font-display pointer-events-none fixed top-1/2 right-4 z-50 -translate-y-1/2 border-2 px-4 py-2 text-[14px] font-bold shadow-lg transition-opacity duration-200 sm:right-8 sm:text-[16px] ${
-                        showIndicator ? "opacity-100" : "opacity-0"
-                    }`}
-                >
-                    {currentLabel}
-                </div>
+            {!isLoading && articles && articles.length > 0 && (
+                <ScrollPositionSlider
+                    months={monthsList}
+                    currentIndex={currentMonthIndex}
+                    onNavigate={handleNavigateToMonth}
+                    onDragChange={setIsSliderDragging}
+                />
             )}
 
-            {/* Hero */}
             <section className="border-foreground border-b-2 px-4 py-10 text-center sm:px-10 sm:py-14">
                 <span className="text-muted-foreground mb-3 block font-mono text-[9px] tracking-[2px] uppercase">
                     {t("heroEyebrow")}
@@ -130,7 +155,6 @@ export default function ArticlesPage() {
                     {t("heroSubtitle")}
                 </p>
 
-                {/* Dateline bar */}
                 <div className="border-foreground text-foreground mx-auto mt-6 flex max-w-[600px] items-center justify-between border-y py-1.5 font-mono text-[9px] tracking-widest uppercase sm:text-[10px]">
                     <span>{t("datelineEdition")}</span>
                     <span>{t("datelineBrand")}</span>
@@ -138,7 +162,6 @@ export default function ArticlesPage() {
                 </div>
             </section>
 
-            {/* Article list */}
             <section className="mx-auto max-w-[1000px] px-4 py-8 sm:px-10 sm:py-12">
                 {isLoading && <LoadingState message={t("loading")} />}
 
@@ -155,12 +178,14 @@ export default function ArticlesPage() {
                             {t("listLabel", { count: articles.length })}
                             <span className="bg-muted/40 h-px flex-1" />
                         </div>
+
                         <div className="w-full space-y-8">
-                            {groupArticlesByYearMonth(articles).map((yearGroup) => {
+                            {groupedArticles.map((yearGroup) => {
                                 const yearArticleCount = yearGroup.months.reduce(
                                     (sum, month) => sum + month.articles.length,
                                     0
                                 );
+
                                 return (
                                     <div key={yearGroup.year} className="w-full">
                                         <h2 className="font-display text-foreground mb-6 text-[28px] font-bold">
@@ -170,9 +195,11 @@ export default function ArticlesPage() {
                                                 {yearArticleCount !== 1 ? "s" : ""}
                                             </span>
                                         </h2>
+
                                         <div className="border-muted/35 w-full border-l pl-6">
                                             {yearGroup.months.map((monthGroup) => {
                                                 const label = `${monthGroup.monthName} ${yearGroup.year}`;
+
                                                 return (
                                                     <div
                                                         key={label}
@@ -188,6 +215,7 @@ export default function ArticlesPage() {
                                                                     : ""}
                                                             </span>
                                                         </h3>
+
                                                         <div className="border-muted/35 w-full border-t">
                                                             {monthGroup.articles.map((article) => (
                                                                 <ArticleCard
