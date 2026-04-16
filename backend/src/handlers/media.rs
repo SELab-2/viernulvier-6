@@ -149,21 +149,20 @@ fn validate_upload_request(req: &UploadUrlRequest) -> Result<(), AppError> {
 
 type HmacSha256 = Hmac<Sha256>;
 
-pub fn generate_upload_token(secret: &str, s3_key: &str) -> String {
+pub fn generate_upload_token(secret: &str, s3_key: &str) -> Result<String, AppError> {
     let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
-        .expect("HMAC can take key of any size");
+        .map_err(|e| AppError::Crypto(format!("HMAC init failed: {e}")))?;
     mac.update(s3_key.as_bytes());
-    hex::encode(mac.finalize().into_bytes())
+    Ok(hex::encode(mac.finalize().into_bytes()))
 }
 
-fn verify_upload_token(secret: &str, s3_key: &str, token: &str) -> bool {
-    let Ok(expected) = hex::decode(token) else {
-        return false;
-    };
+fn verify_upload_token(secret: &str, s3_key: &str, token: &str) -> Result<bool, AppError> {
+    let expected = hex::decode(token)
+        .map_err(|e| AppError::Crypto(format!("invalid upload token hex: {e}")))?;
     let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
-        .expect("HMAC can take key of any size");
+        .map_err(|e| AppError::Crypto(format!("HMAC init failed: {e}")))?;
     mac.update(s3_key.as_bytes());
-    mac.verify_slice(&expected).is_ok()
+    Ok(mac.verify_slice(&expected).is_ok())
 }
 
 #[utoipa::path(
@@ -207,7 +206,7 @@ pub async fn generate_upload_url(
         .await
         .map_err(|e| AppError::Internal(format!("failed to generate presigned URL: {e}")))?;
 
-    let upload_token = generate_upload_token(&state.config.upload_secret, &s3_key);
+    let upload_token = generate_upload_token(&state.config.upload_secret, &s3_key)?;
 
     Ok(Json(UploadUrlResponse {
         s3_key,
@@ -390,7 +389,7 @@ pub async fn attach_to_entity(
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
     Json(req): Json<AttachMediaRequest>,
 ) -> JsonStatusResponse<MediaPayload> {
-    if !verify_upload_token(&state.config.upload_secret, &req.s3_key, &req.upload_token) {
+    if !verify_upload_token(&state.config.upload_secret, &req.s3_key, &req.upload_token)? {
         return Err(AppError::PayloadError("invalid upload token".into()));
     }
 
