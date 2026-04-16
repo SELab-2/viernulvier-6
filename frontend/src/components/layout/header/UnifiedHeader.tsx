@@ -119,7 +119,7 @@ export function UnifiedHeader({
     return (
         <header className="border-foreground border-b-2">
             {/* Desktop */}
-            <div className="mx-auto hidden h-[52px] max-w-[1400px] items-stretch px-6 sm:flex sm:px-10">
+            <div className="mx-auto hidden h-[52px] max-w-7xl items-stretch px-6 sm:flex sm:px-10">
                 {/* Logo */}
                 <div className="border-muted/30 mr-6 flex shrink-0 items-center border-r pr-6 sm:mr-7 sm:pr-7">
                     <Link
