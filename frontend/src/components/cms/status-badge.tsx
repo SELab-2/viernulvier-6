@@ -3,15 +3,15 @@
 import { ArticleStatus } from "@/types/models/article.types";
 
 export const statusStyles: Record<ArticleStatus, string> = {
-    published: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-    draft: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-    archived: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+    published: "bg-foreground text-background",
+    draft: "bg-transparent text-muted-foreground",
+    archived: "bg-muted/20 text-muted-foreground",
 };
 
 export function StatusBadge({ status }: { status: ArticleStatus }) {
     return (
         <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize ${statusStyles[status]}`}
+            className={`inline-flex items-center rounded-md border border-transparent px-2 py-0.5 text-xs font-medium capitalize ${statusStyles[status]}`}
         >
             {status}
         </span>
