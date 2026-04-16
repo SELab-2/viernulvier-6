@@ -3,6 +3,7 @@
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
+
 import { Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "@/i18n/routing";
@@ -14,7 +15,6 @@ import { queryKeys } from "@/hooks/api/query-keys";
 import type { Production } from "@/types/models/production.types";
 import type { PaginatedResult } from "@/types/api/api.types";
 
-import { LoadingState } from "@/components/shared/loading-state";
 import { UnifiedHeader } from "@/components/layout/header";
 import { SearchHero } from "@/components/searchpage/search-hero";
 import { ResultsBar } from "@/components/searchpage/results-bar";
@@ -25,7 +25,6 @@ import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
 export default function SearchPage() {
     const locale = useLocale();
     const t = useTranslations("Search");
-    const tHome = useTranslations("Home");
     const loadMoreRef = useRef<HTMLDivElement>(null);
     const queryClient = useQueryClient();
     const searchParams = useSearchParams();
@@ -69,15 +68,13 @@ export default function SearchPage() {
             ...(currentCursor ? { cursor: currentCursor } : {}),
         },
     });
-    const { data: locationsResult, isLoading: locationsLoading } = useGetLocations();
-    const { data: facets, isLoading: facetsLoading } = useGetFacets({
+    const { data: locationsResult } = useGetLocations();
+    const { data: facets } = useGetFacets({
         entityType: "production",
     });
 
     const nextCursor = productionsResult?.nextCursor;
     const locationsData = useMemo(() => locationsResult?.data ?? [], [locationsResult?.data]);
-
-    const isLoading = productionsLoading || locationsLoading || facetsLoading;
 
     // Derive accumulated productions from React Query cache for each fetched cursor.
     // Including productionsResult in deps triggers recalculation when the current page arrives.
@@ -118,20 +115,6 @@ export default function SearchPage() {
         };
     }, [loadMore]);
 
-    if (isLoading && allProductions.length === 0) {
-        return (
-            <>
-                <UnifiedHeader
-                    query={query}
-                    onQueryChange={() => {}}
-                    searchPlaceholder={t("placeholder")}
-                    searchHint={t("hint")}
-                />
-                <LoadingState message={tHome("loading")} />
-            </>
-        );
-    }
-
     return (
         <>
             <UnifiedHeader
@@ -147,8 +130,8 @@ export default function SearchPage() {
 
             <div className="flex min-h-[calc(100vh-300px)] overflow-hidden">
                 <ArchiveSidebar locations={locationsData} facets={facets ?? []} />
-                <main className="min-w-0 flex-1 overflow-hidden">
-                    {allProductions.length === 0 && !isLoading ? (
+                <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                    {allProductions.length === 0 && !productionsLoading ? (
                         <VintageEmptyState
                             title={t("noResultsTitle")}
                             description={t("noResultsText", { query })}
@@ -156,10 +139,14 @@ export default function SearchPage() {
                             caption={t("articleImageCaption")}
                         />
                     ) : (
-                        <ProductionList productions={allProductions} locale={locale} />
+                        <ProductionList
+                            productions={allProductions}
+                            locale={locale}
+                            isLoading={productionsLoading}
+                        />
                     )}
 
-                    {nextCursor !== null && (
+                    {allProductions.length > 0 && nextCursor !== null && (
                         <div ref={loadMoreRef} className="flex justify-center py-8">
                             {isFetching && (
                                 <div className="text-muted-foreground flex items-center gap-2">
