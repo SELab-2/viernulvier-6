@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState, useRef, useEffect } from "react";
-import { useTranslations, useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Archive } from "lucide-react";
 import type { Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
@@ -15,6 +15,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useGetInfiniteProductions } from "@/hooks/api/useProductions";
 import { useGetEvents, useUpdateEvent } from "@/hooks/api/useEvents";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
+import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
 import type { PickerItem } from "@/lib/collection-picker-utils";
 import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
@@ -68,6 +69,11 @@ export function ProductionsTable() {
 
     const [editEvent, setEditEvent] = useState<Event | null>(null);
     const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
+    const [spotlight, setSpotlight] = useState<{ src: string; alt: string } | null>(null);
+    const openSpotlight = useCallback((src: string, alt: string) => setSpotlight({ src, alt }), []);
+    const spotlightItems: SpotlightItem[] = spotlight
+        ? [{ kind: "plain", src: spotlight.src, alt: spotlight.alt }]
+        : [];
 
     const eventsByProduction = useMemo(() => {
         const map = new Map<string, Event[]>();
@@ -105,9 +111,11 @@ export function ProductionsTable() {
                 onEdit: handleEditProduction,
                 t: tActions,
                 tProductions: t,
+                locale,
+                onOpenSpotlight: openSpotlight,
             }),
         ],
-        [selectColumn, tActions, handleEditProduction, t]
+        [selectColumn, tActions, handleEditProduction, t, locale, openSpotlight]
     );
 
     const eventCols = useMemo(
@@ -260,6 +268,16 @@ export function ProductionsTable() {
                 open={collectionDialogOpen}
                 onOpenChange={setCollectionDialogOpen}
                 items={collectionPickerItems}
+            />
+
+            <ImageSpotlight
+                items={spotlightItems}
+                index={0}
+                open={spotlight !== null}
+                onOpenChange={(open) => {
+                    if (!open) setSpotlight(null);
+                }}
+                eyebrow={t("eyebrow")}
             />
         </div>
     );

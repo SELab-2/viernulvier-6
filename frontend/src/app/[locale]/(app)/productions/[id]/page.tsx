@@ -11,9 +11,11 @@ import {
     useProductionWithPreview,
     useProductionEventsWithPreview,
 } from "@/hooks/useProductionPreview";
+import { useGetEntityMedia } from "@/hooks/api/useMedia";
+import { getLocalizedField } from "@/lib/locale";
 import { Link, useRouter } from "@/i18n/routing";
 
-import { SearchHeader } from "@/components/homepage/search-header";
+import { UnifiedHeader } from "@/components/layout/header";
 import { LoadingState } from "@/components/shared/loading-state";
 import { PreviewBadge } from "@/components/preview";
 
@@ -47,6 +49,7 @@ export default function ProductionPage({
     const { id } = use(params);
     const locale = useLocale();
     const tSearch = useTranslations("Search");
+    const tProd = useTranslations("ProductionPage");
     const router = useRouter();
 
     const [headerQuery, setHeaderQuery] = useState("");
@@ -75,6 +78,7 @@ export default function ProductionPage({
     const { data: apiProduction, isLoading: isProdLoading, isError } = useGetProduction(id);
     const { data: apiEvents = [], isLoading: isEventsLoading } = useGetEventsByProduction(id);
     const { data: productionsResult, isLoading: isAllProdLoading } = useGetProductions();
+    const { data: media = [] } = useGetEntityMedia("production", id);
 
     // Always call preview hooks (they handle preview mode internally)
     const previewProduction = useProductionWithPreview(id, apiProduction, sessionId);
@@ -92,7 +96,7 @@ export default function ProductionPage({
         if (!productionsResult?.data || !production) return [];
         return productionsResult.data
             .filter(
-                (p) => p.id !== production.id && p.uitdatabankType === production.uitdatabankType
+                (p) => p.id !== production.id // && p.uitdatabankType === production.uitdatabankType // Maybe filter here later
             )
             .slice(0, 4);
     }, [productionsResult, production]);
@@ -104,14 +108,14 @@ export default function ProductionPage({
     if (isLoading || !production) {
         return (
             <>
-                <SearchHeader
+                <UnifiedHeader
                     query={headerQuery}
                     onQueryChange={setHeaderQuery}
                     onSearch={handleHeaderSearch}
                     searchPlaceholder={tSearch("placeholder")}
                     searchHint={tSearch("hint")}
                 />
-                <LoadingState message="Laden..." />
+                <LoadingState message={tProd("loading")} />
             </>
         );
     }
@@ -120,7 +124,7 @@ export default function ProductionPage({
 
     return (
         <div className="bg-background text-foreground font-body min-h-screen">
-            <SearchHeader
+            <UnifiedHeader
                 query={headerQuery}
                 onQueryChange={setHeaderQuery}
                 onSearch={handleHeaderSearch}
@@ -131,11 +135,11 @@ export default function ProductionPage({
             {/* Breadcrumb */}
             <div className="border-muted/25 text-muted-foreground flex items-center gap-2 border-b px-6 py-3 font-mono text-[9px] tracking-[1.4px] uppercase sm:px-10">
                 <Link href="/search" className="hover:text-foreground transition-colors">
-                    Archief
+                    {tProd("breadcrumbArchive")}
                 </Link>
                 <span className="opacity-50">/</span>
                 <Link href="/search" className="hover:text-foreground transition-colors">
-                    Producties
+                    {tProd("breadcrumbProductions")}
                 </Link>
                 <span className="opacity-50">/</span>
                 <span className="text-foreground max-w-[200px] truncate">{title}</span>
@@ -148,12 +152,12 @@ export default function ProductionPage({
             </div>
 
             {/* Hero */}
-            <ProductionHero production={production as Production} locale={locale} />
+            <ProductionHero production={production} locale={locale} media={media} />
 
             {/* Content Grid */}
             <div className="border-foreground flex min-h-[600px] flex-col border-b-2 lg:flex-row">
                 <div className="border-border animate-in fade-in slide-in-from-bottom-2 fill-mode-both flex-1 border-b p-6 pb-16 delay-150 duration-500 sm:p-10 lg:border-r lg:border-b-0 lg:pr-[50px]">
-                    <ProductionArticle production={production as Production} locale={locale} />
+                    <ProductionArticle production={production} locale={locale} media={media} />
                 </div>
                 <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both flex w-full shrink-0 flex-col gap-0 p-6 delay-200 duration-500 sm:p-[30px_24px] lg:w-[320px]">
                     <ProductionSidebar

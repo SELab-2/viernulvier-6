@@ -8,7 +8,15 @@
     },
     "Header": {
         "logout": "Uitloggen",
-        "loggingOut": "..."
+        "loggingOut": "...",
+        "signOut": "Uitloggen",
+        "nav": {
+            "home": "Home",
+            "archive": "Archief",
+            "articles": "Artikels",
+            "cms": "CMS",
+            "admin": "Admin"
+        }
     },
     "LocaleSwitcher": {
         "label": "Taal selecteren"
@@ -36,7 +44,7 @@
         "heroEyebrow": "Archief — {count} producties",
         "heroTitle": "Doorzoek het archief",
         "heroTitleItalic": "van De Vooruit",
-        "heroPlaceholder": "Artiest, productie, jaar\u2026",
+        "heroPlaceholder": "Artiest, productie, jaar…",
         "quickSearch": "Snel zoeken:",
         "enter": "enter",
         "noResultsTitle": "Hier hangen enkel spinnenwebben",
@@ -137,7 +145,7 @@
         "hero": {
             "title": "Het archief van VIERNULVIER",
             "subtitle": "Meer dan 40 jaar theater, dans, muziek en nachtleven in Gent.",
-            "searchPlaceholder": "Zoek in het archief\u2026"
+            "searchPlaceholder": "Zoek in het archief…"
         },
         "tags": {
             "theater": "Theater",
@@ -230,15 +238,15 @@
         "ActionsColumn": {
             "openMenu": "Menu openen",
             "actions": "Acties",
-            "copy": "{key} kopi\u00ebren",
+            "copy": "{key} kopiëren",
             "copied": "{key} gekopieerd",
-            "copyFailed": "Kopi\u00ebren naar klembord mislukt",
+            "copyFailed": "Kopiëren naar klembord mislukt",
             "edit": "{label} bewerken"
         },
         "EditSheet": {
             "yes": "Ja",
             "no": "Nee",
-            "selectPlaceholder": "Selecteer\u2026",
+            "selectPlaceholder": "Selecteer…",
             "cancel": "Annuleren",
             "saveChanges": "Wijzigingen opslaan",
             "editMode": "Bewerk modus"
@@ -333,7 +341,8 @@
             "fieldEventMaxTickets": "Max. tickets per bestelling",
             "fieldEventVendorId": "Vendor-ID",
             "fieldEventBoxOfficeId": "Box office ID",
-            "fieldEventUitdatabankId": "UiTdatabank ID"
+            "fieldEventUitdatabankId": "UiTdatabank ID",
+            "eyebrow": "Productie"
         },
         "Locations": {
             "title": "Locaties",
@@ -472,6 +481,32 @@
         "backToHome": "Terug naar het archief",
         "articleImageCaption": "Het vergeten Vooruit gebouw..."
     },
+    "ProductionPage": {
+        "eyebrow": "Productie",
+        "archiveNumber": "Archief nr.",
+        "metaType": "Type",
+        "metaTheme": "Thema",
+        "metaLanguage": "Taal",
+        "languageNlEn": "EN / NL",
+        "languageNl": "NL",
+        "imageCaptionFallback": "Archief VIERNULVIER",
+        "about": "Over de productie",
+        "noDescription": "Geen beschrijving beschikbaar in deze taal.",
+        "video": "Video",
+        "externalVideoLink": "Externe video link ↗",
+        "credits": "Credits",
+        "creditProduction": "Productie",
+        "creditArtist": "Artiest",
+        "relatedTitle": "Meer uit het archief",
+        "relatedViewAll": "Bekijk alles →",
+        "relatedArchive": "Archief",
+        "relatedProductionFallback": "Productie",
+        "breadcrumbArchive": "Archief",
+        "breadcrumbProductions": "Producties",
+        "loading": "Laden…",
+        "openCoverImage": "Coverafbeelding openen",
+        "openGalleryImage": "Afbeelding openen"
+    },
     "NewsArticleComponent": {
         "subTitle": "Vooruit Archief",
         "edition": "Editie 404",
@@ -481,6 +516,18 @@
     "Preview": {
         "previewMode": "Voorbeeld",
         "exitPreview": "Klik om voorbeeldmodus te verlaten"
+    },
+    "Location": {
+        "about": "Over",
+        "history": "Geschiedenis",
+        "halls": "Zalen",
+        "seated": "Zitplaatsen",
+        "openSeating": "Vrije plaatskeuze",
+        "searchArchive": "Bekijk alle voorstellingen op deze locatie",
+        "searchNotImplemented": "Zoeken op locatie is nog niet beschikbaar.",
+        "loading": "Locatie laden...",
+        "notFound": "Locatie niet gevonden.",
+        "error": "Er ging iets mis bij het laden van deze locatie."
     },
     "Articles": {
         "heroEyebrow": "Verhalen uit het archief",
@@ -507,5 +554,14 @@
         "relatedArtists": "Artiesten",
         "relatedLocations": "Locaties",
         "relatedEvents": "Voorstellingen"
+    },
+    "ImageSpotlight": {
+        "close": "Sluiten",
+        "previous": "Vorige",
+        "next": "Volgende",
+        "previousImage": "Vorige afbeelding",
+        "nextImage": "Volgende afbeelding",
+        "archive": "Archief",
+        "openImage": "Afbeelding openen"
     }
 }

@@ -91,8 +91,9 @@ describe("production mapper", () => {
         });
 
         expect(createPayload.slug).toBe("new");
-        expect(createPayload.translations[0]?.language_code).toBe("nl");
-        expect(createPayload.translations[0]?.title).toBe("Titel");
+        expect(createPayload.translations).toHaveLength(1);
+        expect(createPayload.translations?.[0]?.language_code).toBe("nl");
+        expect(createPayload.translations?.[0]?.title).toBe("Titel");
 
         const updatePayload = mapUpdateProductionInput({ id: "id-1", slug: "updated" });
         expect(updatePayload.id).toBe("id-1");

@@ -10,7 +10,7 @@ import { useHasPreview } from "@/hooks/usePreviewData";
 import { useArticleWithPreview, useArticleRelationsWithPreview } from "@/hooks/useArticlePreview";
 import { Link } from "@/i18n/routing";
 
-import { SearchHeader } from "@/components/homepage/search-header";
+import { UnifiedHeader } from "@/components/layout/header";
 import { TiptapRenderer } from "@/components/articles";
 import { LoadingState } from "@/components/shared/loading-state";
 import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
@@ -113,7 +113,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
 
     return (
         <>
-            <SearchHeader
+            <UnifiedHeader
                 query={headerQuery}
                 onQueryChange={setHeaderQuery}
                 onSearch={handleHeaderSearch}

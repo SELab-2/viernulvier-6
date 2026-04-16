@@ -1,5 +1,13 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import Image from "next/image";
+import { useTranslations } from "next-intl";
+
 import { getLocalizedField } from "@/lib/locale";
+import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
 import type { Production } from "@/types/models/production.types";
+import type { Media } from "@/types/models/media.types";
 
 function stripHtmlAndDecode(html: string | null | undefined): string {
     if (!html) return "";
@@ -87,10 +95,14 @@ function TextBlocks({ text, className }: { text: string; className?: string }) {
 export function ProductionArticle({
     production,
     locale,
+    media = [],
 }: {
     production: Production;
     locale: string;
+    media?: Media[];
 }) {
+    const t = useTranslations("ProductionPage");
+
     const description = stripHtmlAndDecode(getLocalizedField(production, "description", locale));
     const descriptionExtra = stripHtmlAndDecode(
         getLocalizedField(production, "descriptionExtra", locale)
@@ -108,12 +120,28 @@ export function ProductionArticle({
 
     const videos = [production.video1, production.video2].filter(Boolean) as string[];
 
+    const [spotlightOpen, setSpotlightOpen] = useState(false);
+    const [spotlightIndex, setSpotlightIndex] = useState(0);
+    const spotlightItems: SpotlightItem[] = useMemo(
+        () => media.filter((m) => m.url).map((m) => ({ kind: "media" as const, media: m })),
+        [media]
+    );
+    const spotlightIndexMap = useMemo(
+        () =>
+            new Map(
+                spotlightItems
+                    .map((it, idx) => (it.kind === "media" ? ([it.media.id, idx] as const) : null))
+                    .filter((entry): entry is [string, number] => entry !== null)
+            ),
+        [spotlightItems]
+    );
+
     return (
         <div className="max-w-3xl">
             {/* Section Rule */}
             <div className="mb-5 flex items-center gap-3.5">
                 <h2 className="text-muted-foreground font-mono text-[9px] font-medium tracking-[2px] whitespace-nowrap uppercase">
-                    Over de productie
+                    {t("about")}
                 </h2>
                 <div className="bg-muted/25 h-px flex-1" />
             </div>
@@ -159,31 +187,69 @@ export function ProductionArticle({
 
                 {/* Fallback if no description */}
                 {!description && !descriptionShort && !descriptionExtra && !teaser && (
-                    <p className="text-muted-foreground italic">
-                        Geen beschrijving beschikbaar in deze taal.
-                    </p>
+                    <p className="text-muted-foreground italic">{t("noDescription")}</p>
                 )}
             </div>
 
-            {/* Gallery placeholder */}
-            <div className="my-8 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <div className="group aspect-[4/3] overflow-hidden bg-[#ccc6bc]">
-                    <div className="h-full w-full bg-gradient-to-tr from-[#CCC6BC] to-[#B5AEA4] grayscale-[15%] transition-all duration-300 group-hover:grayscale-0" />
+            {/* Gallery */}
+            {media.length > 0 && (
+                <div className="my-8 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    {media.map((m, i) => {
+                        const alt =
+                            (locale === "nl"
+                                ? m.altTextNl
+                                : locale === "fr"
+                                  ? m.altTextFr
+                                  : m.altTextEn) ?? "";
+                        const spotlightIdx = spotlightIndexMap.get(m.id) ?? -1;
+                        return m.url && spotlightIdx >= 0 ? (
+                            <button
+                                type="button"
+                                key={m.id}
+                                onClick={() => {
+                                    setSpotlightIndex(spotlightIdx);
+                                    setSpotlightOpen(true);
+                                }}
+                                className="group relative aspect-[4/3] cursor-zoom-in overflow-hidden bg-[#ccc6bc]"
+                                aria-label={alt || t("openGalleryImage")}
+                            >
+                                <Image
+                                    src={m.url}
+                                    alt={alt}
+                                    fill
+                                    className="object-cover grayscale-[15%] transition-all duration-300 group-hover:grayscale-0"
+                                    sizes="(max-width: 640px) 100vw, 33vw"
+                                />
+                            </button>
+                        ) : (
+                            <div
+                                key={m.id ?? `placeholder-${i}`}
+                                className="relative aspect-[4/3] overflow-hidden bg-[#ccc6bc]"
+                            >
+                                <div className="h-full w-full bg-gradient-to-tr from-[#CCC6BC] to-[#B5AEA4]" />
+                            </div>
+                        );
+                    })}
                 </div>
-                <div className="group aspect-[4/3] overflow-hidden bg-[#ccc6bc]">
-                    <div className="h-full w-full bg-gradient-to-tr from-[#CCC6BC] to-[#B5AEA4] grayscale-[15%] transition-all duration-300 group-hover:grayscale-0" />
-                </div>
-                <div className="group aspect-[4/3] overflow-hidden bg-[#ccc6bc]">
-                    <div className="h-full w-full bg-gradient-to-tr from-[#CCC6BC] to-[#B5AEA4] grayscale-[15%] transition-all duration-300 group-hover:grayscale-0" />
-                </div>
-            </div>
+            )}
+
+            {spotlightItems.length > 0 && (
+                <ImageSpotlight
+                    items={spotlightItems}
+                    index={spotlightIndex}
+                    onIndexChange={setSpotlightIndex}
+                    open={spotlightOpen}
+                    onOpenChange={setSpotlightOpen}
+                    eyebrow={t("about")}
+                />
+            )}
 
             {/* Videos */}
             {videos.length > 0 && (
                 <div className="mt-10 mb-10">
                     <div className="mb-5 flex items-center gap-3.5">
                         <h2 className="text-muted-foreground font-mono text-[9px] font-medium tracking-[2px] whitespace-nowrap uppercase">
-                            Video
+                            {t("video")}
                         </h2>
                         <div className="bg-muted/25 h-px flex-1" />
                     </div>
@@ -197,7 +263,7 @@ export function ProductionArticle({
                                 className="group border-border hover:border-foreground flex flex-col border p-4 transition-colors"
                             >
                                 <span className="text-muted-foreground group-hover:text-foreground mb-2 font-mono text-[10px] uppercase">
-                                    Externe video link ↗
+                                    {t("externalVideoLink")}
                                 </span>
                                 <span className="font-body text-foreground truncate text-[13px]">
                                     {v}
@@ -211,7 +277,7 @@ export function ProductionArticle({
             {/* Credits Section */}
             <div className="mt-10 mb-5 flex items-center gap-3.5">
                 <h2 className="text-muted-foreground font-mono text-[9px] font-medium tracking-[2px] whitespace-nowrap uppercase">
-                    Credits
+                    {t("credits")}
                 </h2>
                 <div className="bg-muted/25 h-px flex-1" />
             </div>
@@ -219,7 +285,7 @@ export function ProductionArticle({
             <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
                 <div className="mb-2">
                     <div className="text-muted-foreground mb-0.5 font-mono text-[8px] tracking-[1.6px] uppercase">
-                        Productie
+                        {t("creditProduction")}
                     </div>
                     <div
                         className="font-body text-foreground text-[13px] font-medium"
@@ -230,7 +296,7 @@ export function ProductionArticle({
                 </div>
                 <div className="mb-2">
                     <div className="text-muted-foreground mb-0.5 font-mono text-[8px] tracking-[1.6px] uppercase">
-                        Artiest
+                        {t("creditArtist")}
                     </div>
                     <div
                         className="font-body text-foreground text-[13px] font-medium"

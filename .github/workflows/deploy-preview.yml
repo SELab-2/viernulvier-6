@@ -32,17 +32,21 @@ jobs:
       github.event.action != 'closed' &&
       github.event.action != 'unlabeled' &&
       contains(github.event.pull_request.labels.*.name, 'preview')
-    runs-on: self-hosted
+    runs-on: kaya-sem-house
     environment: preview
     needs: [run_backend_tests, run_frontend_tests]
 
     steps:
-      - name: Clean up runner directories
-        run: sudo chown -R $USER:$USER /opt/hostedtoolcache || true
-        continue-on-error: true
+      # We should not edit perms of this, if this breaks SSH into server and delete manually and let actions rebuild
+      # - name: Clean up runner directories
+      #  run: sudo chown -R $USER:$USER /opt/hostedtoolcache || true
+      #  continue-on-error: true
 
       - name: Clean up workspace
-        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace alpine sh -c "chown -R $(id -u):$(id -g) /workspace"
+        continue-on-error: true
+
       - name: Checkout repo
         uses: actions/checkout@v4
 
@@ -74,12 +78,14 @@ jobs:
 
       - name: Ensure preview Traefik is running
         run: |
-          if [ -z "$(docker ps -q -f name=traefik_preview)" ]; then
+          if [ -z "$(docker compose -f infra/traefik/docker-compose.yml ps -q traefik)" ]; then
             docker compose -f infra/traefik/docker-compose.yml up -d
           fi
 
       - name: Start preview stack
         env:
+          DOCKER_BUILDKIT: "1"
+          COMPOSE_DOCKER_CLI_BUILD: "1"
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
           docker compose --env-file .env --env-file infra/preview/.env.preview \
@@ -138,11 +144,14 @@ jobs:
        contains(github.event.pull_request.labels.*.name, 'preview')) ||
       (github.event.action == 'unlabeled' &&
        github.event.label.name == 'preview')
-    runs-on: self-hosted
+    runs-on: kaya-sem-house
     environment: preview
     steps:
       - name: Clean up workspace
-        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace alpine sh -c "chown -R $(id -u):$(id -g) /workspace"
+        continue-on-error: true
+
       - name: Checkout repo
         uses: actions/checkout@v4
 

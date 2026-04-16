@@ -360,6 +360,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/locations/slug/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get location by slug */
+        get: operations["get_location_by_slug"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/locations/{id}": {
         parameters: {
             query?: never;
@@ -440,6 +457,23 @@ export interface paths {
         put?: never;
         /** @description Primary CMS write endpoint: create/update media metadata by s3_key and link it to an entity in one transaction. */
         post: operations["attach_media_to_entity"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/entity/{entity_type}/{entity_id}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Link an existing media record to an entity. Does not modify media metadata or require an upload token. */
+        post: operations["link_media_to_entity"];
         delete?: never;
         options?: never;
         head?: never;
@@ -695,6 +729,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Aggregate public site statistics (cached) */
+        get: operations["get_stats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tags/{entity_type}/{entity_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get all tags on an entity, grouped by facet */
+        get: operations["get_entity_tags"];
+        /** @description Replace all tags on an entity */
+        put: operations["replace_entity_tags"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/taxonomy/facets": {
         parameters: {
             query?: never;
@@ -822,6 +891,7 @@ export interface components {
             s3_key: string;
             /** Format: int32 */
             sort_order?: number | null;
+            upload_token: string;
             /** Format: int32 */
             width?: number | null;
         };
@@ -943,12 +1013,68 @@ export interface components {
             id: string;
             role: components["schemas"]["UserRole"];
         };
+        EntityFacetResponse: {
+            slug: string;
+            tags: components["schemas"]["EntityTagResponse"][];
+            translations: components["schemas"]["FacetTranslationPayload"][];
+        };
+        EntityTagResponse: {
+            inherited: boolean;
+            slug: string;
+            /** Format: int32 */
+            sort_order: number;
+            translations: components["schemas"]["TagTranslationPayload"][];
+        };
         /** @enum {string} */
         EntityType: "production" | "artist" | "article" | "media" | "location" | "event" | "series";
         ErrorResponse: {
             /** @example An error occurred during processing */
             message: string;
             success: boolean;
+        };
+        EventNestedPricePayload: {
+            auto_select_combo: boolean;
+            cineville_box: boolean;
+            code?: string | null;
+            /** Format: date-time */
+            created_at?: string | null;
+            description_en?: string | null;
+            description_nl?: string | null;
+            /** Format: uuid */
+            id?: string | null;
+            include_in_price_range: boolean;
+            /** Format: int32 */
+            maximum?: number | null;
+            membership?: string | null;
+            /** Format: int32 */
+            minimum: number;
+            /** Format: int32 */
+            order: number;
+            /** Format: int32 */
+            source_id?: number | null;
+            /** Format: int32 */
+            step: number;
+            type: string;
+            /** Format: date-time */
+            updated_at?: string | null;
+            visibility: string;
+        };
+        EventNestedPriceRankPayload: {
+            code: string;
+            /** Format: date-time */
+            created_at?: string | null;
+            description_en?: string | null;
+            description_nl?: string | null;
+            /** Format: uuid */
+            id?: string | null;
+            /** Format: int32 */
+            position: number;
+            /** Format: int32 */
+            sold_out_buffer?: number | null;
+            /** Format: int32 */
+            source_id?: number | null;
+            /** Format: date-time */
+            updated_at?: string | null;
         };
         EventPayload: {
             box_office_id?: string | null;
@@ -966,6 +1092,7 @@ export interface components {
             intermission_at?: string | null;
             /** Format: int32 */
             max_tickets_per_order?: number | null;
+            prices?: components["schemas"]["EventPricePayload"][];
             /** Format: uuid */
             production_id: string;
             /** Format: int32 */
@@ -992,6 +1119,7 @@ export interface components {
             intermission_at?: string | null;
             /** Format: int32 */
             max_tickets_per_order?: number | null;
+            prices?: components["schemas"]["EventPricePayload"][];
             /** Format: uuid */
             production_id: string;
             /** Format: int32 */
@@ -1003,6 +1131,27 @@ export interface components {
             /** Format: date-time */
             updated_at: string;
             vendor_id?: string | null;
+        };
+        EventPricePayload: {
+            /** Format: int32 */
+            amount_cents: number;
+            /** Format: int32 */
+            available: number;
+            box_office_id?: string | null;
+            /** Format: int32 */
+            contingent_id?: number | null;
+            /** Format: date-time */
+            created_at?: string | null;
+            /** Format: date-time */
+            expires_at?: string | null;
+            /** Format: uuid */
+            id?: string | null;
+            price: components["schemas"]["EventNestedPricePayload"];
+            rank: components["schemas"]["EventNestedPriceRankPayload"];
+            /** Format: int32 */
+            source_id?: number | null;
+            /** Format: date-time */
+            updated_at?: string | null;
         };
         /** @enum {string} */
         Facet: "discipline" | "format" | "theme" | "audience";
@@ -1043,6 +1192,14 @@ export interface components {
             space_id?: string | null;
             vendor_id?: string | null;
         };
+        LinkMediaRequest: {
+            is_cover_image?: boolean | null;
+            /** Format: uuid */
+            media_id: string;
+            role?: string | null;
+            /** Format: int32 */
+            sort_order?: number | null;
+        };
         LocationPayload: {
             city?: string | null;
             code?: string | null;
@@ -1059,6 +1216,7 @@ export interface components {
             /** Format: int32 */
             source_id?: number | null;
             street?: string | null;
+            translations?: components["schemas"]["LocationTranslationPayload"][];
             uitdatabank_id?: string | null;
         };
         LocationPostPayload: {
@@ -1075,7 +1233,14 @@ export interface components {
             /** Format: int32 */
             source_id?: number | null;
             street?: string | null;
+            translations?: components["schemas"]["LocationTranslationPayload"][];
             uitdatabank_id?: string | null;
+        };
+        /** @description The per-language content for a location. */
+        LocationTranslationPayload: {
+            description?: string | null;
+            history?: string | null;
+            language_code: string;
         };
         LoginRequest: {
             email: string;
@@ -1158,6 +1323,7 @@ export interface components {
                 intermission_at?: string | null;
                 /** Format: int32 */
                 max_tickets_per_order?: number | null;
+                prices?: components["schemas"]["EventPricePayload"][];
                 /** Format: uuid */
                 production_id: string;
                 /** Format: int32 */
@@ -1207,19 +1373,22 @@ export interface components {
                 /** Format: int32 */
                 source_id?: number | null;
                 street?: string | null;
+                translations?: components["schemas"]["LocationTranslationPayload"][];
                 uitdatabank_id?: string | null;
             }[];
             next_cursor?: string | null;
         };
         PaginatedResponse_ProductionPayload: {
             data: {
+                /** @description Cover image URL resolved from the entity_media link (output-only). */
+                readonly cover_image_url?: string | null;
                 eticket_info?: string | null;
                 /** Format: uuid */
                 id: string;
                 slug: string;
                 /** Format: int32 */
                 source_id?: number | null;
-                translations: components["schemas"]["ProductionTranslationPayload"][];
+                translations?: components["schemas"]["ProductionTranslationPayload"][];
                 uitdatabank_theme?: string | null;
                 uitdatabank_type?: string | null;
                 video_1?: string | null;
@@ -1240,13 +1409,15 @@ export interface components {
             next_cursor?: string | null;
         };
         ProductionPayload: {
+            /** @description Cover image URL resolved from the entity_media link (output-only). */
+            readonly cover_image_url?: string | null;
             eticket_info?: string | null;
             /** Format: uuid */
             id: string;
             slug: string;
             /** Format: int32 */
             source_id?: number | null;
-            translations: components["schemas"]["ProductionTranslationPayload"][];
+            translations?: components["schemas"]["ProductionTranslationPayload"][];
             uitdatabank_theme?: string | null;
             uitdatabank_type?: string | null;
             video_1?: string | null;
@@ -1257,7 +1428,7 @@ export interface components {
             slug: string;
             /** Format: int32 */
             source_id?: number | null;
-            translations: components["schemas"]["ProductionTranslationPayload"][];
+            translations?: components["schemas"]["ProductionTranslationPayload"][];
             uitdatabank_theme?: string | null;
             uitdatabank_type?: string | null;
             video_1?: string | null;
@@ -1291,6 +1462,9 @@ export interface components {
             missing_in_s3: string[];
             s3_key_count: number;
         };
+        ReplaceTagsRequest: {
+            tag_slugs: string[];
+        };
         SeriesPayload: {
             /** Format: date-time */
             created_at: string;
@@ -1319,6 +1493,8 @@ export interface components {
             name: string;
             subtitle: string;
         };
+        /** @enum {string} */
+        Sort: "recent" | "oldest" | "relevance";
         SpacePayload: {
             /** Format: uuid */
             id: string;
@@ -1334,6 +1510,24 @@ export interface components {
             name_nl: string;
             /** Format: int32 */
             source_id?: number | null;
+        };
+        StatsPayload: {
+            /** Format: int64 */
+            article_count: number;
+            /** Format: int64 */
+            artist_count: number;
+            /** Format: int64 */
+            collection_count: number;
+            /** Format: int64 */
+            event_count: number;
+            /** Format: int64 */
+            location_count: number;
+            /** Format: date-time */
+            newest_event?: string | null;
+            /** Format: date-time */
+            oldest_event?: string | null;
+            /** Format: int64 */
+            production_count: number;
         };
         TagResponse: {
             slug: string;
@@ -1360,6 +1554,8 @@ export interface components {
             expires_in: number;
             /** @description The S3 key where the file should be uploaded */
             s3_key: string;
+            /** @description HMAC token that must be presented when attaching this upload */
+            upload_token: string;
             /** @description Presigned PUT URL for direct upload */
             upload_url: string;
         };
@@ -2292,6 +2488,7 @@ export interface operations {
             query?: {
                 cursor?: string | null;
                 limit?: number;
+                q?: string | null;
             };
             header?: never;
             path?: never;
@@ -2455,6 +2652,7 @@ export interface operations {
             query?: {
                 cursor?: string | null;
                 limit?: number;
+                q?: string | null;
             };
             header?: never;
             path?: never;
@@ -2543,6 +2741,36 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
+            };
+        };
+    };
+    get_location_by_slug: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Location slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocationPayload"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -2718,6 +2946,49 @@ export interface operations {
             };
             /** @description Bad request */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    link_media_to_entity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Entity type (production, event, blogpost, media, artist) */
+                entity_type: string;
+                /** @description Entity UUID */
+                entity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkMediaRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaPayload"];
+                };
+            };
+            /** @description Bad request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Media not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2908,6 +3179,15 @@ export interface operations {
             query?: {
                 cursor?: string | null;
                 limit?: number;
+                q?: string | null;
+                discipline?: string | null;
+                format?: string | null;
+                theme?: string | null;
+                audience?: string | null;
+                location?: string | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                sort?: null | components["schemas"]["Sort"];
             };
             header?: never;
             path?: never;
@@ -3516,6 +3796,112 @@ export interface operations {
                 };
             };
             /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_stats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    /** @description Public cache: max-age=3600 (1h), stale-while-revalidate=86400 (24h) */
+                    "Cache-Control"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatsPayload"];
+                };
+            };
+        };
+    };
+    get_entity_tags: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Entity type */
+                entity_type: components["schemas"]["EntityType"];
+                /** @description Entity UUID */
+                entity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntityFacetResponse"][];
+                };
+            };
+            /** @description Entity type does not support tagging */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    replace_entity_tags: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Entity type */
+                entity_type: components["schemas"]["EntityType"];
+                /** @description Entity UUID */
+                entity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceTagsRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntityFacetResponse"][];
+                };
+            };
+            /** @description Invalid tag slug or non-taggable entity type */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Entity not found */
             404: {
                 headers: {
                     [name: string]: unknown;

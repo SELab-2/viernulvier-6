@@ -28,6 +28,13 @@ const fetchLocationById = async (id: string): Promise<Location> => {
     return mapLocation(data);
 };
 
+const fetchLocationBySlug = async (slug: string): Promise<Location> => {
+    const { data } = await api.get<GetLocationByIdResponse>(
+        `/locations/slug/${encodeURIComponent(slug)}`
+    );
+    return mapLocation(data);
+};
+
 export const useGetLocations = (options?: { enabled?: boolean; pagination?: PaginationParams }) => {
     return useQuery({
         queryKey: queryKeys.locations.all(options?.pagination),
@@ -52,6 +59,14 @@ export const useGetLocation = (id: string, options?: { enabled?: boolean }) => {
         queryKey: queryKeys.locations.detail(id),
         queryFn: () => fetchLocationById(id),
         enabled: Boolean(id) && (options?.enabled ?? true),
+    });
+};
+
+export const useGetLocationBySlug = (slug: string, options?: { enabled?: boolean }) => {
+    return useQuery({
+        queryKey: queryKeys.locations.bySlug(slug),
+        queryFn: () => fetchLocationBySlug(slug),
+        enabled: Boolean(slug) && (options?.enabled ?? true),
     });
 };
 

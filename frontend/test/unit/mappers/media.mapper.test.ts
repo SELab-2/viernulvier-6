@@ -159,6 +159,7 @@ describe("media mapper", () => {
         it("maps camelCase input to snake_case API payload", () => {
             const result = mapAttachMediaInput({
                 s3Key: "media/test.jpg",
+                uploadToken: "token-123",
                 mimeType: "image/jpeg",
                 role: "gallery",
                 sortOrder: 1,
@@ -170,6 +171,7 @@ describe("media mapper", () => {
                 fileSize: 50000,
             });
             expect(result.s3_key).toBe("media/test.jpg");
+            expect(result.upload_token).toBe("token-123");
             expect(result.mime_type).toBe("image/jpeg");
             expect(result.role).toBe("gallery");
             expect(result.sort_order).toBe(1);
@@ -199,10 +201,12 @@ describe("media mapper", () => {
                 s3_key: "media/abc.jpg",
                 upload_url: "https://s3.example.com/presigned",
                 expires_in: 300,
+                upload_token: "token-abc",
             });
             expect(result.s3Key).toBe("media/abc.jpg");
             expect(result.uploadUrl).toBe("https://s3.example.com/presigned");
             expect(result.expiresIn).toBe(300);
+            expect(result.uploadToken).toBe("token-abc");
         });
     });
 });

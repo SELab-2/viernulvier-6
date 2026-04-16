@@ -13,7 +13,11 @@ pub struct AppConfig {
     pub refresh_token_expiry_days: i8,
     pub allowed_origins: Vec<String>,
     pub preview_name: String,
+    pub cookie_secure: bool,
+    pub cookie_same_site: String,
     pub s3: Option<S3Config>,
+    pub upload_secret: String,
+    pub max_upload_size_bytes: i64,
 }
 
 #[derive(Debug, Clone)]
@@ -84,7 +88,19 @@ impl AppConfig {
             refresh_token_expiry_days: 7,
             allowed_origins,
             preview_name: env::var("PREVIEW_NAME").unwrap_or_default(),
+            cookie_secure: env::var("COOKIE_SECURE")
+                .map(|v| v == "true")
+                .unwrap_or(true),
+            cookie_same_site: env::var("COOKIE_SAME_SITE").unwrap_or_else(|_| "strict".to_string()),
             s3,
+            upload_secret: env::var("UPLOAD_SECRET")
+                .unwrap_or_else(|_| get_env_var("JWT_SECRET").unwrap_or_default()),
+            max_upload_size_bytes: env::var("MAX_UPLOAD_SIZE_MIB")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(50)
+                * 1024
+                * 1024,
         })
     }
 }

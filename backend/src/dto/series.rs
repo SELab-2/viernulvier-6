@@ -108,11 +108,7 @@ impl SeriesPayload {
     }
 
     pub async fn by_slug(db: &Database, slug: &str) -> Result<Self, AppError> {
-        let swt = db
-            .series()
-            .by_slug(slug)
-            .await?
-            .ok_or(AppError::NotFound)?;
+        let swt = db.series().by_slug(slug).await?.ok_or(AppError::NotFound)?;
 
         let id = swt.series.id;
         let production_ids = db.series().production_ids_for(id).await?;
@@ -127,10 +123,7 @@ impl SeriesPayload {
         ))
     }
 
-    pub async fn for_production(
-        db: &Database,
-        production_id: Uuid,
-    ) -> Result<Vec<Self>, AppError> {
+    pub async fn for_production(db: &Database, production_id: Uuid) -> Result<Vec<Self>, AppError> {
         let all_series = db.series().series_for_production(production_id).await?;
 
         if all_series.is_empty() {

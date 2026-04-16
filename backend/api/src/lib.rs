@@ -12,29 +12,36 @@ use serde::de::DeserializeOwned;
 use sha2::{Digest, Sha256};
 use tracing::{info, warn};
 
+use crate::error::ImporterError;
 use crate::helper::extract_source_id;
 use crate::models::{
-    space::ApiSpace,
     collection::ApiCollection,
     event::ApiEvent,
+    event_price::ApiEventPrice,
     hall::ApiHall,
     location::ApiLocation,
-    production::{ApiProduction, ProductionImportData},
     media::{ApiMediaGallery, ApiMediaItem},
+    price::ApiPrice,
+    price_rank::ApiPriceRank,
+    production::ApiProduction,
+    space::ApiSpace,
 };
 use uuid::Uuid;
-use crate::error::ImporterError;
 
 pub mod error;
 mod helper;
+pub mod insert;
 pub mod models {
     pub mod collection;
     pub mod event;
+    pub mod event_price;
     pub mod genre;
     pub mod hall;
     pub mod localized_text;
     pub mod location;
     pub mod media;
+    pub mod price;
+    pub mod price_rank;
     pub mod production;
     pub mod space;
 }
@@ -109,7 +116,10 @@ impl ApiImporter {
             self.update_spaces(&last_update_ts).await?;
             self.update_halls(&last_update_ts).await?;
             self.update_productions(&last_update_ts).await?;
+            self.update_prices(&last_update_ts).await?;
+            self.update_price_ranks(&last_update_ts).await?;
             self.update_events(&last_update_ts).await?;
+            self.update_event_prices(&last_update_ts).await?;
             Ok::<(), reqwest::Error>(())
         }
         .await;
@@ -177,24 +187,13 @@ impl ApiImporter {
             let amt = productions.len();
             info!("Productions: got {amt} from api");
             for production in productions {
-                let production_source_id = production
-                    .id
-                    .split('/')
-                    .next_back()
-                    .and_then(|s| s.parse::<i32>().ok());
-
                 let galleries = [
                     (production.media_gallery.clone(), "media"),
                     (production.review_gallery.clone(), "review"),
                     (production.poster_gallery.clone(), "poster"),
                 ];
 
-                let data: ProductionImportData = production.into();
-                self.db
-                    .productions()
-                    .insert(data.production, data.translations)
-                    .await
-                    .unwrap();
+                let production_source_id = production.insert(&self.db).await.unwrap();
 
                 let Some(source_id) = production_source_id else {
                     continue;
@@ -230,7 +229,7 @@ impl ApiImporter {
             let amt = locations.len();
             info!("Locations: got {amt} from api");
             for location in locations {
-                self.db.locations().insert(location.into()).await.unwrap();
+                location.insert(&self.db).await.unwrap();
             }
             info!("Locations: inserted {amt} into db");
         }
@@ -249,20 +248,7 @@ impl ApiImporter {
             let amt = spaces.len();
             info!("Spaces: got {amt} from api");
             for space in spaces {
-                // first load in the related location and extract its id
-                let location_source_id = extract_source_id(&space.location).unwrap();
-
-                let location = self
-                    .db
-                    .locations()
-                    .by_source_id(location_source_id)
-                    .await
-                    .unwrap();
-
-                // construct a SpaceCreate out of it
-                let space_create = space.to_create(location.id);
-
-                self.db.spaces().insert(space_create).await.unwrap();
+                space.insert(&self.db).await.unwrap();
             }
             info!("Spaces: inserted {amt} into db");
         }
@@ -281,30 +267,7 @@ impl ApiImporter {
             let amt = halls.len();
             info!("Halls: got {amt} from api");
             for hall in halls {
-                let source_id = hall.space.as_deref().and_then(extract_source_id);
-                let space_uuid = match source_id {
-                    Some(id) => {
-                        // get the uuid of the space with a source id from the db
-                        let db_uuid = self
-                            .db
-                            .spaces()
-                            .by_source_id(id)
-                            .await
-                            .unwrap()
-                            .map(|s| s.id);
-
-                        if db_uuid.is_none() {
-                            warn!("Halls: Space source_id {id} expected but not found in db");
-                        }
-                        db_uuid
-                    }
-                    None => None,
-                };
-
-                // construct a HallCreate out of it
-                let hall_create = hall.to_create(space_uuid);
-
-                self.db.halls().insert(hall_create).await.unwrap();
+                hall.insert(&self.db).await.unwrap();
             }
             info!("Halls: inserted {amt} into db");
         }
@@ -323,43 +286,70 @@ impl ApiImporter {
             let amt = events.len();
             info!("Events: got {amt} from api");
             for event in events {
-                let Some(prod_source_id) = event.production_source_id() else {
-                    warn!("Events: event has no production source_id, skipping");
-                    continue;
-                };
-
-                let Some(production) = self
-                    .db
-                    .productions()
-                    .by_source_id(prod_source_id)
-                    .await
-                    .unwrap()
-                else {
-                    warn!(
-                        "Events: production source_id {prod_source_id} not found in db, skipping"
-                    );
-                    continue;
-                };
-
-                let hall_uuid = if let Some(hall_source_id) = event.hall_source_id() {
-                    let hall_opt = self.db.halls().by_source_id(hall_source_id).await.unwrap();
-
-                    if hall_opt.is_none() {
-                        warn!("Events: hall source_id {hall_source_id} not found in db");
-                    }
-
-                    hall_opt.map(|h| h.id)
-                } else {
-                    None
-                };
-
-                let event_create = event.to_create(production.production.id, hall_uuid);
-                self.db.events().insert(event_create).await.unwrap();
+                event.insert(&self.db).await.unwrap();
             }
             info!("Events: inserted {amt} into db");
         }
 
         info!("Events: finished importing");
+        Ok(())
+    }
+    pub async fn update_prices(&self, updated_after: &str) -> Result<(), reqwest::Error> {
+        info!("Prices: start updating");
+
+        let mut stream = pin!(self.paginated_collection::<ApiPrice>("/prices", updated_after));
+
+        while let Some(batch_result) = stream.next().await {
+            let prices = batch_result?;
+            let amt = prices.len();
+            info!("Prices: got {amt} from api");
+            for price in prices {
+                price.insert(&self.db).await.unwrap();
+            }
+            info!("Prices: inserted {amt} into db");
+        }
+
+        info!("Prices: finished importing");
+        Ok(())
+    }
+
+    pub async fn update_price_ranks(&self, updated_after: &str) -> Result<(), reqwest::Error> {
+        info!("PriceRanks: start updating");
+
+        let mut stream =
+            pin!(self.paginated_collection::<ApiPriceRank>("/prices/ranks", updated_after));
+
+        while let Some(batch_result) = stream.next().await {
+            let ranks = batch_result?;
+            let amt = ranks.len();
+            info!("PriceRanks: got {amt} from api");
+            for rank in ranks {
+                rank.insert(&self.db).await.unwrap();
+            }
+            info!("PriceRanks: inserted {amt} into db");
+        }
+
+        info!("PriceRanks: finished importing");
+        Ok(())
+    }
+
+    pub async fn update_event_prices(&self, updated_after: &str) -> Result<(), reqwest::Error> {
+        info!("EventPrices: start updating");
+
+        let mut stream =
+            pin!(self.paginated_collection::<ApiEventPrice>("/events/prices", updated_after));
+
+        while let Some(batch_result) = stream.next().await {
+            let event_prices = batch_result?;
+            let amt = event_prices.len();
+            info!("EventPrices: got {amt} from api");
+            for event_price in event_prices {
+                event_price.insert(&self.db).await.unwrap();
+            }
+            info!("EventPrices: inserted {amt} into db");
+        }
+
+        info!("EventPrices: finished importing");
         Ok(())
     }
 
@@ -444,17 +434,16 @@ impl ApiImporter {
 
         let mut cdn_url = item.link.nl.or(item.link.en).or(item.link.fr);
         if cdn_url.is_none() {
-            // try to decode the original URL from the end of a crop url
             for crop in &item.crops {
                 if let Some(url) = &crop.url
-                    && let Some(decoded) = decode_url_from_crop(url) {
-                        cdn_url = Some(decoded);
-                        break;
-                    }
+                    && let Some(decoded) = decode_url_from_crop(url)
+                {
+                    cdn_url = Some(decoded);
+                    break;
+                }
             }
 
             if cdn_url.is_none() {
-                // TODO: Decide which crops we want to keep: we can only use hd_ready and scale down in the rust API or select a few crops
                 if let Some(hd_crop) = item.crops.iter().find(|c| {
                     c.name.as_deref() == Some("hd_ready") || c.name.as_deref() == Some("FE3_header")
                 }) {
@@ -465,7 +454,6 @@ impl ApiImporter {
             }
         }
 
-        // skip if already imported by source URI (stable idempotency)
         if self
             .db
             .media()
@@ -476,13 +464,11 @@ impl ApiImporter {
             return;
         }
 
-        // importer policy: all imported media must be uploaded to S3; no external URL fallback
         let Some(url) = &cdn_url else {
             warn!("Media: skipping import for {item_url} because source URL is missing");
             return;
         };
 
-        // We already checked these are some in import_gallery_for_production
         let s3_client = self.s3_client.as_ref().unwrap();
         let s3_bucket = self.s3_bucket.as_ref().unwrap();
 
@@ -500,12 +486,10 @@ impl ApiImporter {
             Ok(result) => result,
             Err(e) => {
                 warn!("Media: download/upload failed for {url}: {e}");
-                // return Ok so we continue to process the next items, it just won't be in the DB
                 return;
             }
         };
 
-        // store with s3_key
         let media_create = MediaCreate {
             s3_key,
             mime_type: mime_type.clone(),
@@ -549,48 +533,49 @@ impl ApiImporter {
                 )
                 .await;
 
-            // Download a single high-res crop to S3, save the others as external URLs
             for crop in item.crops {
-                if let (Some(name), Some(url)) = (crop.name, crop.url) {
-                    let mut variant_s3_key = String::new();
-                    let mut variant_mime_type = None;
-                    let mut variant_file_size = None;
-                    let mut variant_checksum = None;
+                if let (Some(name), Some(url)) = (crop.name, crop.url)
+                    && (name == "hd_ready" || name == "FE3_header")
+                {
+                    let format = item.format.as_deref().unwrap_or("");
+                    let format_info = get_format_info(format);
+                    let ext = format_info.extension;
+                    let file_uuid = Uuid::now_v7();
+                    let crop_s3_key = format!(
+                        "media/production/{production_source_id}/{gallery_type}/crop_{name}_{file_uuid}.{ext}"
+                    );
 
-                    // Only download high-res variants
-                    if name == "hd_ready" || name == "FE3_header" {
-                        let format = item.format.as_deref().unwrap_or("");
-                        let format_info = get_format_info(format);
-                        let ext = format_info.extension;
-                        let file_uuid = Uuid::now_v7();
-                        let crop_s3_key = format!("media/production/{production_source_id}/{gallery_type}/crop_{name}_{file_uuid}.{ext}");
-
-                        if let Ok((checksum, file_size)) = self.download_and_upload_to_key(
+                    match self
+                        .download_and_upload_to_key(
                             s3_client,
                             s3_bucket,
                             &url,
                             &crop_s3_key,
                             format,
-                        ).await {
-                            variant_s3_key = crop_s3_key;
-                            variant_mime_type = Some(format_info.mime.to_string());
-                            variant_file_size = Some(file_size);
-                            variant_checksum = Some(checksum);
+                        )
+                        .await
+                    {
+                        Ok((checksum, file_size, width, height)) => {
+                            let upsert = database::repos::media_variant::CropVariantUpsert {
+                                media_id: media.id,
+                                crop_name: name,
+                                s3_key: crop_s3_key,
+                                mime_type: Some(format_info.mime.to_string()),
+                                file_size: Some(file_size),
+                                width,
+                                height,
+                                checksum: Some(checksum),
+                                source_uri: Some(url),
+                            };
+                            let _ = self.db.media_variants().upsert_crop(upsert).await;
+                        }
+                        Err(e) => {
+                            tracing::warn!(
+                                "Failed to download/upload crop '{name}' for media {}: {e}",
+                                media.id
+                            );
                         }
                     }
-
-                    let upsert = database::repos::media_variant::CropVariantUpsert {
-                        media_id: media.id,
-                        crop_name: name,
-                        s3_key: variant_s3_key,
-                        mime_type: variant_mime_type,
-                        file_size: variant_file_size,
-                        width: None,
-                        height: None,
-                        checksum: variant_checksum,
-                        source_uri: Some(url),
-                    };
-                    let _ = self.db.media_variants().upsert_crop(upsert).await;
                 }
             }
         }
@@ -611,7 +596,7 @@ impl ApiImporter {
         let s3_key =
             format!("media/production/{production_source_id}/{gallery_type}/{file_uuid}.{ext}");
 
-        let (checksum, file_size) = self
+        let (checksum, file_size, _, _) = self
             .download_and_upload_to_key(s3_client, s3_bucket, cdn_url, &s3_key, format)
             .await?;
 
@@ -625,8 +610,7 @@ impl ApiImporter {
         source_url: &str,
         s3_key: &str,
         format: &str,
-    ) -> Result<(String, i64), ImporterError> {
-        // download from CDN
+    ) -> Result<(String, i64, Option<i32>, Option<i32>), ImporterError> {
         let response = self
             .client
             .get(source_url)
@@ -634,7 +618,6 @@ impl ApiImporter {
             .await?
             .error_for_status()?;
 
-        // Create a temporary file to avoid loading the whole file in memory
         let temp_file = tempfile::Builder::new()
             .prefix("viernulvier_import_")
             .tempfile()?;
@@ -657,7 +640,10 @@ impl ApiImporter {
         drop(file);
         let checksum = hex::encode(hasher.finalize());
 
-        // upload to S3 using ByteStream from the temp file
+        let (width, height) = imagesize::size(temp_file.path()).map_or((None, None), |d| {
+            (Some(d.width as i32), Some(d.height as i32))
+        });
+
         let byte_stream = aws_sdk_s3::primitives::ByteStream::from_path(temp_file.path())
             .await
             .map_err(|e| ImporterError::S3(e.to_string()))?;
@@ -672,9 +658,7 @@ impl ApiImporter {
             .await
             .map_err(|e| ImporterError::S3(e.to_string()))?;
 
-        // The temp_file will be automatically deleted here when it goes out of scope
-
-        Ok((checksum, file_size))
+        Ok((checksum, file_size, width, height))
     }
 }
 
@@ -708,14 +692,38 @@ struct FormatInfo {
 fn get_format_info(format: &str) -> FormatInfo {
     let fmt = format.to_ascii_lowercase();
     match () {
-        () if fmt.contains("jpeg") || fmt.contains("jpg") => FormatInfo { extension: "jpg", mime: "image/jpeg" },
-        () if fmt.contains("png") => FormatInfo { extension: "png", mime: "image/png" },
-        () if fmt.contains("gif") => FormatInfo { extension: "gif", mime: "image/gif" },
-        () if fmt.contains("webp") => FormatInfo { extension: "webp", mime: "image/webp" },
-        () if fmt.contains("svg") => FormatInfo { extension: "svg", mime: "image/svg+xml" },
-        () if fmt.contains("mp4") => FormatInfo { extension: "mp4", mime: "video/mp4" },
-        () if fmt.contains("pdf") => FormatInfo { extension: "pdf", mime: "application/pdf" },
-        () => FormatInfo { extension: "bin", mime: "application/octet-stream" },
+        () if fmt.contains("jpeg") || fmt.contains("jpg") => FormatInfo {
+            extension: "jpg",
+            mime: "image/jpeg",
+        },
+        () if fmt.contains("png") => FormatInfo {
+            extension: "png",
+            mime: "image/png",
+        },
+        () if fmt.contains("gif") => FormatInfo {
+            extension: "gif",
+            mime: "image/gif",
+        },
+        () if fmt.contains("webp") => FormatInfo {
+            extension: "webp",
+            mime: "image/webp",
+        },
+        () if fmt.contains("svg") => FormatInfo {
+            extension: "svg",
+            mime: "image/svg+xml",
+        },
+        () if fmt.contains("mp4") => FormatInfo {
+            extension: "mp4",
+            mime: "video/mp4",
+        },
+        () if fmt.contains("pdf") => FormatInfo {
+            extension: "pdf",
+            mime: "application/pdf",
+        },
+        () => FormatInfo {
+            extension: "bin",
+            mime: "application/octet-stream",
+        },
     }
 }
 

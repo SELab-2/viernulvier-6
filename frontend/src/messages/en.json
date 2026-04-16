@@ -8,7 +8,15 @@
     },
     "Header": {
         "logout": "Logout",
-        "loggingOut": "..."
+        "loggingOut": "...",
+        "signOut": "Sign out",
+        "nav": {
+            "home": "Home",
+            "archive": "Archive",
+            "articles": "Articles",
+            "cms": "CMS",
+            "admin": "Admin"
+        }
     },
     "LocaleSwitcher": {
         "label": "Select language"
@@ -36,7 +44,7 @@
         "heroEyebrow": "Archive — {count} productions",
         "heroTitle": "Search the archive",
         "heroTitleItalic": "of De Vooruit",
-        "heroPlaceholder": "Artist, production, year\u2026",
+        "heroPlaceholder": "Artist, production, year…",
         "quickSearch": "Quick search:",
         "enter": "enter",
         "noResultsTitle": "Nothing here but cobwebs",
@@ -137,7 +145,7 @@
         "hero": {
             "title": "The VIERNULVIER archive",
             "subtitle": "Over 40 years of theatre, dance, music and nightlife in Ghent.",
-            "searchPlaceholder": "Search the archive\u2026"
+            "searchPlaceholder": "Search the archive…"
         },
         "tags": {
             "theater": "Theatre",
@@ -238,7 +246,7 @@
         "EditSheet": {
             "yes": "Yes",
             "no": "No",
-            "selectPlaceholder": "Select\u2026",
+            "selectPlaceholder": "Select…",
             "cancel": "Cancel",
             "saveChanges": "Save changes",
             "editMode": "Edit mode"
@@ -333,7 +341,8 @@
             "fieldEventMaxTickets": "Max tickets per order",
             "fieldEventVendorId": "Vendor ID",
             "fieldEventBoxOfficeId": "Box office ID",
-            "fieldEventUitdatabankId": "UiTdatabank ID"
+            "fieldEventUitdatabankId": "UiTdatabank ID",
+            "eyebrow": "Production"
         },
         "Locations": {
             "title": "Locations",
@@ -472,6 +481,32 @@
         "backToHome": "Back to the archive",
         "articleImageCaption": "The forgotten Vooruit building..."
     },
+    "ProductionPage": {
+        "eyebrow": "Production",
+        "archiveNumber": "Archive no.",
+        "metaType": "Type",
+        "metaTheme": "Theme",
+        "metaLanguage": "Language",
+        "languageNlEn": "EN / NL",
+        "languageNl": "NL",
+        "imageCaptionFallback": "VIERNULVIER Archive",
+        "about": "About this production",
+        "noDescription": "No description available in this language.",
+        "video": "Video",
+        "externalVideoLink": "External video link ↗",
+        "credits": "Credits",
+        "creditProduction": "Production",
+        "creditArtist": "Artist",
+        "relatedTitle": "More from the archive",
+        "relatedViewAll": "View all →",
+        "relatedArchive": "Archive",
+        "relatedProductionFallback": "Production",
+        "breadcrumbArchive": "Archive",
+        "breadcrumbProductions": "Productions",
+        "loading": "Loading…",
+        "openCoverImage": "Open cover image",
+        "openGalleryImage": "Open image"
+    },
     "NewsArticleComponent": {
         "subTitle": "Vooruit Archive",
         "edition": "Edition 404",
@@ -481,6 +516,18 @@
     "Preview": {
         "previewMode": "Preview",
         "exitPreview": "Click to exit preview mode"
+    },
+    "Location": {
+        "about": "About",
+        "history": "History",
+        "halls": "Halls",
+        "seated": "Seated",
+        "openSeating": "Open seating",
+        "searchArchive": "View all productions at this location",
+        "searchNotImplemented": "Search filtering by location is not yet available.",
+        "loading": "Loading location...",
+        "notFound": "Location not found.",
+        "error": "Something went wrong while loading this location."
     },
     "Articles": {
         "heroEyebrow": "Stories from the archive",
@@ -507,5 +554,14 @@
         "relatedArtists": "Artists",
         "relatedLocations": "Locations",
         "relatedEvents": "Events"
+    },
+    "ImageSpotlight": {
+        "close": "Close",
+        "previous": "Prev",
+        "next": "Next",
+        "previousImage": "Previous image",
+        "nextImage": "Next image",
+        "archive": "Archive",
+        "openImage": "Open image"
     }
 }

@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use ormlite::{Insert, Model};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -14,6 +15,26 @@ pub struct EventRepo<'a> {
 impl<'a> EventRepo<'a> {
     pub fn new(db: &'a PgPool) -> Self {
         Self { db }
+    }
+
+    pub async fn count(&self) -> Result<i64, DatabaseError> {
+        let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM events")
+            .fetch_one(self.db)
+            .await?;
+
+        Ok(count)
+    }
+
+    pub async fn bounds(
+        &self,
+    ) -> Result<(Option<DateTime<Utc>>, Option<DateTime<Utc>>), DatabaseError> {
+        let (oldest, newest) = sqlx::query_as::<_, (Option<DateTime<Utc>>, Option<DateTime<Utc>>)>(
+            "SELECT MIN(starts_at), MAX(starts_at) FROM events",
+        )
+        .fetch_one(self.db)
+        .await?;
+
+        Ok((oldest, newest))
     }
 
     pub async fn by_id(&self, id: Uuid) -> Result<Event, DatabaseError> {
@@ -47,6 +68,14 @@ impl<'a> EventRepo<'a> {
 
     pub async fn update(&self, event: Event) -> Result<Event, DatabaseError> {
         Ok(event.update_all_fields(self.db).await?)
+    }
+
+    pub async fn by_source_id(&self, source_id: i32) -> Result<Option<Event>, DatabaseError> {
+        Ok(Event::select()
+            .where_("source_id = $1")
+            .bind(source_id)
+            .fetch_optional(self.db)
+            .await?)
     }
 
     pub async fn delete(&self, id: Uuid) -> Result<(), DatabaseError> {

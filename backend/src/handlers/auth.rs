@@ -17,6 +17,7 @@ use utoipa::ToSchema;
 
 const ACCESS_TOKEN_COOKIE: &str = "access_token";
 const REFRESH_TOKEN_COOKIE: &str = "refresh_token";
+const SESSION_PRESENT_COOKIE: &str = "session_present";
 
 #[derive(Deserialize, ToSchema)]
 pub struct LoginRequest {
@@ -75,22 +76,55 @@ fn generate_access_token(
     .map_err(|_| AppError::Internal("JWT error".into()))
 }
 
-fn access_cookie(token: String, expiry_minutes: i8) -> Cookie<'static> {
+fn parse_same_site(value: &str) -> SameSite {
+    match value.to_lowercase().as_str() {
+        "lax" => SameSite::Lax,
+        "none" => SameSite::None,
+        _ => SameSite::Strict,
+    }
+}
+
+fn access_cookie(
+    token: String,
+    expiry_minutes: i8,
+    secure: bool,
+    same_site: SameSite,
+) -> Cookie<'static> {
     Cookie::build((ACCESS_TOKEN_COOKIE, token))
         .http_only(true)
-        .secure(true)
-        .same_site(SameSite::Strict)
+        .secure(secure)
+        .same_site(same_site)
         .path("/")
         .max_age(Duration::minutes(expiry_minutes.into()))
         .build()
 }
 
-fn refresh_cookie(token: String, expiry_days: i8) -> Cookie<'static> {
+fn refresh_cookie(
+    token: String,
+    expiry_days: i8,
+    secure: bool,
+    same_site: SameSite,
+    preview_name: &str,
+) -> Cookie<'static> {
+    let path = if preview_name.is_empty() {
+        "/api/auth/refresh".to_string()
+    } else {
+        format!("/{}/api/auth/refresh", preview_name)
+    };
     Cookie::build((REFRESH_TOKEN_COOKIE, token))
         .http_only(true)
-        .secure(true)
-        .same_site(SameSite::Strict)
-        .path("/auth/refresh")
+        .secure(secure)
+        .same_site(same_site)
+        .path(path)
+        .max_age(Duration::days(expiry_days.into()))
+        .build()
+}
+
+fn session_present_cookie(expiry_days: i8, secure: bool, same_site: SameSite) -> Cookie<'static> {
+    Cookie::build((SESSION_PRESENT_COOKIE, "true"))
+        .secure(secure)
+        .same_site(same_site)
+        .path("/")
         .max_age(Duration::days(expiry_days.into()))
         .build()
 }
@@ -152,10 +186,30 @@ pub async fn login(
         config.access_token_expiry_minutes,
     )?;
 
-    let access_cookie = access_cookie(access_token, config.access_token_expiry_minutes);
-    let refresh_cookie = refresh_cookie(refresh_token, config.refresh_token_expiry_days);
+    let same_site = parse_same_site(&config.cookie_same_site);
+    let access_cookie = access_cookie(
+        access_token,
+        config.access_token_expiry_minutes,
+        config.cookie_secure,
+        same_site,
+    );
+    let refresh_cookie = refresh_cookie(
+        refresh_token,
+        config.refresh_token_expiry_days,
+        config.cookie_secure,
+        same_site,
+        &config.preview_name,
+    );
+    let session_present = session_present_cookie(
+        config.refresh_token_expiry_days,
+        config.cookie_secure,
+        same_site,
+    );
 
-    let updated_jar = jar.add(access_cookie).add(refresh_cookie);
+    let updated_jar = jar
+        .add(access_cookie)
+        .add(refresh_cookie)
+        .add(session_present);
     Ok((
         updated_jar,
         Json(AuthResponse {
@@ -216,7 +270,14 @@ pub async fn refresh(
         config.access_token_expiry_minutes,
     )?;
 
-    let access_cookie = access_cookie(new_access_token, config.access_token_expiry_minutes);
+    let same_site = parse_same_site(&config.cookie_same_site);
+    let access_cookie = access_cookie(
+        new_access_token,
+        config.access_token_expiry_minutes,
+        config.cookie_secure,
+        same_site,
+    );
+    // Note: refresh endpoint only sets a new access token; refresh cookie path is kept intact.
     let updated_jar = jar.add(access_cookie);
 
     Ok((
@@ -246,6 +307,7 @@ pub async fn logout(
     auth: Option<AuthUser>,
     jar: CookieJar,
     db: Database,
+    config: AppConfig,
 ) -> Result<(CookieJar, Json<AuthResponse>), AppError> {
     if let Some(user) = auth {
         let _ = db.sessions().delete(user.session_id).await;
@@ -257,17 +319,37 @@ pub async fn logout(
         let _ = db.sessions().delete_by_token_hash(&hashed_token).await;
     }
 
+    let same_site = parse_same_site(&config.cookie_same_site);
+    let refresh_path = if config.preview_name.is_empty() {
+        "/api/auth/refresh".to_string()
+    } else {
+        format!("/{}/api/auth/refresh", config.preview_name)
+    };
     let access_cookie = Cookie::build(("access_token", ""))
+        .secure(config.cookie_secure)
+        .same_site(same_site)
         .path("/")
         .max_age(Duration::ZERO)
         .build();
 
     let refresh_cookie = Cookie::build(("refresh_token", ""))
-        .path("/refresh")
+        .secure(config.cookie_secure)
+        .same_site(same_site)
+        .path(refresh_path)
         .max_age(Duration::ZERO)
         .build();
 
-    let updated_jar = jar.add(access_cookie).add(refresh_cookie);
+    let session_present = Cookie::build((SESSION_PRESENT_COOKIE, ""))
+        .secure(config.cookie_secure)
+        .same_site(same_site)
+        .path("/")
+        .max_age(Duration::ZERO)
+        .build();
+
+    let updated_jar = jar
+        .add(access_cookie)
+        .add(refresh_cookie)
+        .add(session_present);
     Ok((
         updated_jar,
         Json(AuthResponse {
