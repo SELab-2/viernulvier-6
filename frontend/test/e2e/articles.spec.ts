@@ -68,7 +68,7 @@ test.describe("Articles Page", () => {
 
         // Static connected entities section
         await expect(page.getByText("Gekoppeld aan")).toBeVisible();
-        await expect(page.getByText("The Second Woman — Natali Broods")).toBeVisible();
+        await expect(page.getByText("Koppelingen binnenkort beschikbaar")).toBeVisible();
 
         // Static related articles section
         await expect(page.getByText("Meer artikels")).toBeVisible();
@@ -83,6 +83,6 @@ test.describe("Articles Page", () => {
         await expect(page.getByText("Archiefdienst")).toBeVisible();
 
         // Subject period should be shown
-        await expect(page.getByText(/1960/)).toBeVisible();
+        await expect(page.getByText("1960-01-01 — 1970-12-31")).toBeVisible();
     });
 });

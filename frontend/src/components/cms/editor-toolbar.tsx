@@ -100,7 +100,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
 
     return (
         <TooltipProvider delayDuration={600}>
-            <div className="flex flex-wrap items-center gap-0.5 border-b px-2 py-1">
+            <div className="bg-background relative z-10 flex flex-nowrap items-center gap-0.5 overflow-x-auto border-b px-2 py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <ToolbarButton
                     onClick={() => editor.chain().focus().toggleBold().run()}
                     active={state.bold}
@@ -225,9 +225,11 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
 
                     <Popover.Portal>
                         <Popover.Content
-                            className="bg-popover text-popover-foreground z-50 flex items-center gap-1 rounded-md border p-2 shadow-md"
-                            sideOffset={6}
-                            align="start"
+                            className="bg-popover text-popover-foreground z-[100] flex w-max items-center gap-1 rounded-md border p-2 shadow-lg"
+                            side="bottom"
+                            sideOffset={8}
+                            align="center"
+                            collisionPadding={16}
                         >
                             <Input
                                 value={linkUrl}
