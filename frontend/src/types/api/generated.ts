@@ -908,6 +908,7 @@ export interface components {
             s3_key: string;
             /** Format: int32 */
             sort_order?: number | null;
+            upload_token: string;
             /** Format: int32 */
             width?: number | null;
         };
@@ -1207,6 +1208,14 @@ export interface components {
             /** Format: uuid */
             space_id?: string | null;
             vendor_id?: string | null;
+        };
+        LinkMediaRequest: {
+            is_cover_image?: boolean | null;
+            /** Format: uuid */
+            media_id: string;
+            role?: string | null;
+            /** Format: int32 */
+            sort_order?: number | null;
         };
         LocationPayload: {
             city?: string | null;
@@ -1607,6 +1616,8 @@ export interface components {
             expires_in: number;
             /** @description The S3 key where the file should be uploaded */
             s3_key: string;
+            /** @description HMAC token that must be presented when attaching this upload */
+            upload_token: string;
             /** @description Presigned PUT URL for direct upload */
             upload_url: string;
         };
@@ -3059,6 +3070,49 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
+            };
+        };
+    };
+    link_media_to_entity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Entity type (production, event, blogpost, media, artist) */
+                entity_type: string;
+                /** @description Entity UUID */
+                entity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkMediaRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaPayload"];
+                };
+            };
+            /** @description Bad request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Media not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

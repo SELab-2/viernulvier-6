@@ -15,6 +15,7 @@ services:
       S3_BUCKET: ${GARAGE_S3_BUCKET}
       S3_PUBLIC_URL: ${NEXT_PUBLIC_SITE_URL}/s3
       ALLOWED_ORIGINS: ${NEXT_PUBLIC_SITE_URL}
+      MAX_UPLOAD_SIZE_MIB: ${MAX_UPLOAD_SIZE_MIB:-50}
     depends_on:
       database:
         condition: service_healthy

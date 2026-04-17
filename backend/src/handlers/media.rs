@@ -5,6 +5,8 @@ use axum::{
     http::StatusCode,
 };
 use database::{Database, models::entity_type::EntityType};
+use hmac::{Hmac, Mac};
+use sha2::Sha256;
 use std::collections::HashSet;
 use std::time::Duration;
 use uuid::Uuid;
@@ -14,7 +16,7 @@ use crate::{
     config::S3Config,
     dto::{
         media::{
-            AttachMediaRequest, MediaPayload, MediaVariantPayload, ReconcileResponse,
+            AttachMediaRequest, LinkMediaRequest, MediaPayload, MediaVariantPayload, ReconcileResponse,
             UploadUrlRequest, UploadUrlResponse,
         },
         paginated::PaginatedResponse,
@@ -85,6 +87,76 @@ pub async fn get_one(
     Ok(Json(payload))
 }
 
+const ALLOWED_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png", "gif", "webp", "svg", "mp4", "pdf"];
+const ALLOWED_MIME_TYPES: &[&str] = &[
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/svg+xml",
+    "video/mp4",
+    "application/pdf",
+];
+
+fn validate_upload_request(req: &UploadUrlRequest) -> Result<(), AppError> {
+    let ext = std::path::Path::new(&req.filename)
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("bin")
+        .to_ascii_lowercase();
+
+    if !ALLOWED_EXTENSIONS.contains(&ext.as_str()) {
+        return Err(AppError::PayloadError(format!(
+            "file extension '{ext}' is not allowed"
+        )));
+    }
+
+    if !ALLOWED_MIME_TYPES.contains(&req.mime_type.as_str()) {
+        return Err(AppError::PayloadError(format!(
+            "MIME type '{}' is not allowed",
+            req.mime_type
+        )));
+    }
+
+    let expected_mime = match ext.as_str() {
+        "jpg" | "jpeg" => "image/jpeg",
+        "png" => "image/png",
+        "gif" => "image/gif",
+        "webp" => "image/webp",
+        "svg" => "image/svg+xml",
+        "mp4" => "video/mp4",
+        "pdf" => "application/pdf",
+        _ => "",
+    };
+
+    if !expected_mime.is_empty() && req.mime_type != expected_mime {
+        return Err(AppError::PayloadError(format!(
+            "MIME type '{}' does not match extension '{}'",
+            req.mime_type, ext
+        )));
+    }
+
+    Ok(())
+}
+
+type HmacSha256 = Hmac<Sha256>;
+
+pub fn generate_upload_token(secret: &str, s3_key: &str) -> Result<String, AppError> {
+    let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
+        .map_err(|e| AppError::Crypto(format!("HMAC init failed: {e}")))?;
+    mac.update(s3_key.as_bytes());
+    Ok(hex::encode(mac.finalize().into_bytes()))
+}
+
+fn verify_upload_token(secret: &str, s3_key: &str, token: &str) -> Result<bool, AppError> {
+    let expected = hex::decode(token)
+        .map_err(|e| AppError::Crypto(format!("invalid upload token hex: {e}")))?;
+    let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
+        .map_err(|e| AppError::Crypto(format!("HMAC init failed: {e}")))?;
+    mac.update(s3_key.as_bytes());
+    Ok(mac.verify_slice(&expected).is_ok())
+}
+
 #[utoipa::path(
     method(post),
     path = "/media/upload-url",
@@ -103,6 +175,8 @@ pub async fn generate_upload_url(
     State(state): State<AppState>,
     Json(req): Json<UploadUrlRequest>,
 ) -> Result<Json<UploadUrlResponse>, AppError> {
+    validate_upload_request(&req)?;
+
     let (s3_client, s3_config) = s3_client_and_config(&state)?;
 
     let ext = std::path::Path::new(&req.filename)
@@ -121,14 +195,18 @@ pub async fn generate_upload_url(
         .bucket(&s3_config.bucket)
         .key(&s3_key)
         .content_type(&req.mime_type)
+        .content_length(state.config.max_upload_size_bytes)
         .presigned(presigning_config)
         .await
         .map_err(|e| AppError::Internal(format!("failed to generate presigned URL: {e}")))?;
+
+    let upload_token = generate_upload_token(&state.config.upload_secret, &s3_key)?;
 
     Ok(Json(UploadUrlResponse {
         s3_key,
         upload_url: presigned.uri().to_string(),
         expires_in,
+        upload_token,
     }))
 }
 
@@ -311,6 +389,17 @@ pub async fn attach_to_entity(
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
     Json(req): Json<AttachMediaRequest>,
 ) -> JsonStatusResponse<MediaPayload> {
+    if !verify_upload_token(&state.config.upload_secret, &req.s3_key, &req.upload_token)? {
+        return Err(AppError::PayloadError("invalid upload token".into()));
+    }
+
+    // Prevent metadata hijacking of existing media via ON CONFLICT (s3_key)
+    if db.media().by_s3_key(&req.s3_key).await?.is_some() {
+        return Err(AppError::Conflict(
+            "s3_key is already in use by another media item".into(),
+        ));
+    }
+
     let et = parse_entity_type(&entity_type)?;
     let role = normalize_media_role_opt(req.role)?.unwrap_or_else(|| "gallery".to_string());
 
@@ -355,6 +444,49 @@ pub async fn attach_to_entity(
 
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
     MediaPayload::from_model(media, public_url).json_created()
+}
+
+#[utoipa::path(
+    method(post),
+    path = "/media/entity/{entity_type}/{entity_id}/link",
+    tag = "Media",
+    operation_id = "link_media_to_entity",
+    description = "Link an existing media record to an entity. Does not modify media metadata or require an upload token.",
+    params(
+        ("entity_type" = String, Path, description = "Entity type (production, event, blogpost, media, artist)"),
+        ("entity_id" = Uuid, Path, description = "Entity UUID")
+    ),
+    request_body = LinkMediaRequest,
+    responses(
+        (status = 200, description = "Success", body = MediaPayload),
+        (status = 404, description = "Media not found"),
+        (status = 400, description = "Bad request")
+    )
+)]
+pub async fn link_to_entity(
+    State(state): State<AppState>,
+    db: Database,
+    Path((entity_type, entity_id)): Path<(String, Uuid)>,
+    Json(req): Json<LinkMediaRequest>,
+) -> JsonResponse<MediaPayload> {
+    let et = parse_entity_type(&entity_type)?;
+    let role = normalize_media_role_opt(req.role)?.unwrap_or_else(|| "gallery".to_string());
+
+    let media = db.media().by_id(req.media_id).await?;
+
+    db.media()
+        .link_to_entity(
+            et,
+            entity_id,
+            req.media_id,
+            &role,
+            req.sort_order.unwrap_or(0),
+            req.is_cover_image.unwrap_or(false),
+        )
+        .await?;
+
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    Ok(Json(MediaPayload::from_model(media, public_url)))
 }
 
 #[utoipa::path(

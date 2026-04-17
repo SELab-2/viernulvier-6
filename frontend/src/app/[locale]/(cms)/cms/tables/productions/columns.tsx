@@ -16,32 +16,36 @@ import type {
     ProductionUpdateInput,
 } from "@/types/models/production.types";
 
-export const productionFields: FieldDef<ProductionRow>[] = [
-    { key: "slug", label: "Slug", type: "text", readOnly: true },
-    { key: "titleNl", label: "Title (NL)", type: "text" },
-    { key: "titleEn", label: "Title (EN)", type: "text" },
-    { key: "artistNl", label: "Artist (NL)", type: "text" },
-    { key: "artistEn", label: "Artist (EN)", type: "text" },
-    { key: "supertitleNl", label: "Supertitle (NL)", type: "text" },
-    { key: "supertitleEn", label: "Supertitle (EN)", type: "text" },
-    { key: "taglineNl", label: "Tagline (NL)", type: "text" },
-    { key: "taglineEn", label: "Tagline (EN)", type: "text" },
-    { key: "teaserNl", label: "Teaser (NL)", type: "text" },
-    { key: "teaserEn", label: "Teaser (EN)", type: "text" },
-    { key: "descriptionShortNl", label: "Short desc (NL)", type: "text" },
-    { key: "descriptionShortEn", label: "Short desc (EN)", type: "text" },
-    { key: "descriptionNl", label: "Description (NL)", type: "text" },
-    { key: "descriptionEn", label: "Description (EN)", type: "text" },
-    { key: "quoteNl", label: "Quote (NL)", type: "text" },
-    { key: "quoteEn", label: "Quote (EN)", type: "text" },
-    { key: "quoteSourceNl", label: "Quote source (NL)", type: "text" },
-    { key: "quoteSourceEn", label: "Quote source (EN)", type: "text" },
-    { key: "video1", label: "Video 1", type: "text" },
-    { key: "video2", label: "Video 2", type: "text" },
-    { key: "eticketInfo", label: "E-ticket info", type: "text" },
-    { key: "uitdatabankTheme", label: "UiTdatabank theme", type: "text" },
-    { key: "uitdatabankType", label: "UiTdatabank type", type: "text" },
-];
+export function getProductionFields(
+    t: ReturnType<typeof useTranslations<"Cms.Productions">>
+): FieldDef<ProductionRow>[] {
+    return [
+        { key: "slug", label: t("fieldSlug"), type: "text", readOnly: true },
+        { key: "titleNl", label: `${t("fieldTitle")} (NL)`, type: "text" },
+        { key: "titleEn", label: `${t("fieldTitle")} (EN)`, type: "text" },
+        { key: "artistNl", label: `${t("fieldArtist")} (NL)`, type: "text" },
+        { key: "artistEn", label: `${t("fieldArtist")} (EN)`, type: "text" },
+        { key: "supertitleNl", label: `${t("fieldSupertitle")} (NL)`, type: "text" },
+        { key: "supertitleEn", label: `${t("fieldSupertitle")} (EN)`, type: "text" },
+        { key: "taglineNl", label: `${t("fieldTagline")} (NL)`, type: "text" },
+        { key: "taglineEn", label: `${t("fieldTagline")} (EN)`, type: "text" },
+        { key: "teaserNl", label: `${t("fieldTeaser")} (NL)`, type: "text" },
+        { key: "teaserEn", label: `${t("fieldTeaser")} (EN)`, type: "text" },
+        { key: "descriptionShortNl", label: `${t("fieldDescriptionShort")} (NL)`, type: "text" },
+        { key: "descriptionShortEn", label: `${t("fieldDescriptionShort")} (EN)`, type: "text" },
+        { key: "descriptionNl", label: `${t("fieldDescription")} (NL)`, type: "text" },
+        { key: "descriptionEn", label: `${t("fieldDescription")} (EN)`, type: "text" },
+        { key: "quoteNl", label: `${t("fieldQuote")} (NL)`, type: "text" },
+        { key: "quoteEn", label: `${t("fieldQuote")} (EN)`, type: "text" },
+        { key: "quoteSourceNl", label: `${t("fieldQuoteSource")} (NL)`, type: "text" },
+        { key: "quoteSourceEn", label: `${t("fieldQuoteSource")} (EN)`, type: "text" },
+        { key: "video1", label: t("fieldVideo1"), type: "text" },
+        { key: "video2", label: t("fieldVideo2"), type: "text" },
+        { key: "eticketInfo", label: t("fieldEticketInfo"), type: "text" },
+        { key: "uitdatabankTheme", label: t("fieldUitdatabankTheme"), type: "text" },
+        { key: "uitdatabankType", label: t("fieldUitdatabankType"), type: "text" },
+    ];
+}
 
 export function toProductionRow(entity: Production): ProductionRow {
     const nl = entity.translations.find((t) => t.languageCode === "nl");
@@ -143,6 +147,7 @@ export function makeProductionColumns(options: {
     onEdit: (row: ProductionRow) => void;
     onMedia: (production: Production) => void;
     t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>;
+    tProductions: ReturnType<typeof useTranslations<"Cms.Productions">>;
     locale: string;
     onOpenSpotlight?: (src: string, alt: string) => void;
 }): ColumnDef<Production>[] {
@@ -160,7 +165,7 @@ export function makeProductionColumns(options: {
             label: t("edit", { label: "production" }),
             icon: SquarePen,
             display: ActionDisplay.Inline,
-            onClick: (p) => onEdit(toProductionRow(p)),
+            onClick: (p) => onEdit(p),
         },
         {
             key: "media",
