@@ -109,7 +109,7 @@ fn refresh_cookie(
     let path = if preview_name.is_empty() {
         "/api/auth/refresh".to_string()
     } else {
-        format!("/{}/api/auth/refresh", preview_name)
+        format!("/{preview_name}/api/auth/refresh")
     };
     Cookie::build((REFRESH_TOKEN_COOKIE, token))
         .http_only(true)
