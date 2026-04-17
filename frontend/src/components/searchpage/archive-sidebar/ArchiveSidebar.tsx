@@ -336,7 +336,7 @@ export function ArchiveSidebar({
                 className={`border-border shrink-0 overflow-x-hidden border-r py-5 pb-10 ${
                     mobileOpen
                         ? "bg-background fixed inset-y-0 left-0 z-50 w-[290px] overflow-y-auto shadow-xl"
-                        : "hidden lg:block lg:w-[290px]"
+                        : "hidden lg:sticky lg:top-[var(--results-bar-height,41px)] lg:block lg:max-h-[calc(100vh-var(--results-bar-height,41px))] lg:w-[290px] lg:overflow-y-auto"
                 }`}
             >
                 {sidebarContent}
