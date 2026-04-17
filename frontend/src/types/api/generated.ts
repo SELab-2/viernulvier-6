@@ -1620,6 +1620,11 @@ export interface components {
             language_code: string;
         };
         UploadUrlRequest: {
+            /**
+             * Format: int64
+             * @description File size in bytes (used for presigned URL content-length and max-size validation)
+             */
+            file_size: number;
             /** @description Original filename (used to derive the S3 key extension) */
             filename: string;
             /** @description MIME type of the file (e.g., "image/jpeg") */

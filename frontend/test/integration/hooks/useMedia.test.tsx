@@ -327,6 +327,7 @@ describe("useGenerateUploadUrl", () => {
         const input: UploadUrlInput = {
             filename: "photo.jpg",
             mimeType: "image/jpeg",
+            fileSize: 2048,
         };
 
         await act(async () => {

@@ -237,6 +237,8 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                         content={article.content}
                         onChange={(json) => patchArticle({ content: json })}
                         placeholder={t("contentPlaceholder")}
+                        entityType="article"
+                        entityId={id}
                     />
                 </div>
 

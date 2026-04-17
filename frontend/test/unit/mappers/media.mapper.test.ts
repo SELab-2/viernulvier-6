@@ -189,13 +189,15 @@ describe("media mapper", () => {
     });
 
     describe("mapUploadUrlInput", () => {
-        it("maps filename and mimeType", () => {
+        it("maps filename, mimeType and fileSize", () => {
             const result = mapUploadUrlInput({
                 filename: "photo.jpg",
                 mimeType: "image/jpeg",
+                fileSize: 2048,
             });
             expect(result.filename).toBe("photo.jpg");
             expect(result.mime_type).toBe("image/jpeg");
+            expect(result.file_size).toBe(2048);
         });
     });
 

@@ -177,6 +177,13 @@ pub async fn generate_upload_url(
 ) -> Result<Json<UploadUrlResponse>, AppError> {
     validate_upload_request(&req)?;
 
+    if req.file_size > state.config.max_upload_size_bytes {
+        return Err(AppError::PayloadError(format!(
+            "file size {} exceeds maximum upload size of {} bytes",
+            req.file_size, state.config.max_upload_size_bytes
+        )));
+    }
+
     let (s3_client, s3_config) = s3_client_and_config(&state)?;
 
     let ext = std::path::Path::new(&req.filename)
@@ -195,7 +202,7 @@ pub async fn generate_upload_url(
         .bucket(&s3_config.bucket)
         .key(&s3_key)
         .content_type(&req.mime_type)
-        .content_length(state.config.max_upload_size_bytes)
+        .content_length(req.file_size)
         .presigned(presigning_config)
         .await
         .map_err(|e| AppError::Internal(format!("failed to generate presigned URL: {e}")))?;

@@ -109,6 +109,7 @@ export const mapLinkMediaInput = (input: LinkMediaInput): LinkMediaRequestType =
 export const mapUploadUrlInput = (input: UploadUrlInput): UploadUrlRequestType => ({
     filename: input.filename,
     mime_type: input.mimeType,
+    file_size: input.fileSize,
 });
 
 export const mapUploadUrlResult = (response: GenerateUploadUrlResponse): UploadUrlResult => ({

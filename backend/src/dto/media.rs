@@ -249,6 +249,8 @@ pub struct UploadUrlRequest {
     pub filename: String,
     /// MIME type of the file (e.g., "image/jpeg")
     pub mime_type: String,
+    /// File size in bytes (used for presigned URL content-length and max-size validation)
+    pub file_size: i64,
 }
 
 #[derive(Debug, Serialize, ToSchema)]

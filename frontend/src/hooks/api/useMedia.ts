@@ -292,6 +292,7 @@ export const useUploadMedia = () => {
             const { s3Key, uploadUrl, uploadToken } = await generateUploadUrl.mutateAsync({
                 filename: file.name,
                 mimeType: file.type,
+                fileSize: file.size,
             });
 
             const uploadResponse = await fetch(uploadUrl, {

@@ -87,6 +87,7 @@ export type LinkMediaInput = {
 export type UploadUrlInput = {
     filename: string;
     mimeType: string;
+    fileSize: number;
 };
 
 export type UploadUrlResult = {
