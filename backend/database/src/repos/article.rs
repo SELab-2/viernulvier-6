@@ -6,8 +6,11 @@ use uuid::Uuid;
 use crate::{
     error::DatabaseError,
     models::{
-        article::{Article, ArticleCreate, ArticleRelations, ArticleSearch, ArticleStatus, ArticleWithScore},
-        cursor::CursorData,
+        article::{
+            Article, ArticleCreate, ArticleRelations, ArticleSearch, ArticleStatus,
+            ArticleWithScore,
+        },
+        filtering::cursor::CursorData,
     },
     models::entity_type::EntityType,
 };

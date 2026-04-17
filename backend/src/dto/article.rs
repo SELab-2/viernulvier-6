@@ -2,7 +2,10 @@ use chrono::{DateTime, NaiveDate, Utc};
 use base64::{Engine, prelude::BASE64_URL_SAFE};
 use database::{
     Database,
-    models::{article::{Article, ArticleCreate, ArticleRelations, ArticleSearch, ArticleStatus}, cursor::CursorData},
+    models::{
+        article::{Article, ArticleCreate, ArticleRelations, ArticleSearch, ArticleStatus},
+        filtering::cursor::CursorData,
+    },
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
