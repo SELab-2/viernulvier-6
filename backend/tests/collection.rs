@@ -3,8 +3,11 @@ use serde_json::json;
 use sqlx::PgPool;
 use std::str::FromStr;
 use uuid::Uuid;
-use viernulvier_api::dto::collection::{
-    CollectionItemPayload, CollectionItemPostPayload, CollectionPayload, CollectionPostPayload,
+use viernulvier_api::dto::{
+    collection::{
+        CollectionItemPayload, CollectionItemPostPayload, CollectionPayload, CollectionPostPayload,
+    },
+    paginated::PaginatedResponse,
 };
 
 use crate::common::{into_struct::IntoStruct, router::TestRouter};
@@ -19,8 +22,114 @@ async fn get_all(db: PgPool) {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let data: Vec<CollectionPayload> = response.into_struct().await;
-    assert_eq!(data.len(), 2);
+    let data: PaginatedResponse<CollectionPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 5);
+}
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn get_search_single_result(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/collections?q=zomer").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<CollectionPayload> = response.into_struct().await;
+
+    assert_eq!(data.data.len(), 1);
+    assert_eq!(data.data[0].slug, "zomerselectie");
+    assert!(data.next_cursor.is_none());
+}
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn get_search_no_results(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/collections?q=doesnotexist").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<CollectionPayload> = response.into_struct().await;
+
+    assert!(data.data.is_empty());
+    assert!(data.next_cursor.is_none());
+}
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn get_search_paginated(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/collections?q=selectie&limit=1").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // page 1
+    let page1: PaginatedResponse<CollectionPayload> = response.into_struct().await;
+    assert_eq!(page1.data.len(), 1, "page 1 should respect the limit of 1");
+    assert!(page1.next_cursor.is_some(), "there should be a next cursor");
+
+    let cursor1 = page1.next_cursor.unwrap();
+
+    // page 2
+    let response = app
+        .get(&format!("/collections?q=selectie&limit=1&cursor={cursor1}"))
+        .await;
+
+    let page2: PaginatedResponse<CollectionPayload> = response.into_struct().await;
+    assert_eq!(page2.data.len(), 1, "page 2 should respect the limit of 1");
+    assert!(page2.next_cursor.is_some(), "there should be a next cursor");
+
+    let cursor2 = page2.next_cursor.unwrap();
+
+    let response = app
+        .get(&format!("/collections?q=selectie&limit=1&cursor={cursor2}"))
+        .await;
+
+    // page 3
+    let page3: PaginatedResponse<CollectionPayload> = response.into_struct().await;
+
+    println!(
+        "page1: {:?}",
+        page1
+            .data
+            .iter()
+            .map(|c| c.slug.clone())
+            .collect::<Vec<_>>()
+    );
+    println!(
+        "page2: {:?}",
+        page2
+            .data
+            .iter()
+            .map(|c| c.slug.clone())
+            .collect::<Vec<_>>()
+    );
+    println!(
+        "page3: {:?}",
+        page3
+            .data
+            .iter()
+            .map(|c| c.slug.clone())
+            .collect::<Vec<_>>()
+    );
+    println!("page3 cursor: {:?}", page3.next_cursor);
+    assert_eq!(page3.data.len(), 1, "page 3 should respect the limit of 1");
+    assert!(
+        page3.next_cursor.is_none(),
+        "last page should have no next cursor"
+    );
+
+    let mut all_ids = vec![page1.data[0].id, page2.data[0].id, page3.data[0].id];
+    let original_length = all_ids.len();
+
+    all_ids.sort();
+    all_ids.dedup();
+
+    assert_eq!(
+        all_ids.len(),
+        original_length,
+        "all paginated search results must be unique"
+    );
 }
 
 #[sqlx::test(fixtures("collections"))]

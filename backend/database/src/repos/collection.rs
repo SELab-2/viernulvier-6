@@ -1,20 +1,22 @@
 use std::collections::HashMap;
 
 use sqlx::PgPool;
+use tracing::debug;
 use uuid::Uuid;
 
 use crate::{
     error::DatabaseError,
     models::{
         collection::{
-            Collection, CollectionCreate, CollectionTranslation, CollectionTranslationData,
-            CollectionWithTranslations,
+            Collection, CollectionCreate, CollectionSearch, CollectionTranslation,
+            CollectionTranslationData, CollectionWithScore, CollectionWithTranslations,
         },
         collection_item::{
             CollectionItem, CollectionItemBulkUpdate, CollectionItemCreate,
             CollectionItemTranslation, CollectionItemTranslationData,
             CollectionItemWithTranslations,
         },
+        cursor::CursorData,
     },
 };
 
@@ -35,14 +37,117 @@ impl<'a> CollectionRepo<'a> {
         Ok(count)
     }
 
-    pub async fn all(&self) -> Result<Vec<CollectionWithTranslations>, DatabaseError> {
-        let collections =
-            sqlx::query_as::<_, Collection>("SELECT * FROM collections ORDER BY created_at DESC")
-                .fetch_all(self.db)
-                .await?;
+    pub async fn all(
+        &self,
+        limit: u32,
+        cursor: Option<CursorData>,
+        search: CollectionSearch,
+    ) -> Result<(Vec<CollectionWithTranslations>, Option<CursorData>), DatabaseError> {
+        let limit: i64 = (limit + 1).into();
+
+        let (collections, next_cursor): (Vec<Collection>, Option<CursorData>) =
+            if let Some(search_q) = search.q {
+                debug!("querying collections with search: '{search_q}'");
+
+                let mut query = sqlx::QueryBuilder::new("WITH matched_translations AS (");
+                query
+                    .push("SELECT collection_id, MIN(")
+                    .push_bind(&search_q)
+                    .push(" <<-> full_search_text) AS distance_score ")
+                    .push("FROM collection_translations ")
+                    .push("WHERE ")
+                    .push_bind(&search_q)
+                    .push(" <% full_search_text ")
+                    .push("GROUP BY collection_id ");
+
+                // use the cursor if there is one
+                if let Some(cursor) = cursor
+                    && let Some(score) = cursor.score
+                {
+                    query
+                        .push("HAVING MIN(")
+                        .push_bind(&search_q)
+                        .push(" <<-> full_search_text) > ")
+                        .push_bind(score)
+                        .push(" OR (MIN(")
+                        .push_bind(&search_q)
+                        .push(" <<-> full_search_text) = ")
+                        .push_bind(score)
+                        .push(" AND collection_id < ")
+                        .push_bind(cursor.id)
+                        .push(") ");
+                }
+
+                query
+                    .push("ORDER BY distance_score ASC, collection_id DESC LIMIT ")
+                    .push_bind(limit)
+                    .push(") ");
+
+                query.push(
+                    "
+                    SELECT C.*, distance_score 
+                    FROM collections c 
+                    INNER JOIN matched_translations m ON c.id = m.collection_id 
+                    ORDER BY m.distance_score ASC, c.id DESC
+                ",
+                );
+
+                debug!("collections query: {}", query.sql());
+
+                let mut collections_with_score: Vec<CollectionWithScore> =
+                    query.build_query_as().fetch_all(self.db).await?;
+
+                let next_cursor = if collections_with_score.len() == limit as usize {
+                    collections_with_score.pop();
+                    collections_with_score.last().map(|c| CursorData {
+                        id: c.collection.id,
+                        score: Some(c.distance_score),
+                    })
+                } else {
+                    None
+                };
+
+                let collections = collections_with_score
+                    .into_iter()
+                    .map(|c| c.collection)
+                    .collect();
+
+                (collections, next_cursor)
+            } else {
+                debug!("querying collections normally");
+
+                let query = sqlx::query_as::<_, Collection>(
+                    "SELECT * FROM collections ORDER BY id DESC LIMIT $1",
+                )
+                .bind(limit);
+
+                let mut collections: Vec<Collection> = query.fetch_all(self.db).await?;
+
+                if let Some(cursor) = cursor {
+                    let mut filtered = Vec::new();
+                    for c in collections {
+                        if c.id < cursor.id {
+                            filtered.push(c);
+                        }
+                    }
+                    collections = filtered;
+                }
+
+                let next_cursor = if collections.len() == limit as usize {
+                    collections.pop();
+                    collections.last().map(|c| CursorData {
+                        id: c.id,
+                        score: None,
+                    })
+                } else {
+                    None
+                };
+
+                (collections, next_cursor)
+            };
 
         if collections.is_empty() {
-            return Ok(vec![]);
+            return Ok((vec![], next_cursor));
         }
 
         let ids: Vec<Uuid> = collections.iter().map(|c| c.id).collect();
@@ -58,7 +163,7 @@ impl<'a> CollectionRepo<'a> {
             translation_map.entry(t.collection_id).or_default().push(t);
         }
 
-        Ok(collections
+        let collections_with_translations = collections
             .into_iter()
             .map(|c| {
                 let translations = translation_map.remove(&c.id).unwrap_or_default();
@@ -67,7 +172,9 @@ impl<'a> CollectionRepo<'a> {
                     translations,
                 }
             })
-            .collect())
+            .collect();
+
+        Ok((collections_with_translations, next_cursor))
     }
 
     pub async fn by_id(
