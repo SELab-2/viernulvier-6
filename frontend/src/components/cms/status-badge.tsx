@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { ArticleStatus } from "@/types/models/article.types";
 
 export const statusStyles: Record<ArticleStatus, string> = {
@@ -8,12 +10,19 @@ export const statusStyles: Record<ArticleStatus, string> = {
     archived: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
 };
 
+const statusKeyMap: Record<ArticleStatus, string> = {
+    published: "statusPublished",
+    draft: "statusDraft",
+    archived: "statusArchived",
+};
+
 export function StatusBadge({ status }: { status: ArticleStatus }) {
+    const t = useTranslations("Cms.Articles");
     return (
         <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize ${statusStyles[status]}`}
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusStyles[status]}`}
         >
-            {status}
+            {t(statusKeyMap[status])}
         </span>
     );
 }

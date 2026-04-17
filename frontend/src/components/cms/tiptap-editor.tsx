@@ -50,10 +50,10 @@ export function TiptapEditor({
     return (
         <div className="focus-within:ring-ring flex h-full flex-col overflow-hidden rounded-md border text-sm focus-within:ring-1">
             {editable && <EditorToolbar editor={editor} />}
-            <div className="flex-1 overflow-y-auto px-4 py-3">
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
                 <EditorContent
                     editor={editor}
-                    className="prose prose-sm dark:prose-invert max-w-none focus:outline-none [&_.tiptap]:min-h-full [&_.tiptap]:outline-none"
+                    className="prose prose-sm dark:prose-invert h-full max-w-none focus:outline-none [&_.tiptap]:min-h-0 [&_.tiptap]:outline-none"
                 />
             </div>
         </div>
