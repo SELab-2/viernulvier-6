@@ -3,6 +3,7 @@
 import { type AbstractIntlMessages } from "next-intl";
 
 import { IntlProvider, QueryProvider } from "@/providers";
+import { PreviewProvider } from "@/contexts/PreviewContext";
 import { Toaster } from "@/components/ui/sonner";
 
 export function Providers({
@@ -19,8 +20,10 @@ export function Providers({
     return (
         <IntlProvider messages={messages} locale={locale} timeZone={timeZone}>
             <QueryProvider>
-                {children}
-                <Toaster richColors />
+                <PreviewProvider>
+                    {children}
+                    <Toaster richColors />
+                </PreviewProvider>
             </QueryProvider>
         </IntlProvider>
     );

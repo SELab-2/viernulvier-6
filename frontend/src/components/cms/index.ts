@@ -1,1 +1,1 @@
-export { CmsSidebar } from "./cms-sidebar";
+export { CmsSidebar, CmsMobileMenu } from "./cms-sidebar";

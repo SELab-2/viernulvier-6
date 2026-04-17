@@ -63,9 +63,9 @@ describe("article mapper", () => {
                         { type: "paragraph", content: [{ type: "text", text: "Eerste alinea." }] },
                     ],
                 },
-                publishedAt: null,
                 createdAt: "2026-01-15T10:30:00Z",
                 updatedAt: "2026-03-20T14:00:00Z",
+                publishedAt: null,
                 subjectPeriodStart: "1960-01-01",
                 subjectPeriodEnd: "1970-12-31",
             });
@@ -107,8 +107,8 @@ describe("article mapper", () => {
                 slug: "kleurenstudies-van-de-vooruit",
                 status: "published",
                 title: "Kleurenstudies van De Vooruit",
-                publishedAt: null,
                 updatedAt: "2026-03-20T14:00:00Z",
+                publishedAt: null,
                 subjectPeriodStart: "1960-01-01",
                 subjectPeriodEnd: "1970-12-31",
             });
