@@ -1,6 +1,9 @@
 use database::{
     Database,
-    models::{cursor::CursorData, hall::{Hall, HallCreate}},
+    models::{
+        filtering::cursor::CursorData,
+        hall::{Hall, HallCreate},
+    },
 };
 use o2o::o2o;
 use serde::{Deserialize, Serialize};
@@ -11,8 +14,7 @@ use uuid::Uuid;
 use base64::{Engine, prelude::BASE64_URL_SAFE};
 
 use crate::{
-    dto::paginated::PaginatedResponse, error::AppError,
-    handlers::queries::hall::HallSearchQuery,
+    dto::paginated::PaginatedResponse, error::AppError, handlers::queries::hall::HallSearchQuery,
 };
 
 impl HallPayload {

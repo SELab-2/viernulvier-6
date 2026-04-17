@@ -63,7 +63,9 @@ impl<'a> MediaVariantRepo<'a> {
             source_uri: upsert.source_uri.clone(),
         };
 
-        if create.insert(self.db).await.is_ok() { Ok(()) } else {
+        if create.insert(self.db).await.is_ok() {
+            Ok(())
+        } else {
             sqlx::query(
                 r#"
                 UPDATE media_variant

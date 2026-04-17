@@ -62,6 +62,7 @@ export const mapMediaList = (list: MediaPayloadResponse[]): Media[] => list.map(
 
 export const mapAttachMediaInput = (input: AttachMediaInput): AttachMediaRequestType => ({
     s3_key: input.s3Key,
+    upload_token: input.uploadToken,
     mime_type: input.mimeType,
     role: input.role,
     sort_order: input.sortOrder,
@@ -95,6 +96,7 @@ export const mapUploadUrlResult = (response: GenerateUploadUrlResponse): UploadU
     s3Key: response.s3_key,
     uploadUrl: response.upload_url,
     expiresIn: response.expires_in,
+    uploadToken: response.upload_token,
 });
 
 export const mapMediaVariantToPayload = (v: MediaVariant): MediaVariantPayloadResponse => ({

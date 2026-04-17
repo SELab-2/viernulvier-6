@@ -1,11 +1,11 @@
+use base64::{Engine, prelude::BASE64_URL_SAFE};
 use database::{
     Database,
     models::{
-        cursor::CursorData,
+        filtering::cursor::CursorData,
         location::{Location, LocationCreate, LocationTranslationData, LocationWithTranslations},
     },
 };
-use base64::{Engine, prelude::BASE64_URL_SAFE};
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 use utoipa::ToSchema;
@@ -54,11 +54,7 @@ impl LocationPayload {
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {
         let translations = translations_to_data(&self.translations);
         let location: Location = self.into();
-        Ok(db
-            .locations()
-            .update(location, translations)
-            .await?
-            .into())
+        Ok(db.locations().update(location, translations).await?.into())
     }
 
     pub async fn delete(db: &Database, id: Uuid) -> Result<(), AppError> {

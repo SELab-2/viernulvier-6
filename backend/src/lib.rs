@@ -24,7 +24,7 @@ use crate::config::AppConfig;
 use crate::error::AppError;
 use crate::handlers::{
     admin, article, artist, auth, collection, event, hall, location, media, production, series,
-    space, tagging, taxonomy, version,
+    space, stats, tagging, taxonomy, version,
 };
 
 pub mod config;
@@ -45,9 +45,9 @@ pub struct AppState {
     modifiers(&SecurityAddon),
     components(schemas(EntityType, Facet, Sort)),
     tags(
-        (name = "viernulvier_api", description = "API Endpoints"),
         (name = "Collections", description = "A saved, titled selection of archive items with a shareable URL. No login required to view."),
-        (name = "Series", description = "Thematic/programmatic groupings of productions.")
+        (name = "Series", description = "Thematic/programmatic groupings of productions."),
+        (name = "Stats", description = "Aggregate public site statistics.")
     )
 )]
 pub struct ApiDoc;
@@ -203,7 +203,7 @@ pub fn router(state: &AppState) -> Router<AppState> {
 
     let swagger_ui = SwaggerUi::new(docs_path)
         .url(openapi_json_path, api_spec)
-        .config(Config::default().doc_expansion("none").filter(true));
+        .config(Config::default().doc_expansion("none"));
 
     Router::new()
         .nest(&base_path, api_router)
@@ -216,6 +216,8 @@ fn public_routes() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         // version
         .routes(routes!(version::get))
+        // stats
+        .routes(routes!(stats::get))
         // auth
         .routes(routes!(auth::login))
         .routes(routes!(auth::refresh))
@@ -302,6 +304,7 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(media::put))
         .routes(routes!(media::delete))
         .routes(routes!(media::attach_to_entity))
+        .routes(routes!(media::link_to_entity))
         .routes(routes!(media::unlink_from_entity))
         .routes(routes!(media::cleanup_orphans))
         .routes(routes!(media::reconcile_storage))

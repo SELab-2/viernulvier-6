@@ -26,7 +26,9 @@ async fn get_tags_empty(db: PgPool) {
 #[test_log::test]
 async fn get_tags_non_taggable(db: PgPool) {
     let app = TestRouter::new(db);
-    let resp = app.get("/tags/location/11111111-1111-1111-1111-111111111111").await;
+    let resp = app
+        .get("/tags/location/11111111-1111-1111-1111-111111111111")
+        .await;
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 }
 
@@ -34,10 +36,12 @@ async fn get_tags_non_taggable(db: PgPool) {
 #[test_log::test]
 async fn put_tags_happy_path(db: PgPool) {
     let app = TestRouter::as_editor(db).await;
-    let resp = app.put(
-        &format!("/tags/production/{PROD_ID}"),
-        json!({ "tag_slugs": ["theatre", "dance"] }),
-    ).await;
+    let resp = app
+        .put(
+            &format!("/tags/production/{PROD_ID}"),
+            json!({ "tag_slugs": ["theatre", "dance"] }),
+        )
+        .await;
 
     assert_eq!(resp.status(), StatusCode::OK);
     let data: Vec<EntityFacetResponse> = resp.into_struct().await;
@@ -49,10 +53,12 @@ async fn put_tags_happy_path(db: PgPool) {
 #[test_log::test]
 async fn put_tags_deduplicates(db: PgPool) {
     let app = TestRouter::as_editor(db).await;
-    let resp = app.put(
-        &format!("/tags/production/{PROD_ID}"),
-        json!({ "tag_slugs": ["theatre", "theatre"] }),
-    ).await;
+    let resp = app
+        .put(
+            &format!("/tags/production/{PROD_ID}"),
+            json!({ "tag_slugs": ["theatre", "theatre"] }),
+        )
+        .await;
 
     assert_eq!(resp.status(), StatusCode::OK);
     let data: Vec<EntityFacetResponse> = resp.into_struct().await;
@@ -63,10 +69,12 @@ async fn put_tags_deduplicates(db: PgPool) {
 #[test_log::test]
 async fn put_tags_unknown_slug(db: PgPool) {
     let app = TestRouter::as_editor(db).await;
-    let resp = app.put(
-        &format!("/tags/production/{PROD_ID}"),
-        json!({ "tag_slugs": ["nonexistent-slug"] }),
-    ).await;
+    let resp = app
+        .put(
+            &format!("/tags/production/{PROD_ID}"),
+            json!({ "tag_slugs": ["nonexistent-slug"] }),
+        )
+        .await;
 
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 }
@@ -76,10 +84,12 @@ async fn put_tags_unknown_slug(db: PgPool) {
 async fn put_tags_inapplicable_facet(db: PgPool) {
     // "format" facet doesn't apply to "artist" — should be 400, not 500
     let app = TestRouter::as_editor(db).await;
-    let resp = app.put(
-        "/tags/artist/a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1",
-        json!({ "tag_slugs": ["workshop"] }),
-    ).await;
+    let resp = app
+        .put(
+            "/tags/artist/a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1",
+            json!({ "tag_slugs": ["workshop"] }),
+        )
+        .await;
 
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 }
@@ -89,10 +99,12 @@ async fn put_tags_inapplicable_facet(db: PgPool) {
 async fn put_tags_entity_not_found(db: PgPool) {
     let app = TestRouter::as_editor(db).await;
     let fake_id = Uuid::nil();
-    let resp = app.put(
-        &format!("/tags/production/{fake_id}"),
-        json!({ "tag_slugs": ["theatre"] }),
-    ).await;
+    let resp = app
+        .put(
+            &format!("/tags/production/{fake_id}"),
+            json!({ "tag_slugs": ["theatre"] }),
+        )
+        .await;
 
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
@@ -101,10 +113,12 @@ async fn put_tags_entity_not_found(db: PgPool) {
 #[test_log::test]
 async fn put_tags_non_taggable(db: PgPool) {
     let app = TestRouter::as_editor(db).await;
-    let resp = app.put(
-        "/tags/event/11111111-1111-1111-1111-111111111111",
-        json!({ "tag_slugs": ["theatre"] }),
-    ).await;
+    let resp = app
+        .put(
+            "/tags/event/11111111-1111-1111-1111-111111111111",
+            json!({ "tag_slugs": ["theatre"] }),
+        )
+        .await;
 
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 }

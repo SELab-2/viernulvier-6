@@ -1,20 +1,16 @@
-use std::collections::HashMap;
-
 use ormlite::{Insert, Model};
 use sqlx::PgPool;
-use tracing::debug;
 use uuid::Uuid;
 
 use crate::{
     error::DatabaseError,
-    models::{
-        cursor::CursorData,
-        production::{
-            Production, ProductionCreate, ProductionSearch, ProductionTranslation,
-            ProductionTranslationData, ProductionWithScore, ProductionWithTranslations,
-        },
+    models::production::{
+        Production, ProductionCreate, ProductionTranslation, ProductionTranslationData,
+        ProductionWithTranslations,
     },
 };
+
+pub mod all;
 
 pub struct ProductionRepo<'a> {
     db: &'a PgPool,
@@ -23,6 +19,14 @@ pub struct ProductionRepo<'a> {
 impl<'a> ProductionRepo<'a> {
     pub fn new(db: &'a PgPool) -> Self {
         Self { db }
+    }
+
+    pub async fn count(&self) -> Result<i64, DatabaseError> {
+        let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM productions")
+            .fetch_one(self.db)
+            .await?;
+
+        Ok(count)
     }
 
     pub async fn by_id(&self, id: Uuid) -> Result<ProductionWithTranslations, DatabaseError> {
@@ -39,142 +43,6 @@ impl<'a> ProductionRepo<'a> {
             production,
             translations,
         })
-    }
-
-    pub async fn all(
-        &self,
-        limit: u32,
-        cursor: Option<CursorData>,
-        search: ProductionSearch,
-    ) -> Result<(Vec<ProductionWithTranslations>, Option<CursorData>), DatabaseError> {
-        // make the limit 1 higher to check for next pages
-        let limit: i64 = (limit + 1).into();
-
-        let (productions, next_cursor): (Vec<Production>, Option<CursorData>) =
-            if let Some(search_q) = search.q {
-                debug!("querying productions with search: '{search_q}'");
-                let mut query = sqlx::QueryBuilder::new("WITH matched_translations AS (");
-
-                query
-                    .push("SELECT production_id, MIN( ")
-                    .push_bind(&search_q)
-                    .push(" <<-> full_search_text) ")
-                    .push(" as distance_score ") // lower is better
-                    .push(" FROM production_translations ")
-                    .push(" WHERE ")
-                    .push_bind(&search_q)
-                    .push(" <% full_search_text")
-                    .push(" GROUP BY production_id ");
-
-                // use the cursor if there is one
-                if let Some(cursor) = cursor
-                    && let Some(score) = cursor.score
-                {
-                    // HAVING score > cursor.score
-                    query.push(" HAVING MIN( ");
-                    query.push_bind(&search_q);
-                    query.push(" <<-> full_search_text) > ");
-                    query.push_bind(score);
-
-                    // OR (score = cursor.score AND id < cursor.id)
-                    query.push(" OR (MIN( ");
-                    query.push_bind(&search_q);
-                    query.push(" <<-> full_search_text) = ");
-                    query.push_bind(score);
-                    query.push(" AND production_id < ");
-                    query.push_bind(cursor.id);
-                    query.push(") ");
-                }
-
-                query
-                    .push(" ORDER BY distance_score ASC, production_id DESC LIMIT ")
-                    .push_bind(limit)
-                    .push(" ) ");
-
-                // the rest of the query using the CTE
-                query.push(
-                    "
-                SELECT p.*, distance_score
-                FROM productions p
-                INNER JOIN matched_translations m ON p.id = m.production_id
-                ORDER BY m.distance_score ASC, p.id DESC;
-                ",
-                );
-
-                debug!("productions query: {}", query.sql());
-
-                let mut productions_with_score: Vec<ProductionWithScore> =
-                    query.build_query_as().fetch_all(self.db).await?;
-
-                // calculate the next cursor if there are items on the next page
-                let next_cursor = if productions_with_score.len() == limit as usize {
-                    productions_with_score.pop();
-                    productions_with_score.last().map(|p| CursorData {
-                        id: p.production.id,
-                        score: Some(p.distance_score),
-                    })
-                } else {
-                    None
-                };
-
-                let productions = productions_with_score
-                    .into_iter()
-                    .map(|p| p.production)
-                    .collect();
-
-                (productions, next_cursor)
-            } else {
-                debug!("querying productions normally");
-                let mut select = Production::select().limit(limit as usize).order_desc("id");
-                if let Some(cursor) = cursor {
-                    select = select.where_("id < $1").bind(cursor.id);
-                }
-                let mut productions = select.fetch_all(self.db).await?;
-
-                let next_cursor = if productions.len() == limit as usize {
-                    productions.pop();
-                    productions.last().map(|p| CursorData {
-                        id: p.id,
-                        score: None,
-                    })
-                } else {
-                    None
-                };
-
-                (productions, next_cursor)
-            };
-
-        if productions.is_empty() {
-            return Ok((vec![], None));
-        }
-
-        // get all translations
-        let ids: Vec<Uuid> = productions.iter().map(|p| p.id).collect();
-        let all_translations = sqlx::query_as::<_, ProductionTranslation>(
-            "SELECT * FROM production_translations WHERE production_id = ANY($1)",
-        )
-        .bind(&ids[..])
-        .fetch_all(self.db)
-        .await?;
-
-        // map translations to it's production
-        let mut translation_map: HashMap<Uuid, Vec<ProductionTranslation>> = HashMap::new();
-        for t in all_translations {
-            translation_map.entry(t.production_id).or_default().push(t);
-        }
-
-        let productions_with_translations = productions
-            .into_iter()
-            .map(|p| {
-                let translations = translation_map.remove(&p.id).unwrap_or_default();
-                ProductionWithTranslations {
-                    production: p,
-                    translations,
-                }
-            })
-            .collect();
-
-        Ok((productions_with_translations, next_cursor))
     }
 
     pub async fn insert(
