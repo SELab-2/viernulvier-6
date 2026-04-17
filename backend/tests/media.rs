@@ -419,8 +419,12 @@ async fn set_cover_promotes_gallery_item(db: PgPool) {
     // 'aaaaaaaa' is the current cover (is_cover_image=true, role=gallery).
     // 'bbbbbbbb' is a poster.
     // First attach a second gallery item, then promote it to cover.
+    let config = AppConfig::load().unwrap();
+    let s3_key = "media/cms/new-gallery.jpg";
+    let upload_token = generate_upload_token(&config.upload_secret, s3_key);
     let attach_payload = json!({
-        "s3_key": "media/cms/new-gallery.jpg",
+        "s3_key": s3_key,
+        "upload_token": upload_token,
         "mime_type": "image/jpeg",
         "role": "gallery",
         "sort_order": 1,
