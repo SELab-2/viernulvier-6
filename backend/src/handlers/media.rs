@@ -5,7 +5,7 @@ use axum::{
     http::StatusCode,
 };
 use database::{Database, models::entity_type::EntityType};
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use sha2::Sha256;
 use std::collections::HashSet;
 use std::time::Duration;

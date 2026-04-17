@@ -1,7 +1,7 @@
 #![allow(clippy::indexing_slicing)]
 use axum::http::StatusCode;
 use sqlx::PgPool;
-use viernulvier_api::dto::facet::FacetResponse;
+use viernulvier_archive::dto::facet::FacetResponse;
 
 use crate::common::{into_struct::IntoStruct, router::TestRouter};
 
