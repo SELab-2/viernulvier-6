@@ -509,6 +509,7 @@
             "detachError": "Ontkoppelen van media mislukt",
             "attachSuccess": "Media gekoppeld",
             "uploadSuccess": "Media geüpload",
+            "uploadMultipleSuccess": "{count} media items geüpload",
             "uploadError": "Uploaden van media mislukt",
             "editMetadata": "Metadata bewerken",
             "metadataSaved": "Metadata opgeslagen",

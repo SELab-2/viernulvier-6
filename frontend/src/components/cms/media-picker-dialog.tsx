@@ -108,9 +108,10 @@ export function MediaPickerDialog({
     // ── Handlers ────────────────────────────────────────────────────
 
     const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
+        const files = event.target.files;
+        if (!files || files.length === 0) return;
 
+        const file = files[0];
         setUploadFile(file);
 
         if (file.type.startsWith("image/")) {

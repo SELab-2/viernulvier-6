@@ -29,7 +29,7 @@ const mockGetEntityMedia = vi.fn(() => ({ data: [] }));
 vi.mock("@/hooks/api", () => ({
     useGetEntityMedia: (...args: Parameters<typeof mockGetEntityMedia>) =>
         mockGetEntityMedia(...args),
-    useAttachMedia: () => ({ mutateAsync: mockAttachMutateAsync, isPending: false }),
+    useLinkMedia: () => ({ mutateAsync: mockAttachMutateAsync, isPending: false }),
     useUnlinkMedia: () => ({ mutateAsync: mockUnlinkMutateAsync, isPending: false }),
     useUploadMedia: () => ({ mutateAsync: mockUploadMutateAsync, isPending: false }),
 }));

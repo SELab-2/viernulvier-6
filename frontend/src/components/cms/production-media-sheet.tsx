@@ -161,18 +161,27 @@ export function ProductionMediaSheet({
     );
 
     const handleUploadForRole = useCallback(
-        async (file: File, role: MediaRole) => {
+        async (files: FileList, role: MediaRole) => {
+            const items = role === "gallery" ? Array.from(files) : [files[0]];
             try {
-                await uploadMedia.mutateAsync({
-                    file,
-                    entityType: "production",
-                    entityId: productionId,
-                    metadata: {
-                        role,
-                        isCoverImage: role === "cover",
-                    },
-                });
-                toast.success(t("uploadSuccess"));
+                await Promise.all(
+                    items.map((file) =>
+                        uploadMedia.mutateAsync({
+                            file,
+                            entityType: "production",
+                            entityId: productionId,
+                            metadata: {
+                                role,
+                                isCoverImage: role === "cover",
+                            },
+                        })
+                    )
+                );
+                toast.success(
+                    items.length === 1
+                        ? t("uploadSuccess")
+                        : t("uploadMultipleSuccess", { count: items.length })
+                );
             } catch {
                 toast.error(t("uploadError"));
             }
@@ -289,7 +298,7 @@ type RoleSectionProps = {
     role: MediaRole;
     media: Media[];
     onDetach: (mediaId: string) => void;
-    onUpload: (file: File) => void;
+    onUpload: (files: FileList) => void;
     onOpenPicker: () => void;
     onEdit: (media: Media) => void;
     onSpotlight: (media: Media) => void;
@@ -321,8 +330,8 @@ function RoleSection({
 
     const handleFileInput = useCallback(
         (event: React.ChangeEvent<HTMLInputElement>) => {
-            const file = event.target.files?.[0];
-            if (file) onUpload(file);
+            const files = event.target.files;
+            if (files && files.length > 0) onUpload(files);
             event.target.value = "";
         },
         [onUpload]
@@ -354,6 +363,7 @@ function RoleSection({
                             <input
                                 type="file"
                                 accept="image/*"
+                                multiple
                                 onChange={handleFileInput}
                                 className="absolute inset-0 z-10 cursor-pointer opacity-0"
                                 disabled={isUploading}

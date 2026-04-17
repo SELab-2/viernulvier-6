@@ -509,6 +509,7 @@
             "detachError": "Failed to unlink media",
             "attachSuccess": "Media linked",
             "uploadSuccess": "Media uploaded",
+            "uploadMultipleSuccess": "{count} media items uploaded",
             "uploadError": "Failed to upload media",
             "editMetadata": "Edit metadata",
             "metadataSaved": "Metadata saved",
