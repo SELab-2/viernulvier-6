@@ -184,7 +184,7 @@ impl<'a> ArticleRepo<'a> {
             builder
                 .push(", ")
                 .push_bind(search_q)
-                .push(" <<-> a.full_search_text AS distance_score");
+                .push(" <<-> a.title AS distance_score");
         }
 
         builder.push(" FROM articles a WHERE a.status = 'published'");
@@ -225,7 +225,7 @@ impl<'a> ArticleRepo<'a> {
             builder
                 .push(" AND ")
                 .push_bind(search_q)
-                .push(" <% a.full_search_text");
+                .push(" <% a.title");
 
             if let Some(cursor) = cursor
                 && let Some(score) = cursor.score
@@ -233,13 +233,13 @@ impl<'a> ArticleRepo<'a> {
                 builder
                     .push(" AND ((")
                     .push_bind(search_q)
-                    .push(" <<-> a.full_search_text) > ")
+                    .push(" <<-> a.title) > ")
                     .push_bind(score);
 
                 builder
                     .push(" OR ((")
                     .push_bind(search_q)
-                    .push(" <<-> a.full_search_text) = ")
+                    .push(" <<-> a.title) = ")
                     .push_bind(score)
                     .push(" AND a.id < ")
                     .push_bind(cursor.id)
