@@ -25,9 +25,16 @@ interface RelationMultiSelectProps {
     ids: string[];
     options: { id: string; label: string }[];
     onChange: (ids: string[]) => void;
+    emptyText: string;
 }
 
-function RelationMultiSelect({ label, ids, options, onChange }: RelationMultiSelectProps) {
+function RelationMultiSelect({
+    label,
+    ids,
+    options,
+    onChange,
+    emptyText,
+}: RelationMultiSelectProps) {
     const toggle = (id: string) => {
         onChange(ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]);
     };
@@ -37,12 +44,12 @@ function RelationMultiSelect({ label, ids, options, onChange }: RelationMultiSel
             <Label className="text-xs font-medium">{label}</Label>
             <div className="max-h-40 space-y-1 overflow-y-auto rounded-md border p-2">
                 {options.length === 0 ? (
-                    <p className="text-muted-foreground text-xs">No options available</p>
+                    <p className="text-muted-foreground text-xs">{emptyText}</p>
                 ) : (
                     options.map((opt) => (
                         <label
                             key={opt.id}
-                            className="flex cursor-pointer items-center gap-2 text-xs"
+                            className="flex min-w-0 cursor-pointer items-center gap-2 text-xs"
                         >
                             <input
                                 type="checkbox"
@@ -99,9 +106,9 @@ export function ArticleMetadataPanel({
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="published">Published</SelectItem>
-                        <SelectItem value="archived">Archived</SelectItem>
+                        <SelectItem value="draft">{t("statusDraft")}</SelectItem>
+                        <SelectItem value="published">{t("statusPublished")}</SelectItem>
+                        <SelectItem value="archived">{t("statusArchived")}</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
@@ -151,6 +158,7 @@ export function ArticleMetadataPanel({
                     label: p.translations.find((t) => t.languageCode === "nl")?.title ?? p.slug,
                 }))}
                 onChange={(productionIds) => onRelationsChange({ ...relations, productionIds })}
+                emptyText={t("noOptionsAvailable")}
             />
 
             {/* Related artists */}
@@ -162,6 +170,7 @@ export function ArticleMetadataPanel({
                     label: a.name,
                 }))}
                 onChange={(artistIds) => onRelationsChange({ ...relations, artistIds })}
+                emptyText={t("noOptionsAvailable")}
             />
 
             {/* Related locations */}
@@ -173,6 +182,7 @@ export function ArticleMetadataPanel({
                     label: l.name ?? l.id,
                 }))}
                 onChange={(locationIds) => onRelationsChange({ ...relations, locationIds })}
+                emptyText={t("noOptionsAvailable")}
             />
 
             {/* Related events */}
@@ -181,9 +191,10 @@ export function ArticleMetadataPanel({
                 ids={relations.eventIds}
                 options={events.map((e) => ({
                     id: e.id,
-                    label: e.startsAt ?? "Untitled event",
+                    label: e.startsAt ?? t("untitledEvent"),
                 }))}
                 onChange={(eventIds) => onRelationsChange({ ...relations, eventIds })}
+                emptyText={t("noOptionsAvailable")}
             />
         </div>
     );
