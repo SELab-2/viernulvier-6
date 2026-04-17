@@ -124,6 +124,7 @@ impl<'a> ProductionRepo<'a> {
             })
             .collect())
     }
+
     pub async fn insert(
         &self,
         production: ProductionCreate,

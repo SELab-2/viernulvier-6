@@ -29,20 +29,6 @@ impl<'a> ArtistRepo<'a> {
         )
     }
 
-    pub async fn production_ids_for(&self, artist_id: Uuid) -> Result<Vec<Uuid>, DatabaseError> {
-        self.by_id(artist_id).await?;
-
-        Ok(sqlx::query_scalar::<_, Uuid>(
-            "SELECT production_id
-             FROM production_artists
-             WHERE artist_id = $1
-             ORDER BY production_id DESC",
-        )
-        .bind(artist_id)
-        .fetch_all(self.db)
-        .await?)
-    }
-
     pub async fn count(&self) -> Result<i64, DatabaseError> {
         let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM artists")
             .fetch_one(self.db)

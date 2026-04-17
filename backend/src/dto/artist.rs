@@ -38,11 +38,9 @@ impl ArtistPayload {
     }
 
     pub async fn productions(db: &Database, id: Uuid) -> Result<Vec<ProductionPayload>, AppError> {
-        let production_ids = db.artists().production_ids_for(id).await?;
-
         Ok(db
             .productions()
-            .by_ids(&production_ids)
+            .by_artist_id(id)
             .await?
             .into_iter()
             .map(ProductionPayload::from)
