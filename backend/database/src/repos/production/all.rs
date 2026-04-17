@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use sqlx::{Postgres, QueryBuilder};
 use tracing::debug;
 use uuid::Uuid;
@@ -10,8 +8,7 @@ use crate::{
         entity_type::EntityType,
         filtering::{cursor::CursorData, sort::Sort},
         production::{
-            Production, ProductionFilters, ProductionTranslation, ProductionWithScore,
-            ProductionWithTranslations,
+            Production, ProductionFilters, ProductionWithScore, ProductionWithTranslations,
         },
     },
     repos::{production::ProductionRepo, query_filters::facets::AddFacetFilters},
