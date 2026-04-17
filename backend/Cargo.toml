@@ -80,7 +80,7 @@ sha2 = "0.10.9"
 hmac = "0.12.1"
 hex = "0.4.3"
 time = "0.3.47"
-aws-sdk-s3 = { version = "1", features = ["behavior-version-latest"] }
+aws-sdk-s3 = { version = "1", default-features = false, features = ["behavior-version-latest", "default-https-client", "rt-tokio", "sigv4a"] }
 aws-config = { version = "1", features = ["behavior-version-latest"] }
 slug = "0.1.6"
 
