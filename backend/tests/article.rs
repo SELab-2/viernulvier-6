@@ -6,7 +6,7 @@ use database::models::article::ArticleStatus;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
-use viernulvier_api::dto::article::{
+use viernulvier_archive::dto::article::{
     ArticleListPayload, ArticlePayload, ArticlePostPayload, ArticleRelationsPayload,
     ArticleUpdatePayload,
 };
