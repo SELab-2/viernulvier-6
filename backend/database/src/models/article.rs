@@ -1,9 +1,12 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use ormlite::Model;
+use sqlx::FromRow;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use utoipa::ToSchema;
 use uuid::Uuid;
+
+use crate::models::entity_type::EntityType;
 
 #[derive(Debug)]
 pub struct ArticleRelations {
@@ -36,4 +39,20 @@ pub struct Article {
     pub content: Option<Value>,
     pub subject_period_start: Option<NaiveDate>,
     pub subject_period_end: Option<NaiveDate>,
+}
+
+#[derive(Debug, PartialEq, FromRow)]
+pub struct ArticleWithScore {
+    #[sqlx(flatten)]
+    pub article: Article,
+    pub distance_score: f32,
+}
+
+pub struct ArticleSearch {
+    pub q: Option<String>,
+    pub subject_start: Option<NaiveDate>,
+    pub subject_end: Option<NaiveDate>,
+    pub tag_slug: Option<String>,
+    pub related_entity_id: Option<Uuid>,
+    pub related_entity_type: Option<EntityType>,
 }
