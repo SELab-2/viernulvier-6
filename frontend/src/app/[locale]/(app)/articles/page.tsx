@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
 import { useGetArticles } from "@/hooks/api/useArticles";
+import { groupArticlesByYearMonth } from "@/lib/utils";
 
 import { UnifiedHeader } from "@/components/layout/header";
-import { ArticleCard } from "@/components/articles";
+import { ArticleCard, ScrollPositionSlider } from "@/components/articles";
 import { LoadingState } from "@/components/shared/loading-state";
 import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
 
@@ -18,6 +19,22 @@ export default function ArticlesPage() {
     const router = useRouter();
 
     const [headerQuery, setHeaderQuery] = useState("");
+    const [currentMonthIndex, setCurrentMonthIndex] = useState(0);
+    const [isSliderDragging, setIsSliderDragging] = useState(false);
+    const monthRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+    const { data: articles, isLoading } = useGetArticles();
+
+    const groupedArticles = useMemo(() => {
+        if (!articles || articles.length === 0) return [];
+        return groupArticlesByYearMonth(articles);
+    }, [articles]);
+
+    const monthsList = useMemo(() => {
+        return groupedArticles.flatMap((yearGroup) =>
+            yearGroup.months.map((monthGroup) => `${monthGroup.monthName} ${yearGroup.year}`)
+        );
+    }, [groupedArticles]);
 
     const handleHeaderSearch = useCallback(
         (value: string) => {
@@ -30,7 +47,73 @@ export default function ArticlesPage() {
         [router]
     );
 
-    const { data: articles, isLoading } = useGetArticles();
+    const handleNavigateToMonth = useCallback(
+        (index: number) => {
+            setCurrentMonthIndex(index);
+            const monthLabel = monthsList[index];
+            const element = monthRefs.current.get(monthLabel);
+            if (element) {
+                element.scrollIntoView({ behavior: "auto", block: "start" });
+            }
+        },
+        [monthsList]
+    );
+
+    useEffect(() => {
+        if (!articles || articles.length === 0) return;
+
+        const visibleMap = new Map<string, number>();
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    const label = entry.target.getAttribute("data-label") || "";
+                    if (entry.isIntersecting) {
+                        visibleMap.set(label, entry.intersectionRatio);
+                    } else {
+                        visibleMap.delete(label);
+                    }
+                });
+
+                if (visibleMap.size > 0 && !isSliderDragging) {
+                    let topLabel = "";
+                    let topY = Infinity;
+                    let topIndex = 0;
+
+                    monthRefs.current.forEach((el, key) => {
+                        if (visibleMap.has(key)) {
+                            const rect = el.getBoundingClientRect();
+                            if (rect.top < topY) {
+                                topY = rect.top;
+                                topLabel = key;
+                                topIndex = monthsList.indexOf(key);
+                            }
+                        }
+                    });
+
+                    if (topLabel) {
+                        setCurrentMonthIndex(Math.max(0, topIndex));
+                    }
+                }
+            },
+            { rootMargin: "-10% 0px -70% 0px", threshold: [0, 0.1, 0.5, 1] }
+        );
+
+        monthRefs.current.forEach((el) => observer.observe(el));
+
+        return () => {
+            observer.disconnect();
+        };
+    }, [articles, isSliderDragging, monthsList]);
+
+    const registerMonth = (key: string) => (el: HTMLDivElement | null) => {
+        if (el) {
+            monthRefs.current.set(key, el);
+            el.setAttribute("data-label", key);
+        } else {
+            monthRefs.current.delete(key);
+        }
+    };
 
     return (
         <>
@@ -42,7 +125,6 @@ export default function ArticlesPage() {
                 searchHint={tSearch("hint")}
             />
 
-            {/* Hero */}
             <section className="border-foreground border-b-2 px-4 py-10 text-center sm:px-10 sm:py-14">
                 <span className="text-muted-foreground mb-3 block font-mono text-[9px] tracking-[2px] uppercase">
                     {t("heroEyebrow")}
@@ -54,7 +136,6 @@ export default function ArticlesPage() {
                     {t("heroSubtitle")}
                 </p>
 
-                {/* Dateline bar */}
                 <div className="border-foreground text-foreground mx-auto mt-6 flex max-w-[600px] items-center justify-between border-y py-1.5 font-mono text-[9px] tracking-widest uppercase sm:text-[10px]">
                     <span>{t("datelineEdition")}</span>
                     <span>{t("datelineBrand")}</span>
@@ -62,8 +143,7 @@ export default function ArticlesPage() {
                 </div>
             </section>
 
-            {/* Article list */}
-            <section className="mx-auto max-w-[1000px] px-4 py-8 sm:px-10 sm:py-12">
+            <section className="mx-auto w-full max-w-[1280px] px-3 py-8 sm:px-6 sm:py-12">
                 {isLoading && <LoadingState message={t("loading")} />}
 
                 {!isLoading && (!articles || articles.length === 0) && (
@@ -75,14 +155,86 @@ export default function ArticlesPage() {
 
                 {!isLoading && articles && articles.length > 0 && (
                     <>
-                        <div className="text-muted-foreground mb-4 flex items-center gap-2.5 font-mono text-[9px] font-medium tracking-[2px] uppercase">
+                        <div className="text-muted-foreground border-muted/30 bg-background sticky top-0 z-30 -mx-3 mb-8 flex items-center gap-2.5 border-b px-3 py-3 font-mono text-[9px] font-medium tracking-[2px] uppercase sm:-mx-6 sm:px-6">
                             {t("listLabel", { count: articles.length })}
-                            <span className="bg-muted/40 h-px flex-1" />
+                            <span className="bg-muted/40 h-px min-w-0 flex-1" />
                         </div>
-                        <div className="border-muted/35 grid grid-cols-1 border-t sm:grid-cols-2 lg:grid-cols-3">
-                            {articles.map((article) => (
-                                <ArticleCard key={article.id} article={article} locale={locale} />
-                            ))}
+
+                        <div className="flex w-full items-start gap-6 sm:gap-12">
+                            <div className="sticky top-[calc(0.75rem+0.75rem+0.875rem+1px+1rem)] z-20 hidden h-[85vh] min-h-112 shrink-0 self-start sm:block">
+                                <ScrollPositionSlider
+                                    months={monthsList}
+                                    currentIndex={currentMonthIndex}
+                                    onNavigate={handleNavigateToMonth}
+                                    onDragChange={setIsSliderDragging}
+                                />
+                            </div>
+
+                            <div className="border-muted/25 min-w-0 flex-1 space-y-16 sm:border-l sm:pl-4 md:pl-5">
+                                {groupedArticles.map((yearGroup) => {
+                                    const yearArticleCount = yearGroup.months.reduce(
+                                        (sum, month) => sum + month.articles.length,
+                                        0
+                                    );
+
+                                    return (
+                                        <div key={yearGroup.year} className="w-full">
+                                            <div className="border-foreground mb-8 w-full border-t-2 pt-3">
+                                                <div className="flex items-end justify-between gap-4">
+                                                    <h2 className="font-display text-foreground text-[52px] leading-[0.9] font-black tracking-[-0.05em] sm:text-[68px] md:text-[84px]">
+                                                        {yearGroup.year}
+                                                    </h2>
+                                                    <span className="text-muted-foreground mb-2 font-mono text-[10px] tracking-[2px] whitespace-nowrap uppercase sm:text-[11px]">
+                                                        {yearArticleCount}{" "}
+                                                        {yearArticleCount !== 1
+                                                            ? "entries"
+                                                            : "entry"}
+                                                    </span>
+                                                </div>
+                                                <div className="border-foreground mt-1 w-full border-b" />
+                                            </div>
+
+                                            <div className="w-full space-y-12">
+                                                {yearGroup.months.map((monthGroup) => {
+                                                    const label = `${monthGroup.monthName} ${yearGroup.year}`;
+
+                                                    return (
+                                                        <div
+                                                            key={label}
+                                                            ref={registerMonth(label)}
+                                                            className="w-full"
+                                                        >
+                                                            <div className="bg-background sticky top-[calc(2.5rem+1px)] z-10 mb-5 flex items-center gap-4 py-2">
+                                                                <h3 className="text-foreground font-mono text-[11px] font-bold tracking-[4px] uppercase sm:text-[12px]">
+                                                                    {monthGroup.monthName}
+                                                                </h3>
+                                                                <span className="bg-muted/40 h-px flex-1" />
+                                                                <span className="text-muted-foreground font-mono text-[10px] tracking-[1.5px] uppercase">
+                                                                    {String(
+                                                                        monthGroup.articles.length
+                                                                    ).padStart(2, "0")}
+                                                                </span>
+                                                            </div>
+
+                                                            <div className="w-full">
+                                                                {monthGroup.articles.map(
+                                                                    (article) => (
+                                                                        <ArticleCard
+                                                                            key={article.id}
+                                                                            article={article}
+                                                                            locale={locale}
+                                                                        />
+                                                                    )
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </>
                 )}
