@@ -116,6 +116,7 @@ export const mediaHandlers = [
         HttpResponse.json({
             s3_key: "media/generated-key.jpg",
             upload_url: "https://s3.example.com/presigned-put-url",
+            upload_token: "test-upload-token",
             expires_in: 300,
         } satisfies components["schemas"]["UploadUrlResponse"])
     ),

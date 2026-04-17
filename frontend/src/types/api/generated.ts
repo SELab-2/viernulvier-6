@@ -480,6 +480,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/media/entity/{entity_type}/{entity_id}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Link an existing media record to an entity. Does not modify media metadata or require an upload token. */
+        post: operations["link_media_to_entity"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/media/entity/{entity_type}/{entity_id}/{media_id}": {
         parameters: {
             query?: never;

@@ -144,7 +144,7 @@ export function toProductionUpdateInput(row: ProductionRow): ProductionUpdateInp
 }
 
 export function makeProductionColumns(options: {
-    onEdit: (row: ProductionRow) => void;
+    onEdit: (row: Production) => void;
     onMedia: (production: Production) => void;
     t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>;
     tProductions: ReturnType<typeof useTranslations<"Cms.Productions">>;

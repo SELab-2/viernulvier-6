@@ -351,6 +351,7 @@ describe("useAttachMedia", () => {
 
         const input: AttachMediaInput = {
             s3Key: "media/test.jpg",
+            uploadToken: "test-upload-token",
             mimeType: "image/jpeg",
         };
 

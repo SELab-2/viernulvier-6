@@ -39,7 +39,7 @@ type MediaPickerDialogProps = {
     onOpenChange?: (open: boolean) => void;
 };
 
-type UploadMetadata = Omit<AttachMediaInput, "s3Key" | "mimeType">;
+type UploadMetadata = Omit<AttachMediaInput, "s3Key" | "mimeType" | "uploadToken">;
 
 // ── Helpers ─────────────────────────────────────────────────────────
 

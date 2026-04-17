@@ -1,6 +1,7 @@
 import { PaginatedResult } from "@/types/api/api.types";
 import {
     AttachMediaRequestType,
+    LinkMediaRequestType,
     MediaPayloadResponse,
     MediaVariantPayloadResponse,
     PaginatedMediaResponse,
@@ -9,6 +10,7 @@ import {
 } from "@/types/api/media.api.types";
 import {
     AttachMediaInput,
+    LinkMediaInput,
     Media,
     MediaVariant,
     UploadUrlInput,
@@ -95,6 +97,13 @@ export const mapAttachMediaInput = (input: AttachMediaInput): AttachMediaRequest
     parent_id: input.parentId,
     derivative_type: input.derivativeType,
     gallery_type: input.galleryType,
+});
+
+export const mapLinkMediaInput = (input: LinkMediaInput): LinkMediaRequestType => ({
+    media_id: input.mediaId,
+    role: input.role,
+    is_cover_image: input.isCoverImage,
+    sort_order: input.sortOrder,
 });
 
 export const mapUploadUrlInput = (input: UploadUrlInput): UploadUrlRequestType => ({

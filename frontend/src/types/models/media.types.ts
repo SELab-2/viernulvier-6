@@ -77,6 +77,13 @@ export type AttachMediaInput = {
     galleryType?: string | null;
 };
 
+export type LinkMediaInput = {
+    mediaId: string;
+    role?: string | null;
+    isCoverImage?: boolean | null;
+    sortOrder?: number | null;
+};
+
 export type UploadUrlInput = {
     filename: string;
     mimeType: string;

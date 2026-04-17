@@ -7,9 +7,9 @@ import { toast } from "sonner";
 import { ImageIcon, ImagePlusIcon, PencilIcon, StarIcon, Trash2Icon, XIcon } from "lucide-react";
 
 import {
-    useAttachMedia,
     useClearCoverMedia,
     useGetEntityMedia,
+    useLinkMedia,
     useSetCoverMedia,
     useUnlinkMedia,
     useUpdateMedia,
@@ -82,7 +82,7 @@ export function ProductionMediaSheet({
 
     const unlinkMedia = useUnlinkMedia();
     const uploadMedia = useUploadMedia();
-    const attachMedia = useAttachMedia();
+    const linkMedia = useLinkMedia();
     const updateMedia = useUpdateMedia();
     const setCoverMedia = useSetCoverMedia();
     const clearCoverMedia = useClearCoverMedia();
@@ -142,24 +142,13 @@ export function ProductionMediaSheet({
         async (media: Media) => {
             if (!pickerRole) return;
             try {
-                await attachMedia.mutateAsync({
+                await linkMedia.mutateAsync({
                     entityType: "production",
                     entityId: productionId,
                     input: {
-                        s3Key: media.s3Key,
-                        mimeType: media.mimeType,
+                        mediaId: media.id,
                         role: pickerRole,
                         isCoverImage: pickerRole === "cover",
-                        altTextNl: media.altTextNl,
-                        altTextEn: media.altTextEn,
-                        altTextFr: media.altTextFr,
-                        creditNl: media.creditNl,
-                        creditEn: media.creditEn,
-                        creditFr: media.creditFr,
-                        fileSize: media.fileSize,
-                        width: media.width,
-                        height: media.height,
-                        checksum: media.checksum,
                     },
                 });
                 toast.success(t("attachSuccess"));
@@ -168,7 +157,7 @@ export function ProductionMediaSheet({
             }
             setPickerRole(null);
         },
-        [attachMedia, productionId, pickerRole, t, setPickerRole]
+        [linkMedia, productionId, pickerRole, t, setPickerRole]
     );
 
     const handleUploadForRole = useCallback(
