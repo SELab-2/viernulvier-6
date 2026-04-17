@@ -3,7 +3,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use std::str::FromStr;
 use uuid::Uuid;
-use viernulvier_api::dto::collection::{
+use viernulvier_archive::dto::collection::{
     CollectionItemPayload, CollectionItemPostPayload, CollectionPayload, CollectionPostPayload,
 };
 
