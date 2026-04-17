@@ -39,7 +39,7 @@ type MediaPickerDialogProps = {
     onOpenChange?: (open: boolean) => void;
 };
 
-type UploadMetadata = Omit<AttachMediaInput, "s3Key" | "mimeType">;
+type UploadMetadata = Omit<AttachMediaInput, "s3Key" | "mimeType" | "uploadToken">;
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
@@ -200,7 +200,7 @@ export function MediaPickerDialog({
                     </Button>
                 </DialogTrigger>
             )}
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl" aria-describedby={undefined}>
                 <DialogHeader>
                     <DialogTitle>{t("title")}</DialogTitle>
                 </DialogHeader>
@@ -348,7 +348,7 @@ function MediaGrid({ media, isLoading, selectedId, onSelect, onDetach }: MediaGr
                         key={item.id}
                         role="button"
                         tabIndex={0}
-                        className={`group relative aspect-square cursor-pointer overflow-hidden rounded border-2 transition-colors ${
+                        className={`group relative cursor-pointer overflow-hidden rounded border-2 transition-colors ${
                             isSelected
                                 ? "border-primary ring-primary/20 ring-2"
                                 : "hover:border-muted-foreground/30 border-transparent"
@@ -365,12 +365,13 @@ function MediaGrid({ media, isLoading, selectedId, onSelect, onDetach }: MediaGr
                             <Image
                                 src={url}
                                 alt={item.altTextNl ?? item.altTextEn ?? ""}
-                                fill
-                                className="object-cover"
+                                width={200}
+                                height={200}
+                                className="aspect-square w-full object-cover"
                                 sizes="(max-width: 672px) 25vw, 150px"
                             />
                         ) : (
-                            <div className="bg-muted flex size-full items-center justify-center">
+                            <div className="bg-muted flex aspect-square items-center justify-center">
                                 <ImagePlusIcon className="text-muted-foreground size-6" />
                             </div>
                         )}

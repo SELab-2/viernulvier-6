@@ -64,31 +64,7 @@ export const coverMedia: components["schemas"]["MediaPayload"] = {
 };
 
 export const mediaHandlers = [
-    // Entity media — returns empty by default; override per test with server.use()
-    http.get(apiUrl("/media/entity/:entityType/:entityId"), () =>
-        HttpResponse.json([] satisfies components["schemas"]["MediaPayload"][])
-    ),
-
-    // Attach media to entity
-    http.post(apiUrl("/media/entity/:entityType/:entityId/attach"), () =>
-        HttpResponse.json(coverMedia satisfies components["schemas"]["MediaPayload"])
-    ),
-
-    // Unlink media from entity
-    http.delete(
-        apiUrl("/media/entity/:entityType/:entityId/:mediaId"),
-        () => new HttpResponse(null, { status: 204 })
-    ),
-
-    // Generate upload URL
-    http.post(apiUrl("/media/upload-url"), () =>
-        HttpResponse.json({
-            s3_key: "uploads/new-file.jpg",
-            upload_url: "https://s3.example.com/presigned-upload",
-            expires_in: 3600,
-        })
-    ),
-
+    // GET /media (paginated list + search)
     http.get(apiUrl("/media"), ({ request }) => {
         const url = new URL(request.url);
         const q = url.searchParams.get("q");
@@ -106,7 +82,72 @@ export const mediaHandlers = [
             next_cursor: null,
         } satisfies components["schemas"]["PaginatedResponse_MediaPayload"]);
     }),
-    http.get(apiUrl(`/media/${media.id}`), () =>
+
+    // GET /media/:id
+    http.get(apiUrl("/media/:id"), () =>
         HttpResponse.json(media satisfies components["schemas"]["MediaPayload"])
+    ),
+
+    // PUT /media/:id
+    http.put(apiUrl("/media/:id"), async ({ request }) => {
+        const body = (await request.json()) as components["schemas"]["MediaPayload"];
+        return HttpResponse.json({
+            ...media,
+            ...body,
+            // preserve s3_key from the existing media (as the backend does)
+            s3_key: media.s3_key,
+        } satisfies components["schemas"]["MediaPayload"]);
+    }),
+
+    // DELETE /media/:id
+    http.delete(apiUrl("/media/:id"), () => new HttpResponse(null, { status: 204 })),
+
+    // GET /media/entity/:entityType/:entityId
+    http.get(apiUrl("/media/entity/:entityType/:entityId"), () =>
+        HttpResponse.json([media] satisfies components["schemas"]["MediaPayload"][])
+    ),
+
+    // POST /media/entity/:entityType/:entityId/attach
+    http.post(apiUrl("/media/entity/:entityType/:entityId/attach"), async ({ request }) => {
+        const body = (await request.json()) as components["schemas"]["AttachMediaRequest"];
+        const attached: components["schemas"]["MediaPayload"] = {
+            ...media,
+            id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+            s3_key: body.s3_key,
+            mime_type: body.mime_type,
+            alt_text_nl: body.alt_text_nl ?? null,
+            alt_text_en: body.alt_text_en ?? null,
+            alt_text_fr: body.alt_text_fr ?? null,
+            gallery_type: body.role ?? "gallery",
+        };
+        return HttpResponse.json(attached, { status: 201 });
+    }),
+
+    // DELETE /media/entity/:entityType/:entityId/:mediaId (unlink)
+    http.delete(
+        apiUrl("/media/entity/:entityType/:entityId/:mediaId"),
+        () => new HttpResponse(null, { status: 204 })
+    ),
+
+    // POST /media/entity/:entityType/:entityId/:mediaId/set-cover
+    http.post(
+        apiUrl("/media/entity/:entityType/:entityId/:mediaId/set-cover"),
+        () => new HttpResponse(null, { status: 204 })
+    ),
+
+    // DELETE /media/entity/:entityType/:entityId/cover (clear cover)
+    http.delete(
+        apiUrl("/media/entity/:entityType/:entityId/cover"),
+        () => new HttpResponse(null, { status: 204 })
+    ),
+
+    // POST /media/upload-url
+    http.post(apiUrl("/media/upload-url"), () =>
+        HttpResponse.json({
+            s3_key: "media/generated-key.jpg",
+            upload_url: "https://s3.example.com/presigned-put-url",
+            upload_token: "test-upload-token",
+            expires_in: 300,
+        } satisfies components["schemas"]["UploadUrlResponse"])
     ),
 ];

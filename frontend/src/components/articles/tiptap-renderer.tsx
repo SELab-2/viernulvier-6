@@ -42,6 +42,13 @@ export function TiptapRenderer({ content, mediaMap = {} }: TiptapRendererProps) 
         }
     }, [editor, resolvedContent]);
 
+    // Update editor content when prop changes (for live preview)
+    useEffect(() => {
+        if (editor && content) {
+            editor.commands.setContent(content);
+        }
+    }, [editor, content]);
+
     if (!content) return null;
 
     return (

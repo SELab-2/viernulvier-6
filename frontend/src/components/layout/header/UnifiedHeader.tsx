@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { Search, Menu, X, ChevronDown, LogOut, User } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 
 import { Link as I18nLink, usePathname } from "@/i18n/routing";
 import { ThemeSwitcher } from "@/components/shared/theme-switcher";
+import { LocaleSwitcherLinks } from "@/components/shared/locale-switcher-links";
 import { useUser, useLogout } from "@/hooks/useAuth";
 import { UserRole } from "@/types/models/user.types";
 
@@ -22,6 +23,7 @@ function UserMenu() {
     const { data: user } = useUser();
     const logout = useLogout();
     const [open, setOpen] = useState(false);
+    const t = useTranslations("Header");
 
     if (!user) return null;
 
@@ -54,7 +56,7 @@ function UserMenu() {
                             className="text-muted-foreground hover:bg-muted/50 hover:text-foreground flex w-full items-center gap-2 px-3 py-2.5 font-mono text-[9px] tracking-[1.4px] uppercase"
                         >
                             <LogOut className="h-3.5 w-3.5" />
-                            Sign out
+                            {t("signOut")}
                         </button>
                     </div>
                 </>
@@ -72,10 +74,11 @@ export function UnifiedHeader({
 }: UnifiedHeaderProps) {
     const [menuOpen, setMenuOpen] = useState(false);
     const pathname = usePathname();
-    const locale = useLocale();
+    const t = useTranslations("Header.nav");
     const { data: user } = useUser();
     const isHome = pathname === "/" || pathname === "";
     const isSearch = pathname.startsWith("/search");
+    const isArticles = pathname.startsWith("/articles");
     const isCms = pathname.startsWith("/cms") || pathname.startsWith("/admin");
 
     const navLinkClass = (active: boolean) =>
@@ -85,33 +88,7 @@ export function UnifiedHeader({
                 : "text-muted-foreground hover:text-foreground"
         }`;
 
-    const localeSwitcher = (
-        <span className="flex items-center gap-1 font-mono text-[10px] tracking-[1.4px] uppercase">
-            <I18nLink
-                href={pathname}
-                locale="nl"
-                className={`transition-colors ${
-                    locale === "nl"
-                        ? "text-foreground font-medium"
-                        : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-                NL
-            </I18nLink>
-            <span className="text-muted-foreground text-[8px]">/</span>
-            <I18nLink
-                href={pathname}
-                locale="en"
-                className={`transition-colors ${
-                    locale === "en"
-                        ? "text-foreground font-medium"
-                        : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-                EN
-            </I18nLink>
-        </span>
-    );
+    const localeSwitcher = <LocaleSwitcherLinks />;
 
     return (
         <header className="border-foreground border-b-2">
@@ -155,16 +132,19 @@ export function UnifiedHeader({
                 {/* Nav + utilities */}
                 <div className="border-muted/30 ml-6 flex shrink-0 items-center gap-4 border-l pl-6 sm:ml-7 sm:gap-5 sm:pl-7">
                     <I18nLink href="/" className={navLinkClass(isHome)}>
-                        Home
+                        {t("home")}
                     </I18nLink>
                     <I18nLink href="/search" className={navLinkClass(isSearch)}>
-                        Archief
+                        {t("archive")}
+                    </I18nLink>
+                    <I18nLink href="/articles" className={navLinkClass(isArticles)}>
+                        {t("articles")}
                     </I18nLink>
                     {user && (
                         <>
                             <span className="bg-border h-3 w-px" />
                             <I18nLink href="/cms" className={navLinkClass(isCms)}>
-                                CMS
+                                {t("cms")}
                             </I18nLink>
                         </>
                     )}
@@ -207,14 +187,21 @@ export function UnifiedHeader({
                         onClick={() => setMenuOpen(false)}
                         className={navLinkClass(isHome)}
                     >
-                        Home
+                        {t("home")}
                     </I18nLink>
                     <I18nLink
                         href="/search"
                         onClick={() => setMenuOpen(false)}
                         className={navLinkClass(isSearch)}
                     >
-                        Archief
+                        {t("archive")}
+                    </I18nLink>
+                    <I18nLink
+                        href="/articles"
+                        onClick={() => setMenuOpen(false)}
+                        className={navLinkClass(isArticles)}
+                    >
+                        {t("articles")}
                     </I18nLink>
                     {user && (
                         <>
@@ -223,7 +210,7 @@ export function UnifiedHeader({
                                 onClick={() => setMenuOpen(false)}
                                 className={navLinkClass(isCms)}
                             >
-                                CMS
+                                {t("cms")}
                             </I18nLink>
                             {user.role === UserRole.ADMIN && (
                                 <I18nLink
@@ -231,7 +218,7 @@ export function UnifiedHeader({
                                     onClick={() => setMenuOpen(false)}
                                     className={navLinkClass(pathname.startsWith("/admin"))}
                                 >
-                                    Admin
+                                    {t("admin")}
                                 </I18nLink>
                             )}
                         </>

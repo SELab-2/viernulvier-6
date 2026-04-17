@@ -7,8 +7,10 @@ import { toast } from "sonner";
 import { ImageIcon, ImagePlusIcon, PencilIcon, StarIcon, Trash2Icon, XIcon } from "lucide-react";
 
 import {
-    useAttachMedia,
+    useClearCoverMedia,
     useGetEntityMedia,
+    useLinkMedia,
+    useSetCoverMedia,
     useUnlinkMedia,
     useUpdateMedia,
     useUploadMedia,
@@ -26,6 +28,7 @@ import {
     SheetTitle,
     SheetDescription,
 } from "@/components/ui/sheet";
+import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
 
 import { MediaPickerDialog } from "./media-picker-dialog";
 
@@ -79,13 +82,32 @@ export function ProductionMediaSheet({
 
     const unlinkMedia = useUnlinkMedia();
     const uploadMedia = useUploadMedia();
-    const attachMedia = useAttachMedia();
+    const linkMedia = useLinkMedia();
     const updateMedia = useUpdateMedia();
+    const setCoverMedia = useSetCoverMedia();
+    const clearCoverMedia = useClearCoverMedia();
 
     const [pickerRole, setPickerRole] = useState<MediaRole | null>(null);
     const [editingMedia, setEditingMedia] = useState<Media | null>(null);
+    const [spotlightOpen, setSpotlightOpen] = useState(false);
+    const [spotlightIndex, setSpotlightIndex] = useState(0);
 
     const grouped = groupByRole(entityMedia);
+
+    const spotlightItems: SpotlightItem[] = entityMedia
+        .filter((m) => m.url)
+        .map((m) => ({ kind: "media" as const, media: m }));
+
+    const handleSpotlight = useCallback(
+        (media: Media) => {
+            const idx = spotlightItems.findIndex(
+                (item) => item.kind === "media" && item.media.id === media.id
+            );
+            setSpotlightIndex(idx >= 0 ? idx : 0);
+            setSpotlightOpen(true);
+        },
+        [spotlightItems, setSpotlightIndex, setSpotlightOpen]
+    );
 
     const handleDetach = useCallback(
         async (mediaId: string) => {
@@ -101,31 +123,32 @@ export function ProductionMediaSheet({
                 toast.error(t("detachError"));
             }
         },
-        [unlinkMedia, productionId, t, editingMedia]
+        [unlinkMedia, productionId, t, editingMedia, setEditingMedia]
     );
+
+    const handleClearCover = useCallback(async () => {
+        try {
+            await clearCoverMedia.mutateAsync({
+                entityType: "production",
+                entityId: productionId,
+            });
+            toast.success(t("clearCoverSuccess"));
+        } catch {
+            toast.error(t("clearCoverError"));
+        }
+    }, [clearCoverMedia, productionId, t]);
 
     const handlePickerSelect = useCallback(
         async (media: Media) => {
             if (!pickerRole) return;
             try {
-                await attachMedia.mutateAsync({
+                await linkMedia.mutateAsync({
                     entityType: "production",
                     entityId: productionId,
                     input: {
-                        s3Key: media.s3Key,
-                        mimeType: media.mimeType,
+                        mediaId: media.id,
                         role: pickerRole,
                         isCoverImage: pickerRole === "cover",
-                        altTextNl: media.altTextNl,
-                        altTextEn: media.altTextEn,
-                        altTextFr: media.altTextFr,
-                        creditNl: media.creditNl,
-                        creditEn: media.creditEn,
-                        creditFr: media.creditFr,
-                        fileSize: media.fileSize,
-                        width: media.width,
-                        height: media.height,
-                        checksum: media.checksum,
                     },
                 });
                 toast.success(t("attachSuccess"));
@@ -134,7 +157,7 @@ export function ProductionMediaSheet({
             }
             setPickerRole(null);
         },
-        [attachMedia, productionId, pickerRole, t]
+        [linkMedia, productionId, pickerRole, t, setPickerRole]
     );
 
     const handleUploadForRole = useCallback(
@@ -167,7 +190,23 @@ export function ProductionMediaSheet({
                 toast.error(t("metadataError"));
             }
         },
-        [updateMedia, t]
+        [updateMedia, t, setEditingMedia]
+    );
+
+    const handleSetCover = useCallback(
+        async (media: Media) => {
+            try {
+                await setCoverMedia.mutateAsync({
+                    entityType: "production",
+                    entityId: productionId,
+                    mediaId: media.id,
+                });
+                toast.success(t("setCoverSuccess"));
+            } catch {
+                toast.error(t("setCoverError"));
+            }
+        },
+        [setCoverMedia, productionId, t]
     );
 
     return (
@@ -195,10 +234,13 @@ export function ProductionMediaSheet({
                                     key={role}
                                     role={role}
                                     media={grouped[role]}
-                                    onDetach={handleDetach}
+                                    onDetach={role === "cover" ? handleClearCover : handleDetach}
                                     onUpload={(file) => handleUploadForRole(file, role)}
                                     onOpenPicker={() => setPickerRole(role)}
                                     onEdit={setEditingMedia}
+                                    onSpotlight={handleSpotlight}
+                                    onSetCover={role === "gallery" ? handleSetCover : undefined}
+                                    canUpload={role !== "cover"}
                                     isUploading={uploadMedia.isPending}
                                 />
                             ))
@@ -228,6 +270,15 @@ export function ProductionMediaSheet({
                     onSelect={handlePickerSelect}
                 />
             )}
+
+            <ImageSpotlight
+                items={spotlightItems}
+                index={spotlightIndex}
+                onIndexChange={setSpotlightIndex}
+                open={spotlightOpen}
+                onOpenChange={setSpotlightOpen}
+                eyebrow={productionTitle}
+            />
         </>
     );
 }
@@ -241,6 +292,9 @@ type RoleSectionProps = {
     onUpload: (file: File) => void;
     onOpenPicker: () => void;
     onEdit: (media: Media) => void;
+    onSpotlight: (media: Media) => void;
+    onSetCover?: (media: Media) => void;
+    canUpload?: boolean;
     isUploading: boolean;
 };
 
@@ -257,6 +311,9 @@ function RoleSection({
     onUpload,
     onOpenPicker,
     onEdit,
+    onSpotlight,
+    onSetCover,
+    canUpload = true,
     isUploading,
 }: RoleSectionProps) {
     const t = useTranslations("Cms.ProductionMedia");
@@ -283,45 +340,52 @@ function RoleSection({
                     </h3>
                     <span className="text-muted-foreground/60 text-xs">({media.length})</span>
                 </div>
-                <div className="flex gap-1">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={onOpenPicker}
-                    >
-                        {t("browse")}
-                    </Button>
-                    <label>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleFileInput}
-                            className="hidden"
-                            disabled={isUploading}
-                        />
+                {canUpload && (
+                    <div className="flex gap-1">
                         <Button
                             variant="ghost"
                             size="sm"
                             className="h-7 text-xs"
-                            asChild
-                            disabled={isUploading}
+                            onClick={onOpenPicker}
                         >
-                            <span>
+                            {t("browse")}
+                        </Button>
+                        <div className="relative">
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFileInput}
+                                className="absolute inset-0 z-10 cursor-pointer opacity-0"
+                                disabled={isUploading}
+                            />
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs"
+                                disabled={isUploading}
+                                type="button"
+                            >
                                 {isUploading && <Spinner className="mr-1 size-3" />}
                                 {t("upload")}
-                            </span>
-                        </Button>
-                    </label>
-                </div>
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {media.length === 0 ? (
                 <div className="border-foreground/10 bg-foreground/[0.02] flex items-center justify-center rounded border border-dashed py-6">
-                    <p className="text-muted-foreground text-xs">{t("empty")}</p>
+                    <p className="text-muted-foreground text-xs">
+                        {!canUpload ? t("emptyCover") : t("empty")}
+                    </p>
                 </div>
             ) : isSingle ? (
-                <SingleMediaCard media={media[0]} onDetach={onDetach} onEdit={onEdit} />
+                <SingleMediaCard
+                    media={media[0]}
+                    onDetach={onDetach}
+                    onEdit={onEdit}
+                    onSpotlight={onSpotlight}
+                />
             ) : (
                 <div className="grid grid-cols-3 gap-2">
                     {media.map((item) => (
@@ -330,6 +394,8 @@ function RoleSection({
                             media={item}
                             onDetach={onDetach}
                             onEdit={onEdit}
+                            onSpotlight={onSpotlight}
+                            onSetCover={onSetCover}
                         />
                     ))}
                 </div>
@@ -344,24 +410,31 @@ type SingleMediaCardProps = {
     media: Media;
     onDetach: (mediaId: string) => void;
     onEdit: (media: Media) => void;
+    onSpotlight: (media: Media) => void;
 };
 
-function SingleMediaCard({ media, onDetach, onEdit }: SingleMediaCardProps) {
+function SingleMediaCard({ media, onDetach, onEdit, onSpotlight }: SingleMediaCardProps) {
     const t = useTranslations("Cms.ProductionMedia");
     const url = mediaThumbnailUrl(media);
 
     return (
         <div className="group relative overflow-hidden rounded border">
             {url ? (
-                <div className="relative aspect-video">
+                <button
+                    type="button"
+                    className="block w-full cursor-zoom-in"
+                    onClick={() => onSpotlight(media)}
+                    aria-label={t("viewFullSize")}
+                >
                     <Image
                         src={url}
                         alt={media.altTextNl ?? media.altTextEn ?? ""}
-                        fill
-                        className="object-cover"
+                        width={800}
+                        height={450}
+                        className="aspect-video w-full object-cover"
                         sizes="(max-width: 448px) 100vw, 400px"
                     />
-                </div>
+                </button>
             ) : (
                 <div className="bg-muted flex aspect-video items-center justify-center">
                     <ImageIcon className="text-muted-foreground size-8" />
@@ -410,28 +483,48 @@ type MediaThumbnailProps = {
     media: Media;
     onDetach: (mediaId: string) => void;
     onEdit: (media: Media) => void;
+    onSpotlight: (media: Media) => void;
+    onSetCover?: (media: Media) => void;
 };
 
-function MediaThumbnail({ media, onDetach, onEdit }: MediaThumbnailProps) {
+function MediaThumbnail({ media, onDetach, onEdit, onSpotlight, onSetCover }: MediaThumbnailProps) {
     const t = useTranslations("Cms.ProductionMedia");
     const url = mediaThumbnailUrl(media);
 
     return (
-        <div className="group relative aspect-square overflow-hidden rounded border">
+        <div className="group relative overflow-hidden rounded border">
             {url ? (
-                <Image
-                    src={url}
-                    alt={media.altTextNl ?? media.altTextEn ?? ""}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 448px) 33vw, 130px"
-                />
+                <button
+                    type="button"
+                    className="block w-full cursor-zoom-in"
+                    onClick={() => onSpotlight(media)}
+                    aria-label={t("viewFullSize")}
+                >
+                    <Image
+                        src={url}
+                        alt={media.altTextNl ?? media.altTextEn ?? ""}
+                        width={400}
+                        height={400}
+                        className="aspect-square w-full object-cover"
+                        sizes="(max-width: 448px) 33vw, 130px"
+                    />
+                </button>
             ) : (
-                <div className="bg-muted flex size-full items-center justify-center">
+                <div className="bg-muted flex aspect-square items-center justify-center">
                     <ImageIcon className="text-muted-foreground size-5" />
                 </div>
             )}
             <div className="absolute top-1 right-1 hidden gap-1 group-hover:flex">
+                {onSetCover && (
+                    <button
+                        type="button"
+                        className="rounded-full bg-amber-500 p-1 text-white hover:bg-amber-600"
+                        onClick={() => onSetCover(media)}
+                        aria-label={t("setAsCover")}
+                    >
+                        <StarIcon className="size-3" />
+                    </button>
+                )}
                 <button
                     type="button"
                     className="rounded-full bg-black/60 p-1 text-white hover:bg-black/80"

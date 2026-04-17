@@ -8,9 +8,10 @@ const QUICK_TAGS = ["dance", "theater", "concert", "nightlife", "performance"] a
 interface SearchHeroProps {
     query: string;
     onQueryChange: (query: string) => void;
+    onSearch?: (query: string) => void;
 }
 
-export function SearchHero({ query, onQueryChange }: SearchHeroProps) {
+export function SearchHero({ query, onQueryChange, onSearch }: SearchHeroProps) {
     const t = useTranslations("Search");
 
     return (
@@ -27,6 +28,11 @@ export function SearchHero({ query, onQueryChange }: SearchHeroProps) {
                     type="text"
                     value={query}
                     onChange={(e) => onQueryChange(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter" && onSearch) {
+                            onSearch(query);
+                        }
+                    }}
                     placeholder={t("heroPlaceholder")}
                     autoComplete="off"
                     className="border-foreground focus:border-primary font-display text-foreground placeholder:text-muted-foreground w-full border-b-2 bg-transparent pt-3 pr-24 pb-3 pl-[34px] text-[18px] font-normal transition-all outline-none placeholder:italic sm:pr-28 sm:text-[22px]"
@@ -48,7 +54,11 @@ export function SearchHero({ query, onQueryChange }: SearchHeroProps) {
                 {QUICK_TAGS.map((tag) => (
                     <button
                         key={tag}
-                        onClick={() => onQueryChange(t(`tags.${tag}`))}
+                        onClick={() => {
+                            const value = t(`tags.${tag}`);
+                            onQueryChange(value);
+                            onSearch?.(value);
+                        }}
                         className="border-border text-muted-foreground hover:border-foreground hover:text-foreground cursor-pointer border px-2.5 py-1 font-mono text-[9px] tracking-[1.1px] uppercase transition-all"
                     >
                         {t(`tags.${tag}`)}

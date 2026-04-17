@@ -1,8 +1,8 @@
 use database::{
     Database,
     models::{
-        cursor::CursorData,
         entity_type::EntityType,
+        filtering::cursor::CursorData,
         production::{
             Production, ProductionCreate, ProductionTranslationData, ProductionWithTranslations,
         },
@@ -138,7 +138,7 @@ fn translations_to_data(
 }
 
 /// The per-language content for a production.
-#[derive(Serialize, Deserialize, ToSchema, Clone)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, Clone, PartialEq, Eq)]
 pub struct ProductionTranslationPayload {
     pub language_code: String,
     pub supertitle: Option<String>,
@@ -158,7 +158,7 @@ pub struct ProductionTranslationPayload {
     pub description_short: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, PartialEq, Eq)]
 pub struct ProductionPayload {
     pub id: Uuid,
     pub source_id: Option<i32>,
@@ -171,6 +171,7 @@ pub struct ProductionPayload {
     pub uitdatabank_theme: Option<String>,
     pub uitdatabank_type: Option<String>,
 
+    #[serde(default)]
     pub translations: Vec<ProductionTranslationPayload>,
 
     /// Cover image URL resolved from the entity_media link (output-only).
@@ -191,6 +192,7 @@ pub struct ProductionPostPayload {
     pub uitdatabank_theme: Option<String>,
     pub uitdatabank_type: Option<String>,
 
+    #[serde(default)]
     pub translations: Vec<ProductionTranslationPayload>,
 }
 

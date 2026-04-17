@@ -7,9 +7,11 @@ import { SlidersHorizontal, X } from "lucide-react";
 import type { Location } from "@/types/models/location.types";
 import type { Facet } from "@/types/models/taxonomy.types";
 import { getLabel } from "@/lib/utils";
+import { useGetStats } from "@/hooks/api/useStats";
 
 import { YearRangeSlider } from "./YearRangeSlider";
 import { DateRangePicker } from "./DateRangePicker";
+import { yearBoundsFromStats } from "./statsYearBounds";
 
 const CATEGORIES = ["artists", "productions", "articles", "posters"] as const;
 
@@ -31,12 +33,21 @@ interface ArchiveSidebarProps {
 export function ArchiveSidebar({
     locations = [],
     facets = [],
-    minYear = 1980,
-    maxYear = new Date().getFullYear(),
+    minYear: minYearProp,
+    maxYear: maxYearProp,
     onFilterChange,
 }: ArchiveSidebarProps) {
     const t = useTranslations("Sidebar");
     const locale = useLocale();
+    const { data: stats } = useGetStats();
+
+    const bounds = useMemo(
+        () => yearBoundsFromStats(stats, { minYear: minYearProp, maxYear: maxYearProp }),
+        [stats, minYearProp, maxYearProp]
+    );
+
+    const minDate = useMemo(() => new Date(bounds.minYear, 0, 1), [bounds.minYear]);
+    const maxDate = useMemo(() => new Date(bounds.maxYear, 11, 31), [bounds.maxYear]);
     const [mobileOpen, setMobileOpen] = useState(false);
     const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
     const [checkedCategories, setCheckedCategories] = useState<Set<string>>(
@@ -44,18 +55,32 @@ export function ArchiveSidebar({
     );
     const [checkedLocations, setCheckedLocations] = useState<Set<string>>(new Set());
 
-    const validatedMinYear = Math.min(minYear, maxYear);
-    const validatedMaxYear = Math.max(minYear, maxYear);
-
-    const minDate = new Date(validatedMinYear, 0, 1);
-    const maxDate = new Date(validatedMaxYear, 11, 31);
-
     const [dateMode, setDateMode] = useState<DateFilterMode>("year");
-    const [yearRange, setYearRange] = useState<[number, number]>([
-        validatedMinYear,
-        validatedMaxYear,
-    ]);
-    const [dateRange, setDateRange] = useState<[Date, Date]>([minDate, maxDate]);
+    /** `null` = full range for current archive bounds (updates automatically when /stats arrives). */
+    const [yearRangeDraft, setYearRangeDraft] = useState<[number, number] | null>(null);
+    const [dateRangeDraft, setDateRangeDraft] = useState<[Date, Date] | null>(null);
+
+    const yearRange = useMemo((): [number, number] => {
+        const full: [number, number] = [bounds.minYear, bounds.maxYear];
+        if (yearRangeDraft === null) return full;
+        const lo = Math.max(bounds.minYear, Math.min(yearRangeDraft[0], bounds.maxYear));
+        const hi = Math.max(bounds.minYear, Math.min(yearRangeDraft[1], bounds.maxYear));
+        if (lo <= hi) return [lo, hi];
+        return full;
+    }, [yearRangeDraft, bounds.minYear, bounds.maxYear]);
+
+    const dateRange = useMemo((): [Date, Date] => {
+        const minD = new Date(bounds.minYear, 0, 1);
+        const maxD = new Date(bounds.maxYear, 11, 31);
+        const full: [Date, Date] = [minD, maxD];
+        if (dateRangeDraft === null) return full;
+        const start =
+            dateRangeDraft[0] < minD ? minD : dateRangeDraft[0] > maxD ? maxD : dateRangeDraft[0];
+        const end =
+            dateRangeDraft[1] > maxD ? maxD : dateRangeDraft[1] < minD ? minD : dateRangeDraft[1];
+        if (start > end) return full;
+        return [start, end];
+    }, [dateRangeDraft, bounds.minYear, bounds.maxYear]);
 
     const effectiveDateRange = useMemo<[Date, Date]>(
         () =>
@@ -66,12 +91,16 @@ export function ArchiveSidebar({
     );
 
     const switchToExact = () => {
-        setDateRange([new Date(yearRange[0], 0, 1), new Date(yearRange[1], 11, 31)]);
+        setDateRangeDraft(
+            yearRangeDraft === null
+                ? null
+                : [new Date(yearRange[0], 0, 1), new Date(yearRange[1], 11, 31)]
+        );
         setDateMode("exact");
     };
 
     const switchToYear = () => {
-        setYearRange([dateRange[0].getFullYear(), dateRange[1].getFullYear()]);
+        setYearRangeDraft([dateRange[0].getFullYear(), dateRange[1].getFullYear()]);
         setDateMode("year");
     };
 
@@ -133,9 +162,9 @@ export function ArchiveSidebar({
         setCheckedCategories(new Set());
         setCheckedLocations(new Set());
         setDateMode("year");
-        setYearRange([validatedMinYear, validatedMaxYear]);
-        setDateRange([new Date(validatedMinYear, 0, 1), new Date(validatedMaxYear, 11, 31)]);
-    }, [validatedMinYear, validatedMaxYear]);
+        setYearRangeDraft(null);
+        setDateRangeDraft(null);
+    }, []);
 
     const sidebarContent = (
         <>
@@ -162,7 +191,7 @@ export function ArchiveSidebar({
                             type="button"
                             aria-pressed={checkedCategories.has(cat)}
                             onClick={() => toggleCategory(cat)}
-                            className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase transition-all ${
+                            className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
                                 checkedCategories.has(cat)
                                     ? "bg-foreground text-background border-foreground"
                                     : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
@@ -183,7 +212,7 @@ export function ArchiveSidebar({
                                 type="button"
                                 aria-pressed={activeTags.has(tag.slug)}
                                 onClick={() => toggleTag(tag.slug)}
-                                className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase transition-all ${
+                                className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
                                     activeTags.has(tag.slug)
                                         ? "bg-foreground text-background border-foreground"
                                         : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
@@ -205,7 +234,7 @@ export function ArchiveSidebar({
                                 type="button"
                                 aria-pressed={checkedLocations.has(loc.id)}
                                 onClick={() => toggleLocation(loc.id)}
-                                className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase transition-all ${
+                                className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
                                     checkedLocations.has(loc.id)
                                         ? "bg-foreground text-background border-foreground"
                                         : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
@@ -219,7 +248,7 @@ export function ArchiveSidebar({
                             type="button"
                             aria-pressed={checkedLocations.has("deVooruit")}
                             onClick={() => toggleLocation("deVooruit")}
-                            className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase transition-all ${
+                            className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
                                 checkedLocations.has("deVooruit")
                                     ? "bg-foreground text-background border-foreground"
                                     : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
@@ -254,10 +283,10 @@ export function ArchiveSidebar({
                             <span>{yearRange[1]}</span>
                         </div>
                         <YearRangeSlider
-                            min={validatedMinYear}
-                            max={validatedMaxYear}
+                            min={bounds.minYear}
+                            max={bounds.maxYear}
                             value={yearRange}
-                            onChange={setYearRange}
+                            onChange={setYearRangeDraft}
                             ariaLabelStart={t("year.rangeFrom")}
                             ariaLabelEnd={t("year.rangeTo")}
                         />
@@ -271,7 +300,7 @@ export function ArchiveSidebar({
                             endDate={dateRange[1]}
                             minDate={minDate}
                             maxDate={maxDate}
-                            onChange={(start, end) => setDateRange([start, end])}
+                            onChange={(start, end) => setDateRangeDraft([start, end])}
                         />
                     </div>
                 )}
@@ -304,7 +333,7 @@ export function ArchiveSidebar({
             )}
 
             <aside
-                className={`border-border shrink-0 border-r py-5 pb-10 ${
+                className={`border-border shrink-0 overflow-x-hidden border-r py-5 pb-10 ${
                     mobileOpen
                         ? "bg-background fixed inset-y-0 left-0 z-50 w-[290px] overflow-y-auto shadow-xl"
                         : "hidden lg:block lg:w-[290px]"

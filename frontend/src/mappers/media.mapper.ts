@@ -1,6 +1,7 @@
 import { PaginatedResult } from "@/types/api/api.types";
 import {
     AttachMediaRequestType,
+    LinkMediaRequestType,
     MediaPayloadResponse,
     MediaVariantPayloadResponse,
     PaginatedMediaResponse,
@@ -9,6 +10,7 @@ import {
 } from "@/types/api/media.api.types";
 import {
     AttachMediaInput,
+    LinkMediaInput,
     Media,
     MediaVariant,
     UploadUrlInput,
@@ -72,6 +74,7 @@ export const mapPaginatedMediaResult = (
 
 export const mapAttachMediaInput = (input: AttachMediaInput): AttachMediaRequestType => ({
     s3_key: input.s3Key,
+    upload_token: input.uploadToken,
     mime_type: input.mimeType,
     role: input.role,
     sort_order: input.sortOrder,
@@ -96,15 +99,24 @@ export const mapAttachMediaInput = (input: AttachMediaInput): AttachMediaRequest
     gallery_type: input.galleryType,
 });
 
+export const mapLinkMediaInput = (input: LinkMediaInput): LinkMediaRequestType => ({
+    media_id: input.mediaId,
+    role: input.role,
+    is_cover_image: input.isCoverImage,
+    sort_order: input.sortOrder,
+});
+
 export const mapUploadUrlInput = (input: UploadUrlInput): UploadUrlRequestType => ({
     filename: input.filename,
     mime_type: input.mimeType,
+    file_size: input.fileSize,
 });
 
 export const mapUploadUrlResult = (response: GenerateUploadUrlResponse): UploadUrlResult => ({
     s3Key: response.s3_key,
     uploadUrl: response.upload_url,
     expiresIn: response.expires_in,
+    uploadToken: response.upload_token,
 });
 
 export const mapMediaVariantToPayload = (v: MediaVariant): MediaVariantPayloadResponse => ({

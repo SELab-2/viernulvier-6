@@ -27,7 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { MediaPickerDialog } from "@/components/cms/media-picker-dialog";
-import { useAttachMedia } from "@/hooks/api/useMedia";
+import { useLinkMedia } from "@/hooks/api/useMedia";
 import type { Media } from "@/types/models/media.types";
 import { cn } from "@/lib/utils";
 
@@ -72,7 +72,7 @@ export function EditorToolbar({ editor, entityType, entityId }: EditorToolbarPro
     const [linkOpen, setLinkOpen] = useState(false);
     const [imagePickerOpen, setImagePickerOpen] = useState(false);
 
-    const attachMedia = useAttachMedia();
+    const linkMedia = useLinkMedia();
 
     const state = useEditorState({
         editor,
@@ -111,10 +111,10 @@ export function EditorToolbar({ editor, entityType, entityId }: EditorToolbarPro
     const handleImageSelect = async (media: Media) => {
         if (!entityType || !entityId) return;
         try {
-            await attachMedia.mutateAsync({
+            await linkMedia.mutateAsync({
                 entityType,
                 entityId,
-                input: { s3Key: media.s3Key, mimeType: media.mimeType, role: "inline" },
+                input: { mediaId: media.id, role: "inline" },
             });
             editor
                 .chain()
@@ -135,7 +135,7 @@ export function EditorToolbar({ editor, entityType, entityId }: EditorToolbarPro
 
     return (
         <TooltipProvider delayDuration={600}>
-            <div className="flex flex-wrap items-center gap-0.5 border-b px-2 py-1">
+            <div className="bg-background relative z-10 flex flex-nowrap items-center gap-0.5 overflow-x-auto border-b px-2 py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <ToolbarButton
                     onClick={() => editor.chain().focus().toggleBold().run()}
                     active={state.bold}
@@ -260,9 +260,11 @@ export function EditorToolbar({ editor, entityType, entityId }: EditorToolbarPro
 
                     <Popover.Portal>
                         <Popover.Content
-                            className="bg-popover text-popover-foreground z-50 flex items-center gap-1 rounded-md border p-2 shadow-md"
-                            sideOffset={6}
-                            align="start"
+                            className="bg-popover text-popover-foreground z-[100] flex w-max items-center gap-1 rounded-md border p-2 shadow-lg"
+                            side="bottom"
+                            sideOffset={8}
+                            align="center"
+                            collisionPadding={16}
                         >
                             <Input
                                 value={linkUrl}
@@ -309,7 +311,7 @@ export function EditorToolbar({ editor, entityType, entityId }: EditorToolbarPro
                         <Separator orientation="vertical" className="mx-1 h-5" />
                         <ToolbarButton
                             onClick={() => setImagePickerOpen(true)}
-                            disabled={attachMedia.isPending}
+                            disabled={linkMedia.isPending}
                             label="Insert image"
                         >
                             <ImagePlus className="h-3.5 w-3.5" />

@@ -27,6 +27,14 @@ impl<'a> CollectionRepo<'a> {
         Self { db }
     }
 
+    pub async fn count(&self) -> Result<i64, DatabaseError> {
+        let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM collections")
+            .fetch_one(self.db)
+            .await?;
+
+        Ok(count)
+    }
+
     pub async fn all(&self) -> Result<Vec<CollectionWithTranslations>, DatabaseError> {
         let collections =
             sqlx::query_as::<_, Collection>("SELECT * FROM collections ORDER BY created_at DESC")
@@ -319,12 +327,17 @@ impl<'a> CollectionRepo<'a> {
         .await?)
     }
 
+    /// Insert or update translations for a collection. Clears all translations when the list is empty.
     async fn upsert_translations(
         &self,
         collection_id: Uuid,
         translations: &[CollectionTranslationData],
     ) -> Result<(), DatabaseError> {
         if translations.is_empty() {
+            sqlx::query("DELETE FROM collection_translations WHERE collection_id = $1")
+                .bind(collection_id)
+                .execute(self.db)
+                .await?;
             return Ok(());
         }
 
@@ -403,12 +416,17 @@ impl<'a> CollectionRepo<'a> {
         .await?)
     }
 
+    /// Insert or update translations for a collection item. Clears all translations when the list is empty.
     async fn upsert_item_translations(
         &self,
         item_id: Uuid,
         translations: &[CollectionItemTranslationData],
     ) -> Result<(), DatabaseError> {
         if translations.is_empty() {
+            sqlx::query("DELETE FROM collection_item_translations WHERE collection_item_id = $1")
+                .bind(item_id)
+                .execute(self.db)
+                .await?;
             return Ok(());
         }
 

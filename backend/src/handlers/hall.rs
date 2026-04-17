@@ -14,7 +14,7 @@ use crate::{
     error::ErrorResponse,
     handlers::{
         IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse,
-        queries::pagination::PaginationQuery,
+        queries::{hall::HallSearchQuery, pagination::PaginationQuery},
     },
 };
 
@@ -25,7 +25,8 @@ use crate::{
     operation_id = "get_all_halls",
     description = "Get all halls",
     params(
-        PaginationQuery
+        PaginationQuery,
+        HallSearchQuery
     ),
     responses(
         (status = 200, description = "Success", body = PaginatedResponse<HallPayload>)
@@ -34,8 +35,9 @@ use crate::{
 pub async fn get_all(
     db: Database,
     Query(pagination): Query<PaginationQuery>,
+    Query(search): Query<HallSearchQuery>,
 ) -> JsonResponse<PaginatedResponse<HallPayload>> {
-    HallPayload::all(&db, pagination.cursor, pagination.limit)
+    HallPayload::all(&db, pagination.cursor, pagination.limit, search)
         .await?
         .json()
 }

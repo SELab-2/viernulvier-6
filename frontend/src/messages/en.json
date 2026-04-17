@@ -8,7 +8,15 @@
     },
     "Header": {
         "logout": "Logout",
-        "loggingOut": "..."
+        "loggingOut": "...",
+        "signOut": "Sign out",
+        "nav": {
+            "home": "Home",
+            "archive": "Archive",
+            "articles": "Articles",
+            "cms": "CMS",
+            "admin": "Admin"
+        }
     },
     "LocaleSwitcher": {
         "label": "Select language"
@@ -289,7 +297,53 @@
             "showEvents": "Show events",
             "hideEvents": "Hide events",
             "editProduction": "Edit production",
-            "editEvent": "Edit event"
+            "editEvent": "Edit event",
+            "backToList": "Back to productions",
+            "save": "Save",
+            "saving": "Saving…",
+            "saveSuccess": "Production saved.",
+            "saveFailed": "Failed to save production.",
+            "preview": "Preview",
+            "hidePreview": "Hide Preview",
+            "previewLabel": "Preview",
+            "generalSection": "General",
+            "contentSection": "Content",
+            "fieldSlug": "Slug",
+            "fieldTitle": "Title",
+            "fieldArtist": "Artist",
+            "fieldSupertitle": "Supertitle",
+            "fieldTagline": "Tagline",
+            "fieldTeaser": "Teaser",
+            "fieldDescriptionShort": "Short Description",
+            "fieldDescription": "Description",
+            "fieldQuote": "Quote",
+            "fieldQuoteSource": "Quote Source",
+            "fieldVideo1": "Video 1",
+            "fieldVideo2": "Video 2",
+            "fieldEticketInfo": "E-ticket Info",
+            "fieldUitdatabankTheme": "UiTdatabank Theme",
+            "fieldUitdatabankType": "UiTdatabank Type",
+            "titleNlColumn": "Title (NL)",
+            "titleEnColumn": "Title (EN)",
+            "artistColumn": "Artist",
+            "deleteAction": "Delete",
+            "readOnly": "read-only",
+            "eventStartColumn": "Start",
+            "eventEndColumn": "End",
+            "eventStatusColumn": "Status",
+            "eventHallColumn": "Hall",
+            "fieldEventId": "ID",
+            "fieldEventStartsAt": "Starts at",
+            "fieldEventEndsAt": "Ends at",
+            "fieldEventDoorsAt": "Doors at",
+            "fieldEventIntermissionAt": "Intermission at",
+            "fieldEventStatus": "Status",
+            "fieldEventHallId": "Hall ID",
+            "fieldEventMaxTickets": "Max tickets per order",
+            "fieldEventVendorId": "Vendor ID",
+            "fieldEventBoxOfficeId": "Box office ID",
+            "fieldEventUitdatabankId": "UiTdatabank ID",
+            "eyebrow": "Production"
         },
         "Locations": {
             "title": "Locations",
@@ -311,6 +365,9 @@
             "saving": "Saving…",
             "saveSuccess": "Article saved.",
             "saveFailed": "Failed to save article.",
+            "preview": "Preview",
+            "hidePreview": "Hide Preview",
+            "previewLabel": "Preview",
             "backToList": "Back to articles",
             "statusLabel": "Status",
             "slug": "Slug",
@@ -329,7 +386,16 @@
             "coverSetSuccess": "Cover image set.",
             "coverSetError": "Failed to set cover image.",
             "coverRemovedSuccess": "Cover image removed.",
-            "coverRemovedError": "Failed to remove cover image."
+            "coverRemovedError": "Failed to remove cover image.",
+            "metadata": "Metadata",
+            "statusDraft": "Draft",
+            "statusPublished": "Published",
+            "statusArchived": "Archived",
+            "noOptionsAvailable": "No options available",
+            "untitledEvent": "Untitled event",
+            "contentPlaceholder": "Write article content…",
+            "statusColumn": "Status",
+            "dateRangeColumn": "Date range"
         },
         "Performers": {
             "title": "Performers",
@@ -455,7 +521,14 @@
             "altTextFr": "Alt text (FR)",
             "creditNl": "Credits (NL)",
             "creditEn": "Credits (EN)",
-            "creditFr": "Credits (FR)"
+            "creditFr": "Credits (FR)",
+            "viewFullSize": "View full size",
+            "emptyCover": "No cover image — set one using the star button in the gallery below.",
+            "setAsCover": "Set as cover image",
+            "setCoverSuccess": "Cover image set",
+            "setCoverError": "Failed to set cover image",
+            "clearCoverSuccess": "Cover image removed",
+            "clearCoverError": "Failed to remove cover image"
         }
     },
     "Admin": {
@@ -482,11 +555,53 @@
         "backToHome": "Back to the archive",
         "articleImageCaption": "The forgotten Vooruit building..."
     },
+    "ProductionPage": {
+        "eyebrow": "Production",
+        "archiveNumber": "Archive no.",
+        "metaType": "Type",
+        "metaTheme": "Theme",
+        "metaLanguage": "Language",
+        "languageNlEn": "EN / NL",
+        "languageNl": "NL",
+        "imageCaptionFallback": "VIERNULVIER Archive",
+        "about": "About this production",
+        "noDescription": "No description available in this language.",
+        "video": "Video",
+        "externalVideoLink": "External video link ↗",
+        "credits": "Credits",
+        "creditProduction": "Production",
+        "creditArtist": "Artist",
+        "relatedTitle": "More from the archive",
+        "relatedViewAll": "View all →",
+        "relatedArchive": "Archive",
+        "relatedProductionFallback": "Production",
+        "breadcrumbArchive": "Archive",
+        "breadcrumbProductions": "Productions",
+        "loading": "Loading…",
+        "openCoverImage": "Open cover image",
+        "openGalleryImage": "Open image"
+    },
     "NewsArticleComponent": {
         "subTitle": "Vooruit Archive",
         "edition": "Edition 404",
         "articleBrand": "Archives Department",
         "price": "Price: Priceless"
+    },
+    "Preview": {
+        "previewMode": "Preview",
+        "exitPreview": "Click to exit preview mode"
+    },
+    "Location": {
+        "about": "About",
+        "history": "History",
+        "halls": "Halls",
+        "seated": "Seated",
+        "openSeating": "Open seating",
+        "searchArchive": "View all productions at this location",
+        "searchNotImplemented": "Search filtering by location is not yet available.",
+        "loading": "Loading location...",
+        "notFound": "Location not found.",
+        "error": "Something went wrong while loading this location."
     },
     "Articles": {
         "heroEyebrow": "Stories from the archive",
@@ -505,11 +620,22 @@
         "notFoundTitle": "Article not found",
         "notFoundText": "This article does not exist or is no longer available.",
         "connectedTo": "Connected to",
+        "noConnections": "No connections added yet",
+        "connectionsComingSoon": "Connections coming soon",
         "moreStories": "More articles",
         "relatedEntities": "Related",
         "relatedProductions": "Productions",
         "relatedArtists": "Artists",
         "relatedLocations": "Locations",
         "relatedEvents": "Events"
+    },
+    "ImageSpotlight": {
+        "close": "Close",
+        "previous": "Prev",
+        "next": "Next",
+        "previousImage": "Previous image",
+        "nextImage": "Next image",
+        "archive": "Archive",
+        "openImage": "Open image"
     }
 }

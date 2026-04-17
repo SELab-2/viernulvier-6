@@ -81,7 +81,7 @@ export function makeArticleColumns(
         },
         {
             accessorKey: "status",
-            header: "Status",
+            header: tArticles("statusColumn"),
             cell: ({ row }) => <StatusBadge status={row.original.status} />,
         },
         {
@@ -98,7 +98,7 @@ export function makeArticleColumns(
         },
         {
             id: "subjectPeriod",
-            header: "Date range",
+            header: tArticles("dateRangeColumn"),
             cell: ({ row }) => {
                 const { subjectPeriodStart, subjectPeriodEnd } = row.original;
                 if (!subjectPeriodStart && !subjectPeriodEnd) {

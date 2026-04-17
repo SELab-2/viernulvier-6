@@ -52,6 +52,7 @@ export type EntityMediaParams = {
 
 export type AttachMediaInput = {
     s3Key: string;
+    uploadToken: string;
     mimeType: string;
     role?: string | null;
     sortOrder?: number | null;
@@ -76,15 +77,24 @@ export type AttachMediaInput = {
     galleryType?: string | null;
 };
 
+export type LinkMediaInput = {
+    mediaId: string;
+    role?: string | null;
+    isCoverImage?: boolean | null;
+    sortOrder?: number | null;
+};
+
 export type UploadUrlInput = {
     filename: string;
     mimeType: string;
+    fileSize: number;
 };
 
 export type UploadUrlResult = {
     s3Key: string;
     uploadUrl: string;
     expiresIn: number;
+    uploadToken: string;
 };
 
 export type MediaSearchParams = {

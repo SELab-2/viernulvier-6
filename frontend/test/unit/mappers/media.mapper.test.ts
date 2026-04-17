@@ -8,6 +8,8 @@ import {
     mapAttachMediaInput,
     mapUploadUrlInput,
     mapUploadUrlResult,
+    mapMediaToPayload,
+    mapMediaVariantToPayload,
 } from "@/mappers/media.mapper";
 
 describe("media mapper", () => {
@@ -161,6 +163,7 @@ describe("media mapper", () => {
         it("maps camelCase input to snake_case API payload", () => {
             const result = mapAttachMediaInput({
                 s3Key: "media/test.jpg",
+                uploadToken: "token-123",
                 mimeType: "image/jpeg",
                 role: "gallery",
                 sortOrder: 1,
@@ -172,6 +175,7 @@ describe("media mapper", () => {
                 fileSize: 50000,
             });
             expect(result.s3_key).toBe("media/test.jpg");
+            expect(result.upload_token).toBe("token-123");
             expect(result.mime_type).toBe("image/jpeg");
             expect(result.role).toBe("gallery");
             expect(result.sort_order).toBe(1);
@@ -185,13 +189,15 @@ describe("media mapper", () => {
     });
 
     describe("mapUploadUrlInput", () => {
-        it("maps filename and mimeType", () => {
+        it("maps filename, mimeType and fileSize", () => {
             const result = mapUploadUrlInput({
                 filename: "photo.jpg",
                 mimeType: "image/jpeg",
+                fileSize: 2048,
             });
             expect(result.filename).toBe("photo.jpg");
             expect(result.mime_type).toBe("image/jpeg");
+            expect(result.file_size).toBe(2048);
         });
     });
 
@@ -201,10 +207,12 @@ describe("media mapper", () => {
                 s3_key: "media/abc.jpg",
                 upload_url: "https://s3.example.com/presigned",
                 expires_in: 300,
+                upload_token: "token-abc",
             });
             expect(result.s3Key).toBe("media/abc.jpg");
             expect(result.uploadUrl).toBe("https://s3.example.com/presigned");
             expect(result.expiresIn).toBe(300);
+            expect(result.uploadToken).toBe("token-abc");
         });
     });
 
@@ -236,6 +244,68 @@ describe("media mapper", () => {
             });
             expect(result.data).toHaveLength(0);
             expect(result.nextCursor).toBeNull();
+        });
+    });
+
+    describe("mapMediaToPayload", () => {
+        it("maps camelCase Media back to snake_case API payload", () => {
+            const domainMedia = mapMedia(apiMedia);
+            const result = mapMediaToPayload(domainMedia);
+
+            expect(result.id).toBe("m-1");
+            expect(result.created_at).toBe("2026-01-01T00:00:00Z");
+            expect(result.updated_at).toBe("2026-01-02T00:00:00Z");
+            expect(result.url).toBe("https://s3.example.com/image.jpg");
+            expect(result.s3_key).toBe("media/image.jpg");
+            expect(result.mime_type).toBe("image/jpeg");
+            expect(result.file_size).toBe(120000);
+            expect(result.width).toBe(1920);
+            expect(result.height).toBe(1080);
+            expect(result.alt_text_nl).toBe("Alt NL");
+            expect(result.alt_text_en).toBe("Alt EN");
+            expect(result.alt_text_fr).toBeNull();
+            expect(result.description_nl).toBe("Beschrijving");
+            expect(result.credit_nl).toBe("Fotograaf");
+            expect(result.geo_latitude).toBe(51.05);
+            expect(result.geo_longitude).toBe(3.72);
+            expect(result.gallery_type).toBe("gallery");
+            expect(result.source_system).toBe("api-importer");
+            expect(result.source_uri).toBe("https://cdn.example.com/image.jpg");
+        });
+
+        it("round-trips mapMedia -> mapMediaToPayload", () => {
+            const roundTripped = mapMediaToPayload(mapMedia(apiMedia));
+            expect(roundTripped).toEqual(apiMedia);
+        });
+
+        it("maps crops array back to snake_case", () => {
+            const domainMedia = mapMedia(apiMedia);
+            const result = mapMediaToPayload(domainMedia);
+            expect(result.crops).toHaveLength(1);
+            expect(result.crops[0].crop_name).toBe("hd_ready");
+            expect(result.crops[0].media_id).toBe("m-1");
+        });
+    });
+
+    describe("mapMediaVariantToPayload", () => {
+        it("maps camelCase MediaVariant back to snake_case", () => {
+            const domainVariant = mapMediaVariant(apiVariant);
+            const result = mapMediaVariantToPayload(domainVariant);
+
+            expect(result.id).toBe("v-1");
+            expect(result.media_id).toBe("m-1");
+            expect(result.variant_kind).toBe("crop");
+            expect(result.crop_name).toBe("hd_ready");
+            expect(result.url).toBe("https://s3.example.com/crop.jpg");
+            expect(result.mime_type).toBe("image/jpeg");
+            expect(result.file_size).toBe(50000);
+            expect(result.width).toBe(640);
+            expect(result.height).toBe(360);
+        });
+
+        it("round-trips mapMediaVariant -> mapMediaVariantToPayload", () => {
+            const roundTripped = mapMediaVariantToPayload(mapMediaVariant(apiVariant));
+            expect(roundTripped).toEqual(apiVariant);
         });
     });
 });

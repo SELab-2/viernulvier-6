@@ -21,7 +21,7 @@ import { useGetArtists } from "@/hooks/api/useArtists";
 import { useGetProductions } from "@/hooks/api/useProductions";
 import { useGetLocations } from "@/hooks/api/useLocations";
 import { useGetEvents } from "@/hooks/api/useEvents";
-import { useAttachMedia, useGetEntityMedia, useUnlinkMedia, useUploadMedia } from "@/hooks/api";
+import { useLinkMedia, useGetEntityMedia, useUnlinkMedia, useUploadMedia } from "@/hooks/api";
 import type { Media } from "@/types/models/media.types";
 import { Article, ArticleRelations, ArticleStatus } from "@/types/models/article.types";
 import { statusStyles } from "@/components/cms/status-badge";
@@ -33,9 +33,16 @@ interface RelationMultiSelectProps {
     ids: string[];
     options: { id: string; label: string }[];
     onChange: (ids: string[]) => void;
+    emptyText: string;
 }
 
-function RelationMultiSelect({ label, ids, options, onChange }: RelationMultiSelectProps) {
+function RelationMultiSelect({
+    label,
+    ids,
+    options,
+    onChange,
+    emptyText,
+}: RelationMultiSelectProps) {
     const toggle = (id: string) => {
         onChange(ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]);
     };
@@ -45,12 +52,12 @@ function RelationMultiSelect({ label, ids, options, onChange }: RelationMultiSel
             <Label className="text-xs font-medium">{label}</Label>
             <div className="max-h-40 space-y-1 overflow-y-auto rounded-md border p-2">
                 {options.length === 0 ? (
-                    <p className="text-muted-foreground text-xs">No options available</p>
+                    <p className="text-muted-foreground text-xs">{emptyText}</p>
                 ) : (
                     options.map((opt) => (
                         <label
                             key={opt.id}
-                            className="flex cursor-pointer items-center gap-2 text-xs"
+                            className="flex min-w-0 cursor-pointer items-center gap-2 text-xs"
                         >
                             <input
                                 type="checkbox"
@@ -93,7 +100,7 @@ export function ArticleMetadataPanel({
     const { data: coverMedia = [] } = useGetEntityMedia("article", article.id, {
         params: { role: "cover" },
     });
-    const attachMedia = useAttachMedia();
+    const linkMedia = useLinkMedia();
     const unlinkMedia = useUnlinkMedia();
     const uploadMedia = useUploadMedia();
     const cover = coverMedia[0] ?? null;
@@ -101,24 +108,13 @@ export function ArticleMetadataPanel({
     const handlePickerSelect = useCallback(
         async (media: Media) => {
             try {
-                await attachMedia.mutateAsync({
+                await linkMedia.mutateAsync({
                     entityType: "article",
                     entityId: article.id,
                     input: {
-                        s3Key: media.s3Key,
-                        mimeType: media.mimeType,
+                        mediaId: media.id,
                         role: "cover",
                         isCoverImage: true,
-                        altTextNl: media.altTextNl,
-                        altTextEn: media.altTextEn,
-                        altTextFr: media.altTextFr,
-                        creditNl: media.creditNl,
-                        creditEn: media.creditEn,
-                        creditFr: media.creditFr,
-                        fileSize: media.fileSize,
-                        width: media.width,
-                        height: media.height,
-                        checksum: media.checksum,
                     },
                 });
                 toast.success(t("coverSetSuccess"));
@@ -127,7 +123,7 @@ export function ArticleMetadataPanel({
             }
             setPickerOpen(false);
         },
-        [attachMedia, article.id, t]
+        [linkMedia, article.id, t]
     );
 
     const handleRemoveCover = useCallback(async () => {
@@ -180,9 +176,9 @@ export function ArticleMetadataPanel({
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="published">Published</SelectItem>
-                            <SelectItem value="archived">Archived</SelectItem>
+                            <SelectItem value="draft">{t("statusDraft")}</SelectItem>
+                            <SelectItem value="published">{t("statusPublished")}</SelectItem>
+                            <SelectItem value="archived">{t("statusArchived")}</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -232,6 +228,7 @@ export function ArticleMetadataPanel({
                         label: p.translations.find((t) => t.languageCode === "nl")?.title ?? p.slug,
                     }))}
                     onChange={(productionIds) => onRelationsChange({ ...relations, productionIds })}
+                    emptyText={t("noOptionsAvailable")}
                 />
 
                 {/* Related artists */}
@@ -243,6 +240,7 @@ export function ArticleMetadataPanel({
                         label: a.name,
                     }))}
                     onChange={(artistIds) => onRelationsChange({ ...relations, artistIds })}
+                    emptyText={t("noOptionsAvailable")}
                 />
 
                 {/* Related locations */}
@@ -254,6 +252,7 @@ export function ArticleMetadataPanel({
                         label: l.name ?? l.id,
                     }))}
                     onChange={(locationIds) => onRelationsChange({ ...relations, locationIds })}
+                    emptyText={t("noOptionsAvailable")}
                 />
 
                 {/* Related events */}
@@ -265,6 +264,7 @@ export function ArticleMetadataPanel({
                         label: e.startsAt ?? "Untitled event",
                     }))}
                     onChange={(eventIds) => onRelationsChange({ ...relations, eventIds })}
+                    emptyText={t("noOptionsAvailable")}
                 />
 
                 {/* Cover image */}
@@ -367,6 +367,54 @@ export function ArticleMetadataPanel({
                     onSelect={handlePickerSelect}
                 />
             )}
+
+            {/* Related productions */}
+            <RelationMultiSelect
+                label={t("relatedProductions")}
+                ids={relations.productionIds}
+                options={productions.map((p) => ({
+                    id: p.id,
+                    label: p.translations.find((t) => t.languageCode === "nl")?.title ?? p.slug,
+                }))}
+                onChange={(productionIds) => onRelationsChange({ ...relations, productionIds })}
+                emptyText={t("noOptionsAvailable")}
+            />
+
+            {/* Related artists */}
+            <RelationMultiSelect
+                label={t("relatedArtists")}
+                ids={relations.artistIds}
+                options={artists.map((a) => ({
+                    id: a.id,
+                    label: a.name,
+                }))}
+                onChange={(artistIds) => onRelationsChange({ ...relations, artistIds })}
+                emptyText={t("noOptionsAvailable")}
+            />
+
+            {/* Related locations */}
+            <RelationMultiSelect
+                label={t("relatedLocations")}
+                ids={relations.locationIds}
+                options={locations.map((l) => ({
+                    id: l.id,
+                    label: l.name ?? l.id,
+                }))}
+                onChange={(locationIds) => onRelationsChange({ ...relations, locationIds })}
+                emptyText={t("noOptionsAvailable")}
+            />
+
+            {/* Related events */}
+            <RelationMultiSelect
+                label={t("relatedEvents")}
+                ids={relations.eventIds}
+                options={events.map((e) => ({
+                    id: e.id,
+                    label: e.startsAt ?? t("untitledEvent"),
+                }))}
+                onChange={(eventIds) => onRelationsChange({ ...relations, eventIds })}
+                emptyText={t("noOptionsAvailable")}
+            />
         </>
     );
 }

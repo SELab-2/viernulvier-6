@@ -70,6 +70,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      garage-init:
+        condition: service_completed_successfully
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${PREVIEW_NAME}-api.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/api`)"
@@ -86,7 +88,7 @@ services:
 
   db:
     image: postgres:18
-    container_name: ${COMPOSE_PROJECT_NAME}-db
+    container_name: ${COMPOSE_PROJECT_NAME}-database
     environment:
       POSTGRES_USER: ${PREVIEW_DB_USER}
       POSTGRES_PASSWORD: ${PREVIEW_DB_PASSWORD}
@@ -105,7 +107,7 @@ services:
 
   garage:
     image: dxflrs/garage:v2.2.0
-    container_name: ${COMPOSE_PROJECT_NAME}_garage
+    container_name: ${COMPOSE_PROJECT_NAME}-garage
     restart: unless-stopped
     environment:
       - GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET}
@@ -134,7 +136,7 @@ services:
 
   garage-init:
     image: alpine:3.21
-    container_name: ${COMPOSE_PROJECT_NAME}_garage_init
+    container_name: ${COMPOSE_PROJECT_NAME}-garage-init
     environment:
       - GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET}
       - GARAGE_S3_ACCESS_KEY=${GARAGE_S3_ACCESS_KEY}
@@ -160,7 +162,7 @@ services:
         # Copy garage binary from garage container
         cp /proc/1/root/garage /usr/local/bin/garage
         chmod +x /usr/local/bin/garage
-
+        
         G="garage -c /etc/garage.toml"
 
         # Wait for garage to generate node key first
@@ -201,7 +203,7 @@ services:
         echo "Creating bucket..."
         $$G bucket info "$$GARAGE_S3_BUCKET" 2>/dev/null || \
           $$G bucket create "$$GARAGE_S3_BUCKET"
-        $$G bucket allow "$$GARAGE_S3_BUCKET" --key "$$GARAGE_S3_ACCESS_KEY" --read --write || true
+        $$G bucket allow "$$GARAGE_S3_BUCKET" --key "$$GARAGE_S3_ACCESS_KEY" --read --write --owner || true
 
         echo "Enabling website access on bucket..."
         $$G bucket website "$$GARAGE_S3_BUCKET" --allow || true
@@ -216,7 +218,7 @@ services:
           --cors-configuration "{
             \"CORSRules\": [{
               \"AllowedOrigins\": [\"$$ALLOWED_ORIGIN\"],
-              \"AllowedMethods\": [\"GET\", \"PUT\", \"HEAD\"],
+              \"AllowedMethods\": [\"PUT\"],
               \"AllowedHeaders\": [\"*\"],
               \"ExposeHeaders\": [\"ETag\"],
               \"MaxAgeSeconds\": 3600

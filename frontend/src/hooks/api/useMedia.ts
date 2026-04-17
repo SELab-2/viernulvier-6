@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tansta
 import { api } from "@/lib/api-client";
 import {
     mapAttachMediaInput,
+    mapLinkMediaInput,
     mapMedia,
     mapMediaList,
     mapMediaToPayload,
@@ -21,6 +22,7 @@ import {
 import {
     AttachMediaInput,
     EntityMediaParams,
+    LinkMediaInput,
     Media,
     MediaSearchParams,
     UploadUrlInput,
@@ -114,7 +116,7 @@ export const useGetInfiniteMedia = (
     options?: { enabled?: boolean }
 ) => {
     return useInfiniteQuery({
-        queryKey: ["media", "infinite", params],
+        queryKey: queryKeys.media.infinite(params),
         queryFn: async ({ pageParam }) => fetchAllMedia({ ...params, cursor: pageParam }),
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
         initialPageParam: null as string | null,
@@ -187,6 +189,72 @@ export const useUnlinkMedia = () => {
     });
 };
 
+export const useLinkMedia = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({
+            entityType,
+            entityId,
+            input,
+        }: {
+            entityType: string;
+            entityId: string;
+            input: LinkMediaInput;
+        }): Promise<Media> => {
+            const { data } = await api.post<AttachMediaResponse>(
+                `/media/entity/${entityType}/${entityId}/link`,
+                mapLinkMediaInput(input)
+            );
+            return mapMedia(data);
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.media.entity(variables.entityType, variables.entityId),
+            });
+            queryClient.invalidateQueries({ queryKey: queryKeys.media.all() });
+        },
+    });
+};
+
+export const useSetCoverMedia = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({
+            entityType,
+            entityId,
+            mediaId,
+        }: {
+            entityType: string;
+            entityId: string;
+            mediaId: string;
+        }) => {
+            await api.post(`/media/entity/${entityType}/${entityId}/${mediaId}/set-cover`);
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.media.entity(variables.entityType, variables.entityId),
+            });
+        },
+    });
+};
+
+export const useClearCoverMedia = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ entityType, entityId }: { entityType: string; entityId: string }) => {
+            await api.delete(`/media/entity/${entityType}/${entityId}/cover`);
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.media.entity(variables.entityType, variables.entityId),
+            });
+        },
+    });
+};
+
 export const useUpdateMedia = () => {
     const queryClient = useQueryClient();
 
@@ -219,11 +287,12 @@ export const useUploadMedia = () => {
             file: File;
             entityType: string;
             entityId: string;
-            metadata?: Omit<AttachMediaInput, "s3Key" | "mimeType">;
+            metadata?: Omit<AttachMediaInput, "s3Key" | "mimeType" | "uploadToken">;
         }): Promise<Media> => {
-            const { s3Key, uploadUrl } = await generateUploadUrl.mutateAsync({
+            const { s3Key, uploadUrl, uploadToken } = await generateUploadUrl.mutateAsync({
                 filename: file.name,
                 mimeType: file.type,
+                fileSize: file.size,
             });
 
             const uploadResponse = await fetch(uploadUrl, {
@@ -242,6 +311,7 @@ export const useUploadMedia = () => {
                 entityId,
                 input: {
                     s3Key,
+                    uploadToken,
                     mimeType: file.type,
                     fileSize: file.size,
                     ...metadata,

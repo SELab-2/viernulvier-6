@@ -8,7 +8,15 @@
     },
     "Header": {
         "logout": "Uitloggen",
-        "loggingOut": "..."
+        "loggingOut": "...",
+        "signOut": "Uitloggen",
+        "nav": {
+            "home": "Home",
+            "archive": "Archief",
+            "articles": "Artikels",
+            "cms": "CMS",
+            "admin": "Admin"
+        }
     },
     "LocaleSwitcher": {
         "label": "Taal selecteren"
@@ -289,7 +297,53 @@
             "showEvents": "Voorstellingen tonen",
             "hideEvents": "Voorstellingen verbergen",
             "editProduction": "Productie bewerken",
-            "editEvent": "Voorstelling bewerken"
+            "editEvent": "Voorstelling bewerken",
+            "backToList": "Terug naar producties",
+            "save": "Opslaan",
+            "saving": "Bezig met opslaan…",
+            "saveSuccess": "Productie opgeslagen.",
+            "saveFailed": "Opslaan mislukt.",
+            "preview": "Voorbeeld",
+            "hidePreview": "Voorbeeld verbergen",
+            "previewLabel": "Voorbeeld",
+            "generalSection": "Algemeen",
+            "contentSection": "Inhoud",
+            "fieldSlug": "Slug",
+            "fieldTitle": "Titel",
+            "fieldArtist": "Artiest",
+            "fieldSupertitle": "Supertitel",
+            "fieldTagline": "Ondertitel",
+            "fieldTeaser": "Teaser",
+            "fieldDescriptionShort": "Korte beschrijving",
+            "fieldDescription": "Beschrijving",
+            "fieldQuote": "Citaat",
+            "fieldQuoteSource": "Bron van citaat",
+            "fieldVideo1": "Video 1",
+            "fieldVideo2": "Video 2",
+            "fieldEticketInfo": "E-ticket info",
+            "fieldUitdatabankTheme": "UiTdatabank thema",
+            "fieldUitdatabankType": "UiTdatabank type",
+            "titleNlColumn": "Titel (NL)",
+            "titleEnColumn": "Titel (EN)",
+            "artistColumn": "Artiest",
+            "deleteAction": "Verwijderen",
+            "readOnly": "alleen-lezen",
+            "eventStartColumn": "Start",
+            "eventEndColumn": "Einde",
+            "eventStatusColumn": "Status",
+            "eventHallColumn": "Zaal",
+            "fieldEventId": "ID",
+            "fieldEventStartsAt": "Starttijd",
+            "fieldEventEndsAt": "Eindtijd",
+            "fieldEventDoorsAt": "Deuropening",
+            "fieldEventIntermissionAt": "Pauze",
+            "fieldEventStatus": "Status",
+            "fieldEventHallId": "Zaal-ID",
+            "fieldEventMaxTickets": "Max. tickets per bestelling",
+            "fieldEventVendorId": "Vendor-ID",
+            "fieldEventBoxOfficeId": "Box office ID",
+            "fieldEventUitdatabankId": "UiTdatabank ID",
+            "eyebrow": "Productie"
         },
         "Locations": {
             "title": "Locaties",
@@ -311,6 +365,9 @@
             "saving": "Bezig met opslaan…",
             "saveSuccess": "Artikel opgeslagen.",
             "saveFailed": "Opslaan mislukt.",
+            "preview": "Voorbeeld",
+            "hidePreview": "Verberg Voorbeeld",
+            "previewLabel": "Voorbeeld",
             "backToList": "Terug naar artikelen",
             "statusLabel": "Status",
             "slug": "Slug",
@@ -329,7 +386,16 @@
             "coverSetSuccess": "Omslagafbeelding ingesteld.",
             "coverSetError": "Omslagafbeelding instellen mislukt.",
             "coverRemovedSuccess": "Omslagafbeelding verwijderd.",
-            "coverRemovedError": "Omslagafbeelding verwijderen mislukt."
+            "coverRemovedError": "Omslagafbeelding verwijderen mislukt.",
+            "metadata": "Metadata",
+            "statusDraft": "Concept",
+            "statusPublished": "Gepubliceerd",
+            "statusArchived": "Gearchiveerd",
+            "noOptionsAvailable": "Geen opties beschikbaar",
+            "untitledEvent": "Naamloze voorstelling",
+            "contentPlaceholder": "Schrijf artikelinhoud…",
+            "statusColumn": "Status",
+            "dateRangeColumn": "Periode"
         },
         "Performers": {
             "title": "Uitvoerders",
@@ -455,7 +521,14 @@
             "altTextFr": "Alt-tekst (FR)",
             "creditNl": "Credits (NL)",
             "creditEn": "Credits (EN)",
-            "creditFr": "Credits (FR)"
+            "creditFr": "Credits (FR)",
+            "viewFullSize": "Volledig formaat bekijken",
+            "emptyCover": "Geen omslagfoto — stel er één in via de galerij hieronder.",
+            "setAsCover": "Instellen als omslagfoto",
+            "setCoverSuccess": "Omslagfoto ingesteld",
+            "setCoverError": "Omslagfoto instellen mislukt",
+            "clearCoverSuccess": "Omslagfoto verwijderd",
+            "clearCoverError": "Omslagfoto verwijderen mislukt"
         }
     },
     "Admin": {
@@ -482,11 +555,53 @@
         "backToHome": "Terug naar het archief",
         "articleImageCaption": "Het vergeten Vooruit gebouw..."
     },
+    "ProductionPage": {
+        "eyebrow": "Productie",
+        "archiveNumber": "Archief nr.",
+        "metaType": "Type",
+        "metaTheme": "Thema",
+        "metaLanguage": "Taal",
+        "languageNlEn": "EN / NL",
+        "languageNl": "NL",
+        "imageCaptionFallback": "Archief VIERNULVIER",
+        "about": "Over de productie",
+        "noDescription": "Geen beschrijving beschikbaar in deze taal.",
+        "video": "Video",
+        "externalVideoLink": "Externe video link ↗",
+        "credits": "Credits",
+        "creditProduction": "Productie",
+        "creditArtist": "Artiest",
+        "relatedTitle": "Meer uit het archief",
+        "relatedViewAll": "Bekijk alles →",
+        "relatedArchive": "Archief",
+        "relatedProductionFallback": "Productie",
+        "breadcrumbArchive": "Archief",
+        "breadcrumbProductions": "Producties",
+        "loading": "Laden…",
+        "openCoverImage": "Coverafbeelding openen",
+        "openGalleryImage": "Afbeelding openen"
+    },
     "NewsArticleComponent": {
         "subTitle": "Vooruit Archief",
         "edition": "Editie 404",
         "articleBrand": "Archiefdienst",
         "price": "Prijs: Onschatbaar"
+    },
+    "Preview": {
+        "previewMode": "Voorbeeld",
+        "exitPreview": "Klik om voorbeeldmodus te verlaten"
+    },
+    "Location": {
+        "about": "Over",
+        "history": "Geschiedenis",
+        "halls": "Zalen",
+        "seated": "Zitplaatsen",
+        "openSeating": "Vrije plaatskeuze",
+        "searchArchive": "Bekijk alle voorstellingen op deze locatie",
+        "searchNotImplemented": "Zoeken op locatie is nog niet beschikbaar.",
+        "loading": "Locatie laden...",
+        "notFound": "Locatie niet gevonden.",
+        "error": "Er ging iets mis bij het laden van deze locatie."
     },
     "Articles": {
         "heroEyebrow": "Verhalen uit het archief",
@@ -505,11 +620,22 @@
         "notFoundTitle": "Artikel niet gevonden",
         "notFoundText": "Dit artikel bestaat niet of is niet langer beschikbaar.",
         "connectedTo": "Gekoppeld aan",
+        "noConnections": "Nog geen koppelingen toegevoegd",
+        "connectionsComingSoon": "Koppelingen binnenkort beschikbaar",
         "moreStories": "Meer artikels",
         "relatedEntities": "Gerelateerd",
         "relatedProductions": "Producties",
         "relatedArtists": "Artiesten",
         "relatedLocations": "Locaties",
         "relatedEvents": "Voorstellingen"
+    },
+    "ImageSpotlight": {
+        "close": "Sluiten",
+        "previous": "Vorige",
+        "next": "Volgende",
+        "previousImage": "Vorige afbeelding",
+        "nextImage": "Volgende afbeelding",
+        "archive": "Archief",
+        "openImage": "Afbeelding openen"
     }
 }

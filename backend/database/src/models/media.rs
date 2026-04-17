@@ -3,7 +3,7 @@ use ormlite::Model;
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::models::{entity_type::EntityType, sort::Sort};
+use crate::models::{entity_type::EntityType, filtering::sort::Sort};
 
 #[derive(Debug, Model, PartialEq)]
 #[ormlite(insert = "MediaCreate")]
@@ -59,5 +59,5 @@ pub struct MediaSearch {
     pub entity_type: Option<EntityType>,
     pub entity_id: Option<Uuid>,
     pub role: Option<String>,
-    pub sort: Option<Sort>,
+    pub sort: Sort,
 }
