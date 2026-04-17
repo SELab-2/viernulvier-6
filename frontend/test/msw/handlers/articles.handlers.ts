@@ -29,6 +29,7 @@ export const articleFull: components["schemas"]["ArticlePayload"] = {
     },
     created_at: "2026-01-15T10:30:00Z",
     updated_at: "2026-03-20T14:00:00Z",
+    published_at: "2026-01-20T12:00:00Z",
     subject_period_start: "1960-01-01",
     subject_period_end: "1970-12-31",
 };
@@ -40,6 +41,7 @@ export const articleListItems: components["schemas"]["ArticleListPayload"][] = [
         status: "published",
         title: "Kleurenstudies van De Vooruit",
         updated_at: "2026-03-20T14:00:00Z",
+        published_at: "2026-01-20T12:00:00Z",
         subject_period_start: "1960-01-01",
         subject_period_end: "1970-12-31",
     },
@@ -49,6 +51,7 @@ export const articleListItems: components["schemas"]["ArticleListPayload"][] = [
         status: "published",
         title: "De Balzaal door de jaren heen",
         updated_at: "2026-02-10T09:00:00Z",
+        published_at: "2026-02-15T10:00:00Z",
         subject_period_start: "1960-01-01",
         subject_period_end: "1980-12-31",
     },

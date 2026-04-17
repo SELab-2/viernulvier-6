@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 
@@ -20,6 +21,13 @@ export function TiptapRenderer({ content }: TiptapRendererProps) {
         editable: false,
         immediatelyRender: false,
     });
+
+    // Update editor content when prop changes (for live preview)
+    useEffect(() => {
+        if (editor && content) {
+            editor.commands.setContent(content);
+        }
+    }, [editor, content]);
 
     if (!content) return null;
 
