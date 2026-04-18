@@ -19,7 +19,7 @@ jobs:
     secrets: inherit
 
   build-push:
-    runs-on: prod
+    runs-on: kaya-sem-house
     environment: production
     needs: [run_backend_tests, run_frontend_tests]
 
