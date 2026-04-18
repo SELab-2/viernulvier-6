@@ -120,6 +120,27 @@ this.
 TODO - implemented in a later issue (#286). Will read `backend/seed/raw/*.json`,
 run normalization, and emit `backend/seed/seed.sql` via `pg_dump --data-only`.
 
+### LLM normalization (feature-gated)
+
+The normalization module at `api/src/normalization/` is the shared foundation
+used by the inline importer path and (eventually) the stage 2 seed binary.
+Compiled out by default; enable with the `ai-normalization` cargo feature:
+
+```sh
+cargo build -p api --features ai-normalization
+```
+
+Env vars (all optional; defaults target Groq's free tier):
+
+- `LLM_PROVIDER`: only `groq` is supported; leaving this unset is fine
+- `LLM_API_KEY`: Groq API key; if unset, normalization is skipped with a
+  one-time warning and the importer still runs
+- `LLM_MODEL`: overrides the default (`llama-3.3-70b-versatile`)
+- `LLM_BASE_URL`: optional override for testing
+- `LLM_CONFIDENCE_THRESHOLD`: float in `[0.0, 1.0]`, default `0.8`
+
+Actions executed by the normalizer are persisted to the `normalization_log`
+table (see migration `20260415000000_normalization_log`).
 ## sqlx offline mode
 
 The Docker build uses `SQLX_OFFLINE=true`, so sqlx checks queries at compile time using the cached metadata in `.sqlx/` instead of connecting to a live database.
