@@ -1,0 +1,21 @@
+[
+  { "keep_source_id": 14,  "remove_source_id": 237, "note": "LOD Studio" },
+  { "keep_source_id": 26,  "remove_source_id": 245, "note": "Dansstudio" },
+  { "keep_source_id": 168, "remove_source_id": 239, "note": "Open Atelier (klein)" },
+  { "keep_source_id": 172, "remove_source_id": 287, "note": "Terras" },
+  { "keep_source_id": 211, "remove_source_id": 219, "note": "Blauwe Kamer" },
+  { "keep_source_id": 291, "remove_source_id": 295, "note": "Concertzaal + Balzaal" },
+  { "keep_source_id": 2,   "remove_source_id": 243, "note": "Domzaal" },
+  { "keep_source_id": 8,   "remove_source_id": 227, "note": "Concertzaal" },
+  { "keep_source_id": 10,  "remove_source_id": 229, "note": "Balzaal" },
+  { "keep_source_id": 18,  "remove_source_id": 231, "note": "Theaterzaal" },
+  { "keep_source_id": 6,   "remove_source_id": 235, "note": "Foyer Theaterzaal (FoyerTZ)" },
+  { "keep_source_id": 6,   "remove_source_id": 390, "note": "Foyer Theaterzaal (De Vooruit prefix)" },
+  { "keep_source_id": 16,  "remove_source_id": 223, "note": "Café" },
+  { "keep_source_id": 124, "remove_source_id": 142, "note": "Open Atelier" },
+  { "keep_source_id": 209, "remove_source_id": 221, "note": "Open Atelier (groot)" },
+  { "keep_source_id": 265, "remove_source_id": 267, "note": "Kunstencentrum Vooruit" },
+  { "keep_source_id": 2,   "remove_source_id": 175, "note": "Domzaal (schoolvoorstelling) → Domzaal" },
+  { "keep_source_id": 6,   "remove_source_id": 92,  "note": "Foyer Theaterzaal (NL) → Foyer Theaterzaal" },
+  { "keep_source_id": 6,   "remove_source_id": 94,  "note": "Foyer Theaterzaal (EN) → Foyer Theaterzaal" }
+]
