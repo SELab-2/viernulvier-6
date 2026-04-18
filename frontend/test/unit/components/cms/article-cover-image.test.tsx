@@ -161,6 +161,11 @@ const messages = {
             coverSetError: "Failed to set cover image.",
             coverRemovedSuccess: "Cover image removed.",
             coverRemovedError: "Failed to remove cover image.",
+            statusDraft: "Draft",
+            statusPublished: "Published",
+            statusArchived: "Archived",
+            noOptionsAvailable: "No options available",
+            untitledEvent: "Untitled event",
         },
     },
 };
