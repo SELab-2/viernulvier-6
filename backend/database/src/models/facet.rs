@@ -9,4 +9,6 @@ pub enum Facet {
     Format,
     Theme,
     Audience,
+    Accessibility,
+    Language,
 }
