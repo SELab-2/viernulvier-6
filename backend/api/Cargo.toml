@@ -18,7 +18,7 @@ workspace = true
 [dependencies]
 database = { path = "../database" }
 tracing = { workspace = true }
-tokio = { workspace = true, features = ["fs", "io-util", "rt", "macros"] }
+tokio = { workspace = true, features = ["fs", "io-util", "rt", "rt-multi-thread", "macros"] }
 tracing-subscriber = { version = "=0.3", default-features = false, features = ["env-filter", "fmt", "ansi"] }
 serde = { workspace = true }
 serde_json = { workspace = true }

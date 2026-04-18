@@ -1188,7 +1188,7 @@ export interface components {
             updated_at?: string | null;
         };
         /** @enum {string} */
-        Facet: "discipline" | "format" | "theme" | "audience";
+        Facet: "discipline" | "format" | "theme" | "audience" | "accessibility" | "language";
         FacetResponse: {
             slug: string;
             tags: components["schemas"]["TagResponse"][];
@@ -3433,6 +3433,8 @@ export interface operations {
                 format?: string;
                 theme?: string;
                 audience?: string;
+                accessibility?: string;
+                language?: string;
                 artist?: string;
                 location?: string;
                 date_from?: string;
