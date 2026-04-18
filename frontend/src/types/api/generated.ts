@@ -1342,6 +1342,24 @@ export interface components {
             /** Format: int32 */
             width?: number | null;
         };
+        PaginatedResponse_ArticleListPayload: {
+            data: {
+                /** Format: uuid */
+                id: string;
+                /** Format: date-time */
+                published_at?: string | null;
+                slug: string;
+                status: components["schemas"]["ArticleStatus"];
+                /** Format: date */
+                subject_period_end?: string | null;
+                /** Format: date */
+                subject_period_start?: string | null;
+                title?: string | null;
+                /** Format: date-time */
+                updated_at: string;
+            }[];
+            next_cursor?: string | null;
+        };
         PaginatedResponse_EventPayload: {
             data: {
                 box_office_id?: string | null;
@@ -1657,9 +1675,12 @@ export interface operations {
     get_all_articles: {
         parameters: {
             query?: {
-                subject_start?: string;
-                subject_end?: string;
-                tag_slug?: string;
+                cursor?: string | null;
+                limit?: number;
+                q?: string | null;
+                subject_start?: string | null;
+                subject_end?: string | null;
+                tag_slug?: string | null;
                 related_entity_id?: string | null;
                 related_entity_type?: "production" | "artist" | "article" | "media" | "location" | "event" | "series";
             };
@@ -1675,7 +1696,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ArticleListPayload"][];
+                    "application/json": components["schemas"]["PaginatedResponse_ArticleListPayload"];
                 };
             };
         };

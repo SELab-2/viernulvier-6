@@ -1,8 +1,11 @@
 use chrono::{DateTime, NaiveDate, Utc};
+use base64::{Engine, prelude::BASE64_URL_SAFE};
 use database::{
     Database,
-    models::article::{Article, ArticleCreate, ArticleRelations, ArticleStatus},
-    models::entity_type::EntityType,
+    models::{
+        article::{Article, ArticleCreate, ArticleRelations, ArticleSearch, ArticleStatus},
+        filtering::cursor::CursorData,
+    },
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -11,7 +14,7 @@ use uuid::Uuid;
 
 use slug::slugify;
 
-use crate::error::AppError;
+use crate::{dto::paginated::PaginatedResponse, error::AppError};
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ArticlePayload {
@@ -143,25 +146,31 @@ impl ArticleListPayload {
 
     pub async fn list_published(
         db: &Database,
-        subject_start: Option<NaiveDate>,
-        subject_end: Option<NaiveDate>,
-        tag_slug: Option<String>,
-        related_entity_id: Option<Uuid>,
-        related_entity_type: Option<EntityType>,
-    ) -> Result<Vec<Self>, AppError> {
-        Ok(db
+        id_cursor: Option<String>,
+        limit: u32,
+        search: ArticleSearch,
+    ) -> Result<PaginatedResponse<Self>, AppError> {
+        let cursor: Option<CursorData> = id_cursor.and_then(|b64| {
+            let bytes = BASE64_URL_SAFE.decode(b64).ok()?;
+            serde_json::from_slice(&bytes).ok()
+        });
+
+        let (articles, next_cursor) = db
             .articles()
-            .list_published(
-                subject_start,
-                subject_end,
-                tag_slug,
-                related_entity_id,
-                related_entity_type,
+            .search_published(
+                limit,
+                cursor,
+                search,
             )
-            .await?
-            .into_iter()
-            .map(Self::from)
-            .collect())
+            .await?;
+
+        let data = articles.into_iter().map(Self::from).collect();
+        let next_cursor = next_cursor.and_then(|cursor| {
+            let data = serde_json::to_vec(&cursor).ok()?;
+            Some(BASE64_URL_SAFE.encode(data))
+        });
+
+        Ok(PaginatedResponse { data, next_cursor })
     }
 }
 

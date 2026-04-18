@@ -1,11 +1,10 @@
 use axum::http::StatusCode;
+use hmac::{Hmac, KeyInit, Mac};
 use serde_json::json;
-use hmac::{Hmac, Mac};
 use sha2::Sha256;
 use sqlx::PgPool;
 use uuid::Uuid;
-use viernulvier_api::dto::{media::MediaPayload, paginated::PaginatedResponse};
-use viernulvier_api::{config::AppConfig};
+use viernulvier_archive::{config::AppConfig, dto::{media::MediaPayload, paginated::PaginatedResponse}};
 
 use crate::common::into_struct::IntoStruct;
 use crate::common::router::TestRouter;
@@ -15,8 +14,8 @@ mod common;
 type HmacSha256 = Hmac<Sha256>;
 
 fn generate_upload_token(secret: &str, s3_key: &str) -> String {
-    let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
-        .expect("HMAC can take key of any size");
+    let mut mac =
+        HmacSha256::new_from_slice(secret.as_bytes()).expect("HMAC can take key of any size");
     mac.update(s3_key.as_bytes());
     hex::encode(mac.finalize().into_bytes())
 }

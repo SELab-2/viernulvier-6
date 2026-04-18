@@ -372,6 +372,8 @@
             "statusLabel": "Status",
             "slug": "Slug",
             "subjectPeriod": "Subject period",
+            "subjectPeriodHelp": "The time period this article covers. e.g. when the events it describes took place. Used for filtering in the CMS only, not shown to visitors.",
+            "subjectPeriodCaption": "Internal only. not shown to visitors.",
             "titleColumn": "Title",
             "relatedProductions": "Related productions",
             "relatedArtists": "Related artists",

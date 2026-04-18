@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
 };
 use chrono::NaiveDate;
-use database::{Database, models::entity_type::EntityType};
+use database::{Database, models::{article::ArticleSearch, entity_type::EntityType}};
 use serde::Deserialize;
 use utoipa::IntoParams;
 use uuid::Uuid;
@@ -14,8 +14,12 @@ use crate::{
         ArticleListPayload, ArticlePayload, ArticlePostPayload, ArticleRelationsPayload,
         ArticleUpdatePayload,
     },
+    dto::paginated::PaginatedResponse,
     error::ErrorResponse,
-    handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
+    handlers::{
+        IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse,
+        queries::{article::ArticleSearchQuery, pagination::PaginationQuery},
+    },
 };
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -37,22 +41,29 @@ pub struct ArticleListParams {
     tag = "Articles",
     operation_id = "get_all_articles",
     description = "Get published articles with optional filters",
-    params(ArticleListParams),
+    params(PaginationQuery, ArticleSearchQuery, ArticleListParams),
     responses(
-        (status = 200, description = "Success", body = [ArticleListPayload])
+        (status = 200, description = "Success", body = PaginatedResponse<ArticleListPayload>)
     )
 )]
 pub async fn get_all(
     db: Database,
+    Query(pagination): Query<PaginationQuery>,
+    Query(search): Query<ArticleSearchQuery>,
     Query(params): Query<ArticleListParams>,
-) -> JsonResponse<Vec<ArticleListPayload>> {
+) -> JsonResponse<PaginatedResponse<ArticleListPayload>> {
     ArticleListPayload::list_published(
         &db,
-        params.subject_start,
-        params.subject_end,
-        params.tag_slug,
-        params.related_entity_id,
-        params.related_entity_type,
+        pagination.cursor,
+        pagination.limit,
+        ArticleSearch {
+            q: search.q,
+            subject_start: params.subject_start,
+            subject_end: params.subject_end,
+            tag_slug: params.tag_slug,
+            related_entity_id: params.related_entity_id,
+            related_entity_type: params.related_entity_type,
+        },
     )
     .await?
     .json()

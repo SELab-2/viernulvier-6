@@ -14,7 +14,7 @@ use jsonwebtoken::{EncodingKey, Header, encode};
 use serde::Serialize;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
-use viernulvier_api::config::AppConfig;
+use viernulvier_archive::config::AppConfig;
 
 #[derive(Debug, Serialize)]
 struct Claims {

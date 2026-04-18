@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { XIcon } from "lucide-react";
 
+import { HelpCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useGetArtists } from "@/hooks/api/useArtists";
 import { useGetProductions } from "@/hooks/api/useProductions";
 import { useGetLocations } from "@/hooks/api/useLocations";
@@ -198,7 +200,19 @@ export function ArticleMetadataPanel({
 
                 {/* Subject period */}
                 <div className="space-y-1">
-                    <Label className="text-xs font-medium">{t("subjectPeriod")}</Label>
+                    <div className="flex items-center gap-1.5">
+                        <Label className="text-xs font-medium">{t("subjectPeriod")}</Label>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <HelpCircle className="text-muted-foreground h-3.5 w-3.5 cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-56">
+                                    {t("subjectPeriodHelp")}
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
                     <div className="flex flex-col gap-1">
                         <Input
                             type="date"
@@ -217,55 +231,8 @@ export function ArticleMetadataPanel({
                             className="h-8 text-xs"
                         />
                     </div>
+                    <p className="text-muted-foreground text-xs">{t("subjectPeriodCaption")}</p>
                 </div>
-
-                {/* Related productions */}
-                <RelationMultiSelect
-                    label={t("relatedProductions")}
-                    ids={relations.productionIds}
-                    options={productions.map((p) => ({
-                        id: p.id,
-                        label: p.translations.find((t) => t.languageCode === "nl")?.title ?? p.slug,
-                    }))}
-                    onChange={(productionIds) => onRelationsChange({ ...relations, productionIds })}
-                    emptyText={t("noOptionsAvailable")}
-                />
-
-                {/* Related artists */}
-                <RelationMultiSelect
-                    label={t("relatedArtists")}
-                    ids={relations.artistIds}
-                    options={artists.map((a) => ({
-                        id: a.id,
-                        label: a.name,
-                    }))}
-                    onChange={(artistIds) => onRelationsChange({ ...relations, artistIds })}
-                    emptyText={t("noOptionsAvailable")}
-                />
-
-                {/* Related locations */}
-                <RelationMultiSelect
-                    label={t("relatedLocations")}
-                    ids={relations.locationIds}
-                    options={locations.map((l) => ({
-                        id: l.id,
-                        label: l.name ?? l.id,
-                    }))}
-                    onChange={(locationIds) => onRelationsChange({ ...relations, locationIds })}
-                    emptyText={t("noOptionsAvailable")}
-                />
-
-                {/* Related events */}
-                <RelationMultiSelect
-                    label={t("relatedEvents")}
-                    ids={relations.eventIds}
-                    options={events.map((e) => ({
-                        id: e.id,
-                        label: e.startsAt ?? "Untitled event",
-                    }))}
-                    onChange={(eventIds) => onRelationsChange({ ...relations, eventIds })}
-                    emptyText={t("noOptionsAvailable")}
-                />
 
                 {/* Cover image */}
                 <div className="space-y-1">
