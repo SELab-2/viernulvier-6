@@ -24,10 +24,14 @@ use crate::{
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct ArticleListParams {
+    #[param(value_type = String, required = false)]
     pub subject_start: Option<NaiveDate>,
+    #[param(value_type = String, required = false)]
     pub subject_end: Option<NaiveDate>,
+    #[param(value_type = String, required = false)]
     pub tag_slug: Option<String>,
     pub related_entity_id: Option<Uuid>,
+    #[param(value_type = EntityType, inline, required = false)]
     pub related_entity_type: Option<EntityType>,
 }
 

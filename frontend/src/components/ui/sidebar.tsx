@@ -583,8 +583,7 @@ function SidebarMenuSkeleton({
     showIcon?: boolean;
 }) {
     // Random width between 50 to 90%.
-    // eslint-disable-next-line react-hooks/purity
-    const width = React.useRef(`${Math.floor(Math.random() * 40) + 50}%`).current;
+    const [width] = React.useState(() => `${Math.floor(Math.random() * 40) + 50}%`);
 
     return (
         <div
