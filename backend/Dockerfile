@@ -10,5 +10,5 @@ FROM debian:bookworm-slim
 # Note: Switched libssl-dev to libssl3 for the runtime stage (smaller/correct package)
 RUN apt-get update && apt-get install -y libssl3 ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-COPY --from=builder /app/target/release/viernulvier_api .
-CMD ["./viernulvier_api"]
+COPY --from=builder /app/target/release/viernulvier_archive .
+CMD ["./viernulvier_archive"]

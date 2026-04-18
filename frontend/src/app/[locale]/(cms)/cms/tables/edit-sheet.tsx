@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -43,6 +44,8 @@ export interface EditSheetProps<TData extends { id: string } & Record<string, un
     title: string;
     description?: string;
     onSave?: (data: TData) => void;
+    previewUrl?: string;
+    onPreview?: () => void;
 }
 
 const NULL_SENTINEL = "__null__";
@@ -232,16 +235,39 @@ export function EditSheet<TData extends { id: string } & Record<string, unknown>
     title,
     description,
     onSave,
+    previewUrl,
+    onPreview,
 }: EditSheetProps<TData>) {
     const t = useTranslations("Cms.EditSheet");
+    const tArticles = useTranslations("Cms.Articles");
     const formKey = entity?.id ?? null;
+
+    const handlePreview = () => {
+        if (onPreview) {
+            onPreview();
+        } else if (previewUrl) {
+            window.open(previewUrl, "_blank");
+        }
+    };
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent className="border-foreground/20 flex flex-col gap-0 border-l p-0 sm:max-w-md">
                 <SheetHeader className="border-foreground/10 border-b px-6 pt-6 pb-4">
-                    <div className="text-muted-foreground mb-2 font-mono text-[9px] tracking-[2px] uppercase">
-                        {t("editMode")}
+                    <div className="flex items-center justify-between">
+                        <div className="text-muted-foreground mb-2 font-mono text-[9px] tracking-[2px] uppercase">
+                            {t("editMode")}
+                        </div>
+                        {(previewUrl || onPreview) && (
+                            <button
+                                type="button"
+                                onClick={handlePreview}
+                                className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 font-mono text-[9px] tracking-[1px] uppercase transition-colors"
+                            >
+                                <Eye className="h-3.5 w-3.5" />
+                                {tArticles("preview")}
+                            </button>
+                        )}
                     </div>
                     <SheetTitle className="font-display text-2xl font-bold tracking-tight">
                         {title}

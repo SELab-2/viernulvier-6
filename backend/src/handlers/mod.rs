@@ -25,6 +25,8 @@ pub mod version;
 pub mod queries {
     pub mod hall;
     pub mod location;
+    pub mod article;
+    pub mod media;
     pub mod pagination;
     pub mod production;
     pub mod sort;

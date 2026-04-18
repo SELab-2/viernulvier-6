@@ -191,7 +191,7 @@ export function ArchiveSidebar({
                             type="button"
                             aria-pressed={checkedCategories.has(cat)}
                             onClick={() => toggleCategory(cat)}
-                            className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase transition-all ${
+                            className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
                                 checkedCategories.has(cat)
                                     ? "bg-foreground text-background border-foreground"
                                     : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
@@ -212,7 +212,7 @@ export function ArchiveSidebar({
                                 type="button"
                                 aria-pressed={activeTags.has(tag.slug)}
                                 onClick={() => toggleTag(tag.slug)}
-                                className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase transition-all ${
+                                className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
                                     activeTags.has(tag.slug)
                                         ? "bg-foreground text-background border-foreground"
                                         : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
@@ -234,7 +234,7 @@ export function ArchiveSidebar({
                                 type="button"
                                 aria-pressed={checkedLocations.has(loc.id)}
                                 onClick={() => toggleLocation(loc.id)}
-                                className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase transition-all ${
+                                className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
                                     checkedLocations.has(loc.id)
                                         ? "bg-foreground text-background border-foreground"
                                         : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
@@ -248,7 +248,7 @@ export function ArchiveSidebar({
                             type="button"
                             aria-pressed={checkedLocations.has("deVooruit")}
                             onClick={() => toggleLocation("deVooruit")}
-                            className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase transition-all ${
+                            className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
                                 checkedLocations.has("deVooruit")
                                     ? "bg-foreground text-background border-foreground"
                                     : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
@@ -333,10 +333,10 @@ export function ArchiveSidebar({
             )}
 
             <aside
-                className={`border-border shrink-0 border-r py-5 pb-10 ${
+                className={`border-border shrink-0 overflow-x-hidden border-r py-5 pb-10 ${
                     mobileOpen
                         ? "bg-background fixed inset-y-0 left-0 z-50 w-[290px] overflow-y-auto shadow-xl"
-                        : "hidden lg:block lg:w-[290px]"
+                        : "hidden lg:sticky lg:top-[var(--results-bar-height,41px)] lg:block lg:max-h-[calc(100vh-var(--results-bar-height,41px))] lg:w-[290px] lg:overflow-y-auto"
                 }`}
             >
                 {sidebarContent}
