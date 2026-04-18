@@ -1,0 +1,6 @@
+[
+  { "combo_source_id": 291, "component_source_ids": [8, 10],     "note": "Concertzaal + Balzaal" },
+  { "combo_source_id": 297, "component_source_ids": [8, 10, 16], "note": "Concertzaal + Balzaal + Café" },
+  { "combo_source_id": 303, "component_source_ids": [10, 26, 2], "note": "Balzaal + Dansstudio + Domzaal" },
+  { "combo_source_id": 315, "component_source_ids": [8, 10, 18], "note": "Concertzaal + Balzaal + Theaterzaal" }
+]

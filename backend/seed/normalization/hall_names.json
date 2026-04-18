@@ -1,0 +1,16 @@
+[
+  { "source_id": 2,   "name": "Domzaal" },
+  { "source_id": 8,   "name": "Concertzaal" },
+  { "source_id": 10,  "name": "Balzaal" },
+  { "source_id": 96,  "name": "Majolica Keuken" },
+  { "source_id": 102, "name": "Foyer Domzaal" },
+  { "source_id": 174, "name": "Inkomhal" },
+  { "source_id": 193, "name": "Balzaal + Café" },
+  { "source_id": 217, "name": "Balzaal (zittend)" },
+  { "source_id": 265, "name": "Kunstencentrum Vooruit" },
+  { "source_id": 279, "name": "Doorloop" },
+  { "source_id": 317, "name": "Theaterzaal (scène)" },
+  { "source_id": 384, "name": "Neuzeke" },
+  { "source_id": 305, "name": "Onbekende zaal" },
+  { "source_id": 453, "name": "Gang Theaterzaal" }
+]

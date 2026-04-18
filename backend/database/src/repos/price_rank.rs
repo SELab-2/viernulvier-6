@@ -1,4 +1,4 @@
-use ormlite::{Insert, Model};
+use ormlite::Model;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -30,7 +30,29 @@ impl<'a> PriceRankRepo<'a> {
     }
 
     pub async fn insert(&self, rank: PriceRankCreate) -> Result<PriceRank, DatabaseError> {
-        Ok(rank.insert(self.db).await?)
+        Ok(sqlx::query_as::<_, PriceRank>(
+            "INSERT INTO price_ranks (source_id, created_at, updated_at, description_nl, description_en, code, position, sold_out_buffer)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             ON CONFLICT (source_id) DO UPDATE SET
+                 created_at      = EXCLUDED.created_at,
+                 updated_at      = EXCLUDED.updated_at,
+                 description_nl  = EXCLUDED.description_nl,
+                 description_en  = EXCLUDED.description_en,
+                 code            = EXCLUDED.code,
+                 position        = EXCLUDED.position,
+                 sold_out_buffer = EXCLUDED.sold_out_buffer
+             RETURNING *",
+        )
+        .bind(rank.source_id)
+        .bind(rank.created_at)
+        .bind(rank.updated_at)
+        .bind(&rank.description_nl)
+        .bind(&rank.description_en)
+        .bind(&rank.code)
+        .bind(rank.position)
+        .bind(rank.sold_out_buffer)
+        .fetch_one(self.db)
+        .await?)
     }
 
     pub async fn update(&self, rank: PriceRank) -> Result<PriceRank, DatabaseError> {

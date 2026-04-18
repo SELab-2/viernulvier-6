@@ -168,4 +168,8 @@ impl Database {
     pub fn normalization_log<'a>(&'a self) -> NormalizationLogRepo<'a> {
         NormalizationLogRepo::new(&self.db)
     }
+
+    pub fn pool(&self) -> &PgPool {
+        &self.db
+    }
 }

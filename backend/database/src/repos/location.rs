@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use ormlite::{Insert, Model};
+use ormlite::Model;
 use sqlx::PgPool;
 use tracing::debug;
 use uuid::Uuid;
@@ -194,7 +194,39 @@ impl<'a> LocationRepo<'a> {
         location: LocationCreate,
         translations: Vec<LocationTranslationData>,
     ) -> Result<LocationWithTranslations, DatabaseError> {
-        let location = location.insert(self.db).await?;
+        let location = sqlx::query_as::<_, Location>(
+            "INSERT INTO locations (source_id, name, code, street, number, postal_code, city, country, phone_1, phone_2, is_owned_by_viernulvier, uitdatabank_id, slug)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+             ON CONFLICT (source_id) DO UPDATE SET
+                 name                    = EXCLUDED.name,
+                 code                    = EXCLUDED.code,
+                 street                  = EXCLUDED.street,
+                 number                  = EXCLUDED.number,
+                 postal_code             = EXCLUDED.postal_code,
+                 city                    = EXCLUDED.city,
+                 country                 = EXCLUDED.country,
+                 phone_1                 = EXCLUDED.phone_1,
+                 phone_2                 = EXCLUDED.phone_2,
+                 is_owned_by_viernulvier = EXCLUDED.is_owned_by_viernulvier,
+                 uitdatabank_id          = EXCLUDED.uitdatabank_id,
+                 slug                    = EXCLUDED.slug
+             RETURNING *",
+        )
+        .bind(location.source_id)
+        .bind(&location.name)
+        .bind(&location.code)
+        .bind(&location.street)
+        .bind(&location.number)
+        .bind(&location.postal_code)
+        .bind(&location.city)
+        .bind(&location.country)
+        .bind(&location.phone_1)
+        .bind(&location.phone_2)
+        .bind(location.is_owned_by_viernulvier)
+        .bind(&location.uitdatabank_id)
+        .bind(&location.slug)
+        .fetch_one(self.db)
+        .await?;
         self.upsert_translations(location.id, &translations).await?;
         let translation_rows = self.fetch_translations_for(location.id).await?;
 
