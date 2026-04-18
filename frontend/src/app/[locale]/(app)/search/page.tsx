@@ -35,17 +35,16 @@ export default function SearchPage() {
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
     const query = searchParams.get("q")?.trim() ?? "";
     const [draftQuery, setDraftQuery] = useState(query);
+    const [prevQuery, setPrevQuery] = useState(query);
 
-    const currentCursor = cursorHistory[currentPageIndex];
-
-    useEffect(() => {
+    if (query !== prevQuery) {
+        setPrevQuery(query);
         setDraftQuery(query);
-    }, [query]);
-
-    useEffect(() => {
         setCursorHistory([null]);
         setCurrentPageIndex(0);
-    }, [query]);
+    }
+
+    const currentCursor = cursorHistory[currentPageIndex];
 
     const handleSearch = useCallback(
         (value: string) => {
