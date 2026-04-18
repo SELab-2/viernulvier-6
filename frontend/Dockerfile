@@ -30,7 +30,7 @@ ENV NEXT_PUBLIC_MEDIA_URL=$NEXT_PUBLIC_MEDIA_URL
 ENV NEXT_PUBLIC_BASE_PATH=/$PREVIEW_NAME
 
 RUN npm run build
-RUN npx @codecov/bundle-analyzer --uploadToken=$CODECOV_TOKEN --bundleName="viernulvier-archive-frontend" --buildDirs=".next"
+RUN npx @codecov/bundle-analyzer .next --uploadToken=$CODECOV_TOKEN --bundleName="viernulvier-archive-frontend"
 
 # Stage 3: Production server
 FROM node:24-alpine AS runner
