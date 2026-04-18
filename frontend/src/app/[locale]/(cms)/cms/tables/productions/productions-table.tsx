@@ -15,6 +15,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useGetInfiniteProductions } from "@/hooks/api/useProductions";
 import { useGetEvents, useUpdateEvent } from "@/hooks/api/useEvents";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
+import { ProductionMediaSheet } from "@/components/cms/production-media-sheet";
 import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
 import type { PickerItem } from "@/lib/collection-picker-utils";
 import type { Production } from "@/types/models/production.types";
@@ -69,6 +70,7 @@ export function ProductionsTable() {
 
     const [editEvent, setEditEvent] = useState<Event | null>(null);
     const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
+    const [mediaProduction, setMediaProduction] = useState<Production | null>(null);
     const [spotlight, setSpotlight] = useState<{ src: string; alt: string } | null>(null);
     const openSpotlight = useCallback((src: string, alt: string) => setSpotlight({ src, alt }), []);
     const spotlightItems: SpotlightItem[] = spotlight
@@ -109,6 +111,7 @@ export function ProductionsTable() {
             selectColumn,
             ...makeProductionColumns({
                 onEdit: handleEditProduction,
+                onMedia: setMediaProduction,
                 t: tActions,
                 tProductions: t,
                 locale,
@@ -269,6 +272,20 @@ export function ProductionsTable() {
                 onOpenChange={setCollectionDialogOpen}
                 items={collectionPickerItems}
             />
+
+            {mediaProduction && (
+                <ProductionMediaSheet
+                    productionId={mediaProduction.id}
+                    productionTitle={
+                        mediaProduction.translations.find((t) => t.languageCode === "nl")?.title ??
+                        mediaProduction.slug
+                    }
+                    open={true}
+                    onOpenChange={(open) => {
+                        if (!open) setMediaProduction(null);
+                    }}
+                />
+            )}
 
             <ImageSpotlight
                 items={spotlightItems}
