@@ -12,6 +12,28 @@ use crate::{
     },
 };
 
+pub mod all;
+
+pub(crate) fn push_entity_media_filters<'args>(
+    query: &mut sqlx::QueryBuilder<'args, sqlx::Postgres>,
+    entity_type: Option<&EntityType>,
+    entity_id: Option<&Uuid>,
+    role: Option<&'args str>,
+) {
+    if let Some(entity_type) = entity_type {
+        query.push(" AND em.entity_type = ");
+        query.push_bind(*entity_type);
+    }
+    if let Some(entity_id) = entity_id {
+        query.push(" AND em.entity_id = ");
+        query.push_bind(*entity_id);
+    }
+    if let Some(role) = role {
+        query.push(" AND em.role = ");
+        query.push_bind(role);
+    }
+}
+
 pub struct MediaRepo<'a> {
     db: &'a PgPool,
 }
@@ -28,38 +50,6 @@ impl<'a> MediaRepo<'a> {
             .fetch_optional(self.db)
             .await?
             .ok_or(DatabaseError::NotFound)
-    }
-
-    pub async fn all(&self, limit: usize) -> Result<Vec<Media>, DatabaseError> {
-        Ok(Media::select().limit(limit).fetch_all(self.db).await?)
-    }
-
-    pub async fn paginated(
-        &self,
-        limit: usize,
-        offset: usize,
-    ) -> Result<Vec<Media>, DatabaseError> {
-        Ok(sqlx::query_as::<_, Media>(
-            r#"
-            SELECT
-                id, created_at, updated_at,
-                s3_key, mime_type, file_size,
-                width, height, checksum,
-                alt_text_nl, alt_text_en, alt_text_fr, 
-                description_nl, description_en, description_fr, 
-                credit_nl, credit_en, credit_fr,
-                geo_latitude, geo_longitude,
-                parent_id, derivative_type, gallery_type, source_id,
-                source_system, source_uri, source_updated_at
-            FROM media
-            ORDER BY created_at DESC
-            LIMIT $1 OFFSET $2
-            "#,
-        )
-        .bind(limit as i64)
-        .bind(offset as i64)
-        .fetch_all(self.db)
-        .await?)
     }
 
     pub async fn insert(&self, media: MediaCreate) -> Result<Media, DatabaseError> {
@@ -81,8 +71,8 @@ impl<'a> MediaRepo<'a> {
             r#"
             INSERT INTO media (
                 s3_key, mime_type, file_size, width, height, checksum,
-                alt_text_nl, alt_text_en, alt_text_fr, 
-                description_nl, description_en, description_fr, 
+                alt_text_nl, alt_text_en, alt_text_fr,
+                description_nl, description_en, description_fr,
                 credit_nl, credit_en, credit_fr,
                 geo_latitude, geo_longitude,
                 parent_id, derivative_type, gallery_type,
@@ -123,8 +113,8 @@ impl<'a> MediaRepo<'a> {
                 id, created_at, updated_at,
                 s3_key, mime_type, file_size,
                 width, height, checksum,
-                alt_text_nl, alt_text_en, alt_text_fr, 
-                description_nl, description_en, description_fr, 
+                alt_text_nl, alt_text_en, alt_text_fr,
+                description_nl, description_en, description_fr,
                 credit_nl, credit_en, credit_fr,
                 geo_latitude, geo_longitude,
                 parent_id, derivative_type, gallery_type, source_id,
@@ -313,6 +303,72 @@ impl<'a> MediaRepo<'a> {
         Ok(())
     }
 
+    /// Demote the current cover for an entity back to the gallery role without removing the link.
+    pub async fn clear_cover(
+        &self,
+        entity_type: EntityType,
+        entity_id: Uuid,
+    ) -> Result<(), DatabaseError> {
+        sqlx::query(
+            r#"
+            UPDATE entity_media
+            SET is_cover_image = false,
+                role = CASE WHEN role = 'cover' THEN 'gallery' ELSE role END
+            WHERE entity_type = $1 AND entity_id = $2
+              AND (role = 'cover' OR is_cover_image = true)
+            "#,
+        )
+        .bind(entity_type as EntityType)
+        .bind(entity_id)
+        .execute(self.db)
+        .await?;
+        Ok(())
+    }
+
+    /// Atomically promote a linked media item to cover role for an entity.
+    /// Any existing cover for the entity is demoted back to the gallery role.
+    pub async fn set_cover(
+        &self,
+        entity_type: EntityType,
+        entity_id: Uuid,
+        media_id: Uuid,
+    ) -> Result<(), DatabaseError> {
+        let mut tx = self.db.begin().await?;
+
+        // Demote any existing cover back to gallery (handles both role='cover' and
+        // is_cover_image=true with other roles, e.g. from the importer)
+        sqlx::query(
+            r#"
+            UPDATE entity_media
+            SET is_cover_image = false,
+                role = CASE WHEN role = 'cover' THEN 'gallery' ELSE role END
+            WHERE entity_type = $1 AND entity_id = $2
+              AND (role = 'cover' OR is_cover_image = true)
+            "#,
+        )
+        .bind(entity_type as EntityType)
+        .bind(entity_id)
+        .execute(&mut *tx)
+        .await?;
+
+        // Promote the new media to cover
+        sqlx::query(
+            r#"
+            UPDATE entity_media
+            SET is_cover_image = true, role = 'cover'
+            WHERE entity_type = $1 AND entity_id = $2 AND media_id = $3
+            "#,
+        )
+        .bind(entity_type as EntityType)
+        .bind(entity_id)
+        .bind(media_id)
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(())
+    }
+
     /// Unlink a media item from an entity
     pub async fn unlink_from_entity(
         &self,
@@ -350,7 +406,7 @@ impl<'a> MediaRepo<'a> {
                 m.width, m.height, m.checksum,
                 m.alt_text_nl, m.alt_text_en, m.alt_text_fr, m.description_nl, m.description_en, m.description_fr, m.credit_nl, m.credit_en, m.credit_fr,
                 m.geo_latitude, m.geo_longitude,
-                m.parent_id, m.derivative_type, m.gallery_type, m.source_id,
+                m.parent_id, m.derivative_type, COALESCE(em.role, m.gallery_type) AS gallery_type, m.source_id,
                 m.source_system, m.source_uri, m.source_updated_at
             FROM media m
             JOIN entity_media em ON em.media_id = m.id
@@ -380,7 +436,7 @@ impl<'a> MediaRepo<'a> {
                 m.width, m.height, m.checksum,
                 m.alt_text_nl, m.alt_text_en, m.alt_text_fr, m.description_nl, m.description_en, m.description_fr, m.credit_nl, m.credit_en, m.credit_fr,
                 m.geo_latitude, m.geo_longitude,
-                m.parent_id, m.derivative_type, m.gallery_type, m.source_id,
+                m.parent_id, m.derivative_type, COALESCE(em.role, m.gallery_type) AS gallery_type, m.source_id,
                 m.source_system, m.source_uri, m.source_updated_at
             FROM media m
             JOIN entity_media em ON em.media_id = m.id
@@ -499,7 +555,7 @@ impl<'a> MediaRepo<'a> {
     }
 
     /// Batch-fetch the cover image s3_key for multiple entities of the same type.
-    /// Returns a map from entity_id → s3_key. For each entity, prefers the row
+    /// Returns a map from entity_id -> s3_key. For each entity, prefers the row
     /// where is_cover_image = true; falls back to the first item by sort_order.
     pub async fn cover_s3_keys_for_entities(
         &self,

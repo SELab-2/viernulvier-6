@@ -11,6 +11,7 @@ use crate::{
 #[derive(Deserialize, IntoParams)]
 pub struct TaxonomyParams {
     /// Filter facets by entity type
+    #[param(value_type = EntityType, inline, required = false)]
     pub entity_type: Option<EntityType>,
 }
 

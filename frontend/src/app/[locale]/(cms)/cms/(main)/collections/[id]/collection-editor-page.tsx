@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
     DndContext,
     PointerSensor,
@@ -356,17 +356,13 @@ export function CollectionEditorPage({ id }: { id: string }) {
     const deleteCollection = useDeleteCollection();
 
     const [slugEdited, setSlugEdited] = useState(false);
-    const [origin, setOrigin] = useState("");
+    const [origin] = useState(() => (typeof window !== "undefined" ? window.location.origin : ""));
     const [localSlug, setLocalSlug] = useState<string | null>(null);
     const [titleNl, setTitleNl] = useState<string | null>(null);
     const [titleEn, setTitleEn] = useState<string | null>(null);
     const [descriptionNl, setDescriptionNl] = useState<string | null>(null);
     const [descriptionEn, setDescriptionEn] = useState<string | null>(null);
     const [items, setItems] = useState<LocalCollectionItem[] | null>(null);
-
-    useEffect(() => {
-        if (typeof window !== "undefined") setOrigin(window.location.origin);
-    }, []);
 
     const sensors = useSensors(useSensor(PointerSensor));
 
@@ -506,6 +502,31 @@ export function CollectionEditorPage({ id }: { id: string }) {
         [localItems, eventMap]
     );
 
+    const updateComment = (itemId: string, languageCode: "nl" | "en", value: string) => {
+        setItems(
+            normalizeItems(
+                localItems.map((item) => {
+                    if (item.id !== itemId) return item;
+                    return {
+                        ...item,
+                        translations: withAllLanguages(item.translations, (lang) => ({
+                            languageCode: lang,
+                            comment: null,
+                        })).map((translation) =>
+                            translation.languageCode === languageCode
+                                ? { ...translation, comment: value || null }
+                                : translation
+                        ),
+                    };
+                })
+            )
+        );
+    };
+
+    const removeItem = (itemId: string) => {
+        setItems(normalizeItems(localItems.filter((item) => item.id !== itemId)));
+    };
+
     const renderItemProps = useCallback(
         (item: LocalCollectionItem): ItemRowProps => {
             const translationNl = getTranslation(item.translations, "nl");
@@ -544,31 +565,6 @@ export function CollectionEditorPage({ id }: { id: string }) {
 
         const flatItems = reordered.flatMap((g) => [g.item, ...g.childEvents]);
         setItems(normalizeItems(flatItems));
-    };
-
-    const updateComment = (itemId: string, languageCode: "nl" | "en", value: string) => {
-        setItems(
-            normalizeItems(
-                localItems.map((item) => {
-                    if (item.id !== itemId) return item;
-                    return {
-                        ...item,
-                        translations: withAllLanguages(item.translations, (lang) => ({
-                            languageCode: lang,
-                            comment: null,
-                        })).map((translation) =>
-                            translation.languageCode === languageCode
-                                ? { ...translation, comment: value || null }
-                                : translation
-                        ),
-                    };
-                })
-            )
-        );
-    };
-
-    const removeItem = (itemId: string) => {
-        setItems(normalizeItems(localItems.filter((item) => item.id !== itemId)));
     };
 
     const copyShareableLink = async () => {

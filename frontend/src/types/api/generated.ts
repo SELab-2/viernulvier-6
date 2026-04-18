@@ -402,7 +402,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description List media records with pagination for CMS browsing. */
+        /** @description List and search media records with cursor-based pagination. */
         get: operations["get_all_media"];
         put?: never;
         post?: never;
@@ -463,6 +463,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/media/entity/{entity_type}/{entity_id}/cover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Demote the current cover image back to the gallery role without removing the entity link. */
+        delete: operations["clear_cover_for_entity"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/media/entity/{entity_type}/{entity_id}/link": {
         parameters: {
             query?: never;
@@ -492,6 +509,23 @@ export interface paths {
         post?: never;
         /** @description Unlink media from an entity only (does not directly delete media row/object). Orphans are handled by cleanup/reconcile flows. */
         delete: operations["unlink_media_from_entity"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/entity/{entity_type}/{entity_id}/{media_id}/set-cover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Promote an already-linked media item to the cover role for an entity. Any existing cover is atomically demoted back to the gallery role. */
+        post: operations["set_cover_for_entity"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1279,6 +1313,8 @@ export interface components {
             mime_type: string;
             /** Format: uuid */
             parent_id?: string | null;
+            /** @description The S3 object key (needed to link existing media to another entity) */
+            s3_key: string;
             source_system: string;
             source_uri?: string | null;
             /** Format: date-time */
@@ -1393,6 +1429,49 @@ export interface components {
                 street?: string | null;
                 translations?: components["schemas"]["LocationTranslationPayload"][];
                 uitdatabank_id?: string | null;
+            }[];
+            next_cursor?: string | null;
+        };
+        PaginatedResponse_MediaPayload: {
+            data: {
+                alt_text_en?: string | null;
+                alt_text_fr?: string | null;
+                alt_text_nl?: string | null;
+                checksum?: string | null;
+                /** Format: date-time */
+                created_at: string;
+                credit_en?: string | null;
+                credit_fr?: string | null;
+                credit_nl?: string | null;
+                crops: components["schemas"]["MediaVariantPayload"][];
+                derivative_type?: string | null;
+                description_en?: string | null;
+                description_fr?: string | null;
+                description_nl?: string | null;
+                /** Format: int64 */
+                file_size?: number | null;
+                gallery_type?: string | null;
+                /** Format: double */
+                geo_latitude?: number | null;
+                /** Format: double */
+                geo_longitude?: number | null;
+                /** Format: int32 */
+                height?: number | null;
+                /** Format: uuid */
+                id: string;
+                mime_type: string;
+                /** Format: uuid */
+                parent_id?: string | null;
+                /** @description The S3 object key (needed to link existing media to another entity) */
+                s3_key: string;
+                source_system: string;
+                source_uri?: string | null;
+                /** Format: date-time */
+                updated_at: string;
+                /** @description Direct public URL to the media file (S3 or external) */
+                url?: string | null;
+                /** Format: int32 */
+                width?: number | null;
             }[];
             next_cursor?: string | null;
         };
@@ -1559,6 +1638,11 @@ export interface components {
             language_code: string;
         };
         UploadUrlRequest: {
+            /**
+             * Format: int64
+             * @description File size in bytes (used for presigned URL content-length and max-size validation)
+             */
+            file_size: number;
             /** @description Original filename (used to derive the S3 key extension) */
             filename: string;
             /** @description MIME type of the file (e.g., "image/jpeg") */
@@ -1594,11 +1678,11 @@ export interface operations {
                 cursor?: string | null;
                 limit?: number;
                 q?: string | null;
-                subject_start?: string | null;
-                subject_end?: string | null;
-                tag_slug?: string | null;
+                subject_start?: string;
+                subject_end?: string;
+                tag_slug?: string;
                 related_entity_id?: string | null;
-                related_entity_type?: null | components["schemas"]["EntityType"];
+                related_entity_type?: "production" | "artist" | "article" | "media" | "location" | "event" | "series";
             };
             header?: never;
             path?: never;
@@ -2864,7 +2948,15 @@ export interface operations {
     };
     get_all_media: {
         parameters: {
-            query?: never;
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+                q?: string | null;
+                entity_type?: "production" | "artist" | "article" | "media" | "location" | "event" | "series";
+                entity_id?: string | null;
+                role?: string;
+                sort?: "recent" | "oldest" | "relevance";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2877,7 +2969,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MediaPayload"][];
+                    "application/json": components["schemas"]["PaginatedResponse_MediaPayload"];
                 };
             };
         };
@@ -2900,6 +2992,15 @@ export interface operations {
                     "application/json": components["schemas"]["CleanupResponse"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     get_entity_media: {
@@ -2919,7 +3020,7 @@ export interface operations {
             header?: never;
             path: {
                 /** @description Entity type (production, event, blogpost, media, artist) */
-                entity_type: string;
+                entity_type: components["schemas"]["EntityType"];
                 /** @description Entity UUID */
                 entity_id: string;
             };
@@ -2944,7 +3045,7 @@ export interface operations {
             header?: never;
             path: {
                 /** @description Entity type (production, event, blogpost, media, artist) */
-                entity_type: string;
+                entity_type: components["schemas"]["EntityType"];
                 /** @description Entity UUID */
                 entity_id: string;
             };
@@ -2971,6 +3072,47 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    clear_cover_for_entity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Entity type */
+                entity_type: components["schemas"]["EntityType"];
+                /** @description Entity UUID */
+                entity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
             };
         };
     };
@@ -3023,7 +3165,7 @@ export interface operations {
             header?: never;
             path: {
                 /** @description Entity type (production, event, blogpost, media, artist) */
-                entity_type: string;
+                entity_type: components["schemas"]["EntityType"];
                 /** @description Entity UUID */
                 entity_id: string;
                 /** @description Media UUID */
@@ -3039,6 +3181,56 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    set_cover_for_entity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Entity type */
+                entity_type: components["schemas"]["EntityType"];
+                /** @description Entity UUID */
+                entity_id: string;
+                /** @description Media UUID to promote to cover */
+                media_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
             };
             /** @description Not found */
             404: {
@@ -3070,6 +3262,15 @@ export interface operations {
                     "application/json": components["schemas"]["ReconcileResponse"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     generate_upload_url: {
@@ -3092,6 +3293,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UploadUrlResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description S3 not configured */
@@ -3158,6 +3368,15 @@ export interface operations {
                     "application/json": components["schemas"]["MediaPayload"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -3186,6 +3405,15 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -3201,14 +3429,15 @@ export interface operations {
                 cursor?: string | null;
                 limit?: number;
                 q?: string | null;
-                discipline?: string | null;
-                format?: string | null;
-                theme?: string | null;
-                audience?: string | null;
-                location?: string | null;
-                date_from?: string | null;
-                date_to?: string | null;
-                sort?: null | components["schemas"]["Sort"];
+                discipline?: string;
+                format?: string;
+                theme?: string;
+                audience?: string;
+                artist?: string;
+                location?: string;
+                date_from?: string;
+                date_to?: string;
+                sort?: "recent" | "oldest" | "relevance";
             };
             header?: never;
             path?: never;
@@ -3935,7 +4164,7 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description Filter facets by entity type */
-                entity_type?: null | components["schemas"]["EntityType"];
+                entity_type?: "production" | "artist" | "article" | "media" | "location" | "event" | "series";
             };
             header?: never;
             path?: never;

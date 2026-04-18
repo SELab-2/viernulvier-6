@@ -518,8 +518,12 @@ impl ApiImporter {
         };
 
         if let Ok(media) = self.db.media().insert(media_create).await {
-            let role = media_role_from_gallery_type(gallery_type);
             let is_cover = item.position == Some(0);
+            let role = if is_cover && gallery_type == "media" {
+                "cover"
+            } else {
+                media_role_from_gallery_type(gallery_type)
+            };
             let _ = self
                 .db
                 .media()
