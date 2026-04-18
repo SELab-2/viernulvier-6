@@ -1,13 +1,16 @@
+use base64::{Engine, prelude::BASE64_URL_SAFE};
 use chrono::{DateTime, Utc};
 use database::{
     Database,
-    models::{media::Media, media_variant::MediaVariant},
+    models::{filtering::cursor::CursorData, media::Media, media_variant::MediaVariant},
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::error::AppError;
+use crate::{
+    dto::paginated::PaginatedResponse, error::AppError, handlers::queries::media::MediaSearchQuery,
+};
 
 impl MediaPayload {
     /// Build a MediaPayload from a database model, computing the public URL.
@@ -24,6 +27,7 @@ impl MediaPayload {
             created_at: m.created_at,
             updated_at: m.updated_at,
             url,
+            s3_key: m.s3_key,
             mime_type: m.mime_type,
             file_size: m.file_size,
             width: m.width,
@@ -49,12 +53,38 @@ impl MediaPayload {
         }
     }
 
-    pub async fn by_id(db: &Database, id: Uuid) -> Result<Media, AppError> {
-        Ok(db.media().by_id(id).await?)
+    pub async fn all(
+        db: &Database,
+        id_cursor: Option<String>,
+        limit: u32,
+        public_url: Option<&str>,
+        search: MediaSearchQuery,
+    ) -> Result<PaginatedResponse<Self>, AppError> {
+        let cursor: Option<CursorData> = id_cursor.and_then(|b64| {
+            let bytes = BASE64_URL_SAFE.decode(b64).ok()?;
+            serde_json::from_slice(&bytes).ok()
+        });
+
+        let (media, next_cursor) = db.media().all(limit, cursor, search.into()).await?;
+
+        let next_cursor_data = next_cursor.and_then(|c| {
+            let data = serde_json::to_vec(&c).ok()?;
+            Some(BASE64_URL_SAFE.encode(data))
+        });
+
+        let payloads: Vec<Self> = media
+            .into_iter()
+            .map(|m| Self::from_model(m, public_url))
+            .collect();
+
+        Ok(PaginatedResponse {
+            data: payloads,
+            next_cursor: next_cursor_data,
+        })
     }
 
-    pub async fn all(db: &Database, limit: usize) -> Result<Vec<Media>, AppError> {
-        Ok(db.media().all(limit).await?)
+    pub async fn by_id(db: &Database, id: Uuid) -> Result<Media, AppError> {
+        Ok(db.media().by_id(id).await?)
     }
 
     pub async fn delete(db: &Database, id: Uuid) -> Result<Vec<String>, AppError> {
@@ -72,6 +102,8 @@ pub struct MediaPayload {
 
     /// Direct public URL to the media file (S3 or external)
     pub url: Option<String>,
+    /// The S3 object key (needed to link existing media to another entity)
+    pub s3_key: String,
 
     pub mime_type: String,
     pub file_size: Option<i64>,
@@ -217,6 +249,8 @@ pub struct UploadUrlRequest {
     pub filename: String,
     /// MIME type of the file (e.g., "image/jpeg")
     pub mime_type: String,
+    /// File size in bytes (used for presigned URL content-length and max-size validation)
+    pub file_size: i64,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -227,11 +261,14 @@ pub struct UploadUrlResponse {
     pub upload_url: String,
     /// URL expiration in seconds
     pub expires_in: u64,
+    /// HMAC token that must be presented when attaching this upload
+    pub upload_token: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct AttachMediaRequest {
     pub s3_key: String,
+    pub upload_token: String,
     pub mime_type: String,
     pub role: Option<String>,
     pub sort_order: Option<i32>,
@@ -256,6 +293,14 @@ pub struct AttachMediaRequest {
     pub parent_id: Option<Uuid>,
     pub derivative_type: Option<String>,
     pub gallery_type: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct LinkMediaRequest {
+    pub media_id: Uuid,
+    pub role: Option<String>,
+    pub sort_order: Option<i32>,
+    pub is_cover_image: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]

@@ -141,7 +141,6 @@ Env vars (all optional; defaults target Groq's free tier):
 
 Actions executed by the normalizer are persisted to the `normalization_log`
 table (see migration `20260415000000_normalization_log`).
-
 ## sqlx offline mode
 
 The Docker build uses `SQLX_OFFLINE=true`, so sqlx checks queries at compile time using the cached metadata in `.sqlx/` instead of connecting to a live database.
