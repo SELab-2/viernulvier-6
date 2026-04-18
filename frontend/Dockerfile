@@ -24,14 +24,13 @@ ARG NEXT_PUBLIC_MEDIA_URL
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV PREVIEW_NAME=$PREVIEW_NAME
-ENV CODECOV_TOKEN=$CODECOV_TOKEN
 ENV NEXT_PUBLIC_MEDIA_URL=$NEXT_PUBLIC_MEDIA_URL
 
 # Expose base path to access inside of browser: needed for images
 ENV NEXT_PUBLIC_BASE_PATH=/$PREVIEW_NAME
 
 RUN npm run build
-
+RUN npx @codecov/bundle-analyzer --uploadToken=$CODECOV_TOKEN --bundleName="viernulvier-archive-frontend" --buildDirs=".next"
 
 # Stage 3: Production server
 FROM node:24-alpine AS runner
