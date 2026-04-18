@@ -203,7 +203,7 @@ pub fn router(state: &AppState) -> Router<AppState> {
 
     let swagger_ui = SwaggerUi::new(docs_path)
         .url(openapi_json_path, api_spec)
-        .config(Config::default().doc_expansion("none").filter(true));
+        .config(Config::default().doc_expansion("none"));
 
     Router::new()
         .nest(&base_path, api_router)
@@ -304,7 +304,10 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(media::put))
         .routes(routes!(media::delete))
         .routes(routes!(media::attach_to_entity))
+        .routes(routes!(media::link_to_entity))
         .routes(routes!(media::unlink_from_entity))
+        .routes(routes!(media::set_cover_for_entity))
+        .routes(routes!(media::clear_cover_for_entity))
         .routes(routes!(media::cleanup_orphans))
         .routes(routes!(media::reconcile_storage))
         // Tags

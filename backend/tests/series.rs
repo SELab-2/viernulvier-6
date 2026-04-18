@@ -2,7 +2,9 @@ use axum::http::StatusCode;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
-use viernulvier_api::dto::series::{SeriesPayload, SeriesPostPayload, SeriesProductionsPayload};
+use viernulvier_archive::dto::series::{
+    SeriesPayload, SeriesPostPayload, SeriesProductionsPayload,
+};
 
 use crate::common::{into_struct::IntoStruct, router::TestRouter};
 

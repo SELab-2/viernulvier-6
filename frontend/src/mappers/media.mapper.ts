@@ -1,12 +1,16 @@
+import { PaginatedResult } from "@/types/api/api.types";
 import {
     AttachMediaRequestType,
+    LinkMediaRequestType,
     MediaPayloadResponse,
     MediaVariantPayloadResponse,
+    PaginatedMediaResponse,
     UploadUrlRequestType,
     GenerateUploadUrlResponse,
 } from "@/types/api/media.api.types";
 import {
     AttachMediaInput,
+    LinkMediaInput,
     Media,
     MediaVariant,
     UploadUrlInput,
@@ -34,6 +38,7 @@ export const mapMedia = (m: MediaPayloadResponse): Media => ({
     createdAt: m.created_at,
     updatedAt: m.updated_at,
     url: toNullable(m.url),
+    s3Key: m.s3_key,
     mimeType: m.mime_type,
     fileSize: toNullable(m.file_size),
     width: toNullable(m.width),
@@ -60,8 +65,16 @@ export const mapMedia = (m: MediaPayloadResponse): Media => ({
 
 export const mapMediaList = (list: MediaPayloadResponse[]): Media[] => list.map(mapMedia);
 
+export const mapPaginatedMediaResult = (
+    response: PaginatedMediaResponse
+): PaginatedResult<Media> => ({
+    data: mapMediaList(response.data),
+    nextCursor: response.next_cursor ?? null,
+});
+
 export const mapAttachMediaInput = (input: AttachMediaInput): AttachMediaRequestType => ({
     s3_key: input.s3Key,
+    upload_token: input.uploadToken,
     mime_type: input.mimeType,
     role: input.role,
     sort_order: input.sortOrder,
@@ -86,15 +99,24 @@ export const mapAttachMediaInput = (input: AttachMediaInput): AttachMediaRequest
     gallery_type: input.galleryType,
 });
 
+export const mapLinkMediaInput = (input: LinkMediaInput): LinkMediaRequestType => ({
+    media_id: input.mediaId,
+    role: input.role,
+    is_cover_image: input.isCoverImage,
+    sort_order: input.sortOrder,
+});
+
 export const mapUploadUrlInput = (input: UploadUrlInput): UploadUrlRequestType => ({
     filename: input.filename,
     mime_type: input.mimeType,
+    file_size: input.fileSize,
 });
 
 export const mapUploadUrlResult = (response: GenerateUploadUrlResponse): UploadUrlResult => ({
     s3Key: response.s3_key,
     uploadUrl: response.upload_url,
     expiresIn: response.expires_in,
+    uploadToken: response.upload_token,
 });
 
 export const mapMediaVariantToPayload = (v: MediaVariant): MediaVariantPayloadResponse => ({
@@ -116,6 +138,7 @@ export const mapMediaToPayload = (m: Media): MediaPayloadResponse => ({
     created_at: m.createdAt,
     updated_at: m.updatedAt,
     url: m.url,
+    s3_key: m.s3Key,
     mime_type: m.mimeType,
     file_size: m.fileSize,
     width: m.width,
