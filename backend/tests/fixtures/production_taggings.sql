@@ -1,13 +1,13 @@
 -- fixtures/production_tags.sql
 
--- Discipline: Music
+-- Discipline: Concert
 INSERT INTO taggings (tag_id, entity_type, entity_id, inherited)
 SELECT t.id, 'production', '11111111-1111-1111-1111-111111111111', false
-FROM tags t WHERE t.slug = 'music' AND t.facet = 'discipline';
+FROM tags t WHERE t.slug = 'concert' AND t.facet = 'discipline';
 
 INSERT INTO taggings (tag_id, entity_type, entity_id, inherited)
 SELECT t.id, 'production', '44444444-4444-4444-4444-444444444444', false
-FROM tags t WHERE t.slug = 'music' AND t.facet = 'discipline';
+FROM tags t WHERE t.slug = 'concert' AND t.facet = 'discipline';
 
 -- Theme: Politics
 INSERT INTO taggings (tag_id, entity_type, entity_id, inherited)
