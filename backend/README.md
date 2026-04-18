@@ -71,6 +71,55 @@ cargo llvm-cov --html
 cargo llvm-cov --text
 ```
 
+## Seed pipeline (offline normalization)
+
+The 404 API data is messy, so we normalize it offline and ship the result as a
+Postgres dump restored on first boot of every environment. See
+[issue #253](https://github.com/SELab-2/viernulvier-6/issues/253) for the full
+design.
+
+### Prerequisites
+
+Git LFS must be installed once per machine:
+
+```sh
+git lfs install
+```
+
+The artifacts under `backend/seed/raw/*.json` and `backend/seed/*.sql` are
+tracked via LFS.
+
+### Stage 1: mirror the 404 API to local JSON
+
+Produces `backend/seed/raw/*.json` + `manifest.json`. No DB, no LLM.
+
+Full refresh (takes ~15 min, mostly gallery fetches):
+
+```sh
+API_KEY_404=... cargo run --release -p api --bin fetch_404
+```
+
+Selective fetch - useful when only refreshing taxonomies:
+
+```sh
+cargo run -p api --bin fetch_404 -- --list                              # show names
+cargo run -p api --bin fetch_404 -- tags genres uitdatabank_keywords    # fetch these
+cargo run -p api --bin fetch_404 -- --only productions,events           # comma form
+```
+
+Selected counts merge into the existing `manifest.json`; untouched entries are
+preserved. `max_updated_at` is only overwritten when `productions` is in the
+selection. `media_galleries` requires productions in memory or on disk.
+
+Idempotent: rerunning overwrites the targeted files. Only run when refreshing
+data from the 404 API; bumping the normalizer alone does not require rerunning
+this.
+
+### Stage 2: normalize into a seed DB and dump
+
+TODO - implemented in a later issue (#286). Will read `backend/seed/raw/*.json`,
+run normalization, and emit `backend/seed/seed.sql` via `pg_dump --data-only`.
+
 ## sqlx offline mode
 
 The Docker build uses `SQLX_OFFLINE=true`, so sqlx checks queries at compile time using the cached metadata in `.sqlx/` instead of connecting to a live database.

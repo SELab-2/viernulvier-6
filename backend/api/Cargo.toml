@@ -8,17 +8,22 @@ publish = false
 name = "api"
 path = "src/lib.rs"
 
+[[bin]]
+name = "fetch_404"
+path = "src/bin/fetch_404.rs"
+
 [lints]
 workspace = true
 
 [dependencies]
 database = { path = "../database" }
 tracing = { workspace = true }
-tokio = { workspace = true, features = ["fs", "io-util", "rt"] }
+tokio = { workspace = true, features = ["fs", "io-util", "rt", "macros"] }
+tracing-subscriber = { version = "=0.3", default-features = false, features = ["env-filter", "fmt", "ansi"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 uuid = { workspace = true }
-chrono = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }
 sha2 = { workspace = true }
 aws-sdk-s3 = { workspace = true }
 thiserror.workspace = true
