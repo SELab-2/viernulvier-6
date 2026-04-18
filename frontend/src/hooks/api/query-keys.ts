@@ -1,5 +1,5 @@
 import { PaginationParams, SearchPaginationParams } from "@/types/api/api.types";
-import { EntityMediaParams } from "@/types/models/media.types";
+import { EntityMediaParams, MediaSearchParams } from "@/types/models/media.types";
 
 const buildQueryKey = (
     base: readonly string[],
@@ -50,8 +50,10 @@ export const queryKeys = {
         bySlug: (slug: string) => ["articles", "bySlug", slug] as const,
     },
     media: {
-        all: (params?: { limit?: number; offset?: number }) =>
+        all: (params?: MediaSearchParams) =>
             params ? (["media", params] as const) : (["media"] as const),
+        infinite: (params?: Omit<MediaSearchParams, "cursor">) =>
+            params ? (["media", "infinite", params] as const) : (["media", "infinite"] as const),
         detail: (id: string) => ["media", id] as const,
         entity: (entityType: string, entityId: string, params?: EntityMediaParams) =>
             params

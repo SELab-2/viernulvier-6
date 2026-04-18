@@ -1,11 +1,13 @@
 "use client";
 
-import { use, useState, useCallback, useEffect } from "react";
+import { use, useState, useCallback, useMemo, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Calendar, MapPin, Users, Ticket } from "lucide-react";
 
+import Image from "next/image";
 import { useGetArticleBySlug } from "@/hooks/api/useArticles";
+import { useGetEntityMedia } from "@/hooks/api/useMedia";
 import { useHasPreview } from "@/hooks/usePreviewData";
 import { useArticleWithPreview, useArticleRelationsWithPreview } from "@/hooks/useArticlePreview";
 import { Link } from "@/i18n/routing";
@@ -111,6 +113,22 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
             previewRelations.locationIds.length > 0 ||
             previewRelations.eventIds.length > 0);
 
+    const { data: inlineMedia = [] } = useGetEntityMedia("article", article?.id ?? "", {
+        enabled: !!article?.id,
+        params: { role: "inline" },
+    });
+
+    const { data: coverMedia = [] } = useGetEntityMedia("article", article?.id ?? "", {
+        enabled: !!article?.id,
+        params: { role: "cover" },
+    });
+    const coverImage = coverMedia[0] ?? null;
+
+    const mediaMap = useMemo(
+        () => Object.fromEntries(inlineMedia.map((m) => [m.id, m.url ?? ""])),
+        [inlineMedia]
+    );
+
     return (
         <>
             <UnifiedHeader
@@ -172,11 +190,37 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
                                 <span>{t("datelineBrand")}</span>
                             </div>
                         </div>
+
+                        {/* Cover image */}
+                        {coverImage?.url && (
+                            <div className="relative mt-6 aspect-[16/7] overflow-hidden">
+                                <Image
+                                    src={coverImage.url}
+                                    alt={
+                                        coverImage.altTextNl ??
+                                        coverImage.altTextEn ??
+                                        article?.title ??
+                                        ""
+                                    }
+                                    fill
+                                    className="object-cover"
+                                    priority
+                                    sizes="(max-width: 768px) 100vw, 1100px"
+                                />
+                                {coverImage.creditNl && (
+                                    <span className="bg-background/70 absolute right-2 bottom-2 px-1.5 py-0.5 font-mono text-[9px] tracking-wide">
+                                        {coverImage.creditNl}
+                                    </span>
+                                )}
+                            </div>
+                        )}
                     </header>
 
                     {/* Content */}
                     <div className="mx-auto max-w-[750px]">
-                        {article?.content && <TiptapRenderer content={article.content} />}
+                        {article?.content && (
+                            <TiptapRenderer content={article.content} mediaMap={mediaMap} />
+                        )}
                     </div>
 
                     {/* Connected entities */}

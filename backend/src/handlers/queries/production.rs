@@ -8,17 +8,24 @@ use crate::handlers::queries::{sort::Sort, split_strip::split_strip};
 #[derive(Deserialize, IntoParams)]
 pub struct ProductionSearchQuery {
     pub q: Option<String>,
-    // facets
+    #[param(value_type = String, required = false)]
     pub discipline: Option<String>,
+    #[param(value_type = String, required = false)]
     pub format: Option<String>,
+    #[param(value_type = String, required = false)]
     pub theme: Option<String>,
+    #[param(value_type = String, required = false)]
     pub audience: Option<String>,
-    // search on location
+    #[param(value_type = String, required = false)]
+    pub artist: Option<String>,
+    #[param(value_type = String, required = false)]
     pub location: Option<String>,
-    // date of a production's events
+    #[param(value_type = NaiveDate, required = false)]
     pub date_from: Option<NaiveDate>,
+    #[param(value_type = NaiveDate, required = false)]
     pub date_to: Option<NaiveDate>,
-    // sort direction
+
+    #[param(value_type = Sort, inline, required = false)]
     pub sort: Option<Sort>,
 }
 
