@@ -1678,9 +1678,9 @@ export interface operations {
                 cursor?: string | null;
                 limit?: number;
                 q?: string | null;
-                subject_start?: string | null;
-                subject_end?: string | null;
-                tag_slug?: string | null;
+                subject_start?: string;
+                subject_end?: string;
+                tag_slug?: string;
                 related_entity_id?: string | null;
                 related_entity_type?: "production" | "artist" | "article" | "media" | "location" | "event" | "series";
             };

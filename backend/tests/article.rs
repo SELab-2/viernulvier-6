@@ -10,7 +10,7 @@ use viernulvier_archive::dto::article::{
     ArticleListPayload, ArticlePayload, ArticlePostPayload, ArticleRelationsPayload,
     ArticleUpdatePayload,
 };
-use viernulvier_api::dto::paginated::PaginatedResponse;
+use viernulvier_archive::dto::paginated::PaginatedResponse;
 
 use crate::common::{into_struct::IntoStruct, router::TestRouter};
 

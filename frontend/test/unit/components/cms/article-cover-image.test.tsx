@@ -2,6 +2,7 @@ import { describe, expect, it, afterEach, vi, type Mock } from "vitest";
 import { render, screen, cleanup } from "../../../../test/utils/test-utils";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
+import messages from "../../../../src/messages/en.json";
 
 import type { Media } from "@/types/models/media.types";
 import type { Article, ArticleRelations } from "@/types/models/article.types";
@@ -139,35 +140,6 @@ const coverMedia: Media = {
     derivativeType: null,
     sourceSystem: "cms",
     sourceUri: null,
-};
-
-const messages = {
-    Cms: {
-        Articles: {
-            statusLabel: "Status",
-            slug: "Slug",
-            subjectPeriod: "Subject period",
-            relatedProductions: "Related productions",
-            relatedArtists: "Related artists",
-            relatedLocations: "Related locations",
-            relatedEvents: "Related events",
-            coverImage: "Cover image",
-            coverEmpty: "No cover image",
-            coverPick: "Pick",
-            coverUpload: "Upload",
-            coverChange: "Change",
-            coverRemove: "Remove cover",
-            coverSetSuccess: "Cover image set.",
-            coverSetError: "Failed to set cover image.",
-            coverRemovedSuccess: "Cover image removed.",
-            coverRemovedError: "Failed to remove cover image.",
-            statusDraft: "Draft",
-            statusPublished: "Published",
-            statusArchived: "Archived",
-            noOptionsAvailable: "No options available",
-            untitledEvent: "Untitled event",
-        },
-    },
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────
