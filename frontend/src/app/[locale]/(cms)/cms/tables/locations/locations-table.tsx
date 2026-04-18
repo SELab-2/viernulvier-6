@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Archive } from "lucide-react";
 import type { Row } from "@tanstack/react-table";
@@ -11,6 +12,7 @@ import { useParentChildSelection } from "../use-parent-child-selection";
 import { makeLocationColumns, locationFields, toLocationUpdateInput } from "./columns";
 import { makeHallColumns, hallFields, toHallUpdateInput } from "./hall-columns";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
+import { SearchInput } from "@/components/cms/search-input";
 import { Spinner } from "@/components/ui/spinner";
 import { useGetInfiniteLocations, useUpdateLocation } from "@/hooks/api/useLocations";
 import { useGetHalls, useUpdateHall } from "@/hooks/api/useHalls";
@@ -23,13 +25,15 @@ export function LocationsTable() {
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
     const loadMoreRef = useRef<HTMLDivElement>(null);
+    const searchParams = useSearchParams();
+    const q = searchParams.get("q") ?? undefined;
 
     const {
         data: infiniteData,
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,
-    } = useGetInfiniteLocations();
+    } = useGetInfiniteLocations(q ? { q } : undefined);
 
     const { data: hallsResult, isLoading: hallsLoading } = useGetHalls();
     const { data: spacesResult } = useGetSpaces();
@@ -175,6 +179,9 @@ export function LocationsTable() {
     return (
         <div className="flex h-full flex-col">
             <div className="bg-background sticky top-0 z-10">
+                <div className="flex items-center justify-between py-1">
+                    <SearchInput placeholder={t("search")} />
+                </div>
                 <ActionBar
                     entityCounts={[
                         { countKey: "locationsSelected", count: selectedLocationCount },

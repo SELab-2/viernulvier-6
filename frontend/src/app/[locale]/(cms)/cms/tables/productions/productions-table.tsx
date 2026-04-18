@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Archive } from "lucide-react";
 import type { Row } from "@tanstack/react-table";
@@ -9,6 +10,7 @@ import { EditSheet } from "../edit-sheet";
 import { makeProductionColumns } from "./columns";
 import { makeEventFields, toEventUpdateInput } from "./event-columns";
 import { ActionBar } from "../action-bar";
+import { SearchInput } from "@/components/cms/search-input";
 import { useParentChildSelection } from "../use-parent-child-selection";
 import { makeEventColumns } from "./event-columns";
 import { Spinner } from "@/components/ui/spinner";
@@ -27,13 +29,15 @@ export function ProductionsTable() {
     const tActions = useTranslations("Cms.ActionsColumn");
     const locale = useLocale();
     const loadMoreRef = useRef<HTMLDivElement>(null);
+    const searchParams = useSearchParams();
+    const q = searchParams.get("q") ?? undefined;
 
     const {
         data: infiniteData,
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,
-    } = useGetInfiniteProductions();
+    } = useGetInfiniteProductions(q ? { q } : undefined);
 
     const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
 
@@ -223,6 +227,9 @@ export function ProductionsTable() {
     return (
         <div className="flex h-full flex-col">
             <div className="bg-background sticky top-0 z-10">
+                <div className="flex items-center justify-between py-1">
+                    <SearchInput placeholder={t("search")} />
+                </div>
                 <ActionBar
                     entityCounts={[
                         { countKey: "productionsSelected", count: selectedProductionCount },

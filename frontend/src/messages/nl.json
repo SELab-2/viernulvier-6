@@ -343,7 +343,8 @@
             "fieldEventVendorId": "Vendor-ID",
             "fieldEventBoxOfficeId": "Box office ID",
             "fieldEventUitdatabankId": "UiTdatabank ID",
-            "eyebrow": "Productie"
+            "eyebrow": "Productie",
+            "search": "Zoek producties…"
         },
         "Locations": {
             "title": "Locaties",
@@ -352,7 +353,8 @@
             "showHalls": "Zalen tonen",
             "hideHalls": "Zalen verbergen",
             "editLocation": "Locatie bewerken",
-            "editHall": "Zaal bewerken"
+            "editHall": "Zaal bewerken",
+            "search": "Zoek locaties…"
         },
         "Articles": {
             "title": "Artikelen",
@@ -397,7 +399,8 @@
             "untitledEvent": "Naamloze voorstelling",
             "contentPlaceholder": "Schrijf artikelinhoud…",
             "statusColumn": "Status",
-            "dateRangeColumn": "Periode"
+            "dateRangeColumn": "Periode",
+            "search": "Zoek artikels…"
         },
         "Performers": {
             "title": "Uitvoerders",

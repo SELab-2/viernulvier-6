@@ -314,6 +314,7 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(tagging::put_tags))
         // Articles (CMS)
         .routes(routes!(article::get_all_cms))
+        .routes(routes!(article::get_all_cms_search))
         .routes(routes!(article::get_one_cms))
         .routes(routes!(article::post))
         .routes(routes!(article::put))

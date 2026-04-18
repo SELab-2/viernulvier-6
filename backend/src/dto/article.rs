@@ -172,6 +172,31 @@ impl ArticleListPayload {
 
         Ok(PaginatedResponse { data, next_cursor })
     }
+
+    pub async fn list_cms_search(
+        db: &Database,
+        id_cursor: Option<String>,
+        limit: u32,
+        search: ArticleSearch,
+    ) -> Result<PaginatedResponse<Self>, AppError> {
+        let cursor: Option<CursorData> = id_cursor.and_then(|b64| {
+            let bytes = BASE64_URL_SAFE.decode(b64).ok()?;
+            serde_json::from_slice(&bytes).ok()
+        });
+
+        let (articles, next_cursor) = db
+            .articles()
+            .search_cms(limit, cursor, search)
+            .await?;
+
+        let data = articles.into_iter().map(Self::from).collect();
+        let next_cursor = next_cursor.and_then(|cursor| {
+            let data = serde_json::to_vec(&cursor).ok()?;
+            Some(BASE64_URL_SAFE.encode(data))
+        });
+
+        Ok(PaginatedResponse { data, next_cursor })
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
