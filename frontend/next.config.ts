@@ -4,7 +4,7 @@ import { loadEnvConfig } from "@next/env";
 import createNextIntlPlugin from "next-intl/plugin";
 import type { Configuration, RuleSetRule } from "webpack";
 
-import { codecovWebpackPlugin } from "@codecov/webpack-plugin";
+import { codecovNextJSWebpackPlugin } from "@codecov/nextjs-webpack-plugin";
 
 // Ensure .env files are loaded before reading env vars in this config.
 // next.config.ts is sometimes evaluated before Next.js loads .env.local.
@@ -69,7 +69,7 @@ const nextConfig: NextConfig = {
     },
 
     // Production build
-    webpack(config: Configuration) {
+    webpack(config: Configuration, options) {
         // Ensure module and rules exist on the config object
         if (!config.module || !config.module.rules) return config;
 
@@ -99,10 +99,11 @@ const nextConfig: NextConfig = {
 
         config.plugins = config.plugins || [];
         config.plugins.push(
-            codecovWebpackPlugin({
+            codecovNextJSWebpackPlugin({
                 enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
                 bundleName: "viernulvier-archive-frontend",
                 uploadToken: process.env.CODECOV_TOKEN,
+                webpack: options.webpack,
             })
         );
 
