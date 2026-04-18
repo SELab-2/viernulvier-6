@@ -7,7 +7,7 @@ use crate::{
     models::localized_text::ApiLocalizedText,
 };
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct ApiProduction {
     #[serde(rename = "@id")]
     pub id: String,
