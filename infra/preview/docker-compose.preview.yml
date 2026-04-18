@@ -56,8 +56,8 @@ services:
       context: ../../backend
     container_name: ${COMPOSE_PROJECT_NAME}-api
     environment:
-      DATABASE_URL: postgres://${PREVIEW_DB_USER}:${PREVIEW_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}-db:5432/${PREVIEW_DB_NAME}
-      S3_ENDPOINT: http://${COMPOSE_PROJECT_NAME}_garage:3900
+      DATABASE_URL: postgres://${PREVIEW_DB_USER}:${PREVIEW_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}-database:5432/${PREVIEW_DB_NAME}
+      S3_ENDPOINT: http://${COMPOSE_PROJECT_NAME}-garage:3900
       S3_REGION: garage
       S3_ACCESS_KEY: ${GARAGE_S3_ACCESS_KEY}
       S3_SECRET_KEY: ${GARAGE_S3_SECRET_KEY}
