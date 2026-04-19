@@ -5,11 +5,11 @@ use crate::{
     error::DatabaseError,
     repos::{
         article::ArticleRepo, artist::ArtistRepo, collection::CollectionRepo, event::EventRepo,
-        event_price::EventPriceRepo, hall::HallRepo, internal_state::InternalStateRepo,
-        location::LocationRepo, media::MediaRepo, media_variant::MediaVariantRepo,
-        normalization_log::NormalizationLogRepo, price::PriceRepo, price_rank::PriceRankRepo,
-        production::ProductionRepo, series::SeriesRepo, sessions::SessionRepo, space::SpaceRepo,
-        tag::TagRepo, user::UserRepo,
+        event_price::EventPriceRepo, hall::HallRepo, import::ImportRepo,
+        internal_state::InternalStateRepo, location::LocationRepo, media::MediaRepo,
+        media_variant::MediaVariantRepo, normalization_log::NormalizationLogRepo, price::PriceRepo,
+        price_rank::PriceRankRepo, production::ProductionRepo, series::SeriesRepo,
+        sessions::SessionRepo, space::SpaceRepo, tag::TagRepo, user::UserRepo,
     },
 };
 
@@ -50,6 +50,7 @@ pub mod repos {
     pub mod event;
     pub mod event_price;
     pub mod hall;
+    pub mod import;
     pub mod internal_state;
     pub mod location;
     pub mod media;
@@ -169,5 +170,9 @@ impl Database {
 
     pub fn normalization_log<'a>(&'a self) -> NormalizationLogRepo<'a> {
         NormalizationLogRepo::new(&self.db)
+    }
+
+    pub fn imports<'a>(&'a self) -> ImportRepo<'a> {
+        ImportRepo::new(&self.db)
     }
 }
