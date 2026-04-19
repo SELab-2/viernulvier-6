@@ -3,24 +3,17 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 import { animate, stagger } from "animejs";
-import {
-    FileUp,
-    Database,
-    Clapperboard,
-    MapPin,
-    Newspaper,
-    Users,
-    FolderArchive,
-} from "lucide-react";
+import { FileUp, Database, Drama, MapPin, Newspaper, Users, SquareStack } from "lucide-react";
 
 import { SectionCard, SectionCardContent } from "@/components/cms/SectionCard";
+import { useGetStats } from "@/hooks/api/useStats";
 
 interface ContentSection {
     key: string;
     href: string;
     editionKey: string;
     span: string;
-    icon: typeof Clapperboard;
+    icon: typeof Drama;
     comingSoon?: boolean;
 }
 
@@ -30,7 +23,7 @@ const CONTENT_SECTIONS: ContentSection[] = [
         href: "/cms/productions",
         editionKey: "edition1",
         span: "lg:col-span-8",
-        icon: Clapperboard,
+        icon: Drama,
     },
     {
         key: "locations",
@@ -58,8 +51,8 @@ const CONTENT_SECTIONS: ContentSection[] = [
         key: "collections",
         href: "/cms/collections",
         editionKey: "edition5",
-        span: "lg:col-span-6",
-        icon: FolderArchive,
+        span: "lg:col-span-12",
+        icon: SquareStack,
     },
 ];
 
@@ -90,6 +83,7 @@ export default function CmsOverviewPage() {
     const tEditions = useTranslations("Cms.editions");
     const containerRef = useRef<HTMLDivElement>(null);
     const headerRef = useRef<HTMLElement>(null);
+    const { data: stats } = useGetStats();
 
     useEffect(() => {
         if (headerRef.current) {
@@ -152,6 +146,17 @@ export default function CmsOverviewPage() {
                                     actionLabel={t("openSection")}
                                     icon={section.icon}
                                     comingSoon={section.comingSoon}
+                                    count={
+                                        stats
+                                            ? {
+                                                  productions: stats.production_count,
+                                                  locations: stats.location_count,
+                                                  articles: stats.article_count,
+                                                  performers: stats.artist_count,
+                                                  collections: stats.collection_count,
+                                              }[section.key]
+                                            : undefined
+                                    }
                                 />
                             </div>
                         </SectionCard>

@@ -4,15 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Link, usePathname } from "@/i18n/routing";
-import {
-    Clapperboard,
-    MapPin,
-    Newspaper,
-    Users,
-    Database,
-    FileUp,
-    FolderArchive,
-} from "lucide-react";
+import { Drama, MapPin, Newspaper, Users, Database, FileUp, SquareStack } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -21,11 +13,11 @@ import { getLabel } from "@/lib/utils";
 import type { EntityType, Facet } from "@/types/models/taxonomy.types";
 
 const navItems = [
-    { key: "productions", href: "/cms/productions", icon: Clapperboard, editionKey: "edition1" },
+    { key: "productions", href: "/cms/productions", icon: Drama, editionKey: "edition1" },
     { key: "locations", href: "/cms/locations", icon: MapPin, editionKey: "edition2" },
     { key: "articles", href: "/cms/articles", icon: Newspaper, editionKey: "edition3" },
     { key: "performers", href: "/cms/performers", icon: Users, editionKey: "edition4" },
-    { key: "collections", href: "/cms/collections", icon: FolderArchive, editionKey: "edition5" },
+    { key: "collections", href: "/cms/collections", icon: SquareStack, editionKey: "edition5" },
 ];
 
 const utilityItems = [
