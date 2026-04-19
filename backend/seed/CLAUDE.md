@@ -19,10 +19,12 @@ locations → spaces → halls → productions → prices → price_ranks → ev
   → location_creations  (patch)
   → space_locations     (patch)
   → location_deletions  (patch)
-  → hall_merges         (patch)
-  → hall_names      (patch)
-  → hall_expansions (patch)
-  → hall_deletions  (patch)
+  → hall_merges            (patch)
+  → hall_names             (patch)
+  → hall_expansions        (patch)
+  → hall_deletions         (patch)
+  → genre_tag_mappings      (patch)
+  → genre_location_mappings (patch)
 ```
 
 ## Normalisation files (`seed/normalization/`)
@@ -127,6 +129,31 @@ Some API records represent a combination of multiple physical rooms (e.g. "Conce
 
 - `combo_source_id` - the combined hall record to dissolve.
 - `component_source_ids` - the individual halls that each get an event link.
+
+---
+
+### `genre_tag_mappings.json` - map 404 API genres to taxonomy tags
+
+Maps each raw genre (by source_id from `seed/raw/genres.json`) to a tag slug + facet in the clean taxonomy. Runs after all hall patches. For each production, every genre link is resolved via this mapping and a `taggings` row is inserted. Unmapped genres are silently skipped.
+
+`facet` must match a value from the `facet` enum: `discipline`, `format`, `theme`, `audience`, `accessibility`, `language`.
+
+```json
+{ "genre_source_id": 73, "tag_slug": "theatre", "facet": "discipline", "note": "Theater" }
+```
+
+---
+
+### `genre_location_mappings.json` - link productions to locations via genre signals
+
+Some 404 API genres encode venue information ("in NTGent", "in Minard", etc.). This file maps those genre source_ids to locations, creating rows in the `production_locations` junction table. Runs after all other patches.
+
+Use `location_source_id` for locations that exist in the raw API, or `location_slug` for locations created via `location_creations.json` (which have no source_id).
+
+```json
+{ "genre_source_id": 111, "location_source_id": 56, "note": "in NTGent" }
+{ "genre_source_id": 105, "location_slug": "vlaamse-opera", "note": "in Opera Gent" }
+```
 
 ---
 
