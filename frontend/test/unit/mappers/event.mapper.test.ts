@@ -19,7 +19,7 @@ describe("event mapper", () => {
             max_tickets_per_order: undefined,
             production_id: "4f327f95-3a64-4fc0-8f6a-a9dc44c01111",
             status: "available",
-            hall_id: undefined,
+            hall_ids: [],
         });
 
         expect(mapped.sourceId).toBeNull();
@@ -30,7 +30,7 @@ describe("event mapper", () => {
         expect(mapped.boxOfficeId).toBeNull();
         expect(mapped.uitdatabankId).toBeNull();
         expect(mapped.maxTicketsPerOrder).toBeNull();
-        expect(mapped.hallId).toBeNull();
+        expect(mapped.hallIds).toEqual([]);
         expect(mapped.startsAt).toBe("2025-06-15T20:00:00Z");
         expect(mapped.productionId).toBe("4f327f95-3a64-4fc0-8f6a-a9dc44c01111");
         expect(mapped.status).toBe("available");

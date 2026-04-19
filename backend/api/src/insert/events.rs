@@ -25,8 +25,12 @@ impl ApiEvent {
             None
         };
 
-        let event_create = self.to_create(production.production.id, hall_uuid);
-        db.events().insert(event_create).await?;
+        let event_create = self.to_create(production.production.id);
+        let event = db.events().insert(event_create).await?;
+
+        if let Some(hall_id) = hall_uuid {
+            db.events().sync_halls(event.id, vec![hall_id]).await?;
+        }
         Ok(())
     }
 }

@@ -58,9 +58,11 @@ impl EventPayload {
     }
 
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {
-        let (event, prices) = self.into_parts();
+        let (mut event, prices, hall_ids) = self.into_parts();
+        event.updated_at = Utc::now();
         let updated = db.events().update(event).await?;
         EventPricePayload::sync_for_event(db, updated.id, prices).await?;
+        db.events().sync_halls(updated.id, hall_ids).await?;
         Self::from_model(db, updated).await
     }
 
@@ -69,6 +71,8 @@ impl EventPayload {
     }
 
     async fn from_model(db: &Database, value: Event) -> Result<Self, AppError> {
+        let hall_ids = db.events().hall_ids_for(value.id).await?;
+        let prices = EventPricePayload::by_event(db, value.id).await?;
         Ok(Self {
             id: value.id,
             source_id: value.source_id,
@@ -84,17 +88,18 @@ impl EventPayload {
             max_tickets_per_order: value.max_tickets_per_order,
             production_id: value.production_id,
             status: value.status,
-            hall_id: value.hall_id,
-            prices: EventPricePayload::by_event(db, value.id).await?,
+            hall_ids,
+            prices,
         })
     }
 }
 
 impl EventPostPayload {
     pub async fn create(self, db: &Database) -> Result<EventPayload, AppError> {
-        let (event, prices) = self.into_parts();
+        let (event, prices, hall_ids) = self.into_parts();
         let event = db.events().insert(event).await?;
         EventPricePayload::sync_for_event(db, event.id, prices).await?;
+        db.events().sync_halls(event.id, hall_ids).await?;
         EventPayload::from_model(db, event).await
     }
 }
@@ -104,6 +109,7 @@ pub struct EventPayload {
     pub id: Uuid,
     pub source_id: Option<i32>,
     pub created_at: DateTime<Utc>,
+    #[serde(default)]
     pub updated_at: DateTime<Utc>,
     pub starts_at: DateTime<Utc>,
     pub ends_at: Option<DateTime<Utc>>,
@@ -115,7 +121,8 @@ pub struct EventPayload {
     pub max_tickets_per_order: Option<i32>,
     pub production_id: Uuid,
     pub status: String,
-    pub hall_id: Option<Uuid>,
+    #[serde(default)]
+    pub hall_ids: Vec<Uuid>,
     #[serde(default)]
     pub prices: Vec<EventPricePayload>,
 }
@@ -135,7 +142,8 @@ pub struct EventPostPayload {
     pub max_tickets_per_order: Option<i32>,
     pub production_id: Uuid,
     pub status: String,
-    pub hall_id: Option<Uuid>,
+    #[serde(default)]
+    pub hall_ids: Vec<Uuid>,
     #[serde(default)]
     pub prices: Vec<EventPricePayload>,
 }
@@ -157,7 +165,6 @@ impl From<EventPayload> for Event {
             max_tickets_per_order: value.max_tickets_per_order,
             production_id: value.production_id,
             status: value.status,
-            hall_id: value.hall_id,
         }
     }
 }
@@ -178,13 +185,12 @@ impl From<EventPostPayload> for EventCreate {
             max_tickets_per_order: value.max_tickets_per_order,
             production_id: value.production_id,
             status: value.status,
-            hall_id: value.hall_id,
         }
     }
 }
 
 impl EventPayload {
-    fn into_parts(self) -> (Event, Vec<EventPricePayload>) {
+    fn into_parts(self) -> (Event, Vec<EventPricePayload>, Vec<Uuid>) {
         let Self {
             id,
             source_id,
@@ -200,7 +206,7 @@ impl EventPayload {
             max_tickets_per_order,
             production_id,
             status,
-            hall_id,
+            hall_ids,
             prices,
         } = self;
 
@@ -220,15 +226,15 @@ impl EventPayload {
                 max_tickets_per_order,
                 production_id,
                 status,
-                hall_id,
             },
             prices,
+            hall_ids,
         )
     }
 }
 
 impl EventPostPayload {
-    fn into_parts(self) -> (EventCreate, Vec<EventPricePayload>) {
+    fn into_parts(self) -> (EventCreate, Vec<EventPricePayload>, Vec<Uuid>) {
         let Self {
             source_id,
             created_at,
@@ -243,7 +249,7 @@ impl EventPostPayload {
             max_tickets_per_order,
             production_id,
             status,
-            hall_id,
+            hall_ids,
             prices,
         } = self;
 
@@ -262,9 +268,9 @@ impl EventPostPayload {
                 max_tickets_per_order,
                 production_id,
                 status,
-                hall_id,
             },
             prices,
+            hall_ids,
         )
     }
 }

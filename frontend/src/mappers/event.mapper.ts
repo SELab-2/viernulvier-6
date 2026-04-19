@@ -117,7 +117,7 @@ export const mapEvent = (response: EventResponse): Event => {
         maxTicketsPerOrder: toNullable(response.max_tickets_per_order),
         productionId: response.production_id,
         status: response.status,
-        hallId: toNullable(response.hall_id),
+        hallIds: response.hall_ids ?? [],
         prices: mapEventPrices(response.prices),
     };
 };
@@ -147,7 +147,7 @@ export const mapCreateEventInput = (input: EventCreateInput): EventCreateRequest
         max_tickets_per_order: input.maxTicketsPerOrder,
         production_id: input.productionId,
         status: input.status,
-        hall_id: input.hallId,
+        hall_ids: input.hallIds ?? [],
         prices: input.prices?.map(mapEventPriceInput),
     };
 };
@@ -166,7 +166,7 @@ export const mapUpdateEventInput = (input: EventUpdateInput): EventUpdateRequest
         max_tickets_per_order: input.maxTicketsPerOrder,
         production_id: input.productionId,
         status: input.status,
-        hall_id: input.hallId,
+        hall_ids: input.hallIds ?? [],
         created_at: input.createdAt,
         prices: input.prices?.map(mapEventPriceInput),
     };
