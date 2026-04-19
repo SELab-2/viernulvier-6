@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
-import { ImageIcon, SquarePen } from "lucide-react";
+import { SquarePen } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
@@ -55,6 +55,7 @@ export function toLocationRow(entity: Location): LocationRow {
         isOwnedByViernulvier: entity.isOwnedByViernulvier,
         uitdatabankId: entity.uitdatabankId,
         address: entity.address,
+        coverImageUrl: entity.coverImageUrl,
         descriptionNl: nl?.description ?? null,
         descriptionEn: en?.description ?? null,
         historyNl: nl?.history ?? null,
@@ -97,10 +98,8 @@ export function makeLocationColumns(options: {
     onEdit: (row: LocationRow) => void;
     t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>;
     onOpenSpotlight?: (src: string, alt: string) => void;
-    onEditCover?: (location: Location) => void;
-    tLocations?: ReturnType<typeof useTranslations<"Cms.LocationCoverImage">>;
 }): ColumnDef<Location>[] {
-    const { onEdit, t, onOpenSpotlight, onEditCover, tLocations } = options;
+    const { onEdit, t, onOpenSpotlight } = options;
 
     const actions: Action<Location>[] = [
         {
@@ -136,16 +135,6 @@ export function makeLocationColumns(options: {
                 />
             ),
         },
-        ...(onEditCover
-            ? [
-                  {
-                      key: "cover-image",
-                      label: tLocations?.("edit") ?? "Edit cover image",
-                      icon: ImageIcon,
-                      onClick: (location: Location) => onEditCover(location),
-                  } satisfies Action<Location>,
-              ]
-            : []),
     ];
 
     return [

@@ -8,10 +8,15 @@ import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
 import { ActionBar } from "../action-bar";
 import { useParentChildSelection } from "../use-parent-child-selection";
-import { makeLocationColumns, locationFields, toLocationUpdateInput } from "./columns";
+import {
+    makeLocationColumns,
+    locationFields,
+    toLocationRow,
+    toLocationUpdateInput,
+} from "./columns";
 import { makeHallColumns, hallFields, toHallUpdateInput } from "./hall-columns";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
-import { LocationCoverEditor } from "@/components/cms/location-cover-editor";
+import { LocationCoverField } from "@/components/cms/location-cover-field";
 import { Spinner } from "@/components/ui/spinner";
 import { useGetInfiniteLocations, useUpdateLocation } from "@/hooks/api/useLocations";
 import { useGetHalls, useUpdateHall } from "@/hooks/api/useHalls";
@@ -23,7 +28,6 @@ export function LocationsTable() {
     const t = useTranslations("Cms.Locations");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
-    const tLocationCoverImage = useTranslations("Cms.LocationCoverImage");
     const loadMoreRef = useRef<HTMLDivElement>(null);
 
     const {
@@ -66,10 +70,17 @@ export function LocationsTable() {
         };
     }, [loadMore]);
 
-    const [editLocation, setEditLocation] = useState<LocationRow | null>(null);
+    const [editLocationId, setEditLocationId] = useState<string | null>(null);
     const [editHall, setEditHall] = useState<Hall | null>(null);
     const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
-    const [coverPickerLocation, setCoverPickerLocation] = useState<Location | null>(null);
+
+    // Derive the current LocationRow from live query data so cover image url stays fresh
+    // after linkMedia / clearCover mutations without closing and re-opening the sheet.
+    const editLocation: LocationRow | null = useMemo(() => {
+        if (!editLocationId) return null;
+        const found = locations.find((l) => l.id === editLocationId);
+        return found ? toLocationRow(found) : null;
+    }, [editLocationId, locations]);
 
     const hallsByLocation = useMemo(() => {
         const spaceToLocation = new Map<string, string>();
@@ -104,13 +115,11 @@ export function LocationsTable() {
         () => [
             selectColumn,
             ...makeLocationColumns({
-                onEdit: setEditLocation,
+                onEdit: (row) => setEditLocationId(row.id),
                 t: tActions,
-                onEditCover: setCoverPickerLocation,
-                tLocations: tLocationCoverImage,
             }),
         ],
-        [selectColumn, tActions, tLocationCoverImage]
+        [selectColumn, tActions]
     );
 
     const hallCols = useMemo(
@@ -219,12 +228,13 @@ export function LocationsTable() {
                 items={collectionPickerItems}
             />
             <EditSheet
-                open={!!editLocation}
-                onOpenChange={(open) => !open && setEditLocation(null)}
+                open={!!editLocationId}
+                onOpenChange={(open) => !open && setEditLocationId(null)}
                 entity={editLocation}
                 fields={locationFields}
                 title={t("editLocation")}
                 onSave={(data) => updateLocation.mutateAsync(toLocationUpdateInput(data))}
+                extraContent={(row) => <LocationCoverField location={row} />}
             />
             <EditSheet
                 open={!!editHall}
@@ -233,10 +243,6 @@ export function LocationsTable() {
                 fields={hallFields}
                 title={t("editHall")}
                 onSave={(data) => updateHall.mutateAsync(toHallUpdateInput(data))}
-            />
-            <LocationCoverEditor
-                location={coverPickerLocation}
-                onClose={() => setCoverPickerLocation(null)}
             />
         </div>
     );
