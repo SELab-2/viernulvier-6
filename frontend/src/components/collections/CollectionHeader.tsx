@@ -59,7 +59,9 @@ export function CollectionHeader({ collection }: CollectionHeaderProps) {
                 <span>
                     {collection.items.length} {t("items")}
                 </span>
-                <span>{formatDate(collection.updatedAt, locale)}</span>
+                <time dateTime={collection.updatedAt}>
+                    {formatDate(collection.updatedAt, locale)}
+                </time>
             </div>
 
             {/* Description */}
