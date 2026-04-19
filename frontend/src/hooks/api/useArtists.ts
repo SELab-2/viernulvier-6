@@ -17,8 +17,14 @@ export const useGetArtists = () => {
     });
 };
 
-// TODO: REPLACE WITH REAL HOOK — useGetArtist(id) is implemented in a separate PR.
-// Once that PR is merged, delete this stub and import the real hook in CollectionItemCard.tsx.
-export const useGetArtist = (_id: string, _options?: { enabled?: boolean }) => {
+/**
+ * @deprecated Temporary stub. Replace once the real useGetArtist(id) PR merges.
+ * TODO: REPLACE WITH REAL HOOK — useGetArtist(id) is implemented in a separate PR.
+ * Once that PR is merged, delete this stub and import the real hook in CollectionItemCard.tsx.
+ */
+export const useGetArtist = (
+    _id: string,
+    _options?: { enabled?: boolean }
+): { data: Artist | undefined; isLoading: boolean; isError: boolean } => {
     return { data: undefined, isLoading: false, isError: false };
 };
