@@ -16,3 +16,9 @@ export const useGetArtists = () => {
         },
     });
 };
+
+// TODO: REPLACE WITH REAL HOOK — useGetArtist(id) is implemented in a separate PR.
+// Once that PR is merged, delete this stub and import the real hook in CollectionItemCard.tsx.
+export const useGetArtist = (_id: string, _options?: { enabled?: boolean }) => {
+    return { data: undefined, isLoading: false, isError: false };
+};
