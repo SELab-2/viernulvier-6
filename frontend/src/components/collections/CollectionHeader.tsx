@@ -56,9 +56,7 @@ export function CollectionHeader({ collection }: CollectionHeaderProps) {
 
             {/* Dateline bar */}
             <div className="border-foreground text-foreground mt-4 flex items-center justify-between border-y py-1.5 font-mono text-[9px] tracking-widest uppercase">
-                <span>
-                    {collection.items.length} {t("items")}
-                </span>
+                <span>{t("items", { count: collection.items.length })}</span>
                 <time dateTime={collection.updatedAt}>
                     {formatDate(collection.updatedAt, locale)}
                 </time>

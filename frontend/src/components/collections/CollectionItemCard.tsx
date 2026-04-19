@@ -18,9 +18,10 @@ import { useGetMedia, useGetEntityMedia } from "@/hooks/api/useMedia";
 // ---------------------------------------------------------------------------
 
 function ProductionCard({ item, locale }: { item: CollectionItem; locale: string }) {
+    const t = useTranslations("Collections");
     const { data: production, isLoading } = useGetProduction(item.contentId);
     const title =
-        production?.translations.find((t) => t.languageCode === locale)?.title ??
+        production?.translations.find((tr) => tr.languageCode === locale)?.title ??
         production?.translations[0]?.title ??
         null;
     const imageUrl = production?.coverImageUrl ?? null;
@@ -34,12 +35,13 @@ function ProductionCard({ item, locale }: { item: CollectionItem; locale: string
             title={title}
             imageUrl={imageUrl}
             href={href}
-            typeLabel="PRODUCTIE / PRODUCTION"
+            typeLabel={t("typeLabels.production")}
         />
     );
 }
 
 function EventCard({ item, locale }: { item: CollectionItem; locale: string }) {
+    const t = useTranslations("Collections");
     const { data: event, isLoading } = useGetEvent(item.contentId);
     // Events have no own title — display the start date and link to the production
     const title = event
@@ -65,12 +67,13 @@ function EventCard({ item, locale }: { item: CollectionItem; locale: string }) {
             title={title}
             imageUrl={imageUrl}
             href={href}
-            typeLabel="EVENEMENT / EVENT"
+            typeLabel={t("typeLabels.event")}
         />
     );
 }
 
 function LocationCard({ item, locale }: { item: CollectionItem; locale: string }) {
+    const t = useTranslations("Collections");
     const { data: location, isLoading } = useGetLocation(item.contentId);
     const title = location?.name ?? null;
     const { data: coverMedia = [] } = useGetEntityMedia("location", item.contentId, {
@@ -88,12 +91,13 @@ function LocationCard({ item, locale }: { item: CollectionItem; locale: string }
             title={title}
             imageUrl={imageUrl}
             href={href}
-            typeLabel="LOCATIE / LOCATION"
+            typeLabel={t("typeLabels.location")}
         />
     );
 }
 
 function BlogpostCard({ item, locale }: { item: CollectionItem; locale: string }) {
+    const t = useTranslations("Collections");
     const { data: article, isLoading } = useGetArticle(item.contentId);
     const title = article?.title ?? null;
     const { data: coverMedia = [] } = useGetEntityMedia("article", item.contentId, {
@@ -111,12 +115,13 @@ function BlogpostCard({ item, locale }: { item: CollectionItem; locale: string }
             title={title}
             imageUrl={imageUrl}
             href={href}
-            typeLabel="ARTIKEL / ARTICLE"
+            typeLabel={t("typeLabels.blogpost")}
         />
     );
 }
 
 function ArtistCard({ item, locale }: { item: CollectionItem; locale: string }) {
+    const t = useTranslations("Collections");
     // TODO: REPLACE WITH REAL HOOK — useGetArtist(id) is implemented in a separate PR.
     // Once that PR is merged, replace the stub import and this component will show real data.
     const { data: artist, isLoading } = useGetArtist(item.contentId);
@@ -134,13 +139,14 @@ function ArtistCard({ item, locale }: { item: CollectionItem; locale: string }) 
             isLoading={isLoading}
             title={title}
             imageUrl={imageUrl}
-            href={null}
-            typeLabel="ARTIEST / ARTIST"
+            href={null} // TODO: wire href once artist detail page route exists
+            typeLabel={t("typeLabels.artist")}
         />
     );
 }
 
 function MediaCard({ item, locale }: { item: CollectionItem; locale: string }) {
+    const t = useTranslations("Collections");
     const { data: media, isLoading } = useGetMedia(item.contentId);
     const imageUrl = media?.url ?? null;
     const title = null; // media items have no title
@@ -153,7 +159,7 @@ function MediaCard({ item, locale }: { item: CollectionItem; locale: string }) {
             title={title}
             imageUrl={imageUrl}
             href={null}
-            typeLabel="MEDIA"
+            typeLabel={t("typeLabels.media")}
         />
     );
 }
