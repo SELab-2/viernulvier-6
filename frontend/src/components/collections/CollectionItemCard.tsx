@@ -120,7 +120,7 @@ function ArtistCard({ item, locale }: { item: CollectionItem; locale: string }) 
     // TODO: REPLACE WITH REAL HOOK — useGetArtist(id) is implemented in a separate PR.
     // Once that PR is merged, replace the stub import and this component will show real data.
     const { data: artist, isLoading } = useGetArtist(item.contentId);
-    const title = (artist as { name?: string } | undefined)?.name ?? null;
+    const title = artist?.name ?? null;
     const { data: coverMedia = [] } = useGetEntityMedia("artist", item.contentId, {
         enabled: !!artist,
         params: { role: "cover" },
@@ -237,7 +237,7 @@ function CardShell({ item, locale, isLoading, title, imageUrl, href, typeLabel }
     );
 
     if (href) {
-        return <Link href={href as Parameters<typeof Link>[0]["href"]}>{inner}</Link>;
+        return <Link href={href as string}>{inner}</Link>;
     }
     return inner;
 }
