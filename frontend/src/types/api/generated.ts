@@ -341,6 +341,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/import-errors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description List importer errors for CMS usage. Returns unresolved errors by default. */
+        get: operations["get_import_errors"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/locations": {
         parameters: {
             query?: never;
@@ -1226,6 +1243,31 @@ export interface components {
             space_id?: string | null;
             vendor_id?: string | null;
         };
+        ImportErrorPayload: {
+            /** Format: date-time */
+            created_at: string;
+            entity: string;
+            error_kind: string;
+            field?: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            last_seen_at: string;
+            message: string;
+            payload?: unknown;
+            relation?: string | null;
+            /** Format: int32 */
+            relation_source_id?: number | null;
+            /** Format: date-time */
+            resolved_at?: string | null;
+            /** Format: uuid */
+            run_id?: string | null;
+            severity: string;
+            /** Format: int32 */
+            source_id?: number | null;
+            /** Format: date-time */
+            updated_at: string;
+        };
         LinkMediaRequest: {
             is_cover_image?: boolean | null;
             /** Format: uuid */
@@ -1407,6 +1449,34 @@ export interface components {
                 /** Format: uuid */
                 space_id?: string | null;
                 vendor_id?: string | null;
+            }[];
+            next_cursor?: string | null;
+        };
+        PaginatedResponse_ImportErrorPayload: {
+            data: {
+                /** Format: date-time */
+                created_at: string;
+                entity: string;
+                error_kind: string;
+                field?: string | null;
+                /** Format: uuid */
+                id: string;
+                /** Format: date-time */
+                last_seen_at: string;
+                message: string;
+                payload?: unknown;
+                relation?: string | null;
+                /** Format: int32 */
+                relation_source_id?: number | null;
+                /** Format: date-time */
+                resolved_at?: string | null;
+                /** Format: uuid */
+                run_id?: string | null;
+                severity: string;
+                /** Format: int32 */
+                source_id?: number | null;
+                /** Format: date-time */
+                updated_at: string;
             }[];
             next_cursor?: string | null;
         };
@@ -2749,6 +2819,39 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    get_import_errors: {
+        parameters: {
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+                resolved?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedResponse_ImportErrorPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
             };
         };
     };

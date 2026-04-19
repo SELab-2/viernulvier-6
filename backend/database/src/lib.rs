@@ -8,6 +8,7 @@ use crate::{
         event_price::EventPriceRepo, hall::HallRepo, internal_state::InternalStateRepo,
         location::LocationRepo, media::MediaRepo, media_variant::MediaVariantRepo,
         normalization_log::NormalizationLogRepo, price::PriceRepo, price_rank::PriceRankRepo,
+        import_error::ImportErrorRepo
         production::ProductionRepo, series::SeriesRepo, sessions::SessionRepo, space::SpaceRepo,
         tag::TagRepo, user::UserRepo,
     },
@@ -25,6 +26,7 @@ pub mod models {
     pub mod facet;
     pub mod filtering;
     pub mod hall;
+    pub mod import_error;
     pub mod internal_state;
     pub mod location;
     pub mod media;
@@ -48,6 +50,7 @@ pub mod repos {
     pub mod event;
     pub mod event_price;
     pub mod hall;
+    pub mod import_error;
     pub mod internal_state;
     pub mod location;
     pub mod media;
@@ -167,5 +170,8 @@ impl Database {
 
     pub fn normalization_log<'a>(&'a self) -> NormalizationLogRepo<'a> {
         NormalizationLogRepo::new(&self.db)
+    }
+
+    pub fn import_errors<'a>(&'a self) -> ImportErrorRepo<'a> {
     }
 }
