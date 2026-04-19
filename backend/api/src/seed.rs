@@ -39,6 +39,24 @@ struct LocationNamePatch {
 }
 
 #[derive(Deserialize)]
+struct LocationCreation {
+    name: String,
+    slug: String,
+    city: Option<String>,
+    street: Option<String>,
+    number: Option<String>,
+    postal_code: Option<String>,
+    country: Option<String>,
+    #[serde(default)]
+    space_source_ids: Vec<i32>,
+}
+
+#[derive(Deserialize)]
+struct LocationDeletion {
+    source_id: i32,
+}
+
+#[derive(Deserialize)]
 struct SpaceLocationPatch {
     source_id: i32,
     location_source_id: i32,
@@ -112,7 +130,9 @@ impl SeedImporter {
         self.import_events().await?;
         self.import_event_prices().await?;
         self.apply_location_name_patches().await?;
+        self.apply_location_creations().await?;
         self.apply_space_location_patches().await?;
+        self.apply_location_deletions().await?;
         self.apply_hall_merges().await?;
         self.apply_hall_name_patches().await?;
         self.apply_hall_expansions().await?;
@@ -196,6 +216,64 @@ impl SeedImporter {
                     "space location patch matched no rows"
                 );
             }
+        }
+        Ok(())
+    }
+
+    async fn apply_location_creations(&self) -> Result<(), SeedError> {
+        let Some(creations) =
+            self.read_normalization_file::<LocationCreation>("location_creations.json")
+        else {
+            return Ok(());
+        };
+
+        info!("Applying {} location creations", creations.len());
+        for creation in creations {
+            let location_id: uuid::Uuid = sqlx::query_scalar(
+                "INSERT INTO locations (name, slug, city, street, number, postal_code, country)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7)
+                 ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
+                 RETURNING id",
+            )
+            .bind(&creation.name)
+            .bind(&creation.slug)
+            .bind(&creation.city)
+            .bind(&creation.street)
+            .bind(&creation.number)
+            .bind(&creation.postal_code)
+            .bind(&creation.country)
+            .fetch_one(self.db.pool())
+            .await
+            .map_err(DatabaseError::from)?;
+
+            for space_source_id in &creation.space_source_ids {
+                sqlx::query(
+                    "UPDATE spaces SET location_id = $1 WHERE source_id = $2",
+                )
+                .bind(location_id)
+                .bind(space_source_id)
+                .execute(self.db.pool())
+                .await
+                .map_err(DatabaseError::from)?;
+            }
+        }
+        Ok(())
+    }
+
+    async fn apply_location_deletions(&self) -> Result<(), SeedError> {
+        let Some(deletions) =
+            self.read_normalization_file::<LocationDeletion>("location_deletions.json")
+        else {
+            return Ok(());
+        };
+
+        info!("Applying {} location deletions", deletions.len());
+        for deletion in deletions {
+            sqlx::query("DELETE FROM locations WHERE source_id = $1")
+                .bind(deletion.source_id)
+                .execute(self.db.pool())
+                .await
+                .map_err(DatabaseError::from)?;
         }
         Ok(())
     }

@@ -48,5 +48,13 @@
   { "source_id": 172, "location_source_id": 1, "note": "De Vooruit - Neuzeke" },
   { "source_id": 173, "location_source_id": 1, "note": "Studio Groot" },
   { "source_id": 176, "location_source_id": 1, "note": "Toiletten Café" },
-  { "source_id": 178, "location_source_id": 1, "note": "Studio Klein" }
+  { "source_id": 178, "location_source_id": 1, "note": "Studio Klein" },
+  { "source_id": 53,  "location_source_id": 33, "note": "Bijloke → de Bijloke" },
+  { "source_id": 58,  "location_source_id": 33, "note": "De Bijloke → de Bijloke" },
+  { "source_id": 28,  "location_source_id": 55, "note": "Minnemeers → NTGent Minnemeers" },
+  { "source_id": 25,  "location_source_id": 56, "note": "NTGent Arca → NTGent" },
+  { "source_id": 187, "location_source_id": 59, "note": "Standaertsite Ledeberg → correct location" },
+  { "source_id": 144, "location_source_id": 48, "note": "Loods Dok Noord 4F → BOX (same address)" },
+  { "source_id": 167, "location_source_id": 69, "note": "De Serre → CAMPUSatelier (same address)" },
+  { "source_id": 177, "location_source_id": 87, "note": "Club Wintercircus → Wintercircus" }
 ]
