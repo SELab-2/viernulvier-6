@@ -1118,8 +1118,7 @@ export interface components {
             doors_at?: string | null;
             /** Format: date-time */
             ends_at?: string | null;
-            /** Format: uuid */
-            hall_ids: string[];
+            hall_ids?: string[];
             /** Format: uuid */
             id: string;
             /** Format: date-time */
@@ -1136,7 +1135,7 @@ export interface components {
             status: string;
             uitdatabank_id?: string | null;
             /** Format: date-time */
-            updated_at: string;
+            updated_at?: string;
             vendor_id?: string | null;
         };
         EventPostPayload: {
@@ -1147,7 +1146,6 @@ export interface components {
             doors_at?: string | null;
             /** Format: date-time */
             ends_at?: string | null;
-            /** Format: uuid */
             hall_ids?: string[];
             /** Format: date-time */
             intermission_at?: string | null;
@@ -1369,8 +1367,7 @@ export interface components {
                 doors_at?: string | null;
                 /** Format: date-time */
                 ends_at?: string | null;
-                /** Format: uuid */
-                hall_ids: string[];
+                hall_ids?: string[];
                 /** Format: uuid */
                 id: string;
                 /** Format: date-time */
@@ -1387,7 +1384,7 @@ export interface components {
                 status: string;
                 uitdatabank_id?: string | null;
                 /** Format: date-time */
-                updated_at: string;
+                updated_at?: string;
                 vendor_id?: string | null;
             }[];
             next_cursor?: string | null;
