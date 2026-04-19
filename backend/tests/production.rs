@@ -5,7 +5,7 @@ use axum::http::StatusCode;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
-use viernulvier_api::dto::{
+use viernulvier_archive::dto::{
     paginated::PaginatedResponse,
     production::{ProductionPayload, ProductionPostPayload},
 };

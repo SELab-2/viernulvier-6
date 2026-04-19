@@ -31,6 +31,8 @@ use uuid::Uuid;
 pub mod error;
 mod helper;
 pub mod insert;
+#[cfg(feature = "ai-normalization")]
+pub mod normalization;
 pub mod models {
     pub mod collection;
     pub mod event;
@@ -193,11 +195,18 @@ impl ApiImporter {
                     (production.poster_gallery.clone(), "poster"),
                 ];
 
+                #[cfg(feature = "ai-normalization")]
+                let production_for_norm = production.clone();
+
                 let production_source_id = production.insert(&self.db).await.unwrap();
 
                 let Some(source_id) = production_source_id else {
                     continue;
                 };
+
+                #[cfg(feature = "ai-normalization")]
+                normalization::normalize_production(&self.db, &production_for_norm, source_id)
+                    .await;
 
                 for (gallery_url, gallery_type) in galleries {
                     if let Some(url) = gallery_url
@@ -518,8 +527,12 @@ impl ApiImporter {
         };
 
         if let Ok(media) = self.db.media().insert(media_create).await {
-            let role = media_role_from_gallery_type(gallery_type);
             let is_cover = item.position == Some(0);
+            let role = if is_cover && gallery_type == "media" {
+                "cover"
+            } else {
+                media_role_from_gallery_type(gallery_type)
+            };
             let _ = self
                 .db
                 .media()
