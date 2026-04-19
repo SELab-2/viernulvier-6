@@ -33,6 +33,7 @@ export type Collection = {
     items: CollectionItem[];
     createdAt: string;
     updatedAt: string;
+    coverImageUrl: string | null;
 };
 
 export type CollectionCreateInput = {

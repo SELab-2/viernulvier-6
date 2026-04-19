@@ -50,6 +50,7 @@ export const mapCollection = (response: CollectionResponse): Collection => ({
     items: (response.items ?? []).map(mapItem),
     createdAt: response.created_at,
     updatedAt: response.updated_at,
+    coverImageUrl: toNullable(response.cover_image_url),
 });
 
 export const mapCollections = (response: CollectionResponse[]): Collection[] =>

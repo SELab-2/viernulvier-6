@@ -21,6 +21,7 @@ export type Location = {
     uitdatabankId: string | null;
     address: string;
     translations: LocationTranslation[];
+    coverImageUrl: string | null;
 };
 
 export type LocationTranslationInput = {
