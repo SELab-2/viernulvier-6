@@ -64,6 +64,11 @@ jobs:
             "NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}/api"
             "NEXT_PUBLIC_MEDIA_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}/s3"
             "CODECOV_TOKEN=${{ secrets.CODECOV_TOKEN }}"
+            "GITHUB_ACTIONS=true"
+            "GITHUB_REPOSITORY=${{ github.repository }}"
+            "GITHUB_SHA=${{ github.sha }}"
+            "GITHUB_REF=${{ github.ref }}"
+            "GITHUB_RUN_ID=${{ github.run_id }}"
           tags: |
             kayasem/${{ vars.PROJECT_NAME }}-frontend:latest
             kayasem/${{ vars.PROJECT_NAME }}-frontend:${{ github.sha }}
