@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import Image from "next/image";
 import { SquarePen } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
@@ -95,8 +96,9 @@ export function toLocationUpdateInput(row: LocationRow): LocationUpdateInput {
 export function makeLocationColumns(options: {
     onEdit: (row: LocationRow) => void;
     t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>;
+    onOpenSpotlight?: (src: string, alt: string) => void;
 }): ColumnDef<Location>[] {
-    const { onEdit, t } = options;
+    const { onEdit, t, onOpenSpotlight } = options;
 
     const actions: Action<Location>[] = [
         {
@@ -135,6 +137,48 @@ export function makeLocationColumns(options: {
     ];
 
     return [
+        {
+            id: "cover",
+            header: "",
+            enableSorting: false,
+            cell: ({ row }) => {
+                const src = row.original.coverImageUrl;
+                if (!src) {
+                    return <div className="bg-muted h-10 w-10" />;
+                }
+                const alt = row.original.name ?? row.original.id;
+                if (!onOpenSpotlight) {
+                    return (
+                        <Image
+                            src={src}
+                            alt={alt}
+                            width={40}
+                            height={40}
+                            className="h-10 w-10 object-cover"
+                        />
+                    );
+                }
+                return (
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenSpotlight(src, alt);
+                        }}
+                        className="block h-10 w-10 cursor-zoom-in"
+                        aria-label={alt}
+                    >
+                        <Image
+                            src={src}
+                            alt={alt}
+                            width={40}
+                            height={40}
+                            className="h-10 w-10 object-cover"
+                        />
+                    </button>
+                );
+            },
+        },
         {
             accessorKey: "name",
             header: "Naam",

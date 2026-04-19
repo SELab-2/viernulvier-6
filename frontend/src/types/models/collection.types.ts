@@ -58,4 +58,5 @@ export type CollectionRow = {
     descriptionEn: string;
     itemCount: number;
     updatedAt: string;
+    coverImageUrl: string | null;
 };

@@ -68,6 +68,7 @@ export const toCollectionRow = (collection: Collection): CollectionRow => {
         descriptionEn: en?.description ?? "",
         itemCount: collection.items.length,
         updatedAt: collection.updatedAt,
+        coverImageUrl: collection.coverImageUrl,
     };
 };
 
