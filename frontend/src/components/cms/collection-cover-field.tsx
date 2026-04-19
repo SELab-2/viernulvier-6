@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { MediaPickerDialog } from "@/components/cms/media-picker-dialog";
-import { useClearCoverMedia, useLinkMedia } from "@/hooks/api/useMedia";
+import { useGetEntityMedia, useLinkMedia, useUnlinkMedia } from "@/hooks/api/useMedia";
 import type { Collection } from "@/types/models/collection.types";
 import type { Media } from "@/types/models/media.types";
 
@@ -22,8 +22,12 @@ type Props = {
 export function CollectionCoverField({ collection }: Props) {
     const t = useTranslations("Cms.CollectionCoverImage");
     const [pickerOpen, setPickerOpen] = useState(false);
+    const { data: coverMedia = [] } = useGetEntityMedia("collection", collection.id, {
+        params: { role: "cover" },
+    });
+    const cover = coverMedia[0] ?? null;
     const linkMedia = useLinkMedia();
-    const clearCover = useClearCoverMedia();
+    const unlinkMedia = useUnlinkMedia();
 
     const handleSelect = useCallback(
         async (media: Media) => {
@@ -43,16 +47,18 @@ export function CollectionCoverField({ collection }: Props) {
     );
 
     const handleRemove = useCallback(async () => {
+        if (!cover) return;
         try {
-            await clearCover.mutateAsync({
+            await unlinkMedia.mutateAsync({
                 entityType: "collection",
                 entityId: collection.id,
+                mediaId: cover.id,
             });
             toast.success(t("removeSuccess"));
         } catch {
             toast.error(t("removeError"));
         }
-    }, [clearCover, collection.id, t]);
+    }, [unlinkMedia, collection.id, cover, t]);
 
     return (
         <div className="space-y-2">
@@ -82,7 +88,7 @@ export function CollectionCoverField({ collection }: Props) {
                             variant="ghost"
                             size="sm"
                             onClick={handleRemove}
-                            disabled={clearCover.isPending}
+                            disabled={unlinkMedia.isPending}
                         >
                             {t("remove")}
                         </Button>

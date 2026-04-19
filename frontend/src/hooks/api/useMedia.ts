@@ -198,6 +198,10 @@ export const useUnlinkMedia = () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.media.entity(variables.entityType, variables.entityId),
             });
+            const entityListPrefix = ENTITY_LIST_PREFIXES[variables.entityType];
+            if (entityListPrefix) {
+                queryClient.invalidateQueries({ queryKey: entityListPrefix });
+            }
         },
     });
 };
