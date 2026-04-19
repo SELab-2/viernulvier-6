@@ -23,8 +23,9 @@ locations → spaces → halls → productions → prices → price_ranks → ev
   → hall_names             (patch)
   → hall_expansions        (patch)
   → hall_deletions         (patch)
-  → genre_tag_mappings      (patch)
-  → genre_location_mappings (patch)
+  → genre_tag_mappings           (patch)
+  → uitdatabank_theme_mappings   (patch)
+  → genre_location_mappings      (patch)
   → genre_series_mappings   (patch)
 ```
 
@@ -141,6 +142,16 @@ Maps each raw genre (by source_id from `seed/raw/genres.json`) to a tag slug + f
 
 ```json
 { "genre_source_id": 73, "tag_slug": "theatre", "facet": "discipline", "note": "Theater" }
+```
+
+---
+
+### `uitdatabank_theme_mappings.json` - map UIT databank themes to discipline tags
+
+Maps each `uitdatabank_theme` URL on a production (e.g. `/api/v1/uitdatabank/themes/4`) to a tag slug + facet. Runs after genre tag mappings as a gap-filler — `ON CONFLICT DO NOTHING` ensures genres always take precedence. 970/2658 productions have a theme.
+
+```json
+{ "theme_source_id": 4, "tag_slug": "concert", "facet": "discipline", "note": "pop en rock" }
 ```
 
 ---

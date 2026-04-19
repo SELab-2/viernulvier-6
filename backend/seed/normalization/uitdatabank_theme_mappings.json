@@ -1,0 +1,15 @@
+[
+  { "theme_source_id": 4,  "tag_slug": "concert", "facet": "discipline", "note": "pop en rock" },
+  { "theme_source_id": 9,  "tag_slug": "theatre", "facet": "discipline", "note": "tekst en muziektheater" },
+  { "theme_source_id": 7,  "tag_slug": "dance",   "facet": "discipline", "note": "moderne dans" },
+  { "theme_source_id": 1,  "tag_slug": "concert", "facet": "discipline", "note": "klassieke muziek" },
+  { "theme_source_id": 3,  "tag_slug": "concert", "facet": "discipline", "note": "wereldmuziek en folk" },
+  { "theme_source_id": 2,  "tag_slug": "concert", "facet": "discipline", "note": "jazz en blues" },
+  { "theme_source_id": 18, "tag_slug": "concert", "facet": "discipline", "note": "dance muziek" },
+  { "theme_source_id": 15, "tag_slug": "film",    "facet": "discipline", "note": "Cinefiel" },
+  { "theme_source_id": 14, "tag_slug": "film",    "facet": "discipline", "note": "Documentaires en reportages" },
+  { "theme_source_id": 8,  "tag_slug": "opera",   "facet": "discipline", "note": "opera en operette" },
+  { "theme_source_id": 10, "tag_slug": "theatre", "facet": "discipline", "note": "musical" },
+  { "theme_source_id": 5,  "tag_slug": "dance",   "facet": "discipline", "note": "ballet en klassieke dans" },
+  { "theme_source_id": 6,  "tag_slug": "dance",   "facet": "discipline", "note": "volksdans en werelddans" }
+]
