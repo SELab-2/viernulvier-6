@@ -72,6 +72,8 @@ jobs:
           garage_s3_bucket: media-${{ github.event.pull_request.number }}
           jwt_secret: ${{ secrets.JWT_SECRET }}
           api_key_404: ${{ secrets.API_KEY_404 }}
+          admin_email: ${{ vars.PREVIEW_ADMIN_EMAIL }}
+          admin_password: ${{ secrets.PREVIEW_ADMIN_PASSWORD }}
 
       - name: Ensure Traefik network exists
         run: docker network inspect traefik >/dev/null 2>&1 || docker network create traefik
@@ -171,6 +173,8 @@ jobs:
           garage_s3_bucket: media
           jwt_secret: ${{ secrets.JWT_SECRET }}
           api_key_404: ${{ secrets.API_KEY_404 }}
+          admin_email: ${{ vars.PREVIEW_ADMIN_EMAIL }}
+          admin_password: ${{ secrets.PREVIEW_ADMIN_PASSWORD }}
 
       - name: Cleanup preview stack
         run: |

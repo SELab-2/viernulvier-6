@@ -1,3 +1,7 @@
+use argon2::{
+    Argon2,
+    password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
+};
 use crate::extractors::auth::{AdminUser, EditorUser};
 use api::ApiImporter;
 use aws_sdk_s3::config::{Builder as S3Builder, Credentials, Region};
@@ -6,6 +10,7 @@ use axum::middleware::from_extractor_with_state;
 use axum::{Router, routing::get};
 use database::Database;
 use database::models::entity_type::EntityType;
+use database::models::user::{UserCreate, UserRole};
 use database::models::facet::Facet;
 use handlers::queries::sort::Sort;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
@@ -94,6 +99,20 @@ impl Modify for PathPrefixAddon {
 
 pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
     let db = Database::create_connect_migrate(&config.database_url).await?;
+
+    let has_admin = db.users().has_admin().await?;
+    if has_admin {
+        info!("Admin user already exists, skipping bootstrap");
+    } else {
+        let Some(password) = &config.admin_password else {
+            warn!("ADMIN_PASSWORD is required because no admin user exists yet");
+            return Err(AppError::Internal(
+                "ADMIN_PASSWORD is required because no admin user exists yet".into(),
+            ));
+        };
+        info!("No admin user found, bootstrapping admin account");
+        bootstrap_admin_if_missing(&db, &config.admin_email, password).await?;
+    }
 
     // initialize S3 client if config is present
     let s3_client = config.s3.as_ref().map(|s3_config| {
@@ -306,6 +325,8 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(media::attach_to_entity))
         .routes(routes!(media::link_to_entity))
         .routes(routes!(media::unlink_from_entity))
+        .routes(routes!(media::set_cover_for_entity))
+        .routes(routes!(media::clear_cover_for_entity))
         .routes(routes!(media::cleanup_orphans))
         .routes(routes!(media::reconcile_storage))
         // Tags
@@ -325,6 +346,35 @@ fn admin_routes(state: AppState) -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(admin::create_editor))
         .layer(from_extractor_with_state::<AdminUser, AppState>(state))
+}
+
+async fn bootstrap_admin_if_missing(
+    db: &Database,
+    email: &str,
+    password: &str,
+) -> Result<(), AppError> {
+    if db.users().by_email(email).await.is_ok() {
+        return Ok(());
+    }
+
+    let salt = SaltString::generate(&mut OsRng);
+    let password_hash = Argon2::default()
+        .hash_password(password.as_bytes(), &salt)
+        .map_err(|_| AppError::Internal("Failed to hash bootstrap password".into()))?
+        .to_string();
+
+    db.users()
+        .create(UserCreate {
+            username: "admin".into(),
+            email: email.into(),
+            password_hash,
+            role: UserRole::Admin,
+        })
+        .await
+        .map_err(|e| AppError::Internal(format!("Failed to create bootstrap admin: {e}")))?;
+
+    info!("Bootstrap admin user created successfully");
+    Ok(())
 }
 
 #[allow(clippy::expect_used)]

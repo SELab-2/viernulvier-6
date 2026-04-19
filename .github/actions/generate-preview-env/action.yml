@@ -34,6 +34,12 @@ inputs:
     required: true
   api_key_404:
     required: true
+  admin_email:
+    description: "Admin email for bootstrap"
+    required: true
+  admin_password:
+    description: "Admin password for bootstrap (required on first startup)"
+    required: true
   max_upload_size_mib:
     description: "Max upload size in MiB for presigned S3 URLs (default 50)"
     required: false
@@ -64,6 +70,8 @@ runs:
         GARAGE_S3_BUCKET: "${{ inputs.garage_s3_bucket }}"
         PREVIEW_API_KEY_404: "${{ inputs.api_key_404 }}"
         PREVIEW_JWT_SECRET: "${{ inputs.jwt_secret }}"
+        PREVIEW_ADMIN_EMAIL: "${{ inputs.admin_email }}"
+        PREVIEW_ADMIN_PASSWORD: "${{ inputs.admin_password }}"
         MAX_UPLOAD_SIZE_MIB: "${{ inputs.max_upload_size_mib }}"
 
       run: |
@@ -87,6 +95,8 @@ runs:
         GARAGE_S3_BUCKET=$GARAGE_S3_BUCKET
 
         PREVIEW_API_KEY_404=$PREVIEW_API_KEY_404
+        PREVIEW_ADMIN_EMAIL=$PREVIEW_ADMIN_EMAIL
+        PREVIEW_ADMIN_PASSWORD=$PREVIEW_ADMIN_PASSWORD
         MAX_UPLOAD_SIZE_MIB=$MAX_UPLOAD_SIZE_MIB
         NEXT_PUBLIC_SITE_URL=$PREVIEW_SITE_URL
         EOF

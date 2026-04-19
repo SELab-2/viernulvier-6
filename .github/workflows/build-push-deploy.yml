@@ -19,7 +19,7 @@ jobs:
     secrets: inherit
 
   build-push:
-    runs-on: prod
+    runs-on: kaya-sem-house
     environment: production
     needs: [run_backend_tests, run_frontend_tests]
 
@@ -125,6 +125,8 @@ jobs:
           garage_s3_bucket: media-prod
           jwt_secret: ${{ secrets.JWT_SECRET }}
           api_key_404: ${{ secrets.API_KEY_404 }}
+          admin_email: ${{ vars.PROD_ADMIN_EMAIL }}
+          admin_password: ${{ secrets.PROD_ADMIN_PASSWORD }}
 
       - name: Pull latest images
         run: |
