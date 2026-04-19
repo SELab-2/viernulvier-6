@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE import_rows\n               SET status = CASE status\n                   WHEN 'will_create' THEN 'created'\n                   WHEN 'will_update' THEN 'updated'\n                   ELSE status\n                 END,\n                 target_entity_id = $2\n               WHERE id = $1 AND status IN ('will_create', 'will_update')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3feb1fd703ed2ffcb0d112bcf4e39b95258f96b0511819da49d819f0eaa2e3fb"
+}

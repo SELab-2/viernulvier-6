@@ -101,7 +101,7 @@ impl<'a> ImportRepo<'a> {
                committed_at,
                error
              FROM import_sessions
-             ORDER BY created_at DESC
+             ORDER BY created_at DESC, id DESC
              LIMIT $1 OFFSET $2"#,
             limit,
             offset,
@@ -113,9 +113,13 @@ impl<'a> ImportRepo<'a> {
     }
 
     /// Persist a column mapping and advance the session status to `mapping`.
-    pub async fn save_mapping(&self, id: Uuid, mapping: ImportMapping) -> Result<(), DatabaseError> {
-        let mapping_json = serde_json::to_value(&mapping)
-            .map_err(|e| DatabaseError::BadRequest(e.to_string()))?;
+    pub async fn save_mapping(
+        &self,
+        id: Uuid,
+        mapping: ImportMapping,
+    ) -> Result<(), DatabaseError> {
+        let mapping_json =
+            serde_json::to_value(&mapping).map_err(|e| DatabaseError::BadRequest(e.to_string()))?;
 
         sqlx::query!(
             r#"UPDATE import_sessions
@@ -168,9 +172,9 @@ impl<'a> ImportRepo<'a> {
             .iter()
             .map(|r| {
                 serde_json::to_value(&r.raw_data.0)
-                    .expect("raw_data serialization should not fail")
+                    .map_err(|e| DatabaseError::BadRequest(e.to_string()))
             })
-            .collect();
+            .collect::<Result<_, _>>()?;
 
         sqlx::query!(
             r#"INSERT INTO import_rows (session_id, row_number, raw_data, status)
@@ -326,8 +330,7 @@ impl<'a> ImportRepo<'a> {
 
         let diff_val = diff
             .map(|d| {
-                serde_json::to_value(&d.0)
-                    .map_err(|e| DatabaseError::BadRequest(e.to_string()))
+                serde_json::to_value(&d.0).map_err(|e| DatabaseError::BadRequest(e.to_string()))
             })
             .transpose()?;
 
@@ -369,24 +372,37 @@ impl<'a> ImportRepo<'a> {
     }
 
     /// Mark a row as committed (`created` or `updated`) with a target entity id.
+    ///
+    /// The terminal status is derived from the row's current planning status:
+    /// - `will_create` → `created`
+    /// - `will_update` → `updated`
+    ///
+    /// Returns `DatabaseError::BadRequest` if the row is not in a committable state.
     pub async fn record_committed_row(
         &self,
         row_id: Uuid,
-        status: ImportRowStatus,
         target_entity_id: Uuid,
     ) -> Result<(), DatabaseError> {
-        let status_str = row_status_to_str(status);
-
-        sqlx::query!(
+        let result = sqlx::query!(
             r#"UPDATE import_rows
-               SET status = $1, target_entity_id = $2
-               WHERE id = $3"#,
-            status_str,
-            target_entity_id,
+               SET status = CASE status
+                   WHEN 'will_create' THEN 'created'
+                   WHEN 'will_update' THEN 'updated'
+                   ELSE status
+                 END,
+                 target_entity_id = $2
+               WHERE id = $1 AND status IN ('will_create', 'will_update')"#,
             row_id,
+            target_entity_id,
         )
         .execute(self.db)
         .await?;
+
+        if result.rows_affected() == 0 {
+            return Err(DatabaseError::BadRequest(format!(
+                "row {row_id} is not in a committable state (expected will_create or will_update)"
+            )));
+        }
 
         Ok(())
     }

@@ -16,8 +16,8 @@ use crate::{
     config::S3Config,
     dto::{
         media::{
-            AttachMediaRequest, LinkMediaRequest, MediaPayload, MediaVariantPayload, ReconcileResponse,
-            UploadUrlRequest, UploadUrlResponse,
+            AttachMediaRequest, LinkMediaRequest, MediaPayload, MediaVariantPayload,
+            ReconcileResponse, UploadUrlRequest, UploadUrlResponse,
         },
         paginated::PaginatedResponse,
     },

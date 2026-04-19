@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT\n               id,\n               entity_type,\n               filename,\n               original_headers,\n               mapping        AS \"mapping: Json<ImportMapping>\",\n               status         AS \"status: ImportSessionStatus\",\n               row_count,\n               created_by,\n               created_at,\n               updated_at,\n               committed_at,\n               error\n             FROM import_sessions\n             ORDER BY created_at DESC\n             LIMIT $1 OFFSET $2",
+  "query": "SELECT\n               id,\n               entity_type,\n               filename,\n               original_headers,\n               mapping        AS \"mapping: Json<ImportMapping>\",\n               status         AS \"status: ImportSessionStatus\",\n               row_count,\n               created_by,\n               created_at,\n               updated_at,\n               committed_at,\n               error\n             FROM import_sessions\n             ORDER BY created_at DESC, id DESC\n             LIMIT $1 OFFSET $2",
   "describe": {
     "columns": [
       {
@@ -85,5 +85,5 @@
       true
     ]
   },
-  "hash": "fc6088e941c0a9a8b58646114e8dfaaf8998d3c0a88fae664b6095f00b7ce7c2"
+  "hash": "726999293f03ebdbcba1692fcae842c5a64a4eacdd3905140fde5fc05b7802f5"
 }

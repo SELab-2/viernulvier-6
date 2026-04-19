@@ -10,7 +10,7 @@ use database::{
     },
     repos::import::{CreateSession, ImportRepo, NewImportRow},
 };
-use sqlx::{types::Json, PgPool};
+use sqlx::{PgPool, types::Json};
 use uuid::Uuid;
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -52,13 +52,10 @@ async fn create_session_inserts_with_uploaded_status(pool: PgPool) {
         .await
         .expect("create_session failed");
 
-    let status = sqlx::query_scalar!(
-        r#"SELECT status FROM import_sessions WHERE id = $1"#,
-        id
-    )
-    .fetch_one(&pool)
-    .await
-    .expect("session not found");
+    let status = sqlx::query_scalar!(r#"SELECT status FROM import_sessions WHERE id = $1"#, id)
+        .fetch_one(&pool)
+        .await
+        .expect("session not found");
 
     assert_eq!(status, "uploaded");
 }
@@ -139,21 +136,16 @@ async fn save_mapping_persists_and_sets_status_mapping(pool: PgPool) {
         .await
         .expect("save_mapping failed");
 
-    let status = sqlx::query_scalar!(
-        r#"SELECT status FROM import_sessions WHERE id = $1"#,
-        id
-    )
-    .fetch_one(&pool)
-    .await
-    .expect("session not found");
+    let status = sqlx::query_scalar!(r#"SELECT status FROM import_sessions WHERE id = $1"#, id)
+        .fetch_one(&pool)
+        .await
+        .expect("session not found");
 
-    let mapping_raw = sqlx::query_scalar!(
-        r#"SELECT mapping FROM import_sessions WHERE id = $1"#,
-        id
-    )
-    .fetch_one(&pool)
-    .await
-    .expect("session not found");
+    let mapping_raw =
+        sqlx::query_scalar!(r#"SELECT mapping FROM import_sessions WHERE id = $1"#, id)
+            .fetch_one(&pool)
+            .await
+            .expect("session not found");
 
     assert_eq!(status, "mapping");
     let mapping: serde_json::Value = mapping_raw;
@@ -170,17 +162,20 @@ async fn update_status_updates_status_and_error(pool: PgPool) {
         .await
         .expect("create_session");
 
-    repo.update_status(id, ImportSessionStatus::Failed, Some("something broke".to_string()))
-        .await
-        .expect("update_status failed");
-
-    let (status, error): (String, Option<String>) = sqlx::query_as(
-        "SELECT status, error FROM import_sessions WHERE id = $1",
+    repo.update_status(
+        id,
+        ImportSessionStatus::Failed,
+        Some("something broke".to_string()),
     )
-    .bind(id)
-    .fetch_one(&pool)
     .await
-    .expect("session not found");
+    .expect("update_status failed");
+
+    let (status, error): (String, Option<String>) =
+        sqlx::query_as("SELECT status, error FROM import_sessions WHERE id = $1")
+            .bind(id)
+            .fetch_one(&pool)
+            .await
+            .expect("session not found");
 
     assert_eq!(status, "failed");
     assert_eq!(error.as_deref(), Some("something broke"));
@@ -199,15 +194,17 @@ async fn insert_rows_bulk_inserts_and_sets_row_count(pool: PgPool) {
     let rows = vec![
         NewImportRow {
             row_number: 1,
-            raw_data: Json(BTreeMap::from([
-                ("title".to_string(), Some("Show A".to_string())),
-            ])),
+            raw_data: Json(BTreeMap::from([(
+                "title".to_string(),
+                Some("Show A".to_string()),
+            )])),
         },
         NewImportRow {
             row_number: 2,
-            raw_data: Json(BTreeMap::from([
-                ("title".to_string(), Some("Show B".to_string())),
-            ])),
+            raw_data: Json(BTreeMap::from([(
+                "title".to_string(),
+                Some("Show B".to_string()),
+            )])),
         },
     ];
 
@@ -280,10 +277,18 @@ async fn get_rows_filters_by_status(pool: PgPool) {
         .expect("create_session");
 
     let rows = vec![
-        NewImportRow { row_number: 1, raw_data: Json(BTreeMap::new()) },
-        NewImportRow { row_number: 2, raw_data: Json(BTreeMap::new()) },
+        NewImportRow {
+            row_number: 1,
+            raw_data: Json(BTreeMap::new()),
+        },
+        NewImportRow {
+            row_number: 2,
+            raw_data: Json(BTreeMap::new()),
+        },
     ];
-    repo.insert_rows(session_id, &rows).await.expect("insert_rows");
+    repo.insert_rows(session_id, &rows)
+        .await
+        .expect("insert_rows");
 
     // Mark row 1 as skipped
     let row1_id = sqlx::query_scalar!(
@@ -294,7 +299,9 @@ async fn get_rows_filters_by_status(pool: PgPool) {
     .await
     .expect("row not found");
 
-    repo.mark_row_skipped(row1_id).await.expect("mark_row_skipped");
+    repo.mark_row_skipped(row1_id)
+        .await
+        .expect("mark_row_skipped");
 
     let pending = repo
         .get_rows(session_id, 10, 0, Some(ImportRowStatus::Pending))
@@ -310,11 +317,17 @@ async fn update_row_overrides_persists(pool: PgPool) {
     let user_id = seed_user(&pool).await;
     let repo = make_repo(&pool);
 
-    let session_id = repo.create_session(session_input(user_id)).await.expect("create");
-    repo.insert_rows(session_id, &[NewImportRow {
-        row_number: 1,
-        raw_data: Json(BTreeMap::new()),
-    }])
+    let session_id = repo
+        .create_session(session_input(user_id))
+        .await
+        .expect("create");
+    repo.insert_rows(
+        session_id,
+        &[NewImportRow {
+            row_number: 1,
+            raw_data: Json(BTreeMap::new()),
+        }],
+    )
     .await
     .expect("insert_rows");
 
@@ -333,13 +346,10 @@ async fn update_row_overrides_persists(pool: PgPool) {
         .await
         .expect("update_row_overrides failed");
 
-    let raw = sqlx::query_scalar!(
-        r#"SELECT overrides FROM import_rows WHERE id = $1"#,
-        row_id
-    )
-    .fetch_one(&pool)
-    .await
-    .expect("row not found");
+    let raw = sqlx::query_scalar!(r#"SELECT overrides FROM import_rows WHERE id = $1"#, row_id)
+        .fetch_one(&pool)
+        .await
+        .expect("row not found");
 
     let val: serde_json::Value = raw;
     assert_eq!(val["title"].as_str(), Some("Override Title"));
@@ -350,11 +360,17 @@ async fn update_row_resolved_refs_persists(pool: PgPool) {
     let user_id = seed_user(&pool).await;
     let repo = make_repo(&pool);
 
-    let session_id = repo.create_session(session_input(user_id)).await.expect("create");
-    repo.insert_rows(session_id, &[NewImportRow {
-        row_number: 1,
-        raw_data: Json(BTreeMap::new()),
-    }])
+    let session_id = repo
+        .create_session(session_input(user_id))
+        .await
+        .expect("create");
+    repo.insert_rows(
+        session_id,
+        &[NewImportRow {
+            row_number: 1,
+            raw_data: Json(BTreeMap::new()),
+        }],
+    )
     .await
     .expect("insert_rows");
 
@@ -383,10 +399,7 @@ async fn update_row_resolved_refs_persists(pool: PgPool) {
     .expect("row not found");
 
     let val: serde_json::Value = raw;
-    assert_eq!(
-        val["location"].as_str().unwrap(),
-        ref_uuid.to_string()
-    );
+    assert_eq!(val["location"].as_str().unwrap(), ref_uuid.to_string());
 }
 
 #[sqlx::test(migrations = "../migrations")]
@@ -394,11 +407,17 @@ async fn mark_row_skipped_sets_will_skip(pool: PgPool) {
     let user_id = seed_user(&pool).await;
     let repo = make_repo(&pool);
 
-    let session_id = repo.create_session(session_input(user_id)).await.expect("create");
-    repo.insert_rows(session_id, &[NewImportRow {
-        row_number: 1,
-        raw_data: Json(BTreeMap::new()),
-    }])
+    let session_id = repo
+        .create_session(session_input(user_id))
+        .await
+        .expect("create");
+    repo.insert_rows(
+        session_id,
+        &[NewImportRow {
+            row_number: 1,
+            raw_data: Json(BTreeMap::new()),
+        }],
+    )
     .await
     .expect("insert_rows");
 
@@ -410,15 +429,14 @@ async fn mark_row_skipped_sets_will_skip(pool: PgPool) {
     .await
     .expect("row not found");
 
-    repo.mark_row_skipped(row_id).await.expect("mark_row_skipped");
+    repo.mark_row_skipped(row_id)
+        .await
+        .expect("mark_row_skipped");
 
-    let status = sqlx::query_scalar!(
-        r#"SELECT status FROM import_rows WHERE id = $1"#,
-        row_id
-    )
-    .fetch_one(&pool)
-    .await
-    .expect("row not found");
+    let status = sqlx::query_scalar!(r#"SELECT status FROM import_rows WHERE id = $1"#, row_id)
+        .fetch_one(&pool)
+        .await
+        .expect("row not found");
 
     assert_eq!(status, "will_skip");
 }
@@ -428,11 +446,17 @@ async fn save_dry_run_result_persists_all_fields(pool: PgPool) {
     let user_id = seed_user(&pool).await;
     let repo = make_repo(&pool);
 
-    let session_id = repo.create_session(session_input(user_id)).await.expect("create");
-    repo.insert_rows(session_id, &[NewImportRow {
-        row_number: 1,
-        raw_data: Json(BTreeMap::new()),
-    }])
+    let session_id = repo
+        .create_session(session_input(user_id))
+        .await
+        .expect("create");
+    repo.insert_rows(
+        session_id,
+        &[NewImportRow {
+            row_number: 1,
+            raw_data: Json(BTreeMap::new()),
+        }],
+    )
     .await
     .expect("insert_rows");
 
@@ -469,13 +493,11 @@ async fn save_dry_run_result_persists_all_fields(pool: PgPool) {
     .expect("save_dry_run_result failed");
 
     let (status, diff_raw, warnings_raw): (String, Option<serde_json::Value>, serde_json::Value) =
-        sqlx::query_as(
-            "SELECT status, diff, warnings FROM import_rows WHERE id = $1",
-        )
-        .bind(row_id)
-        .fetch_one(&pool)
-        .await
-        .expect("row not found");
+        sqlx::query_as("SELECT status, diff, warnings FROM import_rows WHERE id = $1")
+            .bind(row_id)
+            .fetch_one(&pool)
+            .await
+            .expect("row not found");
 
     assert_eq!(status, "will_update");
     let diff_val = diff_raw.expect("diff should not be null");
@@ -488,7 +510,10 @@ async fn set_file_key_upserts_into_import_session_files(pool: PgPool) {
     let user_id = seed_user(&pool).await;
     let repo = make_repo(&pool);
 
-    let session_id = repo.create_session(session_input(user_id)).await.expect("create");
+    let session_id = repo
+        .create_session(session_input(user_id))
+        .await
+        .expect("create");
 
     repo.set_file_key(session_id, "imports/test.csv".to_string())
         .await
@@ -525,11 +550,17 @@ async fn record_committed_row_sets_created_and_target_entity_id(pool: PgPool) {
     let user_id = seed_user(&pool).await;
     let repo = make_repo(&pool);
 
-    let session_id = repo.create_session(session_input(user_id)).await.expect("create");
-    repo.insert_rows(session_id, &[NewImportRow {
-        row_number: 1,
-        raw_data: Json(BTreeMap::new()),
-    }])
+    let session_id = repo
+        .create_session(session_input(user_id))
+        .await
+        .expect("create");
+    repo.insert_rows(
+        session_id,
+        &[NewImportRow {
+            row_number: 1,
+            raw_data: Json(BTreeMap::new()),
+        }],
+    )
     .await
     .expect("insert_rows");
 
@@ -541,22 +572,116 @@ async fn record_committed_row_sets_created_and_target_entity_id(pool: PgPool) {
     .await
     .expect("row not found");
 
+    // Transition to will_create via save_dry_run_result
+    repo.save_dry_run_result(row_id, ImportRowStatus::WillCreate, None, Json(vec![]))
+        .await
+        .expect("save_dry_run_result failed");
+
     let entity_id = Uuid::new_v4();
 
-    repo.record_committed_row(row_id, ImportRowStatus::Created, entity_id)
+    repo.record_committed_row(row_id, entity_id)
         .await
         .expect("record_committed_row failed");
 
-    let (status, target_id): (String, Option<Uuid>) = sqlx::query_as(
-        "SELECT status, target_entity_id FROM import_rows WHERE id = $1",
+    let (status, target_id): (String, Option<Uuid>) =
+        sqlx::query_as("SELECT status, target_entity_id FROM import_rows WHERE id = $1")
+            .bind(row_id)
+            .fetch_one(&pool)
+            .await
+            .expect("row not found");
+
+    assert_eq!(status, "created");
+    assert_eq!(target_id, Some(entity_id));
+}
+
+#[sqlx::test(migrations = "../migrations")]
+async fn record_committed_row_sets_updated_and_target_entity_id(pool: PgPool) {
+    let user_id = seed_user(&pool).await;
+    let repo = make_repo(&pool);
+
+    let session_id = repo
+        .create_session(session_input(user_id))
+        .await
+        .expect("create");
+    repo.insert_rows(
+        session_id,
+        &[NewImportRow {
+            row_number: 1,
+            raw_data: Json(BTreeMap::new()),
+        }],
     )
-    .bind(row_id)
+    .await
+    .expect("insert_rows");
+
+    let row_id = sqlx::query_scalar!(
+        r#"SELECT id FROM import_rows WHERE session_id = $1 AND row_number = 1"#,
+        session_id
+    )
     .fetch_one(&pool)
     .await
     .expect("row not found");
 
-    assert_eq!(status, "created");
+    // Transition to will_update via save_dry_run_result
+    repo.save_dry_run_result(row_id, ImportRowStatus::WillUpdate, None, Json(vec![]))
+        .await
+        .expect("save_dry_run_result failed");
+
+    let entity_id = Uuid::new_v4();
+
+    repo.record_committed_row(row_id, entity_id)
+        .await
+        .expect("record_committed_row failed");
+
+    let (status, target_id): (String, Option<Uuid>) =
+        sqlx::query_as("SELECT status, target_entity_id FROM import_rows WHERE id = $1")
+            .bind(row_id)
+            .fetch_one(&pool)
+            .await
+            .expect("row not found");
+
+    assert_eq!(status, "updated");
     assert_eq!(target_id, Some(entity_id));
+}
+
+#[sqlx::test(migrations = "../migrations")]
+async fn record_committed_row_rejects_non_committable_status(pool: PgPool) {
+    let user_id = seed_user(&pool).await;
+    let repo = make_repo(&pool);
+
+    let session_id = repo
+        .create_session(session_input(user_id))
+        .await
+        .expect("create");
+    repo.insert_rows(
+        session_id,
+        &[NewImportRow {
+            row_number: 1,
+            raw_data: Json(BTreeMap::new()),
+        }],
+    )
+    .await
+    .expect("insert_rows");
+
+    let row_id = sqlx::query_scalar!(
+        r#"SELECT id FROM import_rows WHERE session_id = $1 AND row_number = 1"#,
+        session_id
+    )
+    .fetch_one(&pool)
+    .await
+    .expect("row not found");
+
+    // Row is still in `pending` state — calling record_committed_row should fail
+    let entity_id = Uuid::new_v4();
+    let result = repo.record_committed_row(row_id, entity_id).await;
+    assert!(result.is_err(), "expected error for non-committable status");
+
+    // Row must remain unchanged
+    let status = sqlx::query_scalar!(r#"SELECT status FROM import_rows WHERE id = $1"#, row_id)
+        .fetch_one(&pool)
+        .await
+        .expect("row not found");
+
+    assert_eq!(status, "pending");
 }
 
 #[sqlx::test(migrations = "../migrations")]
@@ -564,11 +689,17 @@ async fn record_reverted_row_sets_reverted(pool: PgPool) {
     let user_id = seed_user(&pool).await;
     let repo = make_repo(&pool);
 
-    let session_id = repo.create_session(session_input(user_id)).await.expect("create");
-    repo.insert_rows(session_id, &[NewImportRow {
-        row_number: 1,
-        raw_data: Json(BTreeMap::new()),
-    }])
+    let session_id = repo
+        .create_session(session_input(user_id))
+        .await
+        .expect("create");
+    repo.insert_rows(
+        session_id,
+        &[NewImportRow {
+            row_number: 1,
+            raw_data: Json(BTreeMap::new()),
+        }],
+    )
     .await
     .expect("insert_rows");
 
@@ -584,13 +715,10 @@ async fn record_reverted_row_sets_reverted(pool: PgPool) {
         .await
         .expect("record_reverted_row failed");
 
-    let status = sqlx::query_scalar!(
-        r#"SELECT status FROM import_rows WHERE id = $1"#,
-        row_id
-    )
-    .fetch_one(&pool)
-    .await
-    .expect("row not found");
+    let status = sqlx::query_scalar!(r#"SELECT status FROM import_rows WHERE id = $1"#, row_id)
+        .fetch_one(&pool)
+        .await
+        .expect("row not found");
 
     assert_eq!(status, "reverted");
 }
