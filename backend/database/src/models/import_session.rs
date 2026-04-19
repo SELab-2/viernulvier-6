@@ -22,6 +22,7 @@ pub enum ImportSessionStatus {
 #[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
 pub struct ImportMapping {
     /// CSV header -> target field name (None = unmapped).
+    #[serde(default)]
     pub columns: BTreeMap<String, Option<String>>,
 }
 

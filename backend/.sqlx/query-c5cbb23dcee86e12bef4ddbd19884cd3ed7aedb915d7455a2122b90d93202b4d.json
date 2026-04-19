@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO import_rows (session_id, row_number, raw_data, status)\n               SELECT $1, t.row_number, t.raw_data, 'pending'\n               FROM UNNEST($2::INT[], $3::JSONB[]) AS t(row_number, raw_data)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int4Array",
+        "JsonbArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c5cbb23dcee86e12bef4ddbd19884cd3ed7aedb915d7455a2122b90d93202b4d"
+}

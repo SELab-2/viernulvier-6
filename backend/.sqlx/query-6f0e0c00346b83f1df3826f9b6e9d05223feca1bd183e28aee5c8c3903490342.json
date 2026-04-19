@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO import_sessions\n               (entity_type, filename, original_headers, status, created_by)\n               VALUES ($1, $2, $3, 'uploaded', $4)\n               RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "TextArray",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "6f0e0c00346b83f1df3826f9b6e9d05223feca1bd183e28aee5c8c3903490342"
+}
