@@ -25,6 +25,8 @@ pub mod models {
     pub mod facet;
     pub mod filtering;
     pub mod hall;
+    pub mod import_row;
+    pub mod import_session;
     pub mod internal_state;
     pub mod location;
     pub mod media;
