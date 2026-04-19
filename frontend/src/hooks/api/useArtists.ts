@@ -23,6 +23,7 @@ export const useGetArtists = () => {
  * Once that PR is merged, delete this stub and import the real hook in CollectionItemCard.tsx.
  */
 export const useGetArtist = (
+    /* eslint-disable @typescript-eslint/no-unused-vars */
     _id: string,
     _options?: { enabled?: boolean }
 ): { data: Artist | undefined; isLoading: boolean; isError: boolean } => {
