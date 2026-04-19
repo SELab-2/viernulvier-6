@@ -95,6 +95,14 @@ struct GenreTagMapping {
 }
 
 #[derive(Deserialize)]
+struct GenreSeriesMapping {
+    genre_source_id: i32,
+    series_slug: String,
+    name_nl: String,
+    name_en: String,
+}
+
+#[derive(Deserialize)]
 struct GenreLocationMapping {
     genre_source_id: i32,
     location_source_id: Option<i32>,
@@ -155,6 +163,7 @@ impl SeedImporter {
         self.apply_hall_deletions().await?;
         self.apply_genre_tag_mappings().await?;
         self.apply_genre_location_mappings().await?;
+        self.apply_genre_series_mappings().await?;
         Ok(())
     }
 
@@ -556,6 +565,78 @@ impl SeedImporter {
         }
 
         info!("Inserted {} genre→location links", count);
+        Ok(())
+    }
+
+    async fn apply_genre_series_mappings(&self) -> Result<(), SeedError> {
+        let Some(mappings) =
+            self.read_normalization_file::<GenreSeriesMapping>("genre_series_mappings.json")
+        else {
+            return Ok(());
+        };
+
+        // pre-resolve (upsert) series UUIDs
+        let mut series_index: HashMap<i32, uuid::Uuid> = HashMap::new();
+        for m in &mappings {
+            let series_id: uuid::Uuid = sqlx::query_scalar(
+                "INSERT INTO series (slug) VALUES ($1)
+                 ON CONFLICT (slug) DO UPDATE SET slug = EXCLUDED.slug
+                 RETURNING id",
+            )
+            .bind(&m.series_slug)
+            .fetch_one(self.db.pool())
+            .await
+            .map_err(DatabaseError::from)?;
+
+            sqlx::query(
+                "INSERT INTO series_translations (series_id, language_code, name)
+                 VALUES ($1, 'nl', $2), ($1, 'en', $3)
+                 ON CONFLICT (series_id, language_code) DO UPDATE SET name = EXCLUDED.name",
+            )
+            .bind(series_id)
+            .bind(&m.name_nl)
+            .bind(&m.name_en)
+            .execute(self.db.pool())
+            .await
+            .map_err(DatabaseError::from)?;
+
+            series_index.insert(m.genre_source_id, series_id);
+        }
+
+        let productions: Vec<ApiProduction> = self.read_file("productions.json")?;
+        info!(
+            "Applying genre→series mappings to {} productions",
+            productions.len()
+        );
+
+        let mut count = 0u64;
+        for prod in &productions {
+            let Some(prod_source_id) = extract_source_id(&prod.id) else {
+                continue;
+            };
+            for genre_url in &prod.genres {
+                let Some(genre_source_id) = extract_source_id(genre_url) else {
+                    continue;
+                };
+                let Some(&series_id) = series_index.get(&genre_source_id) else {
+                    continue;
+                };
+                let rows = sqlx::query(
+                    "INSERT INTO series_productions (series_id, production_id)
+                     SELECT $1, p.id FROM productions p WHERE p.source_id = $2
+                     ON CONFLICT DO NOTHING",
+                )
+                .bind(series_id)
+                .bind(prod_source_id)
+                .execute(self.db.pool())
+                .await
+                .map_err(DatabaseError::from)?
+                .rows_affected();
+                count += rows;
+            }
+        }
+
+        info!("Inserted {} genre→series links", count);
         Ok(())
     }
 

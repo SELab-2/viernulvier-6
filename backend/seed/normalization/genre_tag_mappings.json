@@ -31,6 +31,7 @@
   { "genre_source_id": 287, "tag_slug": "aftertalk",        "facet": "format",         "note": "Met nagesprek" },
 
   { "genre_source_id": 159, "tag_slug": "expo",             "facet": "discipline",     "note": "Expo" },
+  { "genre_source_id": 285, "tag_slug": "installation",    "facet": "discipline",     "note": "360° A/V" },
 
   { "genre_source_id": 249, "tag_slug": "children",         "facet": "audience",       "note": "3+" },
   { "genre_source_id": 213, "tag_slug": "children",         "facet": "audience",       "note": "4+" },

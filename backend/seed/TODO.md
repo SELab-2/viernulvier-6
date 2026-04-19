@@ -37,8 +37,10 @@
 ### Unmapped genres (currently skipped)
 - [x] Age ratings: 3+/4+/6+/8+ → `children`, 10+/11+/12+/14+ → `family`, 16+/18+ → `adult`
 - [x] Expo (159) → `discipline: expo`
-- [ ] Wandeling (265), stadsatelier (266), Feest (268), optocht (277), ritueel (278) — unclear mapping
-- [ ] 360° A/V (285), listening session (288) — niche, probably leave as-is
+- [x] 360° A/V (285) → `discipline: installation`
+- [x] Podium (37) → series "Podium" (29 productions)
+- [x] Monument (49) → series "Monument" (15 productions)
+- [x] Wandeling, stadsatelier, Feest, optocht, ritueel, listening session, op locatie, Cadeaubon geldig — deliberately skipped (see README.md)
 
 ### API / frontend exposure
 - [ ] `production_locations` data is seeded but no API endpoint or frontend uses it yet
