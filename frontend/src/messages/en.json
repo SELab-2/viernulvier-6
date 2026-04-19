@@ -640,5 +640,14 @@
         "nextImage": "Next image",
         "archive": "Archive",
         "openImage": "Open image"
+    },
+    "Collections": {
+        "sectionLabel": "COLLECTION",
+        "imagePlaceholder": "[ IMAGE ]",
+        "itemImagePlaceholder": "[ ]",
+        "loading": "Loading collection...",
+        "notFoundTitle": "Collection not found",
+        "notFoundText": "This collection does not exist or has been deleted.",
+        "items": "ITEMS"
     }
 }

@@ -640,5 +640,14 @@
         "nextImage": "Volgende afbeelding",
         "archive": "Archief",
         "openImage": "Afbeelding openen"
+    },
+    "Collections": {
+        "sectionLabel": "COLLECTIE",
+        "imagePlaceholder": "[ AFBEELDING ]",
+        "itemImagePlaceholder": "[ ]",
+        "loading": "Collectie laden...",
+        "notFoundTitle": "Collectie niet gevonden",
+        "notFoundText": "Deze collectie bestaat niet of is verwijderd.",
+        "items": "ITEMS"
     }
 }
