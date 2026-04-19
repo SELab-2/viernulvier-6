@@ -45,5 +45,11 @@
   { "keep_source_id": 48, "remove_source_id": 381, "note": "Waar en wanneer je wil → Diverse locaties" },
   { "keep_source_id": 48, "remove_source_id": 4,   "note": "Rondleidingen → Diverse locaties" },
   { "keep_source_id": 48,  "remove_source_id": 233, "note": "Rondleidingen duplicate → Diverse locaties" },
-  { "keep_source_id": 396, "remove_source_id": 450, "note": "Wintercircus (no space) → Club Wintercircus (has space)" }
+  { "keep_source_id": 396, "remove_source_id": 450, "note": "Wintercircus (no space) → Club Wintercircus (has space)" },
+  { "keep_source_id": 10,  "remove_source_id": 217, "note": "Balzaal (zittend) → Balzaal" },
+  { "keep_source_id": 18,  "remove_source_id": 317, "note": "Theaterzaal (scène) → Theaterzaal" },
+  { "keep_source_id": 18,  "remove_source_id": 453, "note": "Gang Theaterzaal → Theaterzaal" },
+  { "keep_source_id": 16,  "remove_source_id": 393, "note": "Toiletten Café → Café" },
+  { "keep_source_id": 305, "remove_source_id": 313, "note": "unknown → Onbekende zaal" },
+  { "keep_source_id": 130, "remove_source_id": 265, "note": "Kunstencentrum Vooruit → Kunstencentrum VIERNULVIER" }
 ]
