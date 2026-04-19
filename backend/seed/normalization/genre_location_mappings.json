@@ -1,0 +1,9 @@
+[
+  { "genre_source_id": 22,  "location_source_id": 1,  "note": "in De Vooruit" },
+  { "genre_source_id": 34,  "location_source_id": 9,  "note": "in de Koer" },
+  { "genre_source_id": 102, "location_source_id": 87, "note": "in Club Wintercircus" },
+  { "genre_source_id": 105, "location_slug": "vlaamse-opera", "note": "in Opera Gent" },
+  { "genre_source_id": 111, "location_source_id": 56, "note": "in NTGent" },
+  { "genre_source_id": 114, "location_source_id": 15, "note": "in MIRY concertzaal" },
+  { "genre_source_id": 210, "location_source_id": 12, "note": "in Minard" }
+]

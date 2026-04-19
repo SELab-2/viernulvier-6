@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -6,6 +7,7 @@ use serde::Deserialize;
 use thiserror::Error;
 use tracing::{info, warn};
 
+use crate::helper::extract_source_id;
 use crate::models::{
     event::ApiEvent,
     event_price::ApiEventPrice,
@@ -85,6 +87,20 @@ struct HallExpansion {
     component_source_ids: Vec<i32>,
 }
 
+#[derive(Deserialize)]
+struct GenreTagMapping {
+    genre_source_id: i32,
+    tag_slug: String,
+    facet: String,
+}
+
+#[derive(Deserialize)]
+struct GenreLocationMapping {
+    genre_source_id: i32,
+    location_source_id: Option<i32>,
+    location_slug: Option<String>,
+}
+
 /// Imports entities from local seed JSON files produced by `fetch_404`.
 ///
 /// Constructed via [`SeedImporter::from_env`]; returns `None` when no seed
@@ -137,6 +153,8 @@ impl SeedImporter {
         self.apply_hall_name_patches().await?;
         self.apply_hall_expansions().await?;
         self.apply_hall_deletions().await?;
+        self.apply_genre_tag_mappings().await?;
+        self.apply_genre_location_mappings().await?;
         Ok(())
     }
 
@@ -414,6 +432,130 @@ impl SeedImporter {
                 .await
                 .map_err(DatabaseError::from)?;
         }
+        Ok(())
+    }
+
+    async fn apply_genre_tag_mappings(&self) -> Result<(), SeedError> {
+        let Some(mappings) =
+            self.read_normalization_file::<GenreTagMapping>("genre_tag_mappings.json")
+        else {
+            return Ok(());
+        };
+
+        let index: HashMap<i32, (&str, &str)> = mappings
+            .iter()
+            .map(|m| (m.genre_source_id, (m.tag_slug.as_str(), m.facet.as_str())))
+            .collect();
+
+        let productions: Vec<ApiProduction> = self.read_file("productions.json")?;
+        info!(
+            "Applying genre→tag mappings to {} productions",
+            productions.len()
+        );
+
+        let mut count = 0u64;
+        for prod in &productions {
+            let Some(prod_source_id) = extract_source_id(&prod.id) else {
+                continue;
+            };
+            for genre_url in &prod.genres {
+                let Some(genre_source_id) = extract_source_id(genre_url) else {
+                    continue;
+                };
+                let Some(&(tag_slug, facet)) = index.get(&genre_source_id) else {
+                    continue;
+                };
+                let rows = sqlx::query(
+                    "INSERT INTO taggings (tag_id, entity_type, entity_id, inherited)
+                     SELECT t.id, 'production'::entity_type, p.id, false
+                     FROM tags t
+                     JOIN productions p ON p.source_id = $1
+                     WHERE t.slug = $2 AND t.facet::text = $3
+                     ON CONFLICT DO NOTHING",
+                )
+                .bind(prod_source_id)
+                .bind(tag_slug)
+                .bind(facet)
+                .execute(self.db.pool())
+                .await
+                .map_err(DatabaseError::from)?
+                .rows_affected();
+                count += rows;
+            }
+        }
+
+        info!("Inserted {} genre→tag taggings", count);
+        Ok(())
+    }
+
+    async fn apply_genre_location_mappings(&self) -> Result<(), SeedError> {
+        let Some(mappings) =
+            self.read_normalization_file::<GenreLocationMapping>("genre_location_mappings.json")
+        else {
+            return Ok(());
+        };
+
+        // pre-resolve location UUIDs
+        let mut location_index: HashMap<i32, uuid::Uuid> = HashMap::new();
+        for m in &mappings {
+            let location_id: Option<uuid::Uuid> = if let Some(sid) = m.location_source_id {
+                sqlx::query_scalar("SELECT id FROM locations WHERE source_id = $1")
+                    .bind(sid)
+                    .fetch_optional(self.db.pool())
+                    .await
+                    .map_err(DatabaseError::from)?
+            } else if let Some(slug) = &m.location_slug {
+                sqlx::query_scalar("SELECT id FROM locations WHERE slug = $1")
+                    .bind(slug)
+                    .fetch_optional(self.db.pool())
+                    .await
+                    .map_err(DatabaseError::from)?
+            } else {
+                None
+            };
+
+            match location_id {
+                Some(id) => { location_index.insert(m.genre_source_id, id); }
+                None => warn!(genre_source_id = m.genre_source_id, "genre_location_mapping: location not found, skipping"),
+            }
+        }
+
+        let productions: Vec<ApiProduction> = self.read_file("productions.json")?;
+        info!(
+            "Applying genre→location mappings to {} productions",
+            productions.len()
+        );
+
+        let mut count = 0u64;
+        for prod in &productions {
+            let Some(prod_source_id) = extract_source_id(&prod.id) else {
+                continue;
+            };
+            for genre_url in &prod.genres {
+                let Some(genre_source_id) = extract_source_id(genre_url) else {
+                    continue;
+                };
+                let Some(&location_id) = location_index.get(&genre_source_id) else {
+                    continue;
+                };
+                let rows = sqlx::query(
+                    "INSERT INTO production_locations (production_id, location_id)
+                     SELECT p.id, $1
+                     FROM productions p
+                     WHERE p.source_id = $2
+                     ON CONFLICT DO NOTHING",
+                )
+                .bind(location_id)
+                .bind(prod_source_id)
+                .execute(self.db.pool())
+                .await
+                .map_err(DatabaseError::from)?
+                .rows_affected();
+                count += rows;
+            }
+        }
+
+        info!("Inserted {} genre→location links", count);
         Ok(())
     }
 
