@@ -25,6 +25,7 @@ locations → spaces → halls → productions → prices → price_ranks → ev
   → hall_deletions         (patch)
   → genre_tag_mappings      (patch)
   → genre_location_mappings (patch)
+  → genre_series_mappings   (patch)
 ```
 
 ## Normalisation files (`seed/normalization/`)
@@ -140,6 +141,16 @@ Maps each raw genre (by source_id from `seed/raw/genres.json`) to a tag slug + f
 
 ```json
 { "genre_source_id": 73, "tag_slug": "theatre", "facet": "discipline", "note": "Theater" }
+```
+
+---
+
+### `genre_series_mappings.json` - create series and link productions via genre signals
+
+Some genres represent recurring VIERNULVIER programme strands (e.g. "Podium", "Monument"). This file maps those genre source_ids to series. The seed step upserts each series by slug, inserts both language translations, then links all matched productions via `series_productions`.
+
+```json
+{ "genre_source_id": 37, "series_slug": "podium", "name_nl": "Podium", "name_en": "Podium" }
 ```
 
 ---
