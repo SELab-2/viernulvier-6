@@ -17,9 +17,8 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${PREVIEW_NAME}.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}`) && !PathPrefix(`/${PREVIEW_NAME}/docs`) && !PathPrefix(`/${PREVIEW_NAME}/api`) && !PathPrefix(`/${PREVIEW_NAME}/s3`)"
-      - "traefik.http.routers.${PREVIEW_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${PREVIEW_NAME}.entrypoints=web"
       - "traefik.http.services.${PREVIEW_NAME}.loadbalancer.server.port=3000"
-      - "traefik.http.routers.${PREVIEW_NAME}.tls.certresolver=letsencrypt"
       - "traefik.http.routers.${PREVIEW_NAME}.priority=200"
       - "traefik.http.middlewares.${PREVIEW_NAME}-prefix.headers.customrequestheaders.X-Forwarded-Prefix=/${PREVIEW_NAME}"
       - "traefik.http.routers.${PREVIEW_NAME}.middlewares=${PREVIEW_NAME}-prefix"
@@ -41,9 +40,8 @@ services:
       # Route for /{preview-name}/docs (for PR previews) - higher priority than frontend
       # NO strip middleware - full path goes to container (same as frontend)
       - "traefik.http.routers.${PREVIEW_NAME}-docs.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/docs`)"
-      - "traefik.http.routers.${PREVIEW_NAME}-docs.entrypoints=websecure"
+      - "traefik.http.routers.${PREVIEW_NAME}-docs.entrypoints=web"
       - "traefik.http.services.${PREVIEW_NAME}-docs.loadbalancer.server.port=3002"
-      - "traefik.http.routers.${PREVIEW_NAME}-docs.tls.certresolver=letsencrypt"
       - "traefik.http.routers.${PREVIEW_NAME}-docs.priority=200"
       - "traefik.http.middlewares.${PREVIEW_NAME}-prefix-docs.headers.customrequestheaders.X-Forwarded-Prefix=/${PREVIEW_NAME}/docs"
       - "traefik.http.routers.${PREVIEW_NAME}-docs.middlewares=${PREVIEW_NAME}-prefix-docs"
@@ -79,9 +77,8 @@ services:
       - "traefik.http.routers.${PREVIEW_NAME}-api.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/api`)"
       #- "traefik.http.middlewares.${PREVIEW_NAME}-api-strip.stripprefix.prefixes=/${PREVIEW_NAME}/api"
       #- "traefik.http.routers.${PREVIEW_NAME}-api.middlewares=${PREVIEW_NAME}-api-strip"
-      - "traefik.http.routers.${PREVIEW_NAME}-api.entrypoints=websecure"
+      - "traefik.http.routers.${PREVIEW_NAME}-api.entrypoints=web"
       - "traefik.http.services.${PREVIEW_NAME}-api.loadbalancer.server.port=3001"
-      - "traefik.http.routers.${PREVIEW_NAME}-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.${PREVIEW_NAME}-api.priority=200"
     networks:
       - traefik
@@ -128,8 +125,7 @@ services:
       # Note: Garage web endpoint uses Host header to determine bucket
       # We rewrite the Host header to match the bucket name
       - "traefik.http.routers.${PREVIEW_NAME}-s3-web.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/s3`)"
-      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.entrypoints=websecure"
-      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.entrypoints=web"
       - "traefik.http.routers.${PREVIEW_NAME}-s3-web.priority=250"
       - "traefik.http.middlewares.${PREVIEW_NAME}-s3-web-strip.stripprefix.prefixes=/${PREVIEW_NAME}/s3"
       - "traefik.http.routers.${PREVIEW_NAME}-s3-web.middlewares=${PREVIEW_NAME}-s3-web-strip"
