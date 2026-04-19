@@ -3,15 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 import { animate, stagger } from "animejs";
-import {
-    FileUp,
-    Database,
-    Clapperboard,
-    MapPin,
-    Newspaper,
-    Users,
-    FolderArchive,
-} from "lucide-react";
+import { FileUp, Database, Drama, MapPin, Newspaper, Users, SquareStack } from "lucide-react";
 
 import { SectionCard, SectionCardContent } from "@/components/cms/SectionCard";
 import { useGetStats } from "@/hooks/api/useStats";
@@ -21,7 +13,7 @@ interface ContentSection {
     href: string;
     editionKey: string;
     span: string;
-    icon: typeof Clapperboard;
+    icon: typeof Drama;
     comingSoon?: boolean;
 }
 
@@ -31,7 +23,7 @@ const CONTENT_SECTIONS: ContentSection[] = [
         href: "/cms/productions",
         editionKey: "edition1",
         span: "lg:col-span-8",
-        icon: Clapperboard,
+        icon: Drama,
     },
     {
         key: "locations",
@@ -60,7 +52,7 @@ const CONTENT_SECTIONS: ContentSection[] = [
         href: "/cms/collections",
         editionKey: "edition5",
         span: "lg:col-span-12",
-        icon: FolderArchive,
+        icon: SquareStack,
     },
 ];
 
