@@ -196,12 +196,36 @@
         "collections": "Collecties",
         "ingest": "Ingest",
         "import": "Import",
+        "importErrors": "Importfouten",
         "TabBar": {
             "overview": "CMS Overzicht",
             "content": "Inhoud beheren",
             "collections": "Collecties",
             "ingest": "Importeren",
-            "import": "Automatische import"
+            "import": "Automatische import",
+            "importErrors": "Importfouten"
+        },
+        "Import": {
+            "title": "Import",
+            "subtitle": "Automatische import van externe databronnen",
+            "comingSoon": "Binnenkort beschikbaar",
+            "notAvailable": "Import functionaliteit",
+            "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier data importeren van externe bronnen zoals UiTdatabank."
+        },
+        "ImportErrors": {
+            "title": "Importfouten",
+            "description": "Overzicht van fouten en waarschuwingen uit de automatische import.",
+            "previousPage": "Vorige pagina",
+            "nextPage": "Volgende pagina",
+            "unresolvedTab": "Niet opgelost",
+            "resolvedTab": "Opgelost",
+            "severity": "Ernst",
+            "entity": "Entiteit",
+            "sourceId": "Source ID",
+            "errorKind": "Fouttype",
+            "relation": "Relatie",
+            "message": "Bericht",
+            "lastSeen": "Laatst gezien"
         },
         "Sidebar": {
             "contentType": "Inhoudstype",
@@ -269,6 +293,8 @@
             "ingestDescription": "Upload en verwerk archiefmaterialen",
             "import": "Import",
             "importDescription": "Importeer data van externe bronnen",
+            "importErrors": "Importfouten",
+            "importErrorsDescription": "Bekijk waarschuwingen en fouten uit de automatische importer",
             "items": "items",
             "openSection": "Open sectie",
             "backToOverview": "Terug naar overzicht"
@@ -411,13 +437,6 @@
             "comingSoon": "Binnenkort beschikbaar",
             "notAvailable": "Ingest functionaliteit",
             "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier mediabestanden uploaden en verwerken."
-        },
-        "Import": {
-            "title": "Import",
-            "subtitle": "Automatische import van externe databronnen",
-            "comingSoon": "Binnenkort beschikbaar",
-            "notAvailable": "Import functionaliteit",
-            "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier data importeren van externe bronnen zoals UiTdatabank."
         },
         "Collections": {
             "title": "Collecties",

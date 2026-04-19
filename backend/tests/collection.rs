@@ -42,8 +42,10 @@ async fn get_one_success(db: PgPool) {
         .expect("Dutch translation not found");
     assert_eq!(nl.title, "Zomerselectie");
     assert_eq!(data.items.len(), 2);
-    assert_eq!(data.items[0].position, 1);
-    assert_eq!(data.items[1].position, 2);
+    let first_item = data.items.first().expect("expected first collection item");
+    assert_eq!(first_item.position, 1);
+    let second_item = data.items.get(1).expect("expected second collection item");
+    assert_eq!(second_item.position, 2);
 }
 
 #[sqlx::test]

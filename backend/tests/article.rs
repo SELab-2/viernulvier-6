@@ -463,7 +463,11 @@ async fn relations_crud(db: PgPool) {
     assert_eq!(response.status(), StatusCode::OK);
     let data: ArticleRelationsPayload = response.into_struct().await;
     assert_eq!(data.production_ids.len(), 1);
-    assert_eq!(data.production_ids[0], production_id);
+    let related_production = data
+        .production_ids
+        .first()
+        .expect("expected one related production");
+    assert_eq!(*related_production, production_id);
 
     let response = app
         .get(&format!("/articles/cms/{article_id}/relations"))

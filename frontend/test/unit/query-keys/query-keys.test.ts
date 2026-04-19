@@ -11,6 +11,7 @@ describe("queryKeys", () => {
         expect(queryKeys.events.all()).toEqual(["events"]);
         expect(queryKeys.halls.all()).toEqual(["halls"]);
         expect(queryKeys.spaces.all()).toEqual(["spaces"]);
+        expect(queryKeys.importErrors.all()).toEqual(["import-errors", { resolved: false }]);
     });
 
     it("builds deterministic detail keys", () => {
@@ -42,6 +43,10 @@ describe("queryKeys", () => {
             expect(queryKeys.locations.all(pagination)).toEqual(["locations", pagination]);
             expect(queryKeys.halls.all(pagination)).toEqual(["halls", pagination]);
             expect(queryKeys.spaces.all(pagination)).toEqual(["spaces", pagination]);
+            expect(queryKeys.importErrors.all(pagination, true)).toEqual([
+                "import-errors",
+                { ...pagination, resolved: true },
+            ]);
         });
 
         it("returns base key without pagination when no params provided", () => {
