@@ -11,6 +11,7 @@ import { useParentChildSelection } from "../use-parent-child-selection";
 import { makeLocationColumns, locationFields, toLocationUpdateInput } from "./columns";
 import { makeHallColumns, hallFields, toHallUpdateInput } from "./hall-columns";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
+import { LocationCoverEditor } from "@/components/cms/location-cover-editor";
 import { Spinner } from "@/components/ui/spinner";
 import { useGetInfiniteLocations, useUpdateLocation } from "@/hooks/api/useLocations";
 import { useGetHalls, useUpdateHall } from "@/hooks/api/useHalls";
@@ -22,6 +23,7 @@ export function LocationsTable() {
     const t = useTranslations("Cms.Locations");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
+    const tLocationCoverImage = useTranslations("Cms.LocationCoverImage");
     const loadMoreRef = useRef<HTMLDivElement>(null);
 
     const {
@@ -67,6 +69,7 @@ export function LocationsTable() {
     const [editLocation, setEditLocation] = useState<LocationRow | null>(null);
     const [editHall, setEditHall] = useState<Hall | null>(null);
     const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
+    const [coverPickerLocation, setCoverPickerLocation] = useState<Location | null>(null);
 
     const hallsByLocation = useMemo(() => {
         const spaceToLocation = new Map<string, string>();
@@ -98,8 +101,16 @@ export function LocationsTable() {
     } = useParentChildSelection<Location>(hallsByLocation);
 
     const locationCols = useMemo(
-        () => [selectColumn, ...makeLocationColumns({ onEdit: setEditLocation, t: tActions })],
-        [selectColumn, tActions]
+        () => [
+            selectColumn,
+            ...makeLocationColumns({
+                onEdit: setEditLocation,
+                t: tActions,
+                onEditCover: setCoverPickerLocation,
+                tLocations: tLocationCoverImage,
+            }),
+        ],
+        [selectColumn, tActions, tLocationCoverImage]
     );
 
     const hallCols = useMemo(
@@ -222,6 +233,10 @@ export function LocationsTable() {
                 fields={hallFields}
                 title={t("editHall")}
                 onSave={(data) => updateHall.mutateAsync(toHallUpdateInput(data))}
+            />
+            <LocationCoverEditor
+                location={coverPickerLocation}
+                onClose={() => setCoverPickerLocation(null)}
             />
         </div>
     );
