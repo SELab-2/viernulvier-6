@@ -27,6 +27,7 @@ use utoipa_swagger_ui::{Config, SwaggerUi};
 
 use crate::config::AppConfig;
 use crate::error::AppError;
+use crate::import::ImportRegistry;
 use crate::handlers::{
     admin, article, artist, auth, collection, event, hall, location, media, production, series,
     space, stats, tagging, taxonomy, version,
@@ -44,6 +45,7 @@ pub struct AppState {
     pub db: Database,
     pub config: AppConfig,
     pub s3_client: Option<aws_sdk_s3::Client>,
+    pub import_registry: ImportRegistry,
 }
 
 #[derive(OpenApi)]
@@ -166,6 +168,7 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
         db,
         config,
         s3_client,
+        import_registry: ImportRegistry::new(vec![]),
     };
 
     let allowed_origins: Vec<HeaderValue> = state
