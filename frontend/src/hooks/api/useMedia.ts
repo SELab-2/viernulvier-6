@@ -213,6 +213,11 @@ export const useLinkMedia = () => {
                 queryKey: queryKeys.media.entity(variables.entityType, variables.entityId),
             });
             queryClient.invalidateQueries({ queryKey: queryKeys.media.all() });
+            if (variables.entityType === "collection") {
+                queryClient.invalidateQueries({
+                    queryKey: queryKeys.collections.detail(variables.entityId),
+                });
+            }
         },
     });
 };
@@ -251,6 +256,11 @@ export const useClearCoverMedia = () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.media.entity(variables.entityType, variables.entityId),
             });
+            if (variables.entityType === "collection") {
+                queryClient.invalidateQueries({
+                    queryKey: queryKeys.collections.detail(variables.entityId),
+                });
+            }
         },
     });
 };
