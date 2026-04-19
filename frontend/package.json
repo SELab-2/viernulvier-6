@@ -62,7 +62,7 @@
         "zod": "^4.3.6"
     },
     "devDependencies": {
-        "@codecov/webpack-plugin": "^1.9.1",
+        "@codecov/bundle-analyzer": "^2.0.1",
         "@eslint/eslintrc": "^0.1.0",
         "@playwright/test": "^1.58.2",
         "@tailwindcss/postcss": "^4",
