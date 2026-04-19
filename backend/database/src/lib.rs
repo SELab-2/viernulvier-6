@@ -8,7 +8,7 @@ use crate::{
         event_price::EventPriceRepo, hall::HallRepo, internal_state::InternalStateRepo,
         location::LocationRepo, media::MediaRepo, media_variant::MediaVariantRepo,
         normalization_log::NormalizationLogRepo, price::PriceRepo, price_rank::PriceRankRepo,
-        import_error::ImportErrorRepo
+        import_error::ImportErrorRepo,
         production::ProductionRepo, series::SeriesRepo, sessions::SessionRepo, space::SpaceRepo,
         tag::TagRepo, user::UserRepo,
     },
@@ -173,5 +173,6 @@ impl Database {
     }
 
     pub fn import_errors<'a>(&'a self) -> ImportErrorRepo<'a> {
+        ImportErrorRepo::new(&self.db)
     }
 }
