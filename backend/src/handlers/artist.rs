@@ -1,6 +1,8 @@
+use axum::extract::State;
 use database::Database;
 
 use crate::{
+    AppState,
     dto::artist::ArtistPayload,
     handlers::{IntoApiResponse, JsonResponse},
 };
@@ -15,6 +17,10 @@ use crate::{
         (status = 200, description = "Success", body = [ArtistPayload])
     )
 )]
-pub async fn get_all(db: Database) -> JsonResponse<Vec<ArtistPayload>> {
-    ArtistPayload::all(&db).await?.json()
+pub async fn get_all(
+    State(state): State<AppState>,
+    db: Database,
+) -> JsonResponse<Vec<ArtistPayload>> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    ArtistPayload::all(&db, public_url).await?.json()
 }
