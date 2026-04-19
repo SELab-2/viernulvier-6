@@ -47,12 +47,8 @@ export function CollectionHeader({ collection }: CollectionHeaderProps) {
                 {title}
             </h1>
 
-            {/* Cover image placeholder — swap <div> for <Image> once cover_image is added to the API */}
-            <div className="border-foreground/20 mt-6 flex aspect-[16/7] items-center justify-center border">
-                <span className="text-muted-foreground/40 font-mono text-[11px] tracking-[2px] uppercase">
-                    {t("imagePlaceholder")}
-                </span>
-            </div>
+            {/* Cover image placeholder — swap for <Image> once cover_image is added to the API */}
+            <div className="mt-6 aspect-[16/7] w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
 
             {/* Dateline bar */}
             <div className="border-foreground text-foreground mt-4 flex items-center justify-between border-y py-1.5 font-mono text-[9px] tracking-widest uppercase">

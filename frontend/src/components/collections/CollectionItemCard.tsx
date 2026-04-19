@@ -7,7 +7,6 @@ import { Link } from "@/i18n/routing";
 
 import { CollectionItem, CollectionContentType } from "@/types/models/collection.types";
 import { useGetProduction } from "@/hooks/api/useProductions";
-import { useGetEvent } from "@/hooks/api/useEvents";
 import { useGetLocation } from "@/hooks/api/useLocations";
 import { useGetArticle } from "@/hooks/api/useArticles";
 import { useGetArtist } from "@/hooks/api/useArtists";
@@ -36,38 +35,6 @@ function ProductionCard({ item, locale }: { item: CollectionItem; locale: string
             imageUrl={imageUrl}
             href={href}
             typeLabel={t("typeLabels.production")}
-        />
-    );
-}
-
-function EventCard({ item, locale }: { item: CollectionItem; locale: string }) {
-    const t = useTranslations("Collections");
-    const { data: event, isLoading } = useGetEvent(item.contentId);
-    // Events have no own title — display the start date and link to the production
-    const title = event
-        ? new Date(event.startsAt).toLocaleDateString(locale === "en" ? "en-GB" : "nl-BE", {
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-          })
-        : null;
-    const { data: coverMedia = [] } = useGetEntityMedia("event", item.contentId, {
-        enabled: !!event,
-        params: { role: "cover" },
-    });
-    const imageUrl = coverMedia[0]?.url ?? null;
-    // Link to the production that owns this event
-    const href = event ? `/productions/${event.productionId}` : null;
-
-    return (
-        <CardShell
-            item={item}
-            locale={locale}
-            isLoading={isLoading}
-            title={title}
-            imageUrl={imageUrl}
-            href={href}
-            typeLabel={t("typeLabels.event")}
         />
     );
 }
@@ -179,8 +146,6 @@ interface CardShellProps {
 }
 
 function CardShell({ item, locale, isLoading, title, imageUrl, href, typeLabel }: CardShellProps) {
-    const t = useTranslations("Collections");
-
     const comment =
         item.translations.find((tr) => tr.languageCode === locale)?.comment ??
         item.translations[0]?.comment ??
@@ -195,9 +160,8 @@ function CardShell({ item, locale, isLoading, title, imageUrl, href, typeLabel }
                 </span>
             </div>
 
-            {/* Image slot — always rendered; shows placeholder when no image available.
-                This keeps all cards visually balanced in the masonry grid regardless of
-                whether the entity has a cover image yet. Swap for real image when available. */}
+            {/* Image slot — always rendered; gradient placeholder keeps cards visually
+                balanced in the masonry grid when no cover image is available yet. */}
             <div className="relative aspect-[4/3] w-full overflow-hidden">
                 {isLoading ? (
                     <div className="bg-muted/10 h-full w-full animate-pulse" />
@@ -210,11 +174,7 @@ function CardShell({ item, locale, isLoading, title, imageUrl, href, typeLabel }
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     />
                 ) : (
-                    <div className="border-foreground/10 flex h-full w-full items-center justify-center border">
-                        <span className="text-muted-foreground/30 font-mono text-[11px] tracking-[2px]">
-                            {t("itemImagePlaceholder")}
-                        </span>
-                    </div>
+                    <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
                 )}
             </div>
 
@@ -249,15 +209,13 @@ function CardShell({ item, locale, isLoading, title, imageUrl, href, typeLabel }
 }
 
 // ---------------------------------------------------------------------------
-// Dispatch map
+// Dispatch map — events intentionally excluded (not shown on collection pages)
 // ---------------------------------------------------------------------------
 
-const CARD_COMPONENTS: Record<
-    CollectionContentType,
-    React.ComponentType<{ item: CollectionItem; locale: string }>
+const CARD_COMPONENTS: Partial<
+    Record<CollectionContentType, React.ComponentType<{ item: CollectionItem; locale: string }>>
 > = {
     production: ProductionCard,
-    event: EventCard,
     location: LocationCard,
     blogpost: BlogpostCard,
     artist: ArtistCard,
@@ -275,5 +233,6 @@ interface CollectionItemCardProps {
 
 export function CollectionItemCard({ item, locale }: CollectionItemCardProps) {
     const Card = CARD_COMPONENTS[item.contentType];
+    if (!Card) return null;
     return <Card item={item} locale={locale} />;
 }

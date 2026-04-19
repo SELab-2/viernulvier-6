@@ -643,15 +643,12 @@
     },
     "Collections": {
         "sectionLabel": "COLLECTION",
-        "imagePlaceholder": "[ IMAGE ]",
-        "itemImagePlaceholder": "[ ]",
         "loading": "Loading collection...",
         "notFoundTitle": "Collection not found",
         "notFoundText": "This collection does not exist or has been deleted.",
         "items": "{count, plural, one {# ITEM} other {# ITEMS}}",
         "typeLabels": {
             "production": "PRODUCTIE / PRODUCTION",
-            "event": "EVENEMENT / EVENT",
             "location": "LOCATIE / LOCATION",
             "blogpost": "ARTIKEL / ARTICLE",
             "artist": "ARTIEST / ARTIST",
