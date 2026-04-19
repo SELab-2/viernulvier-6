@@ -36,7 +36,7 @@
 
 ### Unmapped genres (currently skipped)
 - [x] Age ratings: 3+/4+/6+/8+ → `children`, 10+/11+/12+/14+ → `family`, 16+/18+ → `adult`
-- [ ] Expo (159) — no discipline tag; consider adding `expo` tag
+- [x] Expo (159) → `discipline: expo`
 - [ ] Wandeling (265), stadsatelier (266), Feest (268), optocht (277), ritueel (278) — unclear mapping
 - [ ] 360° A/V (285), listening session (288) — niche, probably leave as-is
 
