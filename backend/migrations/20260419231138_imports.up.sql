@@ -1,5 +1,5 @@
 CREATE TABLE import_sessions (
-    id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id                UUID PRIMARY KEY DEFAULT uuidv7(),
     entity_type       TEXT NOT NULL,
     filename          TEXT NOT NULL,
     original_headers  TEXT[] NOT NULL,
@@ -17,12 +17,13 @@ CREATE TABLE import_sessions (
 );
 CREATE INDEX import_sessions_created_at_idx ON import_sessions (created_at DESC);
 CREATE INDEX import_sessions_status_idx ON import_sessions (status);
+CREATE INDEX import_sessions_created_by_idx ON import_sessions (created_by);
 CREATE TRIGGER import_sessions_updated_at
     BEFORE UPDATE ON import_sessions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TABLE import_rows (
-    id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id                UUID PRIMARY KEY DEFAULT uuidv7(),
     session_id        UUID NOT NULL REFERENCES import_sessions(id) ON DELETE CASCADE,
     row_number        INT NOT NULL,
     raw_data          JSONB NOT NULL,
@@ -39,6 +40,8 @@ CREATE TABLE import_rows (
 );
 CREATE INDEX import_rows_session_id_idx ON import_rows (session_id);
 CREATE INDEX import_rows_status_idx ON import_rows (status);
+CREATE INDEX import_rows_target_entity_id_idx
+    ON import_rows (target_entity_id) WHERE target_entity_id IS NOT NULL;
 
 CREATE TABLE import_session_files (
     session_id UUID PRIMARY KEY REFERENCES import_sessions(id) ON DELETE CASCADE,
