@@ -13,6 +13,7 @@ pub mod auth;
 pub mod collection;
 pub mod event;
 pub mod hall;
+pub mod import_error;
 pub mod location;
 pub mod media;
 pub mod production;
@@ -24,6 +25,7 @@ pub mod taxonomy;
 pub mod version;
 pub mod queries {
     pub mod hall;
+    pub mod import_error;
     pub mod location;
     pub mod article;
     pub mod media;

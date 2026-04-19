@@ -3,7 +3,16 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 import { animate, stagger } from "animejs";
-import { FileUp, Database, Drama, MapPin, Newspaper, Users, SquareStack } from "lucide-react";
+import {
+    FileUp,
+    Database,
+    Clapperboard,
+    MapPin,
+    Newspaper,
+    Users,
+    FolderArchive,
+    TriangleAlert,
+} from "lucide-react";
 
 import { SectionCard, SectionCardContent } from "@/components/cms/SectionCard";
 import { useGetStats } from "@/hooks/api/useStats";
@@ -13,7 +22,7 @@ interface ContentSection {
     href: string;
     editionKey: string;
     span: string;
-    icon: typeof Drama;
+    icon: typeof Clapperboard;
     comingSoon?: boolean;
 }
 
@@ -23,7 +32,7 @@ const CONTENT_SECTIONS: ContentSection[] = [
         href: "/cms/productions",
         editionKey: "edition1",
         span: "lg:col-span-8",
-        icon: Drama,
+        icon: Clapperboard,
     },
     {
         key: "locations",
@@ -52,7 +61,7 @@ const CONTENT_SECTIONS: ContentSection[] = [
         href: "/cms/collections",
         editionKey: "edition5",
         span: "lg:col-span-12",
-        icon: SquareStack,
+        icon: FolderArchive,
     },
 ];
 
@@ -74,6 +83,12 @@ const UTILITY_SECTIONS: UtilitySection[] = [
         key: "import",
         href: "/cms/import",
         icon: FileUp,
+        editionKey: "edition6",
+    },
+    {
+        key: "importErrors",
+        href: "/cms/import-errors",
+        icon: TriangleAlert,
         editionKey: "edition6",
     },
 ];
