@@ -48,6 +48,19 @@ Genres "Podium" and "Monument" represent recurring VIERNULVIER programme strands
 
 ---
 
+## UIT databank theme mapping
+
+970/2658 productions carry a `uitdatabank_theme` field from the Flemish cultural events database. These are mapped to discipline tags as a gap-filler after genre mappings, using `ON CONFLICT DO NOTHING` so genres always take precedence.
+
+Skipped themes:
+- **meerdere kunstvormen** (12) — catch-all "multiple art forms", no single discipline applies
+- **literatuur** (11) — no literature tag in the taxonomy
+- **samenleving** (13) — thematic content (society), not a discipline
+- **Kunst en kunsteducatie** (17) — art education, doesn't map cleanly
+- **Erfgoed** (16) — heritage, not a discipline
+
+---
+
 ## Hall normalisation decisions
 
 ### Merges

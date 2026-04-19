@@ -24,10 +24,11 @@
 - [ ] `normalize_production()` in `normalization/mod.rs` is a stub — needs implementation
 - [ ] Decide: deterministic seed step (JSON patch file) or LLM-assisted (Groq client is wired up)
 
-### Series from genres
-- [ ] Some genres represent recurring programmes/festivals (e.g. "Podium", "Resident", "stadsatelier")
-- [ ] `GenreAction::Series` variant exists in `normalization/schema.rs` but is never used
-- [ ] Map genre source_ids to existing series slugs, or create new series and link productions
+### Series — needs investigation
+- [x] Podium (genre 37, 29 productions) and Monument (genre 49, 15 productions) seeded as series via `genre_series_mappings.json`
+- [ ] 12 unnamed genres have significant production counts but no name in the API export (genre 135: 54 prods, 126: 15, 147: 15, 252: 9, 144: 9, 192: 7, 129: 6, 132: 4, 165: 3, 186: 2, 177: 2, 141: 2). Cannot seed these without knowing their names.
+- [ ] Known series exist that are not captured by any genre at all — e.g. "Videodroom" is a recurring VIERNULVIER series but has no corresponding genre in the raw data. These would need to be identified from production titles/descriptions or external knowledge and seeded manually.
+- [ ] `GenreAction::Series` variant exists in `normalization/schema.rs` for LLM-assisted series detection — not yet used
 
 ### Location slugs for raw API locations
 - [ ] Locations from the raw API (source_id 1, 9, 12, 15, 56, 87, etc.) are imported with `slug = NULL`
@@ -43,5 +44,6 @@
 - [x] Wandeling, stadsatelier, Feest, optocht, ritueel, listening session, op locatie, Cadeaubon geldig — deliberately skipped (see README.md)
 
 ### API / frontend exposure
+- [x] UIT databank theme→tag mappings seeded (`uitdatabank_theme_mappings.json`) — 13 themes mapped, 5 skipped (see README.md)
 - [ ] `production_locations` data is seeded but no API endpoint or frontend uses it yet
 - [ ] Artist data (once seeded) needs API endpoints and production detail page integration

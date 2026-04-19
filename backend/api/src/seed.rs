@@ -95,6 +95,13 @@ struct GenreTagMapping {
 }
 
 #[derive(Deserialize)]
+struct UitdatabankThemeMapping {
+    theme_source_id: i32,
+    tag_slug: String,
+    facet: String,
+}
+
+#[derive(Deserialize)]
 struct GenreSeriesMapping {
     genre_source_id: i32,
     series_slug: String,
@@ -162,6 +169,7 @@ impl SeedImporter {
         self.apply_hall_expansions().await?;
         self.apply_hall_deletions().await?;
         self.apply_genre_tag_mappings().await?;
+        self.apply_uitdatabank_theme_mappings().await?;
         self.apply_genre_location_mappings().await?;
         self.apply_genre_series_mappings().await?;
         Ok(())
@@ -494,6 +502,60 @@ impl SeedImporter {
         }
 
         info!("Inserted {} genre→tag taggings", count);
+        Ok(())
+    }
+
+    async fn apply_uitdatabank_theme_mappings(&self) -> Result<(), SeedError> {
+        let Some(mappings) = self
+            .read_normalization_file::<UitdatabankThemeMapping>("uitdatabank_theme_mappings.json")
+        else {
+            return Ok(());
+        };
+
+        let index: HashMap<i32, (&str, &str)> = mappings
+            .iter()
+            .map(|m| (m.theme_source_id, (m.tag_slug.as_str(), m.facet.as_str())))
+            .collect();
+
+        let productions: Vec<ApiProduction> = self.read_file("productions.json")?;
+        info!(
+            "Applying uitdatabank theme→tag mappings to {} productions",
+            productions.len()
+        );
+
+        let mut count = 0u64;
+        for prod in &productions {
+            let Some(prod_source_id) = extract_source_id(&prod.id) else {
+                continue;
+            };
+            let Some(theme_url) = &prod.uitdatabank_theme else {
+                continue;
+            };
+            let Some(theme_source_id) = extract_source_id(theme_url) else {
+                continue;
+            };
+            let Some(&(tag_slug, facet)) = index.get(&theme_source_id) else {
+                continue;
+            };
+            let rows = sqlx::query(
+                "INSERT INTO taggings (tag_id, entity_type, entity_id, inherited)
+                 SELECT t.id, 'production'::entity_type, p.id, false
+                 FROM tags t
+                 JOIN productions p ON p.source_id = $1
+                 WHERE t.slug = $2 AND t.facet::text = $3
+                 ON CONFLICT DO NOTHING",
+            )
+            .bind(prod_source_id)
+            .bind(tag_slug)
+            .bind(facet)
+            .execute(self.db.pool())
+            .await
+            .map_err(DatabaseError::from)?
+            .rows_affected();
+            count += rows;
+        }
+
+        info!("Inserted {} uitdatabank theme→tag taggings", count);
         Ok(())
     }
 
