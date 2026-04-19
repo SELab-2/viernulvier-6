@@ -23,5 +23,4 @@ pub struct Event {
     pub production_id: Uuid,
     pub status: String, // mostly irrelevant since the show already happened, but status like
     // 'cancelled' might be worthwhile to keep. Could also be modelled as a bool. or drop entirely.
-    pub hall_id: Option<Uuid>,
 }

@@ -55,7 +55,7 @@ export type Event = {
     maxTicketsPerOrder: number | null;
     productionId: string;
     status: string;
-    hallId: string | null;
+    hallIds: string[];
     prices: EventPrice[];
 };
 
@@ -71,7 +71,7 @@ export type EventCreateInput = {
     maxTicketsPerOrder?: number | null;
     productionId: string;
     status: string;
-    hallId?: string | null;
+    hallIds?: string[];
     prices?: EventPrice[];
 };
 
