@@ -8,6 +8,12 @@ services:
         - NEXT_PUBLIC_MEDIA_URL=${NEXT_PUBLIC_SITE_URL}/${PREVIEW_NAME}/s3
         - PREVIEW_NAME=${PREVIEW_NAME}
         - CODECOV_TOKEN=${CODECOV_TOKEN}
+        - GITHUB_ACTIONS=${GITHUB_ACTIONS} # Github vars needed for codecov bundle analyzer
+        - GITHUB_REPOSITORY=${GITHUB_REPOSITORY}
+        - GITHUB_SHA=${GITHUB_SHA}
+        - GITHUB_REF=${GITHUB_REF}
+        - GITHUB_HEAD_REF=${GITHUB_HEAD_REF}
+        - GITHUB_RUN_ID=${GITHUB_RUN_ID}
     container_name: ${COMPOSE_PROJECT_NAME}-frontend
     environment:
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
