@@ -35,7 +35,7 @@
 - [ ] Fix: add slug generation to `apply_location_name_patches()` or add a separate slug assignment step
 
 ### Unmapped genres (currently skipped)
-- [ ] Age ratings: 3+, 4+, 6+, 8+, 10+, 11+, 12+, 14+, 16+, 18+ — no tags exist for these
+- [x] Age ratings: 3+/4+/6+/8+ → `children`, 10+/11+/12+/14+ → `family`, 16+/18+ → `adult`
 - [ ] Expo (159) — no discipline tag; consider adding `expo` tag
 - [ ] Wandeling (265), stadsatelier (266), Feest (268), optocht (277), ritueel (278) — unclear mapping
 - [ ] 360° A/V (285), listening session (288) — niche, probably leave as-is

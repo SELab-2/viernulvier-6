@@ -28,5 +28,16 @@
   { "genre_source_id": 283, "tag_slug": "festival",         "facet": "format",         "note": "Festival" },
   { "genre_source_id": 284, "tag_slug": "family",           "facet": "audience",       "note": "Familie" },
   { "genre_source_id": 286, "tag_slug": "schools",          "facet": "audience",       "note": "Schoolvoorstelling" },
-  { "genre_source_id": 287, "tag_slug": "aftertalk",        "facet": "format",         "note": "Met nagesprek" }
+  { "genre_source_id": 287, "tag_slug": "aftertalk",        "facet": "format",         "note": "Met nagesprek" },
+
+  { "genre_source_id": 249, "tag_slug": "children",         "facet": "audience",       "note": "3+" },
+  { "genre_source_id": 213, "tag_slug": "children",         "facet": "audience",       "note": "4+" },
+  { "genre_source_id": 198, "tag_slug": "children",         "facet": "audience",       "note": "6+" },
+  { "genre_source_id": 183, "tag_slug": "children",         "facet": "audience",       "note": "8+" },
+  { "genre_source_id": 216, "tag_slug": "family",           "facet": "audience",       "note": "10+" },
+  { "genre_source_id": 219, "tag_slug": "family",           "facet": "audience",       "note": "11+" },
+  { "genre_source_id": 180, "tag_slug": "family",           "facet": "audience",       "note": "12+" },
+  { "genre_source_id": 204, "tag_slug": "family",           "facet": "audience",       "note": "14+" },
+  { "genre_source_id": 189, "tag_slug": "adult",            "facet": "audience",       "note": "16+" },
+  { "genre_source_id": 153, "tag_slug": "adult",            "facet": "audience",       "note": "18+" }
 ]
