@@ -5,6 +5,7 @@ pub mod event;
 pub mod event_price;
 pub mod facet;
 pub mod hall;
+pub mod import_error;
 pub mod location;
 pub mod media;
 pub mod paginated;

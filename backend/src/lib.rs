@@ -28,8 +28,8 @@ use utoipa_swagger_ui::{Config, SwaggerUi};
 use crate::config::AppConfig;
 use crate::error::AppError;
 use crate::handlers::{
-    admin, article, artist, auth, collection, event, hall, location, media, production, series,
-    space, stats, tagging, taxonomy, version,
+    admin, article, artist, auth, collection, event, hall, import_error, location, media,
+    production, series, space, stats, tagging, taxonomy, version,
 };
 
 pub mod config;
@@ -285,6 +285,7 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         // Editor/Admin
         .routes(routes!(admin::editor_me))
+        .routes(routes!(import_error::get_all))
         // Location
         .routes(routes!(location::post))
         .routes(routes!(location::delete))
