@@ -1,5 +1,5 @@
-use chrono::{DateTime, NaiveDate, Utc};
 use base64::{Engine, prelude::BASE64_URL_SAFE};
+use chrono::{DateTime, NaiveDate, Utc};
 use database::{
     Database,
     models::{
@@ -157,11 +157,7 @@ impl ArticleListPayload {
 
         let (articles, next_cursor) = db
             .articles()
-            .search_published(
-                limit,
-                cursor,
-                search,
-            )
+            .search_published(limit, cursor, search)
             .await?;
 
         let data = articles.into_iter().map(Self::from).collect();

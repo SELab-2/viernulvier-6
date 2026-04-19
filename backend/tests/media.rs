@@ -4,7 +4,10 @@ use serde_json::json;
 use sha2::Sha256;
 use sqlx::PgPool;
 use uuid::Uuid;
-use viernulvier_archive::{config::AppConfig, dto::{media::MediaPayload, paginated::PaginatedResponse}};
+use viernulvier_archive::{
+    config::AppConfig,
+    dto::{media::MediaPayload, paginated::PaginatedResponse},
+};
 
 use crate::common::into_struct::IntoStruct;
 use crate::common::router::TestRouter;
@@ -442,7 +445,10 @@ async fn set_cover_promotes_gallery_item(db: PgPool) {
     // Promote the new media to cover
     let set_cover_res = app
         .post(
-            &format!("/media/entity/production/{prod_id}/{}/set-cover", new_media.id),
+            &format!(
+                "/media/entity/production/{prod_id}/{}/set-cover",
+                new_media.id
+            ),
             &json!({}),
         )
         .await;
@@ -508,7 +514,10 @@ async fn put_media_updates_metadata_preserves_s3_key(db: PgPool) {
     assert_eq!(put_res.status(), StatusCode::OK);
     let updated: MediaPayload = put_res.into_struct().await;
 
-    assert_eq!(updated.alt_text_nl.as_deref(), Some("Updated cover alt text"));
+    assert_eq!(
+        updated.alt_text_nl.as_deref(),
+        Some("Updated cover alt text")
+    );
     assert_eq!(updated.credit_nl.as_deref(), Some("New credit"));
     // s3_key should be preserved (not overwritten by the empty string from From<MediaPayload>)
     assert_eq!(updated.s3_key, original.s3_key);
