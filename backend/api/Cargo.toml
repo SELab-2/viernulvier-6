@@ -36,12 +36,6 @@ ormlite = { version = "0.24.3", default-features = false, features = ["sqlite"] 
 futures = "0.3.32"
 slug = "0.1.6"
 hex = "0.4"
-<<<<<<< HEAD
-aws-sdk-s3 = { version = "1", default-features = false, features = ["behavior-version-latest", "default-https-client", "rt-tokio", "sigv4a"] }
-tokio = { version = "1.50.0", features = ["fs", "io-util", "rt"] }
-serde_json = "1.0.149"
-=======
->>>>>>> origin/main
 base64 = "0.22.1"
 tempfile = "3.27.0"
 imagesize = "0.14"

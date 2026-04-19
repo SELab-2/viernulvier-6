@@ -41,7 +41,7 @@ uuid = { version = "1", features = ["v7"], default-features = false }
 thiserror = { version = "2", default-features = false }
 chrono = "0.4"
 sha2 = "0.11"
-aws-sdk-s3 = { version = "1.129", features = ["behavior-version-latest"] }
+aws-sdk-s3 = { version = "1", default-features = false, features = ["behavior-version-latest", "default-https-client", "rt-tokio", "sigv4a"] }
 
 [dependencies]
 database = { path = "database" }
@@ -85,10 +85,6 @@ rand = "0.10"
 hmac = "0.13"
 hex = "0.4.3"
 time = "0.3.47"
-<<<<<<< HEAD
-aws-sdk-s3 = { version = "1", default-features = false, features = ["behavior-version-latest", "default-https-client", "rt-tokio", "sigv4a"] }
-=======
->>>>>>> origin/main
 aws-config = { version = "1", features = ["behavior-version-latest"] }
 slug = "0.1.6"
 
