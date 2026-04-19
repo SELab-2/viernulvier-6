@@ -40,6 +40,10 @@ inputs:
   admin_password:
     description: "Admin password for bootstrap (required on first startup)"
     required: true
+  max_upload_size_mib:
+    description: "Max upload size in MiB for presigned S3 URLs (default 50)"
+    required: false
+    default: "50"
 
 runs:
   using: "composite"
@@ -68,6 +72,7 @@ runs:
         PREVIEW_JWT_SECRET: "${{ inputs.jwt_secret }}"
         PREVIEW_ADMIN_EMAIL: "${{ inputs.admin_email }}"
         PREVIEW_ADMIN_PASSWORD: "${{ inputs.admin_password }}"
+        MAX_UPLOAD_SIZE_MIB: "${{ inputs.max_upload_size_mib }}"
 
       run: |
         mkdir -p infra/preview
@@ -92,6 +97,7 @@ runs:
         PREVIEW_API_KEY_404=$PREVIEW_API_KEY_404
         PREVIEW_ADMIN_EMAIL=$PREVIEW_ADMIN_EMAIL
         PREVIEW_ADMIN_PASSWORD=$PREVIEW_ADMIN_PASSWORD
+        MAX_UPLOAD_SIZE_MIB=$MAX_UPLOAD_SIZE_MIB
         NEXT_PUBLIC_SITE_URL=$PREVIEW_SITE_URL
         EOF
 

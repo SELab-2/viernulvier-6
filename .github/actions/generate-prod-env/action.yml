@@ -42,6 +42,10 @@ inputs:
   admin_password:
     description: "Admin password for bootstrap (required on first startup)"
     required: true
+  max_upload_size_mib:
+    description: "Max upload size in MiB for presigned S3 URLs (default 50)"
+    required: false
+    default: "50"
 runs:
   using: "composite"
   steps:
@@ -62,6 +66,7 @@ runs:
         PROD_JWT_SECRET: "${{ inputs.jwt_secret }}"
         PROD_ADMIN_EMAIL: "${{ inputs.admin_email }}"
         PROD_ADMIN_PASSWORD: "${{ inputs.admin_password }}"
+        MAX_UPLOAD_SIZE_MIB: "${{ inputs.max_upload_size_mib }}"
 
       run: |
         PROD_DATABASE_URL="postgres://${PROD_DB_USER}:${PROD_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}-database:5432/${PROD_DB_NAME}"
@@ -82,6 +87,7 @@ runs:
         GARAGE_S3_ACCESS_KEY=$GARAGE_S3_ACCESS_KEY
         GARAGE_S3_SECRET_KEY=$GARAGE_S3_SECRET_KEY
         GARAGE_S3_BUCKET=$GARAGE_S3_BUCKET
+        MAX_UPLOAD_SIZE_MIB=$MAX_UPLOAD_SIZE_MIB
         EOF
 
         echo "Production .env generated."

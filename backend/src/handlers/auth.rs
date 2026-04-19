@@ -84,7 +84,12 @@ fn parse_same_site(value: &str) -> SameSite {
     }
 }
 
-fn access_cookie(token: String, expiry_minutes: i8, secure: bool, same_site: SameSite) -> Cookie<'static> {
+fn access_cookie(
+    token: String,
+    expiry_minutes: i8,
+    secure: bool,
+    same_site: SameSite,
+) -> Cookie<'static> {
     Cookie::build((ACCESS_TOKEN_COOKIE, token))
         .http_only(true)
         .secure(secure)
@@ -94,11 +99,17 @@ fn access_cookie(token: String, expiry_minutes: i8, secure: bool, same_site: Sam
         .build()
 }
 
-fn refresh_cookie(token: String, expiry_days: i8, secure: bool, same_site: SameSite, preview_name: &str) -> Cookie<'static> {
+fn refresh_cookie(
+    token: String,
+    expiry_days: i8,
+    secure: bool,
+    same_site: SameSite,
+    preview_name: &str,
+) -> Cookie<'static> {
     let path = if preview_name.is_empty() {
         "/api/auth/refresh".to_string()
     } else {
-        format!("/{}/api/auth/refresh", preview_name)
+        format!("/{preview_name}/api/auth/refresh")
     };
     Cookie::build((REFRESH_TOKEN_COOKIE, token))
         .http_only(true)
@@ -176,11 +187,29 @@ pub async fn login(
     )?;
 
     let same_site = parse_same_site(&config.cookie_same_site);
-    let access_cookie = access_cookie(access_token, config.access_token_expiry_minutes, config.cookie_secure, same_site);
-    let refresh_cookie = refresh_cookie(refresh_token, config.refresh_token_expiry_days, config.cookie_secure, same_site, &config.preview_name);
-    let session_present = session_present_cookie(config.refresh_token_expiry_days, config.cookie_secure, same_site);
+    let access_cookie = access_cookie(
+        access_token,
+        config.access_token_expiry_minutes,
+        config.cookie_secure,
+        same_site,
+    );
+    let refresh_cookie = refresh_cookie(
+        refresh_token,
+        config.refresh_token_expiry_days,
+        config.cookie_secure,
+        same_site,
+        &config.preview_name,
+    );
+    let session_present = session_present_cookie(
+        config.refresh_token_expiry_days,
+        config.cookie_secure,
+        same_site,
+    );
 
-    let updated_jar = jar.add(access_cookie).add(refresh_cookie).add(session_present);
+    let updated_jar = jar
+        .add(access_cookie)
+        .add(refresh_cookie)
+        .add(session_present);
     Ok((
         updated_jar,
         Json(AuthResponse {
@@ -242,7 +271,12 @@ pub async fn refresh(
     )?;
 
     let same_site = parse_same_site(&config.cookie_same_site);
-    let access_cookie = access_cookie(new_access_token, config.access_token_expiry_minutes, config.cookie_secure, same_site);
+    let access_cookie = access_cookie(
+        new_access_token,
+        config.access_token_expiry_minutes,
+        config.cookie_secure,
+        same_site,
+    );
     // Note: refresh endpoint only sets a new access token; refresh cookie path is kept intact.
     let updated_jar = jar.add(access_cookie);
 
@@ -312,7 +346,10 @@ pub async fn logout(
         .max_age(Duration::ZERO)
         .build();
 
-    let updated_jar = jar.add(access_cookie).add(refresh_cookie).add(session_present);
+    let updated_jar = jar
+        .add(access_cookie)
+        .add(refresh_cookie)
+        .add(session_present);
     Ok((
         updated_jar,
         Json(AuthResponse {
