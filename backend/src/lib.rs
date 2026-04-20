@@ -32,6 +32,7 @@ use crate::handlers::{
     admin, article, artist, auth, collection, event, hall, location, media, production, series,
     space, stats, tagging, taxonomy, version,
 };
+use crate::handlers::import as import_handlers;
 
 pub mod config;
 pub mod dto;
@@ -343,6 +344,8 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(article::delete))
         .routes(routes!(article::get_relations))
         .routes(routes!(article::put_relations))
+        // Import
+        .routes(routes!(import_handlers::upload_session))
         .layer(from_extractor_with_state::<EditorUser, AppState>(state))
 }
 

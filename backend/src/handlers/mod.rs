@@ -8,6 +8,7 @@ use crate::error::AppError;
 
 pub mod admin;
 pub mod article;
+pub mod import;
 pub mod artist;
 pub mod auth;
 pub mod collection;
