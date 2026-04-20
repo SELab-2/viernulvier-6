@@ -1,3 +1,5 @@
+#![allow(clippy::indexing_slicing)]
+
 use viernulvier_archive::import::csv_parser::{CsvParseError, parse_all, parse_preview};
 
 // ---------------------------------------------------------------------------
@@ -20,15 +22,13 @@ fn parse_preview_basic() {
 #[test]
 fn parse_preview_with_bom() {
     // UTF-8 BOM prepended
-    let mut csv = b"\xef\xbb\xbfa,b\n1,2".to_vec();
+    let csv = b"\xef\xbb\xbfa,b\n1,2".to_vec();
     // Ensure the BOM is at the start
     assert_eq!(&csv[..3], b"\xef\xbb\xbf");
     let result = parse_preview(&csv).unwrap();
     // First header must NOT contain the BOM character
     assert_eq!(result.headers[0], "a");
     assert_eq!(result.headers[1], "b");
-    // suppress "unused variable" — the vec itself is the test fixture
-    csv.clear();
 }
 
 #[test]

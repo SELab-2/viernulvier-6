@@ -18,8 +18,6 @@ pub enum CsvParseError {
     Parse(String),
     #[error("CSV header row is empty")]
     EmptyHeader,
-    #[error("CSV has no data rows")]
-    NoRows,
     #[error("CSV header contains duplicate column: {0}")]
     DuplicateHeader(String),
 }
@@ -36,6 +34,9 @@ fn strip_bom(bytes: &[u8]) -> &[u8] {
 /// Sniff the most likely delimiter by counting occurrences in the first two
 /// logical lines (up to 2 KB). The delimiter with the highest and consistent
 /// count wins; defaults to comma when inconclusive.
+///
+/// **Caveat:** counts raw byte occurrences — may misfire if the first two lines
+/// contain delimiter characters inside quoted fields.
 fn sniff_delimiter(bytes: &[u8]) -> u8 {
     let sample = bytes.get(..2048).unwrap_or(bytes);
 
@@ -65,12 +66,12 @@ fn sniff_delimiter(bytes: &[u8]) -> u8 {
         lines.push(slice);
     }
 
-    let delimiters: &[(u8, &str)] = &[(b',', ","), (b';', ";"), (b'\t', "\t")];
+    let delimiters: &[u8] = b",;\t";
 
     let mut best: u8 = b',';
     let mut best_count: usize = 0;
 
-    for &(delim, _) in delimiters {
+    for &delim in delimiters {
         let counts: Vec<usize> = lines
             .iter()
             .map(|line| line.iter().filter(|&&b| b == delim).count())
@@ -111,11 +112,14 @@ fn record_to_map(
         .collect()
 }
 
-/// Parse the CSV bytes and return headers + up to 20 preview rows + total row count.
+/// Build a CSV reader and validated header list from raw bytes.
 ///
-/// Handles UTF-8 BOM, delimiter sniffing (comma / semicolon / tab), and duplicate
-/// header detection.
-pub fn parse_preview(bytes: &[u8]) -> Result<ParsedCsvPreview, CsvParseError> {
+/// Handles BOM stripping, delimiter sniffing, empty-header detection, and
+/// duplicate-header detection. Both [`parse_preview`] and [`parse_all`] delegate
+/// to this helper so the setup logic is not duplicated.
+fn build_reader_and_headers(
+    bytes: &[u8],
+) -> Result<(csv::Reader<&[u8]>, Vec<String>), CsvParseError> {
     let bytes = strip_bom(bytes);
     let delimiter = sniff_delimiter(bytes);
 
@@ -124,7 +128,6 @@ pub fn parse_preview(bytes: &[u8]) -> Result<ParsedCsvPreview, CsvParseError> {
         .flexible(true)
         .from_reader(bytes);
 
-    // Read headers
     let raw_headers = rdr
         .headers()
         .map_err(|e| CsvParseError::Parse(e.to_string()))?;
@@ -135,13 +138,22 @@ pub fn parse_preview(bytes: &[u8]) -> Result<ParsedCsvPreview, CsvParseError> {
 
     let headers: Vec<String> = raw_headers.iter().map(str::to_owned).collect();
 
-    // Detect duplicate headers
     let mut seen = std::collections::HashSet::new();
     for h in &headers {
         if !seen.insert(h.as_str()) {
             return Err(CsvParseError::DuplicateHeader(h.clone()));
         }
     }
+
+    Ok((rdr, headers))
+}
+
+/// Parse the CSV bytes and return headers + up to 20 preview rows + total row count.
+///
+/// Handles UTF-8 BOM, delimiter sniffing (comma / semicolon / tab), and duplicate
+/// header detection.
+pub fn parse_preview(bytes: &[u8]) -> Result<ParsedCsvPreview, CsvParseError> {
+    let (mut rdr, headers) = build_reader_and_headers(bytes)?;
 
     let mut preview_rows: Vec<BTreeMap<String, Option<String>>> = Vec::new();
     let mut total_rows: usize = 0;
@@ -165,30 +177,7 @@ pub fn parse_preview(bytes: &[u8]) -> Result<ParsedCsvPreview, CsvParseError> {
 ///
 /// Same BOM / delimiter / duplicate-header handling as [`parse_preview`].
 pub fn parse_all(bytes: &[u8]) -> Result<Vec<BTreeMap<String, Option<String>>>, CsvParseError> {
-    let bytes = strip_bom(bytes);
-    let delimiter = sniff_delimiter(bytes);
-
-    let mut rdr = csv::ReaderBuilder::new()
-        .delimiter(delimiter)
-        .flexible(true)
-        .from_reader(bytes);
-
-    let raw_headers = rdr
-        .headers()
-        .map_err(|e| CsvParseError::Parse(e.to_string()))?;
-
-    if raw_headers.is_empty() {
-        return Err(CsvParseError::EmptyHeader);
-    }
-
-    let headers: Vec<String> = raw_headers.iter().map(str::to_owned).collect();
-
-    let mut seen = std::collections::HashSet::new();
-    for h in &headers {
-        if !seen.insert(h.as_str()) {
-            return Err(CsvParseError::DuplicateHeader(h.clone()));
-        }
-    }
+    let (mut rdr, headers) = build_reader_and_headers(bytes)?;
 
     let mut rows = Vec::new();
     for result in rdr.records() {
