@@ -433,10 +433,28 @@
                 "submit": "Create session",
                 "submitting": "Uploading…"
             },
+            "mapping": {
+                "title": "Map columns",
+                "description": "Link each CSV column to a field in the system.",
+                "headerColumn": "CSV column",
+                "sampleValuesLabel": "Sample values",
+                "fieldColumn": "Field",
+                "ignoreOption": "— Ignore —",
+                "unsavedChanges": "(unsaved changes)",
+                "save": "Save mapping",
+                "saving": "Saving…",
+                "startDryRun": "Start dry-run",
+                "startingDryRun": "Starting…",
+                "requiredMissing": "Required fields not yet mapped"
+            },
             "errors": {
                 "fileTooLarge": "File too large (max 20MB).",
                 "uploadFailed": "Upload failed. Try again.",
-                "entityTypesFailed": "Could not load entity types."
+                "entityTypesFailed": "Could not load entity types.",
+                "sessionLoadFailed": "Could not load session.",
+                "fieldsLoadFailed": "Could not load fields.",
+                "saveMappingFailed": "Save failed.",
+                "dryRunStartFailed": "Could not start dry-run."
             }
         },
         "Collections": {

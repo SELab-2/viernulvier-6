@@ -6,6 +6,7 @@ import { animate } from "animejs";
 import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/cms/PageHeader";
 import { ImportStepper, type ImportStage } from "@/components/cms/import/ImportStepper";
+import { MappingStage } from "@/components/cms/import/MappingStage";
 import { UploadStage } from "@/components/cms/import/UploadStage";
 import { useImportSession } from "@/hooks/api/useImport";
 import type { ImportSessionStatus } from "@/types/models/import.types";
@@ -62,7 +63,10 @@ export default function ImportPage() {
             <div ref={contentRef} className="flex-1 overflow-auto">
                 <ImportStepper currentStage={currentStage} />
                 {currentStage === "upload" && <UploadStage />}
-                {currentStage === "mapping" && <div />}
+                {currentStage === "mapping" && sessionId !== "" && (
+                    <MappingStage sessionId={sessionId} />
+                )}
+                {currentStage === "mapping" && sessionId === "" && <div />}
                 {currentStage === "dry_run" && <div />}
                 {currentStage === "commit" && <div />}
             </div>

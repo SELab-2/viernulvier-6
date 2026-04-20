@@ -433,10 +433,28 @@
                 "submit": "Session aanmaken",
                 "submitting": "Bezig…"
             },
+            "mapping": {
+                "title": "Kolommen mappen",
+                "description": "Koppel elke CSV-kolom aan een veld in het systeem.",
+                "headerColumn": "CSV-kolom",
+                "sampleValuesLabel": "Voorbeeldwaarden",
+                "fieldColumn": "Veld",
+                "ignoreOption": "— Negeer —",
+                "unsavedChanges": "(niet opgeslagen wijzigingen)",
+                "save": "Mapping opslaan",
+                "saving": "Opslaan…",
+                "startDryRun": "Dry-run starten",
+                "startingDryRun": "Bezig…",
+                "requiredMissing": "Verplichte velden nog niet gemapt"
+            },
             "errors": {
                 "fileTooLarge": "Bestand is te groot (max 20MB).",
                 "uploadFailed": "Upload mislukt. Probeer opnieuw.",
-                "entityTypesFailed": "Kon entiteitstypes niet laden."
+                "entityTypesFailed": "Kon entiteitstypes niet laden.",
+                "sessionLoadFailed": "Sessie kon niet geladen worden.",
+                "fieldsLoadFailed": "Velden konden niet geladen worden.",
+                "saveMappingFailed": "Opslaan mislukt.",
+                "dryRunStartFailed": "Starten van dry-run mislukt."
             }
         },
         "Collections": {
