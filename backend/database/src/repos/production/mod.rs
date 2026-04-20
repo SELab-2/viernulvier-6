@@ -262,6 +262,7 @@ impl<'a> ProductionRepo<'a> {
         Ok(translation_map)
     }
 
+    /// Insert or update translations for a production. Clears all translations when the list is empty.
     async fn upsert_translations(
         &self,
         production_id: Uuid,
