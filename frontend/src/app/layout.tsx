@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Playfair_Display, DM_Mono, Inter } from "next/font/google";
 
 import "./globals.css";
@@ -26,6 +26,11 @@ const inter = Inter({
 
 export const metadata: Metadata = {
     title: "Viernulvier Archive",
+};
+
+export const viewport: Viewport = {
+    width: "device-width",
+    initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

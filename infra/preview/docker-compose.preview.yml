@@ -8,6 +8,12 @@ services:
         - NEXT_PUBLIC_MEDIA_URL=${NEXT_PUBLIC_SITE_URL}/${PREVIEW_NAME}/s3
         - PREVIEW_NAME=${PREVIEW_NAME}
         - CODECOV_TOKEN=${CODECOV_TOKEN}
+        - GITHUB_ACTIONS=${GITHUB_ACTIONS} # Github vars needed for codecov bundle analyzer
+        - GITHUB_REPOSITORY=${GITHUB_REPOSITORY}
+        - GITHUB_SHA=${GITHUB_SHA}
+        - GITHUB_REF=${GITHUB_REF}
+        - GITHUB_HEAD_REF=${GITHUB_HEAD_REF}
+        - GITHUB_RUN_ID=${GITHUB_RUN_ID}
     container_name: ${COMPOSE_PROJECT_NAME}-frontend
     environment:
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
@@ -17,9 +23,8 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${PREVIEW_NAME}.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}`) && !PathPrefix(`/${PREVIEW_NAME}/docs`) && !PathPrefix(`/${PREVIEW_NAME}/api`) && !PathPrefix(`/${PREVIEW_NAME}/s3`)"
-      - "traefik.http.routers.${PREVIEW_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${PREVIEW_NAME}.entrypoints=web"
       - "traefik.http.services.${PREVIEW_NAME}.loadbalancer.server.port=3000"
-      - "traefik.http.routers.${PREVIEW_NAME}.tls.certresolver=letsencrypt"
       - "traefik.http.routers.${PREVIEW_NAME}.priority=200"
       - "traefik.http.middlewares.${PREVIEW_NAME}-prefix.headers.customrequestheaders.X-Forwarded-Prefix=/${PREVIEW_NAME}"
       - "traefik.http.routers.${PREVIEW_NAME}.middlewares=${PREVIEW_NAME}-prefix"
@@ -41,9 +46,8 @@ services:
       # Route for /{preview-name}/docs (for PR previews) - higher priority than frontend
       # NO strip middleware - full path goes to container (same as frontend)
       - "traefik.http.routers.${PREVIEW_NAME}-docs.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/docs`)"
-      - "traefik.http.routers.${PREVIEW_NAME}-docs.entrypoints=websecure"
+      - "traefik.http.routers.${PREVIEW_NAME}-docs.entrypoints=web"
       - "traefik.http.services.${PREVIEW_NAME}-docs.loadbalancer.server.port=3002"
-      - "traefik.http.routers.${PREVIEW_NAME}-docs.tls.certresolver=letsencrypt"
       - "traefik.http.routers.${PREVIEW_NAME}-docs.priority=200"
       - "traefik.http.middlewares.${PREVIEW_NAME}-prefix-docs.headers.customrequestheaders.X-Forwarded-Prefix=/${PREVIEW_NAME}/docs"
       - "traefik.http.routers.${PREVIEW_NAME}-docs.middlewares=${PREVIEW_NAME}-prefix-docs"
@@ -56,8 +60,8 @@ services:
       context: ../../backend
     container_name: ${COMPOSE_PROJECT_NAME}-api
     environment:
-      DATABASE_URL: postgres://${PREVIEW_DB_USER}:${PREVIEW_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}-db:5432/${PREVIEW_DB_NAME}
-      S3_ENDPOINT: http://${COMPOSE_PROJECT_NAME}_garage:3900
+      DATABASE_URL: postgres://${PREVIEW_DB_USER}:${PREVIEW_DB_PASSWORD}@${COMPOSE_PROJECT_NAME}-database:5432/${PREVIEW_DB_NAME}
+      S3_ENDPOINT: http://${COMPOSE_PROJECT_NAME}-garage:3900
       S3_REGION: garage
       S3_ACCESS_KEY: ${GARAGE_S3_ACCESS_KEY}
       S3_SECRET_KEY: ${GARAGE_S3_SECRET_KEY}
@@ -65,6 +69,8 @@ services:
       S3_PUBLIC_URL: ${NEXT_PUBLIC_SITE_URL}/${PREVIEW_NAME}/s3
       JWT_SECRET: ${PREVIEW_JWT_SECRET}
       API_KEY_404: ${PREVIEW_API_KEY_404}
+      ADMIN_EMAIL: ${PREVIEW_ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${PREVIEW_ADMIN_PASSWORD}
       ALLOWED_ORIGINS: ${NEXT_PUBLIC_SITE_URL}
       PREVIEW_NAME: ${PREVIEW_NAME}
     depends_on:
@@ -77,9 +83,8 @@ services:
       - "traefik.http.routers.${PREVIEW_NAME}-api.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/api`)"
       #- "traefik.http.middlewares.${PREVIEW_NAME}-api-strip.stripprefix.prefixes=/${PREVIEW_NAME}/api"
       #- "traefik.http.routers.${PREVIEW_NAME}-api.middlewares=${PREVIEW_NAME}-api-strip"
-      - "traefik.http.routers.${PREVIEW_NAME}-api.entrypoints=websecure"
+      - "traefik.http.routers.${PREVIEW_NAME}-api.entrypoints=web"
       - "traefik.http.services.${PREVIEW_NAME}-api.loadbalancer.server.port=3001"
-      - "traefik.http.routers.${PREVIEW_NAME}-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.${PREVIEW_NAME}-api.priority=200"
     networks:
       - traefik
@@ -126,8 +131,7 @@ services:
       # Note: Garage web endpoint uses Host header to determine bucket
       # We rewrite the Host header to match the bucket name
       - "traefik.http.routers.${PREVIEW_NAME}-s3-web.rule=Host(`${PREVIEW_HOST}`) && PathPrefix(`/${PREVIEW_NAME}/s3`)"
-      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.entrypoints=websecure"
-      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${PREVIEW_NAME}-s3-web.entrypoints=web"
       - "traefik.http.routers.${PREVIEW_NAME}-s3-web.priority=250"
       - "traefik.http.middlewares.${PREVIEW_NAME}-s3-web-strip.stripprefix.prefixes=/${PREVIEW_NAME}/s3"
       - "traefik.http.routers.${PREVIEW_NAME}-s3-web.middlewares=${PREVIEW_NAME}-s3-web-strip"
@@ -144,6 +148,7 @@ services:
       - GARAGE_S3_BUCKET=${GARAGE_S3_BUCKET}
       - GARAGE_ZONE=${GARAGE_ZONE:-dc1}
       - GARAGE_CAPACITY=${GARAGE_CAPACITY:-500MB}
+      - ALLOWED_ORIGIN=${NEXT_PUBLIC_SITE_URL}
     volumes:
       - ./garage.toml:/etc/garage.toml:ro
       - garage_meta:/var/lib/garage/meta
@@ -202,10 +207,27 @@ services:
         echo "Creating bucket..."
         $$G bucket info "$$GARAGE_S3_BUCKET" 2>/dev/null || \
           $$G bucket create "$$GARAGE_S3_BUCKET"
-        $$G bucket allow "$$GARAGE_S3_BUCKET" --key "$$GARAGE_S3_ACCESS_KEY" --read --write || true
+        $$G bucket allow "$$GARAGE_S3_BUCKET" --key "$$GARAGE_S3_ACCESS_KEY" --read --write --owner || true
 
         echo "Enabling website access on bucket..."
         $$G bucket website "$$GARAGE_S3_BUCKET" --allow || true
+
+        echo "Configuring CORS on bucket..."
+        apk add --no-cache aws-cli >/dev/null 2>&1
+        export AWS_ACCESS_KEY_ID="$$GARAGE_S3_ACCESS_KEY"
+        export AWS_SECRET_ACCESS_KEY="$$GARAGE_S3_SECRET_KEY"
+        export AWS_DEFAULT_REGION=garage
+        aws --endpoint-url http://localhost:3900 s3api put-bucket-cors \
+          --bucket "$$GARAGE_S3_BUCKET" \
+          --cors-configuration "{
+            \"CORSRules\": [{
+              \"AllowedOrigins\": [\"$$ALLOWED_ORIGIN\"],
+              \"AllowedMethods\": [\"PUT\"],
+              \"AllowedHeaders\": [\"*\"],
+              \"ExposeHeaders\": [\"ETag\"],
+              \"MaxAgeSeconds\": 3600
+            }]
+          }" || echo "CORS configuration failed (non-fatal)"
 
         echo "Init complete!"
 

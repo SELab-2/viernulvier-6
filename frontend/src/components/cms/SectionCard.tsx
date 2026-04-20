@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { animate } from "animejs";
 import type { LucideIcon } from "lucide-react";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 
 interface SectionCardProps {
     children: ReactNode;
@@ -58,6 +59,7 @@ interface SectionCardContentProps {
     actionLabel: string;
     icon: LucideIcon;
     comingSoon?: boolean;
+    count?: number;
 }
 
 export function SectionCardContent({
@@ -67,6 +69,7 @@ export function SectionCardContent({
     actionLabel,
     icon: Icon,
     comingSoon = false,
+    count,
 }: SectionCardContentProps) {
     const t = useTranslations("Cms.SectionCard");
     return (
@@ -75,7 +78,15 @@ export function SectionCardContent({
                 <div className="text-muted-foreground mb-3 font-mono text-[9px] tracking-[1.4px] uppercase">
                     {edition}
                 </div>
-                <Icon className="text-muted-foreground/40 group-hover:text-foreground h-5 w-5 transition-colors duration-200" />
+                <div className="flex items-center gap-2">
+                    {count != null && (
+                        <AnimatedNumber
+                            value={count}
+                            className="font-display text-muted-foreground/40 group-hover:text-foreground text-[18px] font-bold tracking-tight transition-colors duration-200"
+                        />
+                    )}
+                    <Icon className="text-muted-foreground/40 group-hover:text-foreground h-5 w-5 transition-colors duration-200" />
+                </div>
             </div>
 
             {comingSoon && (

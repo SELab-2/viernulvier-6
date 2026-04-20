@@ -1,61 +1,143 @@
-use database::{Database, error::DatabaseError};
-use tracing::warn;
+use database::Database;
 
-use crate::helper::{extract_source_id, parse_amount_cents};
 use crate::models::event_price::ApiEventPrice;
+use crate::{
+    error::{ImportEntity, ImportField, ImportItemError, ImportRelation, ItemConversion},
+    helper::{extract_source_id, parse_amount_cents},
+};
 
 impl ApiEventPrice {
-    pub async fn insert(self, db: &Database) -> Result<(), DatabaseError> {
+    pub async fn upsert_import(
+        self,
+        db: &Database,
+    ) -> Result<ItemConversion<Option<i32>>, ImportItemError> {
+        let event_price_source_id = extract_source_id(&self.id);
+
         let Some(amount_cents) = parse_amount_cents(&self.amount) else {
-            warn!(
-                "EventPrices: invalid amount '{}' for event price {}, skipping",
-                self.amount, self.id
-            );
-            return Ok(());
+            return Err(ImportItemError::invalid_reference(
+                ImportEntity::EventPrice,
+                ImportField::Amount,
+                &self.amount,
+            ));
         };
 
         let Some(event_source_id) = extract_source_id(&self.event) else {
-            warn!("EventPrices: event_price has no event source_id, skipping");
-            return Ok(());
+            return Err(ImportItemError::invalid_reference(
+                ImportEntity::EventPrice,
+                ImportField::Event,
+                &self.event,
+            ));
         };
 
         let Some(price_source_id) = extract_source_id(&self.price) else {
-            warn!("EventPrices: event_price has no price source_id, skipping");
-            return Ok(());
+            return Err(ImportItemError::invalid_reference(
+                ImportEntity::EventPrice,
+                ImportField::Price,
+                &self.price,
+            ));
         };
 
         let Some(rank_source_id) = extract_source_id(&self.rank) else {
-            warn!("EventPrices: event_price has no rank source_id, skipping");
-            return Ok(());
+            return Err(ImportItemError::invalid_reference(
+                ImportEntity::EventPrice,
+                ImportField::Rank,
+                &self.rank,
+            ));
         };
 
-        let Some(event) = db.events().by_source_id(event_source_id).await? else {
-            warn!("EventPrices: event source_id {event_source_id} not found in db, skipping");
-            return Ok(());
-        };
+        let event = db
+            .events()
+            .by_source_id(event_source_id)
+            .await
+            .map_err(|err| {
+                ImportItemError::database_lookup(
+                    ImportEntity::EventPrice,
+                    ImportRelation::Event,
+                    event_source_id,
+                    err,
+                )
+            })?
+            .ok_or_else(|| {
+                ImportItemError::missing_relation(
+                    ImportEntity::EventPrice,
+                    ImportRelation::Event,
+                    event_source_id,
+                )
+            })?;
 
-        let Some(price) = db.prices().by_source_id(price_source_id).await? else {
-            warn!("EventPrices: price source_id {price_source_id} not found in db, skipping");
-            return Ok(());
-        };
+        let price = db
+            .prices()
+            .by_source_id(price_source_id)
+            .await
+            .map_err(|err| {
+                ImportItemError::database_lookup(
+                    ImportEntity::EventPrice,
+                    ImportRelation::Price,
+                    price_source_id,
+                    err,
+                )
+            })?
+            .ok_or_else(|| {
+                ImportItemError::missing_relation(
+                    ImportEntity::EventPrice,
+                    ImportRelation::Price,
+                    price_source_id,
+                )
+            })?;
 
-        let Some(rank) = db.price_ranks().by_source_id(rank_source_id).await? else {
-            warn!("EventPrices: rank source_id {rank_source_id} not found in db, skipping");
-            return Ok(());
-        };
+        let rank = db
+            .price_ranks()
+            .by_source_id(rank_source_id)
+            .await
+            .map_err(|err| {
+                ImportItemError::database_lookup(
+                    ImportEntity::EventPrice,
+                    ImportRelation::PriceRank,
+                    rank_source_id,
+                    err,
+                )
+            })?
+            .ok_or_else(|| {
+                ImportItemError::missing_relation(
+                    ImportEntity::EventPrice,
+                    ImportRelation::PriceRank,
+                    rank_source_id,
+                )
+            })?;
 
-        let source_id = extract_source_id(&self.id);
-
-        if let Some(source_id) = source_id
-            && let Some(existing) = db.event_prices().by_source_id(source_id).await?
+        if let Some(source_id) = event_price_source_id
+            && let Some(existing) =
+                db.event_prices()
+                    .by_source_id(source_id)
+                    .await
+                    .map_err(|err| {
+                        ImportItemError::database_lookup(
+                            ImportEntity::EventPrice,
+                            ImportRelation::EventPrice,
+                            source_id,
+                            err,
+                        )
+                    })?
         {
             let model = self.to_model(existing.id, event.id, price.id, rank.id, amount_cents);
-            db.event_prices().update(model).await?;
-            return Ok(());
+            db.event_prices().update(model).await.map_err(|err| {
+                ImportItemError::database_write(ImportEntity::EventPrice, Some(source_id), err)
+            })?;
+            return Ok(ItemConversion::without_warnings(Some(source_id)));
         }
 
         let event_price_create = self.to_create(event.id, price.id, rank.id, amount_cents);
-        db.event_prices().insert(event_price_create).await?;
-        Ok(())
+        db.event_prices()
+            .insert(event_price_create)
+            .await
+            .map_err(|err| {
+                ImportItemError::database_write(
+                    ImportEntity::EventPrice,
+                    event_price_source_id,
+                    err,
+                )
+            })?;
+
+        Ok(ItemConversion::without_warnings(event_price_source_id))
     }
 }
