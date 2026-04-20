@@ -1,3 +1,4 @@
+#![allow(clippy::indexing_slicing)]
 //! Integration tests for PATCH /import/rows/{id} (Task 6.6).
 //!
 //! Covered:

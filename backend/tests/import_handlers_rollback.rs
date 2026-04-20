@@ -1,3 +1,4 @@
+#![allow(clippy::indexing_slicing)]
 //! Integration tests for Task 6.8:
 //!   POST /import/sessions/{id}/rollback
 //!   POST /import/rows/{id}/revert

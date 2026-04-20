@@ -1,5 +1,7 @@
 #![allow(clippy::indexing_slicing)]
 
+use std::fmt::Write as _;
+
 use viernulvier_archive::import::csv_parser::{CsvParseError, parse_all, parse_preview};
 
 // ---------------------------------------------------------------------------
@@ -62,7 +64,7 @@ fn parse_preview_limits_to_20() {
     // Build 25 data rows
     let mut csv = String::from("a,b\n");
     for i in 0..25 {
-        csv.push_str(&format!("{i},val\n"));
+        writeln!(csv, "{i},val").expect("write to String failed");
     }
     let result = parse_preview(csv.as_bytes()).unwrap();
     assert_eq!(result.total_rows, 25);

@@ -1,5 +1,6 @@
 //! Integration tests for ImportRepo.
 //! Each test uses #[sqlx::test] which provisions a clean database with all migrations applied.
+#![allow(clippy::indexing_slicing)]
 
 use std::collections::BTreeMap;
 

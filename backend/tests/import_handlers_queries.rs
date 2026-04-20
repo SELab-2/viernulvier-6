@@ -1,3 +1,4 @@
+#![allow(clippy::indexing_slicing)]
 //! Integration tests for the read-only import session endpoints (Task 6.3).
 //!
 //! Covered:
@@ -174,10 +175,7 @@ async fn list_fields_returns_production_spec(pool: PgPool) {
 
     let json = body_json(resp).await;
     let arr = json.as_array().expect("expected JSON array");
-    let names: Vec<&str> = arr
-        .iter()
-        .map(|f| f["name"].as_str().unwrap())
-        .collect();
+    let names: Vec<&str> = arr.iter().map(|f| f["name"].as_str().unwrap()).collect();
     assert!(names.contains(&"title_nl"), "missing title_nl");
     assert!(names.contains(&"source_id"), "missing source_id");
 }

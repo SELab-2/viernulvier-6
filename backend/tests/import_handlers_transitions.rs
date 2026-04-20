@@ -1,3 +1,4 @@
+#![allow(clippy::indexing_slicing)]
 //! Integration tests for:
 //!   POST /import/sessions/{id}/dry-run  (Task 6.5)
 //!   POST /import/sessions/{id}/commit   (Task 6.7)

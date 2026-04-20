@@ -1,3 +1,4 @@
+#![allow(clippy::indexing_slicing)]
 //! Integration tests for PATCH /import/sessions/{id}/mapping (Task 6.4).
 //!
 //! Covered:

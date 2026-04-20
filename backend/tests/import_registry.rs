@@ -1,3 +1,4 @@
+#![allow(clippy::indexing_slicing)]
 use viernulvier_archive::import::default_registry;
 
 #[test]

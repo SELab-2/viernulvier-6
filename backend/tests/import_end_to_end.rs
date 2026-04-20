@@ -1,4 +1,5 @@
 //! End-to-end integration test for the CSV import pipeline (Task 12.4).
+#![allow(clippy::indexing_slicing)]
 //!
 //! Drives the full import flow entirely through in-process calls:
 //!   create session → save mapping (via HTTP PATCH) → dry-run (HTTP POST → worker)
