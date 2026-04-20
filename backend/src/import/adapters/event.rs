@@ -44,10 +44,17 @@ async fn fuzzy_match_halls(
     limit: usize,
 ) -> anyhow::Result<Vec<ReferenceSuggestion>> {
     // Fetch all halls (small table — no pagination needed).
-    let (halls, _) = db
+    let (halls, next_cursor) = db
         .halls()
         .all(10_000, None, HallSearch { q: None })
         .await?;
+
+    if next_cursor.is_some() {
+        tracing::warn!(
+            fetched = halls.len(),
+            "fuzzy-match candidate set truncated by 10k cap"
+        );
+    }
 
     let input_lower = input.to_lowercase();
     let mut scored: Vec<(f64, Uuid, String)> = halls
@@ -58,8 +65,12 @@ async fn fuzzy_match_halls(
         })
         .collect();
 
-    // Sort descending by score, then stable by id for determinism.
-    scored.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
+    // Sort descending by score, then deterministic tie-break by id.
+    scored.sort_by(|a, b| {
+        b.0.partial_cmp(&a.0)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| a.1.cmp(&b.1))
+    });
     scored.truncate(limit);
 
     Ok(scored
@@ -82,7 +93,7 @@ async fn fuzzy_match_productions(
 ) -> anyhow::Result<Vec<ReferenceSuggestion>> {
     // Fetch all productions with translations, using a generous page size.
     // Productions is a larger table but we need title data which lives in translations.
-    let (productions, _) = db
+    let (productions, next_cursor) = db
         .productions()
         .all(
             10_000,
@@ -103,6 +114,13 @@ async fn fuzzy_match_productions(
         )
         .await?;
 
+    if next_cursor.is_some() {
+        tracing::warn!(
+            fetched = productions.len(),
+            "fuzzy-match candidate set truncated by 10k cap"
+        );
+    }
+
     let input_lower = input.to_lowercase();
     let mut scored: Vec<(f64, Uuid, String)> = productions
         .into_iter()
@@ -118,8 +136,12 @@ async fn fuzzy_match_productions(
         })
         .collect();
 
-    // Sort descending by score, then stable by id for determinism.
-    scored.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
+    // Sort descending by score, then deterministic tie-break by id.
+    scored.sort_by(|a, b| {
+        b.0.partial_cmp(&a.0)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| a.1.cmp(&b.1))
+    });
     scored.truncate(limit);
 
     Ok(scored
@@ -247,6 +269,18 @@ impl ImportableEntity for EventImport {
                 });
             }
             _ => {}
+        }
+
+        // Validate end_time: optional, but if present as a non-empty string it must parse.
+        if let Some(Value::String(s)) = row.get("end_time")
+            && !s.is_empty()
+            && parse_datetime(s).is_none()
+        {
+            warnings.push(ImportWarning {
+                field: Some("end_time".into()),
+                code: "invalid_datetime".into(),
+                message: format!("Field 'end_time' could not be parsed as a datetime: '{s}'."),
+            });
         }
 
         // Validate production_id: required and, once resolved, must be a valid UUID.
@@ -403,7 +437,7 @@ impl ImportableEntity for EventImport {
         };
 
         let hall_id = match row.get("hall_id") {
-            Some(Value::String(s)) => Uuid::parse_str(s).ok(),
+            Some(Value::String(s)) => Uuid::parse_str(s).ok(), // validated upstream by validate_row
             _ => None,
         };
 
@@ -442,6 +476,7 @@ impl ImportableEntity for EventImport {
                     ends_at,
                     production_id,
                     hall_id,
+                    updated_at: chrono::Utc::now(),
                     ..existing
                 };
                 let event = db.events().update(updated).await?;

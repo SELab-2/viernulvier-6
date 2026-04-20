@@ -452,6 +452,61 @@ async fn apply_row_update_preserves_source_id(pool: PgPool) {
     assert_eq!(event.source_id, Some(77), "source_id must not change on update");
 }
 
+// ─── Review fixes ────────────────────────────────────────────────────────────
+
+#[sqlx::test]
+async fn apply_row_update_bumps_updated_at(pool: PgPool) {
+    let prod_id = seed_production_with_nl_title(&pool, "Bump Show").await;
+    let event_id = seed_event(&pool, prod_id, None).await;
+    let db = Database::new(pool.clone());
+
+    // Capture the original updated_at before calling apply_row.
+    let original_updated_at = db
+        .events()
+        .by_id(event_id)
+        .await
+        .expect("by_id failed")
+        .updated_at;
+
+    // Sleep 1 ms so the new timestamp is strictly greater even on fast clocks.
+    tokio::time::sleep(std::time::Duration::from_millis(1)).await;
+
+    let adapter = EventImport;
+    let row = make_row(&[
+        ("start_time", json!("2025-06-01T19:30:00Z")),
+        ("production_id", json!(prod_id.to_string())),
+    ]);
+
+    let mut tx = pool.begin().await.expect("begin tx");
+    adapter
+        .apply_row(Some(event_id), &row, &db, &mut tx)
+        .await
+        .expect("apply_row failed");
+    tx.commit().await.expect("commit tx");
+
+    let event = db.events().by_id(event_id).await.expect("by_id failed");
+    assert!(
+        event.updated_at > original_updated_at,
+        "updated_at should be bumped on update (was {original_updated_at}, got {})",
+        event.updated_at
+    );
+}
+
+#[test]
+fn validate_row_warns_when_end_time_unparseable() {
+    let adapter = EventImport;
+    let prod_uuid = "00000000-0000-7000-8000-000000000001";
+    let row = make_row(&[
+        ("start_time", json!("2024-01-15T20:00:00Z")),
+        ("production_id", json!(prod_uuid)),
+        ("end_time", json!("not-a-date")),
+    ]);
+    let warnings = adapter.validate_row(&row);
+    assert_eq!(warnings.len(), 1, "expected exactly one warning, got: {warnings:?}");
+    assert_eq!(warnings[0].field.as_deref(), Some("end_time"));
+    assert_eq!(warnings[0].code, "invalid_datetime");
+}
+
 // ─── Sub-step 6 — build_diff ─────────────────────────────────────────────────
 
 #[sqlx::test]
