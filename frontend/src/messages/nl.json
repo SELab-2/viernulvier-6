@@ -475,6 +475,12 @@
                     "reverted": "Teruggedraaid"
                 }
             },
+            "commit": {
+                "running": "De import wordt uitgevoerd...",
+                "completed": "Import voltooid. U wordt doorgestuurd...",
+                "failed": "De import is mislukt.",
+                "backToDryRun": "Terug naar controle"
+            },
             "actions": {
                 "commit": "Importeren",
                 "rerunDryRun": "Dry-run opnieuw uitvoeren"

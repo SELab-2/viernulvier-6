@@ -475,6 +475,12 @@
                     "reverted": "Reverted"
                 }
             },
+            "commit": {
+                "running": "Import is running...",
+                "completed": "Import complete. Redirecting...",
+                "failed": "The import failed.",
+                "backToDryRun": "Back to review"
+            },
             "actions": {
                 "commit": "Commit",
                 "rerunDryRun": "Re-run dry-run"

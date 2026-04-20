@@ -6,6 +6,7 @@ import { animate } from "animejs";
 import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/cms/PageHeader";
 import { ImportStepper, type ImportStage } from "@/components/cms/import/ImportStepper";
+import { CommitStage } from "@/components/cms/import/CommitStage";
 import { DryRunStage } from "@/components/cms/import/DryRunStage";
 import { MappingStage } from "@/components/cms/import/MappingStage";
 import { UploadStage } from "@/components/cms/import/UploadStage";
@@ -25,6 +26,7 @@ function deriveStage(status: ImportSessionStatus | undefined): ImportStage {
             return "dry_run";
         case "committing":
         case "committed":
+        case "failed":
             return "commit";
         default:
             return "upload";
@@ -94,7 +96,14 @@ export default function ImportPage() {
                     !sessionError &&
                     currentStage === "dry_run" &&
                     sessionId !== "" && <DryRunStage sessionId={sessionId} />}
-                {!sessionLoading && !sessionError && currentStage === "commit" && <div />}
+                {!sessionLoading &&
+                    !sessionError &&
+                    currentStage === "commit" &&
+                    sessionId !== "" && <CommitStage sessionId={sessionId} />}
+                {!sessionLoading &&
+                    !sessionError &&
+                    currentStage === "commit" &&
+                    sessionId === "" && <div />}
             </div>
         </div>
     );
