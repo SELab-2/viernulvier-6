@@ -449,6 +449,36 @@
                 "startingDryRun": "Starting…",
                 "requiredMissing": "Required fields not yet mapped"
             },
+            "summary": {
+                "willCreate": "Will create",
+                "willUpdate": "Will update",
+                "willSkip": "Will skip",
+                "errors": "Errors",
+                "running": "Dry-run running…"
+            },
+            "table": {
+                "rowNumber": "#",
+                "status": "Status",
+                "target": "Target",
+                "warnings": "Warnings",
+                "action": "Action",
+                "open": "Open",
+                "statusLabels": {
+                    "pending": "Pending",
+                    "willCreate": "Will create",
+                    "willUpdate": "Will update",
+                    "willSkip": "Will skip",
+                    "error": "Error",
+                    "created": "Created",
+                    "updated": "Updated",
+                    "skipped": "Skipped",
+                    "reverted": "Reverted"
+                }
+            },
+            "actions": {
+                "commit": "Commit",
+                "rerunDryRun": "Re-run dry-run"
+            },
             "errors": {
                 "fileTooLarge": "File too large (max {maxMb}MB).",
                 "uploadFailed": "Upload failed. Try again.",
@@ -456,7 +486,8 @@
                 "sessionLoadFailed": "Could not load session.",
                 "fieldsLoadFailed": "Could not load fields.",
                 "saveMappingFailed": "Save failed.",
-                "dryRunStartFailed": "Could not start dry-run."
+                "dryRunStartFailed": "Could not start dry-run.",
+                "rowsLoadFailed": "Could not load rows."
             }
         },
         "Collections": {

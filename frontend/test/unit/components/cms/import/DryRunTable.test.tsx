@@ -1,0 +1,68 @@
+import { describe, expect, it, afterEach, vi } from "vitest";
+import { render, screen, cleanup } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { NextIntlClientProvider } from "next-intl";
+
+import messages from "../../../../../src/messages/en.json";
+import { DryRunTable } from "@/components/cms/import/DryRunTable";
+import type { ImportRow } from "@/types/models/import.types";
+
+function makeRow(overrides: Partial<ImportRow> = {}): ImportRow {
+    return {
+        id: "row-1",
+        sessionId: "session-1",
+        rowNumber: 1,
+        status: "will_create",
+        rawData: {},
+        overrides: {},
+        resolvedRefs: {},
+        diff: null,
+        warnings: [],
+        targetEntityId: null,
+        ...overrides,
+    };
+}
+
+function renderTable(rows: ImportRow[], onSelectRow = vi.fn()) {
+    return render(
+        <NextIntlClientProvider locale="en" messages={messages}>
+            <DryRunTable rows={rows} onSelectRow={onSelectRow} />
+        </NextIntlClientProvider>
+    );
+}
+
+describe("DryRunTable", () => {
+    afterEach(() => cleanup());
+
+    it("renders one table row per ImportRow with correct row number and status label", () => {
+        const rows: ImportRow[] = [
+            makeRow({ id: "row-1", rowNumber: 1, status: "will_create" }),
+            makeRow({ id: "row-2", rowNumber: 2, status: "will_update" }),
+            makeRow({ id: "row-3", rowNumber: 3, status: "will_skip" }),
+        ];
+
+        renderTable(rows);
+
+        expect(screen.getByText("1")).toBeInTheDocument();
+        expect(screen.getByText("2")).toBeInTheDocument();
+        expect(screen.getByText("3")).toBeInTheDocument();
+
+        expect(screen.getByText("Will create")).toBeInTheDocument();
+        expect(screen.getByText("Will update")).toBeInTheDocument();
+        expect(screen.getByText("Will skip")).toBeInTheDocument();
+    });
+
+    it("calls onSelectRow with the correct row when a row is clicked", async () => {
+        const row1 = makeRow({ id: "row-1", rowNumber: 1, status: "will_create" });
+        const row2 = makeRow({ id: "row-2", rowNumber: 2, status: "error" });
+        const onSelectRow = vi.fn();
+
+        renderTable([row1, row2], onSelectRow);
+
+        const openButtons = screen.getAllByRole("button", { name: "Open" });
+        await userEvent.click(openButtons[1]);
+
+        expect(onSelectRow).toHaveBeenCalledOnce();
+        expect(onSelectRow).toHaveBeenCalledWith(row2);
+    });
+});

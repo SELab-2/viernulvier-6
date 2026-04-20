@@ -6,6 +6,7 @@ import { animate } from "animejs";
 import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/cms/PageHeader";
 import { ImportStepper, type ImportStage } from "@/components/cms/import/ImportStepper";
+import { DryRunStage } from "@/components/cms/import/DryRunStage";
 import { MappingStage } from "@/components/cms/import/MappingStage";
 import { UploadStage } from "@/components/cms/import/UploadStage";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -89,7 +90,10 @@ export default function ImportPage() {
                     !sessionError &&
                     currentStage === "mapping" &&
                     sessionId === "" && <div />}
-                {!sessionLoading && !sessionError && currentStage === "dry_run" && <div />}
+                {!sessionLoading &&
+                    !sessionError &&
+                    currentStage === "dry_run" &&
+                    sessionId !== "" && <DryRunStage sessionId={sessionId} />}
                 {!sessionLoading && !sessionError && currentStage === "commit" && <div />}
             </div>
         </div>

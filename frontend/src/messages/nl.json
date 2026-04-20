@@ -449,6 +449,36 @@
                 "startingDryRun": "Bezig…",
                 "requiredMissing": "Verplichte velden nog niet gemapt"
             },
+            "summary": {
+                "willCreate": "Aanmaken",
+                "willUpdate": "Bijwerken",
+                "willSkip": "Overslaan",
+                "errors": "Fouten",
+                "running": "Dry-run wordt uitgevoerd…"
+            },
+            "table": {
+                "rowNumber": "#",
+                "status": "Status",
+                "target": "Doel",
+                "warnings": "Waarschuwingen",
+                "action": "Actie",
+                "open": "Openen",
+                "statusLabels": {
+                    "pending": "In behandeling",
+                    "willCreate": "Aanmaken",
+                    "willUpdate": "Bijwerken",
+                    "willSkip": "Overslaan",
+                    "error": "Fout",
+                    "created": "Aangemaakt",
+                    "updated": "Bijgewerkt",
+                    "skipped": "Overgeslagen",
+                    "reverted": "Teruggedraaid"
+                }
+            },
+            "actions": {
+                "commit": "Importeren",
+                "rerunDryRun": "Dry-run opnieuw uitvoeren"
+            },
             "errors": {
                 "fileTooLarge": "Bestand is te groot (max {maxMb}MB).",
                 "uploadFailed": "Upload mislukt. Probeer opnieuw.",
@@ -456,7 +486,8 @@
                 "sessionLoadFailed": "Sessie kon niet geladen worden.",
                 "fieldsLoadFailed": "Velden konden niet geladen worden.",
                 "saveMappingFailed": "Opslaan mislukt.",
-                "dryRunStartFailed": "Starten van dry-run mislukt."
+                "dryRunStartFailed": "Starten van dry-run mislukt.",
+                "rowsLoadFailed": "Rijen konden niet geladen worden."
             }
         },
         "Collections": {
