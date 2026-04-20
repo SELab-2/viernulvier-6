@@ -1,6 +1,7 @@
 pub mod adapters;
 pub mod csv_parser;
 pub mod registry;
+pub mod storage;
 pub mod trait_def;
 pub mod types;
 
