@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useTranslations, useFormatter } from "next-intl";
 import { toast } from "sonner";
 
+import { cn } from "@/lib/utils";
+
 import { Link } from "@/i18n/routing";
 import {
     useImportSession,
@@ -11,7 +13,8 @@ import {
     useRevertRow,
     useRollbackSession,
 } from "@/hooks/api/useImport";
-import type { ImportRow, ImportSession } from "@/types/models/import.types";
+import type { ImportRow, ImportSession, ImportMapping } from "@/types/models/import.types";
+import { resolveRowLabel } from "@/lib/import/resolveRowLabel";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -37,6 +40,13 @@ import { cmsEditUrl, publicSiteUrl } from "@/lib/import/entityLinks";
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const REVERTABLE_STATUSES = new Set(["created", "updated"]);
+const CONTINUABLE_STATUSES = new Set(["mapping", "dry_run_pending", "dry_run_ready", "failed"]);
+
+const STATUS_BORDER_CLASS: Partial<Record<ImportSession["status"], string>> = {
+    committed: "border-t-green-500",
+    failed: "border-t-destructive",
+    committing: "border-t-blue-500",
+};
 
 function readSlugFromDiff(diff: Record<string, unknown> | null): string | null {
     const entry = diff?.slug;
@@ -72,11 +82,12 @@ function SessionStatusBadge({ status }: { status: ImportSession["status"] }) {
 type HistoryRowProps = {
     row: ImportRow;
     entityType: string;
+    mapping: ImportMapping;
     revertingId: string | null;
     onRevert: (rowId: string) => void;
 };
 
-function HistoryRow({ row, entityType, revertingId, onRevert }: HistoryRowProps) {
+function HistoryRow({ row, entityType, mapping, revertingId, onRevert }: HistoryRowProps) {
     const t = useTranslations("Cms.Import.historyDetail");
     const canRevert = REVERTABLE_STATUSES.has(row.status);
     const isReverting = revertingId === row.id;
@@ -84,17 +95,26 @@ function HistoryRow({ row, entityType, revertingId, onRevert }: HistoryRowProps)
     const slug = readSlugFromDiff(row.diff);
     const viewUrl = row.targetEntityId !== null ? publicSiteUrl(entityType, slug) : null;
 
-    let editLink: React.ReactNode = "—";
-    if (row.targetEntityId !== null) {
+    const rowLabel = resolveRowLabel(row, mapping);
+
+    let entityCell: React.ReactNode;
+    if (row.status === "reverted") {
+        entityCell = (
+            <span className="flex flex-col gap-0.5">
+                <span className="text-muted-foreground text-xs line-through">{rowLabel}</span>
+                <span className="text-muted-foreground text-xs italic">{t("revertedLabel")}</span>
+            </span>
+        );
+    } else if (row.targetEntityId !== null) {
         let editUrl: string | null = null;
         try {
             editUrl = cmsEditUrl(entityType, row.targetEntityId);
         } catch {
             editUrl = null;
         }
-
-        editLink = (
+        entityCell = (
             <span className="flex flex-col gap-1">
+                <span className="text-sm font-medium">{rowLabel}</span>
                 {editUrl !== null ? (
                     <Link
                         href={editUrl}
@@ -117,15 +137,22 @@ function HistoryRow({ row, entityType, revertingId, onRevert }: HistoryRowProps)
                 )}
             </span>
         );
+    } else {
+        entityCell = <span className="text-muted-foreground text-xs">—</span>;
     }
 
     return (
-        <TableRow>
+        <TableRow
+            className={cn(
+                "hover:bg-muted/50 transition-colors",
+                row.status === "reverted" && "opacity-60"
+            )}
+        >
             <TableCell className="font-mono text-xs">{row.rowNumber}</TableCell>
             <TableCell>
                 <StatusBadge status={row.status} />
             </TableCell>
-            <TableCell>{editLink}</TableCell>
+            <TableCell>{entityCell}</TableCell>
             <TableCell className="text-xs">{row.warnings.length}</TableCell>
             <TableCell>
                 <Button
@@ -262,7 +289,9 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
     return (
         <div className="space-y-6">
             {/* Session metadata */}
-            <div className="border-foreground/10 bg-foreground/[0.02] rounded-md border p-4">
+            <div
+                className={`border-foreground/10 bg-foreground/[0.02] rounded-md border border-t-2 p-4 ${STATUS_BORDER_CLASS[session.status] ?? "border-t-border"}`}
+            >
                 <dl className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm sm:grid-cols-3 lg:grid-cols-5">
                     <div>
                         <dt className="text-muted-foreground font-mono text-[9px] tracking-[1.5px] uppercase">
@@ -299,7 +328,26 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
                         </dd>
                     </div>
                 </dl>
+                {session.error !== null && (
+                    <div
+                        role="alert"
+                        className="border-destructive/40 bg-destructive/10 text-destructive mt-3 rounded-md border px-3 py-2 text-sm"
+                    >
+                        <span className="font-medium">{t("sessionErrorTitle")}: </span>
+                        {session.error}
+                    </div>
+                )}
             </div>
+
+            {CONTINUABLE_STATUSES.has(session.status) && (
+                <div className="flex items-center gap-3">
+                    <Button asChild>
+                        <Link href={`/cms/import?session=${session.id}`}>
+                            {t("continueSession")}
+                        </Link>
+                    </Button>
+                </div>
+            )}
 
             {/* Rows table */}
             <div className="rounded-md border">
@@ -319,6 +367,7 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
                                 key={row.id}
                                 row={row}
                                 entityType={session.entityType}
+                                mapping={session.mapping}
                                 revertingId={revertingId}
                                 onRevert={handleRevert}
                             />
@@ -327,10 +376,17 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
                 </Table>
             </div>
 
-            {/* Footer: rollback */}
             {session.status === "committed" && (
-                <div>
-                    <Button variant="destructive" onClick={() => setRollbackOpen(true)}>
+                <div className="border-destructive/30 rounded-md border p-4">
+                    <p className="text-sm font-medium">{t("dangerZoneTitle")}</p>
+                    <p className="text-muted-foreground mt-1 text-xs">
+                        {t("dangerZoneDescription")}
+                    </p>
+                    <Button
+                        variant="destructive"
+                        className="mt-3"
+                        onClick={() => setRollbackOpen(true)}
+                    >
                         {t("rollback")}
                     </Button>
                 </div>

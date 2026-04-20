@@ -10,6 +10,7 @@ import {
     useImportSession,
     useStartDryRun,
 } from "@/hooks/api/useImport";
+import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -192,6 +193,11 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
 
             <div className="flex flex-col gap-3 pt-2">
                 <div className="flex items-center gap-3">
+                    <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/cms/import?session=${sessionId}&stage=mapping`}>
+                            {t("actions.backToMapping")}
+                        </Link>
+                    </Button>
                     <Button
                         variant="outline"
                         disabled={!canRerun || startDryRun.isPending}

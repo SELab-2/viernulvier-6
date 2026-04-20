@@ -42,6 +42,8 @@ export default function ImportPage() {
     const contentRef = useRef<HTMLDivElement>(null);
     const searchParams = useSearchParams();
     const sessionId = searchParams?.get("session") ?? "";
+    const stageOverride = searchParams?.get("stage") as ImportStage | null;
+    const VALID_STAGES: ImportStage[] = ["upload", "mapping", "dry_run", "commit"];
 
     const {
         data: session,
@@ -49,7 +51,12 @@ export default function ImportPage() {
         isError: sessionError,
     } = useImportSession(sessionId, { enabled: sessionId !== "" });
 
-    const currentStage = sessionId === "" ? "upload" : deriveStage(session?.status);
+    const currentStage =
+        sessionId === ""
+            ? "upload"
+            : stageOverride !== null && VALID_STAGES.includes(stageOverride)
+              ? stageOverride
+              : deriveStage(session?.status);
 
     useEffect(() => {
         if (contentRef.current) {

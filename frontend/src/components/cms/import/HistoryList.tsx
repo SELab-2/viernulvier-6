@@ -21,6 +21,7 @@ import { SESSION_STATUS_CLASSES } from "./sessionStatusBadge";
 const LIMIT = 20;
 const SKELETON_ROW_COUNT = 7;
 const COLUMNS = 6;
+const CONTINUABLE_STATUSES = new Set(["mapping", "dry_run_pending", "dry_run_ready", "failed"]);
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 
@@ -43,10 +44,11 @@ function SkeletonRows() {
 type SessionRowProps = {
     session: ImportSession;
     openLabel: string;
+    continueLabel: string;
     statusLabel: string;
 };
 
-function SessionRow({ session, openLabel, statusLabel }: SessionRowProps) {
+function SessionRow({ session, openLabel, continueLabel, statusLabel }: SessionRowProps) {
     const fmt = useFormatter();
     const formattedDate = fmt.dateTime(new Date(session.createdAt), {
         dateStyle: "short",
@@ -54,7 +56,7 @@ function SessionRow({ session, openLabel, statusLabel }: SessionRowProps) {
     });
 
     return (
-        <TableRow>
+        <TableRow className="hover:bg-muted/50 transition-colors">
             <TableCell className="w-36 text-xs whitespace-nowrap">{formattedDate}</TableCell>
             <TableCell className="w-32">{session.entityType}</TableCell>
             <TableCell className="max-w-[200px] truncate text-sm">{session.filename}</TableCell>
@@ -68,13 +70,23 @@ function SessionRow({ session, openLabel, statusLabel }: SessionRowProps) {
             <TableCell className="w-20 text-right text-xs tabular-nums">
                 {session.rowCount}
             </TableCell>
-            <TableCell className="w-20">
-                <Link
-                    href={`/cms/import/history/${session.id}`}
-                    className="text-sm font-medium underline-offset-2 hover:underline"
-                >
-                    {openLabel}
-                </Link>
+            <TableCell className="w-32">
+                <div className="flex flex-col gap-1">
+                    <Link
+                        href={`/cms/import/history/${session.id}`}
+                        className="text-sm font-medium underline-offset-2 hover:underline"
+                    >
+                        {openLabel}
+                    </Link>
+                    {CONTINUABLE_STATUSES.has(session.status) && (
+                        <Link
+                            href={`/cms/import?session=${session.id}`}
+                            className="text-primary text-xs font-medium underline-offset-2 hover:underline"
+                        >
+                            {continueLabel}
+                        </Link>
+                    )}
+                </div>
             </TableCell>
         </TableRow>
     );
@@ -143,6 +155,7 @@ export function HistoryList() {
                                     key={session.id}
                                     session={session}
                                     openLabel={t("open")}
+                                    continueLabel={t("continue")}
                                     statusLabel={t(`sessionStatus.${session.status}`)}
                                 />
                             ))}

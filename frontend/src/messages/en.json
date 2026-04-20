@@ -518,7 +518,8 @@
             },
             "actions": {
                 "commit": "Commit",
-                "rerunDryRun": "Re-run dry-run"
+                "rerunDryRun": "Re-run dry-run",
+                "backToMapping": "Back to mapping"
             },
             "drawer": {
                 "title": "Row {n}",
@@ -572,6 +573,7 @@
                     "actions": "Actions"
                 },
                 "open": "Open",
+                "continue": "Continue",
                 "empty": "No import sessions yet.",
                 "previous": "Previous",
                 "next": "Next",
@@ -606,7 +608,13 @@
                 "revertSuccess": "Row reverted",
                 "rollbackSuccess": "Import rolled back",
                 "entityColumn": "Entity",
-                "warningsColumn": "Warnings"
+                "warningsColumn": "Warnings",
+                "revertedLabel": "Reverted",
+                "revertedOn": "Reverted on {date}",
+                "sessionErrorTitle": "Error",
+                "continueSession": "Continue session",
+                "dangerZoneTitle": "Danger zone",
+                "dangerZoneDescription": "This permanently removes all imported changes."
             }
         },
         "Collections": {

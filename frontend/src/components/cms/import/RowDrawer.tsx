@@ -123,11 +123,14 @@ function FieldOverrideRow({
     onChangeField,
 }: FieldOverrideRowProps) {
     const t = useTranslations("Cms.Import");
-    const [inputValue, setInputValue] = useState(
-        displayValue === null || displayValue === undefined ? "" : String(displayValue)
-    );
+    const initialValue =
+        displayValue === null || displayValue === undefined ? "" : String(displayValue);
+    const [inputValue, setInputValue] = useState(initialValue);
+
     const handleBlur = () => {
-        onChangeField(field.name, inputValue === "" ? null : inputValue);
+        if (inputValue !== initialValue) {
+            onChangeField(field.name, inputValue === "" ? null : inputValue);
+        }
     };
 
     return (

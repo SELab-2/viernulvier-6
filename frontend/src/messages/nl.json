@@ -518,7 +518,8 @@
             },
             "actions": {
                 "commit": "Importeren",
-                "rerunDryRun": "Dry-run opnieuw uitvoeren"
+                "rerunDryRun": "Dry-run opnieuw uitvoeren",
+                "backToMapping": "Terug naar mapping"
             },
             "drawer": {
                 "title": "Rij {n}",
@@ -572,6 +573,7 @@
                     "actions": "Acties"
                 },
                 "open": "Openen",
+                "continue": "Doorgaan",
                 "empty": "Nog geen importsessies.",
                 "previous": "Vorige",
                 "next": "Volgende",
@@ -606,7 +608,13 @@
                 "revertSuccess": "Rij teruggedraaid",
                 "rollbackSuccess": "Import teruggedraaid",
                 "entityColumn": "Entiteit",
-                "warningsColumn": "Waarschuwingen"
+                "warningsColumn": "Waarschuwingen",
+                "revertedLabel": "Teruggedraaid",
+                "revertedOn": "Teruggedraaid op {date}",
+                "sessionErrorTitle": "Fout",
+                "continueSession": "Sessie voortzetten",
+                "dangerZoneTitle": "Gevaarzone",
+                "dangerZoneDescription": "Dit verwijdert alle geïmporteerde wijzigingen permanent."
             }
         },
         "Collections": {
