@@ -460,6 +460,47 @@ impl<'a> ImportRepo<'a> {
         Ok(())
     }
 
+    /// Finalise a row after commit by setting its terminal status and target entity id.
+    ///
+    /// Unlike `record_committed_row`, this accepts rows in any starting status and sets
+    /// the terminal status based on the `created` flag: `true` → `created`, `false` →
+    /// `updated`. Used by the commit worker, which may process rows that never went
+    /// through a dry-run (starting status `pending`).
+    pub async fn finalise_committed_row(
+        &self,
+        row_id: Uuid,
+        target_entity_id: Uuid,
+        created: bool,
+    ) -> Result<(), DatabaseError> {
+        let status_str = if created { "created" } else { "updated" };
+        sqlx::query!(
+            r#"UPDATE import_rows
+               SET status = $1, target_entity_id = $2
+               WHERE id = $3"#,
+            status_str,
+            target_entity_id,
+            row_id,
+        )
+        .execute(self.db)
+        .await?;
+        Ok(())
+    }
+
+    /// Terminally mark a session as committed, setting `committed_at = NOW()`.
+    pub async fn mark_session_committed(&self, session_id: Uuid) -> Result<(), DatabaseError> {
+        sqlx::query!(
+            r#"UPDATE import_sessions
+               SET status = 'committed',
+                   committed_at = NOW(),
+                   error = NULL
+               WHERE id = $1"#,
+            session_id,
+        )
+        .execute(self.db)
+        .await?;
+        Ok(())
+    }
+
     /// Mark a row as `reverted`.
     pub async fn record_reverted_row(&self, row_id: Uuid) -> Result<(), DatabaseError> {
         sqlx::query!(

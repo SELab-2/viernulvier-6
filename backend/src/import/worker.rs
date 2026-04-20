@@ -362,14 +362,203 @@ pub async fn process_dry_run_bytes(
     Ok(())
 }
 
-/// Placeholder commit processor.
+/// Commit processor: applies each actionable row to the database.
 ///
-/// Immediately advances the session to `committed`.
-/// Task 7.3 will replace this with real row-level commit logic.
-async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppError> {
-    ctx.db
-        .imports()
-        .update_status(id, ImportSessionStatus::Committed, None)
-        .await?;
+/// Processes rows with status `WillCreate`, `WillUpdate`, and `Pending`.
+/// Each row is committed inside its own per-row transaction.  Per-row errors
+/// are recorded on the row (status `Error`) and do not abort the session.
+///
+/// Fatal errors (missing session, unknown adapter, failed row fetch) flip the
+/// session to `Failed` and return `Ok(())` so the worker does not retry.
+///
+/// `pub` so integration tests can call it without going through
+/// `run_one_iteration`.
+pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppError> {
+    let db = &ctx.db;
+
+    // ── Step 1: load session ─────────────────────────────────────────────────
+
+    let session = if let Some(s) = db.imports().get_session(id).await? {
+        s
+    } else {
+        let msg = format!("session {id} not found");
+        error!("{msg}");
+        let _ = db
+            .imports()
+            .update_status(id, ImportSessionStatus::Failed, Some(msg))
+            .await;
+        return Ok(());
+    };
+
+    // ── Step 2: look up adapter ──────────────────────────────────────────────
+
+    let adapter = if let Some(a) = ctx.registry.get(&session.entity_type) {
+        a
+    } else {
+        let msg = format!(
+            "no adapter registered for entity type '{}'",
+            session.entity_type
+        );
+        error!("{msg}");
+        db.imports()
+            .update_status(id, ImportSessionStatus::Failed, Some(msg))
+            .await?;
+        return Ok(());
+    };
+
+    // ── Step 3: fetch all rows ───────────────────────────────────────────────
+
+    let all_rows = match db.imports().get_rows(id, FETCH_ALL_ROWS, 0, None).await {
+        Ok(rows) => rows,
+        Err(e) => {
+            let msg = format!("failed to fetch rows: {e}");
+            error!("{msg}");
+            db.imports()
+                .update_status(id, ImportSessionStatus::Failed, Some(msg))
+                .await?;
+            return Ok(());
+        }
+    };
+
+    // Filter to actionable statuses.
+    let actionable_rows: Vec<_> = all_rows
+        .into_iter()
+        .filter(|r| {
+            matches!(
+                r.status,
+                ImportRowStatus::WillCreate
+                    | ImportRowStatus::WillUpdate
+                    | ImportRowStatus::Pending
+            )
+        })
+        .collect();
+
+    let mapping = &session.mapping.0;
+
+    // ── Step 4: process each row ─────────────────────────────────────────────
+
+    for row in &actionable_rows {
+        let raw = &row.raw_data.0;
+        let overrides = &row.overrides.0;
+        let resolved_refs = &row.resolved_refs.0;
+
+        // (a) Build resolved row.
+        let resolved =
+            crate::handlers::import::build_resolved_row(raw, mapping, overrides, resolved_refs);
+
+        // (b) Determine existing_id.
+        let existing_id: Option<uuid::Uuid> = match row.status {
+            ImportRowStatus::WillCreate => None,
+            ImportRowStatus::WillUpdate => {
+                if let Some(eid) = row.target_entity_id {
+                    Some(eid)
+                } else {
+                    match adapter.lookup_existing(&resolved, db).await {
+                        Ok(opt) => opt,
+                        Err(e) => {
+                            let warnings = vec![ImportWarning {
+                                field: None,
+                                code: "adapter_error".to_string(),
+                                message: e.to_string(),
+                            }];
+                            let _ = db
+                                .imports()
+                                .save_dry_run_result(
+                                    row.id,
+                                    ImportRowStatus::Error,
+                                    None,
+                                    Json(warnings),
+                                )
+                                .await;
+                            continue;
+                        }
+                    }
+                }
+            }
+            ImportRowStatus::Pending => match adapter.lookup_existing(&resolved, db).await {
+                Ok(opt) => opt,
+                Err(e) => {
+                    let warnings = vec![ImportWarning {
+                        field: None,
+                        code: "adapter_error".to_string(),
+                        message: e.to_string(),
+                    }];
+                    let _ = db
+                        .imports()
+                        .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
+                        .await;
+                    continue;
+                }
+            },
+            // Unreachable: filtered above; keeps the exhaustive match compiler-happy.
+            _ => None,
+        };
+
+        // (c) Begin per-row transaction.
+        let mut tx = match db.begin_transaction().await {
+            Ok(t) => t,
+            Err(e) => {
+                let warnings = vec![ImportWarning {
+                    field: None,
+                    code: "tx_error".to_string(),
+                    message: e.to_string(),
+                }];
+                let _ = db
+                    .imports()
+                    .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
+                    .await;
+                continue;
+            }
+        };
+
+        // (d) Apply row inside the transaction.
+        let entity_id = match adapter.apply_row(existing_id, &resolved, db, &mut tx).await {
+            Ok(eid) => eid,
+            Err(e) => {
+                let _ = tx.rollback().await;
+                let warnings = vec![ImportWarning {
+                    field: None,
+                    code: "apply_error".to_string(),
+                    message: e.to_string(),
+                }];
+                let _ = db
+                    .imports()
+                    .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
+                    .await;
+                continue;
+            }
+        };
+
+        // Commit the transaction.
+        if let Err(e) = tx.commit().await {
+            let warnings = vec![ImportWarning {
+                field: None,
+                code: "tx_commit_error".to_string(),
+                message: e.to_string(),
+            }];
+            let _ = db
+                .imports()
+                .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
+                .await;
+            continue;
+        }
+
+        // (e) Finalise the row's bookkeeping.
+        if let Err(e) = db
+            .imports()
+            .finalise_committed_row(row.id, entity_id, existing_id.is_none())
+            .await
+        {
+            warn!(
+                "failed to finalise committed row {} (entity {entity_id}): {e}",
+                row.id
+            );
+        }
+    }
+
+    // ── Step 5: mark session as committed ────────────────────────────────────
+
+    db.imports().mark_session_committed(id).await?;
+
     Ok(())
 }
