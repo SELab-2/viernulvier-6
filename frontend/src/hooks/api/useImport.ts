@@ -23,13 +23,18 @@ import {
     ImportRow,
     ImportRowsParams,
     ImportSession,
+    ImportSessionStatus,
     ImportSessionsParams,
     UploadResult,
 } from "@/types/models/import.types";
 
 import { queryKeys } from "./query-keys";
 
-const ACTIVE_SESSION_STATUSES = new Set(["dry_run_pending", "committing"]);
+const ACTIVE_SESSION_POLL_MS = 1500;
+const ACTIVE_SESSION_STATUSES = new Set<ImportSessionStatus>(["dry_run_pending", "committing"]);
+
+const isActiveSessionStatus = (status: ImportSessionStatus | undefined): boolean =>
+    Boolean(status && ACTIVE_SESSION_STATUSES.has(status));
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
@@ -77,7 +82,7 @@ export const useImportSession = (id: string, options?: { enabled?: boolean }) =>
         enabled: Boolean(id) && (options?.enabled ?? true),
         refetchInterval: (query) => {
             const status = (query.state.data as ImportSession | undefined)?.status;
-            return status && ACTIVE_SESSION_STATUSES.has(status) ? 1500 : false;
+            return isActiveSessionStatus(status) ? ACTIVE_SESSION_POLL_MS : false;
         },
     });
 };
@@ -85,13 +90,20 @@ export const useImportSession = (id: string, options?: { enabled?: boolean }) =>
 export const useImportRows = (
     sessionId: string,
     params?: ImportRowsParams,
-    options?: { isSessionActive?: boolean; enabled?: boolean }
+    options?: { enabled?: boolean }
 ) => {
+    const queryClient = useQueryClient();
+
     return useQuery({
         queryKey: queryKeys.imports.rows(sessionId, params),
         queryFn: () => fetchImportRows(sessionId, params),
         enabled: Boolean(sessionId) && (options?.enabled ?? true),
-        refetchInterval: options?.isSessionActive ? 1500 : false,
+        refetchInterval: () => {
+            const session = queryClient.getQueryData<ImportSession>(
+                queryKeys.imports.session(sessionId)
+            );
+            return isActiveSessionStatus(session?.status) ? ACTIVE_SESSION_POLL_MS : false;
+        },
     });
 };
 
@@ -105,7 +117,7 @@ export const useFieldSpec = (entityType: string, options?: { enabled?: boolean }
 
 export const useEntityTypes = (options?: { enabled?: boolean }) => {
     return useQuery({
-        queryKey: queryKeys.imports.entityTypes(),
+        queryKey: queryKeys.imports.entityTypes,
         queryFn: fetchEntityTypes,
         enabled: options?.enabled ?? true,
     });

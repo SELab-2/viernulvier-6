@@ -10,6 +10,7 @@ import {
     useStartDryRun,
     useUpdateMapping,
 } from "@/hooks/api/useImport";
+import type { ImportSession } from "@/types/models/import.types";
 import { createQueryClientWrapper } from "../../utils/query-client";
 
 const SESSION_ID = "session-uuid-1";
@@ -99,7 +100,7 @@ describe("useStartDryRun", () => {
 
         const { result } = renderHook(() => useStartDryRun(), { wrapper });
 
-        let session;
+        let session: ImportSession | undefined;
         await act(async () => {
             session = await result.current.mutateAsync(SESSION_ID);
         });
@@ -145,7 +146,7 @@ describe("useUpdateMapping", () => {
 
         const { result } = renderHook(() => useUpdateMapping(), { wrapper });
 
-        let updated;
+        let updated: ImportSession | undefined;
         await act(async () => {
             updated = await result.current.mutateAsync({
                 id: SESSION_ID,

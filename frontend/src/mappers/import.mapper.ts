@@ -49,7 +49,7 @@ export const mapImportRow = (response: ImportRowResponse): ImportRow => ({
     rawData: response.raw_data as Record<string, unknown>,
     overrides: response.overrides as Record<string, unknown>,
     resolvedRefs: response.resolved_refs as Record<string, unknown>,
-    diff: response.diff ? (response.diff as Record<string, unknown>) : null,
+    diff: toNullable(response.diff) as Record<string, unknown> | null,
     warnings: response.warnings as unknown[],
     targetEntityId: toNullable(response.target_entity_id),
 });

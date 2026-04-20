@@ -1,7 +1,10 @@
-import { components } from "@/types/api/generated";
+import type {
+    ImportRowStatus as ImportRowStatusResponse,
+    ImportSessionStatus as ImportSessionStatusResponse,
+} from "@/types/api/import.api.types";
 
-export type ImportSessionStatus = components["schemas"]["ImportSessionStatus"];
-export type ImportRowStatus = components["schemas"]["ImportRowStatus"];
+export type ImportSessionStatus = ImportSessionStatusResponse;
+export type ImportRowStatus = ImportRowStatusResponse;
 
 export type ImportMapping = {
     columns: Record<string, string | null>;
