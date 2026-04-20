@@ -96,11 +96,13 @@ export function useTableSelection<TData>({
             const start = Math.min(anchorIdx, targetIdx);
             const end = Math.max(anchorIdx, targetIdx);
 
-            const next: RowSelectionState = {};
-            for (let i = start; i <= end; i++) {
-                next[rows[i].id] = true;
-            }
-            onRowSelectionChange?.(next);
+            onRowSelectionChange?.((prev) => {
+                const next = { ...prev };
+                for (let i = start; i <= end; i++) {
+                    next[rows[i].id] = true;
+                }
+                return next;
+            });
         },
         [rows, onRowSelectionChange]
     );
