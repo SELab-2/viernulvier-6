@@ -466,6 +466,72 @@ async fn apply_row_creates_with_fallback_slug_for_punctuation_title(pool: PgPool
 // ─── Fix 4 — additional test cases ───────────────────────────────────────────
 
 #[sqlx::test]
+async fn lookup_existing_finds_by_string_source_id(pool: PgPool) {
+    // CSV cells arrive as Value::String; the adapter must coerce to i32.
+    let id = seed_production_with_source_id(&pool, 1234).await;
+    let db = Database::new(pool.clone());
+    let adapter = ProductionImport;
+
+    let row = make_row(&[("source_id", json!("1234"))]);
+    let result = adapter
+        .lookup_existing(&row, &db)
+        .await
+        .expect("lookup failed");
+    assert_eq!(result, Some(id));
+}
+
+#[sqlx::test]
+async fn apply_row_creates_with_string_source_id_from_csv(pool: PgPool) {
+    let db = Database::new(pool.clone());
+    let adapter = ProductionImport;
+
+    let row = make_row(&[("title_nl", json!("Hello")), ("source_id", json!("42"))]);
+
+    let mut tx = pool.begin().await.expect("begin tx");
+    let id = adapter
+        .apply_row(None, &row, &db, &mut tx)
+        .await
+        .expect("apply_row failed");
+    tx.commit().await.expect("commit tx");
+
+    let result = db.productions().by_id(id).await.expect("by_id failed");
+    assert_eq!(result.production.source_id, Some(42));
+}
+
+#[sqlx::test]
+async fn build_diff_detects_source_id_mismatch_with_string(pool: PgPool) {
+    let db = Database::new(pool.clone());
+    let adapter = ProductionImport;
+
+    let id = seed_production_with_source_id(&pool, 10).await;
+
+    let row = make_row(&[("source_id", json!("99"))]);
+    let diff = adapter
+        .build_diff(id, &row, &db)
+        .await
+        .expect("build_diff failed");
+
+    assert!(diff.contains_key("source_id"), "expected source_id in diff");
+    let entry = &diff["source_id"];
+    assert_eq!(entry.current, Some(json!(10)));
+    assert_eq!(entry.incoming, Some(json!(99)));
+}
+
+#[sqlx::test]
+async fn lookup_existing_returns_none_for_unparseable_string_source_id(pool: PgPool) {
+    let _id = seed_production_with_source_id(&pool, 1234).await;
+    let db = Database::new(pool.clone());
+    let adapter = ProductionImport;
+
+    let row = make_row(&[("source_id", json!("not-a-number"))]);
+    let result = adapter
+        .lookup_existing(&row, &db)
+        .await
+        .expect("lookup failed");
+    assert_eq!(result, None);
+}
+
+#[sqlx::test]
 async fn lookup_existing_returns_none_for_source_id_overflow(pool: PgPool) {
     let db = Database::new(pool.clone());
     let adapter = ProductionImport;

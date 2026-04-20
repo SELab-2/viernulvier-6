@@ -13,6 +13,7 @@ use std::collections::BTreeMap;
 use uuid::Uuid;
 
 use crate::import::{
+    adapters::source_id_from_value,
     trait_def::ImportableEntity,
     types::{FieldSpec, FieldType, RawRow, ReferenceResolution, ResolvedRow},
 };
@@ -89,13 +90,7 @@ impl ImportableEntity for ProductionImport {
         row: &ResolvedRow,
         db: &Database,
     ) -> anyhow::Result<Option<Uuid>> {
-        let Some(v) = row.get("source_id") else {
-            return Ok(None);
-        };
-        let Some(n) = v.as_i64() else {
-            return Ok(None);
-        };
-        let Ok(sid) = i32::try_from(n) else {
+        let Some(sid) = row.get("source_id").and_then(source_id_from_value) else {
             return Ok(None);
         };
         let prod = db.productions().by_source_id(sid).await?;
@@ -168,8 +163,7 @@ impl ImportableEntity for ProductionImport {
             "source_id",
             prod.source_id.map(|n| Value::Number(n.into())),
             row.get("source_id")
-                .and_then(Value::as_i64)
-                .and_then(|n| i32::try_from(n).ok())
+                .and_then(source_id_from_value)
                 .map(|n| Value::Number(n.into())),
         );
         maybe_diff(
@@ -230,10 +224,7 @@ impl ImportableEntity for ProductionImport {
         let description_nl = json_string(row, "description_nl");
         let description_en = json_string(row, "description_en");
         let uitdatabank_theme = json_string(row, "uitdatabank_theme");
-        let source_id = row
-            .get("source_id")
-            .and_then(Value::as_i64)
-            .and_then(|n| i32::try_from(n).ok());
+        let source_id = row.get("source_id").and_then(source_id_from_value);
 
         // Build NL translation data, merging with existing on update.
         let nl_data =

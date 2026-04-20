@@ -194,6 +194,23 @@ async fn lookup_existing_returns_none_when_source_id_absent(pool: PgPool) {
     assert_eq!(result, None);
 }
 
+#[sqlx::test]
+async fn lookup_existing_finds_by_string_source_id(pool: PgPool) {
+    // CSV cells arrive as Value::String; the adapter must coerce to i32.
+    let prod_id = seed_production_with_nl_title(&pool, "Test Production").await;
+    let event_id = seed_event(&pool, prod_id, Some(555)).await;
+
+    let db = Database::new(pool.clone());
+    let adapter = EventImport;
+
+    let row = make_row(&[("source_id", json!("555"))]);
+    let result = adapter
+        .lookup_existing(&row, &db)
+        .await
+        .expect("lookup failed");
+    assert_eq!(result, Some(event_id));
+}
+
 // ─── Sub-step 3 — resolve_references ─────────────────────────────────────────
 
 #[sqlx::test]
