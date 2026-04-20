@@ -1,5 +1,6 @@
 import { PaginationParams, SearchPaginationParams } from "@/types/api/api.types";
 import { EntityMediaParams, MediaSearchParams } from "@/types/models/media.types";
+import { ImportRowsParams, ImportSessionsParams } from "@/types/models/import.types";
 
 const buildQueryKey = (
     base: readonly string[],
@@ -65,5 +66,19 @@ export const queryKeys = {
             entityType
                 ? (["taxonomy", "facets", entityType] as const)
                 : (["taxonomy", "facets"] as const),
+    },
+    imports: {
+        all: ["imports"] as const,
+        sessions: (params?: ImportSessionsParams) =>
+            params
+                ? (["imports", "sessions", params] as const)
+                : (["imports", "sessions"] as const),
+        session: (id: string) => ["imports", "sessions", id] as const,
+        rows: (sessionId: string, params?: ImportRowsParams) =>
+            params
+                ? (["imports", "sessions", sessionId, "rows", params] as const)
+                : (["imports", "sessions", sessionId, "rows"] as const),
+        fieldSpec: (entityType: string) => ["imports", "fields", entityType] as const,
+        entityTypes: () => ["imports", "entity-types"] as const,
     },
 };
