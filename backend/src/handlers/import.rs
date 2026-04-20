@@ -11,7 +11,7 @@ use tracing::warn;
 
 use crate::{
     AppState,
-    dto::import::{ImportRowResponse, ImportSessionResponse, UploadResponse},
+    dto::import::{ImportRowResponse, ImportSessionResponse, UpdateMappingRequest, UploadResponse},
     error::AppError,
     extractors::auth::EditorUser,
     import::{csv_parser, storage},
@@ -268,6 +268,88 @@ pub async fn get_rows(
     Ok(Json(rows.into_iter().map(Into::into).collect()))
 }
 
+/// PATCH /import/sessions/{id}/mapping — persist a column mapping and advance status to `mapping`.
+///
+/// Validates that every non-None target field name exists in the adapter's field list.
+/// Rejects sessions in non-editable statuses (dry_run_pending, committing, committed, failed, cancelled).
+#[utoipa::path(
+    patch,
+    path = "/import/sessions/{id}/mapping",
+    params(("id" = Uuid, Path, description = "Session id")),
+    request_body = UpdateMappingRequest,
+    responses(
+        (status = 200, body = ImportSessionResponse),
+        (status = 400, description = "Unknown field or non-editable session status"),
+        (status = 404, description = "Session not found"),
+    ),
+    tag = "import",
+)]
+pub async fn update_mapping(
+    State(state): State<AppState>,
+    _: EditorUser,
+    Path(id): Path<Uuid>,
+    Json(body): Json<UpdateMappingRequest>,
+) -> Result<Json<ImportSessionResponse>, AppError> {
+    // 1. Load session → 404 if missing
+    let session = state
+        .db
+        .imports()
+        .get_session(id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    // 2. Check status is editable → 400 if not
+    let editable = matches!(
+        session.status,
+        ImportSessionStatus::Uploaded
+            | ImportSessionStatus::Mapping
+            | ImportSessionStatus::DryRunReady
+    );
+    if !editable {
+        let status_label = status_label(session.status);
+        return Err(AppError::PayloadError(format!(
+            "cannot edit mapping for session in status {status_label}"
+        )));
+    }
+
+    // 3. Load adapter from registry → 500 if unknown (session was created with a valid entity_type)
+    let adapter = state
+        .import_registry
+        .get(&session.entity_type)
+        .ok_or_else(|| {
+            AppError::Internal(format!(
+                "no adapter registered for entity_type '{}'",
+                session.entity_type
+            ))
+        })?;
+
+    // 4. Validate every mapped field exists in the adapter's target_fields
+    let fields = adapter.target_fields();
+    let known_fields: std::collections::HashSet<&str> =
+        fields.iter().map(|f| f.name.as_str()).collect();
+
+    for field_name in body.mapping.columns.values().flatten() {
+        if !known_fields.contains(field_name.as_str()) {
+            return Err(AppError::PayloadError(format!(
+                "unknown target field: {field_name}"
+            )));
+        }
+    }
+
+    // 5. Persist the mapping (also sets status = 'mapping')
+    state.db.imports().save_mapping(id, body.mapping).await?;
+
+    // 6. Re-fetch session (status is now 'mapping') and return it
+    let updated = state
+        .db
+        .imports()
+        .get_session(id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    Ok(Json(updated.into()))
+}
+
 /// Strip control characters (including newlines and null bytes) from a raw
 /// filename supplied by the user, then truncate to 255 code-points.
 /// Falls back to `"upload.csv"` if the result would be empty.
@@ -281,5 +363,18 @@ fn sanitise_filename(raw: &str) -> String {
         "upload.csv".to_string()
     } else {
         cleaned
+    }
+}
+
+fn status_label(status: ImportSessionStatus) -> &'static str {
+    match status {
+        ImportSessionStatus::Uploaded => "uploaded",
+        ImportSessionStatus::Mapping => "mapping",
+        ImportSessionStatus::DryRunPending => "dry_run_pending",
+        ImportSessionStatus::DryRunReady => "dry_run_ready",
+        ImportSessionStatus::Committing => "committing",
+        ImportSessionStatus::Committed => "committed",
+        ImportSessionStatus::Failed => "failed",
+        ImportSessionStatus::Cancelled => "cancelled",
     }
 }

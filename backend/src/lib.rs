@@ -348,6 +348,7 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(import_handlers::list_sessions))
         .routes(routes!(import_handlers::get_session))
         .routes(routes!(import_handlers::get_rows))
+        .routes(routes!(import_handlers::update_mapping))
         .layer(from_extractor_with_state::<EditorUser, AppState>(state))
 }
 
