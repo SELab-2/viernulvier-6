@@ -45,4 +45,4 @@ npm run dev
 | `npm run dev:stop`     | Stop all services                     |
 | `npm run dev:cleanup`  | Stop and remove all data              |
 
-[Full Documentation](http://localhost:3002)
+[Full Documentation](https://sel2-6.ugent.be/docs)
