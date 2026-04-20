@@ -6,3 +6,8 @@ export type ArticleResponse = components["schemas"]["ArticlePayload"];
 export type ArticleCreateRequest = components["schemas"]["ArticlePostPayload"];
 export type ArticleUpdateRequest = components["schemas"]["ArticleUpdatePayload"];
 export type ArticleRelationsResponse = components["schemas"]["ArticleRelationsPayload"];
+
+export type ArticlesCmsSearchResponse = {
+    data: ArticleListResponse[];
+    next_cursor: string | null;
+};

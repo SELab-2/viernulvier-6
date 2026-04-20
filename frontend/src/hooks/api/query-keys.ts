@@ -18,11 +18,19 @@ export const queryKeys = {
     },
     locations: {
         all: (pagination?: PaginationParams) => buildQueryKey(["locations"], pagination),
+        infinite: (params?: Omit<SearchPaginationParams, "cursor">) =>
+            params
+                ? (["locations", "infinite", params] as const)
+                : (["locations", "infinite"] as const),
         detail: (id: string) => ["locations", id] as const,
         bySlug: (slug: string) => ["locations", "slug", slug] as const,
     },
     productions: {
         all: (params?: SearchPaginationParams) => buildQueryKey(["productions"], params),
+        infinite: (params?: Omit<SearchPaginationParams, "cursor">) =>
+            params
+                ? (["productions", "infinite", params] as const)
+                : (["productions", "infinite"] as const),
         detail: (id: string) => ["productions", id] as const,
         events: (id: string) => ["productions", id, "events"] as const,
     },
@@ -51,6 +59,10 @@ export const queryKeys = {
         relations: (id: string) => ["articles", id, "relations"] as const,
         published: ["articles", "published"] as const,
         bySlug: (slug: string) => ["articles", "bySlug", slug] as const,
+        cmsInfinite: (params?: Omit<SearchPaginationParams, "cursor">) =>
+            params
+                ? (["articles", "cms", "infinite", params] as const)
+                : (["articles", "cms", "infinite"] as const),
     },
     media: {
         all: (params?: MediaSearchParams) =>

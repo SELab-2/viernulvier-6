@@ -45,11 +45,13 @@ export const useGetProductions = (options?: {
     });
 };
 
-export const useGetInfiniteProductions = (options?: { enabled?: boolean }) => {
+export const useGetInfiniteProductions = (
+    params?: Omit<SearchPaginationParams, "cursor">,
+    options?: { enabled?: boolean }
+) => {
     return useInfiniteQuery({
-        queryKey: ["productions", "infinite"],
-        queryFn: async ({ pageParam }) =>
-            fetchProductions(pageParam ? { cursor: pageParam } : undefined),
+        queryKey: queryKeys.productions.infinite(params),
+        queryFn: async ({ pageParam }) => fetchProductions({ ...params, cursor: pageParam }),
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
         initialPageParam: null as string | null,
         ...options,

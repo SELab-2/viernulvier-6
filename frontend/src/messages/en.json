@@ -369,7 +369,8 @@
             "fieldEventVendorId": "Vendor ID",
             "fieldEventBoxOfficeId": "Box office ID",
             "fieldEventUitdatabankId": "UiTdatabank ID",
-            "eyebrow": "Production"
+            "eyebrow": "Production",
+            "search": "Search productions…"
         },
         "Locations": {
             "title": "Locations",
@@ -378,7 +379,8 @@
             "showHalls": "Show halls",
             "hideHalls": "Hide halls",
             "editLocation": "Edit location",
-            "editHall": "Edit hall"
+            "editHall": "Edit hall",
+            "search": "Search locations…"
         },
         "Articles": {
             "title": "Articles",
@@ -423,7 +425,8 @@
             "untitledEvent": "Untitled event",
             "contentPlaceholder": "Write article content…",
             "statusColumn": "Status",
-            "dateRangeColumn": "Date range"
+            "dateRangeColumn": "Date range",
+            "search": "Search articles…"
         },
         "Performers": {
             "title": "Performers",

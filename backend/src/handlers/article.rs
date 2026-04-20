@@ -105,6 +105,41 @@ pub async fn get_all_cms(db: Database) -> JsonResponse<Vec<ArticleListPayload>> 
 
 #[utoipa::path(
     method(get),
+    path = "/articles/cms/search",
+    tag = "Articles",
+    operation_id = "search_articles_cms",
+    description = "Search all articles (all statuses) — editor only",
+    params(PaginationQuery, ArticleSearchQuery),
+    responses(
+        (status = 200, description = "Success", body = PaginatedResponse<ArticleListPayload>),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    ),
+    security(("cookie_auth" = []))
+)]
+pub async fn get_all_cms_search(
+    db: Database,
+    Query(pagination): Query<PaginationQuery>,
+    Query(search): Query<ArticleSearchQuery>,
+) -> JsonResponse<PaginatedResponse<ArticleListPayload>> {
+    ArticleListPayload::list_cms_search(
+        &db,
+        pagination.cursor,
+        pagination.limit,
+        ArticleSearch {
+            q: search.q,
+            subject_start: None,
+            subject_end: None,
+            tag_slug: None,
+            related_entity_id: None,
+            related_entity_type: None,
+        },
+    )
+    .await?
+    .json()
+}
+
+#[utoipa::path(
+    method(get),
     path = "/articles/cms/{id}",
     tag = "Articles",
     operation_id = "get_article_by_id_cms",
