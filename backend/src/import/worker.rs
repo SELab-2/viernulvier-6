@@ -33,25 +33,13 @@ pub struct WorkerContext {
 /// Returns `Ok(None)` when no pending job is available.
 /// Returns `Ok(Some(id))` after successfully dispatching a job.
 pub async fn run_one_iteration(ctx: &WorkerContext) -> Result<Option<Uuid>, AppError> {
-    let Some(id) = ctx
-        .db
-        .imports()
-        .claim_next_job()
-        .await
-        .map_err(|e| AppError::Internal(e.to_string()))?
-    else {
+    let Some(id) = ctx.db.imports().claim_next_job().await? else {
         return Ok(None);
     };
 
     // Fetch the session so we know which status to dispatch on.
     // If the session was cancelled between claim and fetch, log and skip.
-    let Some(session) = ctx
-        .db
-        .imports()
-        .get_session(id)
-        .await
-        .map_err(|e| AppError::Internal(e.to_string()))?
-    else {
+    let Some(session) = ctx.db.imports().get_session(id).await? else {
         warn!("worker claimed session {id} but it disappeared before processing — skipping");
         return Ok(Some(id));
     };
@@ -100,8 +88,8 @@ async fn process_dry_run(id: Uuid, ctx: &WorkerContext) -> Result<(), AppError> 
     ctx.db
         .imports()
         .update_status(id, ImportSessionStatus::DryRunReady, None)
-        .await
-        .map_err(|e| AppError::Internal(e.to_string()))
+        .await?;
+    Ok(())
 }
 
 /// Placeholder commit processor.
@@ -112,6 +100,6 @@ async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppError> {
     ctx.db
         .imports()
         .update_status(id, ImportSessionStatus::Committed, None)
-        .await
-        .map_err(|e| AppError::Internal(e.to_string()))
+        .await?;
+    Ok(())
 }
