@@ -423,6 +423,20 @@
                 "mapping": "Map",
                 "dryRun": "Dry-run",
                 "commit": "Commit"
+            },
+            "upload": {
+                "title": "Upload CSV file",
+                "description": "Drag a file here or click to browse.",
+                "fileLabel": "File",
+                "entityTypeLabel": "Entity type",
+                "entityTypePlaceholder": "Choose a type…",
+                "submit": "Create session",
+                "submitting": "Uploading…"
+            },
+            "errors": {
+                "fileTooLarge": "File too large (max 20MB).",
+                "uploadFailed": "Upload failed. Try again.",
+                "entityTypesFailed": "Could not load entity types."
             }
         },
         "Collections": {

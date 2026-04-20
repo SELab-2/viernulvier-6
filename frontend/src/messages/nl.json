@@ -423,6 +423,20 @@
                 "mapping": "Mappen",
                 "dryRun": "Dry-run",
                 "commit": "Importeren"
+            },
+            "upload": {
+                "title": "CSV-bestand uploaden",
+                "description": "Sleep een bestand hierheen of klik om te bladeren.",
+                "fileLabel": "Bestand",
+                "entityTypeLabel": "Entiteitstype",
+                "entityTypePlaceholder": "Kies een type…",
+                "submit": "Session aanmaken",
+                "submitting": "Bezig…"
+            },
+            "errors": {
+                "fileTooLarge": "Bestand is te groot (max 20MB).",
+                "uploadFailed": "Upload mislukt. Probeer opnieuw.",
+                "entityTypesFailed": "Kon entiteitstypes niet laden."
             }
         },
         "Collections": {
