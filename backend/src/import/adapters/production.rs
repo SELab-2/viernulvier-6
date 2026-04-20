@@ -162,6 +162,14 @@ impl ImportableEntity for ProductionImport {
 
         // Production-level fields
         maybe_diff(
+            "source_id",
+            prod.source_id.map(|n| Value::Number(n.into())),
+            row.get("source_id")
+                .and_then(Value::as_i64)
+                .and_then(|n| i32::try_from(n).ok())
+                .map(|n| Value::Number(n.into())),
+        );
+        maybe_diff(
             "uitdatabank_theme",
             prod.uitdatabank_theme.as_ref().map(|s| Value::String(s.clone())),
             json_string(row, "uitdatabank_theme").map(Value::String),
@@ -198,12 +206,12 @@ impl ImportableEntity for ProductionImport {
         Ok(diff)
     }
 
+    /// v1: writes committed directly; transactional adapters are future work.
     async fn apply_row(
         &self,
         existing_id: Option<Uuid>,
         row: &ResolvedRow,
         db: &Database,
-        // v1: writes committed directly via pool; transactional adapters are future work.
         _tx: &mut Transaction<'_, Postgres>,
     ) -> anyhow::Result<Uuid> {
         let title_nl = json_string(row, "title_nl");
@@ -248,10 +256,11 @@ impl ImportableEntity for ProductionImport {
         match existing_id {
             None => {
                 // Create path: generate slug from title.
-                let slug = title_nl
-                    .as_deref()
-                    .map(slugify)
-                    .unwrap_or_else(|| "untitled".to_string());
+                let raw_title = title_nl.as_deref().unwrap_or("untitled");
+                let mut slug = slugify(raw_title);
+                if slug.is_empty() {
+                    slug = "untitled".to_string();
+                }
 
                 let mut translations = vec![nl_data(None)];
                 if let Some(desc_en) = description_en.clone() {
@@ -304,7 +313,7 @@ impl ImportableEntity for ProductionImport {
                 let updated_production = database::models::production::Production {
                     id: current.production.id,
                     slug: current.production.slug.clone(), // stable URL: never re-slug on rename
-                    source_id: source_id.or(current.production.source_id),
+                    source_id: current.production.source_id,
                     video_1: current.production.video_1.clone(),
                     video_2: current.production.video_2.clone(),
                     eticket_info: current.production.eticket_info.clone(),
@@ -349,11 +358,11 @@ impl ImportableEntity for ProductionImport {
         }
     }
 
+    /// v1: writes committed directly; transactional adapters are future work.
     async fn revert_row(
         &self,
         entity_id: Uuid,
         db: &Database,
-        // v1: revert assumes Created semantics; ignores tx (pool writes).
         _tx: &mut Transaction<'_, Postgres>,
     ) -> anyhow::Result<()> {
         db.productions().delete(entity_id).await?;

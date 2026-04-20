@@ -346,3 +346,209 @@ async fn revert_row_deletes_production(pool: PgPool) {
     let result = db.productions().by_id(id).await;
     assert!(result.is_err(), "production should no longer exist after revert");
 }
+
+// ─── Fix 1 — source_id in diff / preserved on update ─────────────────────────
+
+#[sqlx::test]
+async fn build_diff_detects_source_id_mismatch(pool: PgPool) {
+    let db = Database::new(pool.clone());
+    let adapter = ProductionImport;
+
+    let id = seed_production_with_source_id(&pool, 10).await;
+
+    let row = make_row(&[("source_id", json!(99))]);
+    let diff = adapter.build_diff(id, &row, &db).await.expect("build_diff failed");
+
+    assert!(diff.contains_key("source_id"), "expected source_id in diff");
+    let entry = &diff["source_id"];
+    assert_eq!(entry.current, Some(json!(10)));
+    assert_eq!(entry.incoming, Some(json!(99)));
+}
+
+#[sqlx::test]
+async fn apply_row_update_preserves_source_id(pool: PgPool) {
+    let db = Database::new(pool.clone());
+    let adapter = ProductionImport;
+
+    let id = seed_production_with_source_id(&pool, 10).await;
+
+    let row = make_row(&[
+        ("title_nl", json!("Updated")),
+        ("source_id", json!(99)),
+    ]);
+
+    let mut tx = pool.begin().await.expect("begin tx");
+    adapter
+        .apply_row(Some(id), &row, &db, &mut tx)
+        .await
+        .expect("apply_row failed");
+    tx.commit().await.expect("commit tx");
+
+    let result = db.productions().by_id(id).await.expect("by_id failed");
+    assert_eq!(result.production.source_id, Some(10), "source_id must not change on update");
+}
+
+// ─── Fix 3 — slug fallback for punctuation-only title ────────────────────────
+
+#[sqlx::test]
+async fn apply_row_creates_with_fallback_slug_for_punctuation_title(pool: PgPool) {
+    let db = Database::new(pool.clone());
+    let adapter = ProductionImport;
+
+    let row = make_row(&[("title_nl", json!("!!!"))]);
+
+    let mut tx = pool.begin().await.expect("begin tx");
+    let id = adapter
+        .apply_row(None, &row, &db, &mut tx)
+        .await
+        .expect("apply_row failed");
+    tx.commit().await.expect("commit tx");
+
+    let result = db.productions().by_id(id).await.expect("by_id failed");
+    assert_eq!(result.production.slug, "untitled");
+}
+
+// ─── Fix 4 — additional test cases ───────────────────────────────────────────
+
+#[sqlx::test]
+async fn lookup_existing_returns_none_for_source_id_overflow(pool: PgPool) {
+    let db = Database::new(pool.clone());
+    let adapter = ProductionImport;
+
+    let row = make_row(&[("source_id", json!(3_000_000_000_u64))]);
+    let result = adapter.lookup_existing(&row, &db).await.expect("lookup failed");
+    assert_eq!(result, None);
+}
+
+#[sqlx::test]
+async fn apply_row_creates_with_only_title_nl(pool: PgPool) {
+    let db = Database::new(pool.clone());
+    let adapter = ProductionImport;
+
+    let row = make_row(&[("title_nl", json!("Minimal"))]);
+
+    let mut tx = pool.begin().await.expect("begin tx");
+    let id = adapter
+        .apply_row(None, &row, &db, &mut tx)
+        .await
+        .expect("apply_row failed");
+    tx.commit().await.expect("commit tx");
+
+    let result = db.productions().by_id(id).await.expect("by_id failed");
+    assert_eq!(result.production.slug, "minimal");
+    assert_eq!(result.production.source_id, None);
+    assert_eq!(result.production.uitdatabank_theme, None);
+
+    let nl = result.translations.iter().find(|t| t.language_code == "nl");
+    assert!(nl.is_some(), "expected NL translation");
+    let nl = nl.unwrap();
+    assert_eq!(nl.title.as_deref(), Some("Minimal"));
+    assert_eq!(nl.description, None);
+}
+
+#[sqlx::test]
+async fn apply_row_update_preserves_existing_en_translation_when_description_en_absent(
+    pool: PgPool,
+) {
+    let db = Database::new(pool.clone());
+    let adapter = ProductionImport;
+
+    // Seed a production with both NL and EN translations.
+    let seeded = db
+        .productions()
+        .insert(
+            ProductionCreate {
+                source_id: None,
+                slug: "seed-en".to_string(),
+                video_1: None,
+                video_2: None,
+                eticket_info: None,
+                uitdatabank_theme: None,
+                uitdatabank_type: None,
+            },
+            vec![
+                ProductionTranslationData {
+                    language_code: "nl".to_string(),
+                    title: Some("Original NL".to_string()),
+                    supertitle: None,
+                    artist: None,
+                    meta_title: None,
+                    meta_description: None,
+                    tagline: None,
+                    teaser: None,
+                    description: None,
+                    description_extra: None,
+                    description_2: None,
+                    quote: None,
+                    quote_source: None,
+                    programme: None,
+                    info: None,
+                    description_short: None,
+                },
+                ProductionTranslationData {
+                    language_code: "en".to_string(),
+                    title: None,
+                    supertitle: None,
+                    artist: None,
+                    meta_title: None,
+                    meta_description: None,
+                    tagline: None,
+                    teaser: None,
+                    description: Some("old-en".to_string()),
+                    description_extra: None,
+                    description_2: None,
+                    quote: None,
+                    quote_source: None,
+                    programme: None,
+                    info: None,
+                    description_short: None,
+                },
+            ],
+        )
+        .await
+        .expect("seed insert failed");
+    let id = seeded.production.id;
+
+    // Update with only title_nl, no description_en.
+    let row = make_row(&[("title_nl", json!("Updated"))]);
+
+    let mut tx = pool.begin().await.expect("begin tx");
+    adapter
+        .apply_row(Some(id), &row, &db, &mut tx)
+        .await
+        .expect("apply_row failed");
+    tx.commit().await.expect("commit tx");
+
+    let result = db.productions().by_id(id).await.expect("by_id failed");
+    let en = result.translations.iter().find(|t| t.language_code == "en");
+    assert!(en.is_some(), "EN translation should still exist");
+    assert_eq!(en.unwrap().description.as_deref(), Some("old-en"));
+}
+
+#[sqlx::test]
+async fn apply_row_creates_with_description_en(pool: PgPool) {
+    let db = Database::new(pool.clone());
+    let adapter = ProductionImport;
+
+    let row = make_row(&[
+        ("title_nl", json!("Show")),
+        ("description_en", json!("English description")),
+    ]);
+
+    let mut tx = pool.begin().await.expect("begin tx");
+    let id = adapter
+        .apply_row(None, &row, &db, &mut tx)
+        .await
+        .expect("apply_row failed");
+    tx.commit().await.expect("commit tx");
+
+    let result = db.productions().by_id(id).await.expect("by_id failed");
+    assert_eq!(result.translations.len(), 2, "expected two translation rows (nl + en)");
+
+    let nl = result.translations.iter().find(|t| t.language_code == "nl");
+    assert!(nl.is_some(), "expected NL translation");
+
+    let en = result.translations.iter().find(|t| t.language_code == "en");
+    assert!(en.is_some(), "expected EN translation");
+    assert_eq!(en.unwrap().description.as_deref(), Some("English description"));
+}
