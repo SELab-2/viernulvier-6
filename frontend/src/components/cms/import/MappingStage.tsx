@@ -18,6 +18,7 @@ import type {
     ImportSession,
 } from "@/types/models/import.types";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ColumnMapRow } from "./ColumnMapRow";
 
 type MappingStageProps = {
@@ -82,7 +83,7 @@ function MappingStageInner({ session, fields, previewRows, savedMapping }: Mappi
     const isDirty = !columnsAreEqual(columns, savedMapping.columns, headers);
 
     const requiredFields = fields.filter((f) => f.required);
-    const mappedFieldNames = new Set(Object.values(columns).filter(Boolean) as string[]);
+    const mappedFieldNames = new Set(Object.values(columns).filter((s): s is string => s !== null));
     const missingRequired = requiredFields.filter((f) => !mappedFieldNames.has(f.name));
 
     function handleColumnChange(header: string, fieldName: string | null) {
@@ -201,8 +202,11 @@ export function MappingStage({ sessionId }: MappingStageProps) {
 
     if (sessionLoading || fieldsLoading) {
         return (
-            <div className="mx-auto max-w-3xl pt-4">
-                <p className="text-muted-foreground text-sm">{t("mapping.title")}</p>
+            <div className="mx-auto max-w-3xl space-y-6 pt-4">
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
             </div>
         );
     }
@@ -228,6 +232,7 @@ export function MappingStage({ sessionId }: MappingStageProps) {
     }
 
     return (
+        // Remounting on save discards concurrent local edits (acceptable v1; Phase 10 should revisit).
         <MappingStageInner
             key={`${session.id}:${session.updatedAt}`}
             session={session}

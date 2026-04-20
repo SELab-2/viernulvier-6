@@ -21,20 +21,20 @@ describe("ImportStepper", () => {
         renderStepper("upload");
 
         expect(screen.getByText("Upload")).toBeInTheDocument();
-        expect(screen.queryAllByLabelText("completed")).toHaveLength(0);
+        expect(screen.queryAllByTestId("step-completed")).toHaveLength(0);
     });
 
     it("shows Dry-run as active and two completed steps when currentStage is dry_run", () => {
         renderStepper("dry_run");
 
         expect(screen.getByText("Dry-run")).toBeInTheDocument();
-        expect(screen.getAllByLabelText("completed")).toHaveLength(2);
+        expect(screen.queryAllByTestId("step-completed")).toHaveLength(2);
     });
 
     it("shows Commit as active and three completed steps when currentStage is commit", () => {
         renderStepper("commit");
 
         expect(screen.getByText("Commit")).toBeInTheDocument();
-        expect(screen.getAllByLabelText("completed")).toHaveLength(3);
+        expect(screen.queryAllByTestId("step-completed")).toHaveLength(3);
     });
 });

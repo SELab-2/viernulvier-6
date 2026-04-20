@@ -36,7 +36,7 @@ export function ColumnMapRow({
         onChange(value === IGNORE_SENTINEL ? null : value);
     }
 
-    const displayedSamples = sampleValues.slice(0, 3);
+    const displayedSamples = sampleValues;
 
     return (
         <tr>
@@ -46,7 +46,7 @@ export function ColumnMapRow({
                     <p className="text-muted-foreground mt-0.5 text-xs">
                         <span className="sr-only">{t("mapping.sampleValuesLabel")}: </span>
                         {displayedSamples.map((v, i) => (
-                            <span key={i}>
+                            <span key={`${i}-${v}`}>
                                 {i > 0 && <span className="mx-1 opacity-40">·</span>}
                                 <span className="inline-block max-w-[120px] truncate align-bottom">
                                     {v}

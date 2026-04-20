@@ -15,7 +15,8 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
+const MAX_FILE_SIZE_MB = 20;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 export function UploadStage() {
     const t = useTranslations("Cms.Import");
@@ -160,7 +161,7 @@ export function UploadStage() {
             {/* Error panels */}
             {fileSizeError && (
                 <p role="alert" className="text-destructive text-sm">
-                    {t("errors.fileTooLarge")}
+                    {t("errors.fileTooLarge", { maxMb: MAX_FILE_SIZE_MB })}
                 </p>
             )}
             {entityTypesError && !fileSizeError && (
@@ -170,14 +171,12 @@ export function UploadStage() {
             )}
             {mutationError && !fileSizeError && (
                 <p role="alert" className="text-destructive text-sm">
-                    {mutationError instanceof Error
-                        ? mutationError.message
-                        : t("errors.uploadFailed")}
+                    {t("errors.uploadFailed")}
                 </p>
             )}
 
             {/* Submit */}
-            <Button onClick={handleSubmit} disabled={Boolean(submitDisabled)} className="w-full">
+            <Button onClick={handleSubmit} disabled={submitDisabled} className="w-full">
                 {isSubmitting ? t("upload.submitting") : t("upload.submit")}
             </Button>
         </div>

@@ -422,7 +422,9 @@
                 "upload": "Upload",
                 "mapping": "Map",
                 "dryRun": "Dry-run",
-                "commit": "Commit"
+                "commit": "Commit",
+                "progressLabel": "Import progress",
+                "completedLabel": "Completed"
             },
             "upload": {
                 "title": "Upload CSV file",
@@ -448,7 +450,7 @@
                 "requiredMissing": "Required fields not yet mapped"
             },
             "errors": {
-                "fileTooLarge": "File too large (max 20MB).",
+                "fileTooLarge": "File too large (max {maxMb}MB).",
                 "uploadFailed": "Upload failed. Try again.",
                 "entityTypesFailed": "Could not load entity types.",
                 "sessionLoadFailed": "Could not load session.",

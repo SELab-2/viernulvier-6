@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/cms/PageHeader";
 import { ImportStepper, type ImportStage } from "@/components/cms/import/ImportStepper";
 import { MappingStage } from "@/components/cms/import/MappingStage";
 import { UploadStage } from "@/components/cms/import/UploadStage";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useImportSession } from "@/hooks/api/useImport";
 import type { ImportSessionStatus } from "@/types/models/import.types";
 
@@ -36,7 +37,11 @@ export default function ImportPage() {
     const searchParams = useSearchParams();
     const sessionId = searchParams?.get("session") ?? "";
 
-    const { data: session } = useImportSession(sessionId, { enabled: sessionId !== "" });
+    const {
+        data: session,
+        isPending: sessionLoading,
+        isError: sessionError,
+    } = useImportSession(sessionId, { enabled: sessionId !== "" });
 
     const currentStage = sessionId === "" ? "upload" : deriveStage(session?.status);
 
@@ -62,13 +67,30 @@ export default function ImportPage() {
             {/* Content - scrollable */}
             <div ref={contentRef} className="flex-1 overflow-auto">
                 <ImportStepper currentStage={currentStage} />
-                {currentStage === "upload" && <UploadStage />}
-                {currentStage === "mapping" && sessionId !== "" && (
-                    <MappingStage sessionId={sessionId} />
+                {sessionId !== "" && sessionLoading && !sessionError && (
+                    <div className="mx-auto max-w-3xl space-y-6 pt-4">
+                        <Skeleton className="h-5 w-48" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
                 )}
-                {currentStage === "mapping" && sessionId === "" && <div />}
-                {currentStage === "dry_run" && <div />}
-                {currentStage === "commit" && <div />}
+                {sessionId !== "" && sessionError && (
+                    <p role="alert" className="text-destructive pt-4 text-sm">
+                        {t("errors.sessionLoadFailed")}
+                    </p>
+                )}
+                {(sessionId === "" || (!sessionLoading && !sessionError)) &&
+                    currentStage === "upload" && <UploadStage />}
+                {!sessionLoading &&
+                    !sessionError &&
+                    currentStage === "mapping" &&
+                    sessionId !== "" && <MappingStage sessionId={sessionId} />}
+                {!sessionLoading &&
+                    !sessionError &&
+                    currentStage === "mapping" &&
+                    sessionId === "" && <div />}
+                {!sessionLoading && !sessionError && currentStage === "dry_run" && <div />}
+                {!sessionLoading && !sessionError && currentStage === "commit" && <div />}
             </div>
         </div>
     );

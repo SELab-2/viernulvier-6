@@ -422,7 +422,9 @@
                 "upload": "Uploaden",
                 "mapping": "Mappen",
                 "dryRun": "Dry-run",
-                "commit": "Importeren"
+                "commit": "Importeren",
+                "progressLabel": "Voortgang importeren",
+                "completedLabel": "Voltooid"
             },
             "upload": {
                 "title": "CSV-bestand uploaden",
@@ -430,7 +432,7 @@
                 "fileLabel": "Bestand",
                 "entityTypeLabel": "Entiteitstype",
                 "entityTypePlaceholder": "Kies een type…",
-                "submit": "Session aanmaken",
+                "submit": "Sessie aanmaken",
                 "submitting": "Bezig…"
             },
             "mapping": {
@@ -448,7 +450,7 @@
                 "requiredMissing": "Verplichte velden nog niet gemapt"
             },
             "errors": {
-                "fileTooLarge": "Bestand is te groot (max 20MB).",
+                "fileTooLarge": "Bestand is te groot (max {maxMb}MB).",
                 "uploadFailed": "Upload mislukt. Probeer opnieuw.",
                 "entityTypesFailed": "Kon entiteitstypes niet laden.",
                 "sessionLoadFailed": "Sessie kon niet geladen worden.",

@@ -15,7 +15,7 @@ function levenshtein(a: string, b: string): number {
         return m;
     }
 
-    const prev: number[] = Array.from({ length: n + 1 }, (_, i) => i);
+    let prev: number[] = Array.from({ length: n + 1 }, (_, i) => i);
     const curr: number[] = new Array<number>(n + 1);
 
     for (let i = 1; i <= m; i++) {
@@ -28,7 +28,7 @@ function levenshtein(a: string, b: string): number {
                 (prev[j - 1] ?? 0) + cost
             );
         }
-        prev.splice(0, prev.length, ...curr);
+        prev = curr.slice();
     }
 
     return prev[n] ?? 0;

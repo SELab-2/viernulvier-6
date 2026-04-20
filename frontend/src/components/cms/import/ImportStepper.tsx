@@ -39,7 +39,7 @@ export function ImportStepper({ currentStage }: ImportStepperProps) {
     const t = useTranslations("Cms.Import");
 
     return (
-        <nav aria-label="Import progress" className="mb-6">
+        <nav aria-label={t("stepper.progressLabel")} className="mb-6">
             <ol className="flex items-center gap-0">
                 {STAGE_LABEL_KEYS.map(({ stage, labelKey }, index) => {
                     const state = getStepState(stage, currentStage);
@@ -57,7 +57,15 @@ export function ImportStepper({ currentStage }: ImportStepperProps) {
                                               ? "border-foreground bg-background text-foreground"
                                               : "border-foreground/20 bg-background text-muted-foreground",
                                     ].join(" ")}
-                                    aria-label={state === "completed" ? "completed" : undefined}
+                                    aria-label={
+                                        state === "completed"
+                                            ? t("stepper.completedLabel")
+                                            : undefined
+                                    }
+                                    aria-current={state === "active" ? "step" : undefined}
+                                    data-testid={
+                                        state === "completed" ? "step-completed" : undefined
+                                    }
                                 >
                                     {state === "completed" ? (
                                         <Check className="h-4 w-4" strokeWidth={2.5} />
