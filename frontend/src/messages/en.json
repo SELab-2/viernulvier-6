@@ -417,7 +417,13 @@
             "subtitle": "Automatic import from external data sources",
             "comingSoon": "Coming soon",
             "notAvailable": "Import functionality",
-            "description": "This feature is still under development. Soon you will be able to import data from external sources such as UiTdatabank here."
+            "description": "This feature is still under development. Soon you will be able to import data from external sources such as UiTdatabank here.",
+            "stepper": {
+                "upload": "Upload",
+                "mapping": "Map",
+                "dryRun": "Dry-run",
+                "commit": "Commit"
+            }
         },
         "Collections": {
             "title": "Collections",

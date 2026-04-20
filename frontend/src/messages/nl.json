@@ -417,7 +417,13 @@
             "subtitle": "Automatische import van externe databronnen",
             "comingSoon": "Binnenkort beschikbaar",
             "notAvailable": "Import functionaliteit",
-            "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier data importeren van externe bronnen zoals UiTdatabank."
+            "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier data importeren van externe bronnen zoals UiTdatabank.",
+            "stepper": {
+                "upload": "Uploaden",
+                "mapping": "Mappen",
+                "dryRun": "Dry-run",
+                "commit": "Importeren"
+            }
         },
         "Collections": {
             "title": "Collecties",

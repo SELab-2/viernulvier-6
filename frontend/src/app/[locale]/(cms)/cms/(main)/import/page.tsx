@@ -3,13 +3,40 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 import { animate } from "animejs";
-import { Construction } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/cms/PageHeader";
+import { ImportStepper, type ImportStage } from "@/components/cms/import/ImportStepper";
+import { useImportSession } from "@/hooks/api/useImport";
+import type { ImportSessionStatus } from "@/types/models/import.types";
+
+function deriveStage(status: ImportSessionStatus | undefined): ImportStage {
+    if (!status) {
+        return "upload";
+    }
+    switch (status) {
+        case "mapping":
+            return "mapping";
+        case "dry_run_pending":
+        case "dry_run_ready":
+            return "dry_run";
+        case "committing":
+        case "committed":
+            return "commit";
+        default:
+            return "upload";
+    }
+}
 
 export default function ImportPage() {
     const t = useTranslations("Cms.Import");
     const tEditions = useTranslations("Cms.editions");
     const contentRef = useRef<HTMLDivElement>(null);
+    const searchParams = useSearchParams();
+    const sessionId = searchParams?.get("session") ?? "";
+
+    const { data: session } = useImportSession(sessionId, { enabled: sessionId !== "" });
+
+    const currentStage = sessionId === "" ? "upload" : deriveStage(session?.status);
 
     useEffect(() => {
         if (contentRef.current) {
@@ -32,29 +59,8 @@ export default function ImportPage() {
 
             {/* Content - scrollable */}
             <div ref={contentRef} className="flex-1 overflow-auto">
-                <div className="max-w-2xl">
-                    <div className="border-foreground/20 bg-foreground/[0.02] border p-8">
-                        <div className="flex items-start gap-4">
-                            <div className="bg-foreground/5 flex h-12 w-12 shrink-0 items-center justify-center">
-                                <Construction
-                                    className="text-muted-foreground h-6 w-6"
-                                    strokeWidth={1.5}
-                                />
-                            </div>
-                            <div>
-                                <div className="text-muted-foreground mb-2 font-mono text-[9px] tracking-[2px] uppercase">
-                                    {t("comingSoon")}
-                                </div>
-                                <h2 className="font-display text-foreground mb-3 text-2xl font-bold tracking-tight">
-                                    {t("notAvailable")}
-                                </h2>
-                                <p className="text-muted-foreground font-body text-sm leading-relaxed">
-                                    {t("description")}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <ImportStepper currentStage={currentStage} />
+                <div />
             </div>
         </div>
     );
