@@ -204,25 +204,43 @@ impl<'a> LocationRepo<'a> {
         })
     }
 
-    pub async fn by_source_id(
+    pub async fn upsert_by_source_id(
         &self,
-        source_id: i32,
-    ) -> Result<Option<LocationWithTranslations>, DatabaseError> {
-        let Some(location) = Location::select()
+        location: LocationCreate,
+    ) -> Result<Location, DatabaseError> {
+        let Some(source_id) = location.source_id else {
+            return Ok(self.insert(location, vec![]).await?.location);
+        };
+
+        match self.by_source_id(source_id).await? {
+            Some(existing) => Ok(Location {
+                id: existing.id,
+                source_id: location.source_id,
+                name: location.name,
+                code: location.code,
+                street: location.street,
+                number: location.number,
+                postal_code: location.postal_code,
+                city: location.city,
+                country: location.country,
+                phone_1: location.phone_1,
+                phone_2: location.phone_2,
+                is_owned_by_viernulvier: location.is_owned_by_viernulvier,
+                uitdatabank_id: location.uitdatabank_id,
+                slug: location.slug,
+            }
+            .update_all_fields(self.db)
+            .await?),
+            None => Ok(self.insert(location, vec![]).await?.location),
+        }
+    }
+
+    pub async fn by_source_id(&self, source_id: i32) -> Result<Option<Location>, DatabaseError> {
+        Ok(Location::select()
             .where_("source_id = $1")
             .bind(source_id)
             .fetch_optional(self.db)
-            .await?
-        else {
-            return Ok(None);
-        };
-
-        let translations = self.fetch_translations_for(location.id).await?;
-
-        Ok(Some(LocationWithTranslations {
-            location,
-            translations,
-        }))
+            .await?)
     }
 
     pub async fn update(

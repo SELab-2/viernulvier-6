@@ -61,6 +61,45 @@ impl<'a> ProductionRepo<'a> {
         })
     }
 
+    /// Importer-only upsert: looks up the existing production by `source_id` and
+    /// overwrites every API-sourced field, then upserts the translations.
+    ///
+    /// All non-key fields on `Production` (`slug`, `video_1`, `video_2`,
+    /// `eticket_info`, `uitdatabank_theme`, `uitdatabank_type`) come from the
+    /// upstream API, so we copy all of them on every run. The CMS-edited copy
+    /// (titles, descriptions, taglines, etc.) lives on `production_translations`
+    /// and is reconciled by `upsert_translations` via the `translations`
+    /// parameter, not by this function.
+    pub async fn upsert_by_source_id(
+        &self,
+        production: ProductionCreate,
+        translations: Vec<ProductionTranslationData>,
+    ) -> Result<ProductionWithTranslations, DatabaseError> {
+        let Some(source_id) = production.source_id else {
+            return self.insert(production, translations).await;
+        };
+
+        match self.by_source_id(source_id).await? {
+            Some(existing) => {
+                self.update(
+                    Production {
+                        id: existing.production.id,
+                        source_id: production.source_id,
+                        slug: production.slug,
+                        video_1: production.video_1,
+                        video_2: production.video_2,
+                        eticket_info: production.eticket_info,
+                        uitdatabank_theme: production.uitdatabank_theme,
+                        uitdatabank_type: production.uitdatabank_type,
+                    },
+                    translations,
+                )
+                .await
+            }
+            None => self.insert(production, translations).await,
+        }
+    }
+
     pub async fn update(
         &self,
         production: Production,

@@ -3,7 +3,7 @@ use axum::http::StatusCode;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
-use viernulvier_api::dto::facet::EntityFacetResponse;
+use viernulvier_archive::dto::facet::EntityFacetResponse;
 
 use crate::common::{into_struct::IntoStruct, router::TestRouter};
 
