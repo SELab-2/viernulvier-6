@@ -351,6 +351,7 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(import_handlers::update_mapping))
         .routes(routes!(import_handlers::enqueue_dry_run))
         .routes(routes!(import_handlers::enqueue_commit))
+        .routes(routes!(import_handlers::update_row))
         .layer(from_extractor_with_state::<EditorUser, AppState>(state))
 }
 

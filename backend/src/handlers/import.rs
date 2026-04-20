@@ -3,19 +3,26 @@ use axum::{
     extract::{Multipart, Path, Query, State},
     http::StatusCode,
 };
+use database::models::import_row::{ImportRowStatus, RawCell};
+use database::models::import_session::{ImportMapping, ImportSessionStatus};
+use database::repos::import::CreateSession;
 use serde::Deserialize;
+use serde_json::Value;
+use sqlx::types::Json as DbJson;
+use std::collections::BTreeMap;
+use tracing::warn;
 use utoipa::IntoParams;
 use uuid::Uuid;
-use database::models::import_session::ImportSessionStatus;
-use database::repos::import::CreateSession;
-use tracing::warn;
 
 use crate::{
     AppState,
-    dto::import::{ImportRowResponse, ImportSessionResponse, UpdateMappingRequest, UploadResponse},
+    dto::import::{
+        ImportRowResponse, ImportSessionResponse, UpdateMappingRequest, UpdateRowRequest,
+        UploadResponse,
+    },
     error::AppError,
     extractors::auth::EditorUser,
-    import::{csv_parser, storage},
+    import::{csv_parser, storage, types::ResolvedRow},
 };
 
 // ── Query param structs ───────────────────────────────────────────────────────
@@ -463,6 +470,181 @@ pub async fn enqueue_commit(
         .ok_or(AppError::NotFound)?;
 
     Ok((StatusCode::ACCEPTED, Json(updated.into())))
+}
+
+/// PATCH /import/rows/{id} — update a row's overrides / resolved_refs / skip flag and
+/// synchronously re-validate it.
+///
+/// Allowed when the session is in `uploaded`, `mapping`, or `dry_run_ready` status.
+/// Sessions in `dry_run_pending`, `committing`, `committed`, `failed`, or `cancelled`
+/// state are rejected with 400.
+#[utoipa::path(
+    patch,
+    path = "/import/rows/{id}",
+    params(("id" = Uuid, Path, description = "Row id")),
+    request_body = UpdateRowRequest,
+    responses(
+        (status = 200, body = ImportRowResponse),
+        (status = 400, description = "Adapter rejected the row or session not in editable state"),
+        (status = 404, description = "Row or session not found"),
+    ),
+    tag = "import",
+)]
+pub async fn update_row(
+    State(state): State<AppState>,
+    _: EditorUser,
+    Path(row_id): Path<Uuid>,
+    Json(body): Json<UpdateRowRequest>,
+) -> Result<Json<ImportRowResponse>, AppError> {
+    let repo = state.db.imports();
+
+    // 1. Load row → 404 if missing
+    let row = repo.get_row(row_id).await?.ok_or(AppError::NotFound)?;
+
+    // 2. Load session → 404 if missing (shouldn't happen — FK)
+    let session = repo
+        .get_session(row.session_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    // 3. Check session status is editable
+    match session.status {
+        ImportSessionStatus::Uploaded
+        | ImportSessionStatus::Mapping
+        | ImportSessionStatus::DryRunReady => {} // allowed
+        ImportSessionStatus::DryRunPending => {
+            return Err(AppError::PayloadError(
+                "row is being dry-run; try again later".to_string(),
+            ));
+        }
+        other => {
+            let label = status_label(other);
+            return Err(AppError::PayloadError(format!(
+                "cannot edit row for session in status {label}"
+            )));
+        }
+    }
+
+    // 4. Load adapter from registry → 500 if unknown
+    let adapter = state
+        .import_registry
+        .get(&session.entity_type)
+        .ok_or_else(|| {
+            AppError::Internal(format!(
+                "no adapter registered for entity_type '{}'",
+                session.entity_type
+            ))
+        })?;
+
+    // 5. Persist overrides if supplied
+    if let Some(ref overrides) = body.overrides {
+        repo.update_row_overrides(row_id, DbJson(overrides.clone()))
+            .await?;
+    }
+
+    // 6. Persist resolved_refs if supplied
+    if let Some(ref resolved_refs) = body.resolved_refs {
+        repo.update_row_resolved_refs(row_id, DbJson(resolved_refs.clone()))
+            .await?;
+    }
+
+    // 7. Handle skip flag
+    if body.skip == Some(true) {
+        repo.mark_row_skipped(row_id).await?;
+        let updated = repo.get_row(row_id).await?.ok_or(AppError::NotFound)?;
+        return Ok(Json(updated.into()));
+    }
+    // skip == Some(false) with WillSkip status falls through to re-validate (un-skip by re-validating)
+
+    // 8. Re-fetch row to get latest overrides / resolved_refs
+    let row = repo.get_row(row_id).await?.ok_or(AppError::NotFound)?;
+
+    // 9. Build ResolvedRow
+    let resolved = build_resolved_row(
+        &row.raw_data.0,
+        &session.mapping.0,
+        &row.overrides.0,
+        &row.resolved_refs.0,
+    );
+
+    // 10. Validate
+    let warnings = adapter.validate_row(&resolved);
+
+    // 11. Lookup existing entity
+    let existing_id = adapter
+        .lookup_existing(&resolved, &state.db)
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+
+    // 12. Determine status and build diff
+    let (status, diff) = match existing_id {
+        Some(id) => {
+            let diff = adapter
+                .build_diff(id, &resolved, &state.db)
+                .await
+                .map_err(|e| AppError::Internal(e.to_string()))?;
+            (ImportRowStatus::WillUpdate, Some(DbJson(diff)))
+        }
+        None => (ImportRowStatus::WillCreate, None),
+    };
+
+    // 13. Persist dry-run result
+    repo.save_dry_run_result(row_id, status, diff, DbJson(warnings))
+        .await?;
+
+    // 14. Re-fetch and return
+    let final_row = repo.get_row(row_id).await?.ok_or(AppError::NotFound)?;
+    Ok(Json(final_row.into()))
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/// Build a `ResolvedRow` from raw CSV data, the session column mapping, any
+/// user-supplied overrides, and pre-resolved FK references.
+///
+/// Algorithm:
+/// 1. For every `(header, Some(field_name))` in the mapping, take the raw value
+///    (an `Option<String>`) and convert it to a `Value` (`None` → `Null`,
+///    `Some(s)` → `String(s)`).
+/// 2. Apply overrides: any `(field, value)` pair replaces the mapped value.
+/// 3. Apply resolved refs: `Some(uuid)` → `String(uuid.to_string())`;
+///    `None` → `Null`.
+///
+/// `pub(crate)` so the Phase-7 background worker can reuse it.
+pub(crate) fn build_resolved_row(
+    raw: &BTreeMap<String, RawCell>,
+    mapping: &ImportMapping,
+    overrides: &BTreeMap<String, Value>,
+    resolved_refs: &BTreeMap<String, Option<Uuid>>,
+) -> ResolvedRow {
+    let mut row: ResolvedRow = BTreeMap::new();
+
+    // Step 1: mapped raw values
+    for (header, maybe_field) in &mapping.columns {
+        if let Some(field_name) = maybe_field {
+            let val = match raw.get(header) {
+                Some(Some(s)) => Value::String(s.clone()),
+                _ => Value::Null,
+            };
+            row.insert(field_name.clone(), val);
+        }
+    }
+
+    // Step 2: overrides
+    for (field_name, value) in overrides {
+        row.insert(field_name.clone(), value.clone());
+    }
+
+    // Step 3: resolved refs
+    for (field_name, maybe_uuid) in resolved_refs {
+        let val = match maybe_uuid {
+            Some(uuid) => Value::String(uuid.to_string()),
+            None => Value::Null,
+        };
+        row.insert(field_name.clone(), val);
+    }
+
+    row
 }
 
 /// Strip control characters (including newlines and null bytes) from a raw
