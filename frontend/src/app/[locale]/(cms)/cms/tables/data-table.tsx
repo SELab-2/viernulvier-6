@@ -319,9 +319,9 @@ export function DataTable<TData, TValue>({
                                         }
                                         className={cn(
                                             "border-0 transition-colors outline-none",
-                                            "hover:bg-foreground/[0.06]",
-                                            "data-[state=selected]:border-l-primary data-[state=selected]:!bg-foreground/[0.04] data-[state=selected]:border-l-2",
-                                            "data-[focused=true]:ring-primary data-[focused=true]:ring-2 data-[focused=true]:ring-inset",
+                                            "hover:bg-foreground/[0.08]",
+                                            "data-[state=selected]:!bg-foreground/[0.18]",
+                                            "data-[focused=true]:bg-foreground/[0.12] data-[focused=true]:ring-primary data-[focused=true]:ring-2 data-[focused=true]:ring-inset",
                                             rowIndex % 2 === 1 && !row.getIsSelected()
                                                 ? "bg-secondary"
                                                 : "",
