@@ -396,6 +396,34 @@ impl<'a> ImportRepo<'a> {
         Ok(())
     }
 
+    /// Retrieve the S3 key stored for a session, or `None` if no file has been
+    /// uploaded yet.
+    pub async fn get_file_key(&self, session_id: Uuid) -> Result<Option<String>, DatabaseError> {
+        let key = sqlx::query_scalar!(
+            r#"SELECT s3_key FROM import_session_files WHERE session_id = $1"#,
+            session_id,
+        )
+        .fetch_optional(self.db)
+        .await?;
+
+        Ok(key)
+    }
+
+    /// Delete all rows belonging to a session.
+    ///
+    /// Used at the start of a dry-run so that re-triggering the worker yields
+    /// a clean, idempotent result.
+    pub async fn delete_rows(&self, session_id: Uuid) -> Result<(), DatabaseError> {
+        sqlx::query!(
+            r#"DELETE FROM import_rows WHERE session_id = $1"#,
+            session_id,
+        )
+        .execute(self.db)
+        .await?;
+
+        Ok(())
+    }
+
     /// Mark a row as committed (`created` or `updated`) with a target entity id.
     ///
     /// The terminal status is derived from the row's current planning status:

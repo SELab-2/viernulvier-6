@@ -3,17 +3,21 @@
 //! The worker runs in a detached tokio task, claiming one session at a time
 //! and dispatching to the appropriate processor. A 1-second sleep between
 //! iterations keeps the poll rate low without needing a notification channel.
-//!
-//! `process_dry_run` and `process_commit` are stubs for Tasks 7.2 / 7.3.
+
+use std::collections::BTreeMap;
 
 use database::Database;
+use database::models::import_row::{ImportRowStatus, ImportWarning, RawCell};
 use database::models::import_session::ImportSessionStatus;
+use database::repos::import::NewImportRow;
+use sqlx::types::Json;
 use tokio::time::{Duration, sleep};
 use tracing::{error, info, warn};
 use uuid::Uuid;
 
 use crate::error::AppError;
-use crate::import::ImportRegistry;
+use crate::import::csv_parser;
+use crate::import::{ImportRegistry, storage};
 
 // ─── Context ─────────────────────────────────────────────────────────────────
 
@@ -78,17 +82,276 @@ pub fn spawn(ctx: WorkerContext) {
     });
 }
 
-// ─── Stub processors (replaced in Tasks 7.2 / 7.3) ──────────────────────────
+// ─── Processors ──────────────────────────────────────────────────────────────
 
-/// Placeholder dry-run processor.
+/// Outer dry-run processor: fetches CSV bytes from S3, then delegates to
+/// `process_dry_run_bytes`.
 ///
-/// Immediately advances the session to `dry_run_ready`.
-/// Task 7.2 will replace this with real row-level processing.
+/// On any fatal S3 / config error the session is set to `Failed` and
+/// `Ok(())` is returned so the worker loop does not retry.
 async fn process_dry_run(id: Uuid, ctx: &WorkerContext) -> Result<(), AppError> {
-    ctx.db
-        .imports()
+    // Retrieve the S3 key.
+    let file_key = if let Some(k) = ctx.db.imports().get_file_key(id).await? {
+        k
+    } else {
+        let msg = format!("session {id} has no file key — cannot run dry-run");
+        error!("{msg}");
+        ctx.db
+            .imports()
+            .update_status(id, ImportSessionStatus::Failed, Some(msg))
+            .await?;
+        return Ok(());
+    };
+
+    // Ensure S3 client and bucket are configured.
+    let (s3_client, s3_bucket) = if let (Some(c), Some(b)) = (&ctx.s3_client, &ctx.s3_bucket) {
+        (c, b.as_str())
+    } else {
+        let msg = "S3 client or bucket not configured — cannot fetch CSV".to_string();
+        error!("{msg}");
+        ctx.db
+            .imports()
+            .update_status(id, ImportSessionStatus::Failed, Some(msg))
+            .await?;
+        return Ok(());
+    };
+
+    let bytes = match storage::get_csv(s3_client, s3_bucket, &file_key).await {
+        Ok(b) => b,
+        Err(e) => {
+            let msg = format!("failed to fetch CSV from S3: {e}");
+            error!("{msg}");
+            ctx.db
+                .imports()
+                .update_status(id, ImportSessionStatus::Failed, Some(msg))
+                .await?;
+            return Ok(());
+        }
+    };
+
+    process_dry_run_bytes(id, &bytes, ctx).await
+}
+
+/// Inner dry-run processor: parses CSV bytes and persists per-row results.
+///
+/// `pub` so integration tests can call it without requiring a live S3 bucket.
+pub async fn process_dry_run_bytes(
+    id: Uuid,
+    csv_bytes: &[u8],
+    ctx: &WorkerContext,
+) -> Result<(), AppError> {
+    let db = &ctx.db;
+
+    // ── Step 1: load session ─────────────────────────────────────────────────
+
+    let session = if let Some(s) = db.imports().get_session(id).await? {
+        s
+    } else {
+        let msg = format!("session {id} not found");
+        error!("{msg}");
+        // Best-effort status update — session may already be gone.
+        let _ = db
+            .imports()
+            .update_status(id, ImportSessionStatus::Failed, Some(msg))
+            .await;
+        return Ok(());
+    };
+
+    // ── Step 2: look up adapter ──────────────────────────────────────────────
+
+    let adapter = if let Some(a) = ctx.registry.get(&session.entity_type) {
+        a
+    } else {
+        let msg = format!(
+            "no adapter registered for entity type '{}'",
+            session.entity_type
+        );
+        error!("{msg}");
+        db.imports()
+            .update_status(id, ImportSessionStatus::Failed, Some(msg))
+            .await?;
+        return Ok(());
+    };
+
+    // ── Step 3: parse CSV ────────────────────────────────────────────────────
+
+    let raw_rows = match csv_parser::parse_all(csv_bytes) {
+        Ok(rows) => rows,
+        Err(e) => {
+            let msg = format!("CSV parse error: {e}");
+            error!("{msg}");
+            db.imports()
+                .update_status(id, ImportSessionStatus::Failed, Some(msg))
+                .await?;
+            return Ok(());
+        }
+    };
+
+    // ── Step 4: delete existing rows (idempotency) ───────────────────────────
+
+    if let Err(e) = db.imports().delete_rows(id).await {
+        let msg = format!("failed to delete existing rows: {e}");
+        error!("{msg}");
+        db.imports()
+            .update_status(id, ImportSessionStatus::Failed, Some(msg))
+            .await?;
+        return Ok(());
+    }
+
+    // ── Step 5: bulk-insert fresh rows ───────────────────────────────────────
+
+    let new_rows: Vec<NewImportRow> = raw_rows
+        .iter()
+        .enumerate()
+        .map(|(idx, row)| {
+            // RawRow (BTreeMap<String, Option<String>>) and RawCell (Option<String>)
+            // are the same structural type — cast directly.
+            let raw_data: BTreeMap<String, RawCell> = row.clone();
+            NewImportRow {
+                row_number: (idx + 1) as i32,
+                raw_data: Json(raw_data),
+            }
+        })
+        .collect();
+
+    if let Err(e) = db.imports().insert_rows(id, &new_rows).await {
+        let msg = format!("failed to insert rows: {e}");
+        error!("{msg}");
+        db.imports()
+            .update_status(id, ImportSessionStatus::Failed, Some(msg))
+            .await?;
+        return Ok(());
+    }
+
+    // ── Step 6: re-fetch inserted rows to obtain their UUIDs ─────────────────
+
+    let inserted_rows = match db.imports().get_rows(id, i64::MAX, 0, None).await {
+        Ok(rows) => rows,
+        Err(e) => {
+            let msg = format!("failed to fetch inserted rows: {e}");
+            error!("{msg}");
+            db.imports()
+                .update_status(id, ImportSessionStatus::Failed, Some(msg))
+                .await?;
+            return Ok(());
+        }
+    };
+
+    let mapping = &session.mapping.0;
+
+    // ── Step 7: process each row ─────────────────────────────────────────────
+
+    for row in &inserted_rows {
+        let raw = &row.raw_data.0;
+
+        // (a) Resolve FK references.
+        let reference_resolution = match adapter.resolve_references(raw, db).await {
+            Ok(r) => r,
+            Err(e) => {
+                let warnings = vec![ImportWarning {
+                    field: None,
+                    code: "adapter_error".to_string(),
+                    message: e.to_string(),
+                }];
+                let _ = db
+                    .imports()
+                    .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
+                    .await;
+                continue;
+            }
+        };
+
+        // (b) Convert to BTreeMap<String, Option<Uuid>> — pick top suggestion per column.
+        let resolved_refs: BTreeMap<String, Option<Uuid>> = reference_resolution
+            .per_column
+            .iter()
+            .map(|(col, suggestions)| {
+                let id = suggestions.first().map(|s| s.id);
+                (col.clone(), id)
+            })
+            .collect();
+
+        // (c) Persist resolved refs.
+        if let Err(e) = db
+            .imports()
+            .update_row_resolved_refs(row.id, Json(resolved_refs.clone()))
+            .await
+        {
+            let warnings = vec![ImportWarning {
+                field: None,
+                code: "adapter_error".to_string(),
+                message: e.to_string(),
+            }];
+            let _ = db
+                .imports()
+                .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
+                .await;
+            continue;
+        }
+
+        // (d) Build resolved row from raw data + mapping + overrides + refs.
+        let overrides = &row.overrides.0;
+        let resolved_row =
+            crate::handlers::import::build_resolved_row(raw, mapping, overrides, &resolved_refs);
+
+        // (e) Validate.
+        let warnings = adapter.validate_row(&resolved_row);
+
+        // (f) Look up existing entity.
+        let existing_id = match adapter.lookup_existing(&resolved_row, db).await {
+            Ok(opt) => opt,
+            Err(e) => {
+                let err_warnings = vec![ImportWarning {
+                    field: None,
+                    code: "adapter_error".to_string(),
+                    message: e.to_string(),
+                }];
+                let _ = db
+                    .imports()
+                    .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(err_warnings))
+                    .await;
+                continue;
+            }
+        };
+
+        // (g) Determine status and compute diff if updating.
+        let (status, diff) = match existing_id {
+            Some(entity_id) => match adapter.build_diff(entity_id, &resolved_row, db).await {
+                Ok(d) => (ImportRowStatus::WillUpdate, Some(Json(d))),
+                Err(e) => {
+                    let err_warnings = vec![ImportWarning {
+                        field: None,
+                        code: "adapter_error".to_string(),
+                        message: e.to_string(),
+                    }];
+                    let _ = db
+                        .imports()
+                        .save_dry_run_result(
+                            row.id,
+                            ImportRowStatus::Error,
+                            None,
+                            Json(err_warnings),
+                        )
+                        .await;
+                    continue;
+                }
+            },
+            None => (ImportRowStatus::WillCreate, None),
+        };
+
+        // (h) Persist dry-run result.
+        let _ = db
+            .imports()
+            .save_dry_run_result(row.id, status, diff, Json(warnings))
+            .await;
+    }
+
+    // ── Step 8: mark session as dry_run_ready ────────────────────────────────
+
+    db.imports()
         .update_status(id, ImportSessionStatus::DryRunReady, None)
         .await?;
+
     Ok(())
 }
 
