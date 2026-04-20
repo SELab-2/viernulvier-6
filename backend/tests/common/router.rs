@@ -9,7 +9,7 @@ use dotenvy::dotenv;
 use serde::Serialize;
 use sqlx::PgPool;
 use tower::ServiceExt;
-use viernulvier_archive::{AppState, config::AppConfig, import::ImportRegistry, router};
+use viernulvier_archive::{AppState, config::AppConfig, import::default_registry, router};
 
 use crate::common::user::{create_test_user, login_user};
 
@@ -29,7 +29,7 @@ impl TestRouter {
             db: Database::new(db.clone()),
             config,
             s3_client: None,
-            import_registry: ImportRegistry::new(vec![]),
+            import_registry: default_registry(),
         };
 
         Self {

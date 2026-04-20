@@ -168,7 +168,7 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
         db,
         config,
         s3_client,
-        import_registry: ImportRegistry::new(vec![]),
+        import_registry: crate::import::default_registry(),
     };
 
     let allowed_origins: Vec<HeaderValue> = state
