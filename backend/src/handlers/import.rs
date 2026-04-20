@@ -68,10 +68,11 @@ const MAX_FILE_BYTES: usize = 10 * 1024 * 1024; // 10 MiB
     responses(
         (status = 200, description = "CSV uploaded and parsed", body = UploadResponse),
         (status = 400, description = "Invalid CSV, missing fields, file too large, or unsupported entity_type"),
-        (status = 401, description = "Not authenticated"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
         (status = 500, description = "Internal error (S3 not configured, database error)"),
     ),
     tag = "import",
+    security(("cookie_auth" = [])),
 )]
 pub async fn upload_session(
     State(state): State<AppState>,
@@ -216,8 +217,12 @@ pub async fn upload_session(
 #[utoipa::path(
     get,
     path = "/import/entity-types",
-    responses((status = 200, body = Vec<String>)),
+    responses(
+        (status = 200, body = Vec<String>),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
+    ),
     tag = "import",
+    security(("cookie_auth" = [])),
 )]
 pub async fn list_entity_types(
     State(state): State<AppState>,
@@ -241,8 +246,10 @@ pub async fn list_entity_types(
     responses(
         (status = 200, body = Vec<FieldSpec>),
         (status = 404, description = "Entity type not registered"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
     ),
     tag = "import",
+    security(("cookie_auth" = [])),
 )]
 pub async fn list_fields(
     State(state): State<AppState>,
@@ -260,8 +267,12 @@ pub async fn list_fields(
     get,
     path = "/import/sessions",
     params(PaginationQuery),
-    responses((status = 200, body = Vec<ImportSessionResponse>)),
+    responses(
+        (status = 200, body = Vec<ImportSessionResponse>),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
+    ),
     tag = "import",
+    security(("cookie_auth" = [])),
 )]
 pub async fn list_sessions(
     State(state): State<AppState>,
@@ -282,8 +293,10 @@ pub async fn list_sessions(
     responses(
         (status = 200, body = ImportSessionResponse),
         (status = 404, description = "Session not found"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
     ),
     tag = "import",
+    security(("cookie_auth" = [])),
 )]
 pub async fn get_session(
     State(state): State<AppState>,
@@ -304,8 +317,12 @@ pub async fn get_session(
         ("id" = Uuid, Path, description = "Session id"),
         RowsQuery,
     ),
-    responses((status = 200, body = Vec<ImportRowResponse>)),
+    responses(
+        (status = 200, body = Vec<ImportRowResponse>),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
+    ),
     tag = "import",
+    security(("cookie_auth" = [])),
 )]
 pub async fn get_rows(
     State(state): State<AppState>,
@@ -336,8 +353,10 @@ pub async fn get_rows(
         (status = 200, body = ImportSessionResponse),
         (status = 400, description = "Unknown field or non-editable session status"),
         (status = 404, description = "Session not found"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
     ),
     tag = "import",
+    security(("cookie_auth" = [])),
 )]
 pub async fn update_mapping(
     State(state): State<AppState>,
@@ -418,8 +437,10 @@ pub async fn update_mapping(
         (status = 202, body = ImportSessionResponse, description = "Dry-run queued"),
         (status = 400, description = "Session not in a state that allows dry-run"),
         (status = 404, description = "Session not found"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
     ),
     tag = "import",
+    security(("cookie_auth" = [])),
 )]
 pub async fn enqueue_dry_run(
     State(state): State<AppState>,
@@ -477,8 +498,10 @@ pub async fn enqueue_dry_run(
         (status = 202, body = ImportSessionResponse, description = "Commit queued"),
         (status = 400, description = "Session is not in dry_run_ready state"),
         (status = 404, description = "Session not found"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
     ),
     tag = "import",
+    security(("cookie_auth" = [])),
 )]
 pub async fn enqueue_commit(
     State(state): State<AppState>,
@@ -534,8 +557,10 @@ pub async fn enqueue_commit(
         (status = 200, body = ImportRowResponse),
         (status = 400, description = "Adapter rejected the row or session not in editable state"),
         (status = 404, description = "Row or session not found"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
     ),
     tag = "import",
+    security(("cookie_auth" = [])),
 )]
 pub async fn update_row(
     State(state): State<AppState>,
@@ -656,8 +681,10 @@ pub async fn update_row(
         (status = 200, body = ImportSessionResponse, description = "Rollback completed (possibly with per-row failures)"),
         (status = 400, description = "Session not in a rollback-eligible state"),
         (status = 404, description = "Session not found"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
     ),
     tag = "import",
+    security(("cookie_auth" = [])),
 )]
 pub async fn rollback_session(
     State(state): State<AppState>,
@@ -776,8 +803,10 @@ pub async fn rollback_session(
         (status = 200, body = ImportRowResponse),
         (status = 400, description = "Row is not in a revert-eligible state"),
         (status = 404, description = "Row not found"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
     ),
     tag = "import",
+    security(("cookie_auth" = [])),
 )]
 pub async fn revert_row(
     State(state): State<AppState>,
@@ -863,8 +892,10 @@ pub async fn revert_row(
         (status = 204, description = "Session cancelled"),
         (status = 400, description = "Session is already committed or being committed"),
         (status = 404, description = "Session not found"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
     ),
     tag = "import",
+    security(("cookie_auth" = [])),
 )]
 pub async fn cancel_session(
     State(state): State<AppState>,
