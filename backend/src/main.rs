@@ -1,7 +1,7 @@
 use std::error::Error;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{EnvFilter, fmt, prelude::*};
-use viernulvier_api::{config::AppConfig, start_app};
+use viernulvier_archive::{config::AppConfig, start_app};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
