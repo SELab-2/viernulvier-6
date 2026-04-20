@@ -64,7 +64,7 @@ pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<HallPay
     method(get),
     path = "/halls/slug/{slug}",
     tag = "Halls",
-    operation_id = "get_one_hall_by_slug",
+    operation_id = "get_hall_by_slug",
     description = "Get a hall by slug",
     params(
         ("slug" = String, Path, description = "Hall slug")
