@@ -4,6 +4,7 @@ pub mod registry;
 pub mod storage;
 pub mod trait_def;
 pub mod types;
+pub mod worker;
 
 pub use registry::ImportRegistry;
 pub use trait_def::ImportableEntity;

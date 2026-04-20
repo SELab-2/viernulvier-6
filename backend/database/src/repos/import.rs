@@ -443,6 +443,29 @@ impl<'a> ImportRepo<'a> {
 
         Ok(())
     }
+
+    /// Atomically claim the next pending/committing import session id.
+    ///
+    /// Uses `FOR UPDATE SKIP LOCKED` so concurrent workers won't both claim
+    /// the same row. Note: because we only poll once per second and the next
+    /// call (`update_status`) runs in its own implicit transaction, the lock is
+    /// released quickly. This is pragmatic rather than theoretically perfect,
+    /// but sufficient for a single-writer polling loop.
+    ///
+    /// Returns `None` if no job is currently available.
+    pub async fn claim_next_job(&self) -> Result<Option<Uuid>, DatabaseError> {
+        let id = sqlx::query_scalar!(
+            r#"SELECT id AS "id!: Uuid"
+               FROM import_sessions
+               WHERE status IN ('dry_run_pending', 'committing')
+               ORDER BY updated_at
+               LIMIT 1
+               FOR UPDATE SKIP LOCKED"#
+        )
+        .fetch_optional(self.db)
+        .await?;
+        Ok(id)
+    }
 }
 
 // ─── helpers ────────────────────────────────────────────────────────────────

@@ -27,11 +27,11 @@ use utoipa_swagger_ui::{Config, SwaggerUi};
 
 use crate::config::AppConfig;
 use crate::error::AppError;
-use crate::import::ImportRegistry;
 use crate::handlers::{
     admin, article, artist, auth, collection, event, hall, import as import_handlers, location,
     media, production, series, space, stats, tagging, taxonomy, version,
 };
+use crate::import::ImportRegistry;
 
 pub mod config;
 pub mod dto;
@@ -171,6 +171,14 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
         s3_client,
         import_registry: crate::import::default_registry(),
     };
+
+    crate::import::worker::spawn(crate::import::worker::WorkerContext {
+        db: state.db.clone(),
+        registry: state.import_registry.clone(),
+        s3_client: state.s3_client.clone(),
+        s3_bucket: state.config.s3.as_ref().map(|s| s.bucket.clone()),
+    });
+    info!("Import worker spawned");
 
     let allowed_origins: Vec<HeaderValue> = state
         .config
@@ -347,7 +355,10 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         // Import
         .routes(routes!(import_handlers::upload_session))
         .routes(routes!(import_handlers::list_sessions))
-        .routes(routes!(import_handlers::get_session, import_handlers::cancel_session))
+        .routes(routes!(
+            import_handlers::get_session,
+            import_handlers::cancel_session
+        ))
         .routes(routes!(import_handlers::get_rows))
         .routes(routes!(import_handlers::update_mapping))
         .routes(routes!(import_handlers::enqueue_dry_run))
