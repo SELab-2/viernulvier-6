@@ -16,7 +16,7 @@ use crate::{
             CollectionItemTranslation, CollectionItemTranslationData,
             CollectionItemWithTranslations,
         },
-        cursor::CursorData,
+        filtering::cursor::CursorData,
     },
 };
 
@@ -53,11 +53,11 @@ impl<'a> CollectionRepo<'a> {
                 query
                     .push("SELECT collection_id, MIN(")
                     .push_bind(&search_q)
-                    .push(" <<-> full_search_text) AS distance_score ")
+                    .push(" <<-> title) AS distance_score ")
                     .push("FROM collection_translations ")
                     .push("WHERE ")
                     .push_bind(&search_q)
-                    .push(" <% full_search_text ")
+                    .push(" <% title ")
                     .push("GROUP BY collection_id ");
 
                 // use the cursor if there is one
@@ -67,11 +67,11 @@ impl<'a> CollectionRepo<'a> {
                     query
                         .push("HAVING MIN(")
                         .push_bind(&search_q)
-                        .push(" <<-> full_search_text) > ")
+                        .push(" <<-> title) > ")
                         .push_bind(score)
                         .push(" OR (MIN(")
                         .push_bind(&search_q)
-                        .push(" <<-> full_search_text) = ")
+                        .push(" <<-> title) = ")
                         .push_bind(score)
                         .push(" AND collection_id < ")
                         .push_bind(cursor.id)
@@ -116,22 +116,14 @@ impl<'a> CollectionRepo<'a> {
             } else {
                 debug!("querying collections normally");
 
-                let query = sqlx::query_as::<_, Collection>(
-                    "SELECT * FROM collections ORDER BY id DESC LIMIT $1",
-                )
-                .bind(limit);
-
-                let mut collections: Vec<Collection> = query.fetch_all(self.db).await?;
-
+                let mut query = sqlx::QueryBuilder::new("SELECT * FROM collections ");
                 if let Some(cursor) = cursor {
-                    let mut filtered = Vec::new();
-                    for c in collections {
-                        if c.id < cursor.id {
-                            filtered.push(c);
-                        }
-                    }
-                    collections = filtered;
+                    query.push(" WHERE id < ").push_bind(cursor.id);
                 }
+                query.push(" ORDER BY id DESC LIMIT ").push_bind(limit);
+
+                let mut collections: Vec<Collection> =
+                    query.build_query_as().fetch_all(self.db).await?;
 
                 let next_cursor = if collections.len() == limit as usize {
                     collections.pop();

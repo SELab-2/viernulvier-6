@@ -87,32 +87,6 @@ async fn get_search_paginated(db: PgPool) {
 
     // page 3
     let page3: PaginatedResponse<CollectionPayload> = response.into_struct().await;
-
-    println!(
-        "page1: {:?}",
-        page1
-            .data
-            .iter()
-            .map(|c| c.slug.clone())
-            .collect::<Vec<_>>()
-    );
-    println!(
-        "page2: {:?}",
-        page2
-            .data
-            .iter()
-            .map(|c| c.slug.clone())
-            .collect::<Vec<_>>()
-    );
-    println!(
-        "page3: {:?}",
-        page3
-            .data
-            .iter()
-            .map(|c| c.slug.clone())
-            .collect::<Vec<_>>()
-    );
-    println!("page3 cursor: {:?}", page3.next_cursor);
     assert_eq!(page3.data.len(), 1, "page 3 should respect the limit of 1");
     assert!(
         page3.next_cursor.is_none(),
@@ -130,6 +104,51 @@ async fn get_search_paginated(db: PgPool) {
         original_length,
         "all paginated search results must be unique"
     );
+}
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn get_paginated_without_search(db: PgPool) {
+    let app = TestRouter::new(db);
+    let limit = 2;
+
+    let mut cursor = None;
+    let mut all_ids = Vec::new();
+
+    loop {
+        let url = if let Some(c) = &cursor {
+            format!("/collections?limit={}&cursor={}", limit, c)
+        } else {
+            format!("/collections?limit={}", limit)
+        };
+
+        let response = app.get(&url).await;
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let page: PaginatedResponse<CollectionPayload> = response.into_struct().await;
+
+        // check for duplicates within the page
+        let mut page_ids: Vec<_> = page.data.iter().map(|c| c.id).collect();
+        page_ids.sort();
+        page_ids.dedup();
+        assert_eq!(page.data.len(), page_ids.len(), "duplicates within page");
+
+        // check for duplicates across pages
+        for id in &page.data {
+            assert!(
+                !all_ids.contains(&id.id),
+                "duplicate id {} across pages",
+                id.id
+            );
+            all_ids.push(id.id);
+        }
+
+        if page.next_cursor.is_none() {
+            break;
+        }
+
+        cursor = page.next_cursor;
+    }
 }
 
 #[sqlx::test(fixtures("collections"))]

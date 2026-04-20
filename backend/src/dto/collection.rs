@@ -8,7 +8,7 @@ use database::{
             CollectionContentType, CollectionItemBulkUpdate, CollectionItemCreate,
             CollectionItemTranslationData, CollectionItemWithTranslations,
         },
-        cursor::CursorData,
+        filtering::cursor::CursorData,
     },
 };
 use serde::{Deserialize, Serialize};
