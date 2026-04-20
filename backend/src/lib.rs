@@ -29,10 +29,9 @@ use crate::config::AppConfig;
 use crate::error::AppError;
 use crate::import::ImportRegistry;
 use crate::handlers::{
-    admin, article, artist, auth, collection, event, hall, location, media, production, series,
-    space, stats, tagging, taxonomy, version,
+    admin, article, artist, auth, collection, event, hall, import as import_handlers, location,
+    media, production, series, space, stats, tagging, taxonomy, version,
 };
-use crate::handlers::import as import_handlers;
 
 pub mod config;
 pub mod dto;

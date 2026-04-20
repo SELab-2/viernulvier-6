@@ -90,7 +90,7 @@ pub struct UploadResponse {
     pub headers: Vec<String>,
     #[schema(value_type = Vec<Object>)]
     pub preview: Vec<BTreeMap<String, Option<String>>>,
-    pub row_count: i32,
+    pub row_count: i64,
 }
 
 // ── Request DTOs ───────────────────────────────────────────────────────────────

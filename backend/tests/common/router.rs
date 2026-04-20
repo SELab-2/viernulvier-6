@@ -97,6 +97,32 @@ impl TestRouter {
         self.request(Method::DELETE, path, None::<()>).await
     }
 
+    /// Send a multipart POST to an endpoint. Must have a leading "/".
+    /// Returns the response.
+    pub async fn post_multipart(
+        &self,
+        path: &str,
+        content_type: &str,
+        body: Vec<u8>,
+    ) -> Response<Body> {
+        let path = path.trim_start_matches('/');
+        let uri = format!("/api/{path}");
+        let mut request_builder = Request::builder()
+            .method(Method::POST)
+            .uri(uri)
+            .header(header::CONTENT_TYPE, content_type);
+
+        if let Some(cookie) = &self.cookie {
+            request_builder = request_builder.header(header::COOKIE, cookie);
+        }
+
+        self.router
+            .clone()
+            .oneshot(request_builder.body(Body::from(body)).unwrap())
+            .await
+            .unwrap()
+    }
+
     /// send a request to an endpoint on this router
     ///
     /// must have a leading "/"

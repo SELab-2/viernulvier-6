@@ -85,12 +85,16 @@ pub async fn upload_session(
         }
     }
 
-    let entity_type = entity_type_opt
-        .filter(|s| !s.is_empty())
-        .ok_or_else(|| AppError::PayloadError("missing 'file' or 'entity_type' field".to_string()))?;
+    let entity_type = match entity_type_opt {
+        None => return Err(AppError::PayloadError("missing 'entity_type' field".to_string())),
+        Some(s) if s.is_empty() => {
+            return Err(AppError::PayloadError("'entity_type' field is empty".to_string()));
+        }
+        Some(s) => s,
+    };
 
     let bytes = file_bytes_opt
-        .ok_or_else(|| AppError::PayloadError("missing 'file' or 'entity_type' field".to_string()))?;
+        .ok_or_else(|| AppError::PayloadError("missing 'file' field".to_string()))?;
 
     // Step 2: validate entity_type
     if state.import_registry.get(&entity_type).is_none() {
@@ -116,7 +120,7 @@ pub async fn upload_session(
     let bucket = s3_cfg.bucket.as_str();
 
     // Step 5: determine filename
-    let filename = filename_opt.unwrap_or_else(|| "upload.csv".to_string());
+    let filename = sanitise_filename(&filename_opt.unwrap_or_else(|| "upload.csv".to_string()));
 
     // Step 6: create DB session row (status = uploaded)
     let session_id = state
@@ -163,6 +167,22 @@ pub async fn upload_session(
         session_id,
         headers: preview.headers,
         preview: preview.preview_rows,
-        row_count: preview.total_rows as i32,
+        row_count: preview.total_rows as i64,
     }))
+}
+
+/// Strip control characters (including newlines and null bytes) from a raw
+/// filename supplied by the user, then truncate to 255 code-points.
+/// Falls back to `"upload.csv"` if the result would be empty.
+fn sanitise_filename(raw: &str) -> String {
+    let cleaned: String = raw
+        .chars()
+        .filter(|c| !c.is_control())
+        .take(255)
+        .collect();
+    if cleaned.is_empty() {
+        "upload.csv".to_string()
+    } else {
+        cleaned
+    }
 }
