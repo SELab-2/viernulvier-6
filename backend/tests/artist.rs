@@ -4,7 +4,7 @@ use std::str::FromStr;
 use axum::http::StatusCode;
 use sqlx::PgPool;
 use uuid::Uuid;
-use viernulvier_api::dto::{artist::ArtistPayload, production::ProductionPayload};
+use viernulvier_archive::dto::{artist::ArtistPayload, production::ProductionPayload};
 
 use crate::common::{into_struct::IntoStruct, router::TestRouter};
 
