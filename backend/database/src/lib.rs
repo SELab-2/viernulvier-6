@@ -175,4 +175,12 @@ impl Database {
     pub fn imports<'a>(&'a self) -> ImportRepo<'a> {
         ImportRepo::new(&self.db)
     }
+
+    /// Begin a database transaction.  The caller is responsible for calling
+    /// `tx.commit()` or `tx.rollback()`.
+    pub async fn begin_transaction(
+        &self,
+    ) -> Result<sqlx::Transaction<'_, sqlx::Postgres>, sqlx::Error> {
+        self.db.begin().await
+    }
 }

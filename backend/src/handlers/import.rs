@@ -597,6 +597,261 @@ pub async fn update_row(
     Ok(Json(final_row.into()))
 }
 
+/// POST /import/sessions/{id}/rollback — iterate committed rows in reverse and revert each one.
+///
+/// Allowed from `committed` or `failed` status.  Partial failures are tolerated: the row keeps
+/// its current status and a `revert_failed` warning is appended.  The session ends in `cancelled`.
+#[utoipa::path(
+    post,
+    path = "/import/sessions/{id}/rollback",
+    params(("id" = Uuid, Path, description = "Session id")),
+    responses(
+        (status = 200, body = ImportSessionResponse, description = "Rollback completed (possibly with per-row failures)"),
+        (status = 400, description = "Session not in a rollback-eligible state"),
+        (status = 404, description = "Session not found"),
+    ),
+    tag = "import",
+)]
+pub async fn rollback_session(
+    State(state): State<AppState>,
+    _: EditorUser,
+    Path(id): Path<Uuid>,
+) -> Result<Json<ImportSessionResponse>, AppError> {
+    // 1. Load session → 404 if missing
+    let session = state
+        .db
+        .imports()
+        .get_session(id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    // 2. Only committed or failed sessions can be rolled back
+    let eligible = matches!(
+        session.status,
+        ImportSessionStatus::Committed | ImportSessionStatus::Failed
+    );
+    if !eligible {
+        let label = status_label(session.status);
+        return Err(AppError::PayloadError(format!(
+            "cannot rollback session in status {label}"
+        )));
+    }
+
+    // 3. Load adapter from registry → 500 if missing
+    let adapter = state
+        .import_registry
+        .get(&session.entity_type)
+        .ok_or_else(|| {
+            AppError::Internal(format!(
+                "no adapter registered for entity_type '{}'",
+                session.entity_type
+            ))
+        })?;
+
+    // 4. Fetch all rows and filter to those that were committed (created/updated), reversed
+    let all_rows = state
+        .db
+        .imports()
+        .get_rows(id, 10_000, 0, None)
+        .await?;
+
+    let mut committed_rows: Vec<_> = all_rows
+        .into_iter()
+        .filter(|r| {
+            matches!(r.status, database::models::import_row::ImportRowStatus::Created | database::models::import_row::ImportRowStatus::Updated)
+        })
+        .collect();
+
+    // reverse order so last-applied rows are reverted first
+    committed_rows.reverse();
+
+    // 5. Revert each row
+    let repo = state.db.imports();
+    for row in committed_rows {
+        if let Some(entity_id) = row.target_entity_id {
+            let mut tx = state
+                .db
+                .begin_transaction()
+                .await
+                .map_err(|e| AppError::Internal(e.to_string()))?;
+            match adapter.revert_row(entity_id, &state.db, &mut tx).await {
+                Ok(()) => {
+                    tx.commit().await.map_err(|e| AppError::Internal(e.to_string()))?;
+                    repo.record_reverted_row(row.id).await?;
+                }
+                Err(e) => {
+                    let _ = tx.rollback().await;
+                    // Append warning to the row; keep its status
+                    let mut warnings = row.warnings.0.clone();
+                    warnings.push(database::models::import_row::ImportWarning {
+                        field: None,
+                        code: "revert_failed".to_string(),
+                        message: e.to_string(),
+                    });
+                    repo.save_dry_run_result(
+                        row.id,
+                        row.status,
+                        row.diff.clone(),
+                        DbJson(warnings),
+                    )
+                    .await?;
+                }
+            }
+        }
+    }
+
+    // 6. Mark session as cancelled
+    repo.update_status(id, ImportSessionStatus::Cancelled, None).await?;
+
+    // 7. Re-fetch and return
+    let updated = state
+        .db
+        .imports()
+        .get_session(id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    Ok(Json(updated.into()))
+}
+
+/// POST /import/rows/{id}/revert — revert a single committed row.
+///
+/// The row must be in `created` or `updated` status and must have a `target_entity_id`.
+/// Failure surfaces as 500 (unlike session rollback which tolerates partial failures).
+#[utoipa::path(
+    post,
+    path = "/import/rows/{id}/revert",
+    params(("id" = Uuid, Path, description = "Row id")),
+    responses(
+        (status = 200, body = ImportRowResponse),
+        (status = 400, description = "Row is not in a revert-eligible state"),
+        (status = 404, description = "Row not found"),
+    ),
+    tag = "import",
+)]
+pub async fn revert_row(
+    State(state): State<AppState>,
+    _: EditorUser,
+    Path(row_id): Path<Uuid>,
+) -> Result<Json<ImportRowResponse>, AppError> {
+    let repo = state.db.imports();
+
+    // 1. Load row → 404
+    let row = repo.get_row(row_id).await?.ok_or(AppError::NotFound)?;
+
+    // 2. Load session (for entity_type) → 404
+    let session = repo
+        .get_session(row.session_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    // 3. Require row in Created/Updated status with a target entity
+    let revertible = matches!(
+        row.status,
+        database::models::import_row::ImportRowStatus::Created
+            | database::models::import_row::ImportRowStatus::Updated
+    );
+    let entity_id = match (revertible, row.target_entity_id) {
+        (true, Some(eid)) => eid,
+        (false, _) => {
+            return Err(AppError::PayloadError(format!(
+                "row is not in a revert-eligible state (status: {:?})",
+                row.status
+            )));
+        }
+        (true, None) => {
+            return Err(AppError::PayloadError(
+                "row has no target_entity_id; cannot revert".to_string(),
+            ));
+        }
+    };
+
+    // 4. Load adapter → 500 if missing
+    let adapter = state
+        .import_registry
+        .get(&session.entity_type)
+        .ok_or_else(|| {
+            AppError::Internal(format!(
+                "no adapter registered for entity_type '{}'",
+                session.entity_type
+            ))
+        })?;
+
+    // 5. Open transaction and revert
+    let mut tx = state
+        .db
+        .begin_transaction()
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+    match adapter.revert_row(entity_id, &state.db, &mut tx).await {
+        Ok(()) => {
+            tx.commit().await.map_err(|e| AppError::Internal(e.to_string()))?;
+            repo.record_reverted_row(row_id).await?;
+        }
+        Err(e) => {
+            let _ = tx.rollback().await;
+            return Err(AppError::Internal(format!("revert failed: {e}")));
+        }
+    }
+
+    // 6. Re-fetch and return
+    let final_row = repo.get_row(row_id).await?.ok_or(AppError::NotFound)?;
+    Ok(Json(final_row.into()))
+}
+
+/// DELETE /import/sessions/{id} — cancel a session that has not been committed.
+///
+/// Refused if status ∈ {Committing, Committed, Cancelled}.  Cancelled sessions remain in the DB
+/// for audit purposes.
+#[utoipa::path(
+    delete,
+    path = "/import/sessions/{id}",
+    params(("id" = Uuid, Path, description = "Session id")),
+    responses(
+        (status = 204, description = "Session cancelled"),
+        (status = 400, description = "Session is already committed or being committed"),
+        (status = 404, description = "Session not found"),
+    ),
+    tag = "import",
+)]
+pub async fn cancel_session(
+    State(state): State<AppState>,
+    _: EditorUser,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, AppError> {
+    // 1. Load session → 404
+    let session = state
+        .db
+        .imports()
+        .get_session(id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    // 2. Refuse if already committed, committing, or cancelled
+    let blocked = matches!(
+        session.status,
+        ImportSessionStatus::Committing
+            | ImportSessionStatus::Committed
+            | ImportSessionStatus::Cancelled
+    );
+    if blocked {
+        let label = status_label(session.status);
+        return Err(AppError::PayloadError(format!(
+            "cannot cancel session in status {label}"
+        )));
+    }
+
+    // 3. Transition to cancelled
+    state
+        .db
+        .imports()
+        .update_status(id, ImportSessionStatus::Cancelled, None)
+        .await?;
+
+    // 4. 204 No Content
+    Ok(StatusCode::NO_CONTENT)
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /// Build a `ResolvedRow` from raw CSV data, the session column mapping, any

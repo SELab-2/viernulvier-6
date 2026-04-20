@@ -346,12 +346,14 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         // Import
         .routes(routes!(import_handlers::upload_session))
         .routes(routes!(import_handlers::list_sessions))
-        .routes(routes!(import_handlers::get_session))
+        .routes(routes!(import_handlers::get_session, import_handlers::cancel_session))
         .routes(routes!(import_handlers::get_rows))
         .routes(routes!(import_handlers::update_mapping))
         .routes(routes!(import_handlers::enqueue_dry_run))
         .routes(routes!(import_handlers::enqueue_commit))
         .routes(routes!(import_handlers::update_row))
+        .routes(routes!(import_handlers::rollback_session))
+        .routes(routes!(import_handlers::revert_row))
         .layer(from_extractor_with_state::<EditorUser, AppState>(state))
 }
 
