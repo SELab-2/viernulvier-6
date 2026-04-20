@@ -1,3 +1,4 @@
+pub mod adapters;
 pub mod registry;
 pub mod trait_def;
 pub mod types;
