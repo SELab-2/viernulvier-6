@@ -554,7 +554,9 @@
                 "rollbackCancel": "Cancel",
                 "reverting": "Reverting...",
                 "revertSuccess": "Row reverted",
-                "rollbackSuccess": "Import rolled back"
+                "rollbackSuccess": "Import rolled back",
+                "entityColumn": "Entity",
+                "warningsColumn": "Warnings"
             }
         },
         "Collections": {

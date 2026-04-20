@@ -554,7 +554,9 @@
                 "rollbackCancel": "Annuleren",
                 "reverting": "Bezig...",
                 "revertSuccess": "Rij teruggedraaid",
-                "rollbackSuccess": "Import teruggedraaid"
+                "rollbackSuccess": "Import teruggedraaid",
+                "entityColumn": "Entiteit",
+                "warningsColumn": "Waarschuwingen"
             }
         },
         "Collections": {

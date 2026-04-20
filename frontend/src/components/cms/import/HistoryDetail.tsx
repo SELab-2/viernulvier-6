@@ -294,8 +294,8 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
                         <TableRow>
                             <TableHead className="w-12">#</TableHead>
                             <TableHead>{t("status")}</TableHead>
-                            <TableHead>Entity</TableHead>
-                            <TableHead className="w-24">Warnings</TableHead>
+                            <TableHead>{t("entityColumn")}</TableHead>
+                            <TableHead className="w-24">{t("warningsColumn")}</TableHead>
                             <TableHead className="w-32">{t("revert")}</TableHead>
                         </TableRow>
                     </TableHeader>
