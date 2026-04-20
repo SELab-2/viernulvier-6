@@ -200,6 +200,31 @@ impl<'a> ImportRepo<'a> {
         Ok(())
     }
 
+    /// Return a single import row by id, or `None` if it doesn't exist.
+    pub async fn get_row(&self, row_id: Uuid) -> Result<Option<ImportRow>, DatabaseError> {
+        let row = sqlx::query_as!(
+            ImportRow,
+            r#"SELECT
+               id,
+               session_id,
+               row_number,
+               raw_data       AS "raw_data: Json<BTreeMap<String, RawCell>>",
+               overrides      AS "overrides: Json<BTreeMap<String, serde_json::Value>>",
+               resolved_refs  AS "resolved_refs: Json<BTreeMap<String, Option<Uuid>>>",
+               status         AS "status: ImportRowStatus",
+               target_entity_id,
+               diff           AS "diff: Json<BTreeMap<String, DiffEntry>>",
+               warnings       AS "warnings: Json<Vec<ImportWarning>>"
+             FROM import_rows
+             WHERE id = $1"#,
+            row_id,
+        )
+        .fetch_optional(self.db)
+        .await?;
+
+        Ok(row)
+    }
+
     /// Return rows for a session ordered by `row_number`, with optional status filter.
     pub async fn get_rows(
         &self,
