@@ -19,6 +19,10 @@ use crate::error::AppError;
 use crate::import::csv_parser;
 use crate::import::{ImportRegistry, storage};
 
+/// Effectively-unbounded row limit for the re-fetch after bulk insert.
+/// `get_rows` requires a `limit`; we want all rows.
+const FETCH_ALL_ROWS: i64 = i64::MAX;
+
 // ─── Context ─────────────────────────────────────────────────────────────────
 
 /// All dependencies the worker needs to process a job.
@@ -225,7 +229,7 @@ pub async fn process_dry_run_bytes(
 
     // ── Step 6: re-fetch inserted rows to obtain their UUIDs ─────────────────
 
-    let inserted_rows = match db.imports().get_rows(id, i64::MAX, 0, None).await {
+    let inserted_rows = match db.imports().get_rows(id, FETCH_ALL_ROWS, 0, None).await {
         Ok(rows) => rows,
         Err(e) => {
             let msg = format!("failed to fetch inserted rows: {e}");
@@ -271,10 +275,15 @@ pub async fn process_dry_run_bytes(
             })
             .collect();
 
-        // (c) Persist resolved refs.
+        // (d) Build resolved row BEFORE persisting refs — build_resolved_row borrows.
+        let overrides = &row.overrides.0;
+        let resolved_row =
+            crate::handlers::import::build_resolved_row(raw, mapping, overrides, &resolved_refs);
+
+        // (c) Persist resolved refs (consumes resolved_refs).
         if let Err(e) = db
             .imports()
-            .update_row_resolved_refs(row.id, Json(resolved_refs.clone()))
+            .update_row_resolved_refs(row.id, Json(resolved_refs))
             .await
         {
             let warnings = vec![ImportWarning {
@@ -288,11 +297,6 @@ pub async fn process_dry_run_bytes(
                 .await;
             continue;
         }
-
-        // (d) Build resolved row from raw data + mapping + overrides + refs.
-        let overrides = &row.overrides.0;
-        let resolved_row =
-            crate::handlers::import::build_resolved_row(raw, mapping, overrides, &resolved_refs);
 
         // (e) Validate.
         let warnings = adapter.validate_row(&resolved_row);
@@ -340,10 +344,13 @@ pub async fn process_dry_run_bytes(
         };
 
         // (h) Persist dry-run result.
-        let _ = db
+        if let Err(e) = db
             .imports()
             .save_dry_run_result(row.id, status, diff, Json(warnings))
-            .await;
+            .await
+        {
+            warn!("failed to persist dry-run result for row {}: {e}", row.id);
+        }
     }
 
     // ── Step 8: mark session as dry_run_ready ────────────────────────────────

@@ -27,7 +27,7 @@ use database::models::user::UserRole;
 // `Some(session_id)` — i.e. the worker successfully claimed and dispatched the
 // job — and that the session no longer sits at `dry_run_pending` afterwards.
 
-#[sqlx::test]
+#[sqlx::test(migrations = "./migrations")]
 async fn worker_claims_dry_run_pending_session(pool: PgPool) {
     let db = Database::new(pool);
 
@@ -79,7 +79,7 @@ async fn worker_claims_dry_run_pending_session(pool: PgPool) {
 
 // ─── Test 2: no-op when queue is empty ────────────────────────────────────────
 
-#[sqlx::test]
+#[sqlx::test(migrations = "./migrations")]
 async fn worker_returns_none_when_queue_empty(pool: PgPool) {
     let db = Database::new(pool);
 
