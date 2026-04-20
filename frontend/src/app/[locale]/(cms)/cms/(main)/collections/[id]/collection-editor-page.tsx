@@ -527,31 +527,6 @@ export function CollectionEditorPage({ id }: { id: string }) {
         [localItems, eventMap]
     );
 
-    const updateComment = (itemId: string, languageCode: "nl" | "en", value: string) => {
-        setItems(
-            normalizeItems(
-                localItems.map((item) => {
-                    if (item.id !== itemId) return item;
-                    return {
-                        ...item,
-                        translations: withAllLanguages(item.translations, (lang) => ({
-                            languageCode: lang,
-                            comment: null,
-                        })).map((translation) =>
-                            translation.languageCode === languageCode
-                                ? { ...translation, comment: value || null }
-                                : translation
-                        ),
-                    };
-                })
-            )
-        );
-    };
-
-    const removeItem = (itemId: string) => {
-        setItems(normalizeItems(localItems.filter((item) => item.id !== itemId)));
-    };
-
     const renderItemProps = useCallback(
         (item: LocalCollectionItem): ItemRowProps => {
             const translationNl = getTranslation(item.translations, "nl");
