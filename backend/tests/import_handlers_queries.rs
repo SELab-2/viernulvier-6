@@ -150,3 +150,42 @@ async fn get_rows_filters_by_status(pool: PgPool) {
     assert_eq!(arr.len(), 1);
     assert_eq!(arr[0]["status"], "pending");
 }
+
+/// GET /import/entity-types returns a sorted list of registered adapters.
+#[sqlx::test]
+async fn list_entity_types_returns_registered_adapters(pool: PgPool) {
+    let r = TestRouter::as_editor(pool).await;
+    let resp = r.get("/import/entity-types").await;
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let json = body_json(resp).await;
+    let arr = json.as_array().expect("expected JSON array");
+    let names: Vec<&str> = arr.iter().map(|v| v.as_str().unwrap()).collect();
+    assert!(names.contains(&"production"), "missing production");
+    assert!(names.contains(&"event"), "missing event");
+}
+
+/// GET /import/fields/production returns the adapter field spec.
+#[sqlx::test]
+async fn list_fields_returns_production_spec(pool: PgPool) {
+    let r = TestRouter::as_editor(pool).await;
+    let resp = r.get("/import/fields/production").await;
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let json = body_json(resp).await;
+    let arr = json.as_array().expect("expected JSON array");
+    let names: Vec<&str> = arr
+        .iter()
+        .map(|f| f["name"].as_str().unwrap())
+        .collect();
+    assert!(names.contains(&"title_nl"), "missing title_nl");
+    assert!(names.contains(&"source_id"), "missing source_id");
+}
+
+/// GET /import/fields/<unknown> returns 404.
+#[sqlx::test]
+async fn list_fields_returns_404_for_unknown_entity_type(pool: PgPool) {
+    let r = TestRouter::as_editor(pool).await;
+    let resp = r.get("/import/fields/not-a-real-entity").await;
+    assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+}

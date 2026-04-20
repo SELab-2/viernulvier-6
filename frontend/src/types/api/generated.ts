@@ -341,6 +341,235 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/import/entity-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /import/entity-types — list supported entity types for CSV import. */
+        get: operations["list_entity_types"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/import/fields/{entity_type}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /import/fields/{entity_type} — list the target field spec for an entity type. */
+        get: operations["list_fields"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/import/rows/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * PATCH /import/rows/{id} — update a row's overrides / resolved_refs / skip flag and
+         *     synchronously re-validate it.
+         * @description Allowed when the session is in `uploaded`, `mapping`, or `dry_run_ready` status.
+         *     Sessions in `dry_run_pending`, `committing`, `committed`, `failed`, or `cancelled`
+         *     state are rejected with 400.
+         */
+        patch: operations["update_row"];
+        trace?: never;
+    };
+    "/import/rows/{id}/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * POST /import/rows/{id}/revert — revert a single committed row.
+         * @description The row must be in `created` or `updated` status and must have a `target_entity_id`.
+         *     Failure surfaces as 500 (unlike session rollback which tolerates partial failures).
+         */
+        post: operations["revert_row"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/import/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /import/sessions — list import sessions, newest first, paginated. */
+        get: operations["list_sessions"];
+        put?: never;
+        /**
+         * POST /import/sessions — upload a CSV and create an import session.
+         * @description Accepts a multipart form with two fields:
+         *     - `entity_type`: the target entity (e.g. "production")
+         *     - `file`: the CSV file
+         *
+         *     Parses a preview, uploads the raw CSV to S3, creates an `import_sessions`
+         *     row, and transitions its status to `mapping`.
+         */
+        post: operations["upload_session"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/import/sessions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /import/sessions/{id} — fetch a single import session by id. */
+        get: operations["get_session"];
+        put?: never;
+        post?: never;
+        /**
+         * DELETE /import/sessions/{id} — cancel a session that has not been committed.
+         * @description Refused if status ∈ {Committing, Committed, Cancelled}.  Cancelled sessions remain in the DB
+         *     for audit purposes.
+         */
+        delete: operations["cancel_session"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/import/sessions/{id}/commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * POST /import/sessions/{id}/commit — enqueue a commit for the session.
+         * @description Allowed only from `dry_run_ready` status.
+         *     Sets status to `committing` and returns 202 Accepted.
+         *     The background worker (Phase 7) will pick the session up and write to the DB.
+         */
+        post: operations["enqueue_commit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/import/sessions/{id}/dry-run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * POST /import/sessions/{id}/dry-run — enqueue a dry-run for the session.
+         * @description Allowed from `mapping` or `dry_run_ready` status only.
+         *     Sets status to `dry_run_pending` and returns 202 Accepted.
+         *     The background worker (Phase 7) will pick the session up and execute the dry-run.
+         */
+        post: operations["enqueue_dry_run"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/import/sessions/{id}/mapping": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * PATCH /import/sessions/{id}/mapping — persist a column mapping and advance status to `mapping`.
+         * @description Validates that every non-None target field name exists in the adapter's field list.
+         *     Rejects sessions in non-editable statuses (dry_run_pending, committing, committed, failed, cancelled).
+         */
+        patch: operations["update_mapping"];
+        trace?: never;
+    };
+    "/import/sessions/{id}/rollback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * POST /import/sessions/{id}/rollback — iterate committed rows in reverse and revert each one.
+         * @description Allowed from `committed` or `failed` status.  Partial failures are tolerated: the row keeps
+         *     its current status and a `revert_failed` warning is appended.  The session ends in `cancelled`.
+         */
+        post: operations["rollback_session"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/import/sessions/{id}/rows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /import/sessions/{id}/rows — list rows for a session, paginated, with optional status filter. */
+        get: operations["get_rows"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/locations": {
         parameters: {
             query?: never;
@@ -1198,6 +1427,40 @@ export interface components {
             label: string;
             language_code: string;
         };
+        FieldSpec: {
+            field_type: components["schemas"]["FieldType"];
+            label: string;
+            name: string;
+            required: boolean;
+            unique_lookup: boolean;
+        };
+        FieldType: {
+            /** @enum {string} */
+            kind: "string";
+        } | {
+            /** @enum {string} */
+            kind: "text";
+        } | {
+            /** @enum {string} */
+            kind: "integer";
+        } | {
+            /** @enum {string} */
+            kind: "decimal";
+        } | {
+            /** @enum {string} */
+            kind: "boolean";
+        } | {
+            /** @enum {string} */
+            kind: "date";
+        } | {
+            /** @enum {string} */
+            kind: "date_time";
+        } | {
+            /** @enum {string} */
+            kind: "foreign_key";
+            match_field: string;
+            target: string;
+        };
         HallPayload: {
             box_office_id?: string | null;
             /** Format: uuid */
@@ -1226,6 +1489,54 @@ export interface components {
             space_id?: string | null;
             vendor_id?: string | null;
         };
+        ImportMapping: {
+            /** @description CSV header -> target field name (None = unmapped). */
+            columns?: {
+                [key: string]: string | null;
+            };
+        };
+        /** @description Response representation of an import row. */
+        ImportRowResponse: {
+            diff?: Record<string, never> | null;
+            /** Format: uuid */
+            id: string;
+            overrides: Record<string, never>;
+            raw_data: Record<string, never>;
+            resolved_refs: Record<string, never>;
+            /** Format: int32 */
+            row_number: number;
+            /** Format: uuid */
+            session_id: string;
+            status: components["schemas"]["ImportRowStatus"];
+            /** Format: uuid */
+            target_entity_id?: string | null;
+            warnings: Record<string, never>[];
+        };
+        /** @enum {string} */
+        ImportRowStatus: "pending" | "will_create" | "will_update" | "will_skip" | "error" | "created" | "updated" | "skipped" | "reverted";
+        /** @description Response representation of an import session. */
+        ImportSessionResponse: {
+            /** Format: date-time */
+            committed_at?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: uuid */
+            created_by: string;
+            entity_type: string;
+            error?: string | null;
+            filename: string;
+            /** Format: uuid */
+            id: string;
+            mapping: components["schemas"]["ImportMapping"];
+            original_headers: string[];
+            /** Format: int32 */
+            row_count: number;
+            status: components["schemas"]["ImportSessionStatus"];
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /** @enum {string} */
+        ImportSessionStatus: "uploaded" | "mapping" | "dry_run_pending" | "dry_run_ready" | "committing" | "committed" | "failed" | "cancelled";
         LinkMediaRequest: {
             is_cover_image?: boolean | null;
             /** Format: uuid */
@@ -1636,6 +1947,27 @@ export interface components {
             description?: string | null;
             label: string;
             language_code: string;
+        };
+        /** @description Request body for PATCH /import/sessions/:id/mapping. */
+        UpdateMappingRequest: {
+            mapping: components["schemas"]["ImportMapping"];
+        };
+        /** @description Request body for PATCH /import/rows/:id. */
+        UpdateRowRequest: {
+            overrides?: Record<string, never> | null;
+            resolved_refs?: {
+                [key: string]: string | null;
+            } | null;
+            skip?: boolean | null;
+        };
+        /** @description Response returned after a CSV file is uploaded (POST /import/sessions). */
+        UploadResponse: {
+            headers: string[];
+            preview: Record<string, never>[];
+            /** Format: int64 */
+            row_count: number;
+            /** Format: uuid */
+            session_id: string;
         };
         UploadUrlRequest: {
             /**
@@ -2749,6 +3081,438 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    list_entity_types: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string[];
+                };
+            };
+        };
+    };
+    list_fields: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Entity type (e.g. "production", "event") */
+                entity_type: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldSpec"][];
+                };
+            };
+            /** @description Entity type not registered */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_row: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Row id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRowRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportRowResponse"];
+                };
+            };
+            /** @description Adapter rejected the row or session not in editable state */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Row or session not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    revert_row: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Row id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportRowResponse"];
+                };
+            };
+            /** @description Row is not in a revert-eligible state */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Row not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_sessions: {
+        parameters: {
+            query?: {
+                page?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportSessionResponse"][];
+                };
+            };
+        };
+    };
+    upload_session: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": number[];
+            };
+        };
+        responses: {
+            /** @description CSV uploaded and parsed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadResponse"];
+                };
+            };
+            /** @description Invalid CSV, missing fields, file too large, or unsupported entity_type */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal error (S3 not configured, database error) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_session: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Session id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportSessionResponse"];
+                };
+            };
+            /** @description Session not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    cancel_session: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Session id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Session cancelled */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Session is already committed or being committed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Session not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    enqueue_commit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Session id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Commit queued */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportSessionResponse"];
+                };
+            };
+            /** @description Session is not in dry_run_ready state */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Session not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    enqueue_dry_run: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Session id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dry-run queued */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportSessionResponse"];
+                };
+            };
+            /** @description Session not in a state that allows dry-run */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Session not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_mapping: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Session id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMappingRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportSessionResponse"];
+                };
+            };
+            /** @description Unknown field or non-editable session status */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Session not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    rollback_session: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Session id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rollback completed (possibly with per-row failures) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportSessionResponse"];
+                };
+            };
+            /** @description Session not in a rollback-eligible state */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Session not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_rows: {
+        parameters: {
+            query?: {
+                page?: number;
+                limit?: number;
+                status?: null | components["schemas"]["ImportRowStatus"];
+            };
+            header?: never;
+            path: {
+                /** @description Session id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportRowResponse"][];
+                };
             };
         };
     };

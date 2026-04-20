@@ -354,6 +354,8 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(article::put_relations))
         // Import
         .routes(routes!(import_handlers::upload_session))
+        .routes(routes!(import_handlers::list_entity_types))
+        .routes(routes!(import_handlers::list_fields))
         .routes(routes!(import_handlers::list_sessions))
         .routes(routes!(
             import_handlers::get_session,

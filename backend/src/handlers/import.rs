@@ -22,7 +22,7 @@ use crate::{
     },
     error::AppError,
     extractors::auth::EditorUser,
-    import::{csv_parser, storage, types::ResolvedRow},
+    import::{csv_parser, storage, types::FieldSpec, types::ResolvedRow},
 };
 
 // ── Query param structs ───────────────────────────────────────────────────────
@@ -210,6 +210,49 @@ pub async fn upload_session(
         preview: preview.preview_rows,
         row_count: preview.total_rows as i64,
     }))
+}
+
+/// GET /import/entity-types — list supported entity types for CSV import.
+#[utoipa::path(
+    get,
+    path = "/import/entity-types",
+    responses((status = 200, body = Vec<String>)),
+    tag = "import",
+)]
+pub async fn list_entity_types(
+    State(state): State<AppState>,
+    _: EditorUser,
+) -> Result<Json<Vec<String>>, AppError> {
+    let mut types: Vec<String> = state
+        .import_registry
+        .supported()
+        .into_iter()
+        .map(str::to_owned)
+        .collect();
+    types.sort();
+    Ok(Json(types))
+}
+
+/// GET /import/fields/{entity_type} — list the target field spec for an entity type.
+#[utoipa::path(
+    get,
+    path = "/import/fields/{entity_type}",
+    params(("entity_type" = String, Path, description = "Entity type (e.g. \"production\", \"event\")")),
+    responses(
+        (status = 200, body = Vec<FieldSpec>),
+        (status = 404, description = "Entity type not registered"),
+    ),
+    tag = "import",
+)]
+pub async fn list_fields(
+    State(state): State<AppState>,
+    _: EditorUser,
+    Path(entity_type): Path<String>,
+) -> Result<Json<Vec<FieldSpec>>, AppError> {
+    let Some(adapter) = state.import_registry.get(&entity_type) else {
+        return Err(AppError::NotFound);
+    };
+    Ok(Json(adapter.target_fields()))
 }
 
 /// GET /import/sessions — list import sessions, newest first, paginated.
