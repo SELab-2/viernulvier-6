@@ -142,6 +142,7 @@ export function useTableSelection<TData>({
 
             if (event.shiftKey && anchorRowId) {
                 selectRange(anchorRowId, rowId);
+                setAnchorRowId(rowId);
                 setFocusedRowIndex(rowIndex);
             } else if (event.metaKey || event.ctrlKey) {
                 toggleRow(rowId);
