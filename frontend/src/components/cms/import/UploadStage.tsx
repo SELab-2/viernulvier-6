@@ -6,6 +6,7 @@ import { UploadCloud } from "lucide-react";
 
 import { useRouter } from "@/i18n/routing";
 import { useCreateImportSession, useEntityTypes } from "@/hooks/api/useImport";
+import { uploadErrorKey } from "@/lib/import/uploadErrorMap";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -105,10 +106,12 @@ export function UploadStage() {
                     tabIndex={0}
                     aria-label={t("upload.fileLabel")}
                     className={[
-                        "flex cursor-pointer flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed px-6 py-12 text-center transition-colors",
+                        "group flex cursor-pointer flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed px-6 py-12 text-center transition-colors",
                         isDragging
                             ? "border-foreground bg-accent"
-                            : "border-border hover:border-foreground/40",
+                            : file
+                              ? "border-green-500/60 bg-green-50/50 dark:bg-green-950/20"
+                              : "border-border hover:border-foreground/40",
                     ].join(" ")}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
@@ -122,13 +125,19 @@ export function UploadStage() {
                 >
                     {file ? (
                         <>
-                            <UploadCloud className="text-foreground h-6 w-6" strokeWidth={1.5} />
+                            <UploadCloud
+                                className="h-6 w-6 text-green-600 dark:text-green-400"
+                                strokeWidth={1.5}
+                            />
                             <span className="text-sm font-medium">{file.name}</span>
+                            <span className="text-muted-foreground text-xs">
+                                {(file.size / 1024).toFixed(0)} KB
+                            </span>
                         </>
                     ) : (
                         <>
                             <UploadCloud
-                                className="text-muted-foreground h-6 w-6"
+                                className="text-muted-foreground h-6 w-6 transition-transform group-hover:scale-110"
                                 strokeWidth={1.5}
                             />
                             <span className="text-muted-foreground text-sm">
@@ -145,6 +154,7 @@ export function UploadStage() {
                     onChange={handleInputChange}
                     data-testid="csv-file-input"
                 />
+                <p className="text-muted-foreground mt-2 text-xs">{t("upload.formatHint")}</p>
             </div>
 
             {/* Entity type select */}
@@ -184,9 +194,12 @@ export function UploadStage() {
                 </p>
             )}
             {mutationError && !fileSizeError && (
-                <p role="alert" className="text-destructive text-sm">
-                    {t("errors.uploadFailed")}
-                </p>
+                <div
+                    role="alert"
+                    className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border px-4 py-3 text-sm"
+                >
+                    <p>{t(uploadErrorKey(mutationError))}</p>
+                </div>
             )}
 
             {/* Submit */}

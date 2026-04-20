@@ -436,7 +436,8 @@
                 "entityTypeLabel": "Entity type",
                 "entityTypePlaceholder": "Choose a type…",
                 "submit": "Create session",
-                "submitting": "Uploading…"
+                "submitting": "Uploading…",
+                "formatHint": "CSV file · comma delimiter (,) · UTF-8 encoding · first row as header"
             },
             "mapping": {
                 "title": "Map columns",
@@ -451,7 +452,18 @@
                 "saving": "Saving…",
                 "startDryRun": "Start dry-run",
                 "startingDryRun": "Starting…",
-                "requiredMissing": "Required fields not yet mapped"
+                "requiredMissing": "Required fields not yet mapped",
+                "saveSuccess": "Mapping saved.",
+                "fieldType": {
+                    "string": "text",
+                    "text": "text area",
+                    "integer": "integer",
+                    "decimal": "decimal",
+                    "boolean": "true / false",
+                    "date": "date",
+                    "date_time": "date + time",
+                    "foreign_key": "foreign key"
+                }
             },
             "summary": {
                 "willCreate": "Will create",
@@ -518,7 +530,13 @@
                 "rerunFailed": "Re-run dry-run failed.",
                 "historyLoadFailed": "Could not load import history.",
                 "revertFailed": "Could not revert row.",
-                "rollbackFailed": "Could not rollback import."
+                "rollbackFailed": "Could not rollback import.",
+                "uploadInvalidCsv": "The file is not a valid CSV file.",
+                "uploadMissingHeaders": "The header row is missing or empty.",
+                "uploadTooFewColumns": "The file has too few columns.",
+                "uploadEmptyFile": "The file is empty.",
+                "uploadWrongDelimiter": "Use a comma (,) as delimiter, not a semicolon or tab.",
+                "uploadInvalidEncoding": "Save the file with UTF-8 encoding."
             },
             "history": {
                 "title": "Import history",

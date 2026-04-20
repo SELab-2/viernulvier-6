@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 import {
     useFieldSpec,
@@ -53,8 +54,8 @@ function buildInitialColumns(
     const suggested = autoSuggestMapping(headers, fields);
     const initial: Record<string, string | null> = {};
     for (const header of headers) {
-        const saved = savedColumns[header] ?? null;
-        initial[header] = saved !== null ? saved : (suggested[header] ?? null);
+        const hasSaved = Object.prototype.hasOwnProperty.call(savedColumns, header);
+        initial[header] = hasSaved ? (savedColumns[header] ?? null) : (suggested[header] ?? null);
     }
     return initial;
 }
@@ -91,7 +92,10 @@ function MappingStageInner({ session, fields, previewRows, savedMapping }: Mappi
     }
 
     function handleSave() {
-        updateMapping.mutate({ id: session.id, mapping: { columns } });
+        updateMapping.mutate(
+            { id: session.id, mapping: { columns } },
+            { onSuccess: () => toast.success(t("mapping.saveSuccess")) }
+        );
     }
 
     function handleStartDryRun() {
@@ -116,7 +120,7 @@ function MappingStageInner({ session, fields, previewRows, savedMapping }: Mappi
             {missingRequired.length > 0 && (
                 <div
                     role="alert"
-                    className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border px-4 py-3 text-sm"
+                    className="animate-in fade-in slide-in-from-top-1 border-destructive/40 bg-destructive/10 text-destructive rounded-md border px-4 py-3 text-sm duration-200"
                 >
                     <p className="font-medium">{t("mapping.requiredMissing")}</p>
                     <ul className="mt-1.5 list-disc space-y-0.5 pl-4">
@@ -176,8 +180,14 @@ function MappingStageInner({ session, fields, previewRows, savedMapping }: Mappi
                 </Button>
 
                 {isDirty && (
-                    <span className="text-muted-foreground font-mono text-[10px] tracking-wide">
-                        {t("mapping.unsavedChanges")}
+                    <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                        <span
+                            className="inline-block h-2 w-2 rounded-full bg-current"
+                            aria-hidden="true"
+                        />
+                        <span className="font-mono text-[10px] tracking-wide">
+                            {t("mapping.unsavedChanges")}
+                        </span>
                     </span>
                 )}
             </div>

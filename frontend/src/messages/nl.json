@@ -436,7 +436,8 @@
                 "entityTypeLabel": "Entiteitstype",
                 "entityTypePlaceholder": "Kies een type…",
                 "submit": "Sessie aanmaken",
-                "submitting": "Uploaden…"
+                "submitting": "Uploaden…",
+                "formatHint": "CSV-bestand · komma (,) · UTF-8-codering · eerste rij als koptekst"
             },
             "mapping": {
                 "title": "Kolommen mappen",
@@ -451,7 +452,18 @@
                 "saving": "Opslaan…",
                 "startDryRun": "Dry-run starten",
                 "startingDryRun": "Starten…",
-                "requiredMissing": "Verplichte velden nog niet gemapt"
+                "requiredMissing": "Verplichte velden nog niet gemapt",
+                "saveSuccess": "Mapping opgeslagen.",
+                "fieldType": {
+                    "string": "tekst",
+                    "text": "tekstveld",
+                    "integer": "geheel getal",
+                    "decimal": "decimaal",
+                    "boolean": "ja/nee",
+                    "date": "datum",
+                    "date_time": "datum + tijd",
+                    "foreign_key": "verwijzing"
+                }
             },
             "summary": {
                 "willCreate": "Aanmaken",
@@ -518,7 +530,13 @@
                 "rerunFailed": "Dry-run opnieuw uitvoeren mislukt.",
                 "historyLoadFailed": "Kon importgeschiedenis niet laden.",
                 "revertFailed": "Kon rij niet terugdraaien.",
-                "rollbackFailed": "Kon import niet terugdraaien."
+                "rollbackFailed": "Kon import niet terugdraaien.",
+                "uploadInvalidCsv": "Het bestand is geen geldig CSV-bestand.",
+                "uploadMissingHeaders": "De headerrij ontbreekt of is leeg.",
+                "uploadTooFewColumns": "Het bestand bevat te weinig kolommen.",
+                "uploadEmptyFile": "Het bestand is leeg.",
+                "uploadWrongDelimiter": "Gebruik een komma (,) als scheidingsteken, niet een puntkomma of tab.",
+                "uploadInvalidEncoding": "Sla het bestand op als UTF-8-codering."
             },
             "history": {
                 "title": "Importgeschiedenis",
