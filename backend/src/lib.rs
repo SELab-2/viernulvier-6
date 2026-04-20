@@ -55,7 +55,8 @@ pub struct AppState {
     tags(
         (name = "Collections", description = "A saved, titled selection of archive items with a shareable URL. No login required to view."),
         (name = "Series", description = "Thematic/programmatic groupings of productions."),
-        (name = "Stats", description = "Aggregate public site statistics.")
+        (name = "Stats", description = "Aggregate public site statistics."),
+        (name = "import", description = "CSV import sessions: upload, map columns, dry-run, commit, and rollback.")
     )
 )]
 pub struct ApiDoc;
