@@ -318,7 +318,10 @@ export function DataTable<TData, TValue>({
                                             hasSelection ? row.getIsSelected() : undefined
                                         }
                                         className={cn(
-                                            "hover:bg-foreground/[0.06] data-[state=selected]:!bg-foreground/[0.08] data-[focused=true]:bg-primary/5 data-[focused=true]:ring-primary border-0 transition-colors outline-none data-[focused=true]:ring-2 data-[focused=true]:ring-inset",
+                                            "border-0 transition-colors outline-none",
+                                            "hover:bg-foreground/[0.06]",
+                                            "data-[state=selected]:border-l-primary data-[state=selected]:!bg-foreground/[0.04] data-[state=selected]:border-l-2",
+                                            "data-[focused=true]:ring-primary data-[focused=true]:ring-2 data-[focused=true]:ring-inset",
                                             rowIndex % 2 === 1 && !row.getIsSelected()
                                                 ? "bg-secondary"
                                                 : "",
