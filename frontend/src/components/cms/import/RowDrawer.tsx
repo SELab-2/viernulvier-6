@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { useUpdateRow } from "@/hooks/api/useImport";
-import type { FieldSpec, ImportRow, ImportRowStatus } from "@/types/models/import.types";
+import type { FieldSpec, ImportRow } from "@/types/models/import.types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
@@ -15,32 +15,9 @@ import {
 } from "@/components/ui/sheet";
 import { DiffView } from "./DiffView";
 import { FkPicker } from "./FkPicker";
+import { statusBadgeClasses, statusLabelKey } from "./statusBadge";
 
 type ImportWarning = { field: string | null; code: string; message: string };
-
-const statusBadgeClasses: Record<ImportRowStatus, string> = {
-    pending: "bg-muted text-muted-foreground",
-    will_create: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-    will_update: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-    will_skip: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-    error: "bg-destructive/10 text-destructive",
-    created: "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-500",
-    updated: "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-500",
-    skipped: "bg-muted text-muted-foreground",
-    reverted: "bg-muted text-muted-foreground",
-};
-
-const statusLabelKey: Record<ImportRowStatus, string> = {
-    pending: "table.statusLabels.pending",
-    will_create: "table.statusLabels.willCreate",
-    will_update: "table.statusLabels.willUpdate",
-    will_skip: "table.statusLabels.willSkip",
-    error: "table.statusLabels.error",
-    created: "table.statusLabels.created",
-    updated: "table.statusLabels.updated",
-    skipped: "table.statusLabels.skipped",
-    reverted: "table.statusLabels.reverted",
-};
 
 type RowDrawerProps = {
     row: ImportRow | null;

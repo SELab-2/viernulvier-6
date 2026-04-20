@@ -58,12 +58,17 @@ function FkPickerRow({ field, resolvedValue, onChangeRef }: FkPickerRowProps) {
         onChangeRef(field.name, null);
     };
 
+    const fieldInputId = `fk-${field.name}`;
+
     return (
         <div className="space-y-1">
-            <p className="text-sm font-medium">{field.label}</p>
+            <label htmlFor={fieldInputId} className="text-sm font-medium">
+                {field.label}
+            </label>
             <div className="flex gap-2">
                 {/* TODO: typeahead search once backend endpoint exists */}
                 <Input
+                    id={fieldInputId}
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onBlur={handleBlur}

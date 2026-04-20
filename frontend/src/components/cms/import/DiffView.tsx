@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import type { ImportRow } from "@/types/models/import.types";
@@ -70,6 +70,14 @@ function DiffRow({ field, entry, onChangeField }: DiffRowProps) {
     const [inputValue, setInputValue] = useState(formatValue(entry.incoming));
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    useEffect(() => {
+        return () => {
+            if (debounceRef.current !== null) {
+                clearTimeout(debounceRef.current);
+            }
+        };
+    }, []);
+
     const handleBlur = () => {
         if (debounceRef.current !== null) {
             clearTimeout(debounceRef.current);
@@ -92,6 +100,7 @@ function DiffRow({ field, entry, onChangeField }: DiffRowProps) {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onBlur={handleBlur}
+                    aria-label={field}
                     className="h-8 text-sm"
                 />
             </div>
