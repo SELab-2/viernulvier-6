@@ -501,6 +501,7 @@
                 "currentValue": "Current value",
                 "incomingValue": "New value",
                 "fkPicker": "Foreign references",
+                "fkPlaceholder": "UUID…",
                 "fkClear": "Clear",
                 "skipRow": "Skip row"
             },

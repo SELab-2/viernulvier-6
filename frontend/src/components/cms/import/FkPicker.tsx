@@ -72,7 +72,7 @@ function FkPickerRow({ field, resolvedValue, onChangeRef }: FkPickerRowProps) {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onBlur={handleBlur}
-                    placeholder="UUID…"
+                    placeholder={t("drawer.fkPlaceholder")}
                     className="h-8 font-mono text-xs"
                 />
                 <Button variant="outline" size="sm" type="button" onClick={handleClear}>

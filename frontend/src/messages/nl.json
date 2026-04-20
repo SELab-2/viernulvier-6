@@ -410,14 +410,14 @@
             "subtitle": "Bulk import van mediabestanden en archiefmaterialen",
             "comingSoon": "Binnenkort beschikbaar",
             "notAvailable": "Ingest functionaliteit",
-            "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier mediabestanden uploaden en verwerken."
+            "description": "Deze functionaliteit is nog in ontwikkeling. Later kun je hier mediabestanden uploaden en verwerken."
         },
         "Import": {
             "title": "Import",
             "subtitle": "Automatische import van externe databronnen",
             "comingSoon": "Binnenkort beschikbaar",
             "notAvailable": "Import functionaliteit",
-            "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier data importeren van externe bronnen zoals UiTdatabank.",
+            "description": "Deze functionaliteit is nog in ontwikkeling. Later kun je hier data importeren van externe bronnen zoals UiTdatabank.",
             "viewHistory": "Geschiedenis bekijken",
             "backToImport": "Terug naar importeren",
             "stepper": {
@@ -436,7 +436,7 @@
                 "entityTypeLabel": "Entiteitstype",
                 "entityTypePlaceholder": "Kies een type…",
                 "submit": "Sessie aanmaken",
-                "submitting": "Bezig…"
+                "submitting": "Uploaden…"
             },
             "mapping": {
                 "title": "Kolommen mappen",
@@ -450,7 +450,7 @@
                 "save": "Mapping opslaan",
                 "saving": "Opslaan…",
                 "startDryRun": "Dry-run starten",
-                "startingDryRun": "Bezig…",
+                "startingDryRun": "Starten…",
                 "requiredMissing": "Verplichte velden nog niet gemapt"
             },
             "summary": {
@@ -484,7 +484,7 @@
             },
             "commit": {
                 "running": "De import wordt uitgevoerd...",
-                "completed": "Import voltooid. U wordt doorgestuurd...",
+                "completed": "Import voltooid. Je wordt doorgestuurd...",
                 "failed": "De import is mislukt.",
                 "backToDryRun": "Terug naar controle",
                 "helperText": "De import wordt uitgevoerd. Dit duurt meestal maar een paar seconden."
@@ -501,6 +501,7 @@
                 "currentValue": "Huidige waarde",
                 "incomingValue": "Nieuwe waarde",
                 "fkPicker": "Externe verwijzingen",
+                "fkPlaceholder": "UUID…",
                 "fkClear": "Wissen",
                 "skipRow": "Rij overslaan"
             },
