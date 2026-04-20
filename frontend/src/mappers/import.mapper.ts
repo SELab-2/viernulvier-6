@@ -57,7 +57,7 @@ export const mapImportRow = (response: ImportRowResponse): ImportRow => ({
 export const mapImportRows = (responses: ImportRowResponse[]): ImportRow[] =>
     responses.map(mapImportRow);
 
-export const mapFieldType = (response: FieldTypeResponse): FieldType => {
+const mapFieldType = (response: FieldTypeResponse): FieldType => {
     switch (response.kind) {
         case "foreign_key":
             return {
