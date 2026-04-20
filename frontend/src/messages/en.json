@@ -479,6 +479,17 @@
                 "commit": "Commit",
                 "rerunDryRun": "Re-run dry-run"
             },
+            "drawer": {
+                "title": "Row {n}",
+                "warnings": "Warnings",
+                "diff": "Changes",
+                "noDiff": "No changes.",
+                "currentValue": "Current value",
+                "incomingValue": "New value",
+                "fkPicker": "Foreign references",
+                "fkClear": "Clear",
+                "skipRow": "Skip row"
+            },
             "errors": {
                 "fileTooLarge": "File too large (max {maxMb}MB).",
                 "uploadFailed": "Upload failed. Try again.",
@@ -487,7 +498,9 @@
                 "fieldsLoadFailed": "Could not load fields.",
                 "saveMappingFailed": "Save failed.",
                 "dryRunStartFailed": "Could not start dry-run.",
-                "rowsLoadFailed": "Could not load rows."
+                "rowsLoadFailed": "Could not load rows.",
+                "commitFailed": "Commit failed.",
+                "rerunFailed": "Re-run dry-run failed."
             }
         },
         "Collections": {

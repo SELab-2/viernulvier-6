@@ -479,6 +479,17 @@
                 "commit": "Importeren",
                 "rerunDryRun": "Dry-run opnieuw uitvoeren"
             },
+            "drawer": {
+                "title": "Rij {n}",
+                "warnings": "Waarschuwingen",
+                "diff": "Verschillen",
+                "noDiff": "Geen verschillen.",
+                "currentValue": "Huidige waarde",
+                "incomingValue": "Nieuwe waarde",
+                "fkPicker": "Externe verwijzingen",
+                "fkClear": "Wissen",
+                "skipRow": "Rij overslaan"
+            },
             "errors": {
                 "fileTooLarge": "Bestand is te groot (max {maxMb}MB).",
                 "uploadFailed": "Upload mislukt. Probeer opnieuw.",
@@ -487,7 +498,9 @@
                 "fieldsLoadFailed": "Velden konden niet geladen worden.",
                 "saveMappingFailed": "Opslaan mislukt.",
                 "dryRunStartFailed": "Starten van dry-run mislukt.",
-                "rowsLoadFailed": "Rijen konden niet geladen worden."
+                "rowsLoadFailed": "Rijen konden niet geladen worden.",
+                "commitFailed": "Importeren mislukt.",
+                "rerunFailed": "Dry-run opnieuw uitvoeren mislukt."
             }
         },
         "Collections": {

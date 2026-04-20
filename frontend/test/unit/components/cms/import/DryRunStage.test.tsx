@@ -1,5 +1,5 @@
 import { describe, expect, it, afterEach, vi, type Mock } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -9,12 +9,51 @@ import { createTestQueryClient } from "../../../../utils/query-client";
 
 // ── Hook mocks (hoisted) ──────────────────────────────────────────────
 
+const mockStartDryRunMutate = vi.fn();
+const mockCommitImportMutate = vi.fn();
+const mockUpdateRowMutate = vi.fn();
+
 const mockUseImportSession = vi.fn();
 const mockUseImportRows = vi.fn();
+const mockUseFieldSpec = vi.fn();
 
 vi.mock("@/hooks/api/useImport", () => ({
     useImportSession: (id: string) => mockUseImportSession(id),
     useImportRows: (sessionId: string, params?: unknown) => mockUseImportRows(sessionId, params),
+    useFieldSpec: (entityType: string, options?: unknown) => mockUseFieldSpec(entityType, options),
+    useStartDryRun: () => ({
+        mutate: mockStartDryRunMutate,
+        isPending: false,
+        isError: false,
+    }),
+    useCommitImport: () => ({
+        mutate: mockCommitImportMutate,
+        isPending: false,
+        isError: false,
+    }),
+    useUpdateRow: () => ({
+        mutate: mockUpdateRowMutate,
+        isPending: false,
+        isError: false,
+    }),
+}));
+
+// ── Radix Sheet mock — avoids portal/animation issues in JSDOM ──────────
+
+vi.mock("@/components/ui/sheet", () => ({
+    Sheet: ({
+        open,
+        children,
+    }: {
+        open: boolean;
+        onOpenChange?: (open: boolean) => void;
+        children: React.ReactNode;
+    }) => (open ? <div data-testid="sheet">{children}</div> : null),
+    SheetContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    SheetHeader: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    SheetTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
+    SheetDescription: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
+    SheetClose: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 // Import component after mocks
@@ -66,6 +105,16 @@ const defaultRows = [
     },
 ];
 
+const defaultFields = [
+    {
+        name: "title_nl",
+        label: "Titel",
+        required: true,
+        uniqueLookup: false,
+        fieldType: { kind: "string" as const },
+    },
+];
+
 function setupDefaultMocks() {
     (mockUseImportSession as Mock).mockReturnValue({
         data: defaultSession,
@@ -74,6 +123,11 @@ function setupDefaultMocks() {
     });
     (mockUseImportRows as Mock).mockReturnValue({
         data: defaultRows,
+        isPending: false,
+        isError: false,
+    });
+    (mockUseFieldSpec as Mock).mockReturnValue({
+        data: defaultFields,
         isPending: false,
         isError: false,
     });
@@ -98,20 +152,97 @@ describe("DryRunStage", () => {
         vi.clearAllMocks();
     });
 
-    it("renders the table with rows and opens the drawer placeholder on row click", async () => {
+    it("renders the table with rows", () => {
         setupDefaultMocks();
         renderDryRunStage();
 
-        const tableRows = screen.getAllByRole("button", { name: "Open" });
-        expect(tableRows).toHaveLength(2);
+        const openButtons = screen.getAllByRole("button", { name: "Open" });
+        expect(openButtons).toHaveLength(2);
         expect(screen.getAllByText("Will create").length).toBeGreaterThanOrEqual(1);
+    });
 
-        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    it("opens the row drawer when a row is clicked", async () => {
+        setupDefaultMocks();
+        renderDryRunStage();
+
+        expect(screen.queryByTestId("sheet")).not.toBeInTheDocument();
 
         const openButtons = screen.getAllByRole("button", { name: "Open" });
         await userEvent.click(openButtons[0]);
 
-        expect(screen.getByRole("dialog")).toBeInTheDocument();
-        expect(screen.getByRole("dialog")).toHaveTextContent("Row #1 drawer placeholder");
+        await waitFor(() => {
+            expect(screen.getByTestId("sheet")).toBeInTheDocument();
+        });
+    });
+
+    it("commit button fires useCommitImport.mutate", async () => {
+        setupDefaultMocks();
+        renderDryRunStage();
+
+        const commitButton = screen.getByRole("button", { name: "Commit" });
+        expect(commitButton).not.toBeDisabled();
+
+        await userEvent.click(commitButton);
+
+        expect(mockCommitImportMutate).toHaveBeenCalledOnce();
+        expect(mockCommitImportMutate).toHaveBeenCalledWith(SESSION_ID);
+    });
+
+    it("commit button is disabled when session has error rows", () => {
+        (mockUseImportSession as Mock).mockReturnValue({
+            data: defaultSession,
+            isPending: false,
+            isError: false,
+        });
+        (mockUseImportRows as Mock).mockReturnValue({
+            data: [{ ...defaultRows[0], status: "error" as const }, defaultRows[1]],
+            isPending: false,
+            isError: false,
+        });
+        (mockUseFieldSpec as Mock).mockReturnValue({
+            data: defaultFields,
+            isPending: false,
+            isError: false,
+        });
+
+        renderDryRunStage();
+
+        const commitButton = screen.getByRole("button", { name: "Commit" });
+        expect(commitButton).toBeDisabled();
+    });
+
+    it("re-run button fires useStartDryRun.mutate", async () => {
+        setupDefaultMocks();
+        renderDryRunStage();
+
+        const rerunButton = screen.getByRole("button", { name: "Re-run dry-run" });
+        expect(rerunButton).not.toBeDisabled();
+
+        await userEvent.click(rerunButton);
+
+        expect(mockStartDryRunMutate).toHaveBeenCalledOnce();
+        expect(mockStartDryRunMutate).toHaveBeenCalledWith(SESSION_ID);
+    });
+
+    it("shows session load error when session fails", () => {
+        (mockUseImportSession as Mock).mockReturnValue({
+            data: undefined,
+            isPending: false,
+            isError: true,
+        });
+        (mockUseImportRows as Mock).mockReturnValue({
+            data: undefined,
+            isPending: false,
+            isError: false,
+        });
+        (mockUseFieldSpec as Mock).mockReturnValue({
+            data: undefined,
+            isPending: false,
+            isError: false,
+        });
+
+        renderDryRunStage();
+
+        expect(screen.getByRole("alert")).toHaveTextContent("Could not load session.");
     });
 });
