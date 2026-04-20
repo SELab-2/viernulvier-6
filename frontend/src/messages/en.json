@@ -237,6 +237,9 @@
             "locations": "Locations",
             "performers": "Performers"
         },
+        "common": {
+            "collapseAll": "Collapse all"
+        },
         "DataTable": {
             "noResults": "No results."
         },

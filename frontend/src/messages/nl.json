@@ -237,6 +237,9 @@
             "locations": "Locaties",
             "performers": "Uitvoerders"
         },
+        "common": {
+            "collapseAll": "Alles inklappen"
+        },
         "DataTable": {
             "noResults": "Geen resultaten."
         },
