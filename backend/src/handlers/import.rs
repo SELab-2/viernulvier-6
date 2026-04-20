@@ -1,18 +1,47 @@
 use axum::{
     Json,
-    extract::{Multipart, State},
+    extract::{Multipart, Path, Query, State},
 };
+use serde::Deserialize;
+use utoipa::IntoParams;
+use uuid::Uuid;
 use database::models::import_session::ImportSessionStatus;
 use database::repos::import::CreateSession;
 use tracing::warn;
 
 use crate::{
     AppState,
-    dto::import::UploadResponse,
+    dto::import::{ImportRowResponse, ImportSessionResponse, UploadResponse},
     error::AppError,
     extractors::auth::EditorUser,
     import::{csv_parser, storage},
 };
+
+// ── Query param structs ───────────────────────────────────────────────────────
+
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct PaginationQuery {
+    #[serde(default = "default_page")]
+    pub page: u32,
+    #[serde(default = "default_limit")]
+    pub limit: u32,
+}
+
+fn default_page() -> u32 {
+    1
+}
+fn default_limit() -> u32 {
+    25
+}
+
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct RowsQuery {
+    #[serde(default = "default_page")]
+    pub page: u32,
+    #[serde(default = "default_limit")]
+    pub limit: u32,
+    pub status: Option<database::models::import_row::ImportRowStatus>,
+}
 
 const MAX_FILE_BYTES: usize = 10 * 1024 * 1024; // 10 MiB
 
@@ -169,6 +198,74 @@ pub async fn upload_session(
         preview: preview.preview_rows,
         row_count: preview.total_rows as i64,
     }))
+}
+
+/// GET /import/sessions — list import sessions, newest first, paginated.
+#[utoipa::path(
+    get,
+    path = "/import/sessions",
+    params(PaginationQuery),
+    responses((status = 200, body = Vec<ImportSessionResponse>)),
+    tag = "import",
+)]
+pub async fn list_sessions(
+    State(state): State<AppState>,
+    _: EditorUser,
+    Query(q): Query<PaginationQuery>,
+) -> Result<Json<Vec<ImportSessionResponse>>, AppError> {
+    let limit = i64::from(q.limit.clamp(1, 100));
+    let offset = i64::from(q.page.saturating_sub(1).saturating_mul(q.limit));
+    let sessions = state.db.imports().list_sessions(limit, offset).await?;
+    Ok(Json(sessions.into_iter().map(Into::into).collect()))
+}
+
+/// GET /import/sessions/{id} — fetch a single import session by id.
+#[utoipa::path(
+    get,
+    path = "/import/sessions/{id}",
+    params(("id" = Uuid, Path, description = "Session id")),
+    responses(
+        (status = 200, body = ImportSessionResponse),
+        (status = 404, description = "Session not found"),
+    ),
+    tag = "import",
+)]
+pub async fn get_session(
+    State(state): State<AppState>,
+    _: EditorUser,
+    Path(id): Path<Uuid>,
+) -> Result<Json<ImportSessionResponse>, AppError> {
+    match state.db.imports().get_session(id).await? {
+        Some(session) => Ok(Json(session.into())),
+        None => Err(AppError::NotFound),
+    }
+}
+
+/// GET /import/sessions/{id}/rows — list rows for a session, paginated, with optional status filter.
+#[utoipa::path(
+    get,
+    path = "/import/sessions/{id}/rows",
+    params(
+        ("id" = Uuid, Path, description = "Session id"),
+        RowsQuery,
+    ),
+    responses((status = 200, body = Vec<ImportRowResponse>)),
+    tag = "import",
+)]
+pub async fn get_rows(
+    State(state): State<AppState>,
+    _: EditorUser,
+    Path(session_id): Path<Uuid>,
+    Query(q): Query<RowsQuery>,
+) -> Result<Json<Vec<ImportRowResponse>>, AppError> {
+    let limit = i64::from(q.limit.clamp(1, 500));
+    let offset = i64::from(q.page.saturating_sub(1).saturating_mul(q.limit));
+    let rows = state
+        .db
+        .imports()
+        .get_rows(session_id, limit, offset, q.status)
+        .await?;
+    Ok(Json(rows.into_iter().map(Into::into).collect()))
 }
 
 /// Strip control characters (including newlines and null bytes) from a raw
