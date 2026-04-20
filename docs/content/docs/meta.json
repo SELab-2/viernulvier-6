@@ -1,5 +1,5 @@
 {
   "title": "Documentation",
   "root": true,
-  "pages": ["getting-started", "frontend", "api", "database", "deployment"]
+  "pages": ["getting-started", "frontend", "api", "database", "import", "deployment"]
 }

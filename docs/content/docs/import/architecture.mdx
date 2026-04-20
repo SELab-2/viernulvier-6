@@ -1,0 +1,390 @@
+---
+title: CSV Import — Architecture
+description: Technical deep-dive on how the CSV import feature is built — database schema, ImportableEntity trait, adapter registry, background worker, four-stage React flow, and the end-to-end type contract.
+---
+
+# CSV Import — Architecture
+
+This document describes **how** the CSV import feature is built. It complements the [User Guide](./index), which covers how to operate it.
+
+The feature was designed around three non-negotiable goals:
+
+1. **Generic over entity types.** A single UI and pipeline handles productions, events, and whatever future entity types editors need.
+2. **Purely additive to existing schema.** No migrations on production, event, or any other pre-existing table — the system reuses the `source_id` columns that already live there.
+3. **Safe by default.** Every commit is preceded by a persisted dry run, and every committed row is revertible.
+
+---
+
+## High-Level Shape
+
+```text
+┌──────────────────────┐      multipart/CSV       ┌──────────────────────┐
+│  Next.js CMS (React) │ ───────────────────────► │  Axum API (Rust)     │
+│  four-stage flow     │                          │  handlers/import.rs  │
+└──────────┬───────────┘                          └──────────┬───────────┘
+           │                                                 │
+           │ TanStack Query / axios                          │ sqlx
+           │                                                 ▼
+           │                                      ┌──────────────────────┐
+           │                                      │  PostgreSQL          │
+           │                                      │  import_sessions     │
+           │                                      │  import_rows         │
+           │                                      │  import_session_files│
+           │                                      └──────────────────────┘
+           │
+           │                                      ┌──────────────────────┐
+           │ presigned PUT (Phase-5 CSV storage)  │  Garage / S3         │
+           └─────────────────────────────────────►│  imports/{uuid}.csv  │
+                                                  └──────────────────────┘
+                                                             ▲
+                                                             │
+                                              ┌──────────────┴───────────┐
+                                              │  tokio import worker     │
+                                              │  (polls for queued jobs) │
+                                              └──────────────────────────┘
+```
+
+There are no new message queues, no new background services, and no new S3 buckets. The worker is just a tokio task inside the API process that polls `import_sessions.status` for `dry_run_pending` / `committing` rows.
+
+---
+
+## Database Schema
+
+Three new tables, introduced by a single migration (`backend/migrations/…_imports.up.sql`). All existing tables are untouched.
+
+### `import_sessions`
+
+One row per import attempt. Owns the lifecycle state machine.
+
+Key columns:
+
+- `id` — UUID PK.
+- `entity_type` — string matching the adapter key (`"production"`, `"event"`, …).
+- `filename` — sanitised original filename, shown in the history list.
+- `original_headers` — `TEXT[]` captured at upload time, so we can show the user the raw headers even after the CSV blob is gone.
+- `mapping` — `JSONB`. Shape: `{ "columns": { "HeaderName": "target_field_or_null", ... } }`.
+- `status` — one of `uploaded`, `mapping`, `dry_run_pending`, `dry_run_ready`, `committing`, `committed`, `failed`, `cancelled`. Enforced by a `CHECK` constraint.
+- `row_count`, `created_by`, `created_at`, `updated_at`, `committed_at`, `error`.
+
+Indexes on `created_at DESC` (for history pagination) and `status` (for the worker's poll query).
+
+### `import_rows`
+
+One row per CSV data row per session.
+
+Key columns:
+
+- `session_id` — FK to `import_sessions`, `ON DELETE CASCADE`.
+- `row_number` — 1-based index within the CSV (header is 1, first data row 2).
+- `raw_data` — `JSONB`, the full `header → Option<String>` map from the CSV.
+- `overrides` — `JSONB`, per-field edits the user made in the drawer.
+- `resolved_refs` — `JSONB`, user-picked UUIDs for ambiguous foreign keys.
+- `status` — one of `pending`, `will_create`, `will_update`, `will_skip`, `error`, `created`, `updated`, `skipped`, `reverted`.
+- `target_entity_id` — populated after commit (or resolved during dry-run for updates).
+- `diff` — `JSONB`, stored at dry-run time for updates and at commit time for creates; used for both UI rendering and revert.
+- `warnings` — `JSONB[]` of `{ field?, code, message }` advisory notes.
+
+### `import_session_files`
+
+Pointer to the raw CSV blob on S3. Split out from `import_sessions` so the main table stays small and cheap to scan.
+
+Columns: `session_id` (PK, FK), `s3_key`, `created_at`.
+
+---
+
+## The `ImportableEntity` Trait
+
+All entity-specific behaviour lives behind one trait in `backend/src/import/trait_def.rs`:
+
+```rust
+#[async_trait]
+pub trait ImportableEntity: Send + Sync {
+    fn entity_type(&self) -> &'static str;
+    fn target_fields(&self) -> Vec<FieldSpec>;
+
+    async fn lookup_existing(&self, row: &ResolvedRow, db: &Database)
+        -> anyhow::Result<Option<Uuid>>;
+
+    async fn resolve_references(&self, row: &RawRow, db: &Database)
+        -> anyhow::Result<ReferenceResolution>;
+
+    fn validate_row(&self, row: &ResolvedRow) -> Vec<ImportWarning>;
+
+    async fn build_diff(&self, entity_id: Uuid, row: &ResolvedRow, db: &Database)
+        -> anyhow::Result<BTreeMap<String, DiffEntry>>;
+
+    async fn apply_row(
+        &self,
+        existing_id: Option<Uuid>,
+        row: &ResolvedRow,
+        db: &Database,
+        tx: &mut Transaction<'_, Postgres>,
+    ) -> anyhow::Result<Uuid>;
+
+    async fn revert_row(
+        &self,
+        entity_id: Uuid,
+        db: &Database,
+        tx: &mut Transaction<'_, Postgres>,
+    ) -> anyhow::Result<()>;
+}
+```
+
+The shared pipeline (`handlers/import.rs` + `import/worker.rs`) calls these methods in a fixed order and is entirely agnostic to which entity it is currently importing.
+
+### Adapters
+
+Each entity type has its own file under `backend/src/import/adapters/`:
+
+- `production.rs` — maps `Titel`, `Ondertitel`, `Description1/2`, `Genre`, and the legacy `ID` column. Uses `productions.source_id` for duplicate detection.
+- `event.rs` — maps `Starttime`, `Endtime`, `Hall`, `Production`. Halls and productions are resolved by label (with fuzzy matching) or by UUID override.
+- `stub.rs` — reference implementation used by tests and for documenting the trait.
+
+Adapters issue direct `sqlx::query!` calls where a specific lookup doesn't exist in the repo layer, keeping the import module a closed world that can evolve without touching existing repos.
+
+### Registry
+
+`ImportRegistry` in `registry.rs` is a tiny `HashMap<&'static str, Arc<dyn ImportableEntity>>` owned by `AppState`. Endpoints look up adapters by key:
+
+```rust
+let adapter = state.import_registry
+    .get(&session.entity_type)
+    .ok_or(AppError::Internal(...))?;
+```
+
+Adding a new entity type is a three-step change: implement the trait, register the adapter in `lib.rs`, and add its label/helper translations on the frontend.
+
+---
+
+## Field Specs & Type Coercion
+
+Adapters declare their target fields as `Vec<FieldSpec>`:
+
+```rust
+pub struct FieldSpec {
+    pub name: String,           // machine key, e.g. "title"
+    pub label: String,          // human label shown in the mapping UI
+    pub field_type: FieldType,  // string | text | integer | decimal |
+                                // boolean | date | datetime | foreign_key
+    pub required: bool,
+    pub unique_lookup: bool,    // used for dedup lookup (e.g. source_id)
+}
+```
+
+The `GET /import/fields/{entity_type}` endpoint exposes this list; the frontend uses it to:
+
+- render the mapping UI with the correct field labels,
+- pre-compute fuzzy mapping suggestions,
+- show type hints in the row drawer,
+- rendering an FK picker when `field_type = ForeignKey { target, match_field }`.
+
+Coercion from the raw `Option<String>` CSV cell to the adapter-expected shape (parsing integers, dates, booleans) happens adapter-side — the shared pipeline only carries `serde_json::Value`.
+
+---
+
+## The Session Lifecycle
+
+Every session moves through a small state machine. Transitions are always server-driven.
+
+```text
+uploaded ─► mapping ─► dry_run_pending ─► dry_run_ready ─► committing ─► committed
+                              │                 │                          │
+                              ▼                 ▼                          ▼
+                           failed             failed                     failed
+                                                              │
+                              any non-final state ─► cancelled
+```
+
+- **Upload** puts the session in `uploaded`, then immediately advances it to `mapping` after the S3 key is recorded.
+- **PATCH mapping** keeps the session in `mapping` (or `dry_run_ready` if it was already there and the user is tweaking).
+- **POST dry-run** moves it to `dry_run_pending` and returns `202`. The worker picks it up, processes every row, and transitions to `dry_run_ready` (or `failed`).
+- **POST commit** moves it to `committing` and returns `202`. The worker applies every `will_create`/`will_update` row in a transaction per row, recording the resulting `target_entity_id` and (for creates) the diff. End state is `committed` or `failed`.
+- **DELETE session** moves any non-final session to `cancelled`.
+- **POST rollback** (from `committed` or `failed`) walks committed rows in reverse and calls `revert_row` on each, tolerating partial failures.
+
+The backend refuses transitions that don't match this diagram — the handler for each action defensively checks the current status first.
+
+---
+
+## The Background Worker
+
+`backend/src/import/worker.rs` spawns a single tokio task on startup. The task loop:
+
+1. Polls for one session where `status IN ('dry_run_pending', 'committing')`, ordered by `updated_at ASC` so we're fair across editors.
+2. Loads the CSV from S3.
+3. Parses it into `RawRow`s.
+4. For each row, calls the adapter in sequence: `resolve_references` → `validate_row` → `lookup_existing` → `build_diff`.
+5. For commit, opens a transaction and calls `apply_row`.
+6. Persists per-row results and advances the session status.
+
+There is deliberately no work queue or job framework — the sessions table _is_ the queue, the worker is just a poller, and recovery after a crash is "whatever state was persisted before the crash, carry on." This keeps operational complexity low.
+
+### Cancellation & idempotency
+
+The worker checks `session.status` between rows. If the status has been set to `cancelled` externally, the worker stops processing mid-session. Because every row writes its own transaction, partial progress is safe.
+
+Re-running a dry run is idempotent: every row is re-evaluated against current DB state and its own persisted overrides, producing a fresh status and diff.
+
+---
+
+## The Four-Stage React Flow
+
+The frontend lives at `frontend/src/app/[locale]/(cms)/cms/(main)/import/` and in `frontend/src/components/cms/import/`.
+
+### Entry point
+
+`page.tsx` is a client component that reads the optional `?session=` query parameter, fetches the session if present, and delegates to one of four stage components based on the session status:
+
+```ts
+function deriveStage(status: ImportSessionStatus | undefined): ImportStage {
+  if (!status) return 'upload';
+  switch (status) {
+    case 'mapping':
+      return 'mapping';
+    case 'dry_run_pending':
+    case 'dry_run_ready':
+      return 'dry_run';
+    case 'committing':
+    case 'committed':
+    case 'failed':
+      return 'commit';
+    default:
+      return 'upload';
+  }
+}
+```
+
+### Stages
+
+- **`UploadStage.tsx`** — drop zone, entity-type selector, multipart upload via `useUploadSession` (TanStack Query mutation). On success, pushes `?session=<id>` and lets the page re-render.
+- **`MappingStage.tsx`** — fetches the session + field spec, builds a table of `ColumnMapRow` components, persists every change via `PATCH /import/sessions/{id}/mapping`, and kicks off a dry-run when the user confirms. Suggestions use Levenshtein distance (threshold `0.65`).
+- **`DryRunStage.tsx`** — polls the session every few seconds while status is `dry_run_pending`, then renders the row table (`DryRunTable.tsx`) once it transitions to `dry_run_ready`. Rows open the `RowDrawer` sidebar with `DiffView` and `FkPicker` sub-components.
+- **`CommitStage.tsx`** — shows a progress spinner while `committing`, redirects to the history detail on `committed`, and shows a failure banner with a link back to dry-run on `failed`.
+
+### History
+
+- **`HistoryList.tsx`** — paginated table at `/cms/import/history`, fed by `useImportSessions` with Previous/Next controls.
+- **`HistoryDetail.tsx`** — at `/cms/import/history/{id}`, renders session metadata, a read-only row table with per-row **Revert** buttons, and a footer **Rollback** button (with shadcn `Dialog` confirmation — not `AlertDialog`, which doesn't exist in this codebase).
+
+### Shared pieces
+
+- `statusBadge.ts` — central mapping of `ImportRowStatus` to Tailwind classes and i18n keys. Used by `DryRunTable`, `RowDrawer`, and `HistoryDetail`.
+- `sessionStatusBadge.ts` — same thing for `ImportSessionStatus`.
+- `lib/import/entityLinks.ts` — `cmsEditUrl(type, id)` and `publicSiteUrl(type, slug)` helpers for linking rows to their CMS edit page and public URL.
+- `ImportStepper.tsx` — the stage stepper, driven entirely by the derived `currentStage`.
+
+---
+
+## The Frontend Type Contract
+
+The project's strict OpenAPI-driven type pipeline (see [Frontend Architecture](../frontend)) is used as-is:
+
+```text
+backend utoipa annotations
+        │
+        ▼
+GET /api/openapi.json
+        │   (openapi-typescript)
+        ▼
+frontend/src/types/api/generated.ts
+        │
+        ▼
+src/types/api/import.api.types.ts    ← thin named aliases
+        │
+        ▼
+src/mappers/import.mapper.ts         ← snake ↔ camel translation
+        │
+        ▼
+src/types/models/import.types.ts     ← frontend domain models
+        │
+        ▼
+src/hooks/api/useImport.ts           ← TanStack Query hooks
+        │
+        ▼
+components/cms/import/*              ← never import from types/api/*
+```
+
+The layering is strict: components only import from `@/types/models/*`. A compile-time contract test in `test/contract/openapi-types.contract.test.ts` pins the generated schema against the frontend aliases.
+
+---
+
+## HTTP API Surface
+
+All routes are under the editor-protected scope (`cookie_auth`, `EditorUser` extractor).
+
+| Method   | Path                             | Purpose                                                                |
+| -------- | -------------------------------- | ---------------------------------------------------------------------- |
+| `POST`   | `/import/sessions`               | Upload CSV (multipart). Creates session, stores blob, returns preview. |
+| `GET`    | `/import/entity-types`           | List registry keys (`["production", "event"]`).                        |
+| `GET`    | `/import/fields/{entity_type}`   | Field spec for the mapping UI.                                         |
+| `GET`    | `/import/sessions`               | Paginated history.                                                     |
+| `GET`    | `/import/sessions/{id}`          | Single session.                                                        |
+| `GET`    | `/import/sessions/{id}/rows`     | Paginated rows, optional `status=` filter.                             |
+| `PATCH`  | `/import/sessions/{id}/mapping`  | Persist column→field mapping.                                          |
+| `POST`   | `/import/sessions/{id}/dry-run`  | Enqueue dry-run. Returns `202`.                                        |
+| `POST`   | `/import/sessions/{id}/commit`   | Enqueue commit. Returns `202`.                                         |
+| `POST`   | `/import/sessions/{id}/rollback` | Revert every committed row, reverse order.                             |
+| `DELETE` | `/import/sessions/{id}`          | Cancel a non-committed session.                                        |
+| `PATCH`  | `/import/rows/{id}`              | Persist overrides / resolved refs / skip; re-validate.                 |
+| `POST`   | `/import/rows/{id}/revert`       | Revert a single committed row.                                         |
+
+Every route is annotated with `utoipa::path`; Swagger UI is served at `/api/docs`.
+
+---
+
+## Testing Strategy
+
+The feature has tests at four levels:
+
+- **Unit (backend)** — adapter helpers, CSV parsing, and the resolved-row builder. Files live next to the modules under test.
+- **Worker integration (backend)** — `backend/tests/import_worker_dry_run.rs` and `import_worker_commit.rs` drive `process_dry_run_bytes` / `process_commit` in-process against a real Postgres.
+- **End-to-end (backend)** — `backend/tests/import_end_to_end.rs` runs the full pipeline (create session → mapping → dry-run → commit → rollback) against the legacy fixtures in `backend/tests/fixtures/import/`.
+- **Component (frontend)** — Vitest + Testing Library covering every stage component, diff rendering, and status badges.
+- **Contract (frontend)** — compile-time `expectTypeOf` assertions in `test/contract/` catch drift between the OpenAPI types and the frontend aliases.
+- **E2E (frontend)** — Playwright coverage at `test/e2e/cms-import.spec.ts` drives the full flow against a mocked API.
+
+The pre-push hook regenerates the OpenAPI types before linting, so any backend DTO change that breaks the frontend fails loudly at push time rather than at merge time.
+
+---
+
+## Design Choices Worth Noting
+
+- **`source_id` reuse.** Every entity table already has a `source_id INTEGER UNIQUE` column populated by the legacy VierNulVier API importer. The CSV importer reuses this column for legacy-ID matching so we can safely re-import the same CSV without creating duplicates — and without a schema migration on any existing table.
+- **Persisted dry runs.** The dry run is not a transient calculation — every row's status, diff, and warnings are stored, so the editor can walk away, come back tomorrow, and commit without re-running it.
+- **Inline edits as overrides.** Overrides live in their own `JSONB` column rather than being applied to `raw_data`. This keeps the original CSV content immutable and makes audit trails obvious.
+- **Per-row transactions.** Every row writes in its own transaction. Partial commits survive crashes, and individual reverts are always safe.
+- **Polling status instead of a message bus.** The status column _is_ the queue. Small-team / single-node deployments don't pay the operational tax of Redis or NATS just for this feature.
+- **No `AlertDialog` shortcut.** The rollback confirmation uses shadcn's `Dialog`, which is the only confirmation primitive already present in this codebase.
+
+---
+
+## Extending the System
+
+### Adding a new entity type
+
+1. Create `backend/src/import/adapters/<entity>.rs` implementing `ImportableEntity`. Use `stub.rs` as a template.
+2. Register the adapter in `ImportRegistry::new(...)` where `AppState` is built (look in `backend/src/lib.rs`).
+3. Add any `source_id`-based lookup the adapter needs. **Do not** `ALTER` the existing table unless absolutely required — reusing `source_id` is the expected pattern.
+4. Add Dutch + English labels for the new field names under `Cms.Import.fields.*` in `frontend/src/messages/{nl,en}.json`.
+5. Regenerate OpenAPI types (`npm run generate:api-types`) and commit the updated `generated.ts`.
+
+That's it. The UI picks up the new entity type automatically on the next `GET /import/entity-types`.
+
+### Adding a new field to an existing entity
+
+1. Edit the adapter's `target_fields()` to add a new `FieldSpec`.
+2. Handle the field in `validate_row`, `build_diff`, and `apply_row` (and `revert_row` if it needs to participate in reverts).
+3. Regenerate types; add i18n labels.
+
+No database migration is needed as long as the field already exists on the underlying entity table.
+
+---
+
+## Pointers
+
+- **Plan**: `docs/superpowers/plans/2026-04-19-csv-import.md` — the exhaustive phase-by-phase implementation plan.
+- **Design spec**: `docs/superpowers/specs/2026-04-19-csv-import-design.md` — the up-front design doc this plan is derived from.
+- **Backend code**: `backend/src/import/`, `backend/src/handlers/import.rs`, `backend/database/src/repos/import.rs`, `backend/database/src/models/import_*`.
+- **Frontend code**: `frontend/src/components/cms/import/`, `frontend/src/hooks/api/useImport.ts`, `frontend/src/app/[locale]/(cms)/cms/(main)/import/`.
+- **Fixtures**: `backend/tests/fixtures/import/legacy_productions.csv`, `legacy_events.csv`.
+- **User Guide**: [../import](./index) — the editor-facing counterpart to this document.

@@ -1,0 +1,176 @@
+---
+title: CSV Import — User Guide
+description: Step-by-step guide for editors on how to upload a CSV, map columns, preview a dry run, commit, and manage past imports in the viernulvier-archief CMS.
+---
+
+# CSV Import — User Guide
+
+The CSV Import feature lets editors bring data into the archive from any spreadsheet file. It walks you through four stages — **Upload → Map → Dry Run → Commit** — and keeps a history of every session so you can revert individual rows or roll back a whole import. This guide explains how to use the feature end-to-end.
+
+The page lives at **`/cms/import`** and is available to any user with the _Editor_ role.
+
+---
+
+## Before You Start
+
+A few things to know up front:
+
+- **File format**: any CSV with a header row. Columns can be in any order and named anything you like — you map them to the target fields in step 2.
+- **File size**: uploads are capped at **10 MiB** per CSV.
+- **Encoding**: UTF-8 is recommended. The parser will attempt to recover from common encoding issues but failures are reported as warnings.
+- **Supported entity types** (v1): `production`, `event`. More adapters can be added by developers — see the [Architecture](./architecture) doc.
+- **Legacy CSVs**: the `Productions - output.csv` and `voorstellingen.csv` files from the old VierNulVier website are fully supported. The importer recognises the legacy `ID` column and uses it to match existing records so you never create duplicates.
+
+You also need to be signed in as an Editor. If you hit a `401 Unauthorized` page during the flow, your session has expired — sign in again and the import session will resume from where you left off.
+
+---
+
+## The Four-Stage Flow
+
+Every import moves through the same four stages, tracked by the stepper at the top of the page:
+
+```text
+Upload  →  Map  →  Dry Run  →  Commit
+```
+
+You can always navigate back to a previous stage — session state lives on the server, so closing a tab in the middle does not lose your work. Come back from the **History** page and click a non-committed session to pick up where you left off.
+
+### Stage 1 — Upload
+
+1. Open **`/cms/import`**. You'll see a drop zone and a pick-file button.
+2. Pick the **entity type** you are importing (`production` or `event`).
+3. Drag-and-drop your CSV onto the drop zone, or click to browse for it.
+4. Click **Upload**.
+
+The page parses the first few rows and shows you a preview so you can verify that columns were detected correctly (common pitfalls: wrong delimiter, stray BOM, mislabelled header row). If the preview looks wrong, cancel the session and fix the CSV locally before trying again.
+
+On success the page auto-advances to **Map**.
+
+### Stage 2 — Map Columns to Fields
+
+This is the step that adapts _your_ CSV to _our_ schema.
+
+On the left you see every column the CSV contains. On the right you pick, for each column, the target field it should feed into. A **suggestion** is pre-selected wherever the column name is a close fuzzy match to a field name (e.g. `Titel` → `title`), but you can always override it.
+
+What to do:
+
+1. Walk through each row and confirm or change the target field.
+2. Leave a column **Unmapped** if you want to ignore it — this is useful for internal IDs, comments, or columns that don't correspond to anything in the archive.
+3. Required fields are highlighted. The system will not let you proceed if any required field has no mapped column.
+4. Click **Start Dry Run**.
+
+The mapping is persisted server-side the moment you click — if you want to adjust it later, you can return to this stage as long as the session has not been committed.
+
+### Stage 3 — Dry Run
+
+This is the most important stage. A **dry run** simulates the import without writing anything to the database, and shows you exactly what _would_ happen if you committed.
+
+For every row the table shows:
+
+| Column       | Meaning                                                                                |
+| ------------ | -------------------------------------------------------------------------------------- |
+| `#`          | Row number in the source file (header = 1, first data row = 2, etc.)                   |
+| **Status**   | `will_create` (green), `will_update` (blue), `will_skip` (grey), or `error` (red)      |
+| **Entity**   | The target record — for updates, a link to the existing CMS entry and the public site. |
+| **Warnings** | Number of validation notes for this row.                                               |
+
+Click any row to open the **detail drawer** on the right. There you can:
+
+- **View the diff.** For updates, every changed field is shown side-by-side with the current value and the proposed value.
+- **Edit a cell inline.** If you want to correct something before committing — fix a typo, change a genre, trim whitespace — just type the new value. Changes are validated and re-diffed as soon as you stop typing.
+- **Resolve foreign-key ambiguity.** If the CSV referenced a production or hall by name and the importer found more than one match (or none), you'll see a picker with the best fuzzy matches. Pick the right one, or paste in a UUID if you know it. Unresolved required FKs keep the row in the `error` state.
+- **Skip a row** you don't want committed. Skipped rows still appear in the history for audit purposes.
+
+#### Reading warnings
+
+Warnings never block a commit on their own — they are advisory. Typical examples:
+
+- _Value was truncated to 255 characters._
+- _Date field could not be parsed; left empty._
+- _Unresolved reference: no `hall` found matching `Domzaal`._
+
+Errors — shown in red — **do** block a row. A row in `error` status is not committed.
+
+#### When to re-run the dry run
+
+If you edit many rows, it is sometimes faster to change the CSV and re-upload than to click through every correction. For small fixes, the inline editor is the path of least resistance. The dry run is **idempotent**: clicking it again re-evaluates every row against the current database, picks up any manual overrides you made, and refreshes the diff.
+
+Click **Commit** when you're satisfied.
+
+### Stage 4 — Commit
+
+The commit stage writes the changes. A spinner shows progress; the backend processes rows in a transaction, and every committed row stores the diff it applied (so it can be reverted later).
+
+On success you are redirected to the **History detail** page for this session.
+
+On failure you see a clear error banner with a link back to the dry-run stage, where you can fix the flagged rows and try again. Committed rows from a partial run are **not rolled back automatically** — you can decide whether to roll back or to fix-forward from the history page.
+
+---
+
+## History & Rollback
+
+Past imports are the other half of the feature. They let you audit what was imported, fix mistakes after the fact, and undo entire sessions if needed.
+
+### The history list
+
+Reach it from the **"View history"** link on the main import page, or directly at **`/cms/import/history`**.
+
+The list shows, newest first:
+
+- Date committed
+- Entity type and filename
+- Status badge (_committed_, _failed_, _cancelled_, _committing_, …)
+- Row count
+- Action buttons
+
+Pagination is straightforward — Previous / Next at the bottom.
+
+### The history detail
+
+Clicking a session opens its detail page at **`/cms/import/history/{id}`**. You see the full session metadata (filename, entity type, committed-at, row count, final status) and the same row table from the dry-run, but read-only — except for the revert buttons.
+
+#### Reverting a single row
+
+Each row has a **Revert** button, enabled only for rows currently in `created` or `updated` state. Clicking it:
+
+- For a `created` row: deletes the entity.
+- For an `updated` row: restores the entity's previous values from the stored diff.
+
+A toast confirms success. The row transitions to the `reverted` state and the button is disabled.
+
+Revert fails gracefully — if the entity has since been modified or deleted outside the import, the error is reported in a toast and the row state is preserved.
+
+#### Rolling back the whole session
+
+The **Rollback** button at the bottom reverts every `created`/`updated` row in reverse order. A confirmation dialog explains what will happen; rollbacks cannot themselves be undone, so confirm carefully.
+
+If individual rows fail to revert, they are flagged with a `revert_failed` warning but the rollback continues for the rest. The session ends up in the `cancelled` state.
+
+---
+
+## Tips & Common Pitfalls
+
+- **Duplicate detection.** For legacy CSVs the `ID` column maps to the `source_id` field the importer already uses. Rows with a matching `source_id` become updates instead of creates — you will never create duplicates by re-importing.
+- **Empty cells.** Blank strings are treated as _absent_ (null), not as the literal empty string. If you want to clear a field, leave it blank.
+- **Dates.** Use ISO 8601 (`2026-04-20T19:30:00+02:00`) whenever possible. The parser tolerates a few common date-only and local-time variants but will warn on anything ambiguous.
+- **Planning ID (legacy productions).** This column is not yet mapped to anything in v1 — leave it Unmapped. It's tracked as an open question for a future release.
+- **Multiple sessions in parallel.** You can start several imports in different tabs; each session is isolated and tracked separately. The history page lists them all.
+- **Editing after commit.** The import feature only writes what's in the CSV. For post-hoc fixes use the normal CMS edit pages (the dry-run and history views both link to them).
+
+---
+
+## Troubleshooting
+
+- **"Unsupported entity_type"** — the entity type you picked has no adapter registered. See [Architecture → Adapters](./architecture#adapters) for how to add one.
+- **"File exceeds 10 MiB limit"** — split the CSV or reduce the column count.
+- **Session stuck in _dry_run_pending_** — the background worker picks up the session on a short polling interval; refresh after a few seconds. If it still doesn't progress, the worker may have crashed — check the API logs.
+- **All rows show `error`** — your mapping probably has a required field pointing at the wrong column. Revisit the Map stage.
+- **Foreign-key picker is empty** — the target entity you're linking to doesn't exist yet. Create it through the normal CMS flow, then refresh the row.
+
+For anything else, check the session's status and error fields in the history detail — most failures surface there with a concrete error message.
+
+---
+
+## What's Next
+
+If you want to understand _how_ any of this works under the hood — the database tables, the adapter trait, the background worker, or the four-stage React flow — continue to the **[Architecture](./architecture)** document.
