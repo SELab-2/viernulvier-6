@@ -21,6 +21,7 @@ interface UseTableSelectionReturn<TData> {
     getRowTabIndex: (index: number) => number;
     isRowFocused: (index: number) => boolean;
     focusRowAt: (index: number) => void;
+    focusRow: (index: number) => void;
     rowRefCallback: (index: number) => (el: HTMLTableRowElement | null) => void;
 }
 
@@ -40,7 +41,7 @@ export function useTableSelection<TData>({
     onRowSelectionChange,
     enableSelection,
 }: UseTableSelectionOptions<TData>): UseTableSelectionReturn<TData> {
-    const [focusedRowIndex, setFocusedRowIndex] = useState(-1);
+    const [focusedRowIndex, setFocusedRowIndex] = useState(0);
     const [anchorRowId, setAnchorRowId] = useState<string | null>(null);
     const rowRefs = useRef<Map<number, HTMLTableRowElement>>(new Map());
 
@@ -107,11 +108,23 @@ export function useTableSelection<TData>({
         [rows, onRowSelectionChange]
     );
 
+    const focusRow = useCallback((index: number) => {
+        setFocusedRowIndex(index);
+        const el = rowRefs.current.get(index);
+        if (el) {
+            el.focus();
+        }
+    }, []);
+
+    const focusRowAt = useCallback((index: number) => {
+        setFocusedRowIndex(index);
+    }, []);
+
     const clearSelection = useCallback(() => {
         onRowSelectionChange?.({});
         setAnchorRowId(null);
-        setFocusedRowIndex(-1);
-    }, [onRowSelectionChange]);
+        focusRow(0);
+    }, [onRowSelectionChange, focusRow]);
 
     const handleRowMouseDown = useCallback(
         (event: React.MouseEvent) => {
@@ -131,7 +144,7 @@ export function useTableSelection<TData>({
             if (target.closest('button, a, [role="checkbox"], input, label')) {
                 if (target.closest('[role="checkbox"]') || target.closest("label")) {
                     setAnchorRowId(row.id);
-                    setFocusedRowIndex(rows.findIndex((r) => r.id === row.id));
+                    focusRow(rows.findIndex((r) => r.id === row.id));
                 }
                 return;
             }
@@ -145,18 +158,18 @@ export function useTableSelection<TData>({
             if (event.shiftKey && anchorRowId) {
                 selectRange(anchorRowId, rowId);
                 setAnchorRowId(rowId);
-                setFocusedRowIndex(rowIndex);
+                focusRow(rowIndex);
             } else if (event.metaKey || event.ctrlKey) {
                 toggleRow(rowId);
                 setAnchorRowId(rowId);
-                setFocusedRowIndex(rowIndex);
+                focusRow(rowIndex);
             } else {
                 selectOnly(rowId);
                 setAnchorRowId(rowId);
-                setFocusedRowIndex(rowIndex);
+                focusRow(rowIndex);
             }
         },
-        [enableSelection, rows, anchorRowId, selectRange, toggleRow, selectOnly]
+        [enableSelection, rows, anchorRowId, selectRange, toggleRow, selectOnly, focusRow]
     );
 
     const handleKeyDown = useCallback(
@@ -165,22 +178,18 @@ export function useTableSelection<TData>({
 
             if (event.key === "ArrowDown") {
                 event.preventDefault();
-                setFocusedRowIndex((prev) => {
-                    const next = prev >= 0 ? Math.min(prev + 1, rows.length - 1) : 0;
-                    if (event.shiftKey && anchorRowId) {
-                        selectRange(anchorRowId, rows[next].id);
-                    }
-                    return next;
-                });
+                const next = Math.min(focusedRowIndex + 1, rows.length - 1);
+                if (event.shiftKey && anchorRowId) {
+                    selectRange(anchorRowId, rows[next].id);
+                }
+                focusRow(next);
             } else if (event.key === "ArrowUp") {
                 event.preventDefault();
-                setFocusedRowIndex((prev) => {
-                    const next = prev >= 0 ? Math.max(prev - 1, 0) : 0;
-                    if (event.shiftKey && anchorRowId) {
-                        selectRange(anchorRowId, rows[next].id);
-                    }
-                    return next;
-                });
+                const next = Math.max(focusedRowIndex - 1, 0);
+                if (event.shiftKey && anchorRowId) {
+                    selectRange(anchorRowId, rows[next].id);
+                }
+                focusRow(next);
             } else if (event.key === " ") {
                 event.preventDefault();
                 if (focusedRowIndex >= 0 && focusedRowIndex < rows.length) {
@@ -203,7 +212,7 @@ export function useTableSelection<TData>({
                 }
                 onRowSelectionChange?.(next);
                 setAnchorRowId(rows[0]?.id ?? null);
-                setFocusedRowIndex(0);
+                focusRow(0);
             }
         },
         [
@@ -215,6 +224,7 @@ export function useTableSelection<TData>({
             toggleRow,
             clearSelection,
             onRowSelectionChange,
+            focusRow,
         ]
     );
 
@@ -228,10 +238,6 @@ export function useTableSelection<TData>({
         [focusedRowIndex]
     );
 
-    const focusRowAt = useCallback((index: number) => {
-        setFocusedRowIndex(index);
-    }, []);
-
     return {
         focusedRowIndex,
         anchorRowId,
@@ -241,6 +247,7 @@ export function useTableSelection<TData>({
         getRowTabIndex,
         isRowFocused,
         focusRowAt,
+        focusRow,
         rowRefCallback,
     };
 }
