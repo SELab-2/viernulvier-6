@@ -16,6 +16,19 @@ vi.mock("@/i18n/routing", () => ({
     usePathname: vi.fn(),
 }));
 
+// ── Sonner mock ───────────────────────────────────────────────────────────────
+
+const mockToastSuccess = vi.fn();
+const mockToastError = vi.fn();
+
+vi.mock("sonner", () => ({
+    toast: {
+        success: (...args: unknown[]) => mockToastSuccess(...args),
+        error: (...args: unknown[]) => mockToastError(...args),
+    },
+    Toaster: () => null,
+}));
+
 // ── Hook mocks (hoisted) ──────────────────────────────────────────────────────
 
 const mockUseImportSession = vi.fn();
@@ -337,5 +350,123 @@ describe("HistoryDetail", () => {
 
         expect(screen.getByRole("alert")).toBeInTheDocument();
         expect(screen.getByRole("alert")).toHaveTextContent("Could not load session.");
+    });
+
+    it("clicking Revert on success calls toast.success with revert success message", async () => {
+        (mockUseImportSession as Mock).mockReturnValue({
+            data: defaultSession,
+            isPending: false,
+            isError: false,
+        });
+        (mockUseImportRows as Mock).mockReturnValue({
+            data: [rowWithTarget],
+            isPending: false,
+            isError: false,
+        });
+        mockRevertRowMutate.mockImplementation(
+            (_payload: unknown, options: { onSuccess?: () => void }) => {
+                options.onSuccess?.();
+            }
+        );
+
+        renderHistoryDetail();
+
+        const revertButton = screen.getByRole("button", { name: /^Revert$/i });
+        await userEvent.click(revertButton);
+
+        expect(mockToastSuccess).toHaveBeenCalledOnce();
+        expect(mockToastSuccess).toHaveBeenCalledWith("Row reverted");
+    });
+
+    it("clicking Revert on error calls toast.error with revert failed message", async () => {
+        (mockUseImportSession as Mock).mockReturnValue({
+            data: defaultSession,
+            isPending: false,
+            isError: false,
+        });
+        (mockUseImportRows as Mock).mockReturnValue({
+            data: [rowWithTarget],
+            isPending: false,
+            isError: false,
+        });
+        mockRevertRowMutate.mockImplementation(
+            (_payload: unknown, options: { onError?: () => void }) => {
+                options.onError?.();
+            }
+        );
+
+        renderHistoryDetail();
+
+        const revertButton = screen.getByRole("button", { name: /^Revert$/i });
+        await userEvent.click(revertButton);
+
+        expect(mockToastError).toHaveBeenCalledOnce();
+        expect(mockToastError).toHaveBeenCalledWith("Could not revert row.");
+    });
+
+    it("confirming rollback on success calls toast.success with rollback success message", async () => {
+        (mockUseImportSession as Mock).mockReturnValue({
+            data: defaultSession,
+            isPending: false,
+            isError: false,
+        });
+        (mockUseImportRows as Mock).mockReturnValue({
+            data: [rowWithTarget],
+            isPending: false,
+            isError: false,
+        });
+        mockRollbackSessionMutate.mockImplementation(
+            (_sessionId: unknown, options: { onSuccess?: () => void }) => {
+                options.onSuccess?.();
+            }
+        );
+
+        renderHistoryDetail();
+
+        const rollbackButton = screen.getByRole("button", { name: /Rollback entire import/i });
+        await userEvent.click(rollbackButton);
+
+        await waitFor(() => {
+            expect(screen.getByText("Rollback entire import?")).toBeInTheDocument();
+        });
+
+        const confirmButton = screen.getByRole("button", { name: /^Rollback$/i });
+        await userEvent.click(confirmButton);
+
+        expect(mockToastSuccess).toHaveBeenCalledOnce();
+        expect(mockToastSuccess).toHaveBeenCalledWith("Import rolled back");
+    });
+
+    it("confirming rollback on error calls toast.error with rollback failed message", async () => {
+        (mockUseImportSession as Mock).mockReturnValue({
+            data: defaultSession,
+            isPending: false,
+            isError: false,
+        });
+        (mockUseImportRows as Mock).mockReturnValue({
+            data: [rowWithTarget],
+            isPending: false,
+            isError: false,
+        });
+        mockRollbackSessionMutate.mockImplementation(
+            (_sessionId: unknown, options: { onError?: () => void }) => {
+                options.onError?.();
+            }
+        );
+
+        renderHistoryDetail();
+
+        const rollbackButton = screen.getByRole("button", { name: /Rollback entire import/i });
+        await userEvent.click(rollbackButton);
+
+        await waitFor(() => {
+            expect(screen.getByText("Rollback entire import?")).toBeInTheDocument();
+        });
+
+        const confirmButton = screen.getByRole("button", { name: /^Rollback$/i });
+        await userEvent.click(confirmButton);
+
+        expect(mockToastError).toHaveBeenCalledOnce();
+        expect(mockToastError).toHaveBeenCalledWith("Could not rollback import.");
     });
 });

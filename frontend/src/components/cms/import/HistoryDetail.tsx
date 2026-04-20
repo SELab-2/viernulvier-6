@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations, useFormatter } from "next-intl";
+import { toast } from "sonner";
 
 import { Link } from "@/i18n/routing";
 import {
@@ -198,7 +199,6 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
 
     const [rollbackOpen, setRollbackOpen] = useState(false);
     const [revertingId, setRevertingId] = useState<string | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const sessionQuery = useImportSession(sessionId);
     const rowsQuery = useImportRows(sessionId);
@@ -240,22 +240,22 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
         : "—";
 
     function handleRevert(rowId: string) {
-        setErrorMessage(null);
         setRevertingId(rowId);
         revertRow.mutate(
             { id: rowId, sessionId },
             {
                 onSettled: () => setRevertingId(null),
-                onError: () => setErrorMessage(tErrors("revertFailed")),
+                onSuccess: () => toast.success(t("revertSuccess")),
+                onError: () => toast.error(tErrors("revertFailed")),
             }
         );
     }
 
     function handleRollbackConfirm() {
-        setErrorMessage(null);
         setRollbackOpen(false);
         rollbackSession.mutate(sessionId, {
-            onError: () => setErrorMessage(tErrors("rollbackFailed")),
+            onSuccess: () => toast.success(t("rollbackSuccess")),
+            onError: () => toast.error(tErrors("rollbackFailed")),
         });
     }
 
@@ -313,27 +313,14 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
                 </Table>
             </div>
 
-            {/* Footer: rollback + error */}
-            <div className="flex flex-col gap-2">
-                {errorMessage !== null && (
-                    <p role="alert" className="text-destructive text-sm">
-                        {errorMessage}
-                    </p>
-                )}
-                {session.status === "committed" && (
-                    <div>
-                        <Button
-                            variant="destructive"
-                            onClick={() => {
-                                setErrorMessage(null);
-                                setRollbackOpen(true);
-                            }}
-                        >
-                            {t("rollback")}
-                        </Button>
-                    </div>
-                )}
-            </div>
+            {/* Footer: rollback */}
+            {session.status === "committed" && (
+                <div>
+                    <Button variant="destructive" onClick={() => setRollbackOpen(true)}>
+                        {t("rollback")}
+                    </Button>
+                </div>
+            )}
 
             {/* Rollback confirm dialog */}
             <Dialog open={rollbackOpen} onOpenChange={setRollbackOpen}>

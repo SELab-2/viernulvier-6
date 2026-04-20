@@ -552,7 +552,9 @@
                 "rollbackConfirmBody": "Alle aangemaakte rijen worden verwijderd en bijgewerkte rijen hersteld. Deze actie kan niet ongedaan worden gemaakt.",
                 "rollbackConfirmCta": "Terugdraaien",
                 "rollbackCancel": "Annuleren",
-                "reverting": "Bezig..."
+                "reverting": "Bezig...",
+                "revertSuccess": "Rij teruggedraaid",
+                "rollbackSuccess": "Import teruggedraaid"
             }
         },
         "Collections": {

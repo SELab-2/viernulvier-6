@@ -552,7 +552,9 @@
                 "rollbackConfirmBody": "All created rows will be deleted and updated rows will be restored. This action cannot be undone.",
                 "rollbackConfirmCta": "Rollback",
                 "rollbackCancel": "Cancel",
-                "reverting": "Reverting..."
+                "reverting": "Reverting...",
+                "revertSuccess": "Row reverted",
+                "rollbackSuccess": "Import rolled back"
             }
         },
         "Collections": {
