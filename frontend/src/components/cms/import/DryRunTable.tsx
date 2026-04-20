@@ -38,58 +38,72 @@ function formatTarget(targetEntityId: string | null): string {
     return `${targetEntityId.slice(0, 8)}…`;
 }
 
+const COLUMNS = 5;
+
 export function DryRunTable({ rows, onSelectRow }: DryRunTableProps) {
     const t = useTranslations("Cms.Import");
 
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead className="w-12">{t("table.rowNumber")}</TableHead>
-                    <TableHead>{t("table.status")}</TableHead>
-                    <TableHead>{t("table.target")}</TableHead>
-                    <TableHead className="w-24">{t("table.warnings")}</TableHead>
-                    <TableHead className="w-16">{t("table.action")}</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {rows.map((row) => (
-                    <TableRow
-                        key={row.id}
-                        role="button"
-                        tabIndex={0}
-                        className="cursor-pointer"
-                        onClick={() => onSelectRow(row)}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                                e.preventDefault();
-                                onSelectRow(row);
-                            }
-                        }}
-                    >
-                        <TableCell className="font-mono text-xs">{row.rowNumber}</TableCell>
-                        <TableCell>
-                            <StatusBadge status={row.status} />
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">
-                            {formatTarget(row.targetEntityId)}
-                        </TableCell>
-                        <TableCell className="text-xs">{row.warnings.length}</TableCell>
-                        <TableCell>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onSelectRow(row);
-                                }}
-                            >
-                                {t("table.open")}
-                            </Button>
-                        </TableCell>
+        <div className="rounded-md border">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead className="w-12">{t("table.rowNumber")}</TableHead>
+                        <TableHead className="w-36">{t("table.status")}</TableHead>
+                        <TableHead>{t("table.target")}</TableHead>
+                        <TableHead className="w-24">{t("table.warnings")}</TableHead>
+                        <TableHead className="w-20">{t("table.action")}</TableHead>
                     </TableRow>
-                ))}
-            </TableBody>
-        </Table>
+                </TableHeader>
+                <TableBody>
+                    {rows.length === 0 && (
+                        <TableRow>
+                            <TableCell
+                                colSpan={COLUMNS}
+                                className="text-muted-foreground py-8 text-center text-sm"
+                            >
+                                {t("summary.running")}
+                            </TableCell>
+                        </TableRow>
+                    )}
+                    {rows.map((row) => (
+                        <TableRow
+                            key={row.id}
+                            role="button"
+                            tabIndex={0}
+                            className="cursor-pointer"
+                            onClick={() => onSelectRow(row)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    onSelectRow(row);
+                                }
+                            }}
+                        >
+                            <TableCell className="font-mono text-xs">{row.rowNumber}</TableCell>
+                            <TableCell>
+                                <StatusBadge status={row.status} />
+                            </TableCell>
+                            <TableCell className="font-mono text-xs">
+                                {formatTarget(row.targetEntityId)}
+                            </TableCell>
+                            <TableCell className="text-xs">{row.warnings.length}</TableCell>
+                            <TableCell>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onSelectRow(row);
+                                    }}
+                                >
+                                    {t("table.open")}
+                                </Button>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </div>
     );
 }

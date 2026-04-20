@@ -30,26 +30,33 @@ export function CommitStage({ sessionId }: CommitStageProps) {
 
     if (sessionLoading) {
         return (
-            <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 pt-12">
+            <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 pt-16">
                 <Spinner className="size-8" />
+                <p className="text-muted-foreground text-sm">{t("commit.helperText")}</p>
             </div>
         );
     }
 
     if (sessionError) {
         return (
-            <p role="alert" className="text-destructive pt-4 text-sm">
-                {t("errors.sessionLoadFailed")}
-            </p>
+            <div
+                role="alert"
+                className="border-destructive/40 bg-destructive/10 text-destructive mx-auto mt-4 max-w-3xl rounded-md border px-4 py-3 text-sm"
+            >
+                <p className="font-medium">{t("errors.sessionLoadFailed")}</p>
+            </div>
         );
     }
 
     if (session?.status === "failed") {
         return (
             <div className="mx-auto max-w-3xl space-y-4 pt-4">
-                <p role="alert" className="text-destructive text-sm">
-                    {t("commit.failed")}
-                </p>
+                <div
+                    role="alert"
+                    className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border px-4 py-3 text-sm"
+                >
+                    <p className="font-medium">{t("commit.failed")}</p>
+                </div>
                 <Button variant="outline" asChild>
                     <Link href={`/cms/import?session=${sessionId}`}>
                         {t("commit.backToDryRun")}
@@ -61,7 +68,7 @@ export function CommitStage({ sessionId }: CommitStageProps) {
 
     if (session?.status === "committed") {
         return (
-            <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 pt-12">
+            <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 pt-16">
                 <Spinner className="size-8" />
                 <p className="text-muted-foreground text-sm">{t("commit.completed")}</p>
             </div>
@@ -69,9 +76,10 @@ export function CommitStage({ sessionId }: CommitStageProps) {
     }
 
     return (
-        <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 pt-12">
+        <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 pt-16">
             <Spinner className="size-8" />
             <p className="text-muted-foreground text-sm">{t("commit.running")}</p>
+            <p className="text-muted-foreground/70 text-xs">{t("commit.helperText")}</p>
         </div>
     );
 }

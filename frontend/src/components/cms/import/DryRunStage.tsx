@@ -59,25 +59,34 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
 
     if (sessionError) {
         return (
-            <p role="alert" className="text-destructive pt-4 text-sm">
-                {t("errors.sessionLoadFailed")}
-            </p>
+            <div
+                role="alert"
+                className="border-destructive/40 bg-destructive/10 text-destructive mt-4 rounded-md border px-4 py-3 text-sm"
+            >
+                <p className="font-medium">{t("errors.sessionLoadFailed")}</p>
+            </div>
         );
     }
 
     if (rowsError) {
         return (
-            <p role="alert" className="text-destructive pt-4 text-sm">
-                {t("errors.rowsLoadFailed")}
-            </p>
+            <div
+                role="alert"
+                className="border-destructive/40 bg-destructive/10 text-destructive mt-4 rounded-md border px-4 py-3 text-sm"
+            >
+                <p className="font-medium">{t("errors.rowsLoadFailed")}</p>
+            </div>
         );
     }
 
     if (fieldsError) {
         return (
-            <p role="alert" className="text-destructive pt-4 text-sm">
-                {t("errors.fieldsLoadFailed")}
-            </p>
+            <div
+                role="alert"
+                className="border-destructive/40 bg-destructive/10 text-destructive mt-4 rounded-md border px-4 py-3 text-sm"
+            >
+                <p className="font-medium">{t("errors.fieldsLoadFailed")}</p>
+            </div>
         );
     }
 
@@ -95,10 +104,19 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
 
     return (
         <div className="mx-auto max-w-4xl space-y-6 pt-4">
+            <div>
+                <h2 className="font-display text-foreground text-lg font-bold tracking-tight">
+                    {t("stepper.dryRun")}
+                </h2>
+                <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed">
+                    {t("dryRun.helperText")}
+                </p>
+            </div>
+
             <DryRunSummary rows={resolvedRows} sessionStatus={session.status} />
             <DryRunTable rows={resolvedRows} onSelectRow={(row) => setSelectedId(row.id)} />
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 pt-2">
                 <div className="flex items-center gap-3">
                     <Button
                         variant="outline"

@@ -105,8 +105,12 @@ function MappingStageInner({ session, fields, previewRows, savedMapping }: Mappi
     return (
         <div className="mx-auto max-w-3xl space-y-6 pt-4">
             <div>
-                <h2 className="text-base font-semibold">{t("mapping.title")}</h2>
-                <p className="text-muted-foreground mt-1 text-sm">{t("mapping.description")}</p>
+                <h2 className="font-display text-foreground text-lg font-bold tracking-tight">
+                    {t("mapping.title")}
+                </h2>
+                <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed">
+                    {t("mapping.helperText")}
+                </p>
             </div>
 
             {missingRequired.length > 0 && (
@@ -115,7 +119,7 @@ function MappingStageInner({ session, fields, previewRows, savedMapping }: Mappi
                     className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border px-4 py-3 text-sm"
                 >
                     <p className="font-medium">{t("mapping.requiredMissing")}</p>
-                    <ul className="mt-1 list-disc pl-4">
+                    <ul className="mt-1.5 list-disc space-y-0.5 pl-4">
                         {missingRequired.map((f) => (
                             <li key={f.name}>{f.label}</li>
                         ))}
@@ -135,32 +139,34 @@ function MappingStageInner({ session, fields, previewRows, savedMapping }: Mappi
                 </p>
             )}
 
-            <table className="w-full text-sm">
-                <thead>
-                    <tr className="text-left">
-                        <th className="text-muted-foreground pr-4 pb-2 text-xs font-medium">
-                            {t("mapping.headerColumn")}
-                        </th>
-                        <th className="text-muted-foreground pb-2 text-xs font-medium">
-                            {t("mapping.fieldColumn")}
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {headers.map((header) => (
-                        <ColumnMapRow
-                            key={header}
-                            header={header}
-                            sampleValues={buildSampleValues(header, previewRows)}
-                            fields={fields}
-                            currentMapping={columns[header] ?? null}
-                            onChange={(fieldName) => handleColumnChange(header, fieldName)}
-                        />
-                    ))}
-                </tbody>
-            </table>
+            <div className="overflow-x-auto">
+                <table className="w-full min-w-[500px] text-sm">
+                    <thead>
+                        <tr className="border-foreground/10 border-b text-left">
+                            <th className="text-muted-foreground pr-4 pb-2 font-mono text-[10px] font-medium tracking-[1.5px] uppercase">
+                                {t("mapping.headerColumn")}
+                            </th>
+                            <th className="text-muted-foreground pb-2 font-mono text-[10px] font-medium tracking-[1.5px] uppercase">
+                                {t("mapping.fieldColumn")}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {headers.map((header) => (
+                            <ColumnMapRow
+                                key={header}
+                                header={header}
+                                sampleValues={buildSampleValues(header, previewRows)}
+                                fields={fields}
+                                currentMapping={columns[header] ?? null}
+                                onChange={(fieldName) => handleColumnChange(header, fieldName)}
+                            />
+                        ))}
+                    </tbody>
+                </table>
+            </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 pt-2">
                 <Button onClick={handleSave} disabled={isSaving} variant="outline">
                     {isSaving ? t("mapping.saving") : t("mapping.save")}
                 </Button>
@@ -170,7 +176,7 @@ function MappingStageInner({ session, fields, previewRows, savedMapping }: Mappi
                 </Button>
 
                 {isDirty && (
-                    <span className="text-muted-foreground text-xs">
+                    <span className="text-muted-foreground font-mono text-[10px] tracking-wide">
                         {t("mapping.unsavedChanges")}
                     </span>
                 )}

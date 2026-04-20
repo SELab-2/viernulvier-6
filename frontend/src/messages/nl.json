@@ -418,6 +418,8 @@
             "comingSoon": "Binnenkort beschikbaar",
             "notAvailable": "Import functionaliteit",
             "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier data importeren van externe bronnen zoals UiTdatabank.",
+            "viewHistory": "Geschiedenis bekijken",
+            "backToImport": "Terug naar importeren",
             "stepper": {
                 "upload": "Uploaden",
                 "mapping": "Mappen",
@@ -429,6 +431,7 @@
             "upload": {
                 "title": "CSV-bestand uploaden",
                 "description": "Sleep een bestand hierheen of klik om te bladeren.",
+                "helperText": "Kies een CSV-bestand en een entiteit waarvoor je data wilt importeren. De kolommen koppel je in de volgende stap.",
                 "fileLabel": "Bestand",
                 "entityTypeLabel": "Entiteitstype",
                 "entityTypePlaceholder": "Kies een type…",
@@ -438,6 +441,7 @@
             "mapping": {
                 "title": "Kolommen mappen",
                 "description": "Koppel elke CSV-kolom aan een veld in het systeem.",
+                "helperText": "Koppel elke kolom uit je bestand aan het juiste veld. Verplichte velden zijn gemarkeerd met een asterisk.",
                 "headerColumn": "CSV-kolom",
                 "sampleValuesLabel": "Voorbeeldwaarden",
                 "fieldColumn": "Veld",
@@ -475,11 +479,15 @@
                     "reverted": "Teruggedraaid"
                 }
             },
+            "dryRun": {
+                "helperText": "Controleer wat er zou gebeuren. Los fouten op en pas rijen aan voordat je definitief importeert."
+            },
             "commit": {
                 "running": "De import wordt uitgevoerd...",
                 "completed": "Import voltooid. U wordt doorgestuurd...",
                 "failed": "De import is mislukt.",
-                "backToDryRun": "Terug naar controle"
+                "backToDryRun": "Terug naar controle",
+                "helperText": "De import wordt uitgevoerd. Dit duurt meestal maar een paar seconden."
             },
             "actions": {
                 "commit": "Importeren",
@@ -513,6 +521,8 @@
             },
             "history": {
                 "title": "Importgeschiedenis",
+                "backToImport": "Terug naar importeren",
+                "emptyHelperText": "Zodra je een import uitvoert, verschijnt die hier.",
                 "columns": {
                     "createdAt": "Aangemaakt",
                     "entityType": "Entiteitstype",

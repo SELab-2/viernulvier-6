@@ -55,24 +55,40 @@ function SessionRow({ session, openLabel, statusLabel }: SessionRowProps) {
 
     return (
         <TableRow>
-            <TableCell className="whitespace-nowrap">{formattedDate}</TableCell>
-            <TableCell>{session.entityType}</TableCell>
-            <TableCell className="max-w-[200px] truncate">{session.filename}</TableCell>
-            <TableCell>
+            <TableCell className="w-36 text-xs whitespace-nowrap">{formattedDate}</TableCell>
+            <TableCell className="w-32">{session.entityType}</TableCell>
+            <TableCell className="max-w-[200px] truncate text-sm">{session.filename}</TableCell>
+            <TableCell className="w-36">
                 <span
                     className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${SESSION_STATUS_CLASSES[session.status]}`}
                 >
                     {statusLabel}
                 </span>
             </TableCell>
-            <TableCell className="text-right">{session.rowCount}</TableCell>
-            <TableCell>
+            <TableCell className="w-20 text-right text-xs tabular-nums">
+                {session.rowCount}
+            </TableCell>
+            <TableCell className="w-20">
                 <Link
                     href={`/cms/import/history/${session.id}`}
                     className="text-sm font-medium underline-offset-2 hover:underline"
                 >
                     {openLabel}
                 </Link>
+            </TableCell>
+        </TableRow>
+    );
+}
+
+// ─── Empty state ───────────────────────────────────────────────────────────────
+
+function EmptyState() {
+    const t = useTranslations("Cms.Import.history");
+    return (
+        <TableRow>
+            <TableCell colSpan={COLUMNS} className="py-12 text-center">
+                <p className="text-foreground text-sm font-medium">{t("empty")}</p>
+                <p className="text-muted-foreground mt-1 text-xs">{t("emptyHelperText")}</p>
             </TableCell>
         </TableRow>
     );
@@ -92,38 +108,34 @@ export function HistoryList() {
 
     if (isError) {
         return (
-            <p role="alert" className="text-destructive mt-4 text-sm">
-                {tErrors("historyLoadFailed")}
-            </p>
+            <div
+                role="alert"
+                className="border-destructive/40 bg-destructive/10 text-destructive mt-4 rounded-md border px-4 py-3 text-sm"
+            >
+                <p className="font-medium">{tErrors("historyLoadFailed")}</p>
+            </div>
         );
     }
 
     return (
-        <div className="mt-4 space-y-4">
+        <div className="space-y-4">
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>{t("columns.createdAt")}</TableHead>
-                            <TableHead>{t("columns.entityType")}</TableHead>
+                            <TableHead className="w-36">{t("columns.createdAt")}</TableHead>
+                            <TableHead className="w-32">{t("columns.entityType")}</TableHead>
                             <TableHead>{t("columns.filename")}</TableHead>
-                            <TableHead>{t("columns.status")}</TableHead>
-                            <TableHead className="text-right">{t("columns.rowCount")}</TableHead>
-                            <TableHead>{t("columns.actions")}</TableHead>
+                            <TableHead className="w-36">{t("columns.status")}</TableHead>
+                            <TableHead className="w-20 text-right">
+                                {t("columns.rowCount")}
+                            </TableHead>
+                            <TableHead className="w-20">{t("columns.actions")}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {isPending && <SkeletonRows />}
-                        {!isPending && data && data.length === 0 && page === 1 && (
-                            <TableRow>
-                                <TableCell
-                                    colSpan={COLUMNS}
-                                    className="text-muted-foreground py-8 text-center text-sm"
-                                >
-                                    {t("empty")}
-                                </TableCell>
-                            </TableRow>
-                        )}
+                        {!isPending && data && data.length === 0 && page === 1 && <EmptyState />}
                         {!isPending &&
                             data &&
                             data.map((session) => (
@@ -147,7 +159,9 @@ export function HistoryList() {
                 >
                     {t("previous")}
                 </Button>
-                <span className="text-muted-foreground text-sm">{t("pageLabel", { page })}</span>
+                <span className="text-muted-foreground font-mono text-xs">
+                    {t("pageLabel", { page })}
+                </span>
                 <Button
                     variant="outline"
                     size="sm"

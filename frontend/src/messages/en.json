@@ -418,6 +418,8 @@
             "comingSoon": "Coming soon",
             "notAvailable": "Import functionality",
             "description": "This feature is still under development. Soon you will be able to import data from external sources such as UiTdatabank here.",
+            "viewHistory": "View history",
+            "backToImport": "Back to import",
             "stepper": {
                 "upload": "Upload",
                 "mapping": "Map",
@@ -429,6 +431,7 @@
             "upload": {
                 "title": "Upload CSV file",
                 "description": "Drag a file here or click to browse.",
+                "helperText": "Pick a CSV file and an entity type. You'll map the columns in the next step.",
                 "fileLabel": "File",
                 "entityTypeLabel": "Entity type",
                 "entityTypePlaceholder": "Choose a type…",
@@ -438,6 +441,7 @@
             "mapping": {
                 "title": "Map columns",
                 "description": "Link each CSV column to a field in the system.",
+                "helperText": "Map each column in your file to a field. Required fields are marked with an asterisk.",
                 "headerColumn": "CSV column",
                 "sampleValuesLabel": "Sample values",
                 "fieldColumn": "Field",
@@ -475,11 +479,15 @@
                     "reverted": "Reverted"
                 }
             },
+            "dryRun": {
+                "helperText": "Review what will happen. Fix errors and adjust rows before committing."
+            },
             "commit": {
                 "running": "Import is running...",
                 "completed": "Import complete. Redirecting...",
                 "failed": "The import failed.",
-                "backToDryRun": "Back to review"
+                "backToDryRun": "Back to review",
+                "helperText": "The import is running. This usually takes only a few seconds."
             },
             "actions": {
                 "commit": "Commit",
@@ -513,6 +521,8 @@
             },
             "history": {
                 "title": "Import history",
+                "backToImport": "Back to import",
+                "emptyHelperText": "Once you run an import, it will appear here.",
                 "columns": {
                     "createdAt": "Created",
                     "entityType": "Entity type",

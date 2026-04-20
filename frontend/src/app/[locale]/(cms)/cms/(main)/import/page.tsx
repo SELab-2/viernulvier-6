@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 import { animate } from "animejs";
 import { useSearchParams } from "next/navigation";
+import { History } from "lucide-react";
 import { PageHeader } from "@/components/cms/PageHeader";
 import { ImportStepper, type ImportStage } from "@/components/cms/import/ImportStepper";
 import { CommitStage } from "@/components/cms/import/CommitStage";
@@ -11,6 +12,8 @@ import { DryRunStage } from "@/components/cms/import/DryRunStage";
 import { MappingStage } from "@/components/cms/import/MappingStage";
 import { UploadStage } from "@/components/cms/import/UploadStage";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/routing";
 import { useImportSession } from "@/hooks/api/useImport";
 import type { ImportSessionStatus } from "@/types/models/import.types";
 
@@ -69,7 +72,25 @@ export default function ImportPage() {
 
             {/* Content - scrollable */}
             <div ref={contentRef} className="flex-1 overflow-auto">
-                <ImportStepper currentStage={currentStage} />
+                <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                        <ImportStepper currentStage={currentStage} />
+                    </div>
+                    {sessionId === "" && (
+                        <div className="mt-1 ml-4 shrink-0">
+                            <Button variant="ghost" size="sm" asChild>
+                                <Link
+                                    href="/cms/import/history"
+                                    className="flex items-center gap-1.5 font-mono text-xs tracking-wide"
+                                >
+                                    <History className="h-3.5 w-3.5" />
+                                    {t("viewHistory")}
+                                </Link>
+                            </Button>
+                        </div>
+                    )}
+                </div>
+
                 {sessionId !== "" && sessionLoading && !sessionError && (
                     <div className="mx-auto max-w-3xl space-y-6 pt-4">
                         <Skeleton className="h-5 w-48" />

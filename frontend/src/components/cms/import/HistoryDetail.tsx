@@ -262,30 +262,44 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
     return (
         <div className="space-y-6">
             {/* Session metadata */}
-            <dl className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm sm:grid-cols-3 lg:grid-cols-5">
-                <div>
-                    <dt className="text-muted-foreground font-medium">{t("filename")}</dt>
-                    <dd className="mt-0.5 truncate">{session.filename}</dd>
-                </div>
-                <div>
-                    <dt className="text-muted-foreground font-medium">{t("entityType")}</dt>
-                    <dd className="mt-0.5">{session.entityType}</dd>
-                </div>
-                <div>
-                    <dt className="text-muted-foreground font-medium">{t("committedAt")}</dt>
-                    <dd className="mt-0.5">{committedAtFormatted}</dd>
-                </div>
-                <div>
-                    <dt className="text-muted-foreground font-medium">{t("rowCount")}</dt>
-                    <dd className="mt-0.5">{session.rowCount}</dd>
-                </div>
-                <div>
-                    <dt className="text-muted-foreground font-medium">{t("status")}</dt>
-                    <dd className="mt-0.5">
-                        <SessionStatusBadge status={session.status} />
-                    </dd>
-                </div>
-            </dl>
+            <div className="border-foreground/10 bg-foreground/[0.02] rounded-md border p-4">
+                <dl className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm sm:grid-cols-3 lg:grid-cols-5">
+                    <div>
+                        <dt className="text-muted-foreground font-mono text-[9px] tracking-[1.5px] uppercase">
+                            {t("filename")}
+                        </dt>
+                        <dd className="mt-1 truncate text-sm font-medium">{session.filename}</dd>
+                    </div>
+                    <div>
+                        <dt className="text-muted-foreground font-mono text-[9px] tracking-[1.5px] uppercase">
+                            {t("entityType")}
+                        </dt>
+                        <dd className="mt-1 text-sm font-medium">{session.entityType}</dd>
+                    </div>
+                    <div>
+                        <dt className="text-muted-foreground font-mono text-[9px] tracking-[1.5px] uppercase">
+                            {t("committedAt")}
+                        </dt>
+                        <dd className="mt-1 text-sm font-medium">{committedAtFormatted}</dd>
+                    </div>
+                    <div>
+                        <dt className="text-muted-foreground font-mono text-[9px] tracking-[1.5px] uppercase">
+                            {t("rowCount")}
+                        </dt>
+                        <dd className="mt-1 text-sm font-medium tabular-nums">
+                            {session.rowCount}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt className="text-muted-foreground font-mono text-[9px] tracking-[1.5px] uppercase">
+                            {t("status")}
+                        </dt>
+                        <dd className="mt-1">
+                            <SessionStatusBadge status={session.status} />
+                        </dd>
+                    </div>
+                </dl>
+            </div>
 
             {/* Rows table */}
             <div className="rounded-md border">

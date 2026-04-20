@@ -2,6 +2,7 @@
 
 import { useRef, useState, type DragEvent, type ChangeEvent } from "react";
 import { useTranslations } from "next-intl";
+import { UploadCloud } from "lucide-react";
 
 import { useRouter } from "@/i18n/routing";
 import { useCreateImportSession, useEntityTypes } from "@/hooks/api/useImport";
@@ -88,19 +89,23 @@ export function UploadStage() {
     return (
         <div className="mx-auto max-w-lg space-y-6 pt-4">
             <div>
-                <h2 className="text-base font-semibold">{t("upload.title")}</h2>
-                <p className="text-muted-foreground mt-1 text-sm">{t("upload.description")}</p>
+                <h2 className="font-display text-foreground text-lg font-bold tracking-tight">
+                    {t("upload.title")}
+                </h2>
+                <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed">
+                    {t("upload.helperText")}
+                </p>
             </div>
 
             {/* Drop zone */}
             <div>
-                <p className="mb-1.5 text-sm font-medium">{t("upload.fileLabel")}</p>
+                <p className="mb-2 text-sm font-medium">{t("upload.fileLabel")}</p>
                 <div
                     role="button"
                     tabIndex={0}
                     aria-label={t("upload.fileLabel")}
                     className={[
-                        "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed px-6 py-10 text-center transition-colors",
+                        "flex cursor-pointer flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed px-6 py-12 text-center transition-colors",
                         isDragging
                             ? "border-foreground bg-accent"
                             : "border-border hover:border-foreground/40",
@@ -116,11 +121,20 @@ export function UploadStage() {
                     }}
                 >
                     {file ? (
-                        <span className="text-sm font-medium">{file.name}</span>
+                        <>
+                            <UploadCloud className="text-foreground h-6 w-6" strokeWidth={1.5} />
+                            <span className="text-sm font-medium">{file.name}</span>
+                        </>
                     ) : (
-                        <span className="text-muted-foreground text-sm">
-                            {t("upload.description")}
-                        </span>
+                        <>
+                            <UploadCloud
+                                className="text-muted-foreground h-6 w-6"
+                                strokeWidth={1.5}
+                            />
+                            <span className="text-muted-foreground text-sm">
+                                {t("upload.description")}
+                            </span>
+                        </>
                     )}
                 </div>
                 <input
@@ -135,7 +149,7 @@ export function UploadStage() {
 
             {/* Entity type select */}
             <div>
-                <p className="mb-1.5 text-sm font-medium">{t("upload.entityTypeLabel")}</p>
+                <p className="mb-2 text-sm font-medium">{t("upload.entityTypeLabel")}</p>
                 {entityTypesLoading ? (
                     <Skeleton className="h-9 w-full" />
                 ) : (
