@@ -506,7 +506,34 @@
                 "dryRunStartFailed": "Could not start dry-run.",
                 "rowsLoadFailed": "Could not load rows.",
                 "commitFailed": "Commit failed.",
-                "rerunFailed": "Re-run dry-run failed."
+                "rerunFailed": "Re-run dry-run failed.",
+                "historyLoadFailed": "Could not load import history."
+            },
+            "history": {
+                "title": "Import history",
+                "columns": {
+                    "createdAt": "Created",
+                    "entityType": "Entity type",
+                    "filename": "File",
+                    "status": "Status",
+                    "rowCount": "Rows",
+                    "actions": "Actions"
+                },
+                "open": "Open",
+                "empty": "No import sessions yet.",
+                "previous": "Previous",
+                "next": "Next",
+                "pageLabel": "Page {page}",
+                "sessionStatus": {
+                    "uploaded": "Uploaded",
+                    "mapping": "Mapping columns",
+                    "dry_run_pending": "Dry-run running",
+                    "dry_run_ready": "Ready for review",
+                    "committing": "Importing",
+                    "committed": "Imported",
+                    "failed": "Failed",
+                    "cancelled": "Cancelled"
+                }
             }
         },
         "Collections": {

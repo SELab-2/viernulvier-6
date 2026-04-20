@@ -506,7 +506,34 @@
                 "dryRunStartFailed": "Starten van dry-run mislukt.",
                 "rowsLoadFailed": "Rijen konden niet geladen worden.",
                 "commitFailed": "Importeren mislukt.",
-                "rerunFailed": "Dry-run opnieuw uitvoeren mislukt."
+                "rerunFailed": "Dry-run opnieuw uitvoeren mislukt.",
+                "historyLoadFailed": "Kon importgeschiedenis niet laden."
+            },
+            "history": {
+                "title": "Importgeschiedenis",
+                "columns": {
+                    "createdAt": "Aangemaakt",
+                    "entityType": "Entiteitstype",
+                    "filename": "Bestand",
+                    "status": "Status",
+                    "rowCount": "Rijen",
+                    "actions": "Acties"
+                },
+                "open": "Openen",
+                "empty": "Nog geen importsessies.",
+                "previous": "Vorige",
+                "next": "Volgende",
+                "pageLabel": "Pagina {page}",
+                "sessionStatus": {
+                    "uploaded": "Geüpload",
+                    "mapping": "Kolommen koppelen",
+                    "dry_run_pending": "Controle bezig",
+                    "dry_run_ready": "Klaar voor controle",
+                    "committing": "Bezig met importeren",
+                    "committed": "Geïmporteerd",
+                    "failed": "Mislukt",
+                    "cancelled": "Geannuleerd"
+                }
             }
         },
         "Collections": {
