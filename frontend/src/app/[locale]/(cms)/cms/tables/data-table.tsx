@@ -320,8 +320,9 @@ export function DataTable<TData, TValue>({
                                         className={cn(
                                             "border-0 transition-colors outline-none",
                                             "hover:bg-foreground/[0.08]",
-                                            "data-[state=selected]:!bg-foreground/[0.18]",
-                                            "data-[focused=true]:bg-foreground/[0.12] data-[focused=true]:ring-primary data-[focused=true]:ring-2 data-[focused=true]:ring-inset",
+                                            "data-[state=selected]:bg-foreground/[0.18]",
+                                            "data-[state=selected]:hover:bg-foreground/[0.22]",
+                                            "data-[focused=true]:bg-foreground/[0.12] data-[state=selected]:data-[focused=true]:bg-foreground/[0.22] data-[focused=true]:ring-primary data-[focused=true]:ring-2 data-[focused=true]:ring-inset",
                                             rowIndex % 2 === 1 && !row.getIsSelected()
                                                 ? "bg-secondary"
                                                 : "",
