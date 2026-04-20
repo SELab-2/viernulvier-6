@@ -1,6 +1,7 @@
 use axum::{
     Json,
     extract::{Multipart, Path, Query, State},
+    http::StatusCode,
 };
 use serde::Deserialize;
 use utoipa::IntoParams;
@@ -348,6 +349,120 @@ pub async fn update_mapping(
         .ok_or(AppError::NotFound)?;
 
     Ok(Json(updated.into()))
+}
+
+/// POST /import/sessions/{id}/dry-run — enqueue a dry-run for the session.
+///
+/// Allowed from `mapping` or `dry_run_ready` status only.
+/// Sets status to `dry_run_pending` and returns 202 Accepted.
+/// The background worker (Phase 7) will pick the session up and execute the dry-run.
+#[utoipa::path(
+    post,
+    path = "/import/sessions/{id}/dry-run",
+    params(("id" = Uuid, Path, description = "Session id")),
+    responses(
+        (status = 202, body = ImportSessionResponse, description = "Dry-run queued"),
+        (status = 400, description = "Session not in a state that allows dry-run"),
+        (status = 404, description = "Session not found"),
+    ),
+    tag = "import",
+)]
+pub async fn enqueue_dry_run(
+    State(state): State<AppState>,
+    _: EditorUser,
+    Path(id): Path<Uuid>,
+) -> Result<(StatusCode, Json<ImportSessionResponse>), AppError> {
+    // 1. Load session → 404 if missing
+    let session = state
+        .db
+        .imports()
+        .get_session(id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    // 2. Allow only if status ∈ {Mapping, DryRunReady}
+    let allowed = matches!(
+        session.status,
+        ImportSessionStatus::Mapping | ImportSessionStatus::DryRunReady
+    );
+    if !allowed {
+        let label = status_label(session.status);
+        return Err(AppError::PayloadError(format!(
+            "cannot enqueue dry-run for session in status {label}"
+        )));
+    }
+
+    // 3. Transition to dry_run_pending
+    state
+        .db
+        .imports()
+        .update_status(id, ImportSessionStatus::DryRunPending, None)
+        .await?;
+
+    // 4. Re-fetch and return 202
+    let updated = state
+        .db
+        .imports()
+        .get_session(id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    Ok((StatusCode::ACCEPTED, Json(updated.into())))
+}
+
+/// POST /import/sessions/{id}/commit — enqueue a commit for the session.
+///
+/// Allowed only from `dry_run_ready` status.
+/// Sets status to `committing` and returns 202 Accepted.
+/// The background worker (Phase 7) will pick the session up and write to the DB.
+#[utoipa::path(
+    post,
+    path = "/import/sessions/{id}/commit",
+    params(("id" = Uuid, Path, description = "Session id")),
+    responses(
+        (status = 202, body = ImportSessionResponse, description = "Commit queued"),
+        (status = 400, description = "Session is not in dry_run_ready state"),
+        (status = 404, description = "Session not found"),
+    ),
+    tag = "import",
+)]
+pub async fn enqueue_commit(
+    State(state): State<AppState>,
+    _: EditorUser,
+    Path(id): Path<Uuid>,
+) -> Result<(StatusCode, Json<ImportSessionResponse>), AppError> {
+    // 1. Load session → 404 if missing
+    let session = state
+        .db
+        .imports()
+        .get_session(id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    // 2. Allow only if status == DryRunReady
+    if session.status != ImportSessionStatus::DryRunReady {
+        let label = status_label(session.status);
+        return Err(AppError::PayloadError(format!(
+            "cannot enqueue commit for session in status {label}"
+        )));
+    }
+
+    // 3. Transition to committing
+    state
+        .db
+        .imports()
+        .update_status(id, ImportSessionStatus::Committing, None)
+        .await?;
+
+    // 4. Re-fetch and return 202
+    let updated = state
+        .db
+        .imports()
+        .get_session(id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    Ok((StatusCode::ACCEPTED, Json(updated.into())))
 }
 
 /// Strip control characters (including newlines and null bytes) from a raw
