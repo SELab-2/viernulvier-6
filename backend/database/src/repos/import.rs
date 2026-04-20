@@ -460,14 +460,18 @@ impl<'a> ImportRepo<'a> {
         Ok(())
     }
 
-    /// Finalise a row after commit by setting its terminal status and target entity id.
+    /// Finalise a committed row's status and target entity id.
     ///
-    /// Unlike `record_committed_row`, this accepts rows in any starting status and sets
-    /// the terminal status based on the `created` flag: `true` → `created`, `false` →
-    /// `updated`. Used by the commit worker, which may process rows that never went
-    /// through a dry-run (starting status `pending`).
+    /// Unlike `record_committed_row` (which rejects non-committable rows), this accepts
+    /// any starting status and derives the terminal status from the `created` flag:
+    /// `true` → `created`, `false` → `updated`.
+    ///
+    /// Runs inside a caller-supplied transaction so the row-status flip is atomic
+    /// with the entity write performed by `adapter.apply_row` — without this,
+    /// a crash between `tx.commit()` and the row update would cause duplicate entity
+    /// creation on the next commit-worker iteration.
     pub async fn finalise_committed_row(
-        &self,
+        tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
         row_id: Uuid,
         target_entity_id: Uuid,
         created: bool,
@@ -481,12 +485,16 @@ impl<'a> ImportRepo<'a> {
             target_entity_id,
             row_id,
         )
-        .execute(self.db)
+        .execute(&mut **tx)
         .await?;
         Ok(())
     }
 
-    /// Terminally mark a session as committed, setting `committed_at = NOW()`.
+    /// Terminally mark a session as committed.
+    ///
+    /// Sets `status = 'committed'`, `committed_at = NOW()`, and clears any prior
+    /// `error` text. Safe to call once per session; the current flow transitions
+    /// through `Committing` exactly once.
     pub async fn mark_session_committed(&self, session_id: Uuid) -> Result<(), DatabaseError> {
         sqlx::query!(
             r#"UPDATE import_sessions

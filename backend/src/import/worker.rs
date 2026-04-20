@@ -9,7 +9,7 @@ use std::collections::BTreeMap;
 use database::Database;
 use database::models::import_row::{ImportRowStatus, ImportWarning, RawCell};
 use database::models::import_session::ImportSessionStatus;
-use database::repos::import::NewImportRow;
+use database::repos::import::{ImportRepo, NewImportRow};
 use sqlx::types::Json;
 use tokio::time::{Duration, sleep};
 use tracing::{error, info, warn};
@@ -529,7 +529,27 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
             }
         };
 
-        // Commit the transaction.
+        // (e) Finalise row status INSIDE the transaction — atomic with the entity write.
+        //     If this fails we roll back both the entity and the status flip, so a
+        //     retry will cleanly recreate the entity without duplicates.
+        if let Err(e) =
+            ImportRepo::finalise_committed_row(&mut tx, row.id, entity_id, existing_id.is_none())
+                .await
+        {
+            let _ = tx.rollback().await;
+            let warnings = vec![ImportWarning {
+                field: None,
+                code: "finalise_error".to_string(),
+                message: e.to_string(),
+            }];
+            let _ = db
+                .imports()
+                .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
+                .await;
+            continue;
+        }
+
+        // Commit the transaction — entity write and row status flip are now durable together.
         if let Err(e) = tx.commit().await {
             let warnings = vec![ImportWarning {
                 field: None,
@@ -541,18 +561,6 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
                 .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
                 .await;
             continue;
-        }
-
-        // (e) Finalise the row's bookkeeping.
-        if let Err(e) = db
-            .imports()
-            .finalise_committed_row(row.id, entity_id, existing_id.is_none())
-            .await
-        {
-            warn!(
-                "failed to finalise committed row {} (entity {entity_id}): {e}",
-                row.id
-            );
         }
     }
 

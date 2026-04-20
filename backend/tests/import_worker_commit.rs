@@ -5,6 +5,9 @@
 //!    commit; asserts productions in DB match CSV contents and rows are Created.
 //! 2. commit_handles_pending_rows_without_dry_run — commit with rows that start
 //!    in `pending` status (no prior dry-run); asserts all become Created.
+//! 3. commit_is_idempotent_after_partial_completion — verifies that running
+//!    process_commit a second time on an already-committed session does NOT
+//!    create duplicate entities; validates the atomic row-status-flip fix.
 
 mod common;
 
@@ -345,4 +348,162 @@ async fn commit_handles_pending_rows_without_dry_run(pool: PgPool) {
             );
         }
     }
+}
+
+// ─── Test 3: commit idempotency — no duplicate entities on second pass ─────────
+
+#[sqlx::test(migrations = "./migrations")]
+async fn commit_is_idempotent_after_partial_completion(pool: PgPool) {
+    let db = Database::new(pool);
+    let user = create_test_user(&db, "commit_test3@test.com", UserRole::Editor).await;
+
+    // 1. Create session with mapping.
+    let session_id = db
+        .imports()
+        .create_session(CreateSession {
+            entity_type: "production".to_string(),
+            filename: "Productions - idempotent.csv".to_string(),
+            original_headers: vec![
+                "Titel".to_string(),
+                "Ondertitel".to_string(),
+                "Description1".to_string(),
+                "Description2".to_string(),
+                "Genre".to_string(),
+                "ID".to_string(),
+                "Planning ID".to_string(),
+            ],
+            created_by: user.id,
+        })
+        .await
+        .expect("create_session failed");
+
+    db.imports()
+        .save_mapping(session_id, legacy_production_mapping())
+        .await
+        .expect("save_mapping failed");
+
+    // 2. Run dry-run.
+    db.imports()
+        .update_status(
+            session_id,
+            database::models::import_session::ImportSessionStatus::DryRunPending,
+            None,
+        )
+        .await
+        .expect("update_status to dry_run_pending failed");
+
+    let ctx = make_worker_ctx(db.clone());
+
+    process_dry_run_bytes(session_id, LEGACY_PRODUCTIONS_CSV.as_bytes(), &ctx)
+        .await
+        .expect("process_dry_run_bytes failed");
+
+    // 3. Verify both rows are WillCreate.
+    let rows_after_dry_run = db
+        .imports()
+        .get_rows(session_id, 100, 0, None)
+        .await
+        .expect("get_rows after dry-run failed");
+    assert_eq!(rows_after_dry_run.len(), 2, "expected 2 rows after dry-run");
+    for row in &rows_after_dry_run {
+        assert_eq!(
+            row.status,
+            ImportRowStatus::WillCreate,
+            "row {} should be will_create after dry-run",
+            row.row_number
+        );
+    }
+
+    // 4. Advance to Committing and run first commit pass.
+    db.imports()
+        .update_status(
+            session_id,
+            database::models::import_session::ImportSessionStatus::Committing,
+            None,
+        )
+        .await
+        .expect("update_status to committing failed");
+
+    process_commit(session_id, &ctx)
+        .await
+        .expect("first process_commit failed");
+
+    // Verify the session is Committed and rows are Created after the first pass.
+    let session_after_first = db
+        .imports()
+        .get_session(session_id)
+        .await
+        .expect("get_session failed")
+        .expect("session missing");
+    assert_eq!(
+        session_after_first.status,
+        database::models::import_session::ImportSessionStatus::Committed,
+        "session should be committed after first pass"
+    );
+
+    let rows_after_first = db
+        .imports()
+        .get_rows(session_id, 100, 0, None)
+        .await
+        .expect("get_rows after first commit failed");
+    assert_eq!(
+        rows_after_first.len(),
+        2,
+        "expected 2 rows after first commit"
+    );
+    for row in &rows_after_first {
+        assert_eq!(
+            row.status,
+            ImportRowStatus::Created,
+            "row {} should be created after first commit, got {:?}",
+            row.row_number,
+            row.status
+        );
+    }
+
+    let count_after_first = db
+        .productions()
+        .count()
+        .await
+        .expect("count() after first commit failed");
+    assert_eq!(
+        count_after_first, 2,
+        "expected exactly 2 productions after first commit"
+    );
+
+    // 5. Simulate the post-commit / pre-finalise crash window by running process_commit
+    //    a second time on the same session.  Because the row-status flip is now atomic
+    //    with the entity write, the Created rows fall outside the WillCreate/WillUpdate/
+    //    Pending filter — the second pass is a no-op for the row loop.
+    //
+    //    With the old (non-atomic) code, if a crash had left rows still in WillCreate
+    //    while the entities were already persisted, this second pass would create
+    //    duplicate productions.  Option A's atomic tx prevents that.
+    process_commit(session_id, &ctx)
+        .await
+        .expect("second process_commit failed");
+
+    // 6. Assert: still exactly 2 productions — no duplicates.
+    let count_after_second = db
+        .productions()
+        .count()
+        .await
+        .expect("count() after second commit failed");
+    assert_eq!(
+        count_after_second, 2,
+        "second commit pass must not create duplicate productions (got {count_after_second})"
+    );
+
+    // 7. Assert: session is still Committed.
+    let session_after_second = db
+        .imports()
+        .get_session(session_id)
+        .await
+        .expect("get_session failed")
+        .expect("session missing");
+    assert_eq!(
+        session_after_second.status,
+        database::models::import_session::ImportSessionStatus::Committed,
+        "session should still be committed after second pass"
+    );
 }
