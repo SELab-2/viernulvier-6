@@ -352,6 +352,23 @@ describe("HistoryDetail", () => {
         expect(screen.getByRole("alert")).toHaveTextContent("Could not load session.");
     });
 
+    it("renders error alert when rows query fails", () => {
+        (mockUseImportSession as Mock).mockReturnValue({
+            data: defaultSession,
+            isPending: false,
+            isError: false,
+        });
+        (mockUseImportRows as Mock).mockReturnValue({
+            data: undefined,
+            isPending: false,
+            isError: true,
+        });
+
+        renderHistoryDetail();
+
+        expect(screen.getByRole("alert")).toHaveTextContent("Could not load rows.");
+    });
+
     it("clicking Revert on success calls toast.success with revert success message", async () => {
         (mockUseImportSession as Mock).mockReturnValue({
             data: defaultSession,
