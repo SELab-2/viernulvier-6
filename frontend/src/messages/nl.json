@@ -507,7 +507,9 @@
                 "rowsLoadFailed": "Rijen konden niet geladen worden.",
                 "commitFailed": "Importeren mislukt.",
                 "rerunFailed": "Dry-run opnieuw uitvoeren mislukt.",
-                "historyLoadFailed": "Kon importgeschiedenis niet laden."
+                "historyLoadFailed": "Kon importgeschiedenis niet laden.",
+                "revertFailed": "Kon rij niet terugdraaien.",
+                "rollbackFailed": "Kon import niet terugdraaien."
             },
             "history": {
                 "title": "Importgeschiedenis",
@@ -534,6 +536,23 @@
                     "failed": "Mislukt",
                     "cancelled": "Geannuleerd"
                 }
+            },
+            "historyDetail": {
+                "title": "Importgeschiedenis",
+                "filename": "Bestand",
+                "entityType": "Type",
+                "committedAt": "Geïmporteerd op",
+                "rowCount": "Rijen",
+                "status": "Status",
+                "editInCms": "Bewerken in CMS",
+                "viewOnSite": "Bekijk op site",
+                "revert": "Terugdraaien",
+                "rollback": "Volledige import terugdraaien",
+                "rollbackConfirmTitle": "Volledige import terugdraaien?",
+                "rollbackConfirmBody": "Alle aangemaakte rijen worden verwijderd en bijgewerkte rijen hersteld. Deze actie kan niet ongedaan worden gemaakt.",
+                "rollbackConfirmCta": "Terugdraaien",
+                "rollbackCancel": "Annuleren",
+                "reverting": "Bezig..."
             }
         },
         "Collections": {

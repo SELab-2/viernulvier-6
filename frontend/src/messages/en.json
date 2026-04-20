@@ -507,7 +507,9 @@
                 "rowsLoadFailed": "Could not load rows.",
                 "commitFailed": "Commit failed.",
                 "rerunFailed": "Re-run dry-run failed.",
-                "historyLoadFailed": "Could not load import history."
+                "historyLoadFailed": "Could not load import history.",
+                "revertFailed": "Could not revert row.",
+                "rollbackFailed": "Could not rollback import."
             },
             "history": {
                 "title": "Import history",
@@ -534,6 +536,23 @@
                     "failed": "Failed",
                     "cancelled": "Cancelled"
                 }
+            },
+            "historyDetail": {
+                "title": "Import history",
+                "filename": "File",
+                "entityType": "Type",
+                "committedAt": "Committed at",
+                "rowCount": "Rows",
+                "status": "Status",
+                "editInCms": "Edit in CMS",
+                "viewOnSite": "View on site",
+                "revert": "Revert",
+                "rollback": "Rollback entire import",
+                "rollbackConfirmTitle": "Rollback entire import?",
+                "rollbackConfirmBody": "All created rows will be deleted and updated rows will be restored. This action cannot be undone.",
+                "rollbackConfirmCta": "Rollback",
+                "rollbackCancel": "Cancel",
+                "reverting": "Reverting..."
             }
         },
         "Collections": {
