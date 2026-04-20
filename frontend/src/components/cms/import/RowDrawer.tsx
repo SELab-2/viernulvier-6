@@ -4,7 +4,13 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { useUpdateRow } from "@/hooks/api/useImport";
-import type { FieldSpec, ImportRow, ImportWarning } from "@/types/models/import.types";
+import type {
+    FieldSpec,
+    ImportMapping,
+    ImportRow,
+    ImportWarning,
+} from "@/types/models/import.types";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,8 +28,20 @@ type RowDrawerProps = {
     row: ImportRow | null;
     sessionId: string;
     fields: FieldSpec[];
+    mapping: ImportMapping;
     onClose: () => void;
 };
+
+function findRawValue(
+    fieldName: string,
+    mapping: ImportMapping,
+    rawData: Record<string, unknown>
+): string {
+    const header = Object.entries(mapping.columns).find(([, f]) => f === fieldName)?.[0];
+    if (!header) return "";
+    const v = rawData[header];
+    return v == null ? "" : String(v);
+}
 
 function RawCsvPanel({ row }: { row: ImportRow }) {
     const t = useTranslations("Cms.Import");
@@ -66,73 +84,15 @@ function RawCsvPanel({ row }: { row: ImportRow }) {
     );
 }
 
-type FieldOverridesPanelProps = {
-    row: ImportRow;
-    fields: FieldSpec[];
-    onChangeField: (field: string, value: unknown) => void;
-};
-
-function FieldOverridesPanel({ row, fields, onChangeField }: FieldOverridesPanelProps) {
-    const t = useTranslations("Cms.Import");
-    const diff = row.diff as Record<string, { current: unknown; incoming: unknown }> | null;
-
-    const editableFields = fields.filter((f) => f.fieldType.kind !== "foreign_key");
-
-    if (editableFields.length === 0) {
-        return (
-            <section className="space-y-2">
-                <p className="text-sm font-medium">{t("drawer.fieldOverridesTitle")}</p>
-                <p className="text-muted-foreground text-xs">{t("drawer.noFieldsMapped")}</p>
-            </section>
-        );
-    }
-
-    return (
-        <section className="space-y-3">
-            <p className="text-sm font-medium">{t("drawer.fieldOverridesTitle")}</p>
-            {editableFields.map((field) => {
-                const diffEntry = diff?.[field.name];
-                const overrideValue = row.overrides[field.name];
-                const displayValue =
-                    overrideValue !== undefined ? overrideValue : (diffEntry?.incoming ?? "");
-                return (
-                    <FieldOverrideRow
-                        key={`${row.id}:${field.name}`}
-                        field={field}
-                        displayValue={displayValue}
-                        currentDbValue={diffEntry?.current}
-                        onChangeField={onChangeField}
-                    />
-                );
-            })}
-        </section>
-    );
-}
-
 type FieldOverrideRowProps = {
     field: FieldSpec;
-    displayValue: unknown;
+    value: string;
     currentDbValue: unknown;
-    onChangeField: (field: string, value: unknown) => void;
+    onChange: (value: string) => void;
 };
 
-function FieldOverrideRow({
-    field,
-    displayValue,
-    currentDbValue,
-    onChangeField,
-}: FieldOverrideRowProps) {
+function FieldOverrideRow({ field, value, currentDbValue, onChange }: FieldOverrideRowProps) {
     const t = useTranslations("Cms.Import");
-    const initialValue =
-        displayValue === null || displayValue === undefined ? "" : String(displayValue);
-    const [inputValue, setInputValue] = useState(initialValue);
-
-    const handleBlur = () => {
-        if (inputValue !== initialValue) {
-            onChangeField(field.name, inputValue === "" ? null : inputValue);
-        }
-    };
-
     return (
         <div className="space-y-1">
             <Label htmlFor={`field-${field.name}`} className="text-xs font-medium">
@@ -146,9 +106,8 @@ function FieldOverrideRow({
             )}
             <Input
                 id={`field-${field.name}`}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onBlur={handleBlur}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
                 aria-label={field.label}
                 className="h-8 text-sm"
             />
@@ -156,19 +115,90 @@ function FieldOverrideRow({
     );
 }
 
-export function RowDrawer({ row, sessionId, fields, onClose }: RowDrawerProps) {
+type FieldOverridesPanelProps = {
+    row: ImportRow;
+    fields: FieldSpec[];
+    mapping: ImportMapping;
+    onSaveOverrides: (overrides: Record<string, string | null>) => void;
+    isSaving: boolean;
+};
+
+function FieldOverridesPanel({
+    row,
+    fields,
+    mapping,
+    onSaveOverrides,
+    isSaving,
+}: FieldOverridesPanelProps) {
+    const t = useTranslations("Cms.Import");
+    const diff = row.diff as Record<string, { current: unknown; incoming: unknown }> | null;
+
+    const editableFields = fields.filter((f) => f.fieldType.kind !== "foreign_key");
+
+    const getInitialValue = (field: FieldSpec): string => {
+        const override = row.overrides[field.name];
+        if (override !== undefined) return override == null ? "" : String(override);
+        const diffEntry = diff?.[field.name];
+        if (diffEntry?.incoming !== undefined)
+            return diffEntry.incoming == null ? "" : String(diffEntry.incoming);
+        return findRawValue(field.name, mapping, row.rawData);
+    };
+
+    const [localValues, setLocalValues] = useState<Record<string, string>>(() => {
+        const init: Record<string, string> = {};
+        for (const field of editableFields) {
+            init[field.name] = getInitialValue(field);
+        }
+        return init;
+    });
+
+    if (editableFields.length === 0) {
+        return (
+            <section className="space-y-2">
+                <p className="text-sm font-medium">{t("drawer.fieldOverridesTitle")}</p>
+                <p className="text-muted-foreground text-xs">{t("drawer.noFieldsMapped")}</p>
+            </section>
+        );
+    }
+
+    return (
+        <section className="space-y-3">
+            <p className="text-sm font-medium">{t("drawer.fieldOverridesTitle")}</p>
+            {editableFields.map((field) => (
+                <FieldOverrideRow
+                    key={field.name}
+                    field={field}
+                    value={localValues[field.name] ?? ""}
+                    currentDbValue={diff?.[field.name]?.current}
+                    onChange={(val) => setLocalValues((prev) => ({ ...prev, [field.name]: val }))}
+                />
+            ))}
+            <Button
+                size="sm"
+                disabled={isSaving}
+                onClick={() => {
+                    const overrides: Record<string, string | null> = {};
+                    for (const [name, val] of Object.entries(localValues)) {
+                        overrides[name] = val === "" ? null : val;
+                    }
+                    onSaveOverrides(overrides);
+                }}
+            >
+                {t("drawer.saveOverrides")}
+            </Button>
+        </section>
+    );
+}
+
+export function RowDrawer({ row, sessionId, fields, mapping, onClose }: RowDrawerProps) {
     const t = useTranslations("Cms.Import");
     const updateRow = useUpdateRow();
 
     const fkFields = fields.filter((f) => f.fieldType.kind === "foreign_key");
 
-    const handleChangeField = (field: string, value: unknown) => {
+    const handleSaveOverrides = (overrides: Record<string, string | null>) => {
         if (!row) return;
-        updateRow.mutate({
-            id: row.id,
-            sessionId,
-            overrides: { [field]: value },
-        });
+        updateRow.mutate({ id: row.id, sessionId, overrides });
     };
 
     const handleChangeRef = (field: string, value: string | null) => {
@@ -238,11 +268,14 @@ export function RowDrawer({ row, sessionId, fields, onClose }: RowDrawerProps) {
 
                             <hr className="border-border" />
 
-                            {/* Section B: Field overrides */}
+                            {/* Section B: Field overrides — keyed by row.id so state resets on row change */}
                             <FieldOverridesPanel
+                                key={row.id}
                                 row={row}
                                 fields={fields}
-                                onChangeField={handleChangeField}
+                                mapping={mapping}
+                                onSaveOverrides={handleSaveOverrides}
+                                isSaving={updateRow.isPending}
                             />
 
                             <hr className="border-border" />

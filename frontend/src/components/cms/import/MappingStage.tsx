@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { useRouter } from "@/i18n/routing";
+
 import {
     useFieldSpec,
     useImportRows,
@@ -72,6 +74,7 @@ type MappingStageInnerProps = {
 function MappingStageInner({ session, fields, previewRows, savedMapping }: MappingStageInnerProps) {
     const t = useTranslations("Cms.Import");
 
+    const router = useRouter();
     const updateMapping = useUpdateMapping();
     const startDryRun = useStartDryRun();
 
@@ -99,7 +102,11 @@ function MappingStageInner({ session, fields, previewRows, savedMapping }: Mappi
     }
 
     function handleStartDryRun() {
-        startDryRun.mutate(session.id);
+        startDryRun.mutate(session.id, {
+            onSuccess: () => {
+                router.replace(`/cms/import?session=${session.id}`);
+            },
+        });
     }
 
     const isSaving = updateMapping.isPending;

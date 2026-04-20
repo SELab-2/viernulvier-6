@@ -537,7 +537,8 @@
                 "csvValue": "Value",
                 "fieldOverridesTitle": "Field values",
                 "fieldCurrentValue": "Current value in database",
-                "noFieldsMapped": "No fields mapped."
+                "noFieldsMapped": "No fields mapped.",
+                "saveOverrides": "Save changes"
             },
             "errors": {
                 "fileTooLarge": "File too large (max {maxMb}MB).",

@@ -229,6 +229,7 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
                 row={selectedRow}
                 sessionId={sessionId}
                 fields={resolvedFields}
+                mapping={session.mapping}
                 onClose={() => setSelectedId(null)}
             />
 

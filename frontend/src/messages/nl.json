@@ -537,7 +537,8 @@
                 "csvValue": "Waarde",
                 "fieldOverridesTitle": "Veldwaarden",
                 "fieldCurrentValue": "Huidige waarde in database",
-                "noFieldsMapped": "Geen velden gemapt."
+                "noFieldsMapped": "Geen velden gemapt.",
+                "saveOverrides": "Wijzigingen opslaan"
             },
             "errors": {
                 "fileTooLarge": "Bestand is te groot (max {maxMb}MB).",

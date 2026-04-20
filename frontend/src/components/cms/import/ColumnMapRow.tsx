@@ -60,7 +60,7 @@ export function ColumnMapRow({
                             <span
                                 key={`${i}-${v}`}
                                 title={v}
-                                className="bg-muted text-muted-foreground max-w-[100px] truncate rounded px-1.5 py-0.5 font-mono text-[10px]"
+                                className="bg-muted text-foreground max-w-[100px] truncate rounded px-1.5 py-0.5 font-mono text-[10px]"
                             >
                                 {v}
                             </span>
