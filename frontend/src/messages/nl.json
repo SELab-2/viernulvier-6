@@ -472,10 +472,20 @@
                 "errors": "Fouten",
                 "running": "Dry-run wordt uitgevoerd…"
             },
+            "filter": {
+                "all": "Alles",
+                "willCreate": "Aanmaken",
+                "willUpdate": "Bijwerken",
+                "willSkip": "Overslaan",
+                "errors": "Fouten",
+                "noResults": "Geen rijen voor dit filter.",
+                "noErrors": "Geen fouten gevonden."
+            },
             "table": {
                 "rowNumber": "#",
                 "status": "Status",
                 "target": "Doel",
+                "label": "Entiteit",
                 "warnings": "Waarschuwingen",
                 "action": "Actie",
                 "open": "Openen",
@@ -492,7 +502,12 @@
                 }
             },
             "dryRun": {
-                "helperText": "Controleer wat er zou gebeuren. Los fouten op en pas rijen aan voordat je definitief importeert."
+                "helperText": "Controleer wat er zou gebeuren. Los fouten op en pas rijen aan voordat je definitief importeert.",
+                "pendingLabel": "Dry-run wordt uitgevoerd…",
+                "commitConfirmTitle": "Import bevestigen?",
+                "commitConfirmBody": "{create} records worden aangemaakt · {update} worden bijgewerkt · {skip} worden overgeslagen.",
+                "commitConfirmCta": "Importeren",
+                "commitConfirmCancel": "Annuleren"
             },
             "commit": {
                 "running": "De import wordt uitgevoerd...",
@@ -515,7 +530,13 @@
                 "fkPicker": "Externe verwijzingen",
                 "fkPlaceholder": "UUID…",
                 "fkClear": "Wissen",
-                "skipRow": "Rij overslaan"
+                "skipRow": "Rij overslaan",
+                "rawCsvTitle": "CSV-gegevens",
+                "csvColumn": "Kolom",
+                "csvValue": "Waarde",
+                "fieldOverridesTitle": "Veldwaarden",
+                "fieldCurrentValue": "Huidige waarde in database",
+                "noFieldsMapped": "Geen velden gemapt."
             },
             "errors": {
                 "fileTooLarge": "Bestand is te groot (max {maxMb}MB).",

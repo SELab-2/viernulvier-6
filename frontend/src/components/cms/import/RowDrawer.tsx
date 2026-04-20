@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { useUpdateRow } from "@/hooks/api/useImport";
-import type { FieldSpec, ImportRow } from "@/types/models/import.types";
+import type { FieldSpec, ImportRow, ImportWarning } from "@/types/models/import.types";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
     Sheet,
@@ -13,11 +15,8 @@ import {
     SheetTitle,
     SheetDescription,
 } from "@/components/ui/sheet";
-import { DiffView } from "./DiffView";
 import { FkPicker } from "./FkPicker";
 import { statusBadgeClasses, statusLabelKey } from "./statusBadge";
-
-type ImportWarning = { field: string | null; code: string; message: string };
 
 type RowDrawerProps = {
     row: ImportRow | null;
@@ -25,6 +24,134 @@ type RowDrawerProps = {
     fields: FieldSpec[];
     onClose: () => void;
 };
+
+function RawCsvPanel({ row }: { row: ImportRow }) {
+    const t = useTranslations("Cms.Import");
+    const entries = Object.entries(row.rawData);
+    return (
+        <section className="space-y-2">
+            <p className="text-sm font-medium">{t("drawer.rawCsvTitle")}</p>
+            <div className="rounded-md border">
+                <table className="w-full text-xs">
+                    <thead>
+                        <tr className="border-b">
+                            <th className="text-muted-foreground px-3 py-1.5 text-left font-medium">
+                                {t("drawer.csvColumn")}
+                            </th>
+                            <th className="text-muted-foreground px-3 py-1.5 text-left font-medium">
+                                {t("drawer.csvValue")}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {entries.map(([col, val]) => (
+                            <tr key={col} className="border-b last:border-0">
+                                <td className="px-3 py-1.5 font-mono">{col}</td>
+                                <td
+                                    className="text-muted-foreground max-w-[200px] truncate px-3 py-1.5"
+                                    title={val == null ? "" : String(val)}
+                                >
+                                    {val == null ? (
+                                        <span className="opacity-40">—</span>
+                                    ) : (
+                                        String(val)
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    );
+}
+
+type FieldOverridesPanelProps = {
+    row: ImportRow;
+    fields: FieldSpec[];
+    onChangeField: (field: string, value: unknown) => void;
+};
+
+function FieldOverridesPanel({ row, fields, onChangeField }: FieldOverridesPanelProps) {
+    const t = useTranslations("Cms.Import");
+    const diff = row.diff as Record<string, { current: unknown; incoming: unknown }> | null;
+
+    const editableFields = fields.filter((f) => f.fieldType.kind !== "foreign_key");
+
+    if (editableFields.length === 0) {
+        return (
+            <section className="space-y-2">
+                <p className="text-sm font-medium">{t("drawer.fieldOverridesTitle")}</p>
+                <p className="text-muted-foreground text-xs">{t("drawer.noFieldsMapped")}</p>
+            </section>
+        );
+    }
+
+    return (
+        <section className="space-y-3">
+            <p className="text-sm font-medium">{t("drawer.fieldOverridesTitle")}</p>
+            {editableFields.map((field) => {
+                const diffEntry = diff?.[field.name];
+                const overrideValue = row.overrides[field.name];
+                const displayValue =
+                    overrideValue !== undefined ? overrideValue : (diffEntry?.incoming ?? "");
+                return (
+                    <FieldOverrideRow
+                        key={`${row.id}:${field.name}`}
+                        field={field}
+                        displayValue={displayValue}
+                        currentDbValue={diffEntry?.current}
+                        onChangeField={onChangeField}
+                    />
+                );
+            })}
+        </section>
+    );
+}
+
+type FieldOverrideRowProps = {
+    field: FieldSpec;
+    displayValue: unknown;
+    currentDbValue: unknown;
+    onChangeField: (field: string, value: unknown) => void;
+};
+
+function FieldOverrideRow({
+    field,
+    displayValue,
+    currentDbValue,
+    onChangeField,
+}: FieldOverrideRowProps) {
+    const t = useTranslations("Cms.Import");
+    const [inputValue, setInputValue] = useState(
+        displayValue === null || displayValue === undefined ? "" : String(displayValue)
+    );
+    const handleBlur = () => {
+        onChangeField(field.name, inputValue === "" ? null : inputValue);
+    };
+
+    return (
+        <div className="space-y-1">
+            <Label htmlFor={`field-${field.name}`} className="text-xs font-medium">
+                {field.label}
+            </Label>
+            {currentDbValue !== undefined && (
+                <p className="text-muted-foreground text-[10px]">
+                    {t("drawer.fieldCurrentValue")}:{" "}
+                    {currentDbValue == null ? "—" : String(currentDbValue)}
+                </p>
+            )}
+            <Input
+                id={`field-${field.name}`}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onBlur={handleBlur}
+                aria-label={field.label}
+                className="h-8 text-sm"
+            />
+        </div>
+    );
+}
 
 export function RowDrawer({ row, sessionId, fields, onClose }: RowDrawerProps) {
     const t = useTranslations("Cms.Import");
@@ -84,12 +211,16 @@ export function RowDrawer({ row, sessionId, fields, onClose }: RowDrawerProps) {
                         </SheetHeader>
 
                         <div className="flex flex-col gap-6 px-4 pb-6">
+                            {/* Warnings */}
                             {row.warnings.length > 0 && (
                                 <section className="space-y-2">
                                     <p className="text-sm font-medium">{t("drawer.warnings")}</p>
                                     <ul className="space-y-1">
-                                        {(row.warnings as ImportWarning[]).map((w, i) => (
-                                            <li key={i} className="text-muted-foreground text-xs">
+                                        {row.warnings.map((w: ImportWarning, i: number) => (
+                                            <li
+                                                key={`${w.field ?? ""}-${w.code}-${i}`}
+                                                className="text-muted-foreground text-xs"
+                                            >
                                                 <span className="font-mono">{w.code}</span>
                                                 {" — "}
                                                 {w.message}
@@ -99,10 +230,24 @@ export function RowDrawer({ row, sessionId, fields, onClose }: RowDrawerProps) {
                                 </section>
                             )}
 
-                            <DiffView row={row} onChangeField={handleChangeField} />
+                            {/* Section A: Raw CSV data */}
+                            <RawCsvPanel row={row} />
 
+                            <hr className="border-border" />
+
+                            {/* Section B: Field overrides */}
+                            <FieldOverridesPanel
+                                row={row}
+                                fields={fields}
+                                onChangeField={handleChangeField}
+                            />
+
+                            <hr className="border-border" />
+
+                            {/* Section C: FK pickers */}
                             <FkPicker row={row} fkFields={fkFields} onChangeRef={handleChangeRef} />
 
+                            {/* Section D: Skip toggle */}
                             <div className="flex items-center gap-2">
                                 <Checkbox
                                     id="skip-row"

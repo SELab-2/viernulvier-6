@@ -472,10 +472,20 @@
                 "errors": "Errors",
                 "running": "Dry-run running…"
             },
+            "filter": {
+                "all": "All",
+                "willCreate": "Will create",
+                "willUpdate": "Will update",
+                "willSkip": "Will skip",
+                "errors": "Errors",
+                "noResults": "No rows match this filter.",
+                "noErrors": "No errors found."
+            },
             "table": {
                 "rowNumber": "#",
                 "status": "Status",
                 "target": "Target",
+                "label": "Entity",
                 "warnings": "Warnings",
                 "action": "Action",
                 "open": "Open",
@@ -492,7 +502,12 @@
                 }
             },
             "dryRun": {
-                "helperText": "Review what will happen. Fix errors and adjust rows before committing."
+                "helperText": "Review what will happen. Fix errors and adjust rows before committing.",
+                "pendingLabel": "Dry-run is running…",
+                "commitConfirmTitle": "Confirm import?",
+                "commitConfirmBody": "{create} records will be created · {update} will be updated · {skip} will be skipped.",
+                "commitConfirmCta": "Import",
+                "commitConfirmCancel": "Cancel"
             },
             "commit": {
                 "running": "Import is running...",
@@ -515,7 +530,13 @@
                 "fkPicker": "Foreign references",
                 "fkPlaceholder": "UUID…",
                 "fkClear": "Clear",
-                "skipRow": "Skip row"
+                "skipRow": "Skip row",
+                "rawCsvTitle": "CSV data",
+                "csvColumn": "Column",
+                "csvValue": "Value",
+                "fieldOverridesTitle": "Field values",
+                "fieldCurrentValue": "Current value in database",
+                "noFieldsMapped": "No fields mapped."
             },
             "errors": {
                 "fileTooLarge": "File too large (max {maxMb}MB).",

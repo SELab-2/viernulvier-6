@@ -44,12 +44,17 @@ export function DryRunSummary({ rows, sessionStatus }: DryRunSummaryProps) {
     return (
         <div className="space-y-4">
             {isPending && (
-                <div
-                    role="progressbar"
-                    aria-label={t("summary.running")}
-                    className="bg-muted h-1 w-full overflow-hidden rounded-full"
-                >
-                    <div className="bg-primary/30 absolute inset-0 animate-pulse" />
+                <div className="space-y-2">
+                    <div
+                        role="progressbar"
+                        aria-label={t("summary.running")}
+                        className="bg-muted h-1 w-full overflow-hidden rounded-full"
+                    >
+                        <div className="bg-primary/40 h-full w-full animate-pulse" />
+                    </div>
+                    <p className="text-muted-foreground animate-pulse text-center text-xs">
+                        {t("dryRun.pendingLabel")}
+                    </p>
                 </div>
             )}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

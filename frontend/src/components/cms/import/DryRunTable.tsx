@@ -3,7 +3,9 @@
 
 import { useTranslations } from "next-intl";
 
-import type { ImportRow, ImportRowStatus } from "@/types/models/import.types";
+import type { ImportRow, ImportRowStatus, ImportMapping } from "@/types/models/import.types";
+import { resolveRowLabel } from "@/lib/import/resolveRowLabel";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
     Table,
@@ -17,6 +19,7 @@ import { statusBadgeClasses, statusLabelKey } from "./statusBadge";
 
 type DryRunTableProps = {
     rows: ImportRow[];
+    mapping: ImportMapping;
     onSelectRow: (row: ImportRow) => void;
 };
 
@@ -31,16 +34,9 @@ function StatusBadge({ status }: { status: ImportRowStatus }) {
     );
 }
 
-function formatTarget(targetEntityId: string | null): string {
-    if (targetEntityId === null) {
-        return "—";
-    }
-    return `${targetEntityId.slice(0, 8)}…`;
-}
-
 const COLUMNS = 5;
 
-export function DryRunTable({ rows, onSelectRow }: DryRunTableProps) {
+export function DryRunTable({ rows, mapping, onSelectRow }: DryRunTableProps) {
     const t = useTranslations("Cms.Import");
 
     return (
@@ -50,7 +46,7 @@ export function DryRunTable({ rows, onSelectRow }: DryRunTableProps) {
                     <TableRow>
                         <TableHead className="w-12">{t("table.rowNumber")}</TableHead>
                         <TableHead className="w-36">{t("table.status")}</TableHead>
-                        <TableHead>{t("table.target")}</TableHead>
+                        <TableHead>{t("table.label")}</TableHead>
                         <TableHead className="w-24">{t("table.warnings")}</TableHead>
                         <TableHead className="w-20">{t("table.action")}</TableHead>
                     </TableRow>
@@ -69,9 +65,11 @@ export function DryRunTable({ rows, onSelectRow }: DryRunTableProps) {
                     {rows.map((row) => (
                         <TableRow
                             key={row.id}
-                            role="button"
                             tabIndex={0}
-                            className="cursor-pointer"
+                            className={cn(
+                                "hover:bg-muted/50 cursor-pointer transition-colors",
+                                row.status === "error" && "border-l-destructive border-l-2"
+                            )}
                             onClick={() => onSelectRow(row)}
                             onKeyDown={(e) => {
                                 if (e.key === "Enter" || e.key === " ") {
@@ -84,10 +82,24 @@ export function DryRunTable({ rows, onSelectRow }: DryRunTableProps) {
                             <TableCell>
                                 <StatusBadge status={row.status} />
                             </TableCell>
-                            <TableCell className="font-mono text-xs">
-                                {formatTarget(row.targetEntityId)}
+                            <TableCell className="max-w-[160px] truncate text-sm">
+                                {resolveRowLabel(row, mapping)}
                             </TableCell>
-                            <TableCell className="text-xs">{row.warnings.length}</TableCell>
+                            <TableCell className="text-xs">
+                                {row.warnings.length === 0 ? (
+                                    <span className="text-muted-foreground">—</span>
+                                ) : row.warnings.length === 1 ? (
+                                    <span className="font-mono">{row.warnings[0].code}</span>
+                                ) : (
+                                    <span className="font-mono">
+                                        {row.warnings[0].code}
+                                        <span className="text-muted-foreground">
+                                            {" "}
+                                            +{row.warnings.length - 1}
+                                        </span>
+                                    </span>
+                                )}
+                            </TableCell>
                             <TableCell>
                                 <Button
                                     variant="ghost"

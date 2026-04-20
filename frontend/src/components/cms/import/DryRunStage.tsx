@@ -12,6 +12,15 @@ import {
 } from "@/hooks/api/useImport";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import type { ImportRowStatus } from "@/types/models/import.types";
 import { DryRunSummary } from "./DryRunSummary";
 import { DryRunTable } from "./DryRunTable";
 import { RowDrawer } from "./RowDrawer";
@@ -23,6 +32,9 @@ type DryRunStageProps = {
 export function DryRunStage({ sessionId }: DryRunStageProps) {
     const t = useTranslations("Cms.Import");
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [statusFilter, setStatusFilter] = useState<ImportRowStatus | "all">("all");
+    const [commitConfirmOpen, setCommitConfirmOpen] = useState(false);
+    const [userHasFiltered, setUserHasFiltered] = useState(false);
 
     const {
         data: session,
@@ -40,6 +52,29 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
 
     const startDryRun = useStartDryRun();
     const commitImport = useCommitImport();
+
+    const resolvedRows = rows ?? [];
+    const resolvedFields = fields ?? [];
+    const hasErrors = resolvedRows.some((r) => r.status === "error");
+
+    // Auto-show error rows when dry run finishes with errors, unless the user has manually chosen a filter
+    const effectiveFilter: ImportRowStatus | "all" =
+        !userHasFiltered && session?.status === "dry_run_ready" && hasErrors
+            ? "error"
+            : statusFilter;
+
+    const filteredRows =
+        effectiveFilter === "all"
+            ? resolvedRows
+            : resolvedRows.filter((r) => r.status === effectiveFilter);
+
+    const counts = {
+        all: resolvedRows.length,
+        will_create: resolvedRows.filter((r) => r.status === "will_create").length,
+        will_update: resolvedRows.filter((r) => r.status === "will_update").length,
+        will_skip: resolvedRows.filter((r) => r.status === "will_skip").length,
+        error: resolvedRows.filter((r) => r.status === "error").length,
+    };
 
     if (sessionLoading || rowsLoading || fieldsLoading) {
         return (
@@ -94,11 +129,7 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
         return null;
     }
 
-    const resolvedRows = rows ?? [];
-    const resolvedFields = fields ?? [];
     const selectedRow = selectedId ? (resolvedRows.find((r) => r.id === selectedId) ?? null) : null;
-
-    const hasErrors = resolvedRows.some((r) => r.status === "error");
     const canRerun = session.status === "dry_run_ready" || session.status === "failed";
     const canCommit = session.status === "dry_run_ready" && !hasErrors;
 
@@ -114,7 +145,50 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
             </div>
 
             <DryRunSummary rows={resolvedRows} sessionStatus={session.status} />
-            <DryRunTable rows={resolvedRows} onSelectRow={(row) => setSelectedId(row.id)} />
+
+            {/* Status filter bar */}
+            <div className="flex flex-wrap gap-2">
+                {(
+                    [
+                        ["all", t("filter.all"), counts.all],
+                        ["will_create", t("filter.willCreate"), counts.will_create],
+                        ["will_update", t("filter.willUpdate"), counts.will_update],
+                        ["will_skip", t("filter.willSkip"), counts.will_skip],
+                        ["error", t("filter.errors"), counts.error],
+                    ] as [ImportRowStatus | "all", string, number][]
+                ).map(([key, label, count]) => (
+                    <button
+                        key={key}
+                        type="button"
+                        onClick={() => {
+                            setUserHasFiltered(true);
+                            setStatusFilter(key);
+                        }}
+                        className={[
+                            "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                            effectiveFilter === key
+                                ? "bg-foreground text-background border-foreground"
+                                : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground",
+                        ].join(" ")}
+                    >
+                        {label} <span className="tabular-nums">{count}</span>
+                    </button>
+                ))}
+            </div>
+
+            {filteredRows.length === 0 && effectiveFilter !== "all" ? (
+                <div className="border-border rounded-md border px-6 py-12 text-center">
+                    <p className="text-muted-foreground text-sm">
+                        {effectiveFilter === "error" ? t("filter.noErrors") : t("filter.noResults")}
+                    </p>
+                </div>
+            ) : (
+                <DryRunTable
+                    rows={filteredRows}
+                    mapping={session.mapping}
+                    onSelectRow={(row) => setSelectedId(row.id)}
+                />
+            )}
 
             <div className="flex flex-col gap-3 pt-2">
                 <div className="flex items-center gap-3">
@@ -127,7 +201,7 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
                     </Button>
                     <Button
                         disabled={!canCommit || commitImport.isPending}
-                        onClick={() => commitImport.mutate(sessionId)}
+                        onClick={() => setCommitConfirmOpen(true)}
                     >
                         {t("actions.commit")}
                     </Button>
@@ -151,6 +225,34 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
                 fields={resolvedFields}
                 onClose={() => setSelectedId(null)}
             />
+
+            <Dialog open={commitConfirmOpen} onOpenChange={setCommitConfirmOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t("dryRun.commitConfirmTitle")}</DialogTitle>
+                        <DialogDescription>
+                            {t("dryRun.commitConfirmBody", {
+                                create: counts.will_create,
+                                update: counts.will_update,
+                                skip: counts.will_skip,
+                            })}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setCommitConfirmOpen(false)}>
+                            {t("dryRun.commitConfirmCancel")}
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                setCommitConfirmOpen(false);
+                                commitImport.mutate(sessionId);
+                            }}
+                        >
+                            {t("dryRun.commitConfirmCta")}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

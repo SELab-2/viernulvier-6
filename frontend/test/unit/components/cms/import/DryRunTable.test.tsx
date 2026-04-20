@@ -5,7 +5,7 @@ import { NextIntlClientProvider } from "next-intl";
 
 import messages from "../../../../../src/messages/en.json";
 import { DryRunTable } from "@/components/cms/import/DryRunTable";
-import type { ImportRow } from "@/types/models/import.types";
+import type { ImportRow, ImportMapping } from "@/types/models/import.types";
 
 function makeRow(overrides: Partial<ImportRow> = {}): ImportRow {
     return {
@@ -23,10 +23,12 @@ function makeRow(overrides: Partial<ImportRow> = {}): ImportRow {
     };
 }
 
+const mapping: ImportMapping = { columns: { title: "title" } };
+
 function renderTable(rows: ImportRow[], onSelectRow = vi.fn()) {
     return render(
         <NextIntlClientProvider locale="en" messages={messages}>
-            <DryRunTable rows={rows} onSelectRow={onSelectRow} />
+            <DryRunTable rows={rows} mapping={mapping} onSelectRow={onSelectRow} />
         </NextIntlClientProvider>
     );
 }
@@ -64,5 +66,50 @@ describe("DryRunTable", () => {
 
         expect(onSelectRow).toHaveBeenCalledOnce();
         expect(onSelectRow).toHaveBeenCalledWith(row2);
+    });
+
+    it("shows em-dash when row has no warnings", () => {
+        renderTable([makeRow({ warnings: [] })]);
+        // resolveRowLabel also renders "—" when no label field is found, so there may be multiple
+        const dashes = screen.getAllByText("—");
+        expect(dashes.length).toBeGreaterThanOrEqual(1);
+        // The warnings em-dash is wrapped in a <span class="text-muted-foreground">
+        const warningDash = dashes.find((el) => el.tagName === "SPAN");
+        expect(warningDash).toBeInTheDocument();
+    });
+
+    it("shows warning code when row has one warning", () => {
+        renderTable([makeRow({ warnings: [{ field: null, code: "WARN_001", message: "test" }] })]);
+        expect(screen.getByText("WARN_001")).toBeInTheDocument();
+    });
+
+    it("shows code +N for multiple warnings", () => {
+        const warnings = [
+            { field: null, code: "WARN_001", message: "first" },
+            { field: null, code: "WARN_002", message: "second" },
+            { field: null, code: "WARN_003", message: "third" },
+        ];
+        renderTable([makeRow({ warnings })]);
+        expect(screen.getByText("WARN_001")).toBeInTheDocument();
+        expect(screen.getByText("+2")).toBeInTheDocument();
+    });
+
+    it("applies destructive border class on error rows", () => {
+        const row = makeRow({ id: "err-row", status: "error" });
+        renderTable([row]);
+        const tableRows = screen.getAllByRole("row");
+        // The data row is the second row (first is thead)
+        expect(tableRows[1]).toHaveClass("border-l-destructive");
+    });
+
+    it("shows the resolved row label in the label column", () => {
+        const row = makeRow({ rawData: { title: "Hamlet" } });
+        const customMapping: ImportMapping = { columns: { title: "title" } };
+        render(
+            <NextIntlClientProvider locale="en" messages={messages}>
+                <DryRunTable rows={[row]} mapping={customMapping} onSelectRow={vi.fn()} />
+            </NextIntlClientProvider>
+        );
+        expect(screen.getByText("Hamlet")).toBeInTheDocument();
     });
 });

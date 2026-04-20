@@ -10,6 +10,8 @@ export type ImportMapping = {
     columns: Record<string, string | null>;
 };
 
+export type ImportWarning = { field: string | null; code: string; message: string };
+
 export type ImportSession = {
     id: string;
     entityType: string;
@@ -34,7 +36,7 @@ export type ImportRow = {
     overrides: Record<string, unknown>;
     resolvedRefs: Record<string, unknown>;
     diff: Record<string, unknown> | null;
-    warnings: unknown[];
+    warnings: ImportWarning[];
     targetEntityId: string | null;
 };
 

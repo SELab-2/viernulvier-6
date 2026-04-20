@@ -175,14 +175,19 @@ describe("DryRunStage", () => {
         });
     });
 
-    it("commit button fires useCommitImport.mutate", async () => {
+    it("commit button fires useCommitImport.mutate after confirming dialog", async () => {
         setupDefaultMocks();
         renderDryRunStage();
 
         const commitButton = screen.getByRole("button", { name: "Commit" });
         expect(commitButton).not.toBeDisabled();
 
+        // First click opens the confirmation dialog
         await userEvent.click(commitButton);
+
+        // Confirm the dialog by clicking the CTA
+        const confirmButton = await screen.findByRole("button", { name: "Import" });
+        await userEvent.click(confirmButton);
 
         expect(mockCommitImportMutate).toHaveBeenCalledOnce();
         expect(mockCommitImportMutate).toHaveBeenCalledWith(SESSION_ID);

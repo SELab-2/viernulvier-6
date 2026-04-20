@@ -14,6 +14,7 @@ import {
     ImportMapping,
     ImportRow,
     ImportSession,
+    ImportWarning,
     UploadResult,
 } from "@/types/models/import.types";
 
@@ -50,7 +51,7 @@ export const mapImportRow = (response: ImportRowResponse): ImportRow => ({
     overrides: response.overrides as Record<string, unknown>,
     resolvedRefs: response.resolved_refs as Record<string, unknown>,
     diff: toNullable(response.diff) as Record<string, unknown> | null,
-    warnings: response.warnings as unknown[],
+    warnings: response.warnings as unknown as ImportWarning[],
     targetEntityId: toNullable(response.target_entity_id),
 });
 
