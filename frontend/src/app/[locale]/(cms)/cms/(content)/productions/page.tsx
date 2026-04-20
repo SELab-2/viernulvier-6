@@ -9,7 +9,7 @@ export default function ProductionsPage() {
     const tEditions = useTranslations("Cms.editions");
 
     return (
-        <div className="flex h-full flex-col px-4 py-3">
+        <div className="flex h-full flex-col px-3 py-1 lg:px-4 lg:py-3">
             <PageHeader eyebrow={tEditions("edition1")} title={t("title")} />
 
             {/* Table - scrollable */}

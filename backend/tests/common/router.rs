@@ -9,7 +9,7 @@ use dotenvy::dotenv;
 use serde::Serialize;
 use sqlx::PgPool;
 use tower::ServiceExt;
-use viernulvier_api::{AppState, config::AppConfig, router};
+use viernulvier_archive::{AppState, config::AppConfig, router};
 
 use crate::common::user::{create_test_user, login_user};
 
