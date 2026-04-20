@@ -24,7 +24,10 @@ use viernulvier_archive::import::types::{RawRow, ResolvedRow};
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 fn make_row(pairs: &[(&str, Value)]) -> ResolvedRow {
-    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
+    pairs
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.clone()))
+        .collect()
 }
 
 fn make_raw_row(pairs: &[(&str, &str)]) -> RawRow {
@@ -152,7 +155,10 @@ async fn lookup_existing_finds_by_source_id(pool: PgPool) {
     let adapter = EventImport;
 
     let row = make_row(&[("source_id", json!(555))]);
-    let result = adapter.lookup_existing(&row, &db).await.expect("lookup failed");
+    let result = adapter
+        .lookup_existing(&row, &db)
+        .await
+        .expect("lookup failed");
     assert_eq!(result, Some(event_id));
 }
 
@@ -165,7 +171,10 @@ async fn lookup_existing_returns_none_for_unknown_source_id(pool: PgPool) {
     let adapter = EventImport;
 
     let row = make_row(&[("source_id", json!(9999))]);
-    let result = adapter.lookup_existing(&row, &db).await.expect("lookup failed");
+    let result = adapter
+        .lookup_existing(&row, &db)
+        .await
+        .expect("lookup failed");
     assert_eq!(result, None);
 }
 
@@ -178,7 +187,10 @@ async fn lookup_existing_returns_none_when_source_id_absent(pool: PgPool) {
     let adapter = EventImport;
 
     let row: ResolvedRow = BTreeMap::new();
-    let result = adapter.lookup_existing(&row, &db).await.expect("lookup failed");
+    let result = adapter
+        .lookup_existing(&row, &db)
+        .await
+        .expect("lookup failed");
     assert_eq!(result, None);
 }
 
@@ -199,7 +211,10 @@ async fn resolve_references_fuzzy_matches_hall_name(pool: PgPool) {
         .await
         .expect("resolve_references failed");
 
-    let suggestions = resolution.per_column.get("hall_id").expect("no hall_id key");
+    let suggestions = resolution
+        .per_column
+        .get("hall_id")
+        .expect("no hall_id key");
     assert!(!suggestions.is_empty(), "expected suggestions for hall_id");
     assert_eq!(
         suggestions[0].label, "Grote Zaal",
@@ -225,7 +240,10 @@ async fn resolve_references_fuzzy_matches_production_title(pool: PgPool) {
         .per_column
         .get("production_id")
         .expect("no production_id key");
-    assert!(!suggestions.is_empty(), "expected suggestions for production_id");
+    assert!(
+        !suggestions.is_empty(),
+        "expected suggestions for production_id"
+    );
     assert_eq!(
         suggestions[0].label, "De Grote Voorstelling",
         "top suggestion should be 'De Grote Voorstelling'"
@@ -267,12 +285,22 @@ async fn resolve_references_empty_input_does_not_panic(pool: PgPool) {
         .expect("resolve_references with empty input should not fail");
 
     // Verify it returns suggestions (all scored low) without panicking.
-    let suggestions = resolution.per_column.get("hall_id").expect("no hall_id key");
+    let suggestions = resolution
+        .per_column
+        .get("hall_id")
+        .expect("no hall_id key");
     // We had 2 halls seeded → at most 3 suggestions, at least 2.
-    assert!(!suggestions.is_empty(), "expected some suggestions even for empty input");
+    assert!(
+        !suggestions.is_empty(),
+        "expected some suggestions even for empty input"
+    );
     // All scores should be in [0, 1].
     for s in suggestions {
-        assert!(s.score >= 0.0 && s.score <= 1.0, "score out of range: {}", s.score);
+        assert!(
+            s.score >= 0.0 && s.score <= 1.0,
+            "score out of range: {}",
+            s.score
+        );
     }
 }
 
@@ -287,7 +315,10 @@ fn validate_row_no_warnings_for_valid_row() {
         ("production_id", json!(prod_uuid)),
     ]);
     let warnings = adapter.validate_row(&row);
-    assert!(warnings.is_empty(), "expected no warnings, got: {warnings:?}");
+    assert!(
+        warnings.is_empty(),
+        "expected no warnings, got: {warnings:?}"
+    );
 }
 
 #[test]
@@ -449,7 +480,11 @@ async fn apply_row_update_preserves_source_id(pool: PgPool) {
     tx.commit().await.expect("commit tx");
 
     let event = db.events().by_id(event_id).await.expect("by_id failed");
-    assert_eq!(event.source_id, Some(77), "source_id must not change on update");
+    assert_eq!(
+        event.source_id,
+        Some(77),
+        "source_id must not change on update"
+    );
 }
 
 // ─── Review fixes ────────────────────────────────────────────────────────────
@@ -502,7 +537,11 @@ fn validate_row_warns_when_end_time_unparseable() {
         ("end_time", json!("not-a-date")),
     ]);
     let warnings = adapter.validate_row(&row);
-    assert_eq!(warnings.len(), 1, "expected exactly one warning, got: {warnings:?}");
+    assert_eq!(
+        warnings.len(),
+        1,
+        "expected exactly one warning, got: {warnings:?}"
+    );
     assert_eq!(warnings[0].field.as_deref(), Some("end_time"));
     assert_eq!(warnings[0].code, "invalid_datetime");
 }
@@ -527,7 +566,10 @@ async fn build_diff_detects_changed_start_time(pool: PgPool) {
         .await
         .expect("build_diff failed");
 
-    assert!(diff.contains_key("start_time"), "expected start_time in diff");
+    assert!(
+        diff.contains_key("start_time"),
+        "expected start_time in diff"
+    );
 }
 
 #[sqlx::test]

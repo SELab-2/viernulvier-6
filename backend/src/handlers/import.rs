@@ -92,20 +92,18 @@ pub async fn upload_session(
 
         match field_name.as_str() {
             "entity_type" => {
-                let text = field
-                    .text()
-                    .await
-                    .map_err(|e| AppError::PayloadError(format!("failed to read entity_type: {e}")))?;
+                let text = field.text().await.map_err(|e| {
+                    AppError::PayloadError(format!("failed to read entity_type: {e}"))
+                })?;
                 entity_type_opt = Some(text);
             }
             "file" => {
                 // Capture filename before consuming the field body
                 filename_opt = field.file_name().map(str::to_string);
 
-                let bytes = field
-                    .bytes()
-                    .await
-                    .map_err(|e| AppError::PayloadError(format!("failed to read file field: {e}")))?;
+                let bytes = field.bytes().await.map_err(|e| {
+                    AppError::PayloadError(format!("failed to read file field: {e}"))
+                })?;
 
                 if bytes.len() > MAX_FILE_BYTES {
                     return Err(AppError::PayloadError(
@@ -123,15 +121,21 @@ pub async fn upload_session(
     }
 
     let entity_type = match entity_type_opt {
-        None => return Err(AppError::PayloadError("missing 'entity_type' field".to_string())),
+        None => {
+            return Err(AppError::PayloadError(
+                "missing 'entity_type' field".to_string(),
+            ));
+        }
         Some(s) if s.is_empty() => {
-            return Err(AppError::PayloadError("'entity_type' field is empty".to_string()));
+            return Err(AppError::PayloadError(
+                "'entity_type' field is empty".to_string(),
+            ));
         }
         Some(s) => s,
     };
 
-    let bytes = file_bytes_opt
-        .ok_or_else(|| AppError::PayloadError("missing 'file' field".to_string()))?;
+    let bytes =
+        file_bytes_opt.ok_or_else(|| AppError::PayloadError("missing 'file' field".to_string()))?;
 
     // Step 2: validate entity_type
     if state.import_registry.get(&entity_type).is_none() {
@@ -141,8 +145,8 @@ pub async fn upload_session(
     }
 
     // Step 3: parse CSV preview
-    let preview = csv_parser::parse_preview(&bytes)
-        .map_err(|e| AppError::PayloadError(e.to_string()))?;
+    let preview =
+        csv_parser::parse_preview(&bytes).map_err(|e| AppError::PayloadError(e.to_string()))?;
 
     // Step 4: verify S3 is configured (before creating DB records)
     let s3_client = state
@@ -649,16 +653,16 @@ pub async fn rollback_session(
         })?;
 
     // 4. Fetch all rows and filter to those that were committed (created/updated), reversed
-    let all_rows = state
-        .db
-        .imports()
-        .get_rows(id, 10_000, 0, None)
-        .await?;
+    let all_rows = state.db.imports().get_rows(id, 10_000, 0, None).await?;
 
     let mut committed_rows: Vec<_> = all_rows
         .into_iter()
         .filter(|r| {
-            matches!(r.status, database::models::import_row::ImportRowStatus::Created | database::models::import_row::ImportRowStatus::Updated)
+            matches!(
+                r.status,
+                database::models::import_row::ImportRowStatus::Created
+                    | database::models::import_row::ImportRowStatus::Updated
+            )
         })
         .collect();
 
@@ -676,7 +680,9 @@ pub async fn rollback_session(
                 .map_err(|e| AppError::Internal(e.to_string()))?;
             match adapter.revert_row(entity_id, &state.db, &mut tx).await {
                 Ok(()) => {
-                    tx.commit().await.map_err(|e| AppError::Internal(e.to_string()))?;
+                    tx.commit()
+                        .await
+                        .map_err(|e| AppError::Internal(e.to_string()))?;
                     repo.record_reverted_row(row.id).await?;
                 }
                 Err(e) => {
@@ -701,7 +707,8 @@ pub async fn rollback_session(
     }
 
     // 6. Mark session as cancelled
-    repo.update_status(id, ImportSessionStatus::Cancelled, None).await?;
+    repo.update_status(id, ImportSessionStatus::Cancelled, None)
+        .await?;
 
     // 7. Re-fetch and return
     let updated = state
@@ -785,7 +792,9 @@ pub async fn revert_row(
         .map_err(|e| AppError::Internal(e.to_string()))?;
     match adapter.revert_row(entity_id, &state.db, &mut tx).await {
         Ok(()) => {
-            tx.commit().await.map_err(|e| AppError::Internal(e.to_string()))?;
+            tx.commit()
+                .await
+                .map_err(|e| AppError::Internal(e.to_string()))?;
             repo.record_reverted_row(row_id).await?;
         }
         Err(e) => {
@@ -906,11 +915,7 @@ pub(crate) fn build_resolved_row(
 /// filename supplied by the user, then truncate to 255 code-points.
 /// Falls back to `"upload.csv"` if the result would be empty.
 fn sanitise_filename(raw: &str) -> String {
-    let cleaned: String = raw
-        .chars()
-        .filter(|c| !c.is_control())
-        .take(255)
-        .collect();
+    let cleaned: String = raw.chars().filter(|c| !c.is_control()).take(255).collect();
     if cleaned.is_empty() {
         "upload.csv".to_string()
     } else {

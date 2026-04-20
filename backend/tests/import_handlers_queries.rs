@@ -17,10 +17,7 @@ use sqlx::PgPool;
 use std::str::FromStr;
 use uuid::Uuid;
 
-use crate::common::{
-    router::TestRouter,
-    user::create_test_user,
-};
+use crate::common::{router::TestRouter, user::create_test_user};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -79,9 +76,7 @@ async fn list_sessions_returns_seeded_session(pool: PgPool) {
 async fn get_session_returns_404_for_missing(pool: PgPool) {
     let r = TestRouter::as_editor(pool).await;
     let missing_id = Uuid::from_str("ffffffff-ffff-ffff-ffff-ffffffffffff").unwrap();
-    let resp = r
-        .get(&format!("/import/sessions/{missing_id}"))
-        .await;
+    let resp = r.get(&format!("/import/sessions/{missing_id}")).await;
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
 
@@ -94,9 +89,7 @@ async fn get_rows_returns_empty_for_session_with_no_rows(pool: PgPool) {
     let session_id = seed_session(&pool, user.id).await;
 
     let r = TestRouter::as_editor(pool).await;
-    let resp = r
-        .get(&format!("/import/sessions/{session_id}/rows"))
-        .await;
+    let resp = r.get(&format!("/import/sessions/{session_id}/rows")).await;
     assert_eq!(resp.status(), StatusCode::OK);
     let json = body_json(resp).await;
     assert_eq!(json, Value::Array(vec![]));
@@ -141,10 +134,7 @@ async fn get_rows_filters_by_status(pool: PgPool) {
     assert_eq!(all_rows.len(), 2);
 
     // Mark row 2 as will_skip so we have two distinct statuses.
-    db.imports()
-        .mark_row_skipped(all_rows[1].id)
-        .await
-        .unwrap();
+    db.imports().mark_row_skipped(all_rows[1].id).await.unwrap();
 
     let r = TestRouter::as_editor(pool).await;
 

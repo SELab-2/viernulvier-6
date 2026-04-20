@@ -63,11 +63,7 @@ async fn seed_row(db: &Database, session_id: Uuid, titel: &str) -> Uuid {
         .unwrap();
 
     // Fetch it back
-    let rows = db
-        .imports()
-        .get_rows(session_id, 1, 0, None)
-        .await
-        .unwrap();
+    let rows = db.imports().get_rows(session_id, 1, 0, None).await.unwrap();
     rows.into_iter().next().unwrap().id
 }
 
@@ -88,9 +84,7 @@ async fn save_title_mapping(db: &Database, session_id: Uuid) {
 async fn update_row_returns_404_for_missing_row(pool: PgPool) {
     let r = TestRouter::as_editor(pool).await;
     let missing = Uuid::from_str("ffffffff-ffff-ffff-ffff-ffffffffffff").unwrap();
-    let resp = r
-        .patch(&format!("/import/rows/{missing}"), json!({}))
-        .await;
+    let resp = r.patch(&format!("/import/rows/{missing}"), json!({})).await;
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
 
@@ -104,10 +98,7 @@ async fn update_row_skip_true_marks_will_skip(pool: PgPool) {
 
     let r = TestRouter::as_editor(pool).await;
     let resp = r
-        .patch(
-            &format!("/import/rows/{row_id}"),
-            json!({ "skip": true }),
-        )
+        .patch(&format!("/import/rows/{row_id}"), json!({ "skip": true }))
         .await;
 
     assert_eq!(resp.status(), StatusCode::OK);
@@ -190,20 +181,13 @@ async fn update_row_unskip_triggers_revalidation(pool: PgPool) {
     db.imports().mark_row_skipped(row_id).await.unwrap();
 
     // Verify it is skipped
-    let rows = db
-        .imports()
-        .get_rows(session_id, 1, 0, None)
-        .await
-        .unwrap();
+    let rows = db.imports().get_rows(session_id, 1, 0, None).await.unwrap();
     assert_eq!(rows[0].status, ImportRowStatus::WillSkip);
 
     // Now un-skip by patching with skip: false
     let r = TestRouter::as_editor(pool).await;
     let resp = r
-        .patch(
-            &format!("/import/rows/{row_id}"),
-            json!({ "skip": false }),
-        )
+        .patch(&format!("/import/rows/{row_id}"), json!({ "skip": false }))
         .await;
 
     assert_eq!(resp.status(), StatusCode::OK);

@@ -60,7 +60,8 @@ fn sniff_delimiter(bytes: &[u8]) -> u8 {
         }
     }
     // If there was content after the last newline (or no newline), include it.
-    if lines.len() < 2 && start < sample.len()
+    if lines.len() < 2
+        && start < sample.len()
         && let Some(slice) = sample.get(start..)
     {
         lines.push(slice);

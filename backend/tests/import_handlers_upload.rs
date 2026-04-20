@@ -36,10 +36,8 @@ fn build_multipart(entity_type: &str, filename: &str, csv: &[u8]) -> (String, Ve
     // file field
     body.extend_from_slice(format!("--{boundary}\r\n").as_bytes());
     body.extend_from_slice(
-        format!(
-            "Content-Disposition: form-data; name=\"file\"; filename=\"{filename}\"\r\n"
-        )
-        .as_bytes(),
+        format!("Content-Disposition: form-data; name=\"file\"; filename=\"{filename}\"\r\n")
+            .as_bytes(),
     );
     body.extend_from_slice(b"Content-Type: text/csv\r\n\r\n");
     body.extend_from_slice(csv);
@@ -56,10 +54,8 @@ fn build_multipart_file_only(filename: &str, csv: &[u8]) -> (String, Vec<u8>) {
 
     body.extend_from_slice(format!("--{boundary}\r\n").as_bytes());
     body.extend_from_slice(
-        format!(
-            "Content-Disposition: form-data; name=\"file\"; filename=\"{filename}\"\r\n"
-        )
-        .as_bytes(),
+        format!("Content-Disposition: form-data; name=\"file\"; filename=\"{filename}\"\r\n")
+            .as_bytes(),
     );
     body.extend_from_slice(b"Content-Type: text/csv\r\n\r\n");
     body.extend_from_slice(csv);

@@ -141,7 +141,10 @@ impl ImportableEntity for ProductionImport {
     ) -> anyhow::Result<BTreeMap<String, DiffEntry>> {
         let current = db.productions().by_id(entity_id).await?;
         let prod = &current.production;
-        let nl_trans = current.translations.iter().find(|t| t.language_code == "nl");
+        let nl_trans = current
+            .translations
+            .iter()
+            .find(|t| t.language_code == "nl");
 
         let mut diff = BTreeMap::new();
 
@@ -171,24 +174,32 @@ impl ImportableEntity for ProductionImport {
         );
         maybe_diff(
             "uitdatabank_theme",
-            prod.uitdatabank_theme.as_ref().map(|s| Value::String(s.clone())),
+            prod.uitdatabank_theme
+                .as_ref()
+                .map(|s| Value::String(s.clone())),
             json_string(row, "uitdatabank_theme").map(Value::String),
         );
 
         // NL translation fields
         maybe_diff(
             "title_nl",
-            nl_trans.and_then(|t| t.title.as_ref()).map(|s| Value::String(s.clone())),
+            nl_trans
+                .and_then(|t| t.title.as_ref())
+                .map(|s| Value::String(s.clone())),
             json_string(row, "title_nl").map(Value::String),
         );
         maybe_diff(
             "supertitle_nl",
-            nl_trans.and_then(|t| t.supertitle.as_ref()).map(|s| Value::String(s.clone())),
+            nl_trans
+                .and_then(|t| t.supertitle.as_ref())
+                .map(|s| Value::String(s.clone())),
             json_string(row, "supertitle_nl").map(Value::String),
         );
         maybe_diff(
             "description_nl",
-            nl_trans.and_then(|t| t.description.as_ref()).map(|s| Value::String(s.clone())),
+            nl_trans
+                .and_then(|t| t.description.as_ref())
+                .map(|s| Value::String(s.clone())),
             json_string(row, "description_nl").map(Value::String),
         );
         maybe_diff(
@@ -225,33 +236,34 @@ impl ImportableEntity for ProductionImport {
             .and_then(|n| i32::try_from(n).ok());
 
         // Build NL translation data, merging with existing on update.
-        let nl_data = |existing_nl: Option<&database::models::production::ProductionTranslation>| {
-            ProductionTranslationData {
-                language_code: "nl".to_string(),
-                title: title_nl.clone().or_else(|| {
-                    existing_nl.and_then(|t| t.title.clone())
-                }),
-                supertitle: supertitle_nl.clone().or_else(|| {
-                    existing_nl.and_then(|t| t.supertitle.clone())
-                }),
-                description: description_nl.clone().or_else(|| {
-                    existing_nl.and_then(|t| t.description.clone())
-                }),
-                // carry over the rest untouched
-                artist: existing_nl.and_then(|t| t.artist.clone()),
-                meta_title: existing_nl.and_then(|t| t.meta_title.clone()),
-                meta_description: existing_nl.and_then(|t| t.meta_description.clone()),
-                tagline: existing_nl.and_then(|t| t.tagline.clone()),
-                teaser: existing_nl.and_then(|t| t.teaser.clone()),
-                description_extra: existing_nl.and_then(|t| t.description_extra.clone()),
-                description_2: existing_nl.and_then(|t| t.description_2.clone()),
-                quote: existing_nl.and_then(|t| t.quote.clone()),
-                quote_source: existing_nl.and_then(|t| t.quote_source.clone()),
-                programme: existing_nl.and_then(|t| t.programme.clone()),
-                info: existing_nl.and_then(|t| t.info.clone()),
-                description_short: existing_nl.and_then(|t| t.description_short.clone()),
-            }
-        };
+        let nl_data =
+            |existing_nl: Option<&database::models::production::ProductionTranslation>| {
+                ProductionTranslationData {
+                    language_code: "nl".to_string(),
+                    title: title_nl
+                        .clone()
+                        .or_else(|| existing_nl.and_then(|t| t.title.clone())),
+                    supertitle: supertitle_nl
+                        .clone()
+                        .or_else(|| existing_nl.and_then(|t| t.supertitle.clone())),
+                    description: description_nl
+                        .clone()
+                        .or_else(|| existing_nl.and_then(|t| t.description.clone())),
+                    // carry over the rest untouched
+                    artist: existing_nl.and_then(|t| t.artist.clone()),
+                    meta_title: existing_nl.and_then(|t| t.meta_title.clone()),
+                    meta_description: existing_nl.and_then(|t| t.meta_description.clone()),
+                    tagline: existing_nl.and_then(|t| t.tagline.clone()),
+                    teaser: existing_nl.and_then(|t| t.teaser.clone()),
+                    description_extra: existing_nl.and_then(|t| t.description_extra.clone()),
+                    description_2: existing_nl.and_then(|t| t.description_2.clone()),
+                    quote: existing_nl.and_then(|t| t.quote.clone()),
+                    quote_source: existing_nl.and_then(|t| t.quote_source.clone()),
+                    programme: existing_nl.and_then(|t| t.programme.clone()),
+                    info: existing_nl.and_then(|t| t.info.clone()),
+                    description_short: existing_nl.and_then(|t| t.description_short.clone()),
+                }
+            };
 
         match existing_id {
             None => {
@@ -305,10 +317,14 @@ impl ImportableEntity for ProductionImport {
             Some(id) => {
                 // Update path: load current, preserve slug and unrelated fields.
                 let current = db.productions().by_id(id).await?;
-                let existing_nl =
-                    current.translations.iter().find(|t| t.language_code == "nl");
-                let existing_en =
-                    current.translations.iter().find(|t| t.language_code == "en");
+                let existing_nl = current
+                    .translations
+                    .iter()
+                    .find(|t| t.language_code == "nl");
+                let existing_en = current
+                    .translations
+                    .iter()
+                    .find(|t| t.language_code == "en");
 
                 let updated_production = database::models::production::Production {
                     id: current.production.id,
@@ -317,16 +333,17 @@ impl ImportableEntity for ProductionImport {
                     video_1: current.production.video_1.clone(),
                     video_2: current.production.video_2.clone(),
                     eticket_info: current.production.eticket_info.clone(),
-                    uitdatabank_theme: uitdatabank_theme.or(current.production.uitdatabank_theme.clone()),
+                    uitdatabank_theme: uitdatabank_theme
+                        .or(current.production.uitdatabank_theme.clone()),
                     uitdatabank_type: current.production.uitdatabank_type.clone(),
                 };
 
                 let mut translations = vec![nl_data(existing_nl)];
 
                 // EN: carry over existing, overwrite description if incoming present.
-                let en_desc = description_en.clone().or_else(|| {
-                    existing_en.and_then(|t| t.description.clone())
-                });
+                let en_desc = description_en
+                    .clone()
+                    .or_else(|| existing_en.and_then(|t| t.description.clone()));
                 if en_desc.is_some() || existing_en.is_some() {
                     translations.push(ProductionTranslationData {
                         language_code: "en".to_string(),

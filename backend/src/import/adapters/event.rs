@@ -17,7 +17,7 @@ use uuid::Uuid;
 
 use crate::import::{
     trait_def::ImportableEntity,
-    types::{FieldSpec, FieldType, RawRow, ReferenceSuggestion, ReferenceResolution, ResolvedRow},
+    types::{FieldSpec, FieldType, RawRow, ReferenceResolution, ReferenceSuggestion, ResolvedRow},
 };
 
 pub struct EventImport;
@@ -44,10 +44,7 @@ async fn fuzzy_match_halls(
     limit: usize,
 ) -> anyhow::Result<Vec<ReferenceSuggestion>> {
     // Fetch all halls (small table — no pagination needed).
-    let (halls, next_cursor) = db
-        .halls()
-        .all(10_000, None, HallSearch { q: None })
-        .await?;
+    let (halls, next_cursor) = db.halls().all(10_000, None, HallSearch { q: None }).await?;
 
     if next_cursor.is_some() {
         tracing::warn!(
@@ -265,7 +262,9 @@ impl ImportableEntity for EventImport {
                 warnings.push(ImportWarning {
                     field: Some("start_time".into()),
                     code: "invalid_datetime".into(),
-                    message: format!("Field 'start_time' could not be parsed as a datetime: '{s}'."),
+                    message: format!(
+                        "Field 'start_time' could not be parsed as a datetime: '{s}'."
+                    ),
                 });
             }
             _ => {}
@@ -386,7 +385,9 @@ impl ImportableEntity for EventImport {
             Some(Value::String(current.production_id.to_string())),
             row.get("production_id").and_then(|v| {
                 if let Value::String(s) = v {
-                    Uuid::parse_str(s).ok().map(|u| Value::String(u.to_string()))
+                    Uuid::parse_str(s)
+                        .ok()
+                        .map(|u| Value::String(u.to_string()))
                 } else {
                     None
                 }
@@ -399,7 +400,9 @@ impl ImportableEntity for EventImport {
             current.hall_id.map(|u| Value::String(u.to_string())),
             row.get("hall_id").and_then(|v| {
                 if let Value::String(s) = v {
-                    Uuid::parse_str(s).ok().map(|u| Value::String(u.to_string()))
+                    Uuid::parse_str(s)
+                        .ok()
+                        .map(|u| Value::String(u.to_string()))
                 } else {
                     None
                 }

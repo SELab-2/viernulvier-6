@@ -1,11 +1,11 @@
 pub mod article;
-pub mod import;
 pub mod artist;
 pub mod collection;
 pub mod event;
 pub mod event_price;
 pub mod facet;
 pub mod hall;
+pub mod import;
 pub mod location;
 pub mod media;
 pub mod paginated;

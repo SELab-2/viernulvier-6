@@ -20,7 +20,10 @@ use viernulvier_archive::import::types::ResolvedRow;
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 fn make_row(pairs: &[(&str, Value)]) -> ResolvedRow {
-    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
+    pairs
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.clone()))
+        .collect()
 }
 
 async fn seed_production_with_source_id(pool: &PgPool, source_id: i32) -> Uuid {
@@ -99,7 +102,10 @@ fn field_spec_contains_all_six_fields() {
     assert!(names.contains(&"supertitle_nl"), "missing supertitle_nl");
     assert!(names.contains(&"description_nl"), "missing description_nl");
     assert!(names.contains(&"description_en"), "missing description_en");
-    assert!(names.contains(&"uitdatabank_theme"), "missing uitdatabank_theme");
+    assert!(
+        names.contains(&"uitdatabank_theme"),
+        "missing uitdatabank_theme"
+    );
     assert!(names.contains(&"source_id"), "missing source_id");
     assert_eq!(names.len(), 6, "expected exactly 6 fields");
 }
@@ -119,7 +125,10 @@ async fn lookup_existing_finds_by_source_id(pool: PgPool) {
     let adapter = ProductionImport;
 
     let row = make_row(&[("source_id", json!(1234))]);
-    let result = adapter.lookup_existing(&row, &db).await.expect("lookup failed");
+    let result = adapter
+        .lookup_existing(&row, &db)
+        .await
+        .expect("lookup failed");
     assert_eq!(result, Some(id));
 }
 
@@ -130,7 +139,10 @@ async fn lookup_existing_returns_none_for_unknown_source_id(pool: PgPool) {
     let adapter = ProductionImport;
 
     let row = make_row(&[("source_id", json!(9999))]);
-    let result = adapter.lookup_existing(&row, &db).await.expect("lookup failed");
+    let result = adapter
+        .lookup_existing(&row, &db)
+        .await
+        .expect("lookup failed");
     assert_eq!(result, None);
 }
 
@@ -141,7 +153,10 @@ async fn lookup_existing_returns_none_when_source_id_absent(pool: PgPool) {
     let adapter = ProductionImport;
 
     let row: ResolvedRow = BTreeMap::new();
-    let result = adapter.lookup_existing(&row, &db).await.expect("lookup failed");
+    let result = adapter
+        .lookup_existing(&row, &db)
+        .await
+        .expect("lookup failed");
     assert_eq!(result, None);
 }
 
@@ -152,7 +167,10 @@ async fn resolve_references_returns_empty(pool: PgPool) {
     let db = Database::new(pool.clone());
     let adapter = ProductionImport;
     let raw_row = BTreeMap::new();
-    let result = adapter.resolve_references(&raw_row, &db).await.expect("resolve failed");
+    let result = adapter
+        .resolve_references(&raw_row, &db)
+        .await
+        .expect("resolve failed");
     assert!(result.per_column.is_empty());
 }
 
@@ -208,7 +226,10 @@ async fn apply_row_creates_production(pool: PgPool) {
 
     let result = db.productions().by_id(id).await.expect("by_id failed");
     assert_eq!(result.production.source_id, Some(42));
-    assert_eq!(result.production.uitdatabank_theme.as_deref(), Some("Dance"));
+    assert_eq!(
+        result.production.uitdatabank_theme.as_deref(),
+        Some("Dance")
+    );
     assert_eq!(result.production.slug, "hello");
 
     let nl = result.translations.iter().find(|t| t.language_code == "nl");
@@ -239,7 +260,11 @@ async fn apply_row_updates_existing_production(pool: PgPool) {
 
     assert_eq!(returned_id, existing_id);
 
-    let result = db.productions().by_id(existing_id).await.expect("by_id failed");
+    let result = db
+        .productions()
+        .by_id(existing_id)
+        .await
+        .expect("by_id failed");
     // slug should be unchanged (was "old")
     assert_eq!(result.production.slug, "old");
 
@@ -285,7 +310,11 @@ async fn build_diff_detects_changed_fields(pool: PgPool) {
         info: None,
         description_short: None,
     }];
-    let seeded = db.productions().insert(create, trans).await.expect("seed failed");
+    let seeded = db
+        .productions()
+        .insert(create, trans)
+        .await
+        .expect("seed failed");
     let id = seeded.production.id;
 
     let row = make_row(&[
@@ -293,9 +322,15 @@ async fn build_diff_detects_changed_fields(pool: PgPool) {
         ("title_nl", json!("B")),
     ]);
 
-    let diff = adapter.build_diff(id, &row, &db).await.expect("build_diff failed");
+    let diff = adapter
+        .build_diff(id, &row, &db)
+        .await
+        .expect("build_diff failed");
 
-    assert!(diff.contains_key("uitdatabank_theme"), "expected uitdatabank_theme in diff");
+    assert!(
+        diff.contains_key("uitdatabank_theme"),
+        "expected uitdatabank_theme in diff"
+    );
     assert!(diff.contains_key("title_nl"), "expected title_nl in diff");
 
     let theme_diff = &diff["uitdatabank_theme"];
@@ -321,13 +356,23 @@ async fn build_diff_excludes_unchanged_fields(pool: PgPool) {
         uitdatabank_theme: Some("Same".to_string()),
         uitdatabank_type: None,
     };
-    let seeded = db.productions().insert(create, vec![]).await.expect("seed failed");
+    let seeded = db
+        .productions()
+        .insert(create, vec![])
+        .await
+        .expect("seed failed");
     let id = seeded.production.id;
 
     let row = make_row(&[("uitdatabank_theme", json!("Same"))]);
-    let diff = adapter.build_diff(id, &row, &db).await.expect("build_diff failed");
+    let diff = adapter
+        .build_diff(id, &row, &db)
+        .await
+        .expect("build_diff failed");
 
-    assert!(!diff.contains_key("uitdatabank_theme"), "unchanged field should not be in diff");
+    assert!(
+        !diff.contains_key("uitdatabank_theme"),
+        "unchanged field should not be in diff"
+    );
 }
 
 // ─── Task 4.7 — revert_row ───────────────────────────────────────────────────
@@ -340,11 +385,17 @@ async fn revert_row_deletes_production(pool: PgPool) {
     let id = seed_production_with_source_id(&pool, 500).await;
 
     let mut tx = pool.begin().await.expect("begin tx");
-    adapter.revert_row(id, &db, &mut tx).await.expect("revert_row failed");
+    adapter
+        .revert_row(id, &db, &mut tx)
+        .await
+        .expect("revert_row failed");
     tx.commit().await.expect("commit tx");
 
     let result = db.productions().by_id(id).await;
-    assert!(result.is_err(), "production should no longer exist after revert");
+    assert!(
+        result.is_err(),
+        "production should no longer exist after revert"
+    );
 }
 
 // ─── Fix 1 — source_id in diff / preserved on update ─────────────────────────
@@ -357,7 +408,10 @@ async fn build_diff_detects_source_id_mismatch(pool: PgPool) {
     let id = seed_production_with_source_id(&pool, 10).await;
 
     let row = make_row(&[("source_id", json!(99))]);
-    let diff = adapter.build_diff(id, &row, &db).await.expect("build_diff failed");
+    let diff = adapter
+        .build_diff(id, &row, &db)
+        .await
+        .expect("build_diff failed");
 
     assert!(diff.contains_key("source_id"), "expected source_id in diff");
     let entry = &diff["source_id"];
@@ -372,10 +426,7 @@ async fn apply_row_update_preserves_source_id(pool: PgPool) {
 
     let id = seed_production_with_source_id(&pool, 10).await;
 
-    let row = make_row(&[
-        ("title_nl", json!("Updated")),
-        ("source_id", json!(99)),
-    ]);
+    let row = make_row(&[("title_nl", json!("Updated")), ("source_id", json!(99))]);
 
     let mut tx = pool.begin().await.expect("begin tx");
     adapter
@@ -385,7 +436,11 @@ async fn apply_row_update_preserves_source_id(pool: PgPool) {
     tx.commit().await.expect("commit tx");
 
     let result = db.productions().by_id(id).await.expect("by_id failed");
-    assert_eq!(result.production.source_id, Some(10), "source_id must not change on update");
+    assert_eq!(
+        result.production.source_id,
+        Some(10),
+        "source_id must not change on update"
+    );
 }
 
 // ─── Fix 3 — slug fallback for punctuation-only title ────────────────────────
@@ -416,7 +471,10 @@ async fn lookup_existing_returns_none_for_source_id_overflow(pool: PgPool) {
     let adapter = ProductionImport;
 
     let row = make_row(&[("source_id", json!(3_000_000_000_u64))]);
-    let result = adapter.lookup_existing(&row, &db).await.expect("lookup failed");
+    let result = adapter
+        .lookup_existing(&row, &db)
+        .await
+        .expect("lookup failed");
     assert_eq!(result, None);
 }
 
@@ -543,12 +601,19 @@ async fn apply_row_creates_with_description_en(pool: PgPool) {
     tx.commit().await.expect("commit tx");
 
     let result = db.productions().by_id(id).await.expect("by_id failed");
-    assert_eq!(result.translations.len(), 2, "expected two translation rows (nl + en)");
+    assert_eq!(
+        result.translations.len(),
+        2,
+        "expected two translation rows (nl + en)"
+    );
 
     let nl = result.translations.iter().find(|t| t.language_code == "nl");
     assert!(nl.is_some(), "expected NL translation");
 
     let en = result.translations.iter().find(|t| t.language_code == "en");
     assert!(en.is_some(), "expected EN translation");
-    assert_eq!(en.unwrap().description.as_deref(), Some("English description"));
+    assert_eq!(
+        en.unwrap().description.as_deref(),
+        Some("English description")
+    );
 }

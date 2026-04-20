@@ -149,9 +149,7 @@ async fn revert_row_rejects_pending_row(pool: PgPool) {
 async fn cancel_session_returns_404_for_missing_session(pool: PgPool) {
     let r = TestRouter::as_editor(pool).await;
     let missing_id = Uuid::from_str("ffffffff-ffff-ffff-ffff-ffffffffffff").unwrap();
-    let resp = r
-        .delete(&format!("/import/sessions/{missing_id}"))
-        .await;
+    let resp = r.delete(&format!("/import/sessions/{missing_id}")).await;
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
 
@@ -164,9 +162,7 @@ async fn cancel_session_rejects_committed_session(pool: PgPool) {
     set_status(&pool, session_id, ImportSessionStatus::Committed).await;
 
     let r = TestRouter::as_editor(pool).await;
-    let resp = r
-        .delete(&format!("/import/sessions/{session_id}"))
-        .await;
+    let resp = r.delete(&format!("/import/sessions/{session_id}")).await;
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 
     // Error body has shape {"message": "...", "success": false}
@@ -183,9 +179,7 @@ async fn cancel_session_returns_204_from_mapping_status(pool: PgPool) {
     set_status(&pool, session_id, ImportSessionStatus::Mapping).await;
 
     let r = TestRouter::as_editor(pool.clone()).await;
-    let resp = r
-        .delete(&format!("/import/sessions/{session_id}"))
-        .await;
+    let resp = r.delete(&format!("/import/sessions/{session_id}")).await;
     assert_eq!(resp.status(), StatusCode::NO_CONTENT);
 
     // Verify the session is now cancelled in the DB
