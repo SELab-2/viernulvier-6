@@ -12,6 +12,7 @@ import {
     Database,
     FileUp,
     FolderArchive,
+    TriangleAlert,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -31,6 +32,12 @@ const navItems = [
 const utilityItems = [
     { key: "ingest", href: "/cms/ingest", icon: Database, editionKey: "edition5" },
     { key: "import", href: "/cms/import", icon: FileUp, editionKey: "edition6" },
+    {
+        key: "importErrors",
+        href: "/cms/import-errors",
+        icon: TriangleAlert,
+        editionKey: "edition6",
+    },
 ];
 
 const ENTITY_TYPE_MAP: Record<string, EntityType | null> = {
@@ -104,9 +111,10 @@ function FacetFilters({ facets, activeFacets, onToggle, onClear }: FacetFiltersP
 // Sidebar content component (shared between desktop and mobile)
 interface SidebarContentProps {
     onNavigate?: () => void;
+    showHeader?: boolean;
 }
 
-function SidebarContent({ onNavigate }: SidebarContentProps) {
+function SidebarContent({ onNavigate, showHeader = true }: SidebarContentProps) {
     const t = useTranslations("Cms");
     const tSidebar = useTranslations("Cms.sidebar");
     const tEditions = useTranslations("Cms.editions");
@@ -164,15 +172,16 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
 
     return (
         <div className="flex h-full flex-col overflow-hidden">
-            {/* Header - Newspaper style */}
-            <div className="shrink-0 px-5 pt-5 pb-3">
-                <Link href="/cms" className="block text-center" onClick={handleNavClick}>
-                    <div className="font-display text-foreground text-[28px] leading-tight font-black tracking-tight uppercase">
-                        CMS
-                    </div>
-                    <div className="bg-foreground mx-auto mt-2 h-0.5 w-16" />
-                </Link>
-            </div>
+            {showHeader && (
+                <div className="shrink-0 px-5 pt-5 pb-3">
+                    <Link href="/cms" className="block text-center" onClick={handleNavClick}>
+                        <div className="font-display text-foreground text-[28px] leading-tight font-black tracking-tight uppercase">
+                            CMS
+                        </div>
+                        <div className="bg-foreground mx-auto mt-2 h-0.5 w-16" />
+                    </Link>
+                </div>
+            )}
 
             {/* Navigation */}
             <nav className="flex-1 overflow-y-auto py-5">
@@ -291,44 +300,52 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
     );
 }
 
-export function CmsSidebar() {
+export function CmsMobileMenu({ className = "" }: { className?: string }) {
     const [mobileOpen, setMobileOpen] = useState(false);
 
+    return (
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger asChild>
+                <button
+                    type="button"
+                    className={`text-muted-foreground hover:text-foreground hover:border-foreground/40 border-foreground/20 flex items-center gap-2 border px-3 py-2 font-mono text-[10px] tracking-[1.5px] uppercase transition-colors ${className}`}
+                    aria-label="Open menu"
+                >
+                    <span>Menu</span>
+                    <span className="text-[8px]">→</span>
+                </button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-72 p-0">
+                <SheetTitle className="sr-only">Menu</SheetTitle>
+                <div className="flex h-full flex-col">
+                    <div className="border-foreground/20 grid grid-cols-3 items-center border-b p-3">
+                        <span className="text-muted-foreground font-mono text-[10px] tracking-[1.5px] uppercase">
+                            Menu
+                        </span>
+                        <span className="font-display text-center text-lg font-black tracking-tight uppercase">
+                            CMS
+                        </span>
+                        <span />
+                    </div>
+                    <div className="flex-1 overflow-y-auto py-4">
+                        <SidebarContent
+                            onNavigate={() => setMobileOpen(false)}
+                            showHeader={false}
+                        />
+                    </div>
+                </div>
+            </SheetContent>
+        </Sheet>
+    );
+}
+
+export function CmsSidebar() {
     return (
         <>
             {/* Desktop Sidebar - Always visible */}
             <aside className="border-foreground/20 bg-background flex hidden h-full w-56 flex-col overflow-hidden border-r lg:flex">
                 <SidebarContent />
             </aside>
-
-            {/* Mobile Header with Menu Button */}
-            <div className="border-foreground/20 bg-background flex items-center justify-between border-b p-4 lg:hidden">
-                <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-                    <SheetTrigger asChild>
-                        <button
-                            type="button"
-                            className="text-muted-foreground hover:text-foreground hover:border-foreground/40 border-foreground/20 flex items-center gap-2 border px-3 py-2 font-mono text-[10px] tracking-[1.5px] uppercase transition-colors"
-                            aria-label="Open menu"
-                        >
-                            <span>Menu</span>
-                            <span className="text-[8px]">→</span>
-                        </button>
-                    </SheetTrigger>
-                    <SheetContent side="left" className="w-72 p-0">
-                        <SheetTitle className="sr-only">Menu</SheetTitle>
-                        <div className="flex h-full flex-col">
-                            <div className="border-foreground/20 flex items-center justify-between border-b p-4">
-                                <span className="font-display text-lg font-black tracking-tight uppercase">
-                                    Menu
-                                </span>
-                            </div>
-                            <div className="flex-1 overflow-y-auto py-4">
-                                <SidebarContent onNavigate={() => setMobileOpen(false)} />
-                            </div>
-                        </div>
-                    </SheetContent>
-                </Sheet>
-            </div>
         </>
     );
 }

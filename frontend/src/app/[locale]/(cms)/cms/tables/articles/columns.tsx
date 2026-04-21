@@ -1,14 +1,38 @@
 "use client";
 
+import Image from "next/image";
 import { ColumnDef } from "@tanstack/react-table";
-import { SquarePen } from "lucide-react";
+import { ImageIcon, SquarePen } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
+import { useGetEntityMedia } from "@/hooks/api";
 import { StatusBadge } from "@/components/cms/status-badge";
 import { makeActionsColumn } from "../actions-column";
 import { Action, ActionDisplay } from "@/types/cms/actions";
 import { ArticleListItem } from "@/types/models/article.types";
+
+function CoverImageCell({ articleId }: { articleId: string }) {
+    const { data: coverMedia = [] } = useGetEntityMedia("article", articleId, {
+        params: { role: "cover" },
+    });
+    const cover = coverMedia[0];
+    const url = cover?.crops.find((c) => c.variantKind === "thumbnail")?.url ?? cover?.url;
+    if (!url) {
+        return <ImageIcon className="text-muted-foreground size-4" />;
+    }
+    return (
+        <div className="relative size-10 overflow-hidden rounded">
+            <Image
+                src={url}
+                alt={cover?.altTextNl ?? ""}
+                fill
+                className="object-cover"
+                sizes="40px"
+            />
+        </div>
+    );
+}
 
 function formatDate(date: string | null): string {
     if (!date) return "—";
@@ -50,8 +74,14 @@ export function makeArticleColumns(
 
     return [
         {
+            id: "cover",
+            header: "",
+            cell: ({ row }) => <CoverImageCell articleId={row.original.id} />,
+            size: 52,
+        },
+        {
             accessorKey: "status",
-            header: "Status",
+            header: tArticles("statusColumn"),
             cell: ({ row }) => <StatusBadge status={row.original.status} />,
         },
         {
@@ -68,7 +98,7 @@ export function makeArticleColumns(
         },
         {
             id: "subjectPeriod",
-            header: "Date range",
+            header: tArticles("dateRangeColumn"),
             cell: ({ row }) => {
                 const { subjectPeriodStart, subjectPeriodEnd } = row.original;
                 if (!subjectPeriodStart && !subjectPeriodEnd) {

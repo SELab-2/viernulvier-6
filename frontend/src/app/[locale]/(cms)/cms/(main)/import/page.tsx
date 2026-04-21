@@ -27,10 +27,9 @@ export default function ImportPage() {
     }, []);
 
     return (
-        <div className="flex h-full flex-col px-4 py-3">
+        <div className="flex h-full flex-col px-3 py-1 lg:px-4 lg:py-3">
             <PageHeader eyebrow={tEditions("edition6")} title={t("title")} />
 
-            {/* Content - scrollable */}
             <div ref={contentRef} className="flex-1 overflow-auto">
                 <div className="max-w-2xl">
                     <div className="border-foreground/20 bg-foreground/[0.02] border p-8">

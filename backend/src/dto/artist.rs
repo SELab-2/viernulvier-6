@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::error::AppError;
+use crate::{dto::production::ProductionPayload, error::AppError};
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ArtistPayload {
@@ -30,6 +30,20 @@ impl ArtistPayload {
             .await?
             .into_iter()
             .map(Self::from)
+            .collect())
+    }
+
+    pub async fn by_id(db: &Database, id: Uuid) -> Result<Self, AppError> {
+        Ok(db.artists().by_id(id).await?.into())
+    }
+
+    pub async fn productions(db: &Database, id: Uuid) -> Result<Vec<ProductionPayload>, AppError> {
+        Ok(db
+            .productions()
+            .by_artist_id(id)
+            .await?
+            .into_iter()
+            .map(ProductionPayload::from)
             .collect())
     }
 }

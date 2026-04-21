@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
     DndContext,
     PointerSensor,
@@ -11,7 +11,7 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { GripVertical, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Link, useRouter } from "@/i18n/routing";
 import {
@@ -338,6 +338,7 @@ function SortableItemRow({
 
 export function CollectionEditorPage({ id }: { id: string }) {
     const t = useTranslations("Cms.Collections");
+    const locale = useLocale();
     const router = useRouter();
 
     const { data: collection, isLoading } = useGetCollection(id);
@@ -355,17 +356,13 @@ export function CollectionEditorPage({ id }: { id: string }) {
     const deleteCollection = useDeleteCollection();
 
     const [slugEdited, setSlugEdited] = useState(false);
-    const [origin, setOrigin] = useState("");
+    const [origin] = useState(() => (typeof window !== "undefined" ? window.location.origin : ""));
     const [localSlug, setLocalSlug] = useState<string | null>(null);
     const [titleNl, setTitleNl] = useState<string | null>(null);
     const [titleEn, setTitleEn] = useState<string | null>(null);
     const [descriptionNl, setDescriptionNl] = useState<string | null>(null);
     const [descriptionEn, setDescriptionEn] = useState<string | null>(null);
     const [items, setItems] = useState<LocalCollectionItem[] | null>(null);
-
-    useEffect(() => {
-        if (typeof window !== "undefined") setOrigin(window.location.origin);
-    }, []);
 
     const sensors = useSensors(useSensor(PointerSensor));
 
@@ -427,6 +424,31 @@ export function CollectionEditorPage({ id }: { id: string }) {
     ]);
 
     const localItems = items ?? initialItems;
+
+    const updateComment = (itemId: string, languageCode: "nl" | "en", value: string) => {
+        setItems(
+            normalizeItems(
+                localItems.map((item) => {
+                    if (item.id !== itemId) return item;
+                    return {
+                        ...item,
+                        translations: withAllLanguages(item.translations, (lang) => ({
+                            languageCode: lang,
+                            comment: null,
+                        })).map((translation) =>
+                            translation.languageCode === languageCode
+                                ? { ...translation, comment: value || null }
+                                : translation
+                        ),
+                    };
+                })
+            )
+        );
+    };
+
+    const removeItem = (itemId: string) => {
+        setItems(normalizeItems(localItems.filter((item) => item.id !== itemId)));
+    };
 
     const metadataDirty = useMemo(() => {
         if (!initialMetadata || !metadata) return false;
@@ -526,7 +548,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
             };
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [localItems, entitiesLoading, productionMap, eventMap, locationMap, t]
+        [entitiesLoading, eventMap, locationMap, productionMap, removeItem, t, updateComment]
     );
 
     const handleDragEnd = (event: DragEndEvent) => {
@@ -545,35 +567,10 @@ export function CollectionEditorPage({ id }: { id: string }) {
         setItems(normalizeItems(flatItems));
     };
 
-    const updateComment = (itemId: string, languageCode: "nl" | "en", value: string) => {
-        setItems(
-            normalizeItems(
-                localItems.map((item) => {
-                    if (item.id !== itemId) return item;
-                    return {
-                        ...item,
-                        translations: withAllLanguages(item.translations, (lang) => ({
-                            languageCode: lang,
-                            comment: null,
-                        })).map((translation) =>
-                            translation.languageCode === languageCode
-                                ? { ...translation, comment: value || null }
-                                : translation
-                        ),
-                    };
-                })
-            )
-        );
-    };
-
-    const removeItem = (itemId: string) => {
-        setItems(normalizeItems(localItems.filter((item) => item.id !== itemId)));
-    };
-
     const copyShareableLink = async () => {
         if (!metadata?.slug) return;
         try {
-            await navigator.clipboard.writeText(`${origin}/en/collections/${metadata.slug}`);
+            await navigator.clipboard.writeText(`${origin}/${locale}/collections/${metadata.slug}`);
             toast.success(t("linkCopied"));
         } catch {
             toast.error(t("copyError"));
@@ -681,9 +678,6 @@ export function CollectionEditorPage({ id }: { id: string }) {
                                 {t("copyLink")}
                             </Button>
                         </div>
-                        <p className="text-muted-foreground text-xs">
-                            {origin}/en/collections/{metadata.slug}
-                        </p>
                     </div>
                 </div>
             </section>

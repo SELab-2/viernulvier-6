@@ -11,6 +11,9 @@ const messages = {
         oldest: "Oldest First",
         az: "A-Z",
     },
+    Search: {
+        heroPlaceholder: "Search the archive",
+    },
 };
 
 const renderWithIntl = (ui: React.ReactElement) => {
@@ -27,14 +30,30 @@ describe("ResultsBar component", () => {
     });
 
     it("displays the correct shown and total counts", () => {
-        renderWithIntl(<ResultsBar shownCount={20} totalCount={1000} />);
+        renderWithIntl(
+            <ResultsBar
+                shownCount={20}
+                totalCount={1000}
+                query=""
+                onQueryChange={() => {}}
+                showSearch={false}
+            />
+        );
 
         expect(screen.getByText("20")).toBeInTheDocument();
         expect(screen.getByText(/1.000/)).toBeInTheDocument();
     });
 
     it("renders sort options based on translations", () => {
-        renderWithIntl(<ResultsBar shownCount={20} totalCount={100} />);
+        renderWithIntl(
+            <ResultsBar
+                shownCount={20}
+                totalCount={100}
+                query=""
+                onQueryChange={() => {}}
+                showSearch={false}
+            />
+        );
 
         expect(screen.getByText("Sort by")).toBeInTheDocument();
         expect(screen.getByText("Most Recent")).toBeInTheDocument();
@@ -44,7 +63,15 @@ describe("ResultsBar component", () => {
 
     it("updates active sort option on click", async () => {
         const user = userEvent.setup();
-        renderWithIntl(<ResultsBar shownCount={20} totalCount={100} />);
+        renderWithIntl(
+            <ResultsBar
+                shownCount={20}
+                totalCount={100}
+                query=""
+                onQueryChange={() => {}}
+                showSearch={false}
+            />
+        );
 
         const recentBtn = screen.getByText("Most Recent");
         const azBtn = screen.getByText("A-Z");

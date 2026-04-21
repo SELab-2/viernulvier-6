@@ -2,19 +2,21 @@
 
 import { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Archive } from "lucide-react";
-import type { Row } from "@tanstack/react-table";
+import { Archive, ChevronsUp } from "lucide-react";
+import type { ExpandedState, Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
-import { makeProductionColumns, productionFields, toProductionUpdateInput } from "./columns";
-import type { ProductionRow } from "@/types/models/production.types";
+import { makeProductionColumns } from "./columns";
+import { makeEventFields, toEventUpdateInput } from "./event-columns";
 import { ActionBar } from "../action-bar";
 import { useParentChildSelection } from "../use-parent-child-selection";
-import { makeEventColumns, eventFields, toEventUpdateInput } from "./event-columns";
+import { makeEventColumns } from "./event-columns";
+import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { useGetInfiniteProductions, useUpdateProduction } from "@/hooks/api/useProductions";
+import { useGetInfiniteProductions } from "@/hooks/api/useProductions";
 import { useGetEvents, useUpdateEvent } from "@/hooks/api/useEvents";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
+import { ProductionMediaSheet } from "@/components/cms/production-media-sheet";
 import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
 import type { PickerItem } from "@/lib/collection-picker-utils";
 import type { Production } from "@/types/models/production.types";
@@ -22,6 +24,7 @@ import type { Event } from "@/types/models/event.types";
 
 export function ProductionsTable() {
     const t = useTranslations("Cms.Productions");
+    const tCommon = useTranslations("Cms.common");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
     const locale = useLocale();
@@ -43,7 +46,6 @@ export function ProductionsTable() {
     );
 
     const allEvents = useMemo(() => eventsResult?.data ?? [], [eventsResult]);
-    const updateProduction = useUpdateProduction();
     const updateEvent = useUpdateEvent();
 
     // Load more handler
@@ -68,10 +70,11 @@ export function ProductionsTable() {
         };
     }, [loadMore]);
 
-    const [editProduction, setEditProduction] = useState<ProductionRow | null>(null);
     const [editEvent, setEditEvent] = useState<Event | null>(null);
     const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
+    const [mediaProduction, setMediaProduction] = useState<Production | null>(null);
     const [spotlight, setSpotlight] = useState<{ src: string; alt: string } | null>(null);
+    const [expanded, setExpanded] = useState<ExpandedState>({});
     const openSpotlight = useCallback((src: string, alt: string) => setSpotlight({ src, alt }), []);
     const spotlightItems: SpotlightItem[] = spotlight
         ? [{ kind: "plain", src: spotlight.src, alt: spotlight.alt }]
@@ -98,22 +101,32 @@ export function ProductionsTable() {
         clearSelection,
     } = useParentChildSelection<Production>(eventsByProduction);
 
+    const handleEditProduction = useCallback(
+        (production: Production) => {
+            // Navigate to the dedicated editor page
+            window.location.href = `/${locale}/cms/productions/${production.id}/edit`;
+        },
+        [locale]
+    );
+
     const productionCols = useMemo(
         () => [
             selectColumn,
             ...makeProductionColumns({
-                onEdit: setEditProduction,
+                onEdit: handleEditProduction,
+                onMedia: setMediaProduction,
                 t: tActions,
+                tProductions: t,
                 locale,
                 onOpenSpotlight: openSpotlight,
             }),
         ],
-        [selectColumn, tActions, locale, openSpotlight]
+        [selectColumn, tActions, handleEditProduction, t, locale, openSpotlight]
     );
 
     const eventCols = useMemo(
-        () => makeEventColumns({ onEdit: setEditEvent, t: tActions }),
-        [tActions]
+        () => makeEventColumns({ onEdit: setEditEvent, t: tActions, tProductions: t }),
+        [tActions, t]
     );
 
     const expanderLabels = useMemo(() => ({ show: t("showEvents"), hide: t("hideEvents") }), [t]);
@@ -194,6 +207,9 @@ export function ProductionsTable() {
         ]
     );
 
+    const hasExpanded = Object.keys(expanded).length > 0;
+    const collapseAll = useCallback(() => setExpanded({}), []);
+
     const actions = useMemo(
         () => [
             {
@@ -204,15 +220,15 @@ export function ProductionsTable() {
             },
             {
                 key: "delete",
-                label: "Delete",
+                label: t("deleteAction"),
             },
         ],
-        [tCollections]
+        [tCollections, t]
     );
 
     return (
         <div className="flex h-full flex-col">
-            <div className="bg-background sticky top-0 z-10">
+            <div className="bg-background sticky top-0 z-10 flex items-center justify-between gap-2">
                 <ActionBar
                     entityCounts={[
                         { countKey: "productionsSelected", count: selectedProductionCount },
@@ -221,6 +237,17 @@ export function ProductionsTable() {
                     actions={actions}
                     onClear={clearSelection}
                 />
+                {hasExpanded && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={collapseAll}
+                        className="text-muted-foreground hover:text-foreground shrink-0 cursor-pointer rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                    >
+                        <ChevronsUp className="mr-1 h-3.5 w-3.5" />
+                        {tCommon("collapseAll")}
+                    </Button>
+                )}
             </div>
 
             <div className="flex-1 overflow-auto">
@@ -232,6 +259,8 @@ export function ProductionsTable() {
                     rowSelection={parentSelection}
                     onRowSelectionChange={setParentSelection}
                     expanderLabels={expanderLabels}
+                    expanded={expanded}
+                    onExpandedChange={setExpanded}
                     getRowId={getProductionRowId}
                 />
 
@@ -243,27 +272,13 @@ export function ProductionsTable() {
                 )}
             </div>
 
-            {editProduction && (
-                <EditSheet
-                    open={!!editProduction}
-                    onOpenChange={(open) => !open && setEditProduction(null)}
-                    title={t("editProduction")}
-                    entity={editProduction}
-                    fields={productionFields}
-                    onSave={async (values) => {
-                        await updateProduction.mutateAsync(toProductionUpdateInput(values));
-                        setEditProduction(null);
-                    }}
-                />
-            )}
-
             {editEvent && (
                 <EditSheet
                     open={!!editEvent}
                     onOpenChange={(open) => !open && setEditEvent(null)}
                     title={t("editEvent")}
                     entity={editEvent}
-                    fields={eventFields}
+                    fields={makeEventFields(t)}
                     onSave={async (values) => {
                         await updateEvent.mutateAsync(toEventUpdateInput(values));
                         setEditEvent(null);
@@ -276,6 +291,20 @@ export function ProductionsTable() {
                 onOpenChange={setCollectionDialogOpen}
                 items={collectionPickerItems}
             />
+
+            {mediaProduction && (
+                <ProductionMediaSheet
+                    productionId={mediaProduction.id}
+                    productionTitle={
+                        mediaProduction.translations.find((t) => t.languageCode === "nl")?.title ??
+                        mediaProduction.slug
+                    }
+                    open={true}
+                    onOpenChange={(open) => {
+                        if (!open) setMediaProduction(null);
+                    }}
+                />
+            )}
 
             <ImageSpotlight
                 items={spotlightItems}

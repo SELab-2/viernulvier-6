@@ -14,7 +14,6 @@ import { queryKeys } from "@/hooks/api/query-keys";
 import type { Production } from "@/types/models/production.types";
 import type { PaginatedResult } from "@/types/api/api.types";
 
-import { LoadingState } from "@/components/shared/loading-state";
 import { UnifiedHeader } from "@/components/layout/header";
 import { SearchHero } from "@/components/searchpage/search-hero";
 import { ResultsBar } from "@/components/searchpage/results-bar";
@@ -22,11 +21,13 @@ import { ArchiveSidebar } from "@/components/searchpage/archive-sidebar";
 import { ProductionList } from "@/components/searchpage/production-list";
 import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
 
+const ARCHIVE_MIN_YEAR = 1980;
+
 export default function SearchPage() {
     const locale = useLocale();
     const t = useTranslations("Search");
-    const tHome = useTranslations("Home");
     const loadMoreRef = useRef<HTMLDivElement>(null);
+    const heroObserverRef = useRef<IntersectionObserver | null>(null);
     const queryClient = useQueryClient();
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -35,17 +36,17 @@ export default function SearchPage() {
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
     const query = searchParams.get("q")?.trim() ?? "";
     const [draftQuery, setDraftQuery] = useState(query);
+    const [prevQuery, setPrevQuery] = useState(query);
+    const [isHeroVisible, setIsHeroVisible] = useState(true);
 
-    const currentCursor = cursorHistory[currentPageIndex];
-
-    useEffect(() => {
+    if (query !== prevQuery) {
+        setPrevQuery(query);
         setDraftQuery(query);
-    }, [query]);
-
-    useEffect(() => {
         setCursorHistory([null]);
         setCurrentPageIndex(0);
-    }, [query]);
+    }
+
+    const currentCursor = cursorHistory[currentPageIndex];
 
     const handleSearch = useCallback(
         (value: string) => {
@@ -69,15 +70,13 @@ export default function SearchPage() {
             ...(currentCursor ? { cursor: currentCursor } : {}),
         },
     });
-    const { data: locationsResult, isLoading: locationsLoading } = useGetLocations();
-    const { data: facets, isLoading: facetsLoading } = useGetFacets({
+    const { data: locationsResult } = useGetLocations();
+    const { data: facets } = useGetFacets({
         entityType: "production",
     });
 
     const nextCursor = productionsResult?.nextCursor;
     const locationsData = useMemo(() => locationsResult?.data ?? [], [locationsResult?.data]);
-
-    const isLoading = productionsLoading || locationsLoading || facetsLoading;
 
     // Derive accumulated productions from React Query cache for each fetched cursor.
     // Including productionsResult in deps triggers recalculation when the current page arrives.
@@ -118,19 +117,17 @@ export default function SearchPage() {
         };
     }, [loadMore]);
 
-    if (isLoading && allProductions.length === 0) {
-        return (
-            <>
-                <UnifiedHeader
-                    query={query}
-                    onQueryChange={() => {}}
-                    searchPlaceholder={t("placeholder")}
-                    searchHint={t("hint")}
-                />
-                <LoadingState message={tHome("loading")} />
-            </>
+    const heroRef = useCallback((node: HTMLDivElement | null) => {
+        heroObserverRef.current?.disconnect();
+        if (!node) return;
+        heroObserverRef.current = new IntersectionObserver(
+            (entries) => setIsHeroVisible(entries[0].isIntersecting),
+            { threshold: 0 }
         );
-    }
+        heroObserverRef.current.observe(node);
+    }, []);
+
+    const maxYear = useMemo(() => new Date().getFullYear(), []);
 
     return (
         <>
@@ -141,14 +138,32 @@ export default function SearchPage() {
                 searchHint={t("hint")}
             />
 
-            <SearchHero query={draftQuery} onQueryChange={setDraftQuery} onSearch={handleSearch} />
+            <SearchHero
+                ref={heroRef}
+                query={draftQuery}
+                onQueryChange={setDraftQuery}
+                onSearch={handleSearch}
+            />
 
-            <ResultsBar shownCount={allProductions.length} totalCount={allProductions.length} />
-
-            <div className="flex min-h-[calc(100vh-300px)] overflow-hidden">
-                <ArchiveSidebar locations={locationsData} facets={facets ?? []} />
-                <main className="min-w-0 flex-1 overflow-hidden">
-                    {allProductions.length === 0 && !isLoading ? (
+            <div
+                className="flex min-h-[calc(100vh-300px)] overflow-hidden"
+                style={{ ["--results-bar-height" as string]: "0px" }}
+            >
+                <ArchiveSidebar
+                    locations={locationsData}
+                    facets={facets ?? []}
+                    minYear={ARCHIVE_MIN_YEAR}
+                    maxYear={maxYear}
+                />
+                <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                    <ResultsBar
+                        shownCount={allProductions.length}
+                        totalCount={allProductions.length}
+                        query={draftQuery}
+                        onQueryChange={setDraftQuery}
+                        showSearch={!isHeroVisible}
+                    />
+                    {allProductions.length === 0 && !productionsLoading ? (
                         <VintageEmptyState
                             title={t("noResultsTitle")}
                             description={t("noResultsText", { query })}
@@ -156,10 +171,14 @@ export default function SearchPage() {
                             caption={t("articleImageCaption")}
                         />
                     ) : (
-                        <ProductionList productions={allProductions} locale={locale} />
+                        <ProductionList
+                            productions={allProductions}
+                            locale={locale}
+                            isLoading={productionsLoading}
+                        />
                     )}
 
-                    {nextCursor !== null && (
+                    {allProductions.length > 0 && nextCursor !== null && (
                         <div ref={loadMoreRef} className="flex justify-center py-8">
                             {isFetching && (
                                 <div className="text-muted-foreground flex items-center gap-2">
