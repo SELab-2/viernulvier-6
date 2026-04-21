@@ -4,14 +4,14 @@ import { use, useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
 
-import { useGetCollection } from "@/hooks/api/useCollections";
+import { useGetCollectionBySlug } from "@/hooks/api/useCollections";
 import { UnifiedHeader } from "@/components/layout/header";
 import { LoadingState } from "@/components/shared/loading-state";
 import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
 import { CollectionHeader, CollectionGrid } from "@/components/collections";
 
-export default function CollectionPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params);
+export default function CollectionPage({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = use(params);
     const t = useTranslations("Collections");
     const tSearch = useTranslations("Search");
     const router = useRouter();
@@ -29,7 +29,7 @@ export default function CollectionPage({ params }: { params: Promise<{ id: strin
         [router]
     );
 
-    const { data: collection, isLoading, isError } = useGetCollection(id);
+    const { data: collection, isLoading, isError } = useGetCollectionBySlug(slug);
 
     return (
         <>
