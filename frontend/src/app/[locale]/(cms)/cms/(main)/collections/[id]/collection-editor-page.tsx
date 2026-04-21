@@ -10,7 +10,7 @@ import {
     type DragEndEvent,
 } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { GripVertical, Trash2 } from "lucide-react";
+import { GripVertical, Link2, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Link, useRouter } from "@/i18n/routing";
@@ -29,10 +29,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CollectionCoverField } from "@/components/cms/collection-cover-field";
+import { LanguageSelector } from "@/components/cms/language-selector";
 import type { Collection, CollectionItem } from "@/types/models/collection.types";
 import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
 import type { Location } from "@/types/models/location.types";
+
+type Lang = "nl" | "en";
 
 const LANGS = ["nl", "en"] as const;
 
@@ -75,15 +78,7 @@ function getTranslation<T extends { languageCode: string }>(
     return translations.find((translation) => translation.languageCode === languageCode);
 }
 
-const CONTENT_TYPE_CLASSES: Record<string, string> = {
-    production: "bg-blue-100 text-blue-700",
-    event: "bg-purple-100 text-purple-700",
-    location: "bg-emerald-100 text-emerald-700",
-    blogpost: "bg-orange-100 text-orange-700",
-    artist: "bg-pink-100 text-pink-700",
-};
-const getContentTypeClass = (ct: string) =>
-    CONTENT_TYPE_CLASSES[ct] ?? "bg-muted text-muted-foreground";
+const getContentTypeClass = (_ct: string) => "border border-border text-muted-foreground";
 
 function toMetadataSnapshot(collection: Collection) {
     return {
@@ -111,70 +106,21 @@ type EntityData =
     | { type: "loading" }
     | { type: "unknown" };
 
-function DetailValue({ label, value }: { label: string; value: string | null | undefined }) {
-    if (!value) return null;
-    return (
-        <div className="min-w-0">
-            <span className="text-muted-foreground text-xs">{label}</span>
-            <p className="truncate text-sm">{value}</p>
-        </div>
-    );
-}
-
-function ItemDetails({ entity }: { entity: EntityData }) {
-    if (entity.type === "loading") {
-        return (
-            <div className="grid gap-x-4 gap-y-1 md:grid-cols-3">
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-            </div>
-        );
-    }
-
+function getItemSubtitle(entity: EntityData): string | null {
     if (entity.type === "production") {
         const nl = getTranslation(entity.data.translations, "nl");
         const en = getTranslation(entity.data.translations, "en");
-        return (
-            <div className="grid gap-x-4 gap-y-1 md:grid-cols-3">
-                <DetailValue label="Title (NL)" value={nl?.title} />
-                <DetailValue label="Title (EN)" value={en?.title} />
-                <DetailValue label="Artist" value={nl?.artist || en?.artist} />
-                <DetailValue label="Tagline" value={nl?.tagline || en?.tagline} />
-            </div>
-        );
+        return nl?.artist || en?.artist || null;
     }
-
     if (entity.type === "event") {
-        const d = entity.data;
-        const starts = new Date(d.startsAt);
-        const date = starts.toLocaleDateString();
-        const time = formatTime(starts);
-        const ends = d.endsAt ? formatTime(new Date(d.endsAt)) : null;
-        const doors = d.doorsAt ? formatTime(new Date(d.doorsAt)) : null;
-        return (
-            <div className="grid gap-x-4 gap-y-1 md:grid-cols-3">
-                <DetailValue label="Date" value={date} />
-                <DetailValue label="Time" value={ends ? `${time} – ${ends}` : time} />
-                <DetailValue label="Doors" value={doors} />
-                <DetailValue label="Status" value={d.status} />
-            </div>
-        );
+        const starts = new Date(entity.data.startsAt);
+        const ends = entity.data.endsAt ? formatTime(new Date(entity.data.endsAt)) : null;
+        const timeStr = ends ? `${formatTime(starts)} – ${ends}` : formatTime(starts);
+        return `${starts.toLocaleDateString()} · ${timeStr}`;
     }
-
     if (entity.type === "location") {
-        const loc = entity.data;
-        return (
-            <div className="grid gap-x-4 gap-y-1 md:grid-cols-3">
-                <DetailValue label="Name" value={loc.name} />
-                <DetailValue label="Address" value={loc.address} />
-                <DetailValue label="City" value={loc.city} />
-                <DetailValue label="Country" value={loc.country} />
-                <DetailValue label="Phone" value={loc.phone1} />
-            </div>
-        );
+        return [entity.data.city, entity.data.country].filter(Boolean).join(", ") || null;
     }
-
     return null;
 }
 
@@ -183,6 +129,7 @@ type ItemRowProps = {
     contentTypeLabel: string;
     title: string;
     entity: EntityData;
+    coverImageUrl: string | null;
     commentNl: string;
     commentEn: string;
     commentNlLabel: string;
@@ -227,9 +174,11 @@ function groupItemsByProduction(
 function SortableItemRow({
     group,
     renderItem,
+    activeLang,
 }: {
     group: GroupedItem;
     renderItem: (item: LocalCollectionItem) => ItemRowProps;
+    activeLang: Lang;
 }) {
     const t = useTranslations("Cms.Collections");
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
@@ -241,97 +190,127 @@ function SortableItemRow({
     };
 
     const parentProps = renderItem(group.item);
+    const subtitle = getItemSubtitle(parentProps.entity);
 
     return (
-        <div
-            ref={setNodeRef}
-            style={style}
-            className="bg-background flex flex-col gap-3 rounded-md border p-3"
-        >
-            <div className="flex items-center gap-2">
-                <button
-                    type="button"
-                    className="text-muted-foreground"
-                    aria-label="Drag"
-                    {...attributes}
-                    {...listeners}
-                >
-                    <GripVertical className="h-4 w-4" />
-                </button>
-                <span
-                    className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${getContentTypeClass(group.item.contentType)}`}
-                >
-                    {parentProps.contentTypeLabel}
-                </span>
-                <span className="truncate text-sm font-medium">{parentProps.title}</span>
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="ml-auto"
-                    aria-label={t("removeItem")}
-                    onClick={parentProps.onRemove}
-                >
-                    <Trash2 className="h-4 w-4" />
-                </Button>
-            </div>
-            <ItemDetails entity={parentProps.entity} />
-            {group.childEvents.length > 0 && (
-                <div className="space-y-1">
-                    <p className="text-muted-foreground text-xs font-medium">{t("events")}</p>
-                    {group.childEvents.map((childItem) => {
-                        const childProps = renderItem(childItem);
-                        const entity = childProps.entity;
-                        const detail =
-                            entity.type === "event"
-                                ? [
-                                      entity.data.status,
-                                      entity.data.doorsAt
-                                          ? `doors ${formatTime(new Date(entity.data.doorsAt))}`
-                                          : null,
-                                  ]
-                                      .filter(Boolean)
-                                      .join(" · ")
-                                : null;
-                        return (
-                            <div
-                                key={childItem.id}
-                                className="flex items-center gap-2 py-1 text-xs"
-                            >
-                                <span className="truncate font-medium">{childProps.title}</span>
-                                {detail && (
-                                    <span className="text-muted-foreground shrink-0">{detail}</span>
-                                )}
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="ml-auto h-6 w-6 shrink-0 p-0"
-                                    aria-label={t("removeItem")}
-                                    onClick={childProps.onRemove}
-                                >
-                                    <Trash2 className="h-3 w-3" />
-                                </Button>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-            <div className="grid gap-3 md:grid-cols-2">
-                {(
-                    [
-                        ["nl", parentProps.commentNlLabel, parentProps.commentNl],
-                        ["en", parentProps.commentEnLabel, parentProps.commentEn],
-                    ] as const
-                ).map(([lang, label, value]) => (
-                    <div key={lang} className="space-y-1">
-                        <Label>{label}</Label>
-                        <Input
-                            value={value}
-                            onChange={(e) => parentProps.onCommentChange(lang, e.target.value)}
+        <div ref={setNodeRef} style={style} className="bg-background border">
+            {/* Two-column: cover + info */}
+            <div className="flex">
+                {/* Left: cover image */}
+                <div className="w-40 shrink-0 self-stretch overflow-hidden">
+                    {parentProps.coverImageUrl ? (
+                        <img
+                            src={parentProps.coverImageUrl}
+                            alt=""
+                            className="h-full w-full object-cover"
                         />
+                    ) : (
+                        <div className="bg-muted h-full min-h-[5rem] w-full" />
+                    )}
+                </div>
+
+                {/* Right: stacked info + actions */}
+                <div className="flex flex-1 flex-col gap-2 p-3">
+                    <div className="flex items-start gap-2">
+                        <div className="flex min-w-0 flex-1 flex-col gap-1">
+                            <span
+                                className={`inline-flex w-fit px-1.5 py-0.5 text-xs font-medium ${getContentTypeClass(group.item.contentType)}`}
+                            >
+                                {parentProps.contentTypeLabel}
+                            </span>
+                            <span className="text-sm leading-tight font-medium">
+                                {parentProps.title}
+                            </span>
+                            {subtitle && (
+                                <span className="text-muted-foreground text-xs">{subtitle}</span>
+                            )}
+                            {parentProps.entity.type === "loading" && (
+                                <Skeleton className="h-4 w-32" />
+                            )}
+                        </div>
+                        <div className="flex shrink-0 items-center">
+                            <button
+                                type="button"
+                                className="text-muted-foreground cursor-grab p-1"
+                                aria-label="Drag"
+                                {...attributes}
+                                {...listeners}
+                            >
+                                <GripVertical className="h-4 w-4" />
+                            </button>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="rounded-none"
+                                aria-label={t("removeItem")}
+                                onClick={parentProps.onRemove}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
                     </div>
-                ))}
+
+                    {/* Child events in the right column */}
+                    {group.childEvents.length > 0 && (
+                        <div className="space-y-1">
+                            <p className="text-muted-foreground text-xs font-medium">
+                                {t("events")}
+                            </p>
+                            {group.childEvents.map((childItem) => {
+                                const childProps = renderItem(childItem);
+                                const entity = childProps.entity;
+                                const detail =
+                                    entity.type === "event"
+                                        ? [
+                                              entity.data.status,
+                                              entity.data.doorsAt
+                                                  ? `doors ${formatTime(new Date(entity.data.doorsAt))}`
+                                                  : null,
+                                          ]
+                                              .filter(Boolean)
+                                              .join(" · ")
+                                        : null;
+                                return (
+                                    <div
+                                        key={childItem.id}
+                                        className="flex items-center gap-2 text-xs"
+                                    >
+                                        <span className="truncate font-medium">
+                                            {childProps.title}
+                                        </span>
+                                        {detail && (
+                                            <span className="text-muted-foreground shrink-0">
+                                                {detail}
+                                            </span>
+                                        )}
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="ml-auto h-6 w-6 shrink-0 rounded-none p-0"
+                                            aria-label={t("removeItem")}
+                                            onClick={childProps.onRemove}
+                                        >
+                                            <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Comment */}
+            <div className="space-y-1 border-t px-3 py-2">
+                <Label className="text-muted-foreground text-xs">
+                    {activeLang === "nl" ? parentProps.commentNlLabel : parentProps.commentEnLabel}
+                </Label>
+                <Input
+                    value={activeLang === "nl" ? parentProps.commentNl : parentProps.commentEn}
+                    onChange={(e) => parentProps.onCommentChange(activeLang, e.target.value)}
+                />
             </div>
         </div>
     );
@@ -341,6 +320,8 @@ export function CollectionEditorPage({ id }: { id: string }) {
     const t = useTranslations("Cms.Collections");
     const locale = useLocale();
     const router = useRouter();
+
+    const [activeLang, setActiveLang] = useState<Lang>(locale as Lang);
 
     const { data: collection, isLoading } = useGetCollection(id);
     const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
@@ -542,6 +523,26 @@ export function CollectionEditorPage({ id }: { id: string }) {
         (item: LocalCollectionItem): ItemRowProps => {
             const translationNl = getTranslation(item.translations, "nl");
             const translationEn = getTranslation(item.translations, "en");
+
+            let coverImageUrl: string | null = null;
+            if (!entitiesLoading) {
+                switch (item.contentType) {
+                    case "production":
+                        coverImageUrl = productionMap.get(item.contentId)?.coverImageUrl ?? null;
+                        break;
+                    case "event": {
+                        const ev = eventMap.get(item.contentId);
+                        if (ev)
+                            coverImageUrl =
+                                productionMap.get(ev.productionId)?.coverImageUrl ?? null;
+                        break;
+                    }
+                    case "location":
+                        coverImageUrl = locationMap.get(item.contentId)?.coverImageUrl ?? null;
+                        break;
+                }
+            }
+
             return {
                 item,
                 contentTypeLabel: t(
@@ -549,6 +550,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
                 ),
                 title: getItemTitle(item),
                 entity: getEntityData(item),
+                coverImageUrl,
                 commentNl: translationNl?.comment ?? "",
                 commentEn: translationEn?.comment ?? "",
                 commentNlLabel: t("commentNl"),
@@ -579,9 +581,8 @@ export function CollectionEditorPage({ id }: { id: string }) {
     };
 
     const copyShareableLink = async () => {
-        if (!metadata?.slug) return;
         try {
-            await navigator.clipboard.writeText(`${origin}/${locale}/collections/${metadata.slug}`);
+            await navigator.clipboard.writeText(`${origin}/${locale}/collections/${id}`);
             toast.success(t("linkCopied"));
         } catch {
             toast.error(t("copyError"));
@@ -640,42 +641,73 @@ export function CollectionEditorPage({ id }: { id: string }) {
     return (
         <div className="h-full space-y-6 overflow-auto p-4 pb-8">
             <div className="flex flex-wrap items-center gap-2">
-                <Button variant="outline" onClick={() => router.push("/cms/collections")}>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-none"
+                    onClick={() => router.push("/cms/collections")}
+                >
                     {t("backToCollections")}
                 </Button>
-                <Button variant="outline" onClick={removeCollection}>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-none"
+                    onClick={removeCollection}
+                >
                     {t("deleteCollection")}
                 </Button>
-                <Button className="ml-auto" onClick={save} disabled={!canSave}>
+                <Button
+                    className="ml-auto rounded-none"
+                    size="sm"
+                    onClick={save}
+                    disabled={!canSave}
+                >
                     {isSaving ? t("saving") : t("save")}
                 </Button>
             </div>
 
             <section className="space-y-3 rounded-md border p-4">
-                <h2 className="font-medium">{t("title")}</h2>
-                <div className="grid gap-3 md:grid-cols-2">
-                    {(
-                        [
-                            ["titleNl", metadata.translations[0]?.title ?? "", setTitleNl],
-                            ["titleEn", metadata.translations[1]?.title ?? "", setTitleEn],
-                            [
-                                "descriptionNl",
-                                metadata.translations[0]?.description ?? "",
-                                setDescriptionNl,
-                            ],
-                            [
-                                "descriptionEn",
-                                metadata.translations[1]?.description ?? "",
-                                setDescriptionEn,
-                            ],
-                        ] as const
-                    ).map(([label, value, setter]) => (
-                        <div key={label} className="space-y-1">
-                            <Label>{t(label)}</Label>
-                            <Input value={value} onChange={(e) => setter(e.target.value)} />
-                        </div>
-                    ))}
-                    <div className="space-y-1 md:col-span-2">
+                <div className="flex items-center justify-between">
+                    <h2 className="font-medium">{t("title")}</h2>
+                    <LanguageSelector activeLang={activeLang} onChange={setActiveLang} />
+                </div>
+                <div className="space-y-3">
+                    <div className="space-y-1">
+                        <Label>{t("fieldTitle")}</Label>
+                        <Input
+                            value={
+                                activeLang === "nl"
+                                    ? (metadata.translations.find((x) => x.languageCode === "nl")
+                                          ?.title ?? "")
+                                    : (metadata.translations.find((x) => x.languageCode === "en")
+                                          ?.title ?? "")
+                            }
+                            onChange={(e) =>
+                                activeLang === "nl"
+                                    ? setTitleNl(e.target.value)
+                                    : setTitleEn(e.target.value)
+                            }
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <Label>{t("fieldDescription")}</Label>
+                        <Input
+                            value={
+                                activeLang === "nl"
+                                    ? (metadata.translations.find((x) => x.languageCode === "nl")
+                                          ?.description ?? "")
+                                    : (metadata.translations.find((x) => x.languageCode === "en")
+                                          ?.description ?? "")
+                            }
+                            onChange={(e) =>
+                                activeLang === "nl"
+                                    ? setDescriptionNl(e.target.value)
+                                    : setDescriptionEn(e.target.value)
+                            }
+                        />
+                    </div>
+                    <div className="space-y-1">
                         <Label>{t("slug")}</Label>
                         <div className="flex gap-2">
                             <Input
@@ -685,8 +717,14 @@ export function CollectionEditorPage({ id }: { id: string }) {
                                     setLocalSlug(slugify(event.target.value));
                                 }}
                             />
-                            <Button type="button" variant="outline" onClick={copyShareableLink}>
-                                {t("copyLink")}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="rounded-none"
+                                onClick={copyShareableLink}
+                            >
+                                <Link2 className="h-4 w-4" />
+                                <span>{t("copyLink")}</span>
                             </Button>
                         </div>
                     </div>
@@ -721,6 +759,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
                                         key={group.item.id}
                                         group={group}
                                         renderItem={renderItemProps}
+                                        activeLang={activeLang}
                                     />
                                 ))}
                             </div>

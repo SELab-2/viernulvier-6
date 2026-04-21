@@ -456,6 +456,8 @@
             "titleEn": "Title (EN)",
             "descriptionNl": "Description (NL)",
             "descriptionEn": "Description (EN)",
+            "fieldTitle": "Title",
+            "fieldDescription": "Description",
             "shareableLink": "Shareable link",
             "copyLink": "Copy link",
             "linkCopied": "Link copied",

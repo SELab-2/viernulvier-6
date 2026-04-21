@@ -456,6 +456,8 @@
             "titleEn": "Titel (EN)",
             "descriptionNl": "Beschrijving (NL)",
             "descriptionEn": "Beschrijving (EN)",
+            "fieldTitle": "Titel",
+            "fieldDescription": "Beschrijving",
             "shareableLink": "Deelbare link",
             "copyLink": "Kopieer link",
             "linkCopied": "Link gekopieerd",
