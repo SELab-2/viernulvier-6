@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CollectionCoverField } from "@/components/cms/collection-cover-field";
 import type { Collection, CollectionItem } from "@/types/models/collection.types";
 import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
@@ -680,6 +681,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
                         </div>
                     </div>
                 </div>
+                <CollectionCoverField collection={collection} />
             </section>
 
             <section className="space-y-3 rounded-md border p-4">

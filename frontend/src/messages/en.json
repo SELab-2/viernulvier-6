@@ -237,6 +237,9 @@
             "locations": "Locations",
             "performers": "Performers"
         },
+        "common": {
+            "collapseAll": "Collapse all"
+        },
         "DataTable": {
             "noResults": "No results."
         },
@@ -513,6 +516,26 @@
             "uploadError": "Failed to upload media",
             "detachSuccess": "Media unlinked",
             "detachError": "Failed to unlink media"
+        },
+        "CollectionCoverImage": {
+            "label": "Cover image",
+            "add": "Add cover image",
+            "edit": "Edit",
+            "remove": "Remove",
+            "setSuccess": "Cover image set.",
+            "setError": "Failed to set cover image.",
+            "removeSuccess": "Cover image removed.",
+            "removeError": "Failed to remove cover image."
+        },
+        "LocationCoverImage": {
+            "label": "Cover image",
+            "add": "Add cover image",
+            "edit": "Edit cover image",
+            "remove": "Remove",
+            "setSuccess": "Cover image set.",
+            "setError": "Failed to set cover image.",
+            "removeSuccess": "Cover image removed.",
+            "removeError": "Failed to remove cover image."
         },
         "ProductionMedia": {
             "title": "Production media",

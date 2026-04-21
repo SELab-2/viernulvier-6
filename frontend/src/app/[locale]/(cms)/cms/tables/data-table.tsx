@@ -120,6 +120,8 @@ interface DataTableProps<TData, TValue> {
     compact?: boolean;
     rowSelection?: RowSelectionState;
     onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+    expanded?: ExpandedState;
+    onExpandedChange?: OnChangeFn<ExpandedState>;
     getRowId?: (row: TData) => string;
     onRowClick?: (row: TData) => void;
 }
@@ -135,11 +137,16 @@ export function DataTable<TData, TValue>({
     compact = false,
     rowSelection,
     onRowSelectionChange,
+    expanded: expandedProp,
+    onExpandedChange: onExpandedChangeProp,
     getRowId,
     onRowClick,
 }: DataTableProps<TData, TValue>) {
     const t = useTranslations("Cms.DataTable");
-    const [expanded, setExpanded] = useState<ExpandedState>({});
+    const [expandedInternal, setExpandedInternal] = useState<ExpandedState>({});
+    const expanded = expandedProp !== undefined ? expandedProp : expandedInternal;
+    const onExpandedChange =
+        onExpandedChangeProp !== undefined ? onExpandedChangeProp : setExpandedInternal;
 
     // Support both renderSubComponent and renderSubRows for backwards compatibility
     const renderSubComponent = renderSubComponentProp ?? renderSubRows;
@@ -235,7 +242,7 @@ export function DataTable<TData, TValue>({
         ...(renderSubComponent && {
             getExpandedRowModel: getExpandedRowModel(),
             getRowCanExpand,
-            onExpandedChange: setExpanded,
+            onExpandedChange,
         }),
         ...(hasSelection && {
             onRowSelectionChange,

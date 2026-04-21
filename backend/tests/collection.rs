@@ -263,6 +263,75 @@ async fn delete_item_not_found(db: PgPool) {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
+#[sqlx::test(fixtures("collections", "media", "entity_media_collection_cover"))]
+#[test_log::test]
+async fn get_one_collection_returns_cover_image_url(db: PgPool) {
+    let app = TestRouter::new(db);
+    let id = Uuid::from_str("20000000-0000-0000-0000-000000000001").unwrap();
+
+    let response = app.get(&format!("/collections/{id}")).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let payload: CollectionPayload = response.into_struct().await;
+
+    let url = payload
+        .cover_image_url
+        .expect("cover_image_url should be set");
+    assert!(
+        url.ends_with("/media/production/1001/media/cover.jpg"),
+        "unexpected URL: {url}"
+    );
+}
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn get_one_collection_without_cover_returns_null(db: PgPool) {
+    let app = TestRouter::new(db);
+    let id = Uuid::from_str("20000000-0000-0000-0000-000000000001").unwrap();
+    let response = app.get(&format!("/collections/{id}")).await;
+    let payload: CollectionPayload = response.into_struct().await;
+    assert!(payload.cover_image_url.is_none());
+}
+
+#[sqlx::test(fixtures("collections", "media", "entity_media_collection_cover"))]
+#[test_log::test]
+async fn get_all_collections_returns_cover_image_urls(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/collections").await;
+    let data: Vec<CollectionPayload> = response.into_struct().await;
+    let with_cover = data.iter().find(|c| c.cover_image_url.is_some());
+    assert!(
+        with_cover.is_some(),
+        "at least one collection should have a resolved cover URL"
+    );
+}
+
+#[sqlx::test(fixtures("collections", "media", "entity_media_collection_cover"))]
+#[test_log::test]
+async fn set_cover_for_collection_round_trips(db: PgPool) {
+    let app = TestRouter::as_editor(db).await;
+    let collection_id = Uuid::from_str("20000000-0000-0000-0000-000000000001").unwrap();
+    let media_id = Uuid::from_str("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa").unwrap();
+
+    let set = app
+        .post(
+            &format!("/media/entity/collection/{collection_id}/{media_id}/set-cover"),
+            &(),
+        )
+        .await;
+    assert_eq!(
+        set.status(),
+        StatusCode::NO_CONTENT,
+        "set-cover should succeed"
+    );
+
+    let resp = app.get(&format!("/collections/{collection_id}")).await;
+    let payload: CollectionPayload = resp.into_struct().await;
+    assert!(
+        payload.cover_image_url.is_some(),
+        "cover_image_url should be set after set-cover"
+    );
+}
+
 fn mock_post_payload() -> CollectionPostPayload {
     serde_json::from_value(json!({
         "slug": "test-selectie",

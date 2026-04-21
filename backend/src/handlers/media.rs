@@ -16,8 +16,8 @@ use crate::{
     config::S3Config,
     dto::{
         media::{
-            AttachMediaRequest, LinkMediaRequest, MediaPayload, MediaVariantPayload, ReconcileResponse,
-            UploadUrlRequest, UploadUrlResponse,
+            AttachMediaRequest, LinkMediaRequest, MediaPayload, MediaVariantPayload,
+            ReconcileResponse, UploadUrlRequest, UploadUrlResponse,
         },
         paginated::PaginatedResponse,
     },
@@ -720,6 +720,8 @@ fn parse_entity_type(s: &str) -> Result<EntityType, AppError> {
         "blogpost" => Ok(EntityType::Article),
         "media" => Ok(EntityType::Media),
         "event" => Ok(EntityType::Event),
+        "location" => Ok(EntityType::Location),
+        "collection" => Ok(EntityType::Collection),
         _ => Err(AppError::PayloadError(format!("invalid entity type: {s}"))),
     }
 }

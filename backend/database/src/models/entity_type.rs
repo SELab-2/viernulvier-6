@@ -12,6 +12,7 @@ pub enum EntityType {
     Location,
     Event,
     Series,
+    Collection,
 }
 
 impl EntityType {
@@ -24,6 +25,7 @@ impl EntityType {
             Self::Location => "locations",
             Self::Event => "events",
             Self::Series => "series",
+            Self::Collection => "collections",
         }
     }
 

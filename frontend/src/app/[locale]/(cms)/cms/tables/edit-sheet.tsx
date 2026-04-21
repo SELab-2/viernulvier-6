@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,8 @@ export interface EditSheetProps<TData extends { id: string } & Record<string, un
     onSave?: (data: TData) => void;
     previewUrl?: string;
     onPreview?: () => void;
+    /** Optional slot rendered inside the sheet body, below the form fields, for a given entity. */
+    extraContent?: (entity: TData) => React.ReactNode;
 }
 
 const NULL_SENTINEL = "__null__";
@@ -173,6 +175,7 @@ interface SheetFormBodyProps<TData extends { id: string } & Record<string, unkno
     fields: FieldDef<TData>[];
     onSave?: (data: TData) => void;
     onClose: () => void;
+    extraContent?: (entity: TData) => React.ReactNode;
 }
 
 function SheetFormBody<TData extends { id: string } & Record<string, unknown>>({
@@ -180,6 +183,7 @@ function SheetFormBody<TData extends { id: string } & Record<string, unknown>>({
     fields,
     onSave,
     onClose,
+    extraContent,
 }: SheetFormBodyProps<TData>) {
     const t = useTranslations("Cms.EditSheet");
     const [values, setValues] = useState<Partial<TData>>(() => ({ ...entity }));
@@ -204,6 +208,9 @@ function SheetFormBody<TData extends { id: string } & Record<string, unknown>>({
                         onChange={(v) => handleChange(field.key, v)}
                     />
                 ))}
+                {extraContent && (
+                    <div className="border-foreground/10 border-t pt-5">{extraContent(entity)}</div>
+                )}
             </div>
             <div className="border-foreground/10 border-t px-6 py-4">
                 <SheetFooter className="flex-row justify-end gap-3 sm:justify-end">
@@ -237,6 +244,7 @@ export function EditSheet<TData extends { id: string } & Record<string, unknown>
     onSave,
     previewUrl,
     onPreview,
+    extraContent,
 }: EditSheetProps<TData>) {
     const t = useTranslations("Cms.EditSheet");
     const tArticles = useTranslations("Cms.Articles");
@@ -285,6 +293,7 @@ export function EditSheet<TData extends { id: string } & Record<string, unknown>
                         fields={fields}
                         onSave={onSave}
                         onClose={() => onOpenChange(false)}
+                        extraContent={extraContent}
                     />
                 )}
             </SheetContent>

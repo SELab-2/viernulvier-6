@@ -942,6 +942,8 @@ export interface components {
             title?: string | null;
         };
         ArtistPayload: {
+            /** @description Cover image URL resolved from the entity_media link (output-only). */
+            readonly cover_image_url?: string | null;
             /** Format: uuid */
             id: string;
             name: string;
@@ -1055,6 +1057,8 @@ export interface components {
             items: components["schemas"]["CollectionItemsBulkEntry"][];
         };
         CollectionPayload: {
+            /** @description Cover image URL resolved from the entity_media link (output-only). */
+            readonly cover_image_url?: string | null;
             /**
              * Format: date-time
              * @description ISO 8601 creation timestamp.
@@ -1111,7 +1115,7 @@ export interface components {
             translations: components["schemas"]["TagTranslationPayload"][];
         };
         /** @enum {string} */
-        EntityType: "production" | "artist" | "article" | "media" | "location" | "event" | "series";
+        EntityType: "production" | "artist" | "article" | "media" | "location" | "event" | "series" | "collection";
         ErrorResponse: {
             /** @example An error occurred during processing */
             message: string;
@@ -1314,6 +1318,8 @@ export interface components {
             city?: string | null;
             code?: string | null;
             country?: string | null;
+            /** @description Cover image URL resolved from the entity_media link (output-only). */
+            readonly cover_image_url?: string | null;
             /** Format: uuid */
             id: string;
             is_owned_by_viernulvier?: boolean | null;
@@ -1519,6 +1525,8 @@ export interface components {
                 city?: string | null;
                 code?: string | null;
                 country?: string | null;
+                /** @description Cover image URL resolved from the entity_media link (output-only). */
+                readonly cover_image_url?: string | null;
                 /** Format: uuid */
                 id: string;
                 is_owned_by_viernulvier?: boolean | null;
@@ -1786,7 +1794,7 @@ export interface operations {
                 subject_end?: string;
                 tag_slug?: string;
                 related_entity_id?: string | null;
-                related_entity_type?: "production" | "artist" | "article" | "media" | "location" | "event" | "series";
+                related_entity_type?: "production" | "artist" | "article" | "media" | "location" | "event" | "series" | "collection";
             };
             header?: never;
             path?: never;
@@ -3149,7 +3157,7 @@ export interface operations {
                 cursor?: string | null;
                 limit?: number;
                 q?: string | null;
-                entity_type?: "production" | "artist" | "article" | "media" | "location" | "event" | "series";
+                entity_type?: "production" | "artist" | "article" | "media" | "location" | "event" | "series" | "collection";
                 entity_id?: string | null;
                 role?: string;
                 sort?: "recent" | "oldest" | "relevance";
@@ -4363,7 +4371,7 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description Filter facets by entity type */
-                entity_type?: "production" | "artist" | "article" | "media" | "location" | "event" | "series";
+                entity_type?: "production" | "artist" | "article" | "media" | "location" | "event" | "series" | "collection";
             };
             header?: never;
             path?: never;
