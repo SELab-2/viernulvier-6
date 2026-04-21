@@ -10,6 +10,7 @@ import {
     type DragEndEvent,
 } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import Image from "next/image";
 import { GripVertical, Link2, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -78,7 +79,7 @@ function getTranslation<T extends { languageCode: string }>(
     return translations.find((translation) => translation.languageCode === languageCode);
 }
 
-const getContentTypeClass = (_ct: string) => "border border-border text-muted-foreground";
+const getContentTypeClass = () => "border border-border text-muted-foreground";
 
 function toMetadataSnapshot(collection: Collection) {
     return {
@@ -197,12 +198,14 @@ function SortableItemRow({
             {/* Two-column: cover + info */}
             <div className="flex">
                 {/* Left: cover image */}
-                <div className="w-40 shrink-0 self-stretch overflow-hidden">
+                <div className="relative w-40 shrink-0 self-stretch overflow-hidden">
                     {parentProps.coverImageUrl ? (
-                        <img
+                        <Image
                             src={parentProps.coverImageUrl}
                             alt=""
-                            className="h-full w-full object-cover"
+                            fill
+                            className="object-cover"
+                            sizes="160px"
                         />
                     ) : (
                         <div className="bg-muted h-full min-h-[5rem] w-full" />
@@ -214,7 +217,7 @@ function SortableItemRow({
                     <div className="flex items-start gap-2">
                         <div className="flex min-w-0 flex-1 flex-col gap-1">
                             <span
-                                className={`inline-flex w-fit px-1.5 py-0.5 text-xs font-medium ${getContentTypeClass(group.item.contentType)}`}
+                                className={`inline-flex w-fit px-1.5 py-0.5 text-xs font-medium ${getContentTypeClass()}`}
                             >
                                 {parentProps.contentTypeLabel}
                             </span>
