@@ -11,6 +11,7 @@ export type Article = {
     publishedAt: string | null;
     subjectPeriodStart: string | null;
     subjectPeriodEnd: string | null;
+    coverImageUrl: string | null;
 };
 
 export type ArticleListItem = Pick<
@@ -23,6 +24,7 @@ export type ArticleListItem = Pick<
     | "publishedAt"
     | "subjectPeriodStart"
     | "subjectPeriodEnd"
+    | "coverImageUrl"
 >;
 
 export type ArticleCreateInput = {

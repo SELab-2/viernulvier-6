@@ -888,6 +888,8 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         ArticleListPayload: {
+            /** @description Cover image URL resolved from the entity_media link (output-only). */
+            readonly cover_image_url?: string | null;
             /** Format: uuid */
             id: string;
             /** Format: date-time */
@@ -904,6 +906,8 @@ export interface components {
         };
         ArticlePayload: {
             content?: unknown;
+            /** @description Cover image URL resolved from the entity_media link (output-only). */
+            readonly cover_image_url?: string | null;
             /** Format: date-time */
             created_at: string;
             /** Format: uuid */
@@ -1426,6 +1430,8 @@ export interface components {
         };
         PaginatedResponse_ArticleListPayload: {
             data: {
+                /** @description Cover image URL resolved from the entity_media link (output-only). */
+                readonly cover_image_url?: string | null;
                 /** Format: uuid */
                 id: string;
                 /** Format: date-time */
