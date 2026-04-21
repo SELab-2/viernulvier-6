@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use sqlx::{Postgres, QueryBuilder};
 use tracing::debug;
 use uuid::Uuid;
@@ -10,8 +8,7 @@ use crate::{
         entity_type::EntityType,
         filtering::{cursor::CursorData, sort::Sort},
         production::{
-            Production, ProductionFilters, ProductionTranslation, ProductionWithScore,
-            ProductionWithTranslations,
+            Production, ProductionFilters, ProductionWithScore, ProductionWithTranslations,
         },
     },
     repos::{production::ProductionRepo, query_filters::facets::AddFacetFilters},
@@ -44,20 +41,8 @@ impl<'a> ProductionRepo<'a> {
             return Ok((vec![], None));
         }
 
-        // get all translations
         let ids: Vec<Uuid> = productions.iter().map(|p| p.id).collect();
-        let all_translations = sqlx::query_as::<_, ProductionTranslation>(
-            "SELECT * FROM production_translations WHERE production_id = ANY($1)",
-        )
-        .bind(&ids[..])
-        .fetch_all(self.db)
-        .await?;
-
-        // map translations to it's production
-        let mut translation_map: HashMap<Uuid, Vec<ProductionTranslation>> = HashMap::new();
-        for t in all_translations {
-            translation_map.entry(t.production_id).or_default().push(t);
-        }
+        let mut translation_map = self.fetch_translations_for_many(&ids).await?;
 
         let productions_with_translations = productions
             .into_iter()
