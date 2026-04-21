@@ -2,8 +2,8 @@
 
 import { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { Archive } from "lucide-react";
-import type { Row } from "@tanstack/react-table";
+import { Archive, ChevronsUp } from "lucide-react";
+import type { ExpandedState, Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
 import { ActionBar } from "../action-bar";
@@ -17,6 +17,7 @@ import {
 import { makeHallColumns, hallFields, toHallUpdateInput } from "./hall-columns";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
 import { LocationCoverField } from "@/components/cms/location-cover-field";
+import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useGetInfiniteLocations, useUpdateLocation } from "@/hooks/api/useLocations";
 import { useGetHalls, useUpdateHall } from "@/hooks/api/useHalls";
@@ -26,6 +27,7 @@ import type { Hall } from "@/types/models/hall.types";
 
 export function LocationsTable() {
     const t = useTranslations("Cms.Locations");
+    const tCommon = useTranslations("Cms.common");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
     const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -73,6 +75,7 @@ export function LocationsTable() {
     const [editLocationId, setEditLocationId] = useState<string | null>(null);
     const [editHall, setEditHall] = useState<Hall | null>(null);
     const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
+    const [expanded, setExpanded] = useState<ExpandedState>({});
 
     // Derive the current LocationRow from live query data so cover image url stays fresh
     // after linkMedia / clearCover mutations without closing and re-opening the sheet.
@@ -176,6 +179,9 @@ export function LocationsTable() {
         [childSelection, getChildHandler, getHallRowId, hallCols, hallsByLocation, hallsLoading]
     );
 
+    const hasExpanded = Object.keys(expanded).length > 0;
+    const collapseAll = useCallback(() => setExpanded({}), []);
+
     const actions = useMemo(
         () => [
             {
@@ -194,7 +200,7 @@ export function LocationsTable() {
 
     return (
         <div className="flex h-full flex-col">
-            <div className="bg-background sticky top-0 z-10">
+            <div className="bg-background sticky top-0 z-10 flex items-center justify-between gap-2">
                 <ActionBar
                     entityCounts={[
                         { countKey: "locationsSelected", count: selectedLocationCount },
@@ -203,6 +209,17 @@ export function LocationsTable() {
                     actions={actions}
                     onClear={clearSelection}
                 />
+                {hasExpanded && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={collapseAll}
+                        className="text-muted-foreground hover:text-foreground shrink-0 cursor-pointer rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                    >
+                        <ChevronsUp className="mr-1 h-3.5 w-3.5" />
+                        {tCommon("collapseAll")}
+                    </Button>
+                )}
             </div>
             <div className="flex-1 overflow-auto">
                 <DataTable
@@ -213,6 +230,8 @@ export function LocationsTable() {
                     expanderLabels={expanderLabels}
                     rowSelection={parentSelection}
                     onRowSelectionChange={setParentSelection}
+                    expanded={expanded}
+                    onExpandedChange={setExpanded}
                     getRowId={getLocationRowId}
                 />
 
