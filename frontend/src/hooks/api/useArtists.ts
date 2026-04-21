@@ -50,16 +50,3 @@ export const useGetProductionsByArtist = (id: string, options?: { enabled?: bool
         enabled: Boolean(id) && (options?.enabled ?? true),
     });
 };
-
-/**
- * @deprecated Temporary stub. Replace once the real useGetArtist(id) PR merges.
- * TODO: REPLACE WITH REAL HOOK — useGetArtist(id) is implemented in a separate PR.
- * Once that PR is merged, delete this stub and import the real hook in CollectionItemCard.tsx.
- */
-export const useGetArtist = (
-    /* eslint-disable @typescript-eslint/no-unused-vars */
-    _id: string,
-    _options?: { enabled?: boolean }
-): { data: Artist | undefined; isLoading: boolean; isError: boolean } => {
-    return { data: undefined, isLoading: false, isError: false };
-};

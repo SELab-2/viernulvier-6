@@ -89,10 +89,11 @@ function BlogpostCard({ item, locale }: { item: CollectionItem; locale: string }
 
 function ArtistCard({ item, locale }: { item: CollectionItem; locale: string }) {
     const t = useTranslations("Collections");
-    // TODO: REPLACE WITH REAL HOOK — useGetArtist(id) is implemented in a separate PR.
-    // Once that PR is merged, replace the stub import and this component will show real data.
+
     const { data: artist, isLoading } = useGetArtist(item.contentId);
     const title = artist?.name ?? null;
+    const href = artist ? `/artists/${artist.id}` : null;
+
     const { data: coverMedia = [] } = useGetEntityMedia("artist", item.contentId, {
         enabled: !!artist,
         params: { role: "cover" },
@@ -106,7 +107,7 @@ function ArtistCard({ item, locale }: { item: CollectionItem; locale: string }) 
             isLoading={isLoading}
             title={title}
             imageUrl={imageUrl}
-            href={null} // TODO: wire href once artist detail page route exists
+            href={href}
             typeLabel={t("typeLabels.artist")}
         />
     );
