@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { Collection } from "@/types/models/collection.types";
 
@@ -47,8 +48,21 @@ export function CollectionHeader({ collection }: CollectionHeaderProps) {
                 {title}
             </h1>
 
-            {/* Cover image placeholder — swap for <Image> once cover_image is added to the API */}
-            <div className="mt-6 aspect-[16/7] w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+            {/* Cover image */}
+            {collection.coverImageUrl ? (
+                <div className="relative mt-6 aspect-[16/7] w-full overflow-hidden">
+                    <Image
+                        src={collection.coverImageUrl}
+                        alt={title}
+                        fill
+                        className="object-cover"
+                        priority
+                        sizes="(max-width: 768px) 100vw, 1100px"
+                    />
+                </div>
+            ) : (
+                <div className="mt-6 aspect-[16/7] w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+            )}
 
             {/* Dateline bar */}
             <div className="border-foreground text-foreground mt-4 flex items-center justify-between border-y py-1.5 font-mono text-[9px] tracking-widest uppercase">
