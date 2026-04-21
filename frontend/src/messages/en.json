@@ -477,6 +477,7 @@
             "addToCollection": "Add to collection",
             "addAndOpen": "Add and open collection",
             "createNewCollection": "Create new collection",
+            "createNamed": "Create ''{name}''",
             "searchCollections": "Search collections…",
             "selectedItems": "{count, plural, one {# selected item} other {# selected items}}",
             "alreadyInCollection": "{title} is already in this collection",

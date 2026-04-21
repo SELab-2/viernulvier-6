@@ -477,6 +477,7 @@
             "addToCollection": "Toevoegen aan collectie",
             "addAndOpen": "Toevoegen en collectie openen",
             "createNewCollection": "Nieuwe collectie maken",
+            "createNamed": "Maak ''{name}'' aan",
             "searchCollections": "Collecties zoeken…",
             "selectedItems": "{count, plural, one {# geselecteerd item} other {# geselecteerde items}}",
             "alreadyInCollection": "{title} zit al in deze collectie",
