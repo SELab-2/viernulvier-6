@@ -14,14 +14,8 @@ import { Link } from "@/i18n/routing";
 import { usePreviewContext } from "@/contexts/PreviewContext";
 import { CmsMobileMenu } from "@/components/cms";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import {
-    useGetArticle,
-    useGetArticleRelations,
-    useUpdateArticle,
-    useUpdateArticleRelations,
-} from "@/hooks/api/useArticles";
-import { Article, ArticleRelations } from "@/types/models/article.types";
-import { ArticlePreviewData } from "@/types/article-preview.types";
+import { useGetArticle, useUpdateArticle } from "@/hooks/api/useArticles";
+import { Article } from "@/types/models/article.types";
 
 interface ArticleEditorPageProps {
     id: string;
@@ -33,12 +27,9 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
     const { setPreview, clearPreviewFor } = usePreviewContext();
 
     const { data: fetchedArticle, isLoading: articleLoading } = useGetArticle(id);
-    const { data: fetchedRelations, isLoading: relationsLoading } = useGetArticleRelations(id);
     const updateArticle = useUpdateArticle();
-    const updateRelations = useUpdateArticleRelations(id);
 
     const [edits, setEdits] = useState<Partial<Article>>({});
-    const [relationEdits, setRelationEdits] = useState<ArticleRelations | null>(null);
     const [isPreviewOpen, setIsPreviewOpen] = useState(() => {
         if (typeof window !== "undefined" && window.innerWidth >= 1024) {
             return true;
@@ -98,25 +89,12 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
         }
     }, [isPreviewOpen, article, article?.slug, previewSessionId]);
 
-    const relations = useMemo(
-        () =>
-            relationEdits ??
-            fetchedRelations ?? {
-                productionIds: [],
-                artistIds: [],
-                locationIds: [],
-                eventIds: [],
-            },
-        [relationEdits, fetchedRelations]
-    );
-
     // Sync preview data to localStorage whenever data changes and preview is open
     useEffect(() => {
         if (article && isPreviewOpen) {
-            const previewData: ArticlePreviewData = { article, relations };
-            setPreview("article", article.slug, previewData, locale, previewSessionId);
+            setPreview("article", article.slug, { article }, locale, previewSessionId);
         }
-    }, [article, relations, isPreviewOpen, setPreview, locale, previewSessionId]);
+    }, [article, isPreviewOpen, setPreview, locale, previewSessionId]);
 
     // Clean up preview data when the editor unmounts
     useEffect(() => {
@@ -131,10 +109,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
         if (!article) return;
 
         try {
-            await Promise.all([
-                updateArticle.mutateAsync(article),
-                updateRelations.mutateAsync(relations),
-            ]);
+            await updateArticle.mutateAsync(article);
             // Clear preview after successful save
             clearPreviewFor("article", article.slug, previewSessionId);
             toast.success(t("saveSuccess"));
@@ -147,18 +122,17 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
         if (!article) return;
 
         if (!isPreviewOpen) {
-            // Opening preview - set initial data with both article and relations
-            const previewData: ArticlePreviewData = { article, relations };
-            setPreview("article", article.slug, previewData, locale, previewSessionId);
+            // Opening preview - set initial data
+            setPreview("article", article.slug, { article }, locale, previewSessionId);
         }
         setIsPreviewOpen((prev) => !prev);
-    }, [article, relations, isPreviewOpen, setPreview, locale, previewSessionId]);
+    }, [article, isPreviewOpen, setPreview, locale, previewSessionId]);
 
     const patchArticle = (patch: Partial<Article>) => {
         setEdits((prev) => ({ ...prev, ...patch }));
     };
 
-    if (articleLoading || relationsLoading || !article) {
+    if (articleLoading || !article) {
         return (
             <div className="space-y-4 p-4">
                 <Skeleton className="h-8 w-48" />
@@ -167,8 +141,8 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
         );
     }
 
-    const isSaving = updateArticle.isPending || updateRelations.isPending;
-    const hasChanges = Object.keys(edits).length > 0 || relationEdits !== null;
+    const isSaving = updateArticle.isPending;
+    const hasChanges = Object.keys(edits).length > 0;
 
     return (
         <div className="flex h-full flex-col overflow-hidden">
@@ -244,12 +218,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
 
                 {/* Desktop Metadata panel */}
                 <aside className="hidden shrink-0 overflow-y-auto border-t lg:block lg:h-full lg:w-64 lg:border-t-0 lg:border-l">
-                    <ArticleMetadataPanel
-                        article={article}
-                        relations={relations}
-                        onArticleChange={patchArticle}
-                        onRelationsChange={setRelationEdits}
-                    />
+                    <ArticleMetadataPanel article={article} onArticleChange={patchArticle} />
                 </aside>
 
                 {/* Mobile Metadata panel in Sheet */}
@@ -273,9 +242,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                             <div className="h-[calc(100%-60px)] overflow-y-auto">
                                 <ArticleMetadataPanel
                                     article={article}
-                                    relations={relations}
                                     onArticleChange={patchArticle}
-                                    onRelationsChange={setRelationEdits}
                                 />
                             </div>
                         </SheetContent>

@@ -10,6 +10,7 @@ import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
 import { getLocalizedField } from "@/lib/locale";
 import { useGetEventsByProduction } from "@/hooks/api/useEvents";
+import { LoadingState } from "@/components/shared/loading-state";
 
 interface ProductionItemProps {
     production: Production;
@@ -182,11 +183,23 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
 interface ProductionListProps {
     productions: Production[];
     locale: string;
+    isLoading?: boolean;
 }
 
-export function ProductionList({ productions, locale }: ProductionListProps) {
+export function ProductionList({ productions, locale, isLoading }: ProductionListProps) {
+    const t = useTranslations("Home");
+
     return (
-        <div className="overflow-hidden">
+        <div
+            className={`relative overflow-hidden ${
+                isLoading && productions.length === 0 ? "flex-1" : ""
+            }`}
+        >
+            {isLoading && productions.length === 0 && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <LoadingState message={t("loading")} className="min-h-0" />
+                </div>
+            )}
             {productions.map((production) => (
                 <ProductionItem key={production.id} production={production} locale={locale} />
             ))}

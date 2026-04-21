@@ -1,18 +1,22 @@
-use database::{Database, error::DatabaseError};
+use database::Database;
 
-use crate::helper::extract_source_id;
-use crate::models::production::{ApiProduction, ProductionImportData};
+use crate::{
+    error::{ImportEntity, ImportItemError},
+    helper::extract_source_id,
+    models::production::{ApiProduction, ProductionImportData},
+};
 
 impl ApiProduction {
-    /// returns the 404 API source_id so the live importer can drive per-production
-    /// gallery fetches. seed binary ignores this.
-    pub async fn insert(self, db: &Database) -> Result<Option<i32>, DatabaseError> {
+    pub async fn upsert_import(self, db: &Database) -> Result<Option<i32>, ImportItemError> {
         let source_id = extract_source_id(&self.id);
-
         let data: ProductionImportData = self.into();
+
         db.productions()
-            .insert(data.production, data.translations)
-            .await?;
+            .upsert_by_source_id(data.production, data.translations)
+            .await
+            .map_err(|err| {
+                ImportItemError::database_write(ImportEntity::Production, source_id, err)
+            })?;
 
         Ok(source_id)
     }
