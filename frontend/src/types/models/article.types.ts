@@ -31,7 +31,10 @@ export type ArticleCreateInput = {
     title?: string | null;
 };
 
-export type ArticleUpdateInput = Omit<Article, "createdAt" | "updatedAt" | "publishedAt">;
+export type ArticleUpdateInput = Omit<
+    Article,
+    "createdAt" | "updatedAt" | "publishedAt" | "coverImageUrl"
+>;
 
 export type ArticleRelations = {
     productionIds: string[];
