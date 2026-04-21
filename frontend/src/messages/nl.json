@@ -690,10 +690,10 @@
         "notFoundText": "Deze collectie bestaat niet of is verwijderd.",
         "items": "{count, plural, one {# ITEM} other {# ITEMS}}",
         "typeLabels": {
-            "production": "PRODUCTIE / PRODUCTION",
-            "location": "LOCATIE / LOCATION",
-            "blogpost": "ARTIKEL / ARTICLE",
-            "artist": "ARTIEST / ARTIST",
+            "production": "PRODUCTIE",
+            "location": "LOCATIE",
+            "blogpost": "ARTIKEL",
+            "artist": "ARTIEST",
             "media": "MEDIA"
         }
     }

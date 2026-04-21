@@ -690,10 +690,10 @@
         "notFoundText": "This collection does not exist or has been deleted.",
         "items": "{count, plural, one {# ITEM} other {# ITEMS}}",
         "typeLabels": {
-            "production": "PRODUCTIE / PRODUCTION",
-            "location": "LOCATIE / LOCATION",
-            "blogpost": "ARTIKEL / ARTICLE",
-            "artist": "ARTIEST / ARTIST",
+            "production": "PRODUCTION",
+            "location": "LOCATION",
+            "blogpost": "ARTICLE",
+            "artist": "ARTIST",
             "media": "MEDIA"
         }
     }
