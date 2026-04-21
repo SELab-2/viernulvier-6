@@ -4,7 +4,10 @@ use axum::{
     http::StatusCode,
 };
 use chrono::NaiveDate;
-use database::{Database, models::{article::ArticleSearch, entity_type::EntityType}};
+use database::{
+    Database,
+    models::{article::ArticleSearch, entity_type::EntityType},
+};
 use serde::Deserialize;
 use utoipa::IntoParams;
 use uuid::Uuid;

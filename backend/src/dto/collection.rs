@@ -7,6 +7,7 @@ use database::{
             CollectionContentType, CollectionItemBulkUpdate, CollectionItemCreate,
             CollectionItemTranslationData, CollectionItemWithTranslations,
         },
+        entity_type::EntityType,
     },
 };
 use serde::{Deserialize, Serialize};
@@ -14,7 +15,7 @@ use std::collections::HashMap;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::error::AppError;
+use crate::{dto::build_cover_url, error::AppError};
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct CollectionTranslationPayload {
@@ -43,6 +44,10 @@ pub struct CollectionPayload {
     pub created_at: DateTime<Utc>,
     /// ISO 8601 last-updated timestamp.
     pub updated_at: DateTime<Utc>,
+    /// Cover image URL resolved from the entity_media link (output-only).
+    #[serde(default)]
+    #[schema(read_only, nullable)]
+    pub cover_image_url: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -121,6 +126,7 @@ fn build_payload(
         items: items.into_iter().map(CollectionItemPayload::from).collect(),
         created_at: cwt.collection.created_at,
         updated_at: cwt.collection.updated_at,
+        cover_image_url: None,
     }
 }
 
@@ -150,7 +156,7 @@ fn collection_translations_to_data(
 }
 
 impl CollectionPayload {
-    pub async fn all(db: &Database) -> Result<Vec<Self>, AppError> {
+    pub async fn all(db: &Database, public_url: Option<&str>) -> Result<Vec<Self>, AppError> {
         let collections = db.collections().all().await?;
         let ids: Vec<Uuid> = collections.iter().map(|c| c.collection.id).collect();
         let all_items = db.collections().items_for_collections(&ids).await?;
@@ -163,23 +169,53 @@ impl CollectionPayload {
                 .push(item);
         }
 
-        Ok(collections
+        let mut result: Vec<Self> = collections
             .into_iter()
             .map(|cwt| {
                 let items = items_map.remove(&cwt.collection.id).unwrap_or_default();
                 build_payload(cwt, items)
             })
-            .collect())
+            .collect();
+
+        if let Some(base) = public_url {
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Collection, &ids)
+                .await?;
+            for c in &mut result {
+                if let Some(key) = cover_keys.get(&c.id) {
+                    c.cover_image_url = Some(build_cover_url(base, key));
+                }
+            }
+        }
+
+        Ok(result)
     }
 
-    pub async fn by_id(db: &Database, id: Uuid) -> Result<Self, AppError> {
+    pub async fn by_id(
+        db: &Database,
+        id: Uuid,
+        public_url: Option<&str>,
+    ) -> Result<Self, AppError> {
         let cwt = db
             .collections()
             .by_id(id)
             .await?
             .ok_or(AppError::NotFound)?;
         let items = db.collections().items_for(id).await?;
-        Ok(build_payload(cwt, items))
+        let mut payload = build_payload(cwt, items);
+
+        if let Some(base) = public_url {
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Collection, &[id])
+                .await?;
+            if let Some(key) = cover_keys.get(&id) {
+                payload.cover_image_url = Some(build_cover_url(base, key));
+            }
+        }
+
+        Ok(payload)
     }
 
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {

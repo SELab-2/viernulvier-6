@@ -1,8 +1,8 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use ormlite::Model;
-use sqlx::FromRow;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 

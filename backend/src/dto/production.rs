@@ -16,7 +16,8 @@ use uuid::Uuid;
 use base64::{Engine, prelude::BASE64_URL_SAFE};
 
 use crate::{
-    dto::paginated::PaginatedResponse, error::AppError,
+    dto::{build_cover_url, paginated::PaginatedResponse},
+    error::AppError,
     handlers::queries::production::ProductionSearchQuery,
 };
 
@@ -51,7 +52,7 @@ impl ProductionPayload {
                 .await?;
             for p in &mut productions {
                 if let Some(s3_key) = cover_keys.get(&p.id) {
-                    p.cover_image_url = Some(format!("{}/{}", base.trim_end_matches('/'), s3_key));
+                    p.cover_image_url = Some(build_cover_url(base, s3_key));
                 }
             }
         }
@@ -76,8 +77,7 @@ impl ProductionPayload {
                 .cover_s3_keys_for_entities(EntityType::Production, &[id])
                 .await?;
             if let Some(s3_key) = cover_keys.get(&id) {
-                payload.cover_image_url =
-                    Some(format!("{}/{}", base.trim_end_matches('/'), s3_key));
+                payload.cover_image_url = Some(build_cover_url(base, s3_key));
             }
         }
 

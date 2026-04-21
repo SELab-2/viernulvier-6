@@ -1,12 +1,13 @@
 use axum::{
     Json,
-    extract::{Path, Query},
+    extract::{Path, Query, State},
     http::StatusCode,
 };
 use database::Database;
 use uuid::Uuid;
 
 use crate::{
+    AppState,
     dto::{
         location::{LocationPayload, LocationPostPayload},
         paginated::PaginatedResponse,
@@ -33,11 +34,13 @@ use crate::{
     )
 )]
 pub async fn get_all(
+    State(state): State<AppState>,
     db: Database,
     Query(pagination): Query<PaginationQuery>,
     Query(search): Query<LocationSearchQuery>,
 ) -> JsonResponse<PaginatedResponse<LocationPayload>> {
-    LocationPayload::all(&db, pagination.cursor, pagination.limit, search)
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    LocationPayload::all(&db, pagination.cursor, pagination.limit, public_url, search)
         .await?
         .json()
 }
@@ -56,8 +59,13 @@ pub async fn get_all(
         (status = 404, description = "Not found")
     )
 )]
-pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<LocationPayload> {
-    LocationPayload::by_id(&db, id).await?.json()
+pub async fn get_one(
+    State(state): State<AppState>,
+    db: Database,
+    Path(id): Path<Uuid>,
+) -> JsonResponse<LocationPayload> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    LocationPayload::by_id(&db, id, public_url).await?.json()
 }
 
 #[utoipa::path(
@@ -74,8 +82,15 @@ pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<Locatio
         (status = 404, description = "Not found")
     )
 )]
-pub async fn get_by_slug(db: Database, Path(slug): Path<String>) -> JsonResponse<LocationPayload> {
-    LocationPayload::by_slug(&db, &slug).await?.json()
+pub async fn get_by_slug(
+    State(state): State<AppState>,
+    db: Database,
+    Path(slug): Path<String>,
+) -> JsonResponse<LocationPayload> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    LocationPayload::by_slug(&db, &slug, public_url)
+        .await?
+        .json()
 }
 
 #[utoipa::path(

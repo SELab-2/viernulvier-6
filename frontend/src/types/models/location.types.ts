@@ -21,6 +21,7 @@ export type Location = {
     uitdatabankId: string | null;
     address: string;
     translations: LocationTranslation[];
+    coverImageUrl: string | null;
 };
 
 export type LocationTranslationInput = {
@@ -66,6 +67,7 @@ export type LocationRow = {
     isOwnedByViernulvier: boolean | null;
     uitdatabankId: string | null;
     address: string;
+    coverImageUrl: string | null;
     descriptionNl: string | null;
     descriptionEn: string | null;
     historyNl: string | null;

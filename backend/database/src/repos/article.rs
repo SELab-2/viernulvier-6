@@ -5,6 +5,7 @@ use uuid::Uuid;
 
 use crate::{
     error::DatabaseError,
+    models::entity_type::EntityType,
     models::{
         article::{
             Article, ArticleCreate, ArticleRelations, ArticleSearch, ArticleStatus,
@@ -12,7 +13,6 @@ use crate::{
         },
         filtering::cursor::CursorData,
     },
-    models::entity_type::EntityType,
 };
 
 pub struct ArticleRepo<'a> {
@@ -278,9 +278,7 @@ impl<'a> ArticleRepo<'a> {
                 builder.push_bind(cursor.id);
             }
 
-            builder
-                .push(" ORDER BY a.id DESC LIMIT ")
-                .push_bind(limit);
+            builder.push(" ORDER BY a.id DESC LIMIT ").push_bind(limit);
 
             let mut articles: Vec<Article> = builder.build_query_as().fetch_all(self.db).await?;
 
