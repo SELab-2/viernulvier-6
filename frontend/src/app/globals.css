@@ -136,6 +136,9 @@
     body {
         @apply bg-background text-foreground;
     }
+    button {
+        cursor: pointer;
+    }
 }
 
 @utility font-display {

@@ -668,8 +668,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
             </div>
 
             <section className="space-y-3 rounded-md border p-4">
-                <div className="flex items-center justify-between">
-                    <h2 className="font-medium">{t("title")}</h2>
+                <div className="flex justify-end">
                     <LanguageSelector activeLang={activeLang} onChange={setActiveLang} />
                 </div>
                 <div className="space-y-3">
