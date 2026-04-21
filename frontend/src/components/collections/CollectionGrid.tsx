@@ -1,9 +1,13 @@
 // frontend/src/components/collections/CollectionGrid.tsx
 "use client";
 
+import { useEffect, useState } from "react";
 import { useLocale } from "next-intl";
 import { CollectionItem } from "@/types/models/collection.types";
 import { CollectionItemCard, UniformCardsContext } from "./CollectionItemCard";
+
+const SM_BREAKPOINT = 640;
+const LG_BREAKPOINT = 1024;
 
 interface CollectionGridProps {
     items: CollectionItem[];
@@ -43,23 +47,34 @@ function MasonryColumns({ columns, locale }: MasonryColumnsProps) {
     );
 }
 
+function useCollectionColumnCount() {
+    const [width, setWidth] = useState(() =>
+        typeof window !== "undefined" ? window.innerWidth : LG_BREAKPOINT
+    );
+
+    useEffect(() => {
+        const onResize = () => setWidth(window.innerWidth);
+        onResize();
+        window.addEventListener("resize", onResize);
+        return () => window.removeEventListener("resize", onResize);
+    }, []);
+
+    if (width < SM_BREAKPOINT) return 1;
+    if (width < LG_BREAKPOINT) return 2;
+    return 3;
+}
+
 export function CollectionGrid({ items }: CollectionGridProps) {
     const locale = useLocale();
     const sorted = [...items].sort((a, b) => a.position - b.position);
+    const columnCount = useCollectionColumnCount();
+    const columns = columnCount === 1 ? [sorted] : splitIntoColumns(sorted, columnCount);
 
     return (
         <section>
-            <div className="sm:hidden">
-                <UniformCardsContext.Provider value={true}>
-                    <MasonryColumns columns={[sorted]} locale={locale} />
-                </UniformCardsContext.Provider>
-            </div>
-            <div className="hidden sm:block lg:hidden">
-                <MasonryColumns columns={splitIntoColumns(sorted, 2)} locale={locale} />
-            </div>
-            <div className="hidden lg:block">
-                <MasonryColumns columns={splitIntoColumns(sorted, 3)} locale={locale} />
-            </div>
+            <UniformCardsContext.Provider value={columnCount === 1}>
+                <MasonryColumns columns={columns} locale={locale} />
+            </UniformCardsContext.Provider>
         </section>
     );
 }

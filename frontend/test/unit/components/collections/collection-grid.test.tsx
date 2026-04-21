@@ -5,6 +5,7 @@ import { CollectionGrid } from "@/components/collections/CollectionGrid";
 import type { CollectionItem } from "@/types/models/collection.types";
 
 vi.mock("@/components/collections/CollectionItemCard", () => ({
+    UniformCardsContext: React.createContext(false),
     CollectionItemCard: ({ item }: { item: CollectionItem }) => (
         <div data-testid="card" data-position={String(item.position)} datatype={item.contentType} />
     ),

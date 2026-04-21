@@ -8,10 +8,26 @@ use database::{Database, models::user::UserRole};
 use dotenvy::dotenv;
 use serde::Serialize;
 use sqlx::PgPool;
+use std::sync::Once;
 use tower::ServiceExt;
 use viernulvier_archive::{AppState, config::AppConfig, router};
 
 use crate::common::user::{create_test_user, login_user};
+
+static TEST_ENV: Once = Once::new();
+
+fn ensure_test_env() {
+    TEST_ENV.call_once(|| {
+        // Cover URL resolution only needs a stable public base URL in tests.
+        unsafe {
+            std::env::set_var("S3_ENDPOINT", "http://localhost:9000");
+            std::env::set_var("S3_ACCESS_KEY", "test-access-key");
+            std::env::set_var("S3_SECRET_KEY", "test-secret-key");
+            std::env::set_var("S3_BUCKET", "test-bucket");
+            std::env::set_var("S3_PUBLIC_URL", "http://localhost:3900");
+        }
+    });
+}
 
 pub struct TestRouter {
     router: axum::Router,
@@ -21,6 +37,7 @@ pub struct TestRouter {
 
 impl TestRouter {
     pub fn new(db: PgPool) -> Self {
+        ensure_test_env();
         let _ = dotenv();
 
         let config = AppConfig::load().unwrap();
