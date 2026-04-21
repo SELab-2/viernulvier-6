@@ -67,14 +67,14 @@ async fn get_paginated(db: PgPool) {
 async fn get_search_filter_discipline(db: PgPool) {
     let app = TestRouter::new(db);
 
-    let response = app.get("/productions?discipline=music&limit=10").await;
+    let response = app.get("/productions?discipline=concert&limit=10").await;
     assert_eq!(response.status(), StatusCode::OK);
 
     let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
     assert_eq!(
         data.data.len(),
         2,
-        "Expected 2 productions with discipline 'music'"
+        "Expected 2 productions with discipline='concert'"
     );
 
     let ids: Vec<String> = data.data.iter().map(|p| p.id.to_string()).collect();
@@ -253,7 +253,7 @@ async fn get_filter_and_sort(db: PgPool) {
     let app = TestRouter::new(db);
 
     let response = app
-        .get("/productions?discipline=music&sort=oldest&limit=10")
+        .get("/productions?discipline=concert&sort=oldest&limit=10")
         .await;
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -262,7 +262,7 @@ async fn get_filter_and_sort(db: PgPool) {
     assert_eq!(
         data.data[0].id.to_string(),
         "11111111-1111-1111-1111-111111111111",
-        "1111 should appear before 4444 when filtered by music and sorted by oldest"
+        "1111 should appear before 4444 when filtered by concert and sorted by oldest"
     );
     assert_eq!(
         data.data[1].id.to_string(),
@@ -325,8 +325,8 @@ async fn get_sort_paginated(db: PgPool) {
 async fn get_search_filter_paginated(db: PgPool) {
     let app = TestRouter::new(db);
 
-    // Filter by music (yields 2 results), but set limit to 1
-    let response = app.get("/productions?discipline=music&limit=1").await;
+    // Filter by concert (yields 2 results), but set limit to 1
+    let response = app.get("/productions?discipline=concert&limit=1").await;
     assert_eq!(response.status(), StatusCode::OK);
 
     // Page 1
@@ -334,13 +334,13 @@ async fn get_search_filter_paginated(db: PgPool) {
     assert_eq!(page1.data.len(), 1, "Page 1 should respect the limit of 1");
     assert!(
         page1.next_cursor.is_some(),
-        "There should be a next cursor for the remaining music production"
+        "There should be a next cursor for the remaining concert production"
     );
 
     let cursor = page1.next_cursor.unwrap();
 
     // Page 2
-    let url = format!("/productions?discipline=music&limit=1&cursor={cursor}");
+    let url = format!("/productions?discipline=concert&limit=1&cursor={cursor}");
     let response = app.get(&url).await;
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -368,7 +368,7 @@ async fn get_search_discipline_and_date(db: PgPool) {
     let app = TestRouter::new(db);
 
     let response = app
-        .get("/productions?discipline=music&date_from=2026-05-10&limit=10")
+        .get("/productions?discipline=concert&date_from=2026-05-10&limit=10")
         .await;
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -376,7 +376,7 @@ async fn get_search_discipline_and_date(db: PgPool) {
     assert_eq!(
         data.data.len(),
         1,
-        "Expected exactly 1 production matching both music and the date range"
+        "Expected exactly 1 production matching both concert and the date range"
     );
     assert_eq!(
         data.data[0].id.to_string(),
@@ -412,7 +412,7 @@ async fn get_search_mutually_exclusive_tags(db: PgPool) {
     let app = TestRouter::new(db);
 
     let response = app
-        .get("/productions?discipline=music&theme=politics&limit=10")
+        .get("/productions?discipline=concert&theme=politics&limit=10")
         .await;
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -452,7 +452,7 @@ async fn get_search_everything(db: PgPool) {
 
     let query = "/productions\
         ?q=heavy\
-        &discipline=music\
+        &discipline=concert\
         &format=workshop\
         &date_from=2026-04-01\
         &date_to=2026-05-31\
