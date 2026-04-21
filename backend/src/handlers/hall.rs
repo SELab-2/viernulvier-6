@@ -61,6 +61,24 @@ pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<HallPay
 }
 
 #[utoipa::path(
+    method(get),
+    path = "/halls/slug/{slug}",
+    tag = "Halls",
+    operation_id = "get_hall_by_slug",
+    description = "Get a hall by slug",
+    params(
+        ("slug" = String, Path, description = "Hall slug")
+    ),
+    responses(
+        (status = 200, description = "Success", body = HallPayload),
+        (status = 404, description = "Not found")
+    )
+)]
+pub async fn get_one_by_slug(db: Database, Path(slug): Path<String>) -> JsonResponse<HallPayload> {
+    HallPayload::by_slug(&db, &slug).await?.json()
+}
+
+#[utoipa::path(
     method(post),
     path = "/halls",
     tag = "Halls",

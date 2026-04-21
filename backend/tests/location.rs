@@ -155,9 +155,18 @@ async fn get_one_success(db: PgPool) {
     assert_eq!(data.translations.len(), 2);
 }
 
+#[sqlx::test]
+#[test_log::test]
+async fn get_one_not_found(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get(&format!("/locations/{}", Uuid::nil())).await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
 #[sqlx::test(fixtures("locations"))]
 #[test_log::test]
-async fn get_by_slug_success(db: PgPool) {
+async fn get_one_by_slug_success(db: PgPool) {
     let app = TestRouter::new(db);
 
     let response = app.get("/locations/slug/de-vooruit").await;
@@ -167,23 +176,15 @@ async fn get_by_slug_success(db: PgPool) {
     assert_eq!(data.name.as_deref(), Some("De Vooruit SEARCH"));
     assert_eq!(data.slug.as_deref(), Some("de-vooruit"));
     assert_eq!(data.translations.len(), 2);
-}
-
-#[sqlx::test(fixtures("locations"))]
-#[test_log::test]
-async fn get_by_slug_not_found(db: PgPool) {
-    let app = TestRouter::new(db);
-
-    let response = app.get("/locations/slug/nonexistent").await;
-    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    assert_eq!(data.id.to_string(),"10000000-0000-0000-0000-000000000001");
 }
 
 #[sqlx::test]
 #[test_log::test]
-async fn get_one_not_found(db: PgPool) {
+async fn get_one_by_slug_not_found(db: PgPool) {
     let app = TestRouter::new(db);
 
-    let response = app.get(&format!("/locations/{}", Uuid::nil())).await;
+    let response = app.get("/locations/slug/does-not-exist").await;
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 

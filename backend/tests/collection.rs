@@ -57,6 +57,39 @@ async fn get_one_not_found(db: PgPool) {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn get_one_by_slug_success(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/collections/slug/zomerselectie").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: CollectionPayload = response.into_struct().await;
+    assert_eq!(data.slug, "zomerselectie");
+    assert_eq!(data.id.to_string(),"20000000-0000-0000-0000-000000000001");
+    let nl = data
+        .translations
+        .iter()
+        .find(|t| t.language_code == "nl")
+        .expect("Dutch translation not found");
+    assert_eq!(nl.title, "Zomerselectie");
+    assert_eq!(data.items.len(), 2);
+    let first_item = data.items.first().expect("expected first collection item");
+    assert_eq!(first_item.position, 1);
+    let second_item = data.items.get(1).expect("expected second collection item");
+    assert_eq!(second_item.position, 2);
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn get_one_by_slug_not_found(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/collections/slug/does-not-exist").await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
 #[sqlx::test]
 #[test_log::test]
 async fn post_success(db: PgPool) {

@@ -244,14 +244,16 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // location
         .routes(routes!(location::get_all))
         .routes(routes!(location::get_one))
-        .routes(routes!(location::get_by_slug))
+        .routes(routes!(location::get_one_by_slug))
         // production
         .routes(routes!(production::get_all))
         .routes(routes!(production::get_one))
+        .routes(routes!(production::get_one_by_slug))
         .routes(routes!(production::get_events))
         // hall
         .routes(routes!(hall::get_all))
         .routes(routes!(hall::get_one))
+        .routes(routes!(hall::get_one_by_slug))
         // space
         .routes(routes!(space::get_all))
         .routes(routes!(space::get_one))
@@ -269,6 +271,7 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // collections
         .routes(routes!(collection::get_all))
         .routes(routes!(collection::get_one))
+        .routes(routes!(collection::get_one_by_slug))
         // series
         .routes(routes!(series::get_all))
         .routes(routes!(series::get_one))

@@ -74,6 +74,24 @@ pub async fn get_one(
 
 #[utoipa::path(
     method(get),
+    path = "/productions/slug/{slug}",
+    tag = "Productions",
+    operation_id = "get_production_by_slug",
+    description = "Get a production by slug",
+    params(
+        ("slug" = String, Path, description = "Production slug")
+    ),
+    responses(
+        (status = 200, description = "Success", body = ProductionPayload),
+        (status = 404, description = "Not found")
+    )
+)]
+pub async fn get_one_by_slug(db: Database, Path(slug): Path<String>) -> JsonResponse<ProductionPayload> {
+    ProductionPayload::by_slug(&db, &slug).await?.json()
+}
+
+#[utoipa::path(
+    method(get),
     path = "/productions/{id}/events",
     tag = "Productions",
     operation_id = "get_events_by_production_id",

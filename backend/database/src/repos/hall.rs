@@ -29,6 +29,15 @@ impl<'a> HallRepo<'a> {
             .ok_or(DatabaseError::NotFound)
     }
 
+    pub async fn by_slug(&self, slug: &str) -> Result<Hall, DatabaseError> {
+        Hall::select()
+            .where_("slug = $1")
+            .bind(slug)
+            .fetch_optional(self.db)
+            .await?
+            .ok_or(DatabaseError::NotFound)
+    }
+
     pub async fn all(
         &self,
         limit: u32,

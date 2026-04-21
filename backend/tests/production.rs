@@ -574,6 +574,28 @@ async fn get_one_not_found(db: PgPool) {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn get_one_by_slug_success(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/productions/slug/heavy-metal-knitting-2026").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: ProductionPayload = response.into_struct().await;
+    assert_eq!(data.slug, "heavy-metal-knitting-2026");
+    assert_eq!(data.id.to_string(), "11111111-1111-1111-1111-111111111111");
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn get_one_by_slug_not_found(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/productions/slug/does-not-exist").await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
 #[sqlx::test]
 #[test_log::test]
 async fn post_success(db: PgPool) {

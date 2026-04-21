@@ -65,7 +65,7 @@ pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<Locatio
     path = "/locations/slug/{slug}",
     tag = "Locations",
     operation_id = "get_location_by_slug",
-    description = "Get location by slug",
+    description = "Get a location by slug",
     params(
         ("slug" = String, Path, description = "Location slug")
     ),
@@ -74,7 +74,7 @@ pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<Locatio
         (status = 404, description = "Not found")
     )
 )]
-pub async fn get_by_slug(db: Database, Path(slug): Path<String>) -> JsonResponse<LocationPayload> {
+pub async fn get_one_by_slug(db: Database, Path(slug): Path<String>) -> JsonResponse<LocationPayload> {
     LocationPayload::by_slug(&db, &slug).await?.json()
 }
 

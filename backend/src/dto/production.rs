@@ -84,6 +84,10 @@ impl ProductionPayload {
         Ok(payload)
     }
 
+    pub async fn by_slug(db: &Database, slug: &str) -> Result<Self, AppError> {
+        Ok(db.productions().by_slug(slug).await?.into())
+    }
+
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {
         let translations = translations_to_data(&self.translations);
         let production: Production = self.into();

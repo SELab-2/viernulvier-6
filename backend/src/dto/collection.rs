@@ -182,6 +182,12 @@ impl CollectionPayload {
         Ok(build_payload(cwt, items))
     }
 
+    pub async fn by_slug(db: &Database, slug: &str) -> Result<Self, AppError> {
+        let cwt = db.collections().by_slug(slug).await?;
+        let items = db.collections().items_for(cwt.collection.id).await?;
+        Ok(build_payload(cwt, items))
+    }
+
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {
         let translations = collection_translations_to_data(&self.translations);
         let cwt = db

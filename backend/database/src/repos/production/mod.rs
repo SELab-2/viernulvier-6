@@ -125,6 +125,20 @@ impl<'a> ProductionRepo<'a> {
             .collect())
     }
 
+    pub async fn by_slug(&self, slug: &str) -> Result<ProductionWithTranslations, DatabaseError> {
+        let production = Production::select()
+            .where_("slug = $1")
+            .bind(slug)
+            .fetch_optional(self.db)
+            .await?
+            .ok_or(DatabaseError::NotFound)?;
+        let translations = self.fetch_translations_for(production.id).await?;
+        Ok(ProductionWithTranslations {
+            production,
+            translations,
+        })
+    }
+
     pub async fn insert(
         &self,
         production: ProductionCreate,
