@@ -1,11 +1,7 @@
 import { describe, expect, it, afterEach, vi } from "vitest";
 import { render, screen, cleanup } from "../../../../test/utils/test-utils";
 import { NextIntlClientProvider } from "next-intl";
-import { http, HttpResponse } from "msw";
 
-import { server } from "../../../msw/server";
-import { apiUrl } from "../../../utils/env";
-import type { components } from "@/types/api/generated";
 import { ArticleCard } from "@/components/articles/article-card";
 import type { ArticleListItem } from "@/types/models/article.types";
 
@@ -44,36 +40,7 @@ const mockArticle: ArticleListItem = {
     publishedAt: "2026-03-01T00:00:00Z",
     subjectPeriodStart: "2026-01-01",
     subjectPeriodEnd: "2026-12-31",
-};
-
-const coverPayload: components["schemas"]["MediaPayload"] = {
-    id: "media-cover-1",
-    url: "https://cdn.example.com/cover.jpg",
-    s3_key: "covers/cover.jpg",
-    mime_type: "image/jpeg",
-    gallery_type: "cover",
-    alt_text_nl: "Cover photo",
-    alt_text_en: null,
-    alt_text_fr: null,
-    description_nl: null,
-    description_en: null,
-    description_fr: null,
-    credit_nl: null,
-    credit_en: null,
-    credit_fr: null,
-    file_size: 50000,
-    width: 800,
-    height: 450,
-    checksum: null,
-    geo_latitude: null,
-    geo_longitude: null,
-    parent_id: null,
-    derivative_type: null,
-    source_system: "cms",
-    source_uri: null,
-    created_at: "2026-01-01T00:00:00Z",
-    updated_at: "2026-01-01T00:00:00Z",
-    crops: [],
+    coverImageUrl: null,
 };
 
 describe("ArticleCard", () => {
@@ -104,54 +71,25 @@ describe("ArticleCard", () => {
         expect(screen.getByText(/Dec 2026/)).toBeInTheDocument();
     });
 
-    it("renders no image when there is no cover media", () => {
-        // global handler already returns [] — no override needed
+    it("renders no image when coverImageUrl is null", () => {
         const { container } = renderWithIntl(<ArticleCard article={mockArticle} locale="en" />);
         expect(container.querySelectorAll("img")).toHaveLength(0);
     });
 
-    it("renders a cover image when entity media returns a cover item", async () => {
-        server.use(
-            http.get(apiUrl("/media/entity/article/article-1"), () =>
-                HttpResponse.json([coverPayload])
-            )
-        );
-
-        const { container } = renderWithIntl(<ArticleCard article={mockArticle} locale="en" />);
-
-        await screen.findByRole("img");
+    it("renders a cover image when the article has a coverImageUrl", () => {
+        const article = { ...mockArticle, coverImageUrl: "https://cdn.example.com/cover.jpg" };
+        const { container } = renderWithIntl(<ArticleCard article={article} locale="en" />);
         const img = container.querySelector("img") as HTMLImageElement;
         expect(img).toBeInTheDocument();
-        expect(img.getAttribute("alt")).toBe("Cover photo");
+        expect(img.getAttribute("alt")).toBe("Test Article");
     });
 
-    it("uses the thumbnail crop URL when available", async () => {
-        const withCrop: components["schemas"]["MediaPayload"] = {
-            ...coverPayload,
-            crops: [
-                {
-                    id: "crop-1",
-                    media_id: "media-cover-1",
-                    variant_kind: "thumbnail",
-                    crop_name: null,
-                    url: "https://cdn.example.com/cover-thumb.jpg",
-                    mime_type: "image/jpeg",
-                    file_size: 8000,
-                    width: 400,
-                    height: 225,
-                    checksum: null,
-                    source_uri: null,
-                },
-            ],
+    it("uses the coverImageUrl from the article directly as the image src", () => {
+        const article = {
+            ...mockArticle,
+            coverImageUrl: "https://cdn.example.com/cover-thumb.jpg",
         };
-
-        server.use(
-            http.get(apiUrl("/media/entity/article/article-1"), () => HttpResponse.json([withCrop]))
-        );
-
-        const { container } = renderWithIntl(<ArticleCard article={mockArticle} locale="en" />);
-
-        await screen.findByRole("img");
+        const { container } = renderWithIntl(<ArticleCard article={article} locale="en" />);
         const img = container.querySelector("img") as HTMLImageElement;
         expect(img.src).toContain("cover-thumb.jpg");
     });
