@@ -176,14 +176,22 @@ export function useTableSelection<TData>({
         (event: React.KeyboardEvent) => {
             if (!enableSelection || rows.length === 0) return;
 
-            if (event.key === "ArrowDown") {
+            const target = event.target as HTMLElement;
+            const isTyping =
+                target.tagName === "INPUT" ||
+                target.tagName === "TEXTAREA" ||
+                target.isContentEditable;
+
+            if (isTyping) return;
+
+            if (event.key === "ArrowDown" || event.key === "j") {
                 event.preventDefault();
                 const next = Math.min(focusedRowIndex + 1, rows.length - 1);
                 if (event.shiftKey && anchorRowId) {
                     selectRange(anchorRowId, rows[next].id);
                 }
                 focusRow(next);
-            } else if (event.key === "ArrowUp") {
+            } else if (event.key === "ArrowUp" || event.key === "k") {
                 event.preventDefault();
                 const next = Math.max(focusedRowIndex - 1, 0);
                 if (event.shiftKey && anchorRowId) {
