@@ -3,6 +3,7 @@ use database::models::event::EventCreate;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use crate::error::{ImportEntity, ImportField, ImportItemError, ItemConversion};
 use crate::helper::extract_source_id;
 use crate::models::localized_text::ApiLocalizedText;
 
@@ -51,8 +52,24 @@ impl ApiEvent {
         extract_source_id(&self.hall)
     }
 
-    pub fn to_create(self, production_id: Uuid, hall_id: Option<Uuid>) -> EventCreate {
-        EventCreate {
+    pub fn to_create(
+        self,
+        production_id: Uuid,
+        hall_id: Option<Uuid>,
+    ) -> Result<ItemConversion<EventCreate>, ImportItemError> {
+        let max_tickets_per_order = self
+            .max_tickets_per_order
+            .map(i32::try_from)
+            .transpose()
+            .map_err(|_| {
+                ImportItemError::out_of_range(
+                    ImportEntity::Event,
+                    ImportField::MaxTicketsPerOrder,
+                    format!("{:?}", self.max_tickets_per_order),
+                )
+            })?;
+
+        Ok(ItemConversion::without_warnings(EventCreate {
             source_id: extract_source_id(&self.id),
             created_at: self.created_at,
             updated_at: self.updated_at,
@@ -63,12 +80,72 @@ impl ApiEvent {
             vendor_id: self.vendor_id,
             box_office_id: self.box_office_id,
             uitdatabank_id: self.uitdatabank_id,
-            max_tickets_per_order: self
-                .max_tickets_per_order
-                .map(|v| v.try_into().expect("max_tickets_per_order out of range")),
+            max_tickets_per_order,
             production_id,
             status: self.status,
             hall_id,
+        }))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_event(max_tickets_per_order: Option<u32>) -> ApiEvent {
+        let now = Utc::now();
+        ApiEvent {
+            id: "/api/v1/events/100".into(),
+            jsonld_type: "Event".into(),
+            created_at: now,
+            updated_at: now,
+            starts_at: now,
+            ends_at: None,
+            intermission_at: None,
+            doors_at: None,
+            box_office_id: None,
+            vendor_id: None,
+            max_tickets_per_order,
+            uitdatabank_id: None,
+            secure: false,
+            sms_verification: false,
+            production: ApiEventProduction {
+                id: "/api/v1/productions/7".into(),
+            },
+            status: "scheduled".into(),
+            hall: "/api/v1/halls/3".into(),
+            info: None,
+            eticket_info: None,
+            external_order_url: None,
         }
+    }
+
+    #[test]
+    fn to_create_returns_out_of_range_when_max_tickets_overflows_i32() {
+        let too_big = (i32::MAX as u32) + 1;
+        let event = make_event(Some(too_big));
+
+        let err = event.to_create(Uuid::nil(), None).unwrap_err();
+        match err {
+            ImportItemError::OutOfRange {
+                entity,
+                field,
+                value,
+            } => {
+                assert_eq!(entity, ImportEntity::Event);
+                assert_eq!(field, ImportField::MaxTicketsPerOrder);
+                assert_eq!(value, format!("Some({too_big})"));
+            }
+            other => panic!("expected OutOfRange, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn to_create_accepts_max_tickets_within_i32() {
+        let event = make_event(Some(10));
+        let conversion = event
+            .to_create(Uuid::nil(), None)
+            .expect("conversion succeeds");
+        assert_eq!(conversion.value.max_tickets_per_order, Some(10));
     }
 }

@@ -38,7 +38,8 @@ async fn get_entity_media_with_role_filter(db: PgPool) {
     assert_eq!(response.status(), StatusCode::OK);
     let data: Vec<MediaPayload> = response.into_struct().await;
     assert_eq!(data.len(), 1);
-    assert_eq!(data[0].gallery_type.as_deref(), Some("poster"));
+    let media = data.first().expect("expected one media item");
+    assert_eq!(media.gallery_type.as_deref(), Some("poster"));
 }
 
 #[sqlx::test(fixtures("productions", "media"))]
@@ -56,7 +57,7 @@ async fn get_entity_cover_media_via_filter(db: PgPool) {
     assert_eq!(response.status(), StatusCode::OK);
     let data: Vec<MediaPayload> = response.into_struct().await;
     assert_eq!(data.len(), 1);
-    let media = &data[0];
+    let media = data.first().expect("expected one media item");
     assert_eq!(media.alt_text_nl.as_deref(), Some("Cover image"));
 }
 
@@ -75,8 +76,10 @@ async fn get_entity_media_with_crops(db: PgPool) {
     assert_eq!(response.status(), StatusCode::OK);
     let data: Vec<MediaPayload> = response.into_struct().await;
     assert_eq!(data.len(), 1);
-    assert_eq!(data[0].crops.len(), 1);
-    assert_eq!(data[0].crops[0].crop_name.as_deref(), Some("square"));
+    let media = data.first().expect("expected one media item");
+    assert_eq!(media.crops.len(), 1);
+    let crop = media.crops.first().expect("expected one crop");
+    assert_eq!(crop.crop_name.as_deref(), Some("square"));
 }
 
 #[sqlx::test(fixtures("productions", "media"))]
@@ -310,7 +313,11 @@ async fn cleanup_orphans(db: PgPool) {
     assert_eq!(cleanup_res.status(), StatusCode::OK);
 
     let cleanup_data: serde_json::Value = cleanup_res.into_struct().await;
-    assert!(cleanup_data["deleted_count"].as_i64().unwrap() > 0);
+    let deleted_count = cleanup_data
+        .get("deleted_count")
+        .and_then(serde_json::Value::as_i64)
+        .expect("cleanup response should include deleted_count");
+    assert!(deleted_count > 0);
 
     // 'aaaaaaaa' should be gone because it became an orphan
     let response = app.get(&format!("/media/{media_id}")).await;

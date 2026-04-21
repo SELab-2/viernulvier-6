@@ -196,12 +196,36 @@
         "collections": "Collections",
         "ingest": "Ingest",
         "import": "Import",
+        "importErrors": "Import errors",
         "TabBar": {
             "overview": "CMS Overview",
             "content": "Manage content",
             "collections": "Collections",
             "ingest": "Ingest",
-            "import": "Automatic import"
+            "import": "Automatic import",
+            "importErrors": "Import errors"
+        },
+        "Import": {
+            "title": "Import",
+            "subtitle": "Automatic import from external data sources",
+            "comingSoon": "Coming soon",
+            "notAvailable": "Import functionality",
+            "description": "This feature is still under development. Soon you will be able to import data from external sources such as UiTdatabank here."
+        },
+        "ImportErrors": {
+            "title": "Import errors",
+            "description": "Overview of errors and warnings from the automatic import.",
+            "previousPage": "Previous page",
+            "nextPage": "Next page",
+            "unresolvedTab": "Unresolved",
+            "resolvedTab": "Resolved",
+            "severity": "Severity",
+            "entity": "Entity",
+            "sourceId": "Source ID",
+            "errorKind": "Error kind",
+            "relation": "Relation",
+            "message": "Message",
+            "lastSeen": "Last seen"
         },
         "Sidebar": {
             "contentType": "Content type",
@@ -269,6 +293,8 @@
             "ingestDescription": "Upload and process archive materials",
             "import": "Import",
             "importDescription": "Import data from external sources",
+            "importErrors": "Import errors",
+            "importErrorsDescription": "Review warnings and errors from the automatic importer",
             "items": "items",
             "openSection": "Open section",
             "backToOverview": "Back to overview"
@@ -411,13 +437,6 @@
             "comingSoon": "Coming soon",
             "notAvailable": "Ingest functionality",
             "description": "This feature is still under development. Soon you will be able to upload and process media files here."
-        },
-        "Import": {
-            "title": "Import",
-            "subtitle": "Automatic import from external data sources",
-            "comingSoon": "Coming soon",
-            "notAvailable": "Import functionality",
-            "description": "This feature is still under development. Soon you will be able to import data from external sources such as UiTdatabank here."
         },
         "Collections": {
             "title": "Collections",

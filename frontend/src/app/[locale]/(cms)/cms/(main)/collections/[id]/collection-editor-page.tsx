@@ -426,6 +426,31 @@ export function CollectionEditorPage({ id }: { id: string }) {
 
     const localItems = items ?? initialItems;
 
+    const updateComment = (itemId: string, languageCode: "nl" | "en", value: string) => {
+        setItems(
+            normalizeItems(
+                localItems.map((item) => {
+                    if (item.id !== itemId) return item;
+                    return {
+                        ...item,
+                        translations: withAllLanguages(item.translations, (lang) => ({
+                            languageCode: lang,
+                            comment: null,
+                        })).map((translation) =>
+                            translation.languageCode === languageCode
+                                ? { ...translation, comment: value || null }
+                                : translation
+                        ),
+                    };
+                })
+            )
+        );
+    };
+
+    const removeItem = (itemId: string) => {
+        setItems(normalizeItems(localItems.filter((item) => item.id !== itemId)));
+    };
+
     const metadataDirty = useMemo(() => {
         if (!initialMetadata || !metadata) return false;
         return JSON.stringify(initialMetadata) !== JSON.stringify(metadata);
@@ -503,31 +528,6 @@ export function CollectionEditorPage({ id }: { id: string }) {
         [localItems, eventMap]
     );
 
-    const updateComment = (itemId: string, languageCode: "nl" | "en", value: string) => {
-        setItems(
-            normalizeItems(
-                localItems.map((item) => {
-                    if (item.id !== itemId) return item;
-                    return {
-                        ...item,
-                        translations: withAllLanguages(item.translations, (lang) => ({
-                            languageCode: lang,
-                            comment: null,
-                        })).map((translation) =>
-                            translation.languageCode === languageCode
-                                ? { ...translation, comment: value || null }
-                                : translation
-                        ),
-                    };
-                })
-            )
-        );
-    };
-
-    const removeItem = (itemId: string) => {
-        setItems(normalizeItems(localItems.filter((item) => item.id !== itemId)));
-    };
-
     const renderItemProps = useCallback(
         (item: LocalCollectionItem): ItemRowProps => {
             const translationNl = getTranslation(item.translations, "nl");
@@ -549,7 +549,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
             };
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [localItems, entitiesLoading, productionMap, eventMap, locationMap, t]
+        [entitiesLoading, eventMap, locationMap, productionMap, removeItem, t, updateComment]
     );
 
     const handleDragEnd = (event: DragEndEvent) => {

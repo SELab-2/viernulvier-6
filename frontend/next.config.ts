@@ -67,7 +67,8 @@ const nextConfig: NextConfig = {
     },
 
     // Production build
-    webpack(config: Configuration) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    webpack(config: Configuration, options) {
         // Ensure module and rules exist on the config object
         if (!config.module || !config.module.rules) return config;
 
