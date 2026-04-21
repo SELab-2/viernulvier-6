@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     DndContext,
     PointerSensor,
@@ -28,6 +28,7 @@ import { slugify } from "@/lib/slugify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CollectionCoverField } from "@/components/cms/collection-cover-field";
 import { LanguageSelector } from "@/components/cms/language-selector";
@@ -194,126 +195,132 @@ function SortableItemRow({
     const subtitle = getItemSubtitle(parentProps.entity);
 
     return (
-        <div ref={setNodeRef} style={style} className="bg-background border">
-            {/* Two-column: cover + info */}
-            <div className="flex">
-                {/* Left: cover image */}
-                <div className="relative w-40 shrink-0 self-stretch overflow-hidden">
-                    {parentProps.coverImageUrl ? (
-                        <Image
-                            src={parentProps.coverImageUrl}
-                            alt=""
-                            fill
-                            className="object-cover"
-                            sizes="160px"
-                        />
-                    ) : (
-                        <div className="bg-muted h-full min-h-[5rem] w-full" />
-                    )}
-                </div>
+        <div ref={setNodeRef} style={style} className="bg-background flex border">
+            {/* Drag handle - full-height left strip */}
+            <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground flex w-7 shrink-0 cursor-grab items-center justify-center self-stretch border-r"
+                aria-label="Drag"
+                {...attributes}
+                {...listeners}
+            >
+                <GripVertical className="h-4 w-4" />
+            </button>
 
-                {/* Right: stacked info + actions */}
-                <div className="flex flex-1 flex-col gap-2 p-3">
-                    <div className="flex items-start gap-2">
-                        <div className="flex min-w-0 flex-1 flex-col gap-1">
-                            <span
-                                className={`inline-flex w-fit px-1.5 py-0.5 text-xs font-medium ${getContentTypeClass()}`}
-                            >
-                                {parentProps.contentTypeLabel}
-                            </span>
-                            <span className="text-sm leading-tight font-medium">
-                                {parentProps.title}
-                            </span>
-                            {subtitle && (
-                                <span className="text-muted-foreground text-xs">{subtitle}</span>
-                            )}
-                            {parentProps.entity.type === "loading" && (
-                                <Skeleton className="h-4 w-32" />
-                            )}
-                        </div>
-                        <div className="flex shrink-0 items-center">
-                            <button
-                                type="button"
-                                className="text-muted-foreground cursor-grab p-1"
-                                aria-label="Drag"
-                                {...attributes}
-                                {...listeners}
-                            >
-                                <GripVertical className="h-4 w-4" />
-                            </button>
+            {/* Everything to the right of the grip */}
+            <div className="flex min-w-0 flex-1 flex-col">
+                {/* Cover image + info */}
+                <div className="flex">
+                    <div className="relative w-40 shrink-0 self-stretch overflow-hidden">
+                        {parentProps.coverImageUrl ? (
+                            <Image
+                                src={parentProps.coverImageUrl}
+                                alt=""
+                                fill
+                                className="object-cover"
+                                sizes="160px"
+                            />
+                        ) : (
+                            <div className="bg-muted h-full min-h-[5rem] w-full" />
+                        )}
+                    </div>
+
+                    {/* Stacked info + actions */}
+                    <div className="flex flex-1 flex-col gap-2 p-3">
+                        <div className="flex items-start gap-2">
+                            <div className="flex min-w-0 flex-1 flex-col gap-1">
+                                <span
+                                    className={`inline-flex w-fit px-1.5 py-0.5 text-xs font-medium ${getContentTypeClass()}`}
+                                >
+                                    {parentProps.contentTypeLabel}
+                                </span>
+                                <span className="text-sm leading-tight font-medium">
+                                    {parentProps.title}
+                                </span>
+                                {subtitle && (
+                                    <span className="text-muted-foreground text-xs">
+                                        {subtitle}
+                                    </span>
+                                )}
+                                {parentProps.entity.type === "loading" && (
+                                    <Skeleton className="h-4 w-32" />
+                                )}
+                            </div>
                             <Button
                                 type="button"
                                 variant="ghost"
                                 size="sm"
-                                className="rounded-none"
+                                className="h-6 w-6 shrink-0 rounded-none p-0"
                                 aria-label={t("removeItem")}
                                 onClick={parentProps.onRemove}
                             >
                                 <Trash2 className="h-4 w-4" />
                             </Button>
                         </div>
-                    </div>
 
-                    {/* Child events in the right column */}
-                    {group.childEvents.length > 0 && (
-                        <div className="space-y-1">
-                            <p className="text-muted-foreground text-xs font-medium">
-                                {t("events")}
-                            </p>
-                            {group.childEvents.map((childItem) => {
-                                const childProps = renderItem(childItem);
-                                const entity = childProps.entity;
-                                const detail =
-                                    entity.type === "event"
-                                        ? [
-                                              entity.data.status,
-                                              entity.data.doorsAt
-                                                  ? `doors ${formatTime(new Date(entity.data.doorsAt))}`
-                                                  : null,
-                                          ]
-                                              .filter(Boolean)
-                                              .join(" · ")
-                                        : null;
-                                return (
-                                    <div
-                                        key={childItem.id}
-                                        className="flex items-center gap-2 text-xs"
-                                    >
-                                        <span className="truncate font-medium">
-                                            {childProps.title}
-                                        </span>
-                                        {detail && (
-                                            <span className="text-muted-foreground shrink-0">
-                                                {detail}
-                                            </span>
-                                        )}
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            className="ml-auto h-6 w-6 shrink-0 rounded-none p-0"
-                                            aria-label={t("removeItem")}
-                                            onClick={childProps.onRemove}
+                        {/* Child events */}
+                        {group.childEvents.length > 0 && (
+                            <div className="space-y-1">
+                                <p className="text-muted-foreground text-xs font-medium">
+                                    {t("events")}
+                                </p>
+                                {group.childEvents.map((childItem) => {
+                                    const childProps = renderItem(childItem);
+                                    const entity = childProps.entity;
+                                    const detail =
+                                        entity.type === "event"
+                                            ? [
+                                                  entity.data.status,
+                                                  entity.data.doorsAt
+                                                      ? `doors ${formatTime(new Date(entity.data.doorsAt))}`
+                                                      : null,
+                                              ]
+                                                  .filter(Boolean)
+                                                  .join(" · ")
+                                            : null;
+                                    return (
+                                        <div
+                                            key={childItem.id}
+                                            className="flex items-center gap-2 text-xs"
                                         >
-                                            <Trash2 className="h-3 w-3" />
-                                        </Button>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
+                                            <span className="truncate font-medium">
+                                                {childProps.title}
+                                            </span>
+                                            {detail && (
+                                                <span className="text-muted-foreground shrink-0">
+                                                    {detail}
+                                                </span>
+                                            )}
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="ml-auto h-6 w-6 shrink-0 rounded-none p-0"
+                                                aria-label={t("removeItem")}
+                                                onClick={childProps.onRemove}
+                                            >
+                                                <Trash2 className="h-3 w-3" />
+                                            </Button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
 
-            {/* Comment */}
-            <div className="space-y-1 border-t px-3 py-2">
-                <Label className="text-muted-foreground text-xs">
-                    {activeLang === "nl" ? parentProps.commentNlLabel : parentProps.commentEnLabel}
-                </Label>
-                <Input
-                    value={activeLang === "nl" ? parentProps.commentNl : parentProps.commentEn}
-                    onChange={(e) => parentProps.onCommentChange(activeLang, e.target.value)}
-                />
+                {/* Comment */}
+                <div className="space-y-1 border-t px-3 py-2">
+                    <Label className="text-muted-foreground text-xs">
+                        {activeLang === "nl"
+                            ? parentProps.commentNlLabel
+                            : parentProps.commentEnLabel}
+                    </Label>
+                    <Input
+                        value={activeLang === "nl" ? parentProps.commentNl : parentProps.commentEn}
+                        onChange={(e) => parentProps.onCommentChange(activeLang, e.target.value)}
+                    />
+                </div>
             </div>
         </div>
     );
@@ -336,9 +343,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
     const updateItems = useUpdateCollectionItems(id);
     const deleteCollection = useDeleteCollection();
 
-    const [slugEdited, setSlugEdited] = useState(false);
     const [origin] = useState(() => (typeof window !== "undefined" ? window.location.origin : ""));
-    const [localSlug, setLocalSlug] = useState<string | null>(null);
     const [titleNl, setTitleNl] = useState<string | null>(null);
     const [titleEn, setTitleEn] = useState<string | null>(null);
     const [descriptionNl, setDescriptionNl] = useState<string | null>(null);
@@ -374,9 +379,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
             initialMetadata.translations.find((t) => t.languageCode === lc)
         );
         const nextTitleNl = titleNl ?? baseNl?.title ?? "";
-        const nextSlug =
-            localSlug ??
-            (slugEdited ? initialMetadata.slug : slugify(nextTitleNl) || initialMetadata.slug);
+        const nextSlug = slugify(nextTitleNl) || initialMetadata.slug;
 
         return {
             slug: nextSlug,
@@ -393,16 +396,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
                 },
             ],
         };
-    }, [
-        collection,
-        descriptionEn,
-        descriptionNl,
-        initialMetadata,
-        localSlug,
-        slugEdited,
-        titleEn,
-        titleNl,
-    ]);
+    }, [collection, descriptionEn, descriptionNl, initialMetadata, titleEn, titleNl]);
 
     const localItems = items ?? initialItems;
 
@@ -445,6 +439,21 @@ export function CollectionEditorPage({ id }: { id: string }) {
 
     const isSaving = updateCollection.isPending || updateItems.isPending;
     const canSave = hydrationReady && (metadataDirty || itemsDirty) && !isSaving;
+
+    const descriptionRef = useRef<HTMLTextAreaElement>(null);
+    const descriptionValue =
+        activeLang === "nl"
+            ? (metadata?.translations.find((x) => x.languageCode === "nl")?.description ?? "")
+            : (metadata?.translations.find((x) => x.languageCode === "en")?.description ?? "");
+
+    // `field-sizing: content` (CSS-only auto-resize) has inconsistent support on mobile
+    // browsers, so we drive height from scrollHeight instead.
+    useEffect(() => {
+        const el = descriptionRef.current;
+        if (!el) return;
+        el.style.height = "auto";
+        el.style.height = `${el.scrollHeight}px`;
+    }, [descriptionValue]);
 
     const productionIds = useMemo(
         () => localItems.filter((i) => i.contentType === "production").map((i) => i.contentId),
@@ -660,23 +669,32 @@ export function CollectionEditorPage({ id }: { id: string }) {
                 >
                     {t("deleteCollection")}
                 </Button>
-                <Button
-                    className="ml-auto rounded-none"
-                    size="sm"
-                    onClick={save}
-                    disabled={!canSave}
-                >
-                    {isSaving ? t("saving") : t("save")}
-                </Button>
+                <div className="ml-auto flex gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="rounded-none"
+                        onClick={copyShareableLink}
+                    >
+                        <Link2 className="h-4 w-4" />
+                        <span>{t("copyLink")}</span>
+                    </Button>
+                    <Button className="rounded-none" size="sm" onClick={save} disabled={!canSave}>
+                        {isSaving ? t("saving") : t("save")}
+                    </Button>
+                </div>
             </div>
 
-            <section className="space-y-3 rounded-md border p-4">
+            <section className="space-y-3 border p-4">
                 <div className="flex justify-end">
                     <LanguageSelector activeLang={activeLang} onChange={setActiveLang} />
                 </div>
                 <div className="space-y-3">
                     <div className="space-y-1">
-                        <Label>{t("fieldTitle")}</Label>
+                        <Label>
+                            {t("fieldTitle")} ({activeLang.toUpperCase()})
+                        </Label>
                         <Input
                             value={
                                 activeLang === "nl"
@@ -693,51 +711,28 @@ export function CollectionEditorPage({ id }: { id: string }) {
                         />
                     </div>
                     <div className="space-y-1">
-                        <Label>{t("fieldDescription")}</Label>
-                        <Input
-                            value={
-                                activeLang === "nl"
-                                    ? (metadata.translations.find((x) => x.languageCode === "nl")
-                                          ?.description ?? "")
-                                    : (metadata.translations.find((x) => x.languageCode === "en")
-                                          ?.description ?? "")
-                            }
+                        <Label>
+                            {t("fieldDescription")} ({activeLang.toUpperCase()})
+                        </Label>
+                        <Textarea
+                            ref={descriptionRef}
+                            value={descriptionValue}
                             onChange={(e) =>
                                 activeLang === "nl"
                                     ? setDescriptionNl(e.target.value)
                                     : setDescriptionEn(e.target.value)
                             }
+                            rows={4}
+                            spellCheck={false}
+                            className="resize-none overflow-hidden"
                         />
-                    </div>
-                    <div className="space-y-1">
-                        <Label>{t("slug")}</Label>
-                        <div className="flex gap-2">
-                            <Input
-                                value={metadata.slug}
-                                onChange={(event) => {
-                                    setSlugEdited(true);
-                                    setLocalSlug(slugify(event.target.value));
-                                }}
-                            />
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="rounded-none"
-                                onClick={copyShareableLink}
-                            >
-                                <Link2 className="h-4 w-4" />
-                                <span>{t("copyLink")}</span>
-                            </Button>
-                        </div>
                     </div>
                 </div>
                 <CollectionCoverField collection={collection} />
             </section>
 
-            <section className="space-y-3 rounded-md border p-4">
-                <div className="flex items-center justify-between">
-                    <h2 className="font-medium">{t("itemsTitle", { count: localItems.length })}</h2>
-                </div>
+            <section className="space-y-3">
+                <h2 className="font-medium">{t("itemsTitle", { count: localItems.length })}</h2>
                 {localItems.length === 0 ? (
                     <div className="text-muted-foreground space-y-2 text-sm">
                         <p>{t("noItems")}</p>
