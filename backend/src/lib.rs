@@ -4,7 +4,7 @@ use argon2::{
 };
 use crate::extractors::auth::{AdminUser, EditorUser};
 use api::ApiImporter;
-use aws_sdk_s3::config::{Builder as S3Builder, Credentials, Region};
+use aws_sdk_s3::config::{BehaviorVersion, Builder as S3Builder, Credentials, Region};
 use axum::http::{HeaderValue, Method};
 use axum::middleware::from_extractor_with_state;
 use axum::{Router, routing::get};
@@ -126,6 +126,7 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
         );
 
         let s3_conf = S3Builder::new()
+            .behavior_version(BehaviorVersion::latest())
             .region(Region::new(s3_config.region.clone()))
             .endpoint_url(&s3_config.endpoint)
             .credentials_provider(creds)

@@ -44,6 +44,7 @@ export function useTableSelection<TData>({
     const [focusedRowIndex, setFocusedRowIndex] = useState(0);
     const [anchorRowId, setAnchorRowId] = useState<string | null>(null);
     const rowRefs = useRef<Map<number, HTMLTableRowElement>>(new Map());
+    const lastKeyRef = useRef<{ key: string; time: number } | null>(null);
 
     const rowRefCallback = useCallback(
         (index: number) => (el: HTMLTableRowElement | null) => {
@@ -198,6 +199,25 @@ export function useTableSelection<TData>({
                     selectRange(anchorRowId, rows[next].id);
                 }
                 focusRow(next);
+            } else if (event.key === "g") {
+                const now = Date.now();
+                if (lastKeyRef.current?.key === "g" && now - lastKeyRef.current.time < 500) {
+                    event.preventDefault();
+                    focusRow(0);
+                    lastKeyRef.current = null;
+                } else {
+                    lastKeyRef.current = { key: "g", time: now };
+                }
+            } else if (event.key === "G") {
+                event.preventDefault();
+                focusRow(rows.length - 1);
+            } else if (event.key === "v") {
+                event.preventDefault();
+                if (focusedRowIndex >= 0 && focusedRowIndex < rows.length) {
+                    const row = rows[focusedRowIndex];
+                    toggleRow(row.id);
+                    setAnchorRowId(row.id);
+                }
             } else if (event.key === " ") {
                 event.preventDefault();
                 if (focusedRowIndex >= 0 && focusedRowIndex < rows.length) {
