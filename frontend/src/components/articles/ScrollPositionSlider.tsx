@@ -60,7 +60,7 @@ export function ScrollPositionSlider({
     }
 
     const SLIDER_HEIGHT_PX = 544;
-    const MIN_GAP_PX = 34;
+    const MIN_GAP_PX = 16;
 
     const filteredYearRanges = yearRanges.filter((range, index) => {
         if (index === 0) return true;
