@@ -16,7 +16,6 @@ export function ScrollPositionSlider({
     onDragChange,
 }: ScrollPositionSliderProps) {
     const containerRef = useRef<HTMLDivElement>(null);
-    const drag = useRef<{ startY: number } | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [dragIndex, setDragIndex] = useState(currentIndex);
 
@@ -83,7 +82,6 @@ export function ScrollPositionSlider({
     const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
         e.preventDefault();
         e.currentTarget.setPointerCapture(e.pointerId);
-        drag.current = { startY: e.clientY };
         setIsDragging(true);
         onDragChange?.(true);
 
@@ -92,15 +90,15 @@ export function ScrollPositionSlider({
     };
 
     const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
-        if (!drag.current || !e.buttons) return;
+        if (!isDragging || !e.buttons) return;
         const newIndex = toIndex(e.clientY);
         setDragIndex(newIndex);
     };
 
     const onPointerUp = (e: PointerEvent<HTMLDivElement>) => {
         e.currentTarget.releasePointerCapture(e.pointerId);
-        drag.current = null;
-        onNavigate(dragIndex);
+        const newIndex = toIndex(e.clientY);
+        onNavigate(newIndex);
         setIsDragging(false);
         onDragChange?.(false);
     };

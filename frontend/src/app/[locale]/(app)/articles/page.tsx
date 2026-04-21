@@ -184,10 +184,9 @@ export default function ArticlesPage() {
                                                         {yearGroup.year}
                                                     </h2>
                                                     <span className="text-muted-foreground mb-2 font-mono text-[10px] tracking-[2px] whitespace-nowrap uppercase sm:text-[11px]">
-                                                        {yearArticleCount}{" "}
-                                                        {yearArticleCount !== 1
-                                                            ? "entries"
-                                                            : "entry"}
+                                                        {t("listLabel", {
+                                                            count: yearArticleCount,
+                                                        })}
                                                     </span>
                                                 </div>
                                             </div>
