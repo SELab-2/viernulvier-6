@@ -1,18 +1,52 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api-client";
-import { mapArtists } from "@/mappers/artist.mapper";
-import { ArtistResponse } from "@/types/api/artist.api.types";
+import { mapArtist, mapArtists } from "@/mappers/artist.mapper";
+import {
+    GetAllArtistsResponse,
+    GetArtistByIdResponse,
+    GetProductionsByArtistIdResponse,
+} from "@/types/api/artist.api.types";
+import { mapProductions } from "@/mappers/production.mapper";
 import { Artist } from "@/types/models/artist.types";
+import { Production } from "@/types/models/production.types";
 
 import { queryKeys } from "./query-keys";
+
+const fetchArtists = async (): Promise<Artist[]> => {
+    const { data } = await api.get<GetAllArtistsResponse>("/artists");
+    return mapArtists(data);
+};
+
+const fetchArtistById = async (id: string): Promise<Artist> => {
+    const { data } = await api.get<GetArtistByIdResponse>(`/artists/${id}`);
+    return mapArtist(data);
+};
+
+const fetchProductionsByArtistId = async (id: string): Promise<Production[]> => {
+    const { data } = await api.get<GetProductionsByArtistIdResponse>(`/artists/${id}/productions`);
+    return mapProductions(data);
+};
 
 export const useGetArtists = () => {
     return useQuery({
         queryKey: queryKeys.artists.all,
-        queryFn: async (): Promise<Artist[]> => {
-            const { data } = await api.get<ArtistResponse[]>("/artists");
-            return mapArtists(data);
-        },
+        queryFn: fetchArtists,
+    });
+};
+
+export const useGetArtist = (id: string, options?: { enabled?: boolean }) => {
+    return useQuery({
+        queryKey: queryKeys.artists.detail(id),
+        queryFn: () => fetchArtistById(id),
+        enabled: Boolean(id) && (options?.enabled ?? true),
+    });
+};
+
+export const useGetProductionsByArtist = (id: string, options?: { enabled?: boolean }) => {
+    return useQuery({
+        queryKey: queryKeys.artists.productions(id),
+        queryFn: () => fetchProductionsByArtistId(id),
+        enabled: Boolean(id) && (options?.enabled ?? true),
     });
 };

@@ -470,7 +470,8 @@ async fn delete_series_cascades_join_rows(db: PgPool) {
         .await;
     let after_data: Vec<SeriesPayload> = after.into_struct().await;
     assert_eq!(after_data.len(), 1);
-    assert_eq!(after_data[0].slug, "fresh-juice");
+    let series = after_data.first().expect("expected one remaining series");
+    assert_eq!(series.slug, "fresh-juice");
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────

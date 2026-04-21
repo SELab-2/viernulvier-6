@@ -5,22 +5,9 @@ import { NextIntlClientProvider } from "next-intl";
 import messages from "../../../../src/messages/en.json";
 
 import type { Media } from "@/types/models/media.types";
-import type { Article, ArticleRelations } from "@/types/models/article.types";
+import type { Article } from "@/types/models/article.types";
 
 // ── Module mocks (hoisted) ───────────────────────────────────────────
-
-vi.mock("@/hooks/api/useProductions", () => ({
-    useGetProductions: () => ({ data: undefined }),
-}));
-vi.mock("@/hooks/api/useLocations", () => ({
-    useGetLocations: () => ({ data: undefined }),
-}));
-vi.mock("@/hooks/api/useEvents", () => ({
-    useGetEvents: () => ({ data: undefined }),
-}));
-vi.mock("@/hooks/api/useArtists", () => ({
-    useGetArtists: () => ({ data: [] }),
-}));
 
 const mockAttachMutateAsync = vi.fn().mockResolvedValue({});
 const mockUnlinkMutateAsync = vi.fn().mockResolvedValue(undefined);
@@ -105,13 +92,6 @@ const mockArticle: Article = {
     subjectPeriodEnd: null,
 };
 
-const mockRelations: ArticleRelations = {
-    productionIds: [],
-    artistIds: [],
-    locationIds: [],
-    eventIds: [],
-};
-
 const coverMedia: Media = {
     id: "cover-media-1",
     url: "https://cdn.example.com/cover.jpg",
@@ -149,9 +129,7 @@ const renderPanel = (articleOverride?: Partial<Article>) =>
         <NextIntlClientProvider locale="en" messages={messages}>
             <ArticleMetadataPanel
                 article={{ ...mockArticle, ...articleOverride }}
-                relations={mockRelations}
                 onArticleChange={vi.fn()}
-                onRelationsChange={vi.fn()}
             />
         </NextIntlClientProvider>
     );
