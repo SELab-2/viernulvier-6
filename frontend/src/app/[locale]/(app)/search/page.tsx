@@ -146,7 +146,7 @@ export default function SearchPage() {
             />
 
             <div
-                className="flex min-h-[calc(100vh-300px)] overflow-hidden"
+                className="flex min-h-[calc(100vh-300px)] items-start"
                 style={{ ["--results-bar-height" as string]: "0px" }}
             >
                 <ArchiveSidebar
@@ -155,10 +155,8 @@ export default function SearchPage() {
                     minYear={ARCHIVE_MIN_YEAR}
                     maxYear={maxYear}
                 />
-                <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                <main className="flex min-w-0 flex-1 flex-col">
                     <ResultsBar
-                        shownCount={allProductions.length}
-                        totalCount={allProductions.length}
                         query={draftQuery}
                         onQueryChange={setDraftQuery}
                         showSearch={!isHeroVisible}
