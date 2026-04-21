@@ -275,6 +275,8 @@ fn public_routes() -> OpenApiRouter<AppState> {
         .routes(routes!(series::get_for_production))
         // artists
         .routes(routes!(artist::get_all))
+        .routes(routes!(artist::get_one))
+        .routes(routes!(artist::get_productions))
         // articles (public: published only, filterable)
         .routes(routes!(article::get_all))
         .routes(routes!(article::get_one))
