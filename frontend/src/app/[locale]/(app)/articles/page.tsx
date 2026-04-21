@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
 import { useGetArticles } from "@/hooks/api/useArticles";
-import { groupArticlesByYearMonth } from "@/lib/utils";
+import { groupArticlesByYearMonth } from "@/lib/articles";
 
 import { UnifiedHeader } from "@/components/layout/header";
 import { ArticleCard, ScrollPositionSlider } from "@/components/articles";
@@ -27,8 +27,8 @@ export default function ArticlesPage() {
 
     const groupedArticles = useMemo(() => {
         if (!articles || articles.length === 0) return [];
-        return groupArticlesByYearMonth(articles);
-    }, [articles]);
+        return groupArticlesByYearMonth(articles, locale);
+    }, [articles, locale]);
 
     const monthsList = useMemo(() => {
         return groupedArticles.flatMap((yearGroup) =>
@@ -157,7 +157,6 @@ export default function ArticlesPage() {
                     <>
                         <div className="text-muted-foreground border-muted/30 bg-background sticky top-0 z-30 -mx-3 mb-8 flex items-center gap-2.5 border-b px-3 py-3 font-mono text-[9px] font-medium tracking-[2px] uppercase sm:-mx-6 sm:px-6">
                             {t("listLabel", { count: articles.length })}
-                            <span className="bg-muted/40 h-px min-w-0 flex-1" />
                         </div>
 
                         <div className="flex w-full items-start gap-6 sm:gap-12">
@@ -170,7 +169,7 @@ export default function ArticlesPage() {
                                 />
                             </div>
 
-                            <div className="border-muted/25 min-w-0 flex-1 space-y-16 sm:border-l sm:pl-4 md:pl-5">
+                            <div className="border-muted/25 min-w-0 flex-1 space-y-8 sm:border-l sm:pl-4 md:pl-5">
                                 {groupedArticles.map((yearGroup) => {
                                     const yearArticleCount = yearGroup.months.reduce(
                                         (sum, month) => sum + month.articles.length,
@@ -178,8 +177,8 @@ export default function ArticlesPage() {
                                     );
 
                                     return (
-                                        <div key={yearGroup.year} className="w-full">
-                                            <div className="border-foreground mb-8 w-full border-t-2 pt-3">
+                                        <div key={yearGroup.year} className="w-full pb-8">
+                                            <div className="mb-8 w-full">
                                                 <div className="flex items-end justify-between gap-4">
                                                     <h2 className="font-display text-foreground text-[52px] leading-[0.9] font-black tracking-[-0.05em] sm:text-[68px] md:text-[84px]">
                                                         {yearGroup.year}
@@ -191,7 +190,6 @@ export default function ArticlesPage() {
                                                             : "entry"}
                                                     </span>
                                                 </div>
-                                                <div className="border-foreground mt-1 w-full border-b" />
                                             </div>
 
                                             <div className="w-full space-y-12">
