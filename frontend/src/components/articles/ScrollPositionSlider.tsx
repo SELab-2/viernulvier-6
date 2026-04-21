@@ -2,15 +2,20 @@
 
 import { useRef, useState, useLayoutEffect, type PointerEvent } from "react";
 
+export type SliderItem = {
+    label: string;
+    type: "year" | "month";
+};
+
 export interface ScrollPositionSliderProps {
-    months: string[];
+    sliderItems: SliderItem[];
     currentIndex: number;
-    onNavigate: (monthIndex: number) => void;
+    onNavigate: (index: number) => void;
     onDragChange?: (isDragging: boolean) => void;
 }
 
 export function ScrollPositionSlider({
-    months,
+    sliderItems,
     currentIndex,
     onNavigate,
     onDragChange,
@@ -32,54 +37,29 @@ export function ScrollPositionSlider({
         return () => window.removeEventListener("resize", updateHeight);
     }, []);
 
-    if (months.length === 0) return null;
+    if (sliderItems.length === 0) return null;
 
     const frac = (index: number) => {
-        if (months.length <= 1) return 0;
-        return (index / (months.length - 1)) * 100;
+        if (sliderItems.length <= 1) return 0;
+        return (index / (sliderItems.length - 1)) * 100;
     };
 
-    const yearRanges: Array<{
-        year: string;
-        startIndex: number;
-        endIndex: number;
-    }> = [];
-
-    let currentYear = "";
-    let startIdx = 0;
-
-    months.forEach((month, idx) => {
-        const year = month.split(" ").pop() || "";
-        if (year !== currentYear) {
-            if (currentYear) {
-                yearRanges.push({
-                    year: currentYear,
-                    startIndex: startIdx,
-                    endIndex: idx - 1,
-                });
-            }
-            currentYear = year;
-            startIdx = idx;
+    const yearIndices = sliderItems.reduce<number[]>((acc, item, index) => {
+        if (item.type === "year") {
+            acc.push(index);
         }
-    });
-
-    if (currentYear) {
-        yearRanges.push({
-            year: currentYear,
-            startIndex: startIdx,
-            endIndex: months.length - 1,
-        });
-    }
+        return acc;
+    }, []);
 
     const MIN_GAP_PX = 16;
 
-    const filteredYearRanges = yearRanges.filter((range, index) => {
-        if (index === 0) return true;
-        if (index === yearRanges.length - 1) return true;
+    const filteredYearIndices = yearIndices.filter((index, i) => {
+        if (i === 0) return true;
+        if (i === yearIndices.length - 1) return true;
 
-        const prev = yearRanges[index - 1];
-        const prevTopPx = (frac(prev.startIndex) / 100) * sliderHeight;
-        const currentTopPx = (frac(range.startIndex) / 100) * sliderHeight;
+        const prevIndex = yearIndices[i - 1];
+        const prevTopPx = (frac(prevIndex) / 100) * sliderHeight;
+        const currentTopPx = (frac(index) / 100) * sliderHeight;
 
         return currentTopPx - prevTopPx >= MIN_GAP_PX;
     });
@@ -88,7 +68,7 @@ export function ScrollPositionSlider({
         if (!containerRef.current) return 0;
         const { top, height } = containerRef.current.getBoundingClientRect();
         const ratio = Math.max(0, Math.min(1, (clientY - top) / height));
-        return Math.round(ratio * (months.length - 1));
+        return Math.round(ratio * (sliderItems.length - 1));
     };
 
     const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
@@ -111,6 +91,7 @@ export function ScrollPositionSlider({
         if (e.currentTarget.hasPointerCapture(e.pointerId)) {
             e.currentTarget.releasePointerCapture(e.pointerId);
         }
+
         const newIndex = toIndex(e.clientY);
         setDragIndex(newIndex);
         onNavigate(newIndex);
@@ -125,16 +106,16 @@ export function ScrollPositionSlider({
 
     return (
         <div ref={containerRef} className="relative z-40 h-full w-11 shrink-0 select-none sm:w-13">
-            {filteredYearRanges.map((range) => (
-                <div key={`label-${range.year}`}>
+            {filteredYearIndices.map((index) => (
+                <div key={`label-${sliderItems[index].label}`}>
                     <div
                         className="text-muted-foreground pointer-events-none absolute right-2.5 left-0 text-right font-mono text-[11px] leading-none whitespace-nowrap"
                         style={{
-                            top: `${frac(range.startIndex)}%`,
+                            top: `${frac(index)}%`,
                             transform: "translateY(-50%)",
                         }}
                     >
-                        {range.year}
+                        {sliderItems[index].label}
                     </div>
                 </div>
             ))}
@@ -149,12 +130,12 @@ export function ScrollPositionSlider({
                         }}
                     />
 
-                    {yearRanges.map((range) => (
-                        <div key={`tick-${range.year}`}>
+                    {yearIndices.map((index) => (
+                        <div key={`tick-${sliderItems[index].label}`}>
                             <div
                                 className="bg-muted-foreground absolute left-1/2 h-2 w-2 -translate-x-1/2 rounded-full"
                                 style={{
-                                    top: `${frac(range.startIndex)}%`,
+                                    top: `${frac(index)}%`,
                                 }}
                             />
                         </div>
@@ -183,7 +164,7 @@ export function ScrollPositionSlider({
                             top: `${frac(dragIndex)}%`,
                         }}
                     >
-                        {months[dragIndex]}
+                        {sliderItems[dragIndex]?.label}
                     </div>
                 )}
             </div>

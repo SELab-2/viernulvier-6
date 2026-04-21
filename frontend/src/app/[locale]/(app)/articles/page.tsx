@@ -7,8 +7,8 @@ import { useRouter } from "next/navigation";
 import { useGetArticles } from "@/hooks/api/useArticles";
 import { groupArticlesByYearMonth } from "@/lib/articles";
 
+import { ArticleCard, ScrollPositionSlider, type SliderItem } from "@/components/articles";
 import { UnifiedHeader } from "@/components/layout/header";
-import { ArticleCard, ScrollPositionSlider } from "@/components/articles";
 import { LoadingState } from "@/components/shared/loading-state";
 import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
 
@@ -19,9 +19,11 @@ export default function ArticlesPage() {
     const router = useRouter();
 
     const [headerQuery, setHeaderQuery] = useState("");
-    const [currentMonthIndex, setCurrentMonthIndex] = useState(0);
+    const [currentSliderIndex, setCurrentSliderIndex] = useState(0);
     const [isSliderDragging, setIsSliderDragging] = useState(false);
-    const monthRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+    const observerLockRef = useRef(false);
+
+    const sectionRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
     const { data: articles, isLoading } = useGetArticles();
 
@@ -30,11 +32,22 @@ export default function ArticlesPage() {
         return groupArticlesByYearMonth(articles, locale);
     }, [articles, locale]);
 
-    const monthsList = useMemo(() => {
-        return groupedArticles.flatMap((yearGroup) =>
-            yearGroup.months.map((monthGroup) => `${monthGroup.monthName} ${yearGroup.year}`)
-        );
+    const sliderItems = useMemo<SliderItem[]>(() => {
+        return groupedArticles.flatMap((yearGroup) => [
+            {
+                type: "year" as const,
+                label: String(yearGroup.year),
+            },
+            ...yearGroup.months.map((monthGroup) => ({
+                type: "month" as const,
+                label: `${monthGroup.monthName} ${yearGroup.year}`,
+            })),
+        ]);
     }, [groupedArticles]);
+
+    const sliderIndexMap = useMemo(() => {
+        return new Map(sliderItems.map((item, index) => [item.label, index]));
+    }, [sliderItems]);
 
     const handleHeaderSearch = useCallback(
         (value: string) => {
@@ -47,20 +60,30 @@ export default function ArticlesPage() {
         [router]
     );
 
-    const handleNavigateToMonth = useCallback(
+    const handleNavigateToItem = useCallback(
         (index: number) => {
-            setCurrentMonthIndex(index);
-            const monthLabel = monthsList[index];
-            const element = monthRefs.current.get(monthLabel);
+            const item = sliderItems[index];
+            if (!item) return;
+
+            setCurrentSliderIndex(index);
+
+            const element = sectionRefs.current.get(item.label);
             if (element) {
                 element.scrollIntoView({ behavior: "auto", block: "start" });
             }
+
+            if (item.type === "year") {
+                observerLockRef.current = true;
+                setTimeout(() => {
+                    observerLockRef.current = false;
+                }, 300);
+            }
         },
-        [monthsList]
+        [sliderItems]
     );
 
     useEffect(() => {
-        if (!articles || articles.length === 0) return;
+        if (sliderItems.length === 0) return;
 
         const visibleMap = new Map<string, number>();
 
@@ -75,43 +98,47 @@ export default function ArticlesPage() {
                     }
                 });
 
-                if (visibleMap.size > 0 && !isSliderDragging) {
+                if (visibleMap.size > 0 && !isSliderDragging && !observerLockRef.current) {
                     let topLabel = "";
                     let topY = Infinity;
-                    let topIndex = 0;
 
-                    monthRefs.current.forEach((el, key) => {
+                    sectionRefs.current.forEach((el, key) => {
                         if (visibleMap.has(key)) {
                             const rect = el.getBoundingClientRect();
                             if (rect.top < topY) {
                                 topY = rect.top;
                                 topLabel = key;
-                                topIndex = monthsList.indexOf(key);
                             }
                         }
                     });
 
                     if (topLabel) {
-                        setCurrentMonthIndex(Math.max(0, topIndex));
+                        const sliderIndex = sliderIndexMap.get(topLabel);
+                        if (sliderIndex !== undefined) {
+                            setCurrentSliderIndex(sliderIndex);
+                        }
                     }
                 }
             },
-            { rootMargin: "-10% 0px -70% 0px", threshold: [0, 0.1, 0.5, 1] }
+            {
+                rootMargin: "-10% 0px -70% 0px",
+                threshold: [0, 0.1, 0.5, 1],
+            }
         );
 
-        monthRefs.current.forEach((el) => observer.observe(el));
+        sectionRefs.current.forEach((el) => observer.observe(el));
 
         return () => {
             observer.disconnect();
         };
-    }, [articles, isSliderDragging, monthsList]);
+    }, [sliderItems, isSliderDragging, sliderIndexMap]);
 
-    const registerMonth = (key: string) => (el: HTMLDivElement | null) => {
+    const registerSection = (key: string) => (el: HTMLDivElement | null) => {
         if (el) {
-            monthRefs.current.set(key, el);
+            sectionRefs.current.set(key, el);
             el.setAttribute("data-label", key);
         } else {
-            monthRefs.current.delete(key);
+            sectionRefs.current.delete(key);
         }
     };
 
@@ -162,9 +189,9 @@ export default function ArticlesPage() {
                         <div className="flex w-full items-start gap-6 sm:gap-12">
                             <div className="sticky top-[calc(0.75rem+0.75rem+0.875rem+1px+1rem)] z-20 hidden h-[85vh] min-h-112 shrink-0 self-start sm:block">
                                 <ScrollPositionSlider
-                                    months={monthsList}
-                                    currentIndex={currentMonthIndex}
-                                    onNavigate={handleNavigateToMonth}
+                                    sliderItems={sliderItems}
+                                    currentIndex={currentSliderIndex}
+                                    onNavigate={handleNavigateToItem}
                                     onDragChange={setIsSliderDragging}
                                 />
                             </div>
@@ -180,7 +207,12 @@ export default function ArticlesPage() {
                                         <div key={yearGroup.year} className="w-full pb-8">
                                             <div className="mb-8 w-full">
                                                 <div className="flex items-end justify-between gap-4">
-                                                    <h2 className="font-display text-foreground text-[52px] leading-[0.9] font-black tracking-[-0.05em] sm:text-[68px] md:text-[84px]">
+                                                    <h2
+                                                        ref={registerSection(
+                                                            String(yearGroup.year)
+                                                        )}
+                                                        className="font-display text-foreground scroll-mt-20 text-[52px] leading-[0.9] font-black tracking-[-0.05em] sm:text-[68px] md:text-[84px]"
+                                                    >
                                                         {yearGroup.year}
                                                     </h2>
                                                     <span className="text-muted-foreground mb-2 font-mono text-[10px] tracking-[2px] whitespace-nowrap uppercase sm:text-[11px]">
@@ -198,7 +230,7 @@ export default function ArticlesPage() {
                                                     return (
                                                         <div
                                                             key={label}
-                                                            ref={registerMonth(label)}
+                                                            ref={registerSection(label)}
                                                             className="w-full"
                                                         >
                                                             <div className="bg-background sticky top-[calc(2.5rem+1px)] z-10 mb-5 flex items-center gap-4 py-2">
