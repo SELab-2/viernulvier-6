@@ -19,6 +19,7 @@ describe("useGetArtists", () => {
 
         expect(result.current.data).toHaveLength(1);
         expect(result.current.data?.[0]).toEqual({
+            coverImageUrl: null,
             id: artistId,
             slug: "test-artist",
             name: "Test Artist",
@@ -49,6 +50,7 @@ describe("useGetArtist", () => {
         });
 
         expect(result.current.data).toEqual({
+            coverImageUrl: null,
             id: artistId,
             slug: "test-artist",
             name: "Test Artist",
