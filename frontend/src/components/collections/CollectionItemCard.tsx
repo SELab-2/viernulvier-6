@@ -43,11 +43,7 @@ function LocationCard({ item, locale }: { item: CollectionItem; locale: string }
     const t = useTranslations("Collections");
     const { data: location, isLoading } = useGetLocation(item.contentId);
     const title = location?.name ?? null;
-    const { data: coverMedia = [] } = useGetEntityMedia("location", item.contentId, {
-        enabled: !!location,
-        params: { role: "cover" },
-    });
-    const imageUrl = coverMedia[0]?.url ?? null;
+    const imageUrl = location?.coverImageUrl ?? null;
     const href = location?.slug ? `/locations/${location.slug}` : null;
 
     return (
@@ -67,11 +63,7 @@ function BlogpostCard({ item, locale }: { item: CollectionItem; locale: string }
     const t = useTranslations("Collections");
     const { data: article, isLoading } = useGetArticle(item.contentId);
     const title = article?.title ?? null;
-    const { data: coverMedia = [] } = useGetEntityMedia("article", item.contentId, {
-        enabled: !!article,
-        params: { role: "cover" },
-    });
-    const imageUrl = coverMedia[0]?.url ?? null;
+    const imageUrl = article?.coverImageUrl ?? null;
     const href = article?.slug ? `/articles/${article.slug}` : null;
 
     return (
@@ -94,11 +86,7 @@ function ArtistCard({ item, locale }: { item: CollectionItem; locale: string }) 
     const title = artist?.name ?? null;
     const href = artist ? `/artists/${artist.id}` : null;
 
-    const { data: coverMedia = [] } = useGetEntityMedia("artist", item.contentId, {
-        enabled: !!artist,
-        params: { role: "cover" },
-    });
-    const imageUrl = coverMedia[0]?.url ?? null;
+    const imageUrl = artist?.coverImageUrl ?? null;
 
     return (
         <CardShell
@@ -117,7 +105,8 @@ function MediaCard({ item, locale }: { item: CollectionItem; locale: string }) {
     const t = useTranslations("Collections");
     const { data: media, isLoading } = useGetMedia(item.contentId);
     const imageUrl = media?.url ?? null;
-    const title = null; // media items have no title
+    const title =
+        (locale === "nl" ? media?.altTextNl : (media?.altTextEn ?? media?.altTextNl)) ?? null;
 
     return (
         <CardShell
