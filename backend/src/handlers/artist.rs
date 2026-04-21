@@ -41,8 +41,13 @@ pub async fn get_all(
         (status = 404, description = "Not found")
     )
 )]
-pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<ArtistPayload> {
-    ArtistPayload::by_id(&db, id).await?.json()
+pub async fn get_one(
+    State(state): State<AppState>,
+    db: Database,
+    Path(id): Path<Uuid>,
+) -> JsonResponse<ArtistPayload> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    ArtistPayload::by_id(&db, id, public_url).await?.json()
 }
 
 #[utoipa::path(

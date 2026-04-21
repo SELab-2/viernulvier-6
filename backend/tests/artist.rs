@@ -47,6 +47,31 @@ async fn get_all_artists_without_cover_returns_null(db: PgPool) {
     }
 }
 
+#[sqlx::test(fixtures("artists", "media", "entity_media_artist_cover"))]
+#[test_log::test]
+async fn get_one_artist_returns_cover_image_url(db: PgPool) {
+    let app = TestRouter::new(db);
+    let id = Uuid::from_str("a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1").unwrap();
+
+    let response = app.get(&format!("/artists/{id}")).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let payload: ArtistPayload = response.into_struct().await;
+    assert!(
+        payload.cover_image_url.is_some(),
+        "cover_image_url should be resolved for artist with a cover"
+    );
+}
+
+#[sqlx::test(fixtures("artists"))]
+#[test_log::test]
+async fn get_one_artist_without_cover_returns_null(db: PgPool) {
+    let app = TestRouter::new(db);
+    let id = Uuid::from_str("a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1").unwrap();
+    let response = app.get(&format!("/artists/{id}")).await;
+    let payload: ArtistPayload = response.into_struct().await;
+    assert!(payload.cover_image_url.is_none());
+}
+
 #[sqlx::test(fixtures("artists"))]
 #[test_log::test]
 async fn get_one_success(db: PgPool) {
