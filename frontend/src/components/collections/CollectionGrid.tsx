@@ -3,7 +3,7 @@
 
 import { useLocale } from "next-intl";
 import { CollectionItem } from "@/types/models/collection.types";
-import { CollectionItemCard } from "./CollectionItemCard";
+import { CollectionItemCard, UniformCardsContext } from "./CollectionItemCard";
 
 interface CollectionGridProps {
     items: CollectionItem[];
@@ -50,7 +50,9 @@ export function CollectionGrid({ items }: CollectionGridProps) {
     return (
         <section>
             <div className="sm:hidden">
-                <MasonryColumns columns={[sorted]} locale={locale} />
+                <UniformCardsContext.Provider value={true}>
+                    <MasonryColumns columns={[sorted]} locale={locale} />
+                </UniformCardsContext.Provider>
             </div>
             <div className="hidden sm:block lg:hidden">
                 <MasonryColumns columns={splitIntoColumns(sorted, 2)} locale={locale} />

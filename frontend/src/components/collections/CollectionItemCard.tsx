@@ -1,9 +1,13 @@
 // frontend/src/components/collections/CollectionItemCard.tsx
 "use client";
 
+import { createContext, useContext } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
+
+/** When true, all cards use a uniform aspect ratio (no masonry height variation). */
+export const UniformCardsContext = createContext(false);
 
 import { CollectionItem, CollectionContentType } from "@/types/models/collection.types";
 import { useGetProduction } from "@/hooks/api/useProductions";
@@ -138,6 +142,7 @@ interface CardShellProps {
 }
 
 function CardShell({ item, locale, isLoading, title, imageUrl, href, typeLabel }: CardShellProps) {
+    const uniform = useContext(UniformCardsContext);
     const comment =
         item.translations.find((tr) => tr.languageCode === locale)?.comment ??
         item.translations[0]?.comment ??
@@ -154,7 +159,7 @@ function CardShell({ item, locale, isLoading, title, imageUrl, href, typeLabel }
 
             {/* Image slot — aspect ratio alternates per position to create height variety within each column */}
             <div
-                className={`relative w-full overflow-hidden ${item.position % 2 === 0 ? ASPECT_CLASSES[0] : ASPECT_CLASSES[1]}`}
+                className={`relative w-full overflow-hidden ${uniform ? ASPECT_CLASSES[0] : item.position % 2 === 0 ? ASPECT_CLASSES[0] : ASPECT_CLASSES[1]}`}
             >
                 {isLoading ? (
                     <div className="bg-muted/10 h-full w-full animate-pulse" />

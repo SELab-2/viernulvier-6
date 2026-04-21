@@ -381,7 +381,8 @@
             "showHalls": "Show halls",
             "hideHalls": "Hide halls",
             "editLocation": "Edit location",
-            "editHall": "Edit hall"
+            "editHall": "Edit hall",
+            "eyebrow": "Location"
         },
         "Articles": {
             "title": "Articles",
@@ -443,6 +444,7 @@
         },
         "Collections": {
             "title": "Collections",
+            "eyebrow": "Collection",
             "newCollection": "New collection",
             "noCollections": "No collections yet.",
             "noItems": "No items yet. Add items from the Content tab.",

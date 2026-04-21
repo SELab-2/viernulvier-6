@@ -32,6 +32,13 @@ export function LocationCoverField({ location }: Props) {
     const handleSelect = useCallback(
         async (media: Media) => {
             try {
+                if (cover) {
+                    await unlinkMedia.mutateAsync({
+                        entityType: "location",
+                        entityId: location.id,
+                        mediaId: cover.id,
+                    });
+                }
                 await linkMedia.mutateAsync({
                     entityType: "location",
                     entityId: location.id,
@@ -43,7 +50,7 @@ export function LocationCoverField({ location }: Props) {
             }
             setPickerOpen(false);
         },
-        [linkMedia, location.id, t]
+        [linkMedia, unlinkMedia, location.id, cover, t]
     );
 
     const handleRemove = useCallback(async () => {
@@ -64,14 +71,14 @@ export function LocationCoverField({ location }: Props) {
         <div className="space-y-2">
             <p className="text-sm font-medium">{t("label")}</p>
             {location.coverImageUrl ? (
-                <div className="flex items-start gap-4">
-                    <div className="relative aspect-video w-40 overflow-hidden rounded-md border">
+                <div className="space-y-2">
+                    <div className="relative aspect-video w-full overflow-hidden rounded-md border">
                         <Image
                             src={location.coverImageUrl}
                             alt=""
                             fill
                             className="object-cover"
-                            sizes="160px"
+                            sizes="400px"
                         />
                     </div>
                     <div className="flex gap-2">
