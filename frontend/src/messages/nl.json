@@ -517,6 +517,26 @@
             "detachSuccess": "Media ontkoppeld",
             "detachError": "Ontkoppelen van media mislukt"
         },
+        "CollectionCoverImage": {
+            "label": "Omslagafbeelding",
+            "add": "Omslagafbeelding toevoegen",
+            "edit": "Bewerken",
+            "remove": "Verwijderen",
+            "setSuccess": "Omslagafbeelding ingesteld.",
+            "setError": "Omslagafbeelding instellen mislukt.",
+            "removeSuccess": "Omslagafbeelding verwijderd.",
+            "removeError": "Omslagafbeelding verwijderen mislukt."
+        },
+        "LocationCoverImage": {
+            "label": "Omslagafbeelding",
+            "add": "Omslagafbeelding toevoegen",
+            "edit": "Omslagafbeelding bewerken",
+            "remove": "Verwijderen",
+            "setSuccess": "Omslagafbeelding ingesteld.",
+            "setError": "Omslagafbeelding instellen mislukt.",
+            "removeSuccess": "Omslagafbeelding verwijderd.",
+            "removeError": "Omslagafbeelding verwijderen mislukt."
+        },
         "ProductionMedia": {
             "title": "Media productie",
             "editMode": "Mediabeheer",

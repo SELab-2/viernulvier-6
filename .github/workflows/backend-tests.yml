@@ -12,6 +12,10 @@ jobs:
         ALLOWED_ORIGINS: "http://localhost:3000"
         API_KEY_404: "test-api-key"
         JWT_SECRET: "test-jwt-secret-that-is-long-enough-for-hs256"
+        S3_ENDPOINT: "http://localhost:3900"
+        S3_ACCESS_KEY: "GKadmin"
+        S3_SECRET_KEY: "admin"
+        S3_BUCKET: "test-bucket"
 
     services:
       postgres:

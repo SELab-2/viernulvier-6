@@ -1,8 +1,10 @@
+use axum::extract::State;
 use axum::extract::Path;
 use database::Database;
 use uuid::Uuid;
 
 use crate::{
+    AppState,
     dto::{artist::ArtistPayload, production::ProductionPayload},
     handlers::{IntoApiResponse, JsonResponse},
 };
@@ -17,8 +19,12 @@ use crate::{
         (status = 200, description = "Success", body = [ArtistPayload])
     )
 )]
-pub async fn get_all(db: Database) -> JsonResponse<Vec<ArtistPayload>> {
-    ArtistPayload::all(&db).await?.json()
+pub async fn get_all(
+    State(state): State<AppState>,
+    db: Database,
+) -> JsonResponse<Vec<ArtistPayload>> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    ArtistPayload::all(&db, public_url).await?.json()
 }
 
 #[utoipa::path(
@@ -35,8 +41,13 @@ pub async fn get_all(db: Database) -> JsonResponse<Vec<ArtistPayload>> {
         (status = 404, description = "Not found")
     )
 )]
-pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<ArtistPayload> {
-    ArtistPayload::by_id(&db, id).await?.json()
+pub async fn get_one(
+    State(state): State<AppState>,
+    db: Database,
+    Path(id): Path<Uuid>,
+) -> JsonResponse<ArtistPayload> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    ArtistPayload::by_id(&db, id, public_url).await?.json()
 }
 
 #[utoipa::path(

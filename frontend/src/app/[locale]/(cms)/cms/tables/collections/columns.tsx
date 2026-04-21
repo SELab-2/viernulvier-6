@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import Image from "next/image";
 import { ExternalLink, Link2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
@@ -14,8 +15,9 @@ export function makeCollectionColumns(options: {
     onOpen: (row: CollectionRow) => void;
     locale: string;
     t: ReturnType<typeof useTranslations<"Cms.Collections">>;
+    onOpenSpotlight?: (src: string, alt: string) => void;
 }): ColumnDef<CollectionRow>[] {
-    const { onDelete, onOpen, locale, t } = options;
+    const { onDelete, onOpen, locale, t, onOpenSpotlight } = options;
     const isEn = locale === "en";
 
     const fieldPair = (row: CollectionRow, field: "title" | "description") => {
@@ -68,6 +70,49 @@ export function makeCollectionColumns(options: {
     ];
 
     return [
+        {
+            id: "cover",
+            header: "",
+            enableSorting: false,
+            cell: ({ row }) => {
+                const src = row.original.coverImageUrl;
+                if (!src) {
+                    return <div className="bg-muted h-10 w-10" />;
+                }
+                const alt =
+                    (isEn ? row.original.titleEn : row.original.titleNl) ?? row.original.slug;
+                if (!onOpenSpotlight) {
+                    return (
+                        <Image
+                            src={src}
+                            alt={alt}
+                            width={40}
+                            height={40}
+                            className="h-10 w-10 object-cover"
+                        />
+                    );
+                }
+                return (
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenSpotlight(src, alt);
+                        }}
+                        className="block h-10 w-10 cursor-zoom-in"
+                        aria-label={alt}
+                    >
+                        <Image
+                            src={src}
+                            alt={alt}
+                            width={40}
+                            height={40}
+                            className="h-10 w-10 object-cover"
+                        />
+                    </button>
+                );
+            },
+        },
         {
             id: "title",
             header: "Title",
