@@ -30,7 +30,9 @@ describe("ResultsBar component", () => {
     });
 
     it("renders sort options based on translations", () => {
-        renderWithIntl(<ResultsBar query="" onQueryChange={() => {}} showSearch={false} />);
+        renderWithIntl(
+            <ResultsBar query="" onQueryChange={() => {}} onSearch={() => {}} showSearch={false} />
+        );
 
         expect(screen.getByText("Sort by")).toBeInTheDocument();
         expect(screen.getByText("Most Recent")).toBeInTheDocument();
@@ -40,7 +42,9 @@ describe("ResultsBar component", () => {
 
     it("updates active sort option on click", async () => {
         const user = userEvent.setup();
-        renderWithIntl(<ResultsBar query="" onQueryChange={() => {}} showSearch={false} />);
+        renderWithIntl(
+            <ResultsBar query="" onQueryChange={() => {}} onSearch={() => {}} showSearch={false} />
+        );
 
         const recentBtn = screen.getByText("Most Recent");
         const azBtn = screen.getByText("A-Z");
