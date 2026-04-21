@@ -125,6 +125,8 @@ function MediaCard({ item, locale }: { item: CollectionItem; locale: string }) {
 // Shared card shell — renders the newspaper-column layout
 // ---------------------------------------------------------------------------
 
+const ASPECT_CLASSES = ["aspect-[4/3]", "aspect-[3/4]"] as const;
+
 interface CardShellProps {
     item: CollectionItem;
     locale: string;
@@ -150,9 +152,10 @@ function CardShell({ item, locale, isLoading, title, imageUrl, href, typeLabel }
                 </span>
             </div>
 
-            {/* Image slot — always rendered; gradient placeholder keeps cards visually
-                balanced in the masonry grid when no cover image is available yet. */}
-            <div className="relative aspect-[4/3] w-full overflow-hidden">
+            {/* Image slot — aspect ratio alternates per position to create height variety within each column */}
+            <div
+                className={`relative w-full overflow-hidden ${item.position % 2 === 0 ? ASPECT_CLASSES[0] : ASPECT_CLASSES[1]}`}
+            >
                 {isLoading ? (
                     <div className="bg-muted/10 h-full w-full animate-pulse" />
                 ) : imageUrl ? (
