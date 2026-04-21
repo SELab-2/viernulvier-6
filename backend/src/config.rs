@@ -49,8 +49,8 @@ impl AppConfig {
         if admin_password.is_none() {
             warn!("ADMIN_PASSWORD not set, bootstrap admin will not be created");
         }
-        let admin_email = env::var("ADMIN_EMAIL")
-            .unwrap_or_else(|_| "admin@viernulvier.be".to_string());
+        let admin_email =
+            env::var("ADMIN_EMAIL").unwrap_or_else(|_| "admin@viernulvier.be".to_string());
 
         let s3 = match (
             env::var("S3_ENDPOINT"),

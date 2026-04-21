@@ -377,7 +377,7 @@ describe("useAttachMedia", () => {
 });
 
 describe("useUnlinkMedia", () => {
-    it("invalidates entity media cache on success", async () => {
+    it("invalidates entity media cache and entity list prefix on success", async () => {
         const { wrapper, queryClient } = createQueryClientWrapper();
         const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
         const { result } = renderHook(() => useUnlinkMedia(), { wrapper });
@@ -397,6 +397,7 @@ describe("useUnlinkMedia", () => {
         expect(invalidateSpy).toHaveBeenCalledWith({
             queryKey: queryKeys.media.entity("production", "prod-1"),
         });
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["productions"] });
     });
 });
 

@@ -1,17 +1,17 @@
+use crate::extractors::auth::{AdminUser, EditorUser};
+use api::ApiImporter;
 use argon2::{
     Argon2,
     password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
 };
-use crate::extractors::auth::{AdminUser, EditorUser};
-use api::ApiImporter;
 use aws_sdk_s3::config::{Builder as S3Builder, Credentials, Region};
 use axum::http::{HeaderValue, Method};
 use axum::middleware::from_extractor_with_state;
 use axum::{Router, routing::get};
 use database::Database;
 use database::models::entity_type::EntityType;
-use database::models::user::{UserCreate, UserRole};
 use database::models::facet::Facet;
+use database::models::user::{UserCreate, UserRole};
 use handlers::queries::sort::Sort;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info, warn};
