@@ -44,6 +44,8 @@ export const queryKeys = {
     },
     artists: {
         all: ["artists"] as const,
+        detail: (id: string) => ["artists", id] as const,
+        productions: (id: string) => ["artists", id, "productions"] as const,
     },
     articles: {
         all: ["articles"] as const,
