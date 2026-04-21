@@ -15,11 +15,9 @@ export function CollectionGrid({ items }: CollectionGridProps) {
     const sorted = [...items].sort((a, b) => a.position - b.position);
 
     return (
-        <section className="columns-1 gap-4 sm:columns-2 lg:columns-3">
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {sorted.map((item) => (
-                <div key={item.id} className="mb-4 break-inside-avoid">
-                    <CollectionItemCard item={item} locale={locale} />
-                </div>
+                <CollectionItemCard key={item.id} item={item} locale={locale} />
             ))}
         </section>
     );
