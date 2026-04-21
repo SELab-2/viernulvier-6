@@ -1,6 +1,12 @@
 export type EntityType = "production" | "artist" | "article" | "media";
 
-export type FacetSlug = "discipline" | "format" | "theme" | "audience";
+export type FacetSlug =
+    | "discipline"
+    | "format"
+    | "theme"
+    | "audience"
+    | "accessibility"
+    | "language";
 
 export type TagTranslation = {
     languageCode: string;
