@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Search } from "lucide-react";
 
@@ -10,6 +10,8 @@ interface ResultsBarProps {
     query: string;
     onQueryChange: (query: string) => void;
     showSearch: boolean;
+    sort?: string;
+    onSortChange?: (sort: string) => void;
 }
 
 const SORT_OPTIONS = ["recent", "oldest", "az"] as const;
@@ -20,15 +22,19 @@ export function ResultsBar({
     query,
     onQueryChange,
     showSearch,
+    sort,
+    onSortChange,
 }: ResultsBarProps) {
     const t = useTranslations("ResultsBar");
     const tSearch = useTranslations("Search");
-    const [activeSort, setActiveSort] = useState<string>("recent");
+    const activeSort = sort ?? "recent";
 
-    const handleSort = useCallback((option: string) => {
-        setActiveSort(option);
-        // TODO: wire up actual sort logic when API supports it
-    }, []);
+    const handleSort = useCallback(
+        (option: string) => {
+            onSortChange?.(option);
+        },
+        [onSortChange]
+    );
 
     return (
         <div className="border-muted/30 bg-background sticky top-0 z-10 flex items-center gap-4 border-b px-4 py-4 sm:px-7">

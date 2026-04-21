@@ -1,21 +1,51 @@
-import { describe, expect, it, afterEach, beforeEach, vi } from "vitest";
-import { render, screen, cleanup, waitFor } from "../../../../test/utils/test-utils";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen, waitFor } from "../../../../test/utils/test-utils";
 import userEvent from "@testing-library/user-event";
 import { ArchiveSidebar } from "@/components/searchpage/archive-sidebar/ArchiveSidebar";
 import { NextIntlClientProvider } from "next-intl";
 import type { Facet } from "@/types/models/taxonomy.types";
 import type { StatsPayload } from "@/types/api/stats.api.types";
+import type { Location } from "@/types/models/location.types";
+import type { PaginatedResult } from "@/types/api/api.types";
 
-const { useGetStatsMock } = vi.hoisted(() => ({
+const mockReplace = vi.fn();
+const mockSearchParams = new URLSearchParams();
+
+const { useGetStatsMock, useGetFacetsMock, useGetLocationsMock } = vi.hoisted(() => ({
     useGetStatsMock: vi.fn(() => ({
         data: undefined as StatsPayload | undefined,
         isLoading: false,
         isError: false,
     })),
+    useGetFacetsMock: vi.fn(() => ({
+        data: undefined as Facet[] | undefined,
+    })),
+    useGetLocationsMock: vi.fn(() => ({
+        data: undefined as PaginatedResult<Location> | undefined,
+    })),
 }));
 
 vi.mock("@/hooks/api/useStats", () => ({
     useGetStats: useGetStatsMock,
+}));
+
+vi.mock("@/hooks/api/useTaxonomy", () => ({
+    useGetFacets: useGetFacetsMock,
+}));
+
+vi.mock("@/hooks/api/useLocations", () => ({
+    useGetLocations: useGetLocationsMock,
+}));
+
+vi.mock("next/navigation", () => ({
+    useSearchParams: () => mockSearchParams,
+    usePathname: () => "/en/search",
+}));
+
+vi.mock("@/i18n/routing", () => ({
+    useRouter: () => ({ replace: mockReplace, push: vi.fn() }),
+    usePathname: () => "/en/search",
+    Link: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 const messages = {
@@ -86,49 +116,62 @@ const renderWithIntl = (ui: React.ReactElement) => {
     );
 };
 
+const mockFacets: Facet[] = [
+    {
+        slug: "discipline",
+        translations: [{ languageCode: "en", label: "Facet 1" }],
+        tags: [
+            {
+                slug: "t1",
+                sortOrder: 0,
+                translations: [
+                    {
+                        languageCode: "en",
+                        label: "Tag 1",
+                        description: null,
+                    },
+                ],
+            },
+        ],
+    },
+    {
+        slug: "format",
+        translations: [{ languageCode: "en", label: "Facet 2" }],
+        tags: [
+            {
+                slug: "t2",
+                sortOrder: 1,
+                translations: [
+                    {
+                        languageCode: "en",
+                        label: "Tag 2",
+                        description: null,
+                    },
+                ],
+            },
+        ],
+    },
+];
+
 describe("ArchiveSidebar component", () => {
     beforeEach(() => {
-        // jsdom does not implement scrollIntoView (needed by DateRangePicker)
         window.HTMLElement.prototype.scrollIntoView = vi.fn();
         useGetStatsMock.mockReturnValue({
             data: undefined,
             isLoading: false,
             isError: false,
         });
+        useGetFacetsMock.mockReturnValue({ data: undefined });
+        useGetLocationsMock.mockReturnValue({ data: undefined });
+        mockReplace.mockClear();
+        mockSearchParams.forEach((_, key) => mockSearchParams.delete(key));
     });
 
     afterEach(() => {
         cleanup();
         vi.clearAllMocks();
-        vi.useRealTimers(); // restore in case a test used fake timers
+        vi.useRealTimers();
     });
-
-    const mockFacets: Facet[] = [
-        {
-            slug: "discipline",
-            translations: [{ languageCode: "en", label: "Facet 1" }],
-            tags: [
-                {
-                    slug: "t1",
-                    sortOrder: 0,
-                    translations: [{ languageCode: "en", label: "Tag 1", description: null }],
-                },
-            ],
-        },
-        {
-            slug: "format",
-            translations: [{ languageCode: "en", label: "Facet 2" }],
-            tags: [
-                {
-                    slug: "t2",
-                    sortOrder: 1,
-                    translations: [{ languageCode: "en", label: "Tag 2", description: null }],
-                },
-            ],
-        },
-    ];
-
-    // ── Rendering ────────────────────────────────────────────────────────────
 
     it("renders categories based on translations", () => {
         renderWithIntl(<ArchiveSidebar />);
@@ -140,8 +183,9 @@ describe("ArchiveSidebar component", () => {
         expect(screen.getByText("Posters")).toBeInTheDocument();
     });
 
-    it("renders tags (facets) if provided", () => {
-        renderWithIntl(<ArchiveSidebar facets={mockFacets} />);
+    it("renders tags (facets) from API hook", () => {
+        useGetFacetsMock.mockReturnValue({ data: mockFacets });
+        renderWithIntl(<ArchiveSidebar />);
 
         expect(screen.getByText("Facet 1")).toBeInTheDocument();
         expect(screen.getByText("Tag 1")).toBeInTheDocument();
@@ -152,14 +196,14 @@ describe("ArchiveSidebar component", () => {
     it("has 'productions' category checked by default", () => {
         renderWithIntl(<ArchiveSidebar />);
 
-        const productionsButton = screen.getByRole("button", { name: "Productions" });
+        const productionsButton = screen.getByRole("button", {
+            name: "Productions",
+        });
         expect(productionsButton).toHaveAttribute("aria-pressed", "true");
 
         const artistsButton = screen.getByRole("button", { name: "Artists" });
         expect(artistsButton).toHaveAttribute("aria-pressed", "false");
     });
-
-    // ── Category toggles ─────────────────────────────────────────────────────
 
     it("toggles categories on click", async () => {
         const user = userEvent.setup();
@@ -173,153 +217,117 @@ describe("ArchiveSidebar component", () => {
         expect(artistsButton).toHaveAttribute("aria-pressed", "true");
     });
 
-    // ── Tag toggles ───────────────────────────────────────────────────────────
-
-    it("toggles a tag on and off", async () => {
-        const user = userEvent.setup();
-        renderWithIntl(<ArchiveSidebar facets={mockFacets} />);
+    it("tag starts unchecked when not in URL", () => {
+        useGetFacetsMock.mockReturnValue({ data: mockFacets });
+        renderWithIntl(<ArchiveSidebar />);
 
         const tag1 = screen.getByRole("button", { name: "Tag 1" });
         expect(tag1).toHaveAttribute("aria-pressed", "false");
-
-        await user.click(tag1);
-        expect(tag1).toHaveAttribute("aria-pressed", "true");
-
-        await user.click(tag1);
-        expect(tag1).toHaveAttribute("aria-pressed", "false");
     });
 
-    // ── Location toggles ──────────────────────────────────────────────────────
+    it("tag appears checked when its slug is in URL params", () => {
+        useGetFacetsMock.mockReturnValue({ data: mockFacets });
+        mockSearchParams.set("discipline", "t1");
+        renderWithIntl(<ArchiveSidebar />);
+
+        const tag1 = screen.getByRole("button", { name: "Tag 1" });
+        expect(tag1).toHaveAttribute("aria-pressed", "true");
+    });
+
+    it("clicking a tag calls router.replace with updated URL param", async () => {
+        const user = userEvent.setup();
+        useGetFacetsMock.mockReturnValue({ data: mockFacets });
+        renderWithIntl(<ArchiveSidebar />);
+
+        await user.click(screen.getByRole("button", { name: "Tag 1" }));
+
+        expect(mockReplace).toHaveBeenCalledOnce();
+        const calledUrl = mockReplace.mock.calls[0][0] as string;
+        expect(calledUrl).toContain("discipline=t1");
+    });
 
     it("renders default 'De Vooruit' location when none provided", () => {
         renderWithIntl(<ArchiveSidebar />);
 
         const locBtn = screen.getByRole("button", { name: "De Vooruit" });
         expect(locBtn).toBeInTheDocument();
-        expect(locBtn).toHaveAttribute("aria-pressed", "false");
+        expect(locBtn).toBeDisabled();
     });
 
-    it("toggles the default location on click", async () => {
-        const user = userEvent.setup();
+    it("renders provided locations from the API hook", () => {
+        useGetLocationsMock.mockReturnValue({
+            data: {
+                data: [
+                    {
+                        id: "loc1",
+                        name: "Venue A",
+                        address: "Street 1",
+                        sourceId: null,
+                        code: null,
+                        street: null,
+                        number: null,
+                        postalCode: null,
+                        city: null,
+                        country: null,
+                        phone1: null,
+                        phone2: null,
+                        isOwnedByViernulvier: null,
+                        uitdatabankId: null,
+                        slug: null,
+                        translations: [],
+                    },
+                ],
+                nextCursor: null,
+            },
+        });
         renderWithIntl(<ArchiveSidebar />);
 
-        const locBtn = screen.getByRole("button", { name: "De Vooruit" });
-        await user.click(locBtn);
-        expect(locBtn).toHaveAttribute("aria-pressed", "true");
-    });
-
-    it("renders provided locations and toggles them", async () => {
-        const user = userEvent.setup();
-        const locations: import("@/types/models/location.types").Location[] = [
-            {
-                id: "loc1",
-                name: "Venue A",
-                address: "Street 1",
-                sourceId: null,
-                code: null,
-                street: null,
-                number: null,
-                postalCode: null,
-                city: null,
-                country: null,
-                phone1: null,
-                phone2: null,
-                isOwnedByViernulvier: null,
-                uitdatabankId: null,
-                slug: null,
-                translations: [],
-            },
-        ];
-        renderWithIntl(<ArchiveSidebar locations={locations} />);
-
         const locBtn = screen.getByRole("button", { name: "Venue A" });
-        expect(locBtn).toHaveAttribute("aria-pressed", "false");
-
-        await user.click(locBtn);
-        expect(locBtn).toHaveAttribute("aria-pressed", "true");
+        expect(locBtn).toBeInTheDocument();
+        expect(locBtn).toBeDisabled();
     });
 
-    // ── clearAll ──────────────────────────────────────────────────────────────
-
-    it("clearAll resets all active filters", async () => {
+    it("clearAll strips filter params from URL and resets category state", async () => {
         const user = userEvent.setup();
-        renderWithIntl(<ArchiveSidebar facets={mockFacets} />);
+        useGetFacetsMock.mockReturnValue({ data: mockFacets });
+        mockSearchParams.set("discipline", "t1");
+        renderWithIntl(<ArchiveSidebar />);
 
         await user.click(screen.getByRole("button", { name: "Artists" }));
-        await user.click(screen.getByRole("button", { name: "Tag 1" }));
-
-        expect(screen.getByRole("button", { name: "Artists" })).toHaveAttribute(
-            "aria-pressed",
-            "true"
-        );
-        expect(screen.getByRole("button", { name: "Tag 1" })).toHaveAttribute(
-            "aria-pressed",
-            "true"
-        );
-
         await user.click(screen.getByRole("button", { name: "Clear all" }));
 
+        expect(mockReplace).toHaveBeenCalled();
+        const lastCall = mockReplace.mock.calls[mockReplace.mock.calls.length - 1][0] as string;
+        expect(lastCall).not.toContain("discipline");
+
         expect(screen.getByRole("button", { name: "Artists" })).toHaveAttribute(
             "aria-pressed",
             "false"
         );
-        expect(screen.getByRole("button", { name: "Tag 1" })).toHaveAttribute(
-            "aria-pressed",
-            "false"
-        );
-        expect(screen.getByRole("button", { name: "Productions" })).toHaveAttribute(
-            "aria-pressed",
-            "false"
-        );
     });
-
-    // ── onFilterChange debounce ───────────────────────────────────────────────
-
-    it("calls onFilterChange after a filter change (debounced)", async () => {
-        const onFilterChange = vi.fn();
-        const user = userEvent.setup();
-        renderWithIntl(<ArchiveSidebar onFilterChange={onFilterChange} />);
-
-        await user.click(screen.getByRole("button", { name: "Artists" }));
-
-        // Wait for the 300ms debounce to fire
-        await waitFor(() => expect(onFilterChange).toHaveBeenCalledOnce(), { timeout: 1000 });
-
-        const call = onFilterChange.mock.calls[0][0];
-        expect(call.categories).toBeInstanceOf(Set);
-        expect(call.tags).toBeInstanceOf(Set);
-        expect(call.locations).toBeInstanceOf(Set);
-        expect(Array.isArray(call.dateRange)).toBe(true);
-    });
-
-    // ── Date mode switching ───────────────────────────────────────────────────
 
     it("shows YearRangeSlider by default (year mode)", () => {
-        renderWithIntl(<ArchiveSidebar minYear={2000} maxYear={2020} />);
+        renderWithIntl(<ArchiveSidebar minYear={2000} />);
 
         expect(screen.getAllByRole("slider")).toHaveLength(2);
-        expect(screen.getByText("2000")).toBeInTheDocument();
-        expect(screen.getByText("2020")).toBeInTheDocument();
     });
 
     it("switches to exact date mode when clicking 'Exact dates' tab", async () => {
         const user = userEvent.setup();
-        renderWithIntl(<ArchiveSidebar minYear={2000} maxYear={2020} />);
+        renderWithIntl(<ArchiveSidebar minYear={2000} />);
 
         await user.click(screen.getByRole("button", { name: "Exact dates" }));
 
-        expect(screen.queryAllByRole("slider")).toHaveLength(0);
+        expect(mockReplace).toHaveBeenCalledOnce();
+        const calledUrl = mockReplace.mock.calls[0][0] as string;
+        expect(calledUrl).toContain("date_mode=exact");
     });
 
-    it("switches back to year mode when clicking 'Year range' tab", async () => {
-        const user = userEvent.setup();
-        renderWithIntl(<ArchiveSidebar minYear={2000} maxYear={2020} />);
+    it("shows DateRangePicker when date_mode=exact is in URL", () => {
+        mockSearchParams.set("date_mode", "exact");
+        renderWithIntl(<ArchiveSidebar minYear={2000} />);
 
-        await user.click(screen.getByRole("button", { name: "Exact dates" }));
         expect(screen.queryAllByRole("slider")).toHaveLength(0);
-
-        await user.click(screen.getByRole("button", { name: "Year range" }));
-        expect(screen.getAllByRole("slider")).toHaveLength(2);
     });
 
     it("updates year range labels when /stats arrives after mount (null draft tracks new bounds)", async () => {
@@ -366,13 +374,10 @@ describe("ArchiveSidebar component", () => {
         expect(screen.queryByText("1980")).not.toBeInTheDocument();
     });
 
-    // ── Mobile open/close ─────────────────────────────────────────────────────
-
     it("opens mobile sidebar when clicking the FAB button", async () => {
         const user = userEvent.setup();
         const { container } = renderWithIntl(<ArchiveSidebar />);
 
-        // FAB is the fixed button in the bottom-left corner (lg:hidden)
         const fab = container.querySelector("button.fixed") as HTMLElement;
         expect(fab).toBeTruthy();
 
@@ -389,7 +394,6 @@ describe("ArchiveSidebar component", () => {
         await user.click(fab);
         expect(document.body.style.overflow).toBe("hidden");
 
-        // X close button: icon-only button with lg:hidden class inside the sidebar header
         const closeBtn = Array.from(container.querySelectorAll("button")).find(
             (btn) =>
                 btn.querySelector("svg") !== null &&

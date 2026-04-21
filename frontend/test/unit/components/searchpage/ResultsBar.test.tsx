@@ -1,4 +1,4 @@
-import { describe, expect, it, afterEach } from "vitest";
+import { describe, expect, it, afterEach, vi } from "vitest";
 import { render, screen, cleanup } from "../../../../test/utils/test-utils";
 import userEvent from "@testing-library/user-event";
 import { ResultsBar } from "@/components/searchpage/results-bar/ResultsBar";
@@ -61,8 +61,9 @@ describe("ResultsBar component", () => {
         expect(screen.getByText("A-Z")).toBeInTheDocument();
     });
 
-    it("updates active sort option on click", async () => {
+    it("calls onSortChange with the clicked option", async () => {
         const user = userEvent.setup();
+        const onSortChange = vi.fn();
         renderWithIntl(
             <ResultsBar
                 shownCount={20}
@@ -70,21 +71,29 @@ describe("ResultsBar component", () => {
                 query=""
                 onQueryChange={() => {}}
                 showSearch={false}
+                onSortChange={onSortChange}
             />
         );
 
-        const recentBtn = screen.getByText("Most Recent");
-        const azBtn = screen.getByText("A-Z");
+        await user.click(screen.getByText("A-Z"));
 
-        // Initial state
-        expect(recentBtn).toHaveClass("border-foreground");
-        expect(azBtn).not.toHaveClass("border-foreground");
+        expect(onSortChange).toHaveBeenCalledOnce();
+        expect(onSortChange).toHaveBeenCalledWith("az");
+    });
 
-        // Click A-Z
-        await user.click(azBtn);
+    it("marks the active sort option from the sort prop", () => {
+        renderWithIntl(
+            <ResultsBar
+                shownCount={20}
+                totalCount={100}
+                query=""
+                onQueryChange={() => {}}
+                showSearch={false}
+                sort="az"
+            />
+        );
 
-        // Updated state
-        expect(recentBtn).not.toHaveClass("border-foreground");
-        expect(azBtn).toHaveClass("border-foreground");
+        expect(screen.getByText("A-Z")).toHaveClass("border-foreground");
+        expect(screen.getByText("Most Recent")).not.toHaveClass("border-foreground");
     });
 });
