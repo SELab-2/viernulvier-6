@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type PointerEvent } from "react";
+import { useRef, useState, useLayoutEffect, type PointerEvent } from "react";
 
 export interface ScrollPositionSliderProps {
     months: string[];
@@ -18,6 +18,19 @@ export function ScrollPositionSlider({
     const containerRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [dragIndex, setDragIndex] = useState(currentIndex);
+    const [sliderHeight, setSliderHeight] = useState(544);
+
+    useLayoutEffect(() => {
+        const updateHeight = () => {
+            if (containerRef.current) {
+                setSliderHeight(containerRef.current.getBoundingClientRect().height);
+            }
+        };
+
+        updateHeight();
+        window.addEventListener("resize", updateHeight);
+        return () => window.removeEventListener("resize", updateHeight);
+    }, []);
 
     if (months.length === 0) return null;
 
@@ -58,7 +71,6 @@ export function ScrollPositionSlider({
         });
     }
 
-    const SLIDER_HEIGHT_PX = 544;
     const MIN_GAP_PX = 16;
 
     const filteredYearRanges = yearRanges.filter((range, index) => {
@@ -66,8 +78,8 @@ export function ScrollPositionSlider({
         if (index === yearRanges.length - 1) return true;
 
         const prev = yearRanges[index - 1];
-        const prevTopPx = (frac(prev.startIndex) / 100) * SLIDER_HEIGHT_PX;
-        const currentTopPx = (frac(range.startIndex) / 100) * SLIDER_HEIGHT_PX;
+        const prevTopPx = (frac(prev.startIndex) / 100) * sliderHeight;
+        const currentTopPx = (frac(range.startIndex) / 100) * sliderHeight;
 
         return currentTopPx - prevTopPx >= MIN_GAP_PX;
     });
@@ -90,15 +102,23 @@ export function ScrollPositionSlider({
     };
 
     const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
-        if (!isDragging || !e.buttons) return;
+        if (!isDragging) return;
         const newIndex = toIndex(e.clientY);
         setDragIndex(newIndex);
     };
 
     const onPointerUp = (e: PointerEvent<HTMLDivElement>) => {
-        e.currentTarget.releasePointerCapture(e.pointerId);
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+            e.currentTarget.releasePointerCapture(e.pointerId);
+        }
         const newIndex = toIndex(e.clientY);
+        setDragIndex(newIndex);
         onNavigate(newIndex);
+        setIsDragging(false);
+        onDragChange?.(false);
+    };
+
+    const onPointerCancel = () => {
         setIsDragging(false);
         onDragChange?.(false);
     };
@@ -153,7 +173,7 @@ export function ScrollPositionSlider({
                     onPointerDown={onPointerDown}
                     onPointerMove={onPointerMove}
                     onPointerUp={onPointerUp}
-                    onPointerCancel={onPointerUp}
+                    onPointerCancel={onPointerCancel}
                 />
 
                 {isDragging && (
