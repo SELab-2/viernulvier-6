@@ -5,14 +5,13 @@ import { useLocale, useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useRouter } from "@/i18n/routing";
+import { useRouter, usePathname } from "@/i18n/routing";
 
 import { useGetProductions } from "@/hooks/api/useProductions";
-import { useGetLocations } from "@/hooks/api/useLocations";
 import { useGetFacets } from "@/hooks/api/useTaxonomy";
 import { queryKeys } from "@/hooks/api/query-keys";
 import type { Production } from "@/types/models/production.types";
-import type { PaginatedResult } from "@/types/api/api.types";
+import type { PaginatedResult, SearchPaginationParams } from "@/types/api/api.types";
 
 import { UnifiedHeader } from "@/components/layout/header";
 import { SearchHero } from "@/components/searchpage/search-hero";
@@ -31,16 +30,43 @@ export default function SearchPage() {
     const queryClient = useQueryClient();
     const searchParams = useSearchParams();
     const router = useRouter();
+    const pathname = usePathname();
 
     const [cursorHistory, setCursorHistory] = useState<(string | null)[]>([null]);
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
-    const query = searchParams.get("q")?.trim() ?? "";
-    const [draftQuery, setDraftQuery] = useState(query);
-    const [prevQuery, setPrevQuery] = useState(query);
     const [isHeroVisible, setIsHeroVisible] = useState(true);
 
-    if (query !== prevQuery) {
-        setPrevQuery(query);
+    const query = searchParams.get("q") ?? "";
+    const dateFrom = searchParams.get("date_from") ?? undefined;
+    const dateTo = searchParams.get("date_to") ?? undefined;
+    const sort = searchParams.get("sort") ?? undefined;
+
+    const { data: facets } = useGetFacets({ entityType: "production" });
+
+    const facetParams = useMemo(
+        () =>
+            Object.fromEntries(
+                (facets ?? []).flatMap(({ slug }) => {
+                    const val = searchParams.get(slug);
+                    return val ? [[slug, val]] : [];
+                })
+            ),
+        [facets, searchParams]
+    );
+
+    const [draftQuery, setDraftQuery] = useState(query);
+
+    // Reset cursor when any filter changes (including q)
+    const filterKey = [
+        query,
+        ...(facets ?? []).map(({ slug }) => searchParams.get(slug) ?? ""),
+        dateFrom,
+        dateTo,
+        sort,
+    ].join("|");
+    const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+    if (filterKey !== prevFilterKey) {
+        setPrevFilterKey(filterKey);
         setDraftQuery(query);
         setCursorHistory([null]);
         setCurrentPageIndex(0);
@@ -48,16 +74,42 @@ export default function SearchPage() {
 
     const currentCursor = cursorHistory[currentPageIndex];
 
+    const filterParams: SearchPaginationParams = useMemo(
+        () => ({
+            ...(query ? { q: query } : {}),
+            ...facetParams,
+            ...(dateFrom ? { date_from: dateFrom } : {}),
+            ...(dateTo ? { date_to: dateTo } : {}),
+            ...(sort ? { sort } : {}),
+        }),
+        [query, facetParams, dateFrom, dateTo, sort]
+    );
+
     const handleSearch = useCallback(
         (value: string) => {
             const trimmed = value.trim();
+            const params = new URLSearchParams(searchParams.toString());
             if (trimmed) {
-                router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+                params.set("q", trimmed);
             } else {
-                router.push("/search");
+                params.delete("q");
             }
+            const qs = params.toString();
+            router.push((qs ? `${pathname}?${qs}` : pathname) as Parameters<typeof router.push>[0]);
         },
-        [router]
+        [router, searchParams, pathname]
+    );
+
+    const handleSortChange = useCallback(
+        (newSort: string) => {
+            const params = new URLSearchParams(searchParams.toString());
+            params.set("sort", newSort);
+            const qs = params.toString();
+            router.replace(
+                (qs ? `${pathname}?${qs}` : pathname) as Parameters<typeof router.replace>[0]
+            );
+        },
+        [router, searchParams, pathname]
     );
 
     const {
@@ -66,34 +118,27 @@ export default function SearchPage() {
         isFetching,
     } = useGetProductions({
         params: {
-            ...(query ? { q: query } : {}),
+            ...filterParams,
             ...(currentCursor ? { cursor: currentCursor } : {}),
         },
     });
-    const { data: locationsResult } = useGetLocations();
-    const { data: facets } = useGetFacets({
-        entityType: "production",
-    });
 
     const nextCursor = productionsResult?.nextCursor;
-    const locationsData = useMemo(() => locationsResult?.data ?? [], [locationsResult?.data]);
 
-    // Derive accumulated productions from React Query cache for each fetched cursor.
-    // Including productionsResult in deps triggers recalculation when the current page arrives.
+    // Accumulate all fetched pages from TanStack Query cache
     const allProductions = useMemo(
         () =>
             cursorHistory.slice(0, currentPageIndex + 1).flatMap((cursor) => {
-                const pagination = cursor ? { cursor } : undefined;
                 const cached = queryClient.getQueryData<PaginatedResult<Production>>(
                     queryKeys.productions.all({
-                        ...(query ? { q: query } : {}),
-                        ...(pagination ?? {}),
+                        ...filterParams,
+                        ...(cursor ? { cursor } : {}),
                     })
                 );
                 return cached?.data ?? [];
             }),
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [cursorHistory, currentPageIndex, queryClient, productionsResult, query]
+        [cursorHistory, currentPageIndex, queryClient, productionsResult, filterParams]
     );
 
     const loadMore = useCallback(() => {
@@ -127,8 +172,6 @@ export default function SearchPage() {
         heroObserverRef.current.observe(node);
     }, []);
 
-    const maxYear = useMemo(() => new Date().getFullYear(), []);
-
     return (
         <>
             <UnifiedHeader
@@ -149,12 +192,7 @@ export default function SearchPage() {
                 className="flex min-h-[calc(100vh-300px)] overflow-hidden"
                 style={{ ["--results-bar-height" as string]: "0px" }}
             >
-                <ArchiveSidebar
-                    locations={locationsData}
-                    facets={facets ?? []}
-                    minYear={ARCHIVE_MIN_YEAR}
-                    maxYear={maxYear}
-                />
+                <ArchiveSidebar minYear={ARCHIVE_MIN_YEAR} />
                 <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
                     <ResultsBar
                         shownCount={allProductions.length}
@@ -162,6 +200,8 @@ export default function SearchPage() {
                         query={draftQuery}
                         onQueryChange={setDraftQuery}
                         showSearch={!isHeroVisible}
+                        sort={sort}
+                        onSortChange={handleSortChange}
                     />
                     {allProductions.length === 0 && !productionsLoading ? (
                         <VintageEmptyState

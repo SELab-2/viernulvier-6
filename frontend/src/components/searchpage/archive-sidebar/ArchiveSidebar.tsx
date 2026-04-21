@@ -3,11 +3,14 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { SlidersHorizontal, X } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
-import type { Location } from "@/types/models/location.types";
 import type { Facet } from "@/types/models/taxonomy.types";
 import { getLabel } from "@/lib/utils";
 import { useGetStats } from "@/hooks/api/useStats";
+import { useGetLocations } from "@/hooks/api/useLocations";
+import { useGetFacets } from "@/hooks/api/useTaxonomy";
+import { useRouter, usePathname } from "@/i18n/routing";
 
 import { YearRangeSlider } from "./YearRangeSlider";
 import { DateRangePicker } from "./DateRangePicker";
@@ -18,91 +21,96 @@ const CATEGORIES = ["artists", "productions", "articles", "posters"] as const;
 type DateFilterMode = "year" | "exact";
 
 interface ArchiveSidebarProps {
-    locations?: Location[];
-    facets?: Facet[];
     minYear?: number;
-    maxYear?: number;
-    onFilterChange?: (filters: {
-        categories: Set<string>;
-        tags: Set<string>;
-        locations: Set<string>;
-        dateRange: [Date, Date];
-    }) => void;
 }
 
-export function ArchiveSidebar({
-    locations = [],
-    facets = [],
-    minYear: minYearProp,
-    maxYear: maxYearProp,
-    onFilterChange,
-}: ArchiveSidebarProps) {
+export function ArchiveSidebar({ minYear: minYearProp }: ArchiveSidebarProps) {
     const t = useTranslations("Sidebar");
     const locale = useLocale();
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+
     const { data: stats } = useGetStats();
+    const { data: locationsResult } = useGetLocations();
+    const { data: facets } = useGetFacets({ entityType: "production" });
+
+    const locations = useMemo(() => locationsResult?.data ?? [], [locationsResult?.data]);
+    const facetList = useMemo<Facet[]>(() => facets ?? [], [facets]);
 
     const bounds = useMemo(
-        () => yearBoundsFromStats(stats, { minYear: minYearProp, maxYear: maxYearProp }),
-        [stats, minYearProp, maxYearProp]
+        () => yearBoundsFromStats(stats, { minYear: minYearProp }),
+        [stats, minYearProp]
     );
 
     const minDate = useMemo(() => new Date(bounds.minYear, 0, 1), [bounds.minYear]);
     const maxDate = useMemo(() => new Date(bounds.maxYear, 11, 31), [bounds.maxYear]);
+
     const [mobileOpen, setMobileOpen] = useState(false);
-    const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
     const [checkedCategories, setCheckedCategories] = useState<Set<string>>(
         new Set(["productions"])
     );
-    const [checkedLocations, setCheckedLocations] = useState<Set<string>>(new Set());
 
-    const [dateMode, setDateMode] = useState<DateFilterMode>("year");
-    /** `null` = full range for current archive bounds (updates automatically when /stats arrives). */
+    // Local draft for the year slider — written to URL with debounce.
+    // Reset when the URL date params change (e.g. clearAll, back/forward nav).
     const [yearRangeDraft, setYearRangeDraft] = useState<[number, number] | null>(null);
-    const [dateRangeDraft, setDateRangeDraft] = useState<[Date, Date] | null>(null);
+    const dateParamKey = `${searchParams.get("date_from")}|${searchParams.get("date_to")}`;
+    const [prevDateParamKey, setPrevDateParamKey] = useState(dateParamKey);
+    if (dateParamKey !== prevDateParamKey) {
+        setPrevDateParamKey(dateParamKey);
+        setYearRangeDraft(null);
+    }
 
+    const dateMode: DateFilterMode = searchParams.get("date_mode") === "exact" ? "exact" : "year";
+
+    // Active facet tags from URL: { facetSlug -> Set<tagSlug> }
+    const activeFacets = useMemo(() => {
+        const result: Record<string, Set<string>> = {};
+        for (const facet of facetList) {
+            const raw = searchParams.get(facet.slug);
+            if (raw) result[facet.slug] = new Set(raw.split(",").filter(Boolean));
+        }
+        return result;
+    }, [searchParams, facetList]);
+
+    // Compute yearRange from URL or fall back to full bounds
     const yearRange = useMemo((): [number, number] => {
-        const full: [number, number] = [bounds.minYear, bounds.maxYear];
-        if (yearRangeDraft === null) return full;
-        const lo = Math.max(bounds.minYear, Math.min(yearRangeDraft[0], bounds.maxYear));
-        const hi = Math.max(bounds.minYear, Math.min(yearRangeDraft[1], bounds.maxYear));
-        if (lo <= hi) return [lo, hi];
-        return full;
-    }, [yearRangeDraft, bounds.minYear, bounds.maxYear]);
+        const dateFrom = searchParams.get("date_from");
+        const dateTo = searchParams.get("date_to");
+        if (dateFrom && dateTo && dateMode === "year") {
+            const from = parseInt(dateFrom.slice(0, 4), 10);
+            const to = parseInt(dateTo.slice(0, 4), 10);
+            if (!isNaN(from) && !isNaN(to)) {
+                const lo = Math.max(bounds.minYear, Math.min(from, bounds.maxYear));
+                const hi = Math.max(bounds.minYear, Math.min(to, bounds.maxYear));
+                if (lo <= hi) return [lo, hi];
+            }
+        }
+        return [bounds.minYear, bounds.maxYear];
+    }, [searchParams, bounds, dateMode]);
 
+    // Compute exact dateRange from URL
     const dateRange = useMemo((): [Date, Date] => {
-        const minD = new Date(bounds.minYear, 0, 1);
-        const maxD = new Date(bounds.maxYear, 11, 31);
-        const full: [Date, Date] = [minD, maxD];
-        if (dateRangeDraft === null) return full;
-        const start =
-            dateRangeDraft[0] < minD ? minD : dateRangeDraft[0] > maxD ? maxD : dateRangeDraft[0];
-        const end =
-            dateRangeDraft[1] > maxD ? maxD : dateRangeDraft[1] < minD ? minD : dateRangeDraft[1];
-        if (start > end) return full;
-        return [start, end];
-    }, [dateRangeDraft, bounds.minYear, bounds.maxYear]);
+        const dateFrom = searchParams.get("date_from");
+        const dateTo = searchParams.get("date_to");
+        if (dateFrom && dateTo && dateMode === "exact") {
+            const start = new Date(dateFrom);
+            const end = new Date(dateTo);
+            if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+                return [start, end];
+            }
+        }
+        return [new Date(bounds.minYear, 0, 1), new Date(bounds.maxYear, 11, 31)];
+    }, [searchParams, bounds, dateMode]);
 
-    const effectiveDateRange = useMemo<[Date, Date]>(
-        () =>
-            dateMode === "year"
-                ? [new Date(yearRange[0], 0, 1), new Date(yearRange[1], 11, 31)]
-                : dateRange,
-        [dateMode, yearRange, dateRange]
-    );
-
-    const switchToExact = () => {
-        setDateRangeDraft(
-            yearRangeDraft === null
-                ? null
-                : [new Date(yearRange[0], 0, 1), new Date(yearRange[1], 11, 31)]
-        );
-        setDateMode("exact");
-    };
-
-    const switchToYear = () => {
-        setYearRangeDraft([dateRange[0].getFullYear(), dateRange[1].getFullYear()]);
-        setDateMode("year");
-    };
+    const displayedYearRange = useMemo((): [number, number] => {
+        if (yearRangeDraft !== null) {
+            const lo = Math.max(bounds.minYear, Math.min(yearRangeDraft[0], bounds.maxYear));
+            const hi = Math.max(bounds.minYear, Math.min(yearRangeDraft[1], bounds.maxYear));
+            if (lo <= hi) return [lo, hi];
+        }
+        return yearRange;
+    }, [yearRangeDraft, yearRange, bounds]);
 
     useEffect(() => {
         if (!mobileOpen) return;
@@ -112,32 +120,109 @@ export function ArchiveSidebar({
         };
     }, [mobileOpen]);
 
-    const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // Debounce timer for year slider URL writes
+    const yearDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    useEffect(() => {
-        if (!onFilterChange) return;
-        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-        debounceTimerRef.current = setTimeout(() => {
-            onFilterChange({
-                categories: checkedCategories,
-                tags: activeTags,
-                locations: checkedLocations,
-                dateRange: effectiveDateRange,
-            });
-        }, 300);
-        return () => {
-            if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-        };
-    }, [checkedCategories, activeTags, checkedLocations, effectiveDateRange, onFilterChange]);
+    const updateParam = useCallback(
+        (updates: Record<string, string | null>) => {
+            const params = new URLSearchParams(searchParams.toString());
+            for (const [key, value] of Object.entries(updates)) {
+                if (value === null) {
+                    params.delete(key);
+                } else {
+                    params.set(key, value);
+                }
+            }
+            const qs = params.toString();
+            router.replace(
+                (qs ? `${pathname}?${qs}` : pathname) as Parameters<typeof router.replace>[0]
+            );
+        },
+        [searchParams, router, pathname]
+    );
 
-    const toggleTag = useCallback((tag: string) => {
-        setActiveTags((prev) => {
-            const next = new Set(prev);
-            if (next.has(tag)) next.delete(tag);
-            else next.add(tag);
-            return next;
-        });
-    }, []);
+    const toggleTag = useCallback(
+        (facetSlug: string, tagSlug: string) => {
+            const params = new URLSearchParams(searchParams.toString());
+            const raw = params.get(facetSlug);
+            const next = new Set(raw ? raw.split(",").filter(Boolean) : []);
+            if (next.has(tagSlug)) {
+                next.delete(tagSlug);
+            } else {
+                next.add(tagSlug);
+            }
+            if (next.size > 0) {
+                params.set(facetSlug, [...next].join(","));
+            } else {
+                params.delete(facetSlug);
+            }
+            const qs = params.toString();
+            router.replace(
+                (qs ? `${pathname}?${qs}` : pathname) as Parameters<typeof router.replace>[0]
+            );
+        },
+        [searchParams, router, pathname]
+    );
+
+    const handleYearRangeChange = useCallback(
+        (range: [number, number]) => {
+            setYearRangeDraft(range);
+            if (yearDebounceRef.current) clearTimeout(yearDebounceRef.current);
+            yearDebounceRef.current = setTimeout(() => {
+                const isFullRange = range[0] === bounds.minYear && range[1] === bounds.maxYear;
+                if (isFullRange) {
+                    updateParam({ date_from: null, date_to: null });
+                } else {
+                    updateParam({
+                        date_from: `${range[0]}-01-01`,
+                        date_to: `${range[1]}-12-31`,
+                    });
+                }
+            }, 400);
+        },
+        [bounds, updateParam]
+    );
+
+    const handleExactDateChange = useCallback(
+        (start: Date, end: Date) => {
+            const isFullRange =
+                start.getTime() === minDate.getTime() && end.getTime() === maxDate.getTime();
+            if (isFullRange) {
+                updateParam({ date_from: null, date_to: null });
+            } else {
+                updateParam({
+                    date_from: start.toISOString().slice(0, 10),
+                    date_to: end.toISOString().slice(0, 10),
+                });
+            }
+        },
+        [minDate, maxDate, updateParam]
+    );
+
+    const switchToExact = useCallback(() => {
+        updateParam({ date_mode: "exact" });
+    }, [updateParam]);
+
+    const switchToYear = useCallback(() => {
+        // Convert current exact date range to year range, remove date_mode param
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete("date_mode");
+        // Keep date_from/date_to as year-based if already set
+        const dateFrom = params.get("date_from");
+        const dateTo = params.get("date_to");
+        if (dateFrom && dateTo) {
+            const from = parseInt(dateFrom.slice(0, 4), 10);
+            const to = parseInt(dateTo.slice(0, 4), 10);
+            if (!isNaN(from) && !isNaN(to)) {
+                params.set("date_from", `${from}-01-01`);
+                params.set("date_to", `${to}-12-31`);
+            }
+        }
+        const qs = params.toString();
+        router.replace(
+            (qs ? `${pathname}?${qs}` : pathname) as Parameters<typeof router.replace>[0]
+        );
+    }, [searchParams, router, pathname]);
 
     const toggleCategory = useCallback((cat: string) => {
         setCheckedCategories((prev) => {
@@ -148,23 +233,25 @@ export function ArchiveSidebar({
         });
     }, []);
 
-    const toggleLocation = useCallback((locId: string) => {
-        setCheckedLocations((prev) => {
-            const next = new Set(prev);
-            if (next.has(locId)) next.delete(locId);
-            else next.add(locId);
-            return next;
-        });
-    }, []);
-
     const clearAll = useCallback(() => {
-        setActiveTags(new Set());
         setCheckedCategories(new Set());
-        setCheckedLocations(new Set());
-        setDateMode("year");
         setYearRangeDraft(null);
-        setDateRangeDraft(null);
-    }, []);
+        // Strip all filter params, keep only q
+        const params = new URLSearchParams();
+        const q = searchParams.get("q");
+        if (q) params.set("q", q);
+        const qs = params.toString();
+        router.replace(
+            (qs ? `${pathname}?${qs}` : pathname) as Parameters<typeof router.replace>[0]
+        );
+    }, [searchParams, router, pathname]);
+
+    const hasActiveFilters = useMemo(() => {
+        for (const facet of facetList) {
+            if (searchParams.get(facet.slug)) return true;
+        }
+        return searchParams.has("date_from") || searchParams.has("date_to");
+    }, [searchParams, facetList]);
 
     const sidebarContent = (
         <>
@@ -203,17 +290,17 @@ export function ArchiveSidebar({
                 </div>
             </FilterGroup>
 
-            {facets.map((facet) => (
+            {facetList.map((facet) => (
                 <FilterGroup key={facet.slug} label={getLabel(facet.translations, locale)}>
                     <div className="flex flex-wrap gap-2 pb-2.5">
                         {facet.tags.map((tag) => (
                             <button
                                 key={tag.slug}
                                 type="button"
-                                aria-pressed={activeTags.has(tag.slug)}
-                                onClick={() => toggleTag(tag.slug)}
+                                aria-pressed={activeFacets[facet.slug]?.has(tag.slug) ?? false}
+                                onClick={() => toggleTag(facet.slug, tag.slug)}
                                 className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
-                                    activeTags.has(tag.slug)
+                                    activeFacets[facet.slug]?.has(tag.slug)
                                         ? "bg-foreground text-background border-foreground"
                                         : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
                                 }`}
@@ -232,13 +319,8 @@ export function ArchiveSidebar({
                             <button
                                 key={loc.id}
                                 type="button"
-                                aria-pressed={checkedLocations.has(loc.id)}
-                                onClick={() => toggleLocation(loc.id)}
-                                className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
-                                    checkedLocations.has(loc.id)
-                                        ? "bg-foreground text-background border-foreground"
-                                        : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
-                                }`}
+                                disabled
+                                className="border-border text-muted-foreground cursor-not-allowed border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase opacity-40"
                             >
                                 {loc.name ?? loc.address}
                             </button>
@@ -246,13 +328,8 @@ export function ArchiveSidebar({
                     ) : (
                         <button
                             type="button"
-                            aria-pressed={checkedLocations.has("deVooruit")}
-                            onClick={() => toggleLocation("deVooruit")}
-                            className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
-                                checkedLocations.has("deVooruit")
-                                    ? "bg-foreground text-background border-foreground"
-                                    : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
-                            }`}
+                            disabled
+                            className="border-border text-muted-foreground cursor-not-allowed border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase opacity-40"
                         >
                             De Vooruit
                         </button>
@@ -278,15 +355,15 @@ export function ArchiveSidebar({
                 {dateMode === "year" && (
                     <>
                         <div className="text-foreground mb-3.5 flex justify-between font-mono text-[13px] select-text">
-                            <span>{yearRange[0]}</span>
+                            <span>{displayedYearRange[0]}</span>
                             <span className="text-muted-foreground text-[11px]">—</span>
-                            <span>{yearRange[1]}</span>
+                            <span>{displayedYearRange[1]}</span>
                         </div>
                         <YearRangeSlider
                             min={bounds.minYear}
                             max={bounds.maxYear}
-                            value={yearRange}
-                            onChange={setYearRangeDraft}
+                            value={displayedYearRange}
+                            onChange={handleYearRangeChange}
                             ariaLabelStart={t("year.rangeFrom")}
                             ariaLabelEnd={t("year.rangeTo")}
                         />
@@ -300,7 +377,7 @@ export function ArchiveSidebar({
                             endDate={dateRange[1]}
                             minDate={minDate}
                             maxDate={maxDate}
-                            onChange={(start, end) => setDateRangeDraft([start, end])}
+                            onChange={handleExactDateChange}
                         />
                     </div>
                 )}
@@ -308,7 +385,9 @@ export function ArchiveSidebar({
 
             <button
                 onClick={clearAll}
-                className="border-foreground text-foreground hover:bg-foreground hover:text-background mx-auto mt-4 block w-[calc(100%-40px)] max-w-[230px] cursor-pointer border bg-transparent px-4 py-[9px] font-mono text-[10px] font-medium tracking-[1.4px] uppercase transition-all"
+                className={`border-foreground text-foreground hover:bg-foreground hover:text-background mx-auto mt-4 block w-[calc(100%-40px)] max-w-[230px] cursor-pointer border bg-transparent px-4 py-[9px] font-mono text-[10px] font-medium tracking-[1.4px] uppercase transition-all ${
+                    !hasActiveFilters && checkedCategories.size === 0 ? "opacity-40" : ""
+                }`}
             >
                 {t("clearAll")}
             </button>

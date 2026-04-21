@@ -36,6 +36,15 @@ export interface PaginationParams {
 
 export interface SearchPaginationParams extends PaginationParams {
     q?: string;
+    discipline?: string;
+    format?: string;
+    theme?: string;
+    audience?: string;
+    accessibility?: string;
+    language?: string;
+    date_from?: string;
+    date_to?: string;
+    sort?: string;
 }
 
 export interface PaginatedResult<T> {
