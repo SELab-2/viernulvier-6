@@ -7,12 +7,13 @@ import { Search } from "lucide-react";
 interface ResultsBarProps {
     query: string;
     onQueryChange: (query: string) => void;
+    onSearch: (query: string) => void;
     showSearch: boolean;
 }
 
 const SORT_OPTIONS = ["recent", "oldest", "az"] as const;
 
-export function ResultsBar({ query, onQueryChange, showSearch }: ResultsBarProps) {
+export function ResultsBar({ query, onQueryChange, onSearch, showSearch }: ResultsBarProps) {
     const t = useTranslations("ResultsBar");
     const tSearch = useTranslations("Search");
     const [activeSort, setActiveSort] = useState<string>("recent");
@@ -38,6 +39,7 @@ export function ResultsBar({ query, onQueryChange, showSearch }: ResultsBarProps
                         type="text"
                         value={query}
                         onChange={(e) => onQueryChange(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && onSearch(query)}
                         placeholder={tSearch("heroPlaceholder")}
                         autoComplete="off"
                         tabIndex={showSearch ? 0 : -1}

@@ -159,6 +159,7 @@ export default function SearchPage() {
                     <ResultsBar
                         query={draftQuery}
                         onQueryChange={setDraftQuery}
+                        onSearch={handleSearch}
                         showSearch={!isHeroVisible}
                     />
                     {allProductions.length === 0 && !productionsLoading ? (
