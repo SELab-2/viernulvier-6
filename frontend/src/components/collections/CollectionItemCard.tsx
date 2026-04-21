@@ -14,7 +14,7 @@ import { useGetProduction } from "@/hooks/api/useProductions";
 import { useGetLocation } from "@/hooks/api/useLocations";
 import { useGetArticle } from "@/hooks/api/useArticles";
 import { useGetArtist } from "@/hooks/api/useArtists";
-import { useGetMedia, useGetEntityMedia } from "@/hooks/api/useMedia";
+import { useGetMedia } from "@/hooks/api/useMedia";
 
 // ---------------------------------------------------------------------------
 // Entity-specific sub-components — each calls exactly one hook family
