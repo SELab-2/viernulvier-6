@@ -24,7 +24,6 @@
     "preview:stop": "docker compose -f infra/preview/docker-compose.preview.yml --env-file .env --env-file infra/preview/.env down && docker compose -f infra/traefik/docker-compose.yml --env-file .env down"
   },
   "dependencies": {
-    "@dnd-kit/modifiers": "^9.0.0",
     "all": "^0.0.0"
   }
 }
