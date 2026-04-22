@@ -66,7 +66,12 @@ export function CollectionHeader({ collection }: CollectionHeaderProps) {
 
             {/* Dateline bar */}
             <div className="border-foreground text-foreground mt-4 flex items-center justify-between border-y py-1.5 font-mono text-[9px] tracking-widest uppercase">
-                <span>{t("items", { count: collection.items.length })}</span>
+                {/* TODO: include events in the count once an event card is designed */}
+                <span>
+                    {t("items", {
+                        count: collection.items.filter((i) => i.contentType !== "event").length,
+                    })}
+                </span>
                 <time dateTime={collection.updatedAt}>
                     {formatDate(collection.updatedAt, locale)}
                 </time>

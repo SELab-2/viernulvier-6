@@ -66,7 +66,10 @@ function useCollectionColumnCount() {
 
 export function CollectionGrid({ items }: CollectionGridProps) {
     const locale = useLocale();
-    const sorted = [...items].sort((a, b) => a.position - b.position);
+    // TODO: design a card for events and remove this filter
+    const sorted = [...items]
+        .filter((item) => item.contentType !== "event")
+        .sort((a, b) => a.position - b.position);
     const columnCount = useCollectionColumnCount();
     const columns = columnCount === 1 ? [sorted] : splitIntoColumns(sorted, columnCount);
 
