@@ -32,6 +32,13 @@ export function CollectionCoverField({ collection }: Props) {
     const handleSelect = useCallback(
         async (media: Media) => {
             try {
+                if (cover) {
+                    await unlinkMedia.mutateAsync({
+                        entityType: "collection",
+                        entityId: collection.id,
+                        mediaId: cover.id,
+                    });
+                }
                 await linkMedia.mutateAsync({
                     entityType: "collection",
                     entityId: collection.id,
@@ -43,7 +50,7 @@ export function CollectionCoverField({ collection }: Props) {
             }
             setPickerOpen(false);
         },
-        [linkMedia, collection.id, t]
+        [linkMedia, unlinkMedia, collection.id, cover, t]
     );
 
     const handleRemove = useCallback(async () => {

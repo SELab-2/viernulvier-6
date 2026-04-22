@@ -11,6 +11,7 @@ export type Article = {
     publishedAt: string | null;
     subjectPeriodStart: string | null;
     subjectPeriodEnd: string | null;
+    coverImageUrl: string | null;
 };
 
 export type ArticleListItem = Pick<
@@ -23,13 +24,17 @@ export type ArticleListItem = Pick<
     | "publishedAt"
     | "subjectPeriodStart"
     | "subjectPeriodEnd"
+    | "coverImageUrl"
 >;
 
 export type ArticleCreateInput = {
     title?: string | null;
 };
 
-export type ArticleUpdateInput = Omit<Article, "createdAt" | "updatedAt" | "publishedAt">;
+export type ArticleUpdateInput = Omit<
+    Article,
+    "createdAt" | "updatedAt" | "publishedAt" | "coverImageUrl"
+>;
 
 export type ArticleRelations = {
     productionIds: string[];

@@ -381,7 +381,8 @@
             "showHalls": "Zalen tonen",
             "hideHalls": "Zalen verbergen",
             "editLocation": "Locatie bewerken",
-            "editHall": "Zaal bewerken"
+            "editHall": "Zaal bewerken",
+            "eyebrow": "Locatie"
         },
         "Articles": {
             "title": "Artikelen",
@@ -443,6 +444,7 @@
         },
         "Collections": {
             "title": "Collecties",
+            "eyebrow": "Collectie",
             "newCollection": "Nieuwe collectie",
             "noCollections": "Nog geen collecties.",
             "noItems": "Nog geen items. Voeg items toe vanuit het tabblad Inhoud.",
@@ -682,5 +684,19 @@
         "nextImage": "Volgende afbeelding",
         "archive": "Archief",
         "openImage": "Afbeelding openen"
+    },
+    "Collections": {
+        "sectionLabel": "COLLECTIE",
+        "loading": "Collectie laden...",
+        "notFoundTitle": "Collectie niet gevonden",
+        "notFoundText": "Deze collectie bestaat niet of is verwijderd.",
+        "items": "{count, plural, one {# ITEM} other {# ITEMS}}",
+        "typeLabels": {
+            "production": "PRODUCTIE",
+            "location": "LOCATIE",
+            "blogpost": "ARTIKEL",
+            "artist": "ARTIEST",
+            "media": "MEDIA"
+        }
     }
 }

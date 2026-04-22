@@ -1,6 +1,6 @@
 use axum::{
     Json,
-    extract::{Path, Query},
+    extract::{Path, Query, State},
     http::StatusCode,
 };
 use chrono::NaiveDate;
@@ -13,6 +13,7 @@ use utoipa::IntoParams;
 use uuid::Uuid;
 
 use crate::{
+    AppState,
     dto::article::{
         ArticleListPayload, ArticlePayload, ArticlePostPayload, ArticleRelationsPayload,
         ArticleUpdatePayload,
@@ -50,11 +51,13 @@ pub struct ArticleListParams {
     )
 )]
 pub async fn get_all(
+    State(state): State<AppState>,
     db: Database,
     Query(pagination): Query<PaginationQuery>,
     Query(search): Query<ArticleSearchQuery>,
     Query(params): Query<ArticleListParams>,
 ) -> JsonResponse<PaginatedResponse<ArticleListPayload>> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
     ArticleListPayload::list_published(
         &db,
         pagination.cursor,
@@ -67,6 +70,7 @@ pub async fn get_all(
             related_entity_id: params.related_entity_id,
             related_entity_type: params.related_entity_type,
         },
+        public_url,
     )
     .await?
     .json()
@@ -86,8 +90,13 @@ pub async fn get_all(
         (status = 404, description = "Not found")
     )
 )]
-pub async fn get_one(db: Database, Path(slug): Path<String>) -> JsonResponse<ArticlePayload> {
-    ArticlePayload::by_slug_published(&db, &slug).await?.json()
+pub async fn get_one(
+    State(state): State<AppState>,
+    db: Database,
+    Path(slug): Path<String>,
+) -> JsonResponse<ArticlePayload> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    ArticlePayload::by_slug_published(&db, &slug, public_url).await?.json()
 }
 
 #[utoipa::path(
@@ -102,8 +111,12 @@ pub async fn get_one(db: Database, Path(slug): Path<String>) -> JsonResponse<Art
     ),
     security(("cookie_auth" = []))
 )]
-pub async fn get_all_cms(db: Database) -> JsonResponse<Vec<ArticleListPayload>> {
-    ArticleListPayload::all_cms(&db).await?.json()
+pub async fn get_all_cms(
+    State(state): State<AppState>,
+    db: Database,
+) -> JsonResponse<Vec<ArticleListPayload>> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    ArticleListPayload::all_cms(&db, public_url).await?.json()
 }
 
 #[utoipa::path(
@@ -122,8 +135,13 @@ pub async fn get_all_cms(db: Database) -> JsonResponse<Vec<ArticleListPayload>> 
     ),
     security(("cookie_auth" = []))
 )]
-pub async fn get_one_cms(db: Database, Path(id): Path<Uuid>) -> JsonResponse<ArticlePayload> {
-    ArticlePayload::by_id(&db, id).await?.json()
+pub async fn get_one_cms(
+    State(state): State<AppState>,
+    db: Database,
+    Path(id): Path<Uuid>,
+) -> JsonResponse<ArticlePayload> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    ArticlePayload::by_id(&db, id, public_url).await?.json()
 }
 
 #[utoipa::path(

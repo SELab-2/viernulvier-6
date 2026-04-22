@@ -90,6 +90,7 @@ const mockArticle: Article = {
     publishedAt: null,
     subjectPeriodStart: null,
     subjectPeriodEnd: null,
+    coverImageUrl: null,
 };
 
 const coverMedia: Media = {
