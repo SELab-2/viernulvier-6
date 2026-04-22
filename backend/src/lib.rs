@@ -269,6 +269,7 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // collections
         .routes(routes!(collection::get_all))
         .routes(routes!(collection::get_one))
+        .routes(routes!(collection::get_by_slug))
         // series
         .routes(routes!(series::get_all))
         .routes(routes!(series::get_one))

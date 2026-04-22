@@ -91,6 +91,27 @@ impl<'a> CollectionRepo<'a> {
         }))
     }
 
+    pub async fn by_slug(
+        &self,
+        slug: &str,
+    ) -> Result<Option<CollectionWithTranslations>, DatabaseError> {
+        let Some(collection) =
+            sqlx::query_as::<_, Collection>("SELECT * FROM collections WHERE slug = $1")
+                .bind(slug)
+                .fetch_optional(self.db)
+                .await?
+        else {
+            return Ok(None);
+        };
+
+        let translations = self.fetch_translations_for(collection.id).await?;
+
+        Ok(Some(CollectionWithTranslations {
+            collection,
+            translations,
+        }))
+    }
+
     pub async fn insert(
         &self,
         data: CollectionCreate,

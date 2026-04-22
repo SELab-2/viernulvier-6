@@ -4,7 +4,6 @@ import Image from "next/image";
 import { Link } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 
-import { useGetEntityMedia } from "@/hooks/api";
 import type { ArticleListItem } from "@/types/models/article.types";
 
 interface ArticleCardProps {
@@ -38,13 +37,7 @@ export function ArticleCard({ article, locale }: ArticleCardProps) {
     const t = useTranslations("Articles");
     const period = formatPeriod(article.subjectPeriodStart, article.subjectPeriodEnd, locale);
 
-    const { data: coverMedia = [] } = useGetEntityMedia("article", article.id, {
-        params: { role: "cover" },
-    });
-    const coverUrl =
-        coverMedia[0]?.crops.find((c) => c.variantKind === "thumbnail")?.url ??
-        coverMedia[0]?.url ??
-        null;
+    const coverUrl = article.coverImageUrl;
 
     return (
         <Link href={`/articles/${article.slug}`}>
@@ -56,7 +49,7 @@ export function ArticleCard({ article, locale }: ArticleCardProps) {
                     <div className="relative aspect-[16/9] overflow-hidden">
                         <Image
                             src={coverUrl}
-                            alt={coverMedia[0]?.altTextNl ?? article.title ?? ""}
+                            alt={article.title ?? ""}
                             fill
                             className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

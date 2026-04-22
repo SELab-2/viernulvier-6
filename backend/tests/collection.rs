@@ -48,6 +48,32 @@ async fn get_one_success(db: PgPool) {
     assert_eq!(second_item.position, 2);
 }
 
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn get_by_slug_success(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/collections/slug/zomerselectie").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: CollectionPayload = response.into_struct().await;
+    assert_eq!(
+        data.id,
+        Uuid::from_str("20000000-0000-0000-0000-000000000001").unwrap()
+    );
+    assert_eq!(data.slug, "zomerselectie");
+    assert_eq!(data.items.len(), 2);
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn get_by_slug_not_found(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/collections/slug/missing-collection").await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
 #[sqlx::test]
 #[test_log::test]
 async fn get_one_not_found(db: PgPool) {

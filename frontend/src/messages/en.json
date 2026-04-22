@@ -381,7 +381,8 @@
             "showHalls": "Show halls",
             "hideHalls": "Hide halls",
             "editLocation": "Edit location",
-            "editHall": "Edit hall"
+            "editHall": "Edit hall",
+            "eyebrow": "Location"
         },
         "Articles": {
             "title": "Articles",
@@ -443,6 +444,7 @@
         },
         "Collections": {
             "title": "Collections",
+            "eyebrow": "Collection",
             "newCollection": "New collection",
             "noCollections": "No collections yet.",
             "noItems": "No items yet. Add items from the Content tab.",
@@ -682,5 +684,19 @@
         "nextImage": "Next image",
         "archive": "Archive",
         "openImage": "Open image"
+    },
+    "Collections": {
+        "sectionLabel": "COLLECTION",
+        "loading": "Loading collection...",
+        "notFoundTitle": "Collection not found",
+        "notFoundText": "This collection does not exist or has been deleted.",
+        "items": "{count, plural, one {# ITEM} other {# ITEMS}}",
+        "typeLabels": {
+            "production": "PRODUCTION",
+            "location": "LOCATION",
+            "blogpost": "ARTICLE",
+            "artist": "ARTIST",
+            "media": "MEDIA"
+        }
     }
 }
