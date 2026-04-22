@@ -10,6 +10,7 @@ import {
     type DragEndEvent,
 } from "@dnd-kit/core";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import type { Modifier } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import Image from "next/image";
 import { ArrowLeft, GripVertical, Link2, Trash2 } from "lucide-react";
@@ -351,6 +352,23 @@ export function CollectionEditorPage({ id }: { id: string }) {
     const [descriptionNl, setDescriptionNl] = useState<string | null>(null);
     const [descriptionEn, setDescriptionEn] = useState<string | null>(null);
     const [items, setItems] = useState<LocalCollectionItem[] | null>(null);
+
+    const itemsContainerRef = useRef<HTMLDivElement>(null);
+
+    const restrictToItemsContainer: Modifier = ({ transform, activeNodeRect }) => {
+        const container = itemsContainerRef.current;
+        if (!container || !activeNodeRect) return transform;
+
+        const containerRect = container.getBoundingClientRect();
+
+        const minY = containerRect.top - activeNodeRect.top;
+        const maxY = containerRect.bottom - activeNodeRect.bottom;
+
+        return {
+            ...transform,
+            y: Math.min(Math.max(transform.y, minY), maxY),
+        };
+    };
 
     const sensors = useSensors(useSensor(PointerSensor));
 
@@ -760,14 +778,14 @@ export function CollectionEditorPage({ id }: { id: string }) {
                             <DndContext
                                 sensors={sensors}
                                 collisionDetection={closestCenter}
-                                modifiers={[restrictToVerticalAxis]}
+                                modifiers={[restrictToVerticalAxis, restrictToItemsContainer]}
                                 onDragEnd={handleDragEnd}
                             >
                                 <SortableContext
                                     items={groupedItems.map((g) => g.item.id)}
                                     strategy={verticalListSortingStrategy}
                                 >
-                                    <div className="space-y-2">
+                                    <div ref={itemsContainerRef} className="space-y-2">
                                         {groupedItems.map((group) => (
                                             <SortableItemRow
                                                 key={group.item.id}
