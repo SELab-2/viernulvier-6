@@ -239,7 +239,9 @@
         },
         "common": {
             "collapseAll": "Alles inklappen",
-            "delete": "Verwijderen"
+            "delete": "Verwijderen",
+            "save": "Opslaan",
+            "saving": "Bezig met opslaan…"
         },
         "DataTable": {
             "noResults": "Geen resultaten."

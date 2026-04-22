@@ -239,7 +239,9 @@
         },
         "common": {
             "collapseAll": "Collapse all",
-            "delete": "Delete"
+            "delete": "Delete",
+            "save": "Save",
+            "saving": "Saving…"
         },
         "DataTable": {
             "noResults": "No results."

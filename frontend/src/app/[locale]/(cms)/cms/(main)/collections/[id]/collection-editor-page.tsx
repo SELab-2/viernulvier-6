@@ -684,7 +684,9 @@ export function CollectionEditorPage({ id }: { id: string }) {
                     <span className="hidden sm:inline">{t("copyLink")}</span>
                 </Button>
                 <Button onClick={save} disabled={!canSave} size="sm" className="gap-2">
-                    <span className="hidden sm:inline">{isSaving ? t("saving") : t("save")}</span>
+                    <span className="hidden sm:inline">
+                        {isSaving ? tCommon("saving") : tCommon("save")}
+                    </span>
                 </Button>
             </div>
 
@@ -700,7 +702,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
                         <div className="space-y-5">
                             <div>
                                 <label className="mb-2 block text-sm font-medium">
-                                    {t("fieldTitle")} ({activeLang.toUpperCase()})
+                                    {t("fieldTitle")}
                                 </label>
                                 <Input
                                     value={
@@ -722,7 +724,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
                             </div>
                             <div>
                                 <label className="mb-2 block text-sm font-medium">
-                                    {t("fieldDescription")} ({activeLang.toUpperCase()})
+                                    {t("fieldDescription")}
                                 </label>
                                 <Textarea
                                     ref={descriptionRef}
