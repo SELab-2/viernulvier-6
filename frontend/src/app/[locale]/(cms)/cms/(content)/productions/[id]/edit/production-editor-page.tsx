@@ -112,6 +112,7 @@ function getGeneralFields(t: ReturnType<typeof useTranslations<"Cms.Productions"
 
 export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
     const t = useTranslations("Cms.Productions");
+    const tCommon = useTranslations("Cms.common");
     const locale = useLocale();
     const { setPreview, clearPreviewFor } = usePreviewContext();
 
@@ -313,7 +314,9 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                 </Button>
                 <Button onClick={handleSave} disabled={isSaving} size="sm">
                     <Save className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">{isSaving ? t("saving") : t("save")}</span>
+                    <span className="hidden sm:inline">
+                        {isSaving ? tCommon("saving") : tCommon("save")}
+                    </span>
                 </Button>
             </div>
 

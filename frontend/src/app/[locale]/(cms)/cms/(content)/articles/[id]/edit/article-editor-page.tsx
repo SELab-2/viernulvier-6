@@ -23,6 +23,7 @@ interface ArticleEditorPageProps {
 
 export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
     const t = useTranslations("Cms.Articles");
+    const tCommon = useTranslations("Cms.common");
     const locale = useLocale();
     const { setPreview, clearPreviewFor } = usePreviewContext();
 
@@ -183,7 +184,9 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                 </Button>
                 <Button onClick={handleSave} disabled={isSaving} size="sm">
                     <Save className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">{isSaving ? t("saving") : t("save")}</span>
+                    <span className="hidden sm:inline">
+                        {isSaving ? tCommon("saving") : tCommon("save")}
+                    </span>
                 </Button>
             </div>
 

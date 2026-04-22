@@ -461,6 +461,7 @@
             "descriptionEn": "Beschrijving (EN)",
             "fieldTitle": "Titel",
             "fieldDescription": "Beschrijving",
+            "metadataSection": "Metadata",
             "shareableLink": "Deelbare link",
             "copyLink": "Kopieer link",
             "linkCopied": "Link gekopieerd",
