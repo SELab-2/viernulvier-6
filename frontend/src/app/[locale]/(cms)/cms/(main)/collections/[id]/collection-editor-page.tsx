@@ -11,7 +11,7 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import Image from "next/image";
-import { GripVertical, Link2, Trash2 } from "lucide-react";
+import { ArrowLeft, GripVertical, Link2, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Link, useRouter } from "@/i18n/routing";
@@ -651,119 +651,140 @@ export function CollectionEditorPage({ id }: { id: string }) {
     }
 
     return (
-        <div className="h-full space-y-6 overflow-auto p-4 pb-8">
-            <div className="flex flex-wrap items-center gap-2">
+        <div className="flex h-full flex-col overflow-hidden">
+            {/* Top bar */}
+            <div className="flex items-center gap-3 border-b px-4 py-3">
+                <Link
+                    href="/cms/collections"
+                    className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t("backToCollections")}</span>
+                </Link>
+                <div className="flex-1" />
                 <Button
+                    type="button"
                     variant="outline"
                     size="sm"
-                    className="rounded-none"
-                    onClick={() => router.push("/cms/collections")}
+                    onClick={copyShareableLink}
+                    className="gap-2"
                 >
-                    {t("backToCollections")}
+                    <Link2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t("copyLink")}</span>
                 </Button>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    className="rounded-none"
-                    onClick={removeCollection}
-                >
-                    {t("deleteCollection")}
+                <Button onClick={save} disabled={!canSave} size="sm" className="gap-2">
+                    <span className="hidden sm:inline">{isSaving ? t("saving") : t("save")}</span>
                 </Button>
-                <div className="ml-auto flex gap-2">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="rounded-none"
-                        onClick={copyShareableLink}
-                    >
-                        <Link2 className="h-4 w-4" />
-                        <span>{t("copyLink")}</span>
-                    </Button>
-                    <Button className="rounded-none" size="sm" onClick={save} disabled={!canSave}>
-                        {isSaving ? t("saving") : t("save")}
-                    </Button>
-                </div>
             </div>
 
-            <section className="space-y-3 border p-4">
-                <div className="flex justify-end">
-                    <LanguageSelector activeLang={activeLang} onChange={setActiveLang} />
-                </div>
-                <div className="space-y-3">
-                    <div className="space-y-1">
-                        <Label>
-                            {t("fieldTitle")} ({activeLang.toUpperCase()})
-                        </Label>
-                        <Input
-                            value={
-                                activeLang === "nl"
-                                    ? (metadata.translations.find((x) => x.languageCode === "nl")
-                                          ?.title ?? "")
-                                    : (metadata.translations.find((x) => x.languageCode === "en")
-                                          ?.title ?? "")
-                            }
-                            onChange={(e) =>
-                                activeLang === "nl"
-                                    ? setTitleNl(e.target.value)
-                                    : setTitleEn(e.target.value)
-                            }
-                        />
-                    </div>
-                    <div className="space-y-1">
-                        <Label>
-                            {t("fieldDescription")} ({activeLang.toUpperCase()})
-                        </Label>
-                        <Textarea
-                            ref={descriptionRef}
-                            value={descriptionValue}
-                            onChange={(e) =>
-                                activeLang === "nl"
-                                    ? setDescriptionNl(e.target.value)
-                                    : setDescriptionEn(e.target.value)
-                            }
-                            rows={4}
-                            spellCheck={false}
-                            className="resize-none overflow-hidden"
-                        />
-                    </div>
-                </div>
-                <CollectionCoverField collection={collection} />
-            </section>
-
-            <section className="space-y-3">
-                <h2 className="font-medium">{t("itemsTitle", { count: localItems.length })}</h2>
-                {localItems.length === 0 ? (
-                    <div className="text-muted-foreground space-y-2 text-sm">
-                        <p>{t("noItems")}</p>
-                        <Link href="/cms/productions" className="underline">
-                            {t("goToContent")}
-                        </Link>
-                    </div>
-                ) : (
-                    <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={handleDragEnd}
-                    >
-                        <SortableContext
-                            items={groupedItems.map((g) => g.item.id)}
-                            strategy={verticalListSortingStrategy}
-                        >
-                            <div className="space-y-2">
-                                {groupedItems.map((group) => (
-                                    <SortableItemRow
-                                        key={group.item.id}
-                                        group={group}
-                                        renderItem={renderItemProps}
-                                        activeLang={activeLang}
-                                    />
-                                ))}
+            {/* Form */}
+            <div className="flex-1 overflow-y-auto p-6">
+                <div className="space-y-8">
+                    {/* Metadata section */}
+                    <section className="space-y-4">
+                        <div className="border-foreground/10 flex items-center justify-between border-b pb-2">
+                            <h2 className="text-sm font-semibold">{t("metadataSection")}</h2>
+                            <LanguageSelector activeLang={activeLang} onChange={setActiveLang} />
+                        </div>
+                        <div className="space-y-5">
+                            <div>
+                                <label className="mb-2 block text-sm font-medium">
+                                    {t("fieldTitle")} ({activeLang.toUpperCase()})
+                                </label>
+                                <Input
+                                    value={
+                                        activeLang === "nl"
+                                            ? (metadata.translations.find(
+                                                  (x) => x.languageCode === "nl"
+                                              )?.title ?? "")
+                                            : (metadata.translations.find(
+                                                  (x) => x.languageCode === "en"
+                                              )?.title ?? "")
+                                    }
+                                    onChange={(e) =>
+                                        activeLang === "nl"
+                                            ? setTitleNl(e.target.value)
+                                            : setTitleEn(e.target.value)
+                                    }
+                                    className="h-9 text-sm"
+                                />
                             </div>
-                        </SortableContext>
-                    </DndContext>
-                )}
-            </section>
+                            <div>
+                                <label className="mb-2 block text-sm font-medium">
+                                    {t("fieldDescription")} ({activeLang.toUpperCase()})
+                                </label>
+                                <Textarea
+                                    ref={descriptionRef}
+                                    value={descriptionValue}
+                                    onChange={(e) =>
+                                        activeLang === "nl"
+                                            ? setDescriptionNl(e.target.value)
+                                            : setDescriptionEn(e.target.value)
+                                    }
+                                    rows={4}
+                                    spellCheck={false}
+                                    className="min-h-[100px] resize-y text-sm"
+                                />
+                            </div>
+                        </div>
+                        <CollectionCoverField collection={collection} />
+                    </section>
+
+                    {/* Items section */}
+                    <section className="space-y-4">
+                        <h2 className="border-foreground/10 border-b pb-2 text-sm font-semibold">
+                            {t("itemsTitle", { count: localItems.length })}
+                        </h2>
+                        {localItems.length === 0 ? (
+                            <div className="text-muted-foreground space-y-2 text-sm">
+                                <p>{t("noItems")}</p>
+                                <Link href="/cms/productions" className="underline">
+                                    {t("goToContent")}
+                                </Link>
+                            </div>
+                        ) : (
+                            <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={handleDragEnd}
+                            >
+                                <SortableContext
+                                    items={groupedItems.map((g) => g.item.id)}
+                                    strategy={verticalListSortingStrategy}
+                                >
+                                    <div className="space-y-2">
+                                        {groupedItems.map((group) => (
+                                            <SortableItemRow
+                                                key={group.item.id}
+                                                group={group}
+                                                renderItem={renderItemProps}
+                                                activeLang={activeLang}
+                                            />
+                                        ))}
+                                    </div>
+                                </SortableContext>
+                            </DndContext>
+                        )}
+                    </section>
+
+                    {/* Danger zone */}
+                    <section className="space-y-4">
+                        <h2 className="border-foreground/10 border-b pb-2 text-sm font-semibold">
+                            {t("dangerZone")}
+                        </h2>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={removeCollection}
+                            className="text-destructive hover:text-destructive border-destructive/50 hover:border-destructive"
+                        >
+                            <Trash2 className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">{t("deleteCollection")}</span>
+                        </Button>
+                    </section>
+                </div>
+            </div>
         </div>
     );
 }
