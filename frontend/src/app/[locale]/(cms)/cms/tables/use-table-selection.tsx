@@ -10,6 +10,8 @@ interface UseTableSelectionOptions<TData> {
         updater: RowSelectionState | ((prev: RowSelectionState) => RowSelectionState)
     ) => void;
     enableSelection: boolean;
+    onJumpToEnd?: () => Promise<void>;
+    useGlobal?: boolean;
 }
 
 interface UseTableSelectionReturn<TData> {
@@ -40,6 +42,8 @@ export function useTableSelection<TData>({
     rows,
     onRowSelectionChange,
     enableSelection,
+    onJumpToEnd,
+    useGlobal = false,
 }: UseTableSelectionOptions<TData>): UseTableSelectionReturn<TData> {
     const [focusedRowIndex, setFocusedRowIndex] = useState(-1);
     const [anchorRowId, setAnchorRowId] = useState<string | null>(null);
@@ -173,8 +177,8 @@ export function useTableSelection<TData>({
         [enableSelection, rows, anchorRowId, selectRange, toggleRow, selectOnly, focusRow]
     );
 
-    const handleKeyDown = useCallback(
-        (event: React.KeyboardEvent) => {
+    const processKeyEvent = useCallback(
+        (event: KeyboardEvent) => {
             if (!enableSelection || rows.length === 0) return;
 
             const target = event.target as HTMLElement;
@@ -211,7 +215,13 @@ export function useTableSelection<TData>({
                 }
             } else if (event.key === "G") {
                 event.preventDefault();
-                focusRow(rows.length - 1);
+                if (onJumpToEnd) {
+                    onJumpToEnd().then(() => {
+                        focusRow(rows.length - 1);
+                    });
+                } else {
+                    focusRow(rows.length - 1);
+                }
             } else if (event.key === "v") {
                 event.preventDefault();
                 if (focusedRowIndex >= 0 && focusedRowIndex < rows.length) {
@@ -259,7 +269,22 @@ export function useTableSelection<TData>({
             clearSelection,
             onRowSelectionChange,
             focusRow,
+            onJumpToEnd,
         ]
+    );
+
+    useEffect(() => {
+        if (!useGlobal) return;
+        window.addEventListener("keydown", processKeyEvent);
+        return () => window.removeEventListener("keydown", processKeyEvent);
+    }, [useGlobal, processKeyEvent]);
+
+    const handleKeyDown = useCallback(
+        (event: React.KeyboardEvent) => {
+            if (useGlobal) return;
+            processKeyEvent(event.nativeEvent);
+        },
+        [useGlobal, processKeyEvent]
     );
 
     const getRowTabIndex = useCallback(

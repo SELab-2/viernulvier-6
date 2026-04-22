@@ -126,6 +126,7 @@ interface DataTableProps<TData, TValue> {
     onExpandedChange?: OnChangeFn<ExpandedState>;
     getRowId?: (row: TData) => string;
     onRowClick?: (row: TData) => void;
+    onJumpToEnd?: () => Promise<void>;
 }
 
 export function DataTable<TData, TValue>({
@@ -143,6 +144,7 @@ export function DataTable<TData, TValue>({
     onExpandedChange: onExpandedChangeProp,
     getRowId,
     onRowClick,
+    onJumpToEnd,
 }: DataTableProps<TData, TValue>) {
     const t = useTranslations("Cms.DataTable");
     const [expandedInternal, setExpandedInternal] = useState<ExpandedState>({});
@@ -267,6 +269,8 @@ export function DataTable<TData, TValue>({
         rowSelection: effectiveRowSelection,
         onRowSelectionChange,
         enableSelection: hasSelection,
+        onJumpToEnd,
+        useGlobal: !compact,
     });
 
     return (
