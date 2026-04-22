@@ -274,7 +274,6 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
     }
 
     const isSaving = updateProduction.isPending;
-    const hasChanges = Object.keys(edits).length > 0;
 
     return (
         <div className="flex h-full flex-col overflow-hidden">
@@ -291,12 +290,7 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                     <span className="hidden sm:inline">{t("backToList")}</span>
                 </Link>
                 <div className="flex-1" />
-                <Button
-                    variant={isPreviewOpen ? "secondary" : "outline"}
-                    size="sm"
-                    onClick={togglePreview}
-                    className="gap-2"
-                >
+                <Button variant="outline" size="sm" onClick={togglePreview} className="gap-2">
                     {isPreviewOpen ? (
                         <>
                             <EyeOff className="h-4 w-4" />
@@ -307,9 +301,6 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                             <Eye className="h-4 w-4" />
                             <span className="hidden sm:inline">{t("preview")}</span>
                         </>
-                    )}
-                    {!isPreviewOpen && hasChanges && (
-                        <span className="bg-primary h-2 w-2 rounded-full" />
                     )}
                 </Button>
                 <Button onClick={handleSave} disabled={isSaving} size="sm">

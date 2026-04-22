@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Archive, ChevronsUp } from "lucide-react";
+import { toast } from "sonner";
 import type { ExpandedState, Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
@@ -13,7 +14,7 @@ import { useParentChildSelection } from "../use-parent-child-selection";
 import { makeEventColumns } from "./event-columns";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { useGetInfiniteProductions } from "@/hooks/api/useProductions";
+import { useDeleteProduction, useGetInfiniteProductions } from "@/hooks/api/useProductions";
 import { useGetEvents, useUpdateEvent } from "@/hooks/api/useEvents";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
 import { ProductionMediaSheet } from "@/components/cms/production-media-sheet";
@@ -36,6 +37,7 @@ export function ProductionsTable() {
         hasNextPage,
         isFetchingNextPage,
     } = useGetInfiniteProductions();
+    const deleteProduction = useDeleteProduction();
 
     const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
 
@@ -109,19 +111,40 @@ export function ProductionsTable() {
         [locale]
     );
 
+    const handleDeleteProduction = useCallback(
+        (production: Production) => {
+            const ok = window.confirm(t("deleteConfirm", { title: production.slug }));
+            if (!ok) return;
+            deleteProduction.mutate(production.id, {
+                onSuccess: () => toast.success(t("deleteSuccess")),
+                onError: () => toast.error(t("deleteError")),
+            });
+        },
+        [deleteProduction, t]
+    );
+
     const productionCols = useMemo(
         () => [
             selectColumn,
             ...makeProductionColumns({
                 onEdit: handleEditProduction,
                 onMedia: setMediaProduction,
+                onDelete: handleDeleteProduction,
                 t: tActions,
                 tProductions: t,
                 locale,
                 onOpenSpotlight: openSpotlight,
             }),
         ],
-        [selectColumn, tActions, handleEditProduction, t, locale, openSpotlight]
+        [
+            selectColumn,
+            tActions,
+            handleEditProduction,
+            handleDeleteProduction,
+            t,
+            locale,
+            openSpotlight,
+        ]
     );
 
     const eventCols = useMemo(
@@ -143,6 +166,31 @@ export function ProductionsTable() {
         () => allProductions.filter((production) => parentSelection[production.id]),
         [parentSelection, allProductions]
     );
+
+    const handleBulkDelete = useCallback(() => {
+        const ok = window.confirm(t("deleteConfirmMultiple", { count: selectedProductionCount }));
+        if (!ok) return;
+        let success = 0;
+        let failed = 0;
+        selectedProductions.forEach((production) => {
+            deleteProduction.mutate(production.id, {
+                onSuccess: () => {
+                    success++;
+                    if (success + failed === selectedProductions.length) {
+                        toast.success(t("deleteSuccess"));
+                        clearSelection();
+                    }
+                },
+                onError: () => {
+                    failed++;
+                    if (success + failed === selectedProductions.length) {
+                        if (failed > 0) toast.error(t("deleteError"));
+                        clearSelection();
+                    }
+                },
+            });
+        });
+    }, [selectedProductions, selectedProductionCount, deleteProduction, t, clearSelection]);
 
     const eventsById = useMemo(
         () => new Map(allEvents.map((event) => [event.id, event])),
@@ -220,10 +268,11 @@ export function ProductionsTable() {
             },
             {
                 key: "delete",
-                label: t("deleteAction"),
+                label: tCommon("delete"),
+                onClick: handleBulkDelete,
             },
         ],
-        [tCollections, t]
+        [tCollections, tCommon, handleBulkDelete]
     );
 
     return (

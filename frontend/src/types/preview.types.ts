@@ -8,7 +8,13 @@
 /**
  * Supported entity types for preview
  */
-export type PreviewEntityType = "article" | "production" | "location" | "artist" | "event";
+export type PreviewEntityType =
+    | "article"
+    | "production"
+    | "location"
+    | "artist"
+    | "event"
+    | "collection";
 
 /**
  * Preview data structure stored in context and localStorage
