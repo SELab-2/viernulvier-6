@@ -8,6 +8,7 @@ import { DataTable } from "../data-table";
 import { makeCollectionColumns } from "./columns";
 import { CreateCollectionDialog } from "./create-collection-dialog";
 import { Button } from "@/components/ui/button";
+import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
 import { useDeleteCollection, useGetCollections } from "@/hooks/api";
 import { toCollectionRow } from "@/mappers/collection.mapper";
 import { CollectionRow } from "@/types/models/collection.types";
@@ -20,6 +21,8 @@ export function CollectionsTable() {
     const deleteCollection = useDeleteCollection();
 
     const [createOpen, setCreateOpen] = useState(false);
+    const [spotlight, setSpotlight] = useState<{ src: string; alt: string } | null>(null);
+    const openSpotlight = useCallback((src: string, alt: string) => setSpotlight({ src, alt }), []);
 
     const handleRowClick = useCallback(
         (row: CollectionRow) => router.push(`/cms/collections/${row.id}`),
@@ -47,9 +50,20 @@ export function CollectionsTable() {
     );
 
     const columns = useMemo(
-        () => makeCollectionColumns({ onDelete: handleDelete, onOpen: handleOpen, locale, t }),
-        [handleDelete, handleOpen, locale, t]
+        () =>
+            makeCollectionColumns({
+                onDelete: handleDelete,
+                onOpen: handleOpen,
+                locale,
+                t,
+                onOpenSpotlight: openSpotlight,
+            }),
+        [handleDelete, handleOpen, locale, t, openSpotlight]
     );
+
+    const spotlightItems: SpotlightItem[] = spotlight
+        ? [{ kind: "plain", src: spotlight.src, alt: spotlight.alt }]
+        : [];
 
     if (!isLoading && rows.length === 0) {
         return (
@@ -77,6 +91,15 @@ export function CollectionsTable() {
                 />
             </div>
             <CreateCollectionDialog open={createOpen} onOpenChange={setCreateOpen} />
+            <ImageSpotlight
+                items={spotlightItems}
+                index={0}
+                open={spotlight !== null}
+                onOpenChange={(open) => {
+                    if (!open) setSpotlight(null);
+                }}
+                eyebrow={t("eyebrow")}
+            />
         </div>
     );
 }

@@ -17,6 +17,7 @@ import {
 import { makeHallColumns, hallFields, toHallUpdateInput } from "./hall-columns";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
 import { LocationCoverField } from "@/components/cms/location-cover-field";
+import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useGetInfiniteLocations, useUpdateLocation } from "@/hooks/api/useLocations";
@@ -76,6 +77,8 @@ export function LocationsTable() {
     const [editHall, setEditHall] = useState<Hall | null>(null);
     const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
     const [expanded, setExpanded] = useState<ExpandedState>({});
+    const [spotlight, setSpotlight] = useState<{ src: string; alt: string } | null>(null);
+    const openSpotlight = useCallback((src: string, alt: string) => setSpotlight({ src, alt }), []);
 
     // Derive the current LocationRow from live query data so cover image url stays fresh
     // after linkMedia / clearCover mutations without closing and re-opening the sheet.
@@ -114,15 +117,20 @@ export function LocationsTable() {
         clearSelection,
     } = useParentChildSelection<Location>(hallsByLocation);
 
+    const spotlightItems: SpotlightItem[] = spotlight
+        ? [{ kind: "plain", src: spotlight.src, alt: spotlight.alt }]
+        : [];
+
     const locationCols = useMemo(
         () => [
             selectColumn,
             ...makeLocationColumns({
                 onEdit: (row) => setEditLocationId(row.id),
                 t: tActions,
+                onOpenSpotlight: openSpotlight,
             }),
         ],
-        [selectColumn, tActions]
+        [selectColumn, tActions, openSpotlight]
     );
 
     const hallCols = useMemo(
@@ -262,6 +270,15 @@ export function LocationsTable() {
                 fields={hallFields}
                 title={t("editHall")}
                 onSave={(data) => updateHall.mutateAsync(toHallUpdateInput(data))}
+            />
+            <ImageSpotlight
+                items={spotlightItems}
+                index={0}
+                open={spotlight !== null}
+                onOpenChange={(open) => {
+                    if (!open) setSpotlight(null);
+                }}
+                eyebrow={t("eyebrow")}
             />
         </div>
     );

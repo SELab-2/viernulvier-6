@@ -58,6 +58,31 @@ pub async fn get_one(
 }
 
 #[utoipa::path(
+    method(get),
+    path = "/collections/slug/{slug}",
+    tag = "Collections",
+    operation_id = "get_collection_by_slug",
+    description = "Return a single collection by its slug, including all its items in position order. Public endpoint, no authentication required. Use this for shareable collection URLs.",
+    params(
+        ("slug" = String, Path, description = "Collection slug")
+    ),
+    responses(
+        (status = 200, description = "Success", body = CollectionPayload),
+        (status = 404, description = "Not found")
+    )
+)]
+pub async fn get_by_slug(
+    State(state): State<AppState>,
+    db: Database,
+    Path(slug): Path<String>,
+) -> JsonResponse<CollectionPayload> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    CollectionPayload::by_slug(&db, &slug, public_url)
+        .await?
+        .json()
+}
+
+#[utoipa::path(
     method(post),
     path = "/collections",
     tag = "Collections",

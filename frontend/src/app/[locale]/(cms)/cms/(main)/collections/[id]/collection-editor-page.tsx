@@ -19,7 +19,7 @@ import {
     useGetCollection,
     useGetEvents,
     useGetLocations,
-    useGetProductions,
+    useGetProductionsByIds,
     useUpdateCollection,
     useUpdateCollectionItems,
 } from "@/hooks/api";
@@ -343,14 +343,10 @@ export function CollectionEditorPage({ id }: { id: string }) {
     const router = useRouter();
 
     const { data: collection, isLoading } = useGetCollection(id);
-    const { data: productionsResult, isLoading: productionsLoading } = useGetProductions();
     const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
     const { data: locationsResult, isLoading: locationsLoading } = useGetLocations();
-    const productions = useMemo(() => productionsResult?.data ?? [], [productionsResult?.data]);
     const events = useMemo(() => eventsResult?.data ?? [], [eventsResult?.data]);
     const locations = useMemo(() => locationsResult?.data ?? [], [locationsResult?.data]);
-
-    const entitiesLoading = productionsLoading || eventsLoading || locationsLoading;
 
     const updateCollection = useUpdateCollection();
     const updateItems = useUpdateCollectionItems(id);
@@ -466,7 +462,21 @@ export function CollectionEditorPage({ id }: { id: string }) {
     const isSaving = updateCollection.isPending || updateItems.isPending;
     const canSave = hydrationReady && (metadataDirty || itemsDirty) && !isSaving;
 
-    const productionMap = useMemo(() => new Map(productions.map((p) => [p.id, p])), [productions]);
+    const productionIds = useMemo(
+        () => localItems.filter((i) => i.contentType === "production").map((i) => i.contentId),
+        [localItems]
+    );
+    const productionResults = useGetProductionsByIds(productionIds);
+    const productionsLoading = productionResults.some((q) => q.isLoading);
+    const entitiesLoading = productionsLoading || eventsLoading || locationsLoading;
+    const productionMap = useMemo(() => {
+        const map = new Map<string, Production>();
+        productionResults.forEach((q) => {
+            if (q.data) map.set(q.data.id, q.data);
+        });
+        return map;
+    }, [productionResults]);
+
     const eventMap = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
     const locationMap = useMemo(() => new Map(locations.map((l) => [l.id, l])), [locations]);
 

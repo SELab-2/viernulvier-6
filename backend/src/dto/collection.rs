@@ -218,6 +218,33 @@ impl CollectionPayload {
         Ok(payload)
     }
 
+    pub async fn by_slug(
+        db: &Database,
+        slug: &str,
+        public_url: Option<&str>,
+    ) -> Result<Self, AppError> {
+        let cwt = db
+            .collections()
+            .by_slug(slug)
+            .await?
+            .ok_or(AppError::NotFound)?;
+        let collection_id = cwt.collection.id;
+        let items = db.collections().items_for(collection_id).await?;
+        let mut payload = build_payload(cwt, items);
+
+        if let Some(base) = public_url {
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Collection, &[collection_id])
+                .await?;
+            if let Some(key) = cover_keys.get(&collection_id) {
+                payload.cover_image_url = Some(build_cover_url(base, key));
+            }
+        }
+
+        Ok(payload)
+    }
+
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {
         let translations = collection_translations_to_data(&self.translations);
         let cwt = db
