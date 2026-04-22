@@ -9,6 +9,7 @@ import {
     useSensors,
     type DragEndEvent,
 } from "@dnd-kit/core";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import Image from "next/image";
 import { ArrowLeft, GripVertical, Link2, Trash2 } from "lucide-react";
@@ -759,6 +760,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
                             <DndContext
                                 sensors={sensors}
                                 collisionDetection={closestCenter}
+                                modifiers={[restrictToVerticalAxis]}
                                 onDragEnd={handleDragEnd}
                             >
                                 <SortableContext
