@@ -668,7 +668,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
                     variant="ghost"
                     size="sm"
                     onClick={removeCollection}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    className="text-destructive hover:!bg-destructive/10 hover:!text-destructive"
                 >
                     <Trash2 className="h-4 w-4" />
                     <span className="hidden sm:inline">{tCommon("delete")}</span>
