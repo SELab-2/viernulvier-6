@@ -41,7 +41,7 @@ export function useTableSelection<TData>({
     onRowSelectionChange,
     enableSelection,
 }: UseTableSelectionOptions<TData>): UseTableSelectionReturn<TData> {
-    const [focusedRowIndex, setFocusedRowIndex] = useState(0);
+    const [focusedRowIndex, setFocusedRowIndex] = useState(-1);
     const [anchorRowId, setAnchorRowId] = useState<string | null>(null);
     const rowRefs = useRef<Map<number, HTMLTableRowElement>>(new Map());
     const lastKeyRef = useRef<{ key: string; time: number } | null>(null);
@@ -124,8 +124,8 @@ export function useTableSelection<TData>({
     const clearSelection = useCallback(() => {
         onRowSelectionChange?.({});
         setAnchorRowId(null);
-        focusRow(0);
-    }, [onRowSelectionChange, focusRow]);
+        setFocusedRowIndex(-1);
+    }, [onRowSelectionChange]);
 
     const handleRowMouseDown = useCallback(
         (event: React.MouseEvent) => {
@@ -187,18 +187,19 @@ export function useTableSelection<TData>({
 
             if (event.key === "ArrowDown" || event.key === "j") {
                 event.preventDefault();
-                const next = Math.min(focusedRowIndex + 1, rows.length - 1);
+                const next =
+                    focusedRowIndex === -1 ? 0 : Math.min(focusedRowIndex + 1, rows.length - 1);
                 if (event.shiftKey && anchorRowId) {
                     selectRange(anchorRowId, rows[next].id);
                 }
                 focusRow(next);
             } else if (event.key === "ArrowUp" || event.key === "k") {
                 event.preventDefault();
-                const next = Math.max(focusedRowIndex - 1, 0);
-                if (event.shiftKey && anchorRowId) {
+                const next = focusedRowIndex === -1 ? -1 : Math.max(focusedRowIndex - 1, 0);
+                if (next >= 0 && event.shiftKey && anchorRowId) {
                     selectRange(anchorRowId, rows[next].id);
                 }
-                focusRow(next);
+                if (next >= 0) focusRow(next);
             } else if (event.key === "g") {
                 const now = Date.now();
                 if (lastKeyRef.current?.key === "g" && now - lastKeyRef.current.time < 500) {
@@ -220,7 +221,12 @@ export function useTableSelection<TData>({
                 }
             } else if (event.key === " ") {
                 event.preventDefault();
-                if (focusedRowIndex >= 0 && focusedRowIndex < rows.length) {
+                if (focusedRowIndex === -1 && rows.length > 0) {
+                    focusRow(0);
+                    const row = rows[0];
+                    toggleRow(row.id);
+                    setAnchorRowId(row.id);
+                } else if (focusedRowIndex >= 0 && focusedRowIndex < rows.length) {
                     const row = rows[focusedRowIndex];
                     if (event.shiftKey && anchorRowId) {
                         selectRange(anchorRowId, row.id);

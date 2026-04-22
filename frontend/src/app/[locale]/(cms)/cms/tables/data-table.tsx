@@ -260,6 +260,7 @@ export function DataTable<TData, TValue>({
         handleKeyDown,
         getRowTabIndex,
         isRowFocused,
+        focusRowAt,
         rowRefCallback,
     } = useTableSelection({
         rows: visibleRows,
@@ -271,12 +272,16 @@ export function DataTable<TData, TValue>({
     return (
         <TooltipProvider>
             <div
-                className={cn("", compact ? "" : "")}
+                className={cn("outline-none", compact ? "" : "")}
                 onKeyDown={handleKeyDown}
+                tabIndex={hasSelection ? 0 : -1}
                 role={hasSelection ? "grid" : undefined}
                 aria-multiselectable={hasSelection ? true : undefined}
             >
-                <Table className={compact ? "text-xs [&_tbody_tr]:border-0 [&_td]:py-1" : ""}>
+                <Table
+                    className={compact ? "text-xs [&_tbody_tr]:border-0 [&_td]:py-1" : ""}
+                    onMouseLeave={() => focusRowAt(-1)}
+                >
                     <TableHeader className="bg-muted">
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id} className="bg-muted hover:bg-muted">
@@ -319,9 +324,7 @@ export function DataTable<TData, TValue>({
                                         }
                                         className={cn(
                                             "border-0 transition-colors outline-none",
-                                            "hover:bg-foreground/[0.08]",
                                             "data-[state=selected]:bg-foreground/[0.18]",
-                                            "data-[state=selected]:hover:bg-foreground/[0.22]",
                                             "data-[focused=true]:bg-foreground/[0.12] data-[state=selected]:data-[focused=true]:bg-foreground/[0.22] data-[focused=true]:ring-primary data-[focused=true]:ring-2 data-[focused=true]:ring-inset",
                                             rowIndex % 2 === 1 && !row.getIsSelected()
                                                 ? "bg-secondary"
@@ -336,6 +339,7 @@ export function DataTable<TData, TValue>({
                                                 onRowClick?.(row.original);
                                             }
                                         }}
+                                        onMouseEnter={() => focusRowAt(rowIndex)}
                                         onMouseDown={handleRowMouseDown}
                                     >
                                         {row.getVisibleCells().map((cell) => (
