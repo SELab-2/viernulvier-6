@@ -328,6 +328,7 @@ function SortableItemRow({
 
 export function CollectionEditorPage({ id }: { id: string }) {
     const t = useTranslations("Cms.Collections");
+    const tCommon = useTranslations("Cms.common");
     const locale = useLocale();
     const router = useRouter();
 
@@ -639,7 +640,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
 
         deleteCollection.mutate(collection.id, {
             onSuccess: () => {
-                toast.success(t("deleteCollection"));
+                toast.success(tCommon("delete"));
                 router.push("/cms/collections");
             },
             onError: () => toast.error(t("metadataError")),
@@ -662,6 +663,16 @@ export function CollectionEditorPage({ id }: { id: string }) {
                     <span className="hidden sm:inline">{t("backToCollections")}</span>
                 </Link>
                 <div className="flex-1" />
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={removeCollection}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">{tCommon("delete")}</span>
+                </Button>
                 <Button
                     type="button"
                     variant="outline"
@@ -765,23 +776,6 @@ export function CollectionEditorPage({ id }: { id: string }) {
                                 </SortableContext>
                             </DndContext>
                         )}
-                    </section>
-
-                    {/* Danger zone */}
-                    <section className="space-y-4">
-                        <h2 className="border-foreground/10 border-b pb-2 text-sm font-semibold">
-                            {t("dangerZone")}
-                        </h2>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={removeCollection}
-                            className="text-destructive hover:text-destructive border-destructive/50 hover:border-destructive"
-                        >
-                            <Trash2 className="h-4 w-4 sm:mr-2" />
-                            <span className="hidden sm:inline">{t("deleteCollection")}</span>
-                        </Button>
                     </section>
                 </div>
             </div>

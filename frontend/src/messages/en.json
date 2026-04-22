@@ -238,7 +238,8 @@
             "performers": "Performers"
         },
         "common": {
-            "collapseAll": "Collapse all"
+            "collapseAll": "Collapse all",
+            "delete": "Delete"
         },
         "DataTable": {
             "noResults": "No results."
@@ -473,7 +474,6 @@
             "copyError": "Failed to copy link",
             "events": "Events",
             "invalidSlug": "Title must contain at least one letter or number",
-            "deleteCollection": "Delete collection",
             "deleteConfirm": "Are you sure you want to delete \"{title}\"? All items will be removed.",
             "backToCollections": "Back to collections",
             "addToCollection": "Add to collection",

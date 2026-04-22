@@ -238,7 +238,8 @@
             "performers": "Uitvoerders"
         },
         "common": {
-            "collapseAll": "Alles inklappen"
+            "collapseAll": "Alles inklappen",
+            "delete": "Verwijderen"
         },
         "DataTable": {
             "noResults": "Geen resultaten."
@@ -473,7 +474,6 @@
             "copyError": "Kopiëren van link mislukt",
             "events": "Voorstellingen",
             "invalidSlug": "Titel moet minstens één letter of cijfer bevatten",
-            "deleteCollection": "Collectie verwijderen",
             "deleteConfirm": "Weet je zeker dat je \"{title}\" wil verwijderen? Alle items worden verwijderd.",
             "backToCollections": "Terug naar collecties",
             "addToCollection": "Toevoegen aan collectie",
