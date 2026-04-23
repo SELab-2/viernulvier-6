@@ -20,12 +20,18 @@ export function useParentChildSelection<TParent extends { id: string }>(
 
     // Use refs to access latest state without triggering re-renders of the column definition
     const childSelectionRef = useRef(childSelection);
+    const childrenByParentIdRef = useRef(childrenByParentId);
     useEffect(() => {
         childSelectionRef.current = childSelection;
     }, [childSelection]);
+    useEffect(() => {
+        childrenByParentIdRef.current = childrenByParentId;
+    }, [childrenByParentId]);
 
     // Stable per-parent child selection handlers. Created once per parentId and cached
-    // in a ref.
+    // in a ref. We also eagerly update the childSelectionRef so the selectColumn cell
+    // renderer sees the latest childSelection during the same render cycle (useEffect
+    // runs after render, which is too late for the indeterminate check).
     const childHandlersRef = useRef<Map<string, OnChangeFn<RowSelectionState>>>(new Map());
     const getChildHandler = useCallback((parentId: string): OnChangeFn<RowSelectionState> => {
         let handler = childHandlersRef.current.get(parentId);
@@ -34,13 +40,21 @@ export function useParentChildSelection<TParent extends { id: string }>(
                 setChildSelection((prev) => {
                     const current = prev.get(parentId) ?? {};
                     const next = typeof updater === "function" ? updater(current) : updater;
-                    return new Map(prev).set(parentId, next);
+                    const newMap = new Map(prev).set(parentId, next);
+                    childSelectionRef.current = newMap;
+                    return newMap;
                 });
             };
             childHandlersRef.current.set(parentId, handler);
         }
         return handler;
     }, []);
+
+    // Stable reference to getChildHandler
+    const getChildHandlerRef = useRef(getChildHandler);
+    useEffect(() => {
+        getChildHandlerRef.current = getChildHandler;
+    }, [getChildHandler]);
 
     // Stable select column - never recreate the column definition
     const selectColumn = useMemo<ColumnDef<TParent>>(
@@ -54,14 +68,26 @@ export function useParentChildSelection<TParent extends { id: string }>(
                 const selectedChildCount = Object.values(childSel).filter(Boolean).length;
                 const isChecked = row.getIsSelected();
                 const isIndeterminate = !isChecked && selectedChildCount > 0;
+
                 return (
                     <div
-                        className={`pointer-events-none flex size-4 items-center justify-center border ${
+                        className={`flex size-4 items-center justify-center border ${
                             isChecked || isIndeterminate
                                 ? "border-foreground bg-foreground text-background"
                                 : "border-foreground/30"
                         }`}
                         aria-hidden="true"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            const nextChecked = !row.getIsSelected();
+                            row.toggleSelected(nextChecked);
+                            const children = childrenByParentIdRef.current.get(parentId) ?? [];
+                            const handleChildSelect = getChildHandlerRef.current;
+                            const nextChildSel = nextChecked
+                                ? Object.fromEntries(children.map((c) => [c.id, true]))
+                                : {};
+                            handleChildSelect(parentId)(nextChildSel);
+                        }}
                     >
                         {(isChecked || isIndeterminate) && (
                             <svg
