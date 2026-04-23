@@ -130,6 +130,8 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
             .endpoint_url(&s3_config.endpoint)
             .credentials_provider(creds)
             .force_path_style(true)
+            .request_checksum_calculation(aws_sdk_s3::config::RequestChecksumCalculation::WhenRequired)
+            .response_checksum_validation(aws_sdk_s3::config::ResponseChecksumValidation::WhenRequired)
             .build();
 
         aws_sdk_s3::Client::from_conf(s3_conf)
@@ -269,6 +271,7 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // collections
         .routes(routes!(collection::get_all))
         .routes(routes!(collection::get_one))
+        .routes(routes!(collection::get_by_slug))
         // series
         .routes(routes!(series::get_all))
         .routes(routes!(series::get_one))

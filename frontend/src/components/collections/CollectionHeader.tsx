@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import { type ReactNode } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { Collection } from "@/types/models/collection.types";
@@ -28,7 +28,7 @@ function formatDate(dateStr: string, locale: string): string {
 
 interface CollectionHeaderProps {
     collection: Collection;
-    previewNode?: React.ReactNode;
+    previewNode?: ReactNode;
 }
 
 export function CollectionHeader({ collection, previewNode }: CollectionHeaderProps) {
@@ -69,7 +69,12 @@ export function CollectionHeader({ collection, previewNode }: CollectionHeaderPr
             {/* Dateline bar */}
             <div className="border-foreground text-foreground mt-4 flex items-center justify-between border-y py-1.5 font-mono text-[9px] tracking-widest uppercase">
                 <div className="flex items-center gap-3">
-                    <span>{t("items", { count: collection.items.length })}</span>
+                    {/* TODO: include events in the count once an event card is designed */}
+                    <span>
+                        {t("items", {
+                            count: collection.items.filter((i) => i.contentType !== "event").length,
+                        })}
+                    </span>
                     {previewNode}
                 </div>
                 <time dateTime={collection.updatedAt}>

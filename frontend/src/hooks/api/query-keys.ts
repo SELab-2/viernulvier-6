@@ -29,6 +29,7 @@ export const queryKeys = {
     collections: {
         all: ["collections"] as const,
         detail: (id: string) => ["collections", id] as const,
+        bySlug: (slug: string) => ["collections", "slug", slug] as const,
     },
     events: {
         all: (pagination?: PaginationParams) => buildQueryKey(["events"], pagination),
