@@ -738,7 +738,9 @@ export function CollectionEditorPage({ id }: { id: string }) {
 
     const copyShareableLink = async () => {
         try {
-            await navigator.clipboard.writeText(`${origin}/${locale}/collections/${id}`);
+            await navigator.clipboard.writeText(
+                `${origin}/${locale}/collections/${collection.slug}`
+            );
             toast.success(t("linkCopied"));
         } catch {
             toast.error(t("copyError"));
