@@ -163,11 +163,12 @@ export function useTableSelection<TData>({
             if (!enableSelection) return;
 
             const target = event.target as HTMLElement;
-            if (target.closest('button, a, [role="checkbox"], input, label')) {
-                if (target.closest('[role="checkbox"]') || target.closest("label")) {
-                    setAnchorRowId(row.id);
-                    focusRowRef.current(rowsRef.current.findIndex((r) => r.id === row.id));
-                }
+            const isCheckbox = target.closest('[role="checkbox"]');
+
+            // Let native buttons/links/inputs handle themselves, but treat a
+            // click on the visual checkbox as a row-level toggle (same as the
+            // parent-child select column behaviour).
+            if (target.closest("button, a, input, label") && !isCheckbox) {
                 return;
             }
 
@@ -182,6 +183,11 @@ export function useTableSelection<TData>({
                 setAnchorRowId(rowId);
                 focusRowRef.current(rowIndex);
             } else if (event.metaKey || event.ctrlKey) {
+                toggleRowRef.current(rowId);
+                setAnchorRowId(rowId);
+                focusRowRef.current(rowIndex);
+            } else if (isCheckbox) {
+                // Plain click on the checkbox cell toggles just this row
                 toggleRowRef.current(rowId);
                 setAnchorRowId(rowId);
                 focusRowRef.current(rowIndex);

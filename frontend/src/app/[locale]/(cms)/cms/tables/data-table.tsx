@@ -165,13 +165,18 @@ export function DataTable<TData, TValue>({
             header: () => null,
             cell: ({ row }) => (
                 <div
+                    role="checkbox"
+                    aria-checked={row.getIsSelected()}
                     className={cn(
-                        "pointer-events-none flex size-4 items-center justify-center border",
+                        "flex size-4 items-center justify-center border",
                         row.getIsSelected()
                             ? "border-foreground bg-foreground text-background"
                             : "border-foreground/30"
                     )}
-                    aria-hidden="true"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        row.toggleSelected(!row.getIsSelected());
+                    }}
                 >
                     {row.getIsSelected() && <Check className="size-3.5" />}
                 </div>
