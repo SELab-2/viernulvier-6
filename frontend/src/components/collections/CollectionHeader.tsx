@@ -1,5 +1,6 @@
 "use client";
 
+import { type ReactNode } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { Collection } from "@/types/models/collection.types";
@@ -27,9 +28,10 @@ function formatDate(dateStr: string, locale: string): string {
 
 interface CollectionHeaderProps {
     collection: Collection;
+    previewNode?: ReactNode;
 }
 
-export function CollectionHeader({ collection }: CollectionHeaderProps) {
+export function CollectionHeader({ collection, previewNode }: CollectionHeaderProps) {
     const locale = useLocale();
     const t = useTranslations("Collections");
 
@@ -66,12 +68,15 @@ export function CollectionHeader({ collection }: CollectionHeaderProps) {
 
             {/* Dateline bar */}
             <div className="border-foreground text-foreground mt-4 flex items-center justify-between border-y py-1.5 font-mono text-[9px] tracking-widest uppercase">
-                {/* TODO: include events in the count once an event card is designed */}
-                <span>
-                    {t("items", {
-                        count: collection.items.filter((i) => i.contentType !== "event").length,
-                    })}
-                </span>
+                <div className="flex items-center gap-3">
+                    {/* TODO: include events in the count once an event card is designed */}
+                    <span>
+                        {t("items", {
+                            count: collection.items.filter((i) => i.contentType !== "event").length,
+                        })}
+                    </span>
+                    {previewNode}
+                </div>
                 <time dateTime={collection.updatedAt}>
                     {formatDate(collection.updatedAt, locale)}
                 </time>
@@ -79,7 +84,7 @@ export function CollectionHeader({ collection }: CollectionHeaderProps) {
 
             {/* Description */}
             {description && (
-                <p className="text-muted-foreground mt-4 max-w-[750px] font-mono text-[13px] leading-relaxed italic">
+                <p className="text-muted-foreground mt-4 max-w-[750px] font-mono text-[13px] leading-relaxed break-words italic">
                     {description}
                 </p>
             )}

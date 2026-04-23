@@ -2,14 +2,14 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
-import { ImageIcon, SquarePen } from "lucide-react";
+import { ImageIcon, SquarePen, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
 import { LocalizedText, resolveLocalized } from "@/components/ui/localized-text";
 import type { FieldDef } from "../edit-sheet";
 import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
-import { Action, ActionDisplay } from "@/types/cms/actions";
+import { Action, ActionDisplay, ActionVariant } from "@/types/cms/actions";
 import type {
     Production,
     ProductionRow,
@@ -146,12 +146,13 @@ export function toProductionUpdateInput(row: ProductionRow): ProductionUpdateInp
 export function makeProductionColumns(options: {
     onEdit: (row: Production) => void;
     onMedia: (production: Production) => void;
+    onDelete: (production: Production) => void;
     t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>;
     tProductions: ReturnType<typeof useTranslations<"Cms.Productions">>;
     locale: string;
     onOpenSpotlight?: (src: string, alt: string) => void;
 }): ColumnDef<Production>[] {
-    const { onEdit, onMedia, t, locale, onOpenSpotlight } = options;
+    const { onEdit, onMedia, onDelete, t, locale, onOpenSpotlight } = options;
     const otherLocale = locale === "nl" ? "en" : "nl";
 
     const translationPair = (row: Production, field: "title" | "artist") => ({
@@ -201,6 +202,13 @@ export function makeProductionColumns(options: {
                     onComplete={closeMenu}
                 />
             ),
+        },
+        {
+            key: "delete",
+            label: t("delete", { label: "production" }),
+            icon: Trash2,
+            variant: ActionVariant.Destructive,
+            onClick: onDelete,
         },
     ];
 

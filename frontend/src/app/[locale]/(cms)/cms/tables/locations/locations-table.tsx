@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Archive, ChevronsUp } from "lucide-react";
+import { toast } from "sonner";
 import type { ExpandedState, Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
@@ -20,7 +21,11 @@ import { LocationCoverField } from "@/components/cms/location-cover-field";
 import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { useGetInfiniteLocations, useUpdateLocation } from "@/hooks/api/useLocations";
+import {
+    useDeleteLocation,
+    useGetInfiniteLocations,
+    useUpdateLocation,
+} from "@/hooks/api/useLocations";
 import { useGetHalls, useUpdateHall } from "@/hooks/api/useHalls";
 import { useGetSpaces } from "@/hooks/api/useSpaces";
 import type { Location, LocationRow } from "@/types/models/location.types";
@@ -52,6 +57,7 @@ export function LocationsTable() {
     const allSpaces = useMemo(() => spacesResult?.data ?? [], [spacesResult]);
     const updateLocation = useUpdateLocation();
     const updateHall = useUpdateHall();
+    const deleteLocation = useDeleteLocation();
 
     const loadMore = useCallback(() => {
         if (hasNextPage && !isFetchingNextPage) {
@@ -121,16 +127,30 @@ export function LocationsTable() {
         ? [{ kind: "plain", src: spotlight.src, alt: spotlight.alt }]
         : [];
 
+    const handleDeleteLocation = useCallback(
+        (location: Location) => {
+            const title = location.name || location.slug || location.id;
+            const ok = window.confirm(t("deleteConfirm", { title }));
+            if (!ok) return;
+            deleteLocation.mutate(location.id, {
+                onSuccess: () => toast.success(t("deleteSuccess")),
+                onError: () => toast.error(t("deleteError")),
+            });
+        },
+        [deleteLocation, t]
+    );
+
     const locationCols = useMemo(
         () => [
             selectColumn,
             ...makeLocationColumns({
                 onEdit: (row) => setEditLocationId(row.id),
+                onDelete: handleDeleteLocation,
                 t: tActions,
                 onOpenSpotlight: openSpotlight,
             }),
         ],
-        [selectColumn, tActions, openSpotlight]
+        [selectColumn, tActions, handleDeleteLocation, openSpotlight]
     );
 
     const hallCols = useMemo(
@@ -152,6 +172,31 @@ export function LocationsTable() {
         () => locations.filter((location) => parentSelection[location.id]),
         [locations, parentSelection]
     );
+
+    const handleBulkDelete = useCallback(() => {
+        const ok = window.confirm(t("deleteConfirmMultiple", { count: selectedLocationCount }));
+        if (!ok) return;
+        let success = 0;
+        let failed = 0;
+        selectedLocations.forEach((location) => {
+            deleteLocation.mutate(location.id, {
+                onSuccess: () => {
+                    success++;
+                    if (success + failed === selectedLocations.length) {
+                        toast.success(t("deleteSuccess"));
+                        clearSelection();
+                    }
+                },
+                onError: () => {
+                    failed++;
+                    if (success + failed === selectedLocations.length) {
+                        if (failed > 0) toast.error(t("deleteError"));
+                        clearSelection();
+                    }
+                },
+            });
+        });
+    }, [selectedLocations, selectedLocationCount, deleteLocation, t, clearSelection]);
 
     const collectionPickerItems = useMemo(
         () =>
@@ -200,10 +245,11 @@ export function LocationsTable() {
             },
             {
                 key: "delete",
-                label: "Delete",
+                label: tCommon("delete"),
+                onClick: handleBulkDelete,
             },
         ],
-        [tCollections]
+        [tCollections, tCommon, handleBulkDelete]
     );
 
     return (

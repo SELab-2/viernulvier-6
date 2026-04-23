@@ -191,7 +191,7 @@ function CardShell({ item, locale, isLoading, title, imageUrl, href, typeLabel }
             {comment && (
                 <>
                     <div className="border-foreground/10 mx-3 mt-3 border-t" />
-                    <p className="text-muted-foreground px-3 pt-2 pb-3 font-mono text-[11px] leading-snug italic">
+                    <p className="text-muted-foreground px-3 pt-2 pb-3 font-mono text-[11px] leading-snug break-words italic">
                         {comment}
                     </p>
                 </>
