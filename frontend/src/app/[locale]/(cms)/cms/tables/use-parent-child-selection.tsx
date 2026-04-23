@@ -17,6 +17,9 @@ export function useParentChildSelection<TParent extends { id: string }>(
 } {
     const [parentSelection, setParentSelection] = useState<RowSelectionState>({});
     const [childSelection, setChildSelection] = useState<Map<string, RowSelectionState>>(new Map());
+    // Force re-render counter used to give select cells a changing key so React
+    // never skips re-rendering them after a selection toggle.
+    const [toggleRev, setToggleRev] = useState(0);
 
     // Use refs to access latest state without triggering re-renders of the column definition
     const childSelectionRef = useRef(childSelection);
@@ -56,7 +59,10 @@ export function useParentChildSelection<TParent extends { id: string }>(
         getChildHandlerRef.current = getChildHandler;
     }, [getChildHandler]);
 
-    // Stable select column - never recreate the column definition
+    // Stable select column - never recreate the column definition.
+    // toggleRev is read inside the cell renderer via closure; we deliberately
+    // keep the deps empty so TanStack Table does not re-initialise the table.
+
     const selectColumn = useMemo<ColumnDef<TParent>>(
         () => ({
             id: "select",
@@ -71,6 +77,7 @@ export function useParentChildSelection<TParent extends { id: string }>(
 
                 return (
                     <div
+                        key={`sel-${toggleRev}`}
                         className={`flex size-4 items-center justify-center border ${
                             isChecked || isIndeterminate
                                 ? "border-foreground bg-foreground text-background"
@@ -87,6 +94,8 @@ export function useParentChildSelection<TParent extends { id: string }>(
                                 ? Object.fromEntries(children.map((c) => [c.id, true]))
                                 : {};
                             handleChildSelect(parentId)(nextChildSel);
+                            // Bump rev so the cell key changes and React repaints the checkbox immediately
+                            setToggleRev((r) => r + 1);
                         }}
                     >
                         {(isChecked || isIndeterminate) && (
