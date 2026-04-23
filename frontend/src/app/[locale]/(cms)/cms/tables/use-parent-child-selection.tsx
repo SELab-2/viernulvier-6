@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ColumnDef, OnChangeFn, RowSelectionState } from "@tanstack/react-table";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import type { Dispatch, SetStateAction } from "react";
 
 export function useParentChildSelection<TParent extends { id: string }>(
@@ -20,13 +20,9 @@ export function useParentChildSelection<TParent extends { id: string }>(
 
     // Use refs to access latest state without triggering re-renders of the column definition
     const childSelectionRef = useRef(childSelection);
-    const childrenByParentIdRef = useRef(childrenByParentId);
     useEffect(() => {
         childSelectionRef.current = childSelection;
     }, [childSelection]);
-    useEffect(() => {
-        childrenByParentIdRef.current = childrenByParentId;
-    }, [childrenByParentId]);
 
     // Stable per-parent child selection handlers. Created once per parentId and cached
     // in a ref.
@@ -46,12 +42,6 @@ export function useParentChildSelection<TParent extends { id: string }>(
         return handler;
     }, []);
 
-    // Stable reference to getChildHandler
-    const getChildHandlerRef = useRef(getChildHandler);
-    useEffect(() => {
-        getChildHandlerRef.current = getChildHandler;
-    }, [getChildHandler]);
-
     // Stable select column - never recreate the column definition
     const selectColumn = useMemo<ColumnDef<TParent>>(
         () => ({
@@ -64,20 +54,31 @@ export function useParentChildSelection<TParent extends { id: string }>(
                 const selectedChildCount = Object.values(childSel).filter(Boolean).length;
                 const isChecked = row.getIsSelected();
                 const isIndeterminate = !isChecked && selectedChildCount > 0;
-                const children = childrenByParentIdRef.current.get(parentId) ?? [];
-                const handleChildSelect = getChildHandlerRef.current;
-
                 return (
-                    <Checkbox
-                        checked={isChecked ? true : isIndeterminate ? "indeterminate" : false}
-                        onCheckedChange={(value) => {
-                            row.toggleSelected(!!value);
-                            handleChildSelect(parentId)(
-                                value ? Object.fromEntries(children.map((c) => [c.id, true])) : {}
-                            );
-                        }}
-                        aria-label="Select row"
-                    />
+                    <div
+                        className={`pointer-events-none flex size-4 items-center justify-center border ${
+                            isChecked || isIndeterminate
+                                ? "border-foreground bg-foreground text-background"
+                                : "border-foreground/30"
+                        }`}
+                        aria-hidden="true"
+                    >
+                        {(isChecked || isIndeterminate) && (
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                        )}
+                    </div>
                 );
             },
             enableSorting: false,

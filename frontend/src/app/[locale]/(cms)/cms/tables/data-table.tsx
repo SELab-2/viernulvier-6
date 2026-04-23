@@ -11,7 +11,7 @@ import {
     getExpandedRowModel,
     useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { Check, ChevronDown, ChevronRight } from "lucide-react";
 import { Fragment, ReactNode, memo, useMemo, useState } from "react";
 
 import { useTableSelection } from "./use-table-selection";
@@ -60,7 +60,7 @@ function shallowEqual(
 }
 
 import { useTranslations } from "next-intl";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
@@ -164,12 +164,17 @@ export function DataTable<TData, TValue>({
             id: "select",
             header: () => null,
             cell: ({ row }) => (
-                <Checkbox
-                    checked={row.getIsSelected()}
-                    onCheckedChange={(value) => row.toggleSelected(!!value)}
-                    aria-label="Select row"
-                    className="border-foreground/30 data-[state=checked]:bg-foreground data-[state=checked]:border-foreground"
-                />
+                <div
+                    className={cn(
+                        "pointer-events-none flex size-4 items-center justify-center border",
+                        row.getIsSelected()
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-foreground/30"
+                    )}
+                    aria-hidden="true"
+                >
+                    {row.getIsSelected() && <Check className="size-3.5" />}
+                </div>
             ),
             enableSorting: false,
             enableHiding: false,

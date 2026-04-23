@@ -141,6 +141,23 @@ export function useTableSelection<TData>({
         [enableSelection]
     );
 
+    // Stable refs so handleRowClick never changes identity
+    const anchorRowIdRef = useRef(anchorRowId);
+    const rowsRef = useRef(rows);
+    const selectRangeRef = useRef(selectRange);
+    const toggleRowRef = useRef(toggleRow);
+    const selectOnlyRef = useRef(selectOnly);
+    const focusRowRef = useRef(focusRow);
+
+    useEffect(() => {
+        anchorRowIdRef.current = anchorRowId;
+        rowsRef.current = rows;
+        selectRangeRef.current = selectRange;
+        toggleRowRef.current = toggleRow;
+        selectOnlyRef.current = selectOnly;
+        focusRowRef.current = focusRow;
+    }, [anchorRowId, rows, selectRange, toggleRow, selectOnly, focusRow]);
+
     const handleRowClick = useCallback(
         (row: Row<TData>, event: React.MouseEvent) => {
             if (!enableSelection) return;
@@ -149,7 +166,7 @@ export function useTableSelection<TData>({
             if (target.closest('button, a, [role="checkbox"], input, label')) {
                 if (target.closest('[role="checkbox"]') || target.closest("label")) {
                     setAnchorRowId(row.id);
-                    focusRow(rows.findIndex((r) => r.id === row.id));
+                    focusRowRef.current(rowsRef.current.findIndex((r) => r.id === row.id));
                 }
                 return;
             }
@@ -158,23 +175,23 @@ export function useTableSelection<TData>({
             event.preventDefault();
 
             const rowId = row.id;
-            const rowIndex = rows.findIndex((r) => r.id === rowId);
+            const rowIndex = rowsRef.current.findIndex((r) => r.id === rowId);
 
-            if (event.shiftKey && anchorRowId) {
-                selectRange(anchorRowId, rowId);
+            if (event.shiftKey && anchorRowIdRef.current) {
+                selectRangeRef.current(anchorRowIdRef.current, rowId);
                 setAnchorRowId(rowId);
-                focusRow(rowIndex);
+                focusRowRef.current(rowIndex);
             } else if (event.metaKey || event.ctrlKey) {
-                toggleRow(rowId);
+                toggleRowRef.current(rowId);
                 setAnchorRowId(rowId);
-                focusRow(rowIndex);
+                focusRowRef.current(rowIndex);
             } else {
-                selectOnly(rowId);
+                selectOnlyRef.current(rowId);
                 setAnchorRowId(rowId);
-                focusRow(rowIndex);
+                focusRowRef.current(rowIndex);
             }
         },
-        [enableSelection, rows, anchorRowId, selectRange, toggleRow, selectOnly, focusRow]
+        [enableSelection]
     );
 
     const processKeyEvent = useCallback(
