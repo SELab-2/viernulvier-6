@@ -2,14 +2,14 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
-import { SquarePen } from "lucide-react";
+import { SquarePen, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
 import { BooleanCell } from "../boolean-cell";
 import type { FieldDef } from "../edit-sheet";
 import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
-import { Action, ActionDisplay } from "@/types/cms/actions";
+import { Action, ActionDisplay, ActionVariant } from "@/types/cms/actions";
 import type { Location, LocationRow, LocationUpdateInput } from "@/types/models/location.types";
 
 export const locationFields: FieldDef<LocationRow>[] = [
@@ -96,10 +96,11 @@ export function toLocationUpdateInput(row: LocationRow): LocationUpdateInput {
 
 export function makeLocationColumns(options: {
     onEdit: (row: LocationRow) => void;
+    onDelete: (location: Location) => void;
     t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>;
     onOpenSpotlight?: (src: string, alt: string) => void;
 }): ColumnDef<Location>[] {
-    const { onEdit, t, onOpenSpotlight } = options;
+    const { onEdit, onDelete, t, onOpenSpotlight } = options;
 
     const actions: Action<Location>[] = [
         {
@@ -134,6 +135,13 @@ export function makeLocationColumns(options: {
                     onComplete={closeMenu}
                 />
             ),
+        },
+        {
+            key: "delete",
+            label: t("delete", { label: "location" }),
+            icon: Trash2,
+            variant: ActionVariant.Destructive,
+            onClick: onDelete,
         },
     ];
 

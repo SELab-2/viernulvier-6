@@ -9,9 +9,11 @@ import {
     useSensors,
     type DragEndEvent,
 } from "@dnd-kit/core";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import type { Modifier } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import Image from "next/image";
-import { GripVertical, Link2, Trash2 } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, GripVertical, Link2, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Link, useRouter } from "@/i18n/routing";
@@ -33,6 +35,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CollectionCoverField } from "@/components/cms/collection-cover-field";
 import { LanguageSelector } from "@/components/cms/language-selector";
 import type { Collection, CollectionItem } from "@/types/models/collection.types";
+import { CollectionPreviewData } from "@/types/collection-preview.types";
+import { usePreviewContext } from "@/contexts/PreviewContext";
 import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
 import type { Location } from "@/types/models/location.types";
@@ -108,11 +112,11 @@ type EntityData =
     | { type: "loading" }
     | { type: "unknown" };
 
-function getItemSubtitle(entity: EntityData): string | null {
+function getItemSubtitle(entity: EntityData, locale: Lang): string | null {
     if (entity.type === "production") {
-        const nl = getTranslation(entity.data.translations, "nl");
-        const en = getTranslation(entity.data.translations, "en");
-        return nl?.artist || en?.artist || null;
+        const primary = getTranslation(entity.data.translations, locale);
+        const fallback = getTranslation(entity.data.translations, locale === "nl" ? "en" : "nl");
+        return primary?.artist || fallback?.artist || null;
     }
     if (entity.type === "event") {
         const starts = new Date(entity.data.startsAt);
@@ -192,7 +196,7 @@ function SortableItemRow({
     };
 
     const parentProps = renderItem(group.item);
-    const subtitle = getItemSubtitle(parentProps.entity);
+    const subtitle = getItemSubtitle(parentProps.entity, activeLang);
 
     return (
         <div ref={setNodeRef} style={style} className="bg-background flex border">
@@ -328,10 +332,31 @@ function SortableItemRow({
 
 export function CollectionEditorPage({ id }: { id: string }) {
     const t = useTranslations("Cms.Collections");
+    const tCommon = useTranslations("Cms.common");
     const locale = useLocale();
     const router = useRouter();
 
-    const [activeLang, setActiveLang] = useState<Lang>(locale as Lang);
+    const { setPreview, clearPreviewFor } = usePreviewContext();
+
+    const [isPreviewOpen, setIsPreviewOpen] = useState(() => {
+        if (typeof window !== "undefined" && window.innerWidth >= 1024) {
+            return true;
+        }
+        return false;
+    });
+    const [previewSessionId] = useState(() => {
+        if (typeof crypto !== "undefined" && crypto.randomUUID) {
+            return crypto.randomUUID();
+        }
+        return Math.random().toString(36).slice(2) + Date.now().toString(36);
+    });
+    const [activeLang, setActiveLang] = useState<Lang>(() => {
+        if (typeof window !== "undefined") {
+            const saved = localStorage.getItem(`cms_preview_locale:${previewSessionId}`);
+            if (saved === "nl" || saved === "en") return saved;
+        }
+        return locale as Lang;
+    });
 
     const { data: collection, isLoading } = useGetCollection(id);
     const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
@@ -349,6 +374,26 @@ export function CollectionEditorPage({ id }: { id: string }) {
     const [descriptionNl, setDescriptionNl] = useState<string | null>(null);
     const [descriptionEn, setDescriptionEn] = useState<string | null>(null);
     const [items, setItems] = useState<LocalCollectionItem[] | null>(null);
+
+    const itemsContainerRef = useRef<HTMLDivElement>(null);
+    const iframeRef = useRef<HTMLIFrameElement>(null);
+    const localeChangeSourceRef = useRef<"editor" | "storage" | null>(null);
+    const lastSyncedRef = useRef<string | null>(null);
+
+    const restrictToItemsContainer: Modifier = ({ transform, activeNodeRect }) => {
+        const container = itemsContainerRef.current;
+        if (!container || !activeNodeRect) return transform;
+
+        const containerRect = container.getBoundingClientRect();
+
+        const minY = containerRect.top - activeNodeRect.top;
+        const maxY = containerRect.bottom - activeNodeRect.bottom;
+
+        return {
+            ...transform,
+            y: Math.min(Math.max(transform.y, minY), maxY),
+        };
+    };
 
     const sensors = useSensors(useSensor(PointerSensor));
 
@@ -455,6 +500,101 @@ export function CollectionEditorPage({ id }: { id: string }) {
         el.style.height = `${el.scrollHeight}px`;
     }, [descriptionValue]);
 
+    // Listen for locale changes from preview iframe
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const key = `cms_preview_locale:${previewSessionId}`;
+        const handleStorage = (event: StorageEvent) => {
+            if (event.key === key) {
+                const next = event.newValue;
+                if (next === "nl" || next === "en") {
+                    localeChangeSourceRef.current = "storage";
+                    setActiveLang(next);
+                }
+            }
+        };
+        window.addEventListener("storage", handleStorage);
+        return () => window.removeEventListener("storage", handleStorage);
+    }, [previewSessionId]);
+
+    const handleLangChange = useCallback(
+        (nextLang: Lang) => {
+            localeChangeSourceRef.current = "editor";
+            setActiveLang(nextLang);
+            localStorage.setItem(`cms_preview_locale:${previewSessionId}`, nextLang);
+        },
+        [previewSessionId]
+    );
+
+    // Update iframe src when editor initiates locale change
+    useEffect(() => {
+        if (!iframeRef.current || !isPreviewOpen || !collection?.id) return;
+        if (localeChangeSourceRef.current === "storage") {
+            localeChangeSourceRef.current = null;
+            return;
+        }
+        const expectedPath = `/${activeLang}/collections/${collection.id}?preview=1&session=${previewSessionId}`;
+        const currentPath = iframeRef.current.src
+            ? new URL(iframeRef.current.src).pathname + new URL(iframeRef.current.src).search
+            : "";
+        if (currentPath !== expectedPath) {
+            iframeRef.current.src = expectedPath;
+        }
+        localeChangeSourceRef.current = null;
+    }, [activeLang, isPreviewOpen, collection?.id, previewSessionId]);
+
+    // Sync preview data whenever metadata or items change and preview is open
+    useEffect(() => {
+        if (!metadata || !collection || !isPreviewOpen) return;
+
+        const createdAtMap = new Map(collection.items.map((i) => [i.id, i.createdAt]));
+        const previewCollection: Collection = {
+            ...collection,
+            slug: metadata.slug,
+            translations: metadata.translations,
+            items: localItems.map((item, index) => ({
+                ...item,
+                position: index + 1,
+                createdAt: createdAtMap.get(item.id) ?? new Date().toISOString(),
+            })),
+        };
+
+        const hash = JSON.stringify(previewCollection);
+        if (hash === lastSyncedRef.current) return;
+        lastSyncedRef.current = hash;
+
+        const previewData: CollectionPreviewData = { collection: previewCollection };
+        setPreview("collection", collection.id, previewData, locale, previewSessionId);
+    }, [metadata, localItems, collection, isPreviewOpen, setPreview, locale, previewSessionId]);
+
+    // Clean up preview on unmount
+    useEffect(() => {
+        return () => {
+            clearPreviewFor("collection", id, previewSessionId);
+        };
+    }, [id, previewSessionId, clearPreviewFor]);
+
+    const togglePreview = useCallback(() => {
+        if (!metadata || !collection) return;
+
+        if (!isPreviewOpen) {
+            const createdAtMap = new Map(collection.items.map((i) => [i.id, i.createdAt]));
+            const previewCollection: Collection = {
+                ...collection,
+                slug: metadata.slug,
+                translations: metadata.translations,
+                items: localItems.map((item, index) => ({
+                    ...item,
+                    position: index + 1,
+                    createdAt: createdAtMap.get(item.id) ?? new Date().toISOString(),
+                })),
+            };
+            const previewData: CollectionPreviewData = { collection: previewCollection };
+            setPreview("collection", collection.id, previewData, locale, previewSessionId);
+        }
+        setIsPreviewOpen((prev) => !prev);
+    }, [metadata, collection, localItems, isPreviewOpen, setPreview, locale, previewSessionId]);
+
     const productionIds = useMemo(
         () => localItems.filter((i) => i.contentType === "production").map((i) => i.contentId),
         [localItems]
@@ -478,12 +618,12 @@ export function CollectionEditorPage({ id }: { id: string }) {
         switch (item.contentType) {
             case "production": {
                 const p = productionMap.get(item.contentId);
-                return (
-                    getTranslation(p?.translations ?? [], "nl")?.title ||
-                    getTranslation(p?.translations ?? [], "en")?.title ||
-                    p?.slug ||
-                    item.contentId
+                const primary = getTranslation(p?.translations ?? [], activeLang);
+                const fallback = getTranslation(
+                    p?.translations ?? [],
+                    activeLang === "nl" ? "en" : "nl"
                 );
+                return primary?.title || fallback?.title || p?.slug || item.contentId;
             }
             case "event": {
                 const e = eventMap.get(item.contentId);
@@ -511,10 +651,12 @@ export function CollectionEditorPage({ id }: { id: string }) {
                 const data = eventMap.get(item.contentId);
                 if (!data) return { type: "unknown" };
                 const prod = productionMap.get(data.productionId);
-                const prodTitle =
-                    getTranslation(prod?.translations ?? [], "nl")?.title ||
-                    getTranslation(prod?.translations ?? [], "en")?.title ||
-                    prod?.slug;
+                const primary = getTranslation(prod?.translations ?? [], activeLang);
+                const fallback = getTranslation(
+                    prod?.translations ?? [],
+                    activeLang === "nl" ? "en" : "nl"
+                );
+                const prodTitle = primary?.title || fallback?.title || prod?.slug;
                 return { type: "event", data, productionTitle: prodTitle };
             }
             case "location": {
@@ -565,8 +707,8 @@ export function CollectionEditorPage({ id }: { id: string }) {
                 coverImageUrl,
                 commentNl: translationNl?.comment ?? "",
                 commentEn: translationEn?.comment ?? "",
-                commentNlLabel: t("commentNl"),
-                commentEnLabel: t("commentEn"),
+                commentNlLabel: t("comment"),
+                commentEnLabel: t("comment"),
                 onCommentChange: (languageCode, value) =>
                     updateComment(item.id, languageCode, value),
                 onRemove: () => removeItem(item.id),
@@ -612,7 +754,10 @@ export function CollectionEditorPage({ id }: { id: string }) {
                     translations: metadata.translations,
                 },
                 {
-                    onSuccess: () => toast.success(t("metadataSaved")),
+                    onSuccess: () => {
+                        toast.success(t("metadataSaved"));
+                        clearPreviewFor("collection", collection.id);
+                    },
                     onError: () => toast.error(t("metadataError")),
                 }
             );
@@ -624,7 +769,10 @@ export function CollectionEditorPage({ id }: { id: string }) {
                     items: toItemsSnapshot(localItems),
                 },
                 {
-                    onSuccess: () => toast.success(t("itemsSaved")),
+                    onSuccess: () => {
+                        toast.success(t("itemsSaved"));
+                        clearPreviewFor("collection", collection.id);
+                    },
                     onError: () => toast.error(t("itemsError")),
                 }
             );
@@ -639,7 +787,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
 
         deleteCollection.mutate(collection.id, {
             onSuccess: () => {
-                toast.success(t("deleteCollection"));
+                toast.success(tCommon("delete"));
                 router.push("/cms/collections");
             },
             onError: () => toast.error(t("metadataError")),
@@ -651,119 +799,193 @@ export function CollectionEditorPage({ id }: { id: string }) {
     }
 
     return (
-        <div className="h-full space-y-6 overflow-auto p-4 pb-8">
-            <div className="flex flex-wrap items-center gap-2">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    className="rounded-none"
-                    onClick={() => router.push("/cms/collections")}
+        <div className="flex h-full flex-col overflow-hidden">
+            {/* Top bar */}
+            <div className="flex items-center gap-3 border-b px-4 py-3">
+                <Link
+                    href="/cms/collections"
+                    className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
                 >
-                    {t("backToCollections")}
-                </Button>
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t("backToCollections")}</span>
+                </Link>
+                <div className="flex-1" />
                 <Button
-                    variant="outline"
+                    type="button"
+                    variant="ghost"
                     size="sm"
-                    className="rounded-none"
                     onClick={removeCollection}
+                    className="text-destructive hover:!bg-destructive/10 hover:!text-destructive"
                 >
-                    {t("deleteCollection")}
+                    <Trash2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">{tCommon("delete")}</span>
                 </Button>
-                <div className="ml-auto flex gap-2">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="rounded-none"
-                        onClick={copyShareableLink}
-                    >
-                        <Link2 className="h-4 w-4" />
-                        <span>{t("copyLink")}</span>
-                    </Button>
-                    <Button className="rounded-none" size="sm" onClick={save} disabled={!canSave}>
-                        {isSaving ? t("saving") : t("save")}
-                    </Button>
-                </div>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={togglePreview}
+                    className="gap-2"
+                >
+                    {isPreviewOpen ? (
+                        <>
+                            <EyeOff className="h-4 w-4" />
+                            <span className="hidden sm:inline">{t("hidePreview")}</span>
+                        </>
+                    ) : (
+                        <>
+                            <Eye className="h-4 w-4" />
+                            <span className="hidden sm:inline">{t("preview")}</span>
+                        </>
+                    )}
+                </Button>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={copyShareableLink}
+                    className="gap-2"
+                >
+                    <Link2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t("copyLink")}</span>
+                </Button>
+                <Button onClick={save} disabled={!canSave} size="sm" className="gap-2">
+                    <span className="hidden sm:inline">
+                        {isSaving ? tCommon("saving") : tCommon("save")}
+                    </span>
+                </Button>
             </div>
 
-            <section className="space-y-3 border p-4">
-                <div className="flex justify-end">
-                    <LanguageSelector activeLang={activeLang} onChange={setActiveLang} />
-                </div>
-                <div className="space-y-3">
-                    <div className="space-y-1">
-                        <Label>
-                            {t("fieldTitle")} ({activeLang.toUpperCase()})
-                        </Label>
-                        <Input
-                            value={
-                                activeLang === "nl"
-                                    ? (metadata.translations.find((x) => x.languageCode === "nl")
-                                          ?.title ?? "")
-                                    : (metadata.translations.find((x) => x.languageCode === "en")
-                                          ?.title ?? "")
-                            }
-                            onChange={(e) =>
-                                activeLang === "nl"
-                                    ? setTitleNl(e.target.value)
-                                    : setTitleEn(e.target.value)
-                            }
-                        />
-                    </div>
-                    <div className="space-y-1">
-                        <Label>
-                            {t("fieldDescription")} ({activeLang.toUpperCase()})
-                        </Label>
-                        <Textarea
-                            ref={descriptionRef}
-                            value={descriptionValue}
-                            onChange={(e) =>
-                                activeLang === "nl"
-                                    ? setDescriptionNl(e.target.value)
-                                    : setDescriptionEn(e.target.value)
-                            }
-                            rows={4}
-                            spellCheck={false}
-                            className="resize-none overflow-hidden"
-                        />
-                    </div>
-                </div>
-                <CollectionCoverField collection={collection} />
-            </section>
-
-            <section className="space-y-3">
-                <h2 className="font-medium">{t("itemsTitle", { count: localItems.length })}</h2>
-                {localItems.length === 0 ? (
-                    <div className="text-muted-foreground space-y-2 text-sm">
-                        <p>{t("noItems")}</p>
-                        <Link href="/cms/productions" className="underline">
-                            {t("goToContent")}
-                        </Link>
-                    </div>
-                ) : (
-                    <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={handleDragEnd}
-                    >
-                        <SortableContext
-                            items={groupedItems.map((g) => g.item.id)}
-                            strategy={verticalListSortingStrategy}
-                        >
-                            <div className="space-y-2">
-                                {groupedItems.map((group) => (
-                                    <SortableItemRow
-                                        key={group.item.id}
-                                        group={group}
-                                        renderItem={renderItemProps}
+            {/* Main content area */}
+            <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
+                {/* Editor */}
+                <div
+                    className={`flex flex-col overflow-hidden transition-all duration-300 ${
+                        isPreviewOpen
+                            ? "hidden lg:flex lg:w-[45%] lg:flex-1"
+                            : "w-full lg:mx-auto lg:max-w-3xl lg:flex-1"
+                    }`}
+                >
+                    <div className="flex-1 overflow-y-auto p-6">
+                        <div className="space-y-8">
+                            {/* Metadata section */}
+                            <section className="space-y-4">
+                                <div className="border-foreground/10 flex items-center justify-between border-b pb-2">
+                                    <h2 className="text-sm font-semibold">
+                                        {t("metadataSection")}
+                                    </h2>
+                                    <LanguageSelector
                                         activeLang={activeLang}
+                                        onChange={handleLangChange}
                                     />
-                                ))}
-                            </div>
-                        </SortableContext>
-                    </DndContext>
+                                </div>
+                                <div className="space-y-5">
+                                    <div>
+                                        <label className="mb-2 block text-sm font-medium">
+                                            {t("fieldTitle")}
+                                        </label>
+                                        <Input
+                                            value={
+                                                activeLang === "nl"
+                                                    ? (metadata.translations.find(
+                                                          (x) => x.languageCode === "nl"
+                                                      )?.title ?? "")
+                                                    : (metadata.translations.find(
+                                                          (x) => x.languageCode === "en"
+                                                      )?.title ?? "")
+                                            }
+                                            onChange={(e) =>
+                                                activeLang === "nl"
+                                                    ? setTitleNl(e.target.value)
+                                                    : setTitleEn(e.target.value)
+                                            }
+                                            className="h-9 text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="mb-2 block text-sm font-medium">
+                                            {t("fieldDescription")}
+                                        </label>
+                                        <Textarea
+                                            ref={descriptionRef}
+                                            value={descriptionValue}
+                                            onChange={(e) =>
+                                                activeLang === "nl"
+                                                    ? setDescriptionNl(e.target.value)
+                                                    : setDescriptionEn(e.target.value)
+                                            }
+                                            rows={4}
+                                            spellCheck={false}
+                                            className="min-h-[100px] resize-y text-sm"
+                                        />
+                                    </div>
+                                </div>
+                                <CollectionCoverField collection={collection} />
+                            </section>
+
+                            {/* Items section */}
+                            <section className="space-y-4">
+                                <h2 className="border-foreground/10 border-b pb-2 text-sm font-semibold">
+                                    {t("itemsTitle", { count: localItems.length })}
+                                </h2>
+                                {localItems.length === 0 ? (
+                                    <div className="text-muted-foreground space-y-2 text-sm">
+                                        <p>{t("noItems")}</p>
+                                        <Link href="/cms/productions" className="underline">
+                                            {t("goToContent")}
+                                        </Link>
+                                    </div>
+                                ) : (
+                                    <DndContext
+                                        sensors={sensors}
+                                        collisionDetection={closestCenter}
+                                        modifiers={[
+                                            restrictToVerticalAxis,
+                                            restrictToItemsContainer,
+                                        ]}
+                                        onDragEnd={handleDragEnd}
+                                    >
+                                        <SortableContext
+                                            items={groupedItems.map((g) => g.item.id)}
+                                            strategy={verticalListSortingStrategy}
+                                        >
+                                            <div ref={itemsContainerRef} className="space-y-2">
+                                                {groupedItems.map((group) => (
+                                                    <SortableItemRow
+                                                        key={group.item.id}
+                                                        group={group}
+                                                        renderItem={renderItemProps}
+                                                        activeLang={activeLang}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </SortableContext>
+                                    </DndContext>
+                                )}
+                            </section>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Preview Panel - right side */}
+                {isPreviewOpen && (
+                    <div className="border-muted flex min-h-[70vh] w-full flex-1 flex-col overflow-hidden border-t lg:min-h-0 lg:w-[55%] lg:min-w-[400px] lg:border-t-0 lg:border-l">
+                        <div className="bg-muted flex items-center justify-between px-4 py-3 shadow-[0_1px_0_0_hsl(var(--border))]">
+                            <span className="text-background font-mono text-[10px] font-medium tracking-[1.2px] uppercase">
+                                {t("previewLabel")}
+                            </span>
+                        </div>
+                        <div className="bg-background flex-1 overflow-auto">
+                            <iframe
+                                ref={iframeRef}
+                                className="bg-background h-full w-full"
+                                title={t("previewLabel")}
+                                sandbox="allow-same-origin allow-scripts"
+                            />
+                        </div>
+                    </div>
                 )}
-            </section>
+            </div>
         </div>
     );
 }
