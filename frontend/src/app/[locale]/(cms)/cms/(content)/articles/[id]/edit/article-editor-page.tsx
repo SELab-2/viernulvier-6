@@ -23,6 +23,7 @@ interface ArticleEditorPageProps {
 
 export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
     const t = useTranslations("Cms.Articles");
+    const tCommon = useTranslations("Cms.common");
     const locale = useLocale();
     const { setPreview, clearPreviewFor } = usePreviewContext();
 
@@ -142,7 +143,6 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
     }
 
     const isSaving = updateArticle.isPending;
-    const hasChanges = Object.keys(edits).length > 0;
 
     return (
         <div className="flex h-full flex-col overflow-hidden">
@@ -160,7 +160,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                 </Link>
                 <div className="flex-1" />
                 <Button
-                    variant={isPreviewOpen ? "secondary" : "outline"}
+                    variant="outline"
                     size="sm"
                     onClick={togglePreview}
                     disabled={!article.slug}
@@ -177,13 +177,12 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                             <span className="hidden sm:inline">{t("preview")}</span>
                         </>
                     )}
-                    {!isPreviewOpen && hasChanges && (
-                        <span className="bg-primary h-2 w-2 rounded-full" />
-                    )}
                 </Button>
                 <Button onClick={handleSave} disabled={isSaving} size="sm">
                     <Save className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">{isSaving ? t("saving") : t("save")}</span>
+                    <span className="hidden sm:inline">
+                        {isSaving ? tCommon("saving") : tCommon("save")}
+                    </span>
                 </Button>
             </div>
 

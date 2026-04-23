@@ -2,13 +2,13 @@
 
 import Image from "next/image";
 import { ColumnDef } from "@tanstack/react-table";
-import { ImageIcon, SquarePen } from "lucide-react";
+import { ImageIcon, SquarePen, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
 import { StatusBadge } from "@/components/cms/status-badge";
 import { makeActionsColumn } from "../actions-column";
-import { Action, ActionDisplay } from "@/types/cms/actions";
+import { Action, ActionDisplay, ActionVariant } from "@/types/cms/actions";
 import { ArticleListItem } from "@/types/models/article.types";
 
 function formatDate(date: string | null): string {
@@ -23,6 +23,7 @@ function formatDate(date: string | null): string {
 
 export function makeArticleColumns(
     onEdit: (article: ArticleListItem) => void,
+    onDelete: (article: ArticleListItem) => void,
     t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>,
     tArticles: ReturnType<typeof useTranslations<"Cms.Articles">>
 ): ColumnDef<ArticleListItem>[] {
@@ -46,6 +47,13 @@ export function makeArticleColumns(
                     toast.error(t("copyFailed"));
                 }
             },
+        },
+        {
+            key: "delete",
+            label: t("delete", { label: "article" }),
+            icon: Trash2,
+            variant: ActionVariant.Destructive,
+            onClick: onDelete,
         },
     ];
 
