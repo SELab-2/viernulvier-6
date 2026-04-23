@@ -29,10 +29,7 @@ function DialogOverlay({
     return (
         <DialogPrimitive.Overlay
             data-slot="dialog-overlay"
-            className={cn(
-                "data-[state=open]:animate-in data-[state=closed]:animate-out fixed inset-0 z-50 bg-black/50",
-                className
-            )}
+            className={cn("fixed inset-0 z-50 bg-black/50", className)}
             {...props}
         />
     );
@@ -50,14 +47,14 @@ function DialogContent({
             <DialogPrimitive.Content
                 data-slot="dialog-content"
                 className={cn(
-                    "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg",
+                    "bg-background fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] grid-cols-1 gap-4 border p-6 shadow-lg",
                     className
                 )}
                 {...props}
             >
                 {children}
                 {showClose && (
-                    <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:pointer-events-none">
+                    <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 cursor-pointer rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:pointer-events-none">
                         <X className="size-4" />
                         <span className="sr-only">Close</span>
                     </DialogPrimitive.Close>
