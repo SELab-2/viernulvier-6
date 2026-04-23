@@ -109,6 +109,14 @@ export function ProductionsTable() {
         [locale]
     );
 
+    const handleJumpToEnd = useCallback(async () => {
+        while (hasNextPage) {
+            await fetchNextPage();
+            // Wait for the fetch to complete before checking again
+            await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+    }, [hasNextPage, fetchNextPage]);
+
     const productionCols = useMemo(
         () => [
             selectColumn,
@@ -262,6 +270,7 @@ export function ProductionsTable() {
                     expanded={expanded}
                     onExpandedChange={setExpanded}
                     getRowId={getProductionRowId}
+                    onJumpToEnd={handleJumpToEnd}
                 />
 
                 {/* Infinite scroll trigger */}
