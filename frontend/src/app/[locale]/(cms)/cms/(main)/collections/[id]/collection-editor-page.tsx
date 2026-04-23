@@ -528,12 +528,12 @@ export function CollectionEditorPage({ id }: { id: string }) {
 
     // Update iframe src when editor initiates locale change
     useEffect(() => {
-        if (!iframeRef.current || !isPreviewOpen || !collection?.id) return;
+        if (!iframeRef.current || !isPreviewOpen || !collection?.slug) return;
         if (localeChangeSourceRef.current === "storage") {
             localeChangeSourceRef.current = null;
             return;
         }
-        const expectedPath = `/${activeLang}/collections/${collection.id}?preview=1&session=${previewSessionId}`;
+        const expectedPath = `/${activeLang}/collections/${collection.slug}?preview=1&session=${previewSessionId}`;
         const currentPath = iframeRef.current.src
             ? new URL(iframeRef.current.src).pathname + new URL(iframeRef.current.src).search
             : "";
@@ -541,7 +541,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
             iframeRef.current.src = expectedPath;
         }
         localeChangeSourceRef.current = null;
-    }, [activeLang, isPreviewOpen, collection?.id, previewSessionId]);
+    }, [activeLang, isPreviewOpen, collection?.slug, previewSessionId]);
 
     // Sync preview data whenever metadata or items change and preview is open
     useEffect(() => {
@@ -564,15 +564,17 @@ export function CollectionEditorPage({ id }: { id: string }) {
         lastSyncedRef.current = hash;
 
         const previewData: CollectionPreviewData = { collection: previewCollection };
-        setPreview("collection", collection.id, previewData, locale, previewSessionId);
+        setPreview("collection", collection.slug, previewData, locale, previewSessionId);
     }, [metadata, localItems, collection, isPreviewOpen, setPreview, locale, previewSessionId]);
 
     // Clean up preview on unmount
     useEffect(() => {
         return () => {
-            clearPreviewFor("collection", id, previewSessionId);
+            if (collection?.slug) {
+                clearPreviewFor("collection", collection.slug, previewSessionId);
+            }
         };
-    }, [id, previewSessionId, clearPreviewFor]);
+    }, [collection?.slug, previewSessionId, clearPreviewFor]);
 
     const togglePreview = useCallback(() => {
         if (!metadata || !collection) return;
@@ -590,7 +592,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
                 })),
             };
             const previewData: CollectionPreviewData = { collection: previewCollection };
-            setPreview("collection", collection.id, previewData, locale, previewSessionId);
+            setPreview("collection", collection.slug, previewData, locale, previewSessionId);
         }
         setIsPreviewOpen((prev) => !prev);
     }, [metadata, collection, localItems, isPreviewOpen, setPreview, locale, previewSessionId]);
@@ -756,7 +758,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
                 {
                     onSuccess: () => {
                         toast.success(t("metadataSaved"));
-                        clearPreviewFor("collection", collection.id);
+                        clearPreviewFor("collection", collection.slug);
                     },
                     onError: () => toast.error(t("metadataError")),
                 }
@@ -771,7 +773,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
                 {
                     onSuccess: () => {
                         toast.success(t("itemsSaved"));
-                        clearPreviewFor("collection", collection.id);
+                        clearPreviewFor("collection", collection.slug);
                     },
                     onError: () => toast.error(t("itemsError")),
                 }
