@@ -142,7 +142,7 @@ export function CollectionPickerDialog({
                         {showCreate && (
                             <button
                                 type="button"
-                                className="text-muted-foreground hover:bg-foreground/10 block w-full cursor-pointer px-2 py-1 text-left text-sm"
+                                className="text-muted-foreground hover:bg-muted hover:text-background block w-full cursor-pointer px-2 py-1 text-left text-sm"
                                 onClick={createNewCollection}
                             >
                                 + {t("createNamed", { name: query.trim() })}
@@ -154,8 +154,8 @@ export function CollectionPickerDialog({
                                 type="button"
                                 className={`text-muted-foreground block w-full cursor-pointer px-2 py-1 text-left text-sm ${
                                     selectedCollectionId === collection.id
-                                        ? "bg-foreground/10"
-                                        : "hover:bg-foreground/10"
+                                        ? "bg-muted text-background"
+                                        : "hover:bg-muted hover:text-background"
                                 }`}
                                 onClick={() => setSelectedCollectionId(collection.id)}
                             >
