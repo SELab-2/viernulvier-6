@@ -354,6 +354,7 @@ export function DataTable<TData, TValue>({
                                             }
                                         }}
                                         onMouseEnter={() => focusRowAt(rowIndex)}
+                                        onMouseLeave={() => focusRowAt(-1)}
                                         onMouseDown={handleRowMouseDown}
                                     >
                                         {row.getVisibleCells().map((cell) => (
