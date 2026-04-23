@@ -119,6 +119,7 @@ export function useParentChildSelection<TParent extends { id: string }>(
             enableSorting: false,
             enableHiding: false,
         }),
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         [] // Never recreate - use refs for all dynamic values
     );
 
