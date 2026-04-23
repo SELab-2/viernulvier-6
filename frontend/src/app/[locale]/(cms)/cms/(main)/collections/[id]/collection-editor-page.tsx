@@ -737,6 +737,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
     };
 
     const copyShareableLink = async () => {
+        if (!collection) return;
         try {
             await navigator.clipboard.writeText(
                 `${origin}/${locale}/collections/${collection.slug}`
