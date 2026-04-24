@@ -42,7 +42,25 @@ describe("location mapper", () => {
             uitdatabankId: null,
             address: "Mainstraat 12, 9000 Gent, Belgium",
             translations: [{ languageCode: "nl", description: "Beschrijving", history: null }],
+            coverImageUrl: null,
         });
+    });
+
+    it("maps cover_image_url to coverImageUrl", () => {
+        const result = mapLocation({
+            id: "abc",
+            cover_image_url: "https://cdn/x.jpg",
+            translations: [],
+        });
+        expect(result.coverImageUrl).toBe("https://cdn/x.jpg");
+    });
+
+    it("maps missing cover_image_url to null", () => {
+        const result = mapLocation({
+            id: "abc",
+            translations: [],
+        });
+        expect(result.coverImageUrl).toBeNull();
     });
 
     it("maps create and update inputs to API payloads", () => {

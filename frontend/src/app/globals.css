@@ -61,7 +61,7 @@
 }
 
 :root {
-    --radius: 0.625rem;
+    --radius: 0;
     --background: #f0ebe0;
     --foreground: #231f1a;
     --card: #f0ebe0;
@@ -135,6 +135,9 @@
     }
     body {
         @apply bg-background text-foreground;
+    }
+    button {
+        cursor: pointer;
     }
 }
 

@@ -68,16 +68,44 @@ impl<'a> EventRepo<'a> {
         Ok(event.insert(self.db).await?)
     }
 
-    pub async fn update(&self, event: Event) -> Result<Event, DatabaseError> {
-        Ok(event.update_all_fields(self.db).await?)
-    }
-
     pub async fn by_source_id(&self, source_id: i32) -> Result<Option<Event>, DatabaseError> {
         Ok(Event::select()
             .where_("source_id = $1")
             .bind(source_id)
             .fetch_optional(self.db)
             .await?)
+    }
+
+    pub async fn upsert_by_source_id(&self, event: EventCreate) -> Result<Event, DatabaseError> {
+        let Some(source_id) = event.source_id else {
+            return self.insert(event).await;
+        };
+
+        match self.by_source_id(source_id).await? {
+            Some(existing) => Ok(Event {
+                id: existing.id,
+                source_id: event.source_id,
+                created_at: event.created_at,
+                updated_at: event.updated_at,
+                starts_at: event.starts_at,
+                ends_at: event.ends_at,
+                intermission_at: event.intermission_at,
+                doors_at: event.doors_at,
+                vendor_id: event.vendor_id,
+                box_office_id: event.box_office_id,
+                uitdatabank_id: event.uitdatabank_id,
+                max_tickets_per_order: event.max_tickets_per_order,
+                production_id: event.production_id,
+                status: event.status,
+            }
+            .update_all_fields(self.db)
+            .await?),
+            None => self.insert(event).await,
+        }
+    }
+
+    pub async fn update(&self, event: Event) -> Result<Event, DatabaseError> {
+        Ok(event.update_all_fields(self.db).await?)
     }
 
     pub async fn delete(&self, id: Uuid) -> Result<(), DatabaseError> {

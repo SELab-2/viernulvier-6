@@ -290,6 +290,58 @@ async fn delete_not_found(db: PgPool) {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
+#[sqlx::test(fixtures("locations", "media", "entity_media_location_cover"))]
+#[test_log::test]
+async fn get_one_location_returns_cover_image_url(db: PgPool) {
+    let app = TestRouter::new(db);
+    let id = Uuid::from_str("10000000-0000-0000-0000-000000000001").unwrap();
+
+    let response = app.get(&format!("/locations/{id}")).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let payload: LocationPayload = response.into_struct().await;
+
+    let url = payload
+        .cover_image_url
+        .expect("cover_image_url should be set");
+    assert!(
+        url.ends_with("/media/production/1001/media/cover.jpg"),
+        "unexpected URL: {url}"
+    );
+}
+
+#[sqlx::test(fixtures("locations"))]
+#[test_log::test]
+async fn get_one_location_without_cover_returns_null(db: PgPool) {
+    let app = TestRouter::new(db);
+    let id = Uuid::from_str("10000000-0000-0000-0000-000000000001").unwrap();
+    let response = app.get(&format!("/locations/{id}")).await;
+    let payload: LocationPayload = response.into_struct().await;
+    assert!(payload.cover_image_url.is_none());
+}
+
+#[sqlx::test(fixtures("locations", "media", "entity_media_location_cover"))]
+#[test_log::test]
+async fn get_all_locations_returns_cover_image_urls(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/locations").await;
+    let data: PaginatedResponse<LocationPayload> = response.into_struct().await;
+    let with_cover = data.data.iter().find(|l| l.cover_image_url.is_some());
+    assert!(
+        with_cover.is_some(),
+        "at least one location should have a resolved cover URL"
+    );
+}
+
+#[sqlx::test(fixtures("locations", "media", "entity_media_location_cover"))]
+#[test_log::test]
+async fn get_location_by_slug_returns_cover_image_url(db: PgPool) {
+    let app = TestRouter::new(db);
+    // location id 10000000-0000-0000-0000-000000000001 has slug 'de-vooruit'
+    let response = app.get("/locations/slug/de-vooruit").await;
+    let payload: LocationPayload = response.into_struct().await;
+    assert!(payload.cover_image_url.is_some());
+}
+
 fn mock_post_payload() -> LocationPostPayload {
     serde_json::from_value(json!({
         "name": "Test Locatie",

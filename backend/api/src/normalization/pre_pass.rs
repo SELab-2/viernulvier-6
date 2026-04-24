@@ -6,11 +6,7 @@ pub fn strip_html(input: &str) -> String {
         return String::new();
     }
     let fragment = scraper::Html::parse_fragment(input);
-    let text = fragment
-        .root_element()
-        .text()
-        .collect::<Vec<_>>()
-        .join(" ");
+    let text = fragment.root_element().text().collect::<Vec<_>>().join(" ");
     text.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 

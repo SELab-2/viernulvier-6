@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -19,84 +19,20 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useGetArtists } from "@/hooks/api/useArtists";
-import { useGetProductions } from "@/hooks/api/useProductions";
-import { useGetLocations } from "@/hooks/api/useLocations";
-import { useGetEvents } from "@/hooks/api/useEvents";
 import { useLinkMedia, useGetEntityMedia, useUnlinkMedia, useUploadMedia } from "@/hooks/api";
 import type { Media } from "@/types/models/media.types";
-import { Article, ArticleRelations, ArticleStatus } from "@/types/models/article.types";
+import { Article, ArticleStatus } from "@/types/models/article.types";
 import { statusStyles } from "@/components/cms/status-badge";
 import { cn } from "@/lib/utils";
 import { MediaPickerDialog } from "./media-picker-dialog";
 
-interface RelationMultiSelectProps {
-    label: string;
-    ids: string[];
-    options: { id: string; label: string }[];
-    onChange: (ids: string[]) => void;
-    emptyText: string;
-}
-
-function RelationMultiSelect({
-    label,
-    ids,
-    options,
-    onChange,
-    emptyText,
-}: RelationMultiSelectProps) {
-    const toggle = (id: string) => {
-        onChange(ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]);
-    };
-
-    return (
-        <div className="space-y-1">
-            <Label className="text-xs font-medium">{label}</Label>
-            <div className="max-h-40 space-y-1 overflow-y-auto rounded-md border p-2">
-                {options.length === 0 ? (
-                    <p className="text-muted-foreground text-xs">{emptyText}</p>
-                ) : (
-                    options.map((opt) => (
-                        <label
-                            key={opt.id}
-                            className="flex min-w-0 cursor-pointer items-center gap-2 text-xs"
-                        >
-                            <input
-                                type="checkbox"
-                                checked={ids.includes(opt.id)}
-                                onChange={() => toggle(opt.id)}
-                                className="h-3 w-3"
-                            />
-                            <span className="truncate">{opt.label}</span>
-                        </label>
-                    ))
-                )}
-            </div>
-        </div>
-    );
-}
-
 interface ArticleMetadataPanelProps {
     article: Article;
-    relations: ArticleRelations;
     onArticleChange: (patch: Partial<Article>) => void;
-    onRelationsChange: (relations: ArticleRelations) => void;
 }
 
-export function ArticleMetadataPanel({
-    article,
-    relations,
-    onArticleChange,
-    onRelationsChange,
-}: ArticleMetadataPanelProps) {
+export function ArticleMetadataPanel({ article, onArticleChange }: ArticleMetadataPanelProps) {
     const t = useTranslations("Cms.Articles");
-    const { data: productionsResult } = useGetProductions();
-    const { data: locationsResult } = useGetLocations();
-    const { data: eventsResult } = useGetEvents();
-    const { data: artists = [] } = useGetArtists();
-    const productions = useMemo(() => productionsResult?.data ?? [], [productionsResult?.data]);
-    const locations = useMemo(() => locationsResult?.data ?? [], [locationsResult?.data]);
-    const events = useMemo(() => eventsResult?.data ?? [], [eventsResult?.data]);
 
     const [pickerOpen, setPickerOpen] = useState(false);
     const { data: coverMedia = [] } = useGetEntityMedia("article", article.id, {
@@ -334,54 +270,6 @@ export function ArticleMetadataPanel({
                     onSelect={handlePickerSelect}
                 />
             )}
-
-            {/* Related productions */}
-            <RelationMultiSelect
-                label={t("relatedProductions")}
-                ids={relations.productionIds}
-                options={productions.map((p) => ({
-                    id: p.id,
-                    label: p.translations.find((t) => t.languageCode === "nl")?.title ?? p.slug,
-                }))}
-                onChange={(productionIds) => onRelationsChange({ ...relations, productionIds })}
-                emptyText={t("noOptionsAvailable")}
-            />
-
-            {/* Related artists */}
-            <RelationMultiSelect
-                label={t("relatedArtists")}
-                ids={relations.artistIds}
-                options={artists.map((a) => ({
-                    id: a.id,
-                    label: a.name,
-                }))}
-                onChange={(artistIds) => onRelationsChange({ ...relations, artistIds })}
-                emptyText={t("noOptionsAvailable")}
-            />
-
-            {/* Related locations */}
-            <RelationMultiSelect
-                label={t("relatedLocations")}
-                ids={relations.locationIds}
-                options={locations.map((l) => ({
-                    id: l.id,
-                    label: l.name ?? l.id,
-                }))}
-                onChange={(locationIds) => onRelationsChange({ ...relations, locationIds })}
-                emptyText={t("noOptionsAvailable")}
-            />
-
-            {/* Related events */}
-            <RelationMultiSelect
-                label={t("relatedEvents")}
-                ids={relations.eventIds}
-                options={events.map((e) => ({
-                    id: e.id,
-                    label: e.startsAt ?? t("untitledEvent"),
-                }))}
-                onChange={(eventIds) => onRelationsChange({ ...relations, eventIds })}
-                emptyText={t("noOptionsAvailable")}
-            />
         </>
     );
 }

@@ -106,7 +106,7 @@ export const mapEvent = (response: EventResponse): Event => {
         id: response.id,
         sourceId: toNullable(response.source_id),
         createdAt: response.created_at,
-        updatedAt: response.updated_at,
+        updatedAt: response.updated_at ?? response.created_at,
         startsAt: response.starts_at,
         endsAt: toNullable(response.ends_at),
         intermissionAt: toNullable(response.intermission_at),

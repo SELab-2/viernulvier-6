@@ -31,6 +31,7 @@ export const mapArticle = (response: ArticleResponse): Article => ({
     publishedAt: toNullable(response.published_at),
     subjectPeriodStart: toNullable(response.subject_period_start),
     subjectPeriodEnd: toNullable(response.subject_period_end),
+    coverImageUrl: toNullable(response.cover_image_url),
 });
 
 export const mapArticleListItem = (response: ArticleListResponse): ArticleListItem => ({
@@ -42,6 +43,7 @@ export const mapArticleListItem = (response: ArticleListResponse): ArticleListIt
     publishedAt: toNullable(response.published_at),
     subjectPeriodStart: toNullable(response.subject_period_start),
     subjectPeriodEnd: toNullable(response.subject_period_end),
+    coverImageUrl: toNullable(response.cover_image_url),
 });
 
 export const mapArticleListItems = (responses: ArticleListResponse[]): ArticleListItem[] =>

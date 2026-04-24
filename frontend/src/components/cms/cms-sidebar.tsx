@@ -12,6 +12,7 @@ import {
     Database,
     FileUp,
     FolderArchive,
+    TriangleAlert,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -31,6 +32,12 @@ const navItems = [
 const utilityItems = [
     { key: "ingest", href: "/cms/ingest", icon: Database, editionKey: "edition5" },
     { key: "import", href: "/cms/import", icon: FileUp, editionKey: "edition6" },
+    {
+        key: "importErrors",
+        href: "/cms/import-errors",
+        icon: TriangleAlert,
+        editionKey: "edition6",
+    },
 ];
 
 const ENTITY_TYPE_MAP: Record<string, EntityType | null> = {
