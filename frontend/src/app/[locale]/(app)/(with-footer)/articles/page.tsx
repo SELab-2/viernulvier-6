@@ -99,7 +99,7 @@ export default function ArticlesPage() {
                 {!isLoading && articles && articles.length > 0 && (
                     <>
                         <div className="text-muted-foreground mb-4 flex items-center gap-2.5 font-mono text-[9px] font-medium tracking-[2px] uppercase">
-                            {t("listLabel", { count: articles.length })}
+                            {t("articles")}
                             <span className="bg-muted/40 h-px flex-1" />
                         </div>
                         <div className="border-muted/35 grid grid-cols-1 border-t sm:grid-cols-2 lg:grid-cols-3">
