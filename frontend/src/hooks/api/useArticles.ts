@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api-client";
 import {
@@ -6,6 +6,7 @@ import {
     mapArticleListItems,
     mapArticleRelations,
     mapCreateArticleInput,
+    mapPaginatedArticlesResult,
     mapUpdateArticleInput,
     mapUpdateArticleRelationsInput,
 } from "@/mappers/article.mapper";
@@ -13,7 +14,9 @@ import {
     ArticleListResponse,
     ArticleRelationsResponse,
     ArticleResponse,
+    GetAllArticlesResponse,
 } from "@/types/api/article.api.types";
+import { PaginatedResult, SearchPaginationParams } from "@/types/api/api.types";
 import {
     Article,
     ArticleCreateInput,
@@ -24,9 +27,11 @@ import {
 
 import { queryKeys } from "./query-keys";
 
-const fetchArticlesPublished = async (): Promise<ArticleListItem[]> => {
-    const { data } = await api.get<ArticleListResponse[]>("/articles");
-    return mapArticleListItems(data);
+const fetchArticlesPublished = async (
+    params?: SearchPaginationParams
+): Promise<PaginatedResult<ArticleListItem>> => {
+    const { data } = await api.get<GetAllArticlesResponse>("/articles", { params });
+    return mapPaginatedArticlesResult(data);
 };
 
 const fetchArticleBySlug = async (slug: string): Promise<Article> => {
@@ -49,10 +54,25 @@ const fetchArticleRelations = async (id: string): Promise<ArticleRelations> => {
     return mapArticleRelations(data);
 };
 
-export const useGetArticles = () => {
+export const useGetArticles = (options?: {
+    enabled?: boolean;
+    params?: SearchPaginationParams;
+}) => {
     return useQuery({
-        queryKey: queryKeys.articles.published,
-        queryFn: fetchArticlesPublished,
+        queryKey: queryKeys.articles.all(options?.params),
+        queryFn: () => fetchArticlesPublished(options?.params),
+        ...options,
+    });
+};
+
+export const useGetInfiniteArticles = (options?: { enabled?: boolean }) => {
+    return useInfiniteQuery({
+        queryKey: ["articles", "infinite"],
+        queryFn: async ({ pageParam }) =>
+            fetchArticlesPublished(pageParam ? { cursor: pageParam } : undefined),
+        getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+        initialPageParam: null as string | null,
+        ...options,
     });
 };
 
