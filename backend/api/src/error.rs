@@ -77,6 +77,7 @@ pub enum ImportField {
     SeatSelection,
     SourceId,
     SourceUri,
+    Status,
 }
 
 impl ImportField {
@@ -98,6 +99,7 @@ impl ImportField {
             Self::SeatSelection => "seat_selection",
             Self::SourceId => "source_id",
             Self::SourceUri => "source_uri",
+            Self::Status => "status",
         }
     }
 }
@@ -121,6 +123,7 @@ impl From<&'static str> for ImportField {
             "seat_selection" => Self::SeatSelection,
             "source_id" => Self::SourceId,
             "source_uri" => Self::SourceUri,
+            "status" => Self::Status,
             other => panic!("unknown import field: {other}"),
         }
     }

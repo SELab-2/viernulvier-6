@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::pin::pin;
 use std::time::Duration;
 
@@ -22,6 +23,7 @@ use crate::models::{
     collection::ApiCollection,
     event::ApiEvent,
     event_price::ApiEventPrice,
+    event_status::ApiEventStatus,
     hall::ApiHall,
     location::ApiLocation,
     media::{ApiMediaGallery, ApiMediaItem},
@@ -41,6 +43,7 @@ pub mod models {
     pub mod collection;
     pub mod event;
     pub mod event_price;
+    pub mod event_status;
     pub mod genre;
     pub mod hall;
     pub mod localized_text;
@@ -96,7 +99,7 @@ impl ApiImporter {
             .await
             .unwrap_or_else(|e| {
                 warn!("error when fetching last api update timestamp: {e}. updating all.");
-                "2000-01-01T00:00:00Z".into()
+                "1900-01-01T00:00:00Z".into()
             })
     }
 
@@ -446,6 +449,22 @@ impl ApiImporter {
     ) -> Result<(), reqwest::Error> {
         info!("Events: start updating");
 
+        // Resolve status IRIs to human-readable strings. We drain the whole
+        // /events/statuses collection once and keep an in-memory @id -> display
+        // lookup for the rest of this import run. Without this the status
+        // column ends up storing the raw IRI like "/api/v1/events/statuses/1".
+        let mut status_map: HashMap<String, String> = HashMap::new();
+        let mut statuses = pin!(
+            self.paginated_collection::<ApiEventStatus>("/events/statuses", "1900-01-01T00:00:00Z")
+        );
+        while let Some(batch_result) = statuses.next().await {
+            for s in batch_result? {
+                let display = s.display();
+                status_map.insert(s.id, display);
+            }
+        }
+        info!("Events: loaded {} status entries", status_map.len());
+
         let mut stream = pin!(self.paginated_collection::<ApiEvent>("/events", updated_after));
 
         while let Some(batch_result) = stream.next().await {
@@ -455,7 +474,7 @@ impl ApiImporter {
             let mut resolved_source_ids: Vec<i32> = Vec::new();
             for event in events {
                 let event_source_id = extract_source_id(&event.id);
-                match event.upsert_import(&self.db).await {
+                match event.upsert_import(&self.db, &status_map).await {
                     Ok(conversion) => {
                         if let Some(source_id) = conversion.value {
                             resolved_source_ids.push(source_id);
