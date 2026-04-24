@@ -16,7 +16,7 @@ import {
     ArticleResponse,
     GetAllArticlesResponse,
 } from "@/types/api/article.api.types";
-import { PaginatedResult, SearchPaginationParams } from "@/types/api/api.types";
+import { PaginatedResult, PaginationParams, SearchPaginationParams } from "@/types/api/api.types";
 import {
     Article,
     ArticleCreateInput,
@@ -54,20 +54,12 @@ const fetchArticleRelations = async (id: string): Promise<ArticleRelations> => {
     return mapArticleRelations(data);
 };
 
-export const useGetArticles = (options?: {
+export const useGetInfiniteArticles = (options?: {
     enabled?: boolean;
-    params?: SearchPaginationParams;
+    pagination?: PaginationParams;
 }) => {
-    return useQuery({
-        queryKey: queryKeys.articles.all(options?.params),
-        queryFn: () => fetchArticlesPublished(options?.params),
-        ...options,
-    });
-};
-
-export const useGetInfiniteArticles = (options?: { enabled?: boolean }) => {
     return useInfiniteQuery({
-        queryKey: ["articles", "infinite"],
+        queryKey: queryKeys.articles.infinite(options?.pagination),
         queryFn: async ({ pageParam }) =>
             fetchArticlesPublished(pageParam ? { cursor: pageParam } : undefined),
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
@@ -86,7 +78,7 @@ export const useGetArticleBySlug = (slug: string, options?: { enabled?: boolean 
 
 export const useGetArticlesCms = () => {
     return useQuery({
-        queryKey: queryKeys.articles.all,
+        queryKey: queryKeys.articles.list(),
         queryFn: fetchArticlesCms,
     });
 };
