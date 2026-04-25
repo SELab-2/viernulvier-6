@@ -5,7 +5,8 @@ import { Media } from "@/types/models/media.types";
 import { MediaIngestCard } from "./media-ingest-card";
 
 const SM_BREAKPOINT = 640;
-const LG_BREAKPOINT = 1024;
+const MD_BREAKPOINT = 1024;
+const LG_BREAKPOINT = 1440;
 
 interface MediaMasonryGridProps {
     items: Media[];
@@ -27,7 +28,7 @@ function splitIntoColumns<T>(items: T[], cols: number): T[][] {
 
 function useColumnCount() {
     const [width, setWidth] = useState(() =>
-        typeof window !== "undefined" ? window.innerWidth : LG_BREAKPOINT
+        typeof window !== "undefined" ? window.innerWidth : MD_BREAKPOINT
     );
 
     useEffect(() => {
@@ -37,19 +38,20 @@ function useColumnCount() {
         return () => window.removeEventListener("resize", onResize);
     }, []);
 
-    if (width < SM_BREAKPOINT) return 1;
-    if (width < LG_BREAKPOINT) return 2;
-    return 3;
+    if (width < SM_BREAKPOINT) return 2;
+    if (width < MD_BREAKPOINT) return 3;
+    if (width < LG_BREAKPOINT) return 4;
+    return 5;
 }
 
 export function MediaMasonryGrid({ items, onView, onEdit, onDelete }: MediaMasonryGridProps) {
     const columnCount = useColumnCount();
-    const columns = columnCount === 1 ? [items] : splitIntoColumns(items, columnCount);
+    const columns = splitIntoColumns(items, columnCount);
 
     return (
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-2">
             {columns.map((col, ci) => (
-                <div key={ci} className="flex flex-1 flex-col gap-4">
+                <div key={ci} className="flex flex-1 flex-col gap-2">
                     {col.map((media) => (
                         <MediaIngestCard
                             key={media.id}
