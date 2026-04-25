@@ -15,6 +15,7 @@ pub struct StatsPayload {
     pub article_count: i64,
     pub artist_count: i64,
     pub collection_count: i64,
+    pub media_count: i64,
 }
 
 impl StatsPayload {
@@ -27,6 +28,7 @@ impl StatsPayload {
             article_count,
             artist_count,
             collection_count,
+            media_count,
         ) = tokio::try_join!(
             async { db.events().bounds().await },
             async { db.events().count().await },
@@ -35,6 +37,7 @@ impl StatsPayload {
             async { db.articles().count_published().await },
             async { db.artists().count().await },
             async { db.collections().count().await },
+            async { db.media().count().await },
         )?;
         Ok(Self {
             oldest_event,
@@ -45,6 +48,7 @@ impl StatsPayload {
             article_count,
             artist_count,
             collection_count,
+            media_count,
         })
     }
 }
