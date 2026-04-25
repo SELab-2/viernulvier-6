@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
 
 import { DataTable } from "../data-table";
+import { ActionBar } from "../action-bar";
 import { useGetImportErrors } from "@/hooks/api/useImportErrors";
 import { ImportErrorResponse } from "@/types/api/import-error.api.types";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ export function ImportErrorsTable() {
     const [statusFilter, setStatusFilter] = useState<StatusFilter>("unresolved");
     const [cursorHistory, setCursorHistory] = useState<(string | null)[]>([null]);
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
+    const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
     const currentCursor = cursorHistory[currentPageIndex];
 
     const { data, isLoading } = useGetImportErrors({
@@ -46,10 +48,9 @@ export function ImportErrorsTable() {
     const handleStatusChange = (next: string) => {
         if (next !== "unresolved" && next !== "resolved") return;
         setStatusFilter(next);
-        // Reset pagination — cursors are scoped to a specific filter on the
-        // backend, so we cannot reuse them when the resolved filter flips.
         setCursorHistory([null]);
         setCurrentPageIndex(0);
+        setRowSelection({});
     };
 
     const columns = useMemo<ColumnDef<ImportErrorResponse>[]>(
@@ -108,6 +109,8 @@ export function ImportErrorsTable() {
         [t]
     );
 
+    const selectedCount = Object.values(rowSelection).filter(Boolean).length;
+
     return (
         <div className="space-y-4 p-4">
             <div className="space-y-1">
@@ -122,12 +125,28 @@ export function ImportErrorsTable() {
                 </TabsList>
             </Tabs>
 
-            <DataTable columns={columns} data={data?.data ?? []} loading={isLoading} />
+            <ActionBar
+                entityCounts={[{ countKey: "importErrorsSelected", count: selectedCount }]}
+                actions={[]}
+                onClear={() => setRowSelection({})}
+            />
+
+            <DataTable
+                columns={columns}
+                data={data?.data ?? []}
+                loading={isLoading}
+                rowSelection={rowSelection}
+                onRowSelectionChange={setRowSelection}
+                getRowId={(row) => row.id}
+            />
 
             <div className="flex justify-end gap-2">
                 <Button
                     variant="outline"
-                    onClick={() => setCurrentPageIndex((current) => Math.max(0, current - 1))}
+                    onClick={() => {
+                        setCurrentPageIndex((current) => Math.max(0, current - 1));
+                        setRowSelection({});
+                    }}
                     disabled={currentPageIndex === 0 || isLoading}
                 >
                     {t("previousPage")}
@@ -145,6 +164,7 @@ export function ImportErrorsTable() {
                             return [...current.slice(0, currentPageIndex + 1), data.nextCursor];
                         });
                         setCurrentPageIndex((current) => current + 1);
+                        setRowSelection({});
                     }}
                     disabled={data?.nextCursor == null || isLoading}
                 >

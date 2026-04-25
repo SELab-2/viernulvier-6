@@ -254,6 +254,9 @@
             "eventsSelected": "{count, plural, one {# event} other {# events}} selected",
             "locationsSelected": "{count, plural, one {# location} other {# locations}} selected",
             "hallsSelected": "{count, plural, one {# hall} other {# halls}} selected",
+            "articlesSelected": "{count, plural, one {# article} other {# articles}} selected",
+            "collectionsSelected": "{count, plural, one {# collection} other {# collections}} selected",
+            "importErrorsSelected": "{count, plural, one {# error} other {# errors}} selected",
             "bulkEdit": "Bulk edit",
             "delete": "Delete"
         },
