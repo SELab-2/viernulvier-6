@@ -1,4 +1,10 @@
-import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import {
+    useMutation,
+    useQuery,
+    useQueryClient,
+    useInfiniteQuery,
+    useQueries,
+} from "@tanstack/react-query";
 
 import { api } from "@/lib/api-client";
 import {
@@ -61,6 +67,16 @@ export const useGetProduction = (id: string, options?: { enabled?: boolean }) =>
         queryKey: queryKeys.productions.detail(id),
         queryFn: () => fetchProductionById(id),
         enabled: Boolean(id) && (options?.enabled ?? true),
+    });
+};
+
+export const useGetProductionsByIds = (ids: string[]) => {
+    return useQueries({
+        queries: ids.map((id) => ({
+            queryKey: queryKeys.productions.detail(id),
+            queryFn: () => fetchProductionById(id),
+            enabled: Boolean(id),
+        })),
     });
 };
 

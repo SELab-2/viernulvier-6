@@ -208,7 +208,7 @@ export function ImageSpotlight({
                         </>
                     )}
 
-                    <figure className="relative flex max-h-[75vh] min-h-0 w-full max-w-[1400px] flex-1 items-center justify-center">
+                    <figure className="relative flex max-h-[75vh] min-h-0 w-full max-w-7xl flex-1 items-center justify-center">
                         <Image
                             src={resolved.src}
                             alt={resolved.alt}
@@ -220,7 +220,7 @@ export function ImageSpotlight({
                         />
                     </figure>
 
-                    <div className="border-foreground/15 w-full max-w-[1400px] border-t pt-3">
+                    <div className="border-foreground/15 w-full max-w-7xl border-t pt-3">
                         <div
                             className={cn(
                                 "flex flex-wrap items-baseline gap-x-3 gap-y-1",

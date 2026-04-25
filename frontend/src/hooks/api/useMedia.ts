@@ -31,6 +31,19 @@ import {
 
 import { queryKeys } from "./query-keys";
 
+// ── Constants ────────────────────────────────────────────────────────
+
+/** Maps entity type strings to the query-key prefix that covers both the list
+ *  and detail queries for that entity.  Invalidating by prefix is enough — TanStack
+ *  Query matches all keys that start with the prefix, so detail queries are included. */
+const ENTITY_LIST_PREFIXES: Record<string, readonly string[]> = {
+    collection: ["collections"],
+    location: ["locations"],
+    article: ["articles"],
+    production: ["productions"],
+    artist: ["artists"],
+};
+
 // ── Fetch functions ──────────────────────────────────────────────────
 
 const fetchEntityMedia = async (
@@ -185,6 +198,10 @@ export const useUnlinkMedia = () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.media.entity(variables.entityType, variables.entityId),
             });
+            const entityListPrefix = ENTITY_LIST_PREFIXES[variables.entityType];
+            if (entityListPrefix) {
+                queryClient.invalidateQueries({ queryKey: entityListPrefix });
+            }
         },
     });
 };
@@ -213,6 +230,10 @@ export const useLinkMedia = () => {
                 queryKey: queryKeys.media.entity(variables.entityType, variables.entityId),
             });
             queryClient.invalidateQueries({ queryKey: queryKeys.media.all() });
+            const entityListPrefix = ENTITY_LIST_PREFIXES[variables.entityType];
+            if (entityListPrefix) {
+                queryClient.invalidateQueries({ queryKey: entityListPrefix });
+            }
         },
     });
 };
@@ -251,6 +272,10 @@ export const useClearCoverMedia = () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.media.entity(variables.entityType, variables.entityId),
             });
+            const entityListPrefix = ENTITY_LIST_PREFIXES[variables.entityType];
+            if (entityListPrefix) {
+                queryClient.invalidateQueries({ queryKey: entityListPrefix });
+            }
         },
     });
 };

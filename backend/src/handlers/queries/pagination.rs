@@ -1,7 +1,7 @@
 use serde::{Deserialize, Deserializer};
-use utoipa::IntoParams;
+use utoipa::{IntoParams, ToSchema};
 
-#[derive(Deserialize, IntoParams)]
+#[derive(Deserialize, IntoParams, ToSchema)]
 pub struct PaginationQuery {
     pub cursor: Option<String>,
     #[serde(

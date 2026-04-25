@@ -1,36 +1,98 @@
-use database::{Database, error::DatabaseError};
-use tracing::warn;
+use database::Database;
 
-use crate::models::event::ApiEvent;
+use crate::{
+    error::{
+        ImportEntity, ImportField, ImportItemError, ImportItemWarning, ImportRelation,
+        ItemConversion,
+    },
+    helper::extract_source_id,
+    models::event::ApiEvent,
+};
 
 impl ApiEvent {
-    pub async fn insert(self, db: &Database) -> Result<(), DatabaseError> {
-        let Some(prod_source_id) = self.production_source_id() else {
-            warn!("Events: event has no production source_id, skipping");
-            return Ok(());
+    pub async fn upsert_import(
+        self,
+        db: &Database,
+    ) -> Result<ItemConversion<Option<i32>>, ImportItemError> {
+        let event_source_id = extract_source_id(&self.id);
+        let mut warnings = Vec::new();
+
+        let Some(production_source_id) = self.production_source_id() else {
+            return Err(ImportItemError::invalid_reference(
+                ImportEntity::Event,
+                ImportField::Production,
+                &self.production.id,
+            ));
         };
 
-        let Some(production) = db.productions().by_source_id(prod_source_id).await? else {
-            warn!("Events: production source_id {prod_source_id} not found in db, skipping");
-            return Ok(());
-        };
+        let production = db
+            .productions()
+            .by_source_id(production_source_id)
+            .await
+            .map_err(|err| {
+                ImportItemError::database_lookup(
+                    ImportEntity::Event,
+                    ImportRelation::Production,
+                    production_source_id,
+                    err,
+                )
+            })?
+            .ok_or_else(|| {
+                ImportItemError::missing_relation(
+                    ImportEntity::Event,
+                    ImportRelation::Production,
+                    production_source_id,
+                )
+            })?;
 
         let hall_uuid = if let Some(hall_source_id) = self.hall_source_id() {
-            let hall_opt = db.halls().by_source_id(hall_source_id).await?;
-            if hall_opt.is_none() {
-                warn!("Events: hall source_id {hall_source_id} not found in db");
+            match db.halls().by_source_id(hall_source_id).await {
+                Ok(hall_opt) => {
+                    if hall_opt.is_none() {
+                        warnings.push(ImportItemWarning::missing_optional_relation(
+                            ImportEntity::Event,
+                            ImportRelation::Hall,
+                            hall_source_id,
+                        ));
+                    }
+
+                    hall_opt.map(|hall| hall.id)
+                }
+                Err(err) => {
+                    return Err(ImportItemError::database_lookup(
+                        ImportEntity::Event,
+                        ImportRelation::Hall,
+                        hall_source_id,
+                        err,
+                    ));
+                }
             }
-            hall_opt.map(|h| h.id)
         } else {
             None
         };
 
-        let event_create = self.to_create(production.production.id);
-        let event = db.events().insert(event_create).await?;
+        let event_conversion = self.to_create(production.production.id)?;
+        warnings.extend(event_conversion.warnings);
 
-        if let Some(hall_id) = hall_uuid {
-            db.events().sync_halls(event.id, vec![hall_id]).await?;
-        }
-        Ok(())
+        let event = db
+            .events()
+            .upsert_by_source_id(event_conversion.value)
+            .await
+            .map_err(|err| {
+                ImportItemError::database_write(ImportEntity::Event, event_source_id, err)
+            })?;
+
+        let hall_ids = hall_uuid.into_iter().collect::<Vec<_>>();
+        db.events()
+            .sync_halls(event.id, hall_ids)
+            .await
+            .map_err(|err| {
+                ImportItemError::database_write(ImportEntity::Event, event_source_id, err)
+            })?;
+
+        Ok(ItemConversion {
+            value: event_source_id,
+            warnings,
+        })
     }
 }

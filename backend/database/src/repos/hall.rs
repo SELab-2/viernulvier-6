@@ -147,6 +147,30 @@ impl<'a> HallRepo<'a> {
         .await?)
     }
 
+    pub async fn upsert_by_source_id(&self, hall: HallCreate) -> Result<Hall, DatabaseError> {
+        let Some(source_id) = hall.source_id else {
+            return self.insert(hall).await;
+        };
+
+        match self.by_source_id(source_id).await? {
+            Some(existing) => Ok(Hall {
+                id: existing.id,
+                source_id: hall.source_id,
+                slug: hall.slug,
+                vendor_id: hall.vendor_id,
+                box_office_id: hall.box_office_id,
+                seat_selection: hall.seat_selection,
+                open_seating: hall.open_seating,
+                name: hall.name,
+                remark: hall.remark,
+                space_id: hall.space_id,
+            }
+            .update_all_fields(self.db)
+            .await?),
+            None => self.insert(hall).await,
+        }
+    }
+
     pub async fn update(&self, hall: Hall) -> Result<Hall, DatabaseError> {
         Ok(hall.update_all_fields(self.db).await?)
     }

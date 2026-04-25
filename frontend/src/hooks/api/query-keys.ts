@@ -1,11 +1,10 @@
 import { PaginationParams, SearchPaginationParams } from "@/types/api/api.types";
 import { EntityMediaParams, MediaSearchParams } from "@/types/models/media.types";
 
-const buildQueryKey = (
-    base: readonly string[],
-    params?: PaginationParams | SearchPaginationParams
-): readonly unknown[] => {
-    if (!params) return base;
+type QueryKeyParams = PaginationParams | SearchPaginationParams | Record<string, unknown>;
+
+const buildQueryKey = (base: readonly string[], params?: QueryKeyParams): readonly unknown[] => {
+    if (!params || Object.keys(params).length === 0) return base;
     return [...base, params];
 };
 
@@ -13,6 +12,10 @@ export const queryKeys = {
     user: ["user"] as const,
     version: ["version"] as const,
     stats: ["stats"] as const,
+    importErrors: {
+        all: (pagination?: PaginationParams, resolved?: boolean) =>
+            buildQueryKey(["import-errors"], { ...pagination, resolved: resolved ?? false }),
+    },
     locations: {
         all: (pagination?: PaginationParams) => buildQueryKey(["locations"], pagination),
         detail: (id: string) => ["locations", id] as const,
@@ -26,6 +29,7 @@ export const queryKeys = {
     collections: {
         all: ["collections"] as const,
         detail: (id: string) => ["collections", id] as const,
+        bySlug: (slug: string) => ["collections", "slug", slug] as const,
     },
     events: {
         all: (pagination?: PaginationParams) => buildQueryKey(["events"], pagination),
@@ -41,6 +45,8 @@ export const queryKeys = {
     },
     artists: {
         all: ["artists"] as const,
+        detail: (id: string) => ["artists", id] as const,
+        productions: (id: string) => ["artists", id, "productions"] as const,
     },
     articles: {
         all: ["articles"] as const,

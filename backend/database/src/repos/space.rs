@@ -57,6 +57,21 @@ impl<'a> SpaceRepo<'a> {
         .await?)
     }
 
+    pub async fn upsert_by_source_id(&self, space: SpaceCreate) -> Result<Space, DatabaseError> {
+        let Some(source_id) = space.source_id else {
+            return self.insert(space).await;
+        };
+
+        match self.by_source_id(source_id).await? {
+            Some(mut existing) => {
+                existing.name_nl = space.name_nl;
+                existing.location_id = space.location_id;
+                self.update(existing).await
+            }
+            None => self.insert(space).await,
+        }
+    }
+
     pub async fn by_source_id(&self, source_id: i32) -> Result<Option<Space>, DatabaseError> {
         Ok(Space::select()
             .where_("source_id = $1")

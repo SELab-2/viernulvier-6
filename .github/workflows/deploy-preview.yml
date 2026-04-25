@@ -15,18 +15,6 @@ permissions:
   issues: write
 
 jobs:
-  run_backend_tests:
-    name: Backend tests
-    if: github.event.action != 'closed'
-    uses: ./.github/workflows/backend-tests.yml
-    secrets: inherit
-
-  run_frontend_tests:
-    name: Frontend tests
-    if: github.event.action != 'closed'
-    uses: ./.github/workflows/frontend-tests.yml
-    secrets: inherit
-
   preview:
     if: >-
       github.event.action != 'closed' &&
@@ -34,7 +22,6 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'preview')
     runs-on: kaya-sem-house
     environment: preview
-    needs: [run_backend_tests, run_frontend_tests]
 
     steps:
       # We should not edit perms of this, if this breaks SSH into server and delete manually and let actions rebuild
@@ -72,14 +59,16 @@ jobs:
           garage_s3_bucket: media-${{ github.event.pull_request.number }}
           jwt_secret: ${{ secrets.JWT_SECRET }}
           api_key_404: ${{ secrets.API_KEY_404 }}
+          admin_email: ${{ vars.PREVIEW_ADMIN_EMAIL }}
+          admin_password: ${{ secrets.PREVIEW_ADMIN_PASSWORD }}
 
       - name: Ensure Traefik network exists
         run: docker network inspect traefik >/dev/null 2>&1 || docker network create traefik
 
       - name: Ensure preview Traefik is running
         run: |
-          if [ -z "$(docker compose -f infra/traefik/docker-compose.yml ps -q traefik)" ]; then
-            docker compose -f infra/traefik/docker-compose.yml up -d
+          if [ -z "$(docker ps -q -f name=preview-traefik)" ]; then
+            docker compose -f infra/traefik/docker-compose.preview-traefik.yml up -d
           fi
 
       - name: Start preview stack
@@ -87,6 +76,13 @@ jobs:
           DOCKER_BUILDKIT: "1"
           COMPOSE_DOCKER_CLI_BUILD: "1"
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          # Expose CI context to Docker for Codecov - needed for codecov bundle analyzer
+          GITHUB_ACTIONS: "true"
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_HEAD_REF: ${{ github.head_ref }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
         run: |
           docker compose --env-file .env --env-file infra/preview/.env.preview \
             -f infra/preview/docker-compose.preview.yml up -d --build
@@ -171,6 +167,8 @@ jobs:
           garage_s3_bucket: media
           jwt_secret: ${{ secrets.JWT_SECRET }}
           api_key_404: ${{ secrets.API_KEY_404 }}
+          admin_email: ${{ vars.PREVIEW_ADMIN_EMAIL }}
+          admin_password: ${{ secrets.PREVIEW_ADMIN_PASSWORD }}
 
       - name: Cleanup preview stack
         run: |

@@ -1,3 +1,5 @@
+use uuid::Uuid;
+
 use sqlx::PgPool;
 
 use crate::{error::DatabaseError, models::artist::Artist};
@@ -11,13 +13,20 @@ impl<'a> ArtistRepo<'a> {
         Self { db }
     }
 
+    pub async fn by_id(&self, id: Uuid) -> Result<Artist, DatabaseError> {
+        sqlx::query_as::<_, Artist>("SELECT * FROM artists WHERE id = $1")
+            .bind(id)
+            .fetch_optional(self.db)
+            .await?
+            .ok_or(DatabaseError::NotFound)
+    }
+
     pub async fn all(&self) -> Result<Vec<Artist>, DatabaseError> {
-        Ok(sqlx::query_as!(
-            Artist,
-            "SELECT id, created_at, updated_at, slug, name FROM artists ORDER BY name ASC"
+        Ok(
+            sqlx::query_as::<_, Artist>("SELECT * FROM artists ORDER BY name ASC")
+                .fetch_all(self.db)
+                .await?,
         )
-        .fetch_all(self.db)
-        .await?)
     }
 
     pub async fn count(&self) -> Result<i64, DatabaseError> {

@@ -34,6 +34,13 @@ const fetchCollectionById = async (id: string): Promise<Collection> => {
     return mapCollection(data);
 };
 
+const fetchCollectionBySlug = async (slug: string): Promise<Collection> => {
+    const { data } = await api.get<CollectionResponse>(
+        `/collections/slug/${encodeURIComponent(slug)}`
+    );
+    return mapCollection(data);
+};
+
 export const useGetCollections = (options?: { enabled?: boolean }) => {
     return useQuery({
         queryKey: queryKeys.collections.all,
@@ -47,6 +54,14 @@ export const useGetCollection = (id: string, options?: { enabled?: boolean }) =>
         queryKey: queryKeys.collections.detail(id),
         queryFn: () => fetchCollectionById(id),
         enabled: Boolean(id) && (options?.enabled ?? true),
+    });
+};
+
+export const useGetCollectionBySlug = (slug: string, options?: { enabled?: boolean }) => {
+    return useQuery({
+        queryKey: queryKeys.collections.bySlug(slug),
+        queryFn: () => fetchCollectionBySlug(slug),
+        enabled: Boolean(slug) && (options?.enabled ?? true),
     });
 };
 

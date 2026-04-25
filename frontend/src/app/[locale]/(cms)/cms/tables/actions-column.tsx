@@ -79,10 +79,10 @@ function ActionsCellInner<TData extends Record<string, unknown>>({
                                 <DropdownMenuItem
                                     key={action.key}
                                     onClick={() => action.onClick(entity)}
-                                    className={
+                                    variant={
                                         action.variant === ActionVariant.Destructive
-                                            ? "text-destructive"
-                                            : undefined
+                                            ? "destructive"
+                                            : "default"
                                     }
                                 >
                                     {action.icon && <action.icon className="h-4 w-4" />}
