@@ -25,7 +25,7 @@ async fn get_all(db: PgPool) {
     assert_eq!(data[4].slug, "accessibility");
     assert_eq!(data[5].slug, "language");
 
-    assert_eq!(data[0].tags.len(), 13);
+    assert_eq!(data[0].tags.len(), 14);
     assert_eq!(data[1].tags.len(), 11);
     assert_eq!(data[2].tags.len(), 5);
     assert_eq!(data[3].tags.len(), 5);
@@ -63,7 +63,7 @@ async fn get_filtered_by_artist(db: PgPool) {
     let data: Vec<FacetResponse> = response.into_struct().await;
     assert_eq!(data.len(), 1);
     assert_eq!(data[0].slug, "discipline");
-    assert_eq!(data[0].tags.len(), 13);
+    assert_eq!(data[0].tags.len(), 14);
 }
 
 #[sqlx::test]
