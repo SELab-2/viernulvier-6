@@ -36,6 +36,26 @@ describe("event mapper", () => {
         expect(mapped.status).toBe("available");
     });
 
+    it("maps response with multiple hall_ids", () => {
+        const mapped = mapEvent({
+            id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+            created_at: "2025-01-01T00:00:00Z",
+            updated_at: "2025-01-01T00:00:00Z",
+            starts_at: "2025-06-15T20:00:00Z",
+            production_id: "4f327f95-3a64-4fc0-8f6a-a9dc44c01111",
+            status: "available",
+            hall_ids: [
+                "30000000-0000-0000-0000-000000000001",
+                "30000000-0000-0000-0000-000000000002",
+            ],
+        });
+
+        expect(mapped.hallIds).toEqual([
+            "30000000-0000-0000-0000-000000000001",
+            "30000000-0000-0000-0000-000000000002",
+        ]);
+    });
+
     it("maps create input to api payload", () => {
         const createPayload = mapCreateEventInput({
             startsAt: "2025-06-15T20:00:00Z",
@@ -46,6 +66,17 @@ describe("event mapper", () => {
         expect(createPayload.starts_at).toBe("2025-06-15T20:00:00Z");
         expect(createPayload.production_id).toBe("4f327f95-3a64-4fc0-8f6a-a9dc44c01111");
         expect(createPayload.status).toBe("available");
+    });
+
+    it("maps create input with hall_ids to api payload", () => {
+        const createPayload = mapCreateEventInput({
+            startsAt: "2025-06-15T20:00:00Z",
+            productionId: "4f327f95-3a64-4fc0-8f6a-a9dc44c01111",
+            status: "available",
+            hallIds: ["30000000-0000-0000-0000-000000000001"],
+        });
+
+        expect(createPayload.hall_ids).toEqual(["30000000-0000-0000-0000-000000000001"]);
     });
 
     it("maps update input to api payload with id and preserves createdAt", () => {
@@ -60,5 +91,24 @@ describe("event mapper", () => {
         expect(updatePayload.id).toBe("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
         expect(updatePayload.starts_at).toBe("2025-06-15T20:00:00Z");
         expect(updatePayload.created_at).toBe("2025-01-01T00:00:00Z");
+    });
+
+    it("maps update input with hall_ids to api payload", () => {
+        const updatePayload = mapUpdateEventInput({
+            id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+            startsAt: "2025-06-15T20:00:00Z",
+            productionId: "4f327f95-3a64-4fc0-8f6a-a9dc44c01111",
+            status: "available",
+            createdAt: "2025-01-01T00:00:00Z",
+            hallIds: [
+                "30000000-0000-0000-0000-000000000001",
+                "30000000-0000-0000-0000-000000000002",
+            ],
+        });
+
+        expect(updatePayload.hall_ids).toEqual([
+            "30000000-0000-0000-0000-000000000001",
+            "30000000-0000-0000-0000-000000000002",
+        ]);
     });
 });
