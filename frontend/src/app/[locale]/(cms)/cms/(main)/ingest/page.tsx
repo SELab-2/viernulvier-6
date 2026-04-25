@@ -17,6 +17,7 @@ import {
     useCleanupOrphanedMedia,
     useReconcileMediaStorage,
 } from "@/hooks/api/useMedia";
+import { useGetStats } from "@/hooks/api/useStats";
 import { toast } from "sonner";
 import { Media } from "@/types/models/media.types";
 import type { SpotlightItem } from "@/components/ui/image-spotlight";
@@ -157,9 +158,7 @@ export default function IngestPage() {
 
             {/* Toolbar */}
             <div className="mb-4 flex items-center justify-between">
-                <div className="text-muted-foreground font-mono text-[10px] tracking-[1.5px] uppercase">
-                    {mediaItems.length} {t("items")}
-                </div>
+                <IngestCount />
                 <div className="flex items-center gap-2">
                     <Button
                         variant="outline"
@@ -258,6 +257,17 @@ export default function IngestPage() {
                 onOpenChange={setSpotlightOpen}
                 eyebrow={t("mediaPreview")}
             />
+        </div>
+    );
+}
+
+function IngestCount() {
+    const t = useTranslations("Cms.Ingest");
+    const { data: stats } = useGetStats();
+    const count = stats?.media_count ?? 0;
+    return (
+        <div className="text-muted-foreground font-mono text-[10px] tracking-[1.5px] uppercase">
+            {count} {t("items")}
         </div>
     );
 }
