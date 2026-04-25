@@ -14,7 +14,6 @@ export const useGetStats = (options?: { enabled?: boolean }) => {
     return useQuery({
         queryKey: queryKeys.stats,
         queryFn: fetchStats,
-        staleTime: 60 * 60 * 1000,
         ...options,
     });
 };

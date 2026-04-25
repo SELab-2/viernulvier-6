@@ -447,8 +447,16 @@
         "Performers": {
             "title": "Uitvoerders",
             "subtitle": "Beheer artiesten",
-            "comingSoon": "Binnenkort beschikbaar",
-            "notAvailable": "Uitvoerders-API is nog niet beschikbaar. Geen gegevens om weer te geven."
+            "nameColumn": "Naam",
+            "slugColumn": "Slug",
+            "nameField": "Naam",
+            "slugField": "Slug",
+            "editPerformer": "Artiest bewerken",
+            "deleteConfirm": "Weet je zeker dat je \"{name}\" wilt verwijderen?",
+            "deleteSuccess": "Artiest verwijderd.",
+            "deleteError": "Verwijderen mislukt.",
+            "updateSuccess": "Artiest bijgewerkt.",
+            "updateError": "Bijwerken mislukt."
         },
         "Ingest": {
             "title": "Ingest",
