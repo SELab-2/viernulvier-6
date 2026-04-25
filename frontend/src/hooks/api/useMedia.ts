@@ -130,7 +130,8 @@ export const useGetInfiniteMedia = (
 ) => {
     return useInfiniteQuery({
         queryKey: queryKeys.media.infinite(params),
-        queryFn: async ({ pageParam }) => fetchAllMedia({ ...params, cursor: pageParam }),
+        queryFn: async ({ pageParam }) =>
+            fetchAllMedia(pageParam ? { ...params, cursor: pageParam } : params),
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
         initialPageParam: null as string | null,
         ...options,
