@@ -16,6 +16,8 @@ pub struct AppConfig {
     pub cookie_secure: bool,
     pub cookie_same_site: String,
     pub s3: Option<S3Config>,
+    pub admin_email: String,
+    pub admin_password: Option<String>,
     pub upload_secret: String,
     pub max_upload_size_bytes: i64,
 }
@@ -42,6 +44,13 @@ impl AppConfig {
         if api_key_404.is_none() {
             warn!("API_KEY_404 not set, API importer will be disabled");
         }
+
+        let admin_password = env::var("ADMIN_PASSWORD").ok();
+        if admin_password.is_none() {
+            warn!("ADMIN_PASSWORD not set, bootstrap admin will not be created");
+        }
+        let admin_email =
+            env::var("ADMIN_EMAIL").unwrap_or_else(|_| "admin@viernulvier.be".to_string());
 
         let s3 = match (
             env::var("S3_ENDPOINT"),
@@ -93,6 +102,8 @@ impl AppConfig {
                 .unwrap_or(true),
             cookie_same_site: env::var("COOKIE_SAME_SITE").unwrap_or_else(|_| "strict".to_string()),
             s3,
+            admin_email,
+            admin_password,
             upload_secret: env::var("UPLOAD_SECRET")
                 .unwrap_or_else(|_| get_env_var("JWT_SECRET").unwrap_or_default()),
             max_upload_size_bytes: env::var("MAX_UPLOAD_SIZE_MIB")

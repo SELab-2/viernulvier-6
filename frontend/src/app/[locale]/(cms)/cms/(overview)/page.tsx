@@ -11,9 +11,11 @@ import {
     Newspaper,
     Users,
     FolderArchive,
+    TriangleAlert,
 } from "lucide-react";
 
 import { SectionCard, SectionCardContent } from "@/components/cms/SectionCard";
+import { useGetStats } from "@/hooks/api/useStats";
 
 interface ContentSection {
     key: string;
@@ -58,7 +60,7 @@ const CONTENT_SECTIONS: ContentSection[] = [
         key: "collections",
         href: "/cms/collections",
         editionKey: "edition5",
-        span: "lg:col-span-6",
+        span: "lg:col-span-12",
         icon: FolderArchive,
     },
 ];
@@ -83,6 +85,12 @@ const UTILITY_SECTIONS: UtilitySection[] = [
         icon: FileUp,
         editionKey: "edition6",
     },
+    {
+        key: "importErrors",
+        href: "/cms/import-errors",
+        icon: TriangleAlert,
+        editionKey: "edition6",
+    },
 ];
 
 export default function CmsOverviewPage() {
@@ -90,6 +98,7 @@ export default function CmsOverviewPage() {
     const tEditions = useTranslations("Cms.editions");
     const containerRef = useRef<HTMLDivElement>(null);
     const headerRef = useRef<HTMLElement>(null);
+    const { data: stats } = useGetStats();
 
     useEffect(() => {
         if (headerRef.current) {
@@ -152,6 +161,17 @@ export default function CmsOverviewPage() {
                                     actionLabel={t("openSection")}
                                     icon={section.icon}
                                     comingSoon={section.comingSoon}
+                                    count={
+                                        stats
+                                            ? {
+                                                  productions: stats.production_count,
+                                                  locations: stats.location_count,
+                                                  articles: stats.article_count,
+                                                  performers: stats.artist_count,
+                                                  collections: stats.collection_count,
+                                              }[section.key]
+                                            : undefined
+                                    }
                                 />
                             </div>
                         </SectionCard>

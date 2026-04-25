@@ -7,6 +7,7 @@ use serde::Deserialize;
 use thiserror::Error;
 use tracing::{info, warn};
 
+use crate::error::ImportItemError;
 use crate::helper::extract_source_id;
 use crate::models::{
     event::ApiEvent,
@@ -27,6 +28,8 @@ pub enum SeedError {
     Json(#[from] serde_json::Error),
     #[error("Database error during seed import: {0}")]
     Db(#[from] DatabaseError),
+    #[error("Import error during seed: {0}")]
+    Import(#[from] ImportItemError),
 }
 
 #[derive(Deserialize)]
@@ -706,7 +709,7 @@ impl SeedImporter {
         let items: Vec<ApiLocation> = self.read_file("locations.json")?;
         info!("Seed: importing {} locations", items.len());
         for item in items {
-            item.insert(&self.db).await?;
+            item.upsert_import(&self.db).await?;
         }
         Ok(())
     }
@@ -715,7 +718,7 @@ impl SeedImporter {
         let items: Vec<ApiSpace> = self.read_file("spaces.json")?;
         info!("Seed: importing {} spaces", items.len());
         for item in items {
-            item.insert(&self.db).await?;
+            item.upsert_import(&self.db).await?;
         }
         Ok(())
     }
@@ -724,7 +727,7 @@ impl SeedImporter {
         let items: Vec<ApiHall> = self.read_file("halls.json")?;
         info!("Seed: importing {} halls", items.len());
         for item in items {
-            item.insert(&self.db).await?;
+            item.upsert_import(&self.db).await?;
         }
         Ok(())
     }
@@ -733,7 +736,7 @@ impl SeedImporter {
         let items: Vec<ApiProduction> = self.read_file("productions.json")?;
         info!("Seed: importing {} productions", items.len());
         for item in items {
-            item.insert(&self.db).await?;
+            item.upsert_import(&self.db).await?;
         }
         Ok(())
     }
@@ -742,7 +745,7 @@ impl SeedImporter {
         let items: Vec<ApiPrice> = self.read_file("prices.json")?;
         info!("Seed: importing {} prices", items.len());
         for item in items {
-            item.insert(&self.db).await?;
+            item.upsert_import(&self.db).await?;
         }
         Ok(())
     }
@@ -751,7 +754,7 @@ impl SeedImporter {
         let items: Vec<ApiPriceRank> = self.read_file("price_ranks.json")?;
         info!("Seed: importing {} price ranks", items.len());
         for item in items {
-            item.insert(&self.db).await?;
+            item.upsert_import(&self.db).await?;
         }
         Ok(())
     }
@@ -760,7 +763,7 @@ impl SeedImporter {
         let items: Vec<ApiEvent> = self.read_file("events.json")?;
         info!("Seed: importing {} events", items.len());
         for item in items {
-            item.insert(&self.db).await?;
+            item.upsert_import(&self.db).await?;
         }
         Ok(())
     }
@@ -769,7 +772,7 @@ impl SeedImporter {
         let items: Vec<ApiEventPrice> = self.read_file("event_prices.json")?;
         info!("Seed: importing {} event prices", items.len());
         for item in items {
-            item.insert(&self.db).await?;
+            item.upsert_import(&self.db).await?;
         }
         Ok(())
     }

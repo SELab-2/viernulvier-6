@@ -463,7 +463,11 @@ async fn relations_crud(db: PgPool) {
     assert_eq!(response.status(), StatusCode::OK);
     let data: ArticleRelationsPayload = response.into_struct().await;
     assert_eq!(data.production_ids.len(), 1);
-    assert_eq!(data.production_ids[0], production_id);
+    let related_production = data
+        .production_ids
+        .first()
+        .expect("expected one related production");
+    assert_eq!(*related_production, production_id);
 
     let response = app
         .get(&format!("/articles/cms/{article_id}/relations"))
@@ -785,4 +789,81 @@ async fn get_one_published_returns_all_fields(db: PgPool) {
         Some(NaiveDate::from_ymd_opt(2026, 6, 30).unwrap())
     );
     assert!(!data.id.is_nil());
+}
+
+#[sqlx::test(fixtures("articles", "media", "entity_media_article_cover"))]
+#[test_log::test]
+async fn get_all_articles_returns_cover_image_urls(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/articles").await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    let with_cover = data.data.iter().find(|a| a.cover_image_url.is_some());
+    assert!(
+        with_cover.is_some(),
+        "at least one article should have a resolved cover URL"
+    );
+}
+
+#[sqlx::test(fixtures("articles"))]
+#[test_log::test]
+async fn get_all_articles_without_cover_returns_null(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/articles").await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    for a in &data.data {
+        assert!(a.cover_image_url.is_none());
+    }
+}
+
+#[sqlx::test(fixtures("articles", "media", "entity_media_article_cover"))]
+#[test_log::test]
+async fn get_one_article_by_slug_returns_cover_image_url(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/articles/published-article").await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: ArticlePayload = response.into_struct().await;
+    assert!(
+        data.cover_image_url.is_some(),
+        "cover_image_url should be resolved for article with a cover"
+    );
+}
+
+#[sqlx::test(fixtures("articles"))]
+#[test_log::test]
+async fn get_one_article_by_slug_without_cover_returns_null(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/articles/published-article").await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: ArticlePayload = response.into_struct().await;
+    assert!(data.cover_image_url.is_none());
+}
+
+#[sqlx::test(fixtures("articles", "media", "entity_media_article_cover"))]
+#[test_log::test]
+async fn get_all_cms_returns_cover_image_urls(db: PgPool) {
+    let app = TestRouter::as_editor(db).await;
+    let response = app.get("/articles/cms").await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: Vec<ArticleListPayload> = response.into_struct().await;
+    let with_cover = data.iter().find(|a| a.cover_image_url.is_some());
+    assert!(
+        with_cover.is_some(),
+        "at least one article should have a resolved cover URL in CMS list"
+    );
+}
+
+#[sqlx::test(fixtures("articles", "media", "entity_media_article_cover"))]
+#[test_log::test]
+async fn get_one_cms_returns_cover_image_url(db: PgPool) {
+    let id = Uuid::from_str("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa").unwrap();
+    let app = TestRouter::as_editor(db).await;
+    let response = app.get(&format!("/articles/cms/{id}")).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: ArticlePayload = response.into_struct().await;
+    assert!(
+        data.cover_image_url.is_some(),
+        "cover_image_url should be resolved for article with a cover in CMS view"
+    );
 }

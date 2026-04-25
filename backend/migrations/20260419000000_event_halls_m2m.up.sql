@@ -3,6 +3,7 @@ CREATE TABLE event_halls (
     hall_id  UUID NOT NULL REFERENCES halls(id)  ON DELETE CASCADE,
     PRIMARY KEY (event_id, hall_id)
 );
+CREATE INDEX ON event_halls (hall_id);
 
 INSERT INTO event_halls (event_id, hall_id)
 SELECT id, hall_id FROM events WHERE hall_id IS NOT NULL;
