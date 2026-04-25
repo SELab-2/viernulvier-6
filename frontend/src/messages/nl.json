@@ -455,7 +455,21 @@
             "subtitle": "Bulk import van mediabestanden en archiefmaterialen",
             "comingSoon": "Binnenkort beschikbaar",
             "notAvailable": "Ingest functionaliteit",
-            "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier mediabestanden uploaden en verwerken."
+            "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier mediabestanden uploaden en verwerken.",
+            "upload": "Uploaden",
+            "uploadMedia": "Media uploaden",
+            "uploadTitle": "Nieuwe media uploaden",
+            "selectFile": "Bestand selecteren",
+            "altText": "Alt-tekst",
+            "credit": "Credit",
+            "save": "Opslaan",
+            "cancel": "Annuleren",
+            "editMedia": "Media bewerken",
+            "noMedia": "Nog geen media geüpload.",
+            "items": "items",
+            "loading": "Laden",
+            "confirmDelete": "Weet u zeker dat u deze media wilt verwijderen? Dit kan niet ongedaan worden gemaakt.",
+            "mediaPreview": "Media voorbeeld"
         },
         "Collections": {
             "title": "Collecties",

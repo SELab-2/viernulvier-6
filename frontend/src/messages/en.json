@@ -455,7 +455,21 @@
             "subtitle": "Bulk import of media files and archive materials",
             "comingSoon": "Coming soon",
             "notAvailable": "Ingest functionality",
-            "description": "This feature is still under development. Soon you will be able to upload and process media files here."
+            "description": "This feature is still under development. Soon you will be able to upload and process media files here.",
+            "upload": "Upload",
+            "uploadMedia": "Upload media",
+            "uploadTitle": "Upload new media",
+            "selectFile": "Select file",
+            "altText": "Alt text",
+            "credit": "Credit",
+            "save": "Save",
+            "cancel": "Cancel",
+            "editMedia": "Edit media",
+            "noMedia": "No media uploaded yet.",
+            "items": "items",
+            "loading": "Loading",
+            "confirmDelete": "Are you sure you want to delete this media? This action cannot be undone.",
+            "mediaPreview": "Media preview"
         },
         "Collections": {
             "title": "Collections",
