@@ -1,12 +1,17 @@
-name: Backend Tests
+name: Backend tests
 
-on: workflow_call
+on:
+  workflow_call:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
   test:
+    if: github.event.pull_request.draft == false
     runs-on: kaya-sem-house
     container:
       image: rust:1.94-bookworm
+      options: -v /cache/cargo-registry:/root/.cargo/registry -v /cache/cargo-git:/root/.cargo/git -v /cache/cargo-bin:/root/.cargo/bin -v /cache/backend-target:/backend/target
       env:
         DATABASE_URL: postgres://test:test@postgres:5432/test
         ALLOWED_ORIGINS: "http://localhost:3000"
@@ -42,19 +47,8 @@ jobs:
       - name: Install dependencies
         run: apt-get update && apt-get install -y pkg-config libssl-dev postgresql-client
 
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: backend
-
-      - name: Cache cargo binaries
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/bin
-          key: cargo-bin-sqlx-0.8
-
       - name: Install sqlx-cli
-        run: command -v sqlx || cargo install sqlx-cli --no-default-features --features native-tls,postgres
+        run: cargo install sqlx-cli --no-default-features --features native-tls,postgres
 
       - name: Run migrations
         run: cd backend && sqlx migrate run
