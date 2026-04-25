@@ -26,7 +26,10 @@ locations → spaces → halls → productions → prices → price_ranks → ev
   → genre_tag_mappings           (patch)
   → uitdatabank_theme_mappings   (patch)
   → genre_location_mappings      (patch)
-  → genre_series_mappings   (patch)
+  → genre_series_mappings        (patch)
+  → artists              (derived from already-inserted productions)
+  → artist_merges        (patch)
+  → artist_names         (patch)
 ```
 
 ## Normalisation files (`seed/normalization/`)
@@ -189,8 +192,43 @@ Removes a hall and all its `event_halls` links outright. Use when the hall is no
 
 ---
 
+### `artist_merges.json` - merge two duplicate artist records
+
+The 404 API has no structured artist entities — artists are derived from the free-text `artist` field on each production by splitting on `/`. If the same person appears under two slightly different name variants (e.g. a typo, different capitalisation that produces a different slug), they end up as separate records. A merge:
+
+1. Re-points all `production_artists` rows from the removed artist to the kept artist (`ON CONFLICT DO NOTHING`).
+2. Deletes all remaining `production_artists` rows for the removed artist.
+3. Deletes the removed artist record.
+
+Unlike location/hall patches, artist patches reference records by **slug** (there are no source IDs for artists).
+
+```json
+{ "keep_slug": "jan-de-smedt", "remove_slug": "jan-de-smeth", "note": "typo variant" }
+```
+
+---
+
+### `artist_names.json` - rename/correct an artist's display name
+
+Overwrites the `name` column on an artist row. Does not change the slug. Applied after merges, so the surviving artist gets the clean display name.
+
+To find the slug for an artist, query `SELECT slug FROM artists WHERE name ILIKE '%...'` after seeding.
+
+```json
+{ "slug": "jan-de-smedt", "name": "Jan De Smedt", "note": "capitalisation fix" }
+```
+
+---
+
 ## Workflow: how to add a new patch
 
+**For location/hall/genre patches:**
 1. Find the source ID in the relevant `seed/raw/*.json` file (look at the `@id` field).
 2. Add an entry to the appropriate file in `seed/normalization/`.
 3. Re-seed the DB to verify (tear down, re-run migrations, let the importer run).
+
+**For artist patches:**
+1. Seed the DB once to populate the `artists` table from production data.
+2. Query `SELECT slug, name FROM artists ORDER BY name` to find duplicate or incorrectly named records.
+3. Add entries to `artist_merges.json` (for duplicates) and/or `artist_names.json` (for display name fixes).
+4. Re-seed to verify.

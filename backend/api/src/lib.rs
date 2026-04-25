@@ -116,17 +116,29 @@ impl ApiImporter {
         // Save the current timestamp now, before we start importing, so that any
         // updates made on the upstream API while we're running are still picked up
         // by the next run (the import takes a while).
-        let current_ts = Utc::now().to_rfc3339();
+        let current_ts = Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
         let last_update_ts = self.get_last_updated().await;
 
         // On first run, bootstrap from local seed files before hitting the live API.
         // The seed's max_updated_at becomes the starting point for the live fetch so
         // only records newer than the snapshot are pulled from the network.
+        //
+        // We persist the seed timestamp immediately after a successful seed import so
+        // that a subsequent live-fetch failure doesn't cause the seed to re-run on the
+        // next boot (and doesn't fall back to a full live fetch from EPOCH).
         let live_start_ts = if last_update_ts == "2000-01-01T00:00:00Z" {
-            self.bootstrap_from_seed().await.unwrap_or(last_update_ts)
+            match self.bootstrap_from_seed().await {
+                Some(seed_ts) => {
+                    self.set_last_updated(seed_ts.clone()).await;
+                    seed_ts
+                }
+                None => last_update_ts,
+            }
         } else {
             last_update_ts
         };
+
+        info!(live_start_ts = %live_start_ts, "starting live API fetch");
 
         // Order matters: a location contains spaces, a space contains halls,
         // a production has events, and events reference halls. We import the
@@ -163,8 +175,13 @@ impl ApiImporter {
             warn!(error = %e, "seed import failed, falling back to full live import");
             return None;
         }
-        info!(max_updated_at = %max_ts, "seed import complete");
-        Some(max_ts)
+        // Normalize to Z suffix: chrono's to_rfc3339() emits "+00:00" which some servers
+        // decode as a space when URL-encoded in query strings, silently breaking the filter.
+        let normalized = chrono::DateTime::parse_from_rfc3339(&max_ts)
+            .map(|dt| dt.format("%Y-%m-%dT%H:%M:%SZ").to_string())
+            .unwrap_or(max_ts);
+        info!(max_updated_at = %normalized, "seed import complete");
+        Some(normalized)
     }
 
     /// fetch a collection of objects from the api
