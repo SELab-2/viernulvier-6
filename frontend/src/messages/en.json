@@ -672,6 +672,7 @@
         "error": "Something went wrong while loading this location."
     },
     "Articles": {
+        "articles": "Articles",
         "heroEyebrow": "Stories from the archive",
         "heroTitle": "Articles & Stories",
         "heroSubtitle": "Stories from behind the scenes of De Vooruit",

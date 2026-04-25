@@ -4,7 +4,9 @@ import {
     ArticleRelationsResponse,
     ArticleResponse,
     ArticleUpdateRequest,
+    PaginatedArticleResponse,
 } from "@/types/api/article.api.types";
+import { PaginatedResult } from "@/types/api/api.types";
 import {
     Article,
     ArticleCreateInput,
@@ -48,6 +50,13 @@ export const mapArticleListItem = (response: ArticleListResponse): ArticleListIt
 
 export const mapArticleListItems = (responses: ArticleListResponse[]): ArticleListItem[] =>
     responses.map(mapArticleListItem);
+
+export const mapPaginatedArticlesResult = (
+    response: PaginatedArticleResponse
+): PaginatedResult<ArticleListItem> => ({
+    data: mapArticleListItems(response.data),
+    nextCursor: response.next_cursor ?? null,
+});
 
 export const mapArticleRelations = (response: ArticleRelationsResponse): ArticleRelations => ({
     productionIds: response.production_ids,

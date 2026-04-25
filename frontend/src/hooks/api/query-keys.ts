@@ -49,11 +49,15 @@ export const queryKeys = {
         productions: (id: string) => ["artists", id, "productions"] as const,
     },
     articles: {
-        all: ["articles"] as const,
-        detail: (id: string) => ["articles", id] as const,
-        relations: (id: string) => ["articles", id, "relations"] as const,
-        published: ["articles", "published"] as const,
-        bySlug: (slug: string) => ["articles", "bySlug", slug] as const,
+        base: ["articles"] as const,
+        list: (pagination?: PaginationParams) =>
+            buildQueryKey([...queryKeys.articles.base, "list"], pagination),
+        infinite: (pagination?: PaginationParams) =>
+            buildQueryKey([...queryKeys.articles.base, "infinite"], pagination),
+        detail: (id: string) => [...queryKeys.articles.base, id] as const,
+        relations: (id: string) => [...queryKeys.articles.base, id, "relations"] as const,
+        published: () => [...queryKeys.articles.base, "published"] as const,
+        bySlug: (slug: string) => [...queryKeys.articles.base, "bySlug", slug] as const,
     },
     media: {
         all: (params?: MediaSearchParams) =>
