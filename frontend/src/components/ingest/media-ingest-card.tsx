@@ -21,10 +21,15 @@ export function MediaIngestCard({ media, onView, onEdit, onDelete }: MediaIngest
     const url = thumbnailUrl(media);
     const alt = resolveLocalized(media.altTextNl ?? "", media.altTextEn ?? "").value;
 
+    // Preserve natural aspect ratio so each card has a different height,
+    // creating the masonry look.
+    const naturalAspect =
+        media.width && media.height && media.height > 0 ? media.width / media.height : 1;
+
     return (
         <div className="border-foreground/20 hover:border-foreground/40 group relative border transition-colors">
-            {/* Image container — compact square thumbnail */}
-            <div className="relative aspect-square w-full overflow-hidden">
+            {/* Image container with natural aspect ratio */}
+            <div className="relative w-full overflow-hidden" style={{ aspectRatio: naturalAspect }}>
                 {url ? (
                     <Image
                         src={url}
