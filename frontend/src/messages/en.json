@@ -63,6 +63,7 @@
     },
     "ResultsBar": {
         "sortBy": "Sort by:",
+        "relevant": "Most relevant",
         "recent": "Most recent",
         "oldest": "Oldest first",
         "az": "A–Z"
@@ -138,7 +139,9 @@
             ],
             "weekdays": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
         },
-        "clearAll": "Clear all"
+        "clearAll": "Clear all",
+        "showMore": "Show more",
+        "showLess": "Show less"
     },
     "Home": {
         "loading": "Loading archive...",

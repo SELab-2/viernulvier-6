@@ -11,12 +11,12 @@ interface ResultsBarProps {
     showSearch: boolean;
 }
 
-const SORT_OPTIONS = ["recent", "oldest", "az"] as const;
+const SORT_OPTIONS = ["relevant", "recent", "oldest"] as const;
 
 export function ResultsBar({ query, onQueryChange, onSearch, showSearch }: ResultsBarProps) {
     const t = useTranslations("ResultsBar");
     const tSearch = useTranslations("Search");
-    const [activeSort, setActiveSort] = useState<string>("recent");
+    const [activeSort, setActiveSort] = useState<string>("relevant");
 
     const handleSort = useCallback((option: string) => {
         setActiveSort(option);
