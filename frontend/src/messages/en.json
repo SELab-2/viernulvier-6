@@ -598,6 +598,8 @@
             "attachError": "Failed to link media",
             "save": "Save",
             "cancel": "Cancel",
+            "altText": "Alt text",
+            "credit": "Credit",
             "altTextNl": "Alt text (NL)",
             "altTextEn": "Alt text (EN)",
             "altTextFr": "Alt text (FR)",

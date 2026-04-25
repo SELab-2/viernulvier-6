@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { ImageIcon, ImagePlusIcon, PencilIcon, StarIcon, Trash2Icon, XIcon } from "lucide-react";
+import { LanguageSelector } from "@/components/cms/language-selector";
 
 import {
     useClearCoverMedia,
@@ -565,13 +566,19 @@ type MediaMetadataFormProps = {
     isSaving: boolean;
 };
 
+type Lang = "nl" | "en" | "fr";
+
 function MediaMetadataForm({ media, onSave, onCancel, isSaving }: MediaMetadataFormProps) {
     const t = useTranslations("Cms.ProductionMedia");
     const [values, setValues] = useState({ ...media });
+    const [activeLang, setActiveLang] = useState<Lang>("nl");
 
     const update = <K extends keyof Media>(key: K, value: Media[K]) => {
         setValues((prev) => ({ ...prev, [key]: value }));
     };
+
+    const altKey = `altText${capitalize(activeLang)}` as keyof Media;
+    const creditKey = `credit${capitalize(activeLang)}` as keyof Media;
 
     return (
         <div className="border-foreground/10 space-y-4 rounded border p-4">
@@ -594,36 +601,26 @@ function MediaMetadataForm({ media, onSave, onCancel, isSaving }: MediaMetadataF
                 </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="border-foreground/10 flex items-center justify-between border-b pb-2">
+                <LanguageSelector
+                    activeLang={activeLang}
+                    onChange={setActiveLang}
+                    languages={["nl", "en", "fr"]}
+                />
+            </div>
+
+            <div className="space-y-3">
                 <MetadataField
-                    label={t("altTextNl")}
-                    value={values.altTextNl ?? ""}
-                    onChange={(v) => update("altTextNl", v || null)}
+                    label={t("altText")}
+                    value={(values[altKey] as string | null) ?? ""}
+                    onChange={(v) => update(altKey, v || null)}
+                    placeholder={activeLang.toUpperCase()}
                 />
                 <MetadataField
-                    label={t("altTextEn")}
-                    value={values.altTextEn ?? ""}
-                    onChange={(v) => update("altTextEn", v || null)}
-                />
-                <MetadataField
-                    label={t("altTextFr")}
-                    value={values.altTextFr ?? ""}
-                    onChange={(v) => update("altTextFr", v || null)}
-                />
-                <MetadataField
-                    label={t("creditNl")}
-                    value={values.creditNl ?? ""}
-                    onChange={(v) => update("creditNl", v || null)}
-                />
-                <MetadataField
-                    label={t("creditEn")}
-                    value={values.creditEn ?? ""}
-                    onChange={(v) => update("creditEn", v || null)}
-                />
-                <MetadataField
-                    label={t("creditFr")}
-                    value={values.creditFr ?? ""}
-                    onChange={(v) => update("creditFr", v || null)}
+                    label={t("credit")}
+                    value={(values[creditKey] as string | null) ?? ""}
+                    onChange={(v) => update(creditKey, v || null)}
+                    placeholder={activeLang.toUpperCase()}
                 />
             </div>
 
@@ -648,17 +645,27 @@ type MetadataFieldProps = {
     onChange: (value: string) => void;
 };
 
-function MetadataField({ label, value, onChange }: MetadataFieldProps) {
+function MetadataField({
+    label,
+    value,
+    onChange,
+    placeholder,
+}: MetadataFieldProps & { placeholder?: string }) {
     return (
         <div className="space-y-1">
             <Label className="text-xs">{label}</Label>
             <Input
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
+                placeholder={placeholder}
                 className="h-7 text-xs"
             />
         </div>
     );
+}
+
+function capitalize(s: string) {
+    return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 // ── LoadingSkeleton ─────────────────────────────────────────────────
