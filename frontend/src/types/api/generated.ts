@@ -103,43 +103,9 @@ export interface paths {
         /** @description Get all artists */
         get: operations["get_all_artists"];
         put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/artists/cms": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
         /** @description Create a new artist — editor only */
         post: operations["create_artist"];
         delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/artists/cms/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** @description Update an artist — editor only */
-        put: operations["update_artist"];
-        post?: never;
-        /** @description Delete an artist — editor only */
-        delete: operations["delete_artist"];
         options?: never;
         head?: never;
         patch?: never;
@@ -154,9 +120,11 @@ export interface paths {
         };
         /** @description Get an artist by id */
         get: operations["get_one_artist"];
-        put?: never;
+        /** @description Update an artist — editor only */
+        put: operations["update_artist"];
         post?: never;
-        delete?: never;
+        /** @description Delete an artist — editor only */
+        delete: operations["delete_artist"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2221,6 +2189,36 @@ export interface operations {
             };
         };
     };
+    get_one_artist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Artist UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtistPayload"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     update_artist: {
         parameters: {
             query?: never;
@@ -2290,36 +2288,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    get_one_artist: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Artist UUID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ArtistPayload"];
                 };
             };
             /** @description Not found */
