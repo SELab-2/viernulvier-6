@@ -50,7 +50,6 @@ export default function HomePage() {
     const latestProductions = productions.slice(3, 7);
 
     const { data: articles } = useGetArticles();
-    const publishedArticles = (articles ?? []).filter((a) => a.status === "published");
 
     return (
         <>
@@ -78,7 +77,7 @@ export default function HomePage() {
             </section>
 
             <section className="px-4 pt-10 sm:px-[30px] sm:pt-14">
-                <ArticlesSection articles={publishedArticles} />
+                <ArticlesSection articles={articles ?? []} />
             </section>
 
             {latestProductions.length > 0 && (
