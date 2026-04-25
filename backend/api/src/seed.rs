@@ -119,6 +119,18 @@ struct GenreLocationMapping {
     location_slug: Option<String>,
 }
 
+#[derive(Deserialize)]
+struct ArtistMerge {
+    keep_slug: String,
+    remove_slug: String,
+}
+
+#[derive(Deserialize)]
+struct ArtistNamePatch {
+    slug: String,
+    name: String,
+}
+
 /// Imports entities from local seed JSON files produced by `fetch_404`.
 ///
 /// Constructed via [`SeedImporter::from_env`]; returns `None` when no seed
@@ -175,6 +187,9 @@ impl SeedImporter {
         self.apply_uitdatabank_theme_mappings().await?;
         self.apply_genre_location_mappings().await?;
         self.apply_genre_series_mappings().await?;
+        self.import_artists().await?;
+        self.apply_artist_merges().await?;
+        self.apply_artist_name_patches().await?;
         Ok(())
     }
 
@@ -705,6 +720,133 @@ impl SeedImporter {
         Ok(())
     }
 
+    async fn import_artists(&self) -> Result<(), SeedError> {
+        let rows: Vec<(uuid::Uuid, Option<String>, Option<String>)> = sqlx::query_as(
+            "SELECT p.id, nl.artist, en.artist
+             FROM productions p
+             LEFT JOIN production_translations nl
+               ON nl.production_id = p.id AND nl.language_code = 'nl'
+             LEFT JOIN production_translations en
+               ON en.production_id = p.id AND en.language_code = 'en'",
+        )
+        .fetch_all(self.db.pool())
+        .await
+        .map_err(DatabaseError::from)?;
+
+        info!("Seed: deriving artists from {} productions", rows.len());
+
+        let mut link_count = 0u64;
+        for (prod_id, nl_artist, en_artist) in rows {
+            let Some(text) = nl_artist.or(en_artist) else {
+                continue;
+            };
+            for fragment in text.split('/') {
+                let name = fragment.trim();
+                if name.is_empty() {
+                    continue;
+                }
+                let slug = slug::slugify(name);
+                if slug.is_empty() {
+                    continue;
+                }
+                let artist_id: uuid::Uuid = sqlx::query_scalar(
+                    "INSERT INTO artists (name, slug) VALUES ($1, $2)
+                     ON CONFLICT (slug) DO UPDATE SET slug = EXCLUDED.slug
+                     RETURNING id",
+                )
+                .bind(name)
+                .bind(&slug)
+                .fetch_one(self.db.pool())
+                .await
+                .map_err(DatabaseError::from)?;
+
+                let inserted = sqlx::query(
+                    "INSERT INTO production_artists (production_id, artist_id)
+                     VALUES ($1, $2) ON CONFLICT DO NOTHING",
+                )
+                .bind(prod_id)
+                .bind(artist_id)
+                .execute(self.db.pool())
+                .await
+                .map_err(DatabaseError::from)?
+                .rows_affected();
+
+                link_count += inserted;
+            }
+        }
+
+        info!("Seed: inserted {} production→artist links", link_count);
+        Ok(())
+    }
+
+    async fn apply_artist_merges(&self) -> Result<(), SeedError> {
+        let Some(merges) = self.read_normalization_file::<ArtistMerge>("artist_merges.json") else {
+            return Ok(());
+        };
+
+        info!("Applying {} artist merges", merges.len());
+        for merge in &merges {
+            sqlx::query(
+                "INSERT INTO production_artists (production_id, artist_id)
+                 SELECT pa.production_id, (SELECT id FROM artists WHERE slug = $1)
+                 FROM production_artists pa
+                 JOIN artists a ON a.id = pa.artist_id
+                 WHERE a.slug = $2
+                 ON CONFLICT DO NOTHING",
+            )
+            .bind(&merge.keep_slug)
+            .bind(&merge.remove_slug)
+            .execute(self.db.pool())
+            .await
+            .map_err(DatabaseError::from)?;
+
+            sqlx::query(
+                "DELETE FROM production_artists
+                 WHERE artist_id = (SELECT id FROM artists WHERE slug = $1)",
+            )
+            .bind(&merge.remove_slug)
+            .execute(self.db.pool())
+            .await
+            .map_err(DatabaseError::from)?;
+
+            let rows = sqlx::query("DELETE FROM artists WHERE slug = $1")
+                .bind(&merge.remove_slug)
+                .execute(self.db.pool())
+                .await
+                .map_err(DatabaseError::from)?
+                .rows_affected();
+
+            if rows == 0 {
+                warn!(remove_slug = %merge.remove_slug, "artist merge: artist to remove not found");
+            }
+        }
+        Ok(())
+    }
+
+    async fn apply_artist_name_patches(&self) -> Result<(), SeedError> {
+        let Some(patches) =
+            self.read_normalization_file::<ArtistNamePatch>("artist_names.json")
+        else {
+            return Ok(());
+        };
+
+        info!("Applying {} artist name patches", patches.len());
+        for patch in &patches {
+            let rows = sqlx::query("UPDATE artists SET name = $1 WHERE slug = $2")
+                .bind(&patch.name)
+                .bind(&patch.slug)
+                .execute(self.db.pool())
+                .await
+                .map_err(DatabaseError::from)?
+                .rows_affected();
+
+            if rows == 0 {
+                warn!(slug = %patch.slug, "artist name patch matched no rows");
+            }
+        }
+        Ok(())
+    }
+
     async fn import_locations(&self) -> Result<(), SeedError> {
         let items: Vec<ApiLocation> = self.read_file("locations.json")?;
         info!("Seed: importing {} locations", items.len());
@@ -762,8 +904,15 @@ impl SeedImporter {
     async fn import_events(&self) -> Result<(), SeedError> {
         let items: Vec<ApiEvent> = self.read_file("events.json")?;
         info!("Seed: importing {} events", items.len());
+        let mut skipped = 0u32;
         for item in items {
-            item.upsert_import(&self.db).await?;
+            if let Err(err) = item.upsert_import(&self.db).await {
+                warn!(error = %err, "skipping event during seed import");
+                skipped += 1;
+            }
+        }
+        if skipped > 0 {
+            warn!("Seed: skipped {skipped} events (likely reference LongtermProduction records not in seed)");
         }
         Ok(())
     }
@@ -771,8 +920,15 @@ impl SeedImporter {
     async fn import_event_prices(&self) -> Result<(), SeedError> {
         let items: Vec<ApiEventPrice> = self.read_file("event_prices.json")?;
         info!("Seed: importing {} event prices", items.len());
+        let mut skipped = 0u32;
         for item in items {
-            item.upsert_import(&self.db).await?;
+            if let Err(err) = item.upsert_import(&self.db).await {
+                warn!(error = %err, "skipping event price during seed import");
+                skipped += 1;
+            }
+        }
+        if skipped > 0 {
+            warn!("Seed: skipped {skipped} event prices (their event was not imported)");
         }
         Ok(())
     }
