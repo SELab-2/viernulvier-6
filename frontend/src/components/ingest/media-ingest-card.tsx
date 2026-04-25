@@ -29,7 +29,10 @@ export function MediaIngestCard({ media, onView, onEdit, onDelete }: MediaIngest
     const dimensions = media.width && media.height ? `${media.width}×${media.height}` : null;
 
     return (
-        <div className="border-foreground/20 hover:border-foreground/40 group relative border transition-colors">
+        <div
+            className="border-foreground/20 hover:border-foreground/40 group relative border transition-colors"
+            style={{ contentVisibility: "auto", containIntrinsicSize: "0 250px" }}
+        >
             {/* Image — clickable to open spotlight (production page pattern) */}
             <button
                 type="button"
@@ -42,6 +45,8 @@ export function MediaIngestCard({ media, onView, onEdit, onDelete }: MediaIngest
                         src={url}
                         alt={alt}
                         fill
+                        loading="lazy"
+                        decoding="async"
                         className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                     />
