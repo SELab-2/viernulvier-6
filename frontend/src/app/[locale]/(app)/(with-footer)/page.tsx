@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
 import Link from "next/link";
@@ -62,7 +62,6 @@ export default function HomePage() {
                 searchHint={tSearch("hint")}
             />
 
-            {/* Hero */}
             <section className="flex flex-col items-center gap-6 px-4 py-16 text-center sm:px-10 sm:py-24">
                 <h1 className="font-display text-foreground text-[40px] leading-[1.05] font-bold tracking-[-0.03em] sm:text-[64px] md:text-[72px]">
                     {t("hero.title")}
@@ -74,17 +73,14 @@ export default function HomePage() {
                 <SearchBar onSearch={handleHeroSearch} placeholder={t("hero.searchPlaceholder")} />
             </section>
 
-            {/* Featured */}
             <section className="px-4 pt-8 sm:px-[30px] sm:pt-12">
                 <FeaturedSection productions={featuredProductions} locale={locale} />
             </section>
 
-            {/* Articles */}
             <section className="px-4 pt-10 sm:px-[30px] sm:pt-14">
                 <ArticlesSection articles={publishedArticles} />
             </section>
 
-            {/* Latest productions */}
             {latestProductions.length > 0 && (
                 <section className="px-4 py-10 sm:px-[30px] sm:py-14">
                     <div className="mb-6 flex items-baseline justify-between">
@@ -110,7 +106,6 @@ export default function HomePage() {
                 </section>
             )}
 
-            {/* About */}
             <section className="border-foreground/10 flex flex-col items-center gap-5 border-t px-4 py-14 text-center sm:px-10 sm:py-20">
                 <h3 className="font-display text-foreground text-[24px] leading-tight font-bold tracking-[-0.02em] sm:text-[32px]">
                     {t("about.title")}
