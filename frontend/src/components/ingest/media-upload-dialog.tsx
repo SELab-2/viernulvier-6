@@ -16,7 +16,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { LanguageSelector } from "@/components/cms/language-selector";
 import { useIngestMediaUpload } from "@/hooks/api/useIngestMediaUpload";
+
+type Lang = "nl" | "en" | "fr";
 
 interface MediaUploadDialogProps {
     open: boolean;
@@ -29,24 +32,18 @@ export function MediaUploadDialog({ open, onOpenChange, onSuccess }: MediaUpload
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
-    const [altTextNl, setAltTextNl] = useState("");
-    const [altTextEn, setAltTextEn] = useState("");
-    const [altTextFr, setAltTextFr] = useState("");
-    const [creditNl, setCreditNl] = useState("");
-    const [creditEn, setCreditEn] = useState("");
-    const [creditFr, setCreditFr] = useState("");
+    const [activeLang, setActiveLang] = useState<Lang>("nl");
+    const [altText, setAltText] = useState<Record<Lang, string>>({ nl: "", en: "", fr: "" });
+    const [credit, setCredit] = useState<Record<Lang, string>>({ nl: "", en: "", fr: "" });
 
     const upload = useIngestMediaUpload();
 
     const reset = useCallback(() => {
         setFile(null);
         setPreview(null);
-        setAltTextNl("");
-        setAltTextEn("");
-        setAltTextFr("");
-        setCreditNl("");
-        setCreditEn("");
-        setCreditFr("");
+        setAltText({ nl: "", en: "", fr: "" });
+        setCredit({ nl: "", en: "", fr: "" });
+        setActiveLang("nl");
     }, []);
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,12 +63,12 @@ export function MediaUploadDialog({ open, onOpenChange, onSuccess }: MediaUpload
             await upload.mutateAsync({
                 file,
                 metadata: {
-                    altTextNl: altTextNl || null,
-                    altTextEn: altTextEn || null,
-                    altTextFr: altTextFr || null,
-                    creditNl: creditNl || null,
-                    creditEn: creditEn || null,
-                    creditFr: creditFr || null,
+                    altTextNl: altText.nl || null,
+                    altTextEn: altText.en || null,
+                    altTextFr: altText.fr || null,
+                    creditNl: credit.nl || null,
+                    creditEn: credit.en || null,
+                    creditFr: credit.fr || null,
                 },
             });
             reset();
@@ -155,24 +152,50 @@ export function MediaUploadDialog({ open, onOpenChange, onSuccess }: MediaUpload
                     {/* Metadata fields */}
                     {file && (
                         <div className="space-y-4">
-                            <LocalizedInputs
-                                label={t("altText")}
-                                nl={altTextNl}
-                                en={altTextEn}
-                                fr={altTextFr}
-                                onChangeNl={setAltTextNl}
-                                onChangeEn={setAltTextEn}
-                                onChangeFr={setAltTextFr}
-                            />
-                            <LocalizedInputs
-                                label={t("credit")}
-                                nl={creditNl}
-                                en={creditEn}
-                                fr={creditFr}
-                                onChangeNl={setCreditNl}
-                                onChangeEn={setCreditEn}
-                                onChangeFr={setCreditFr}
-                            />
+                            <div className="border-foreground/10 flex items-center justify-between border-b pb-2">
+                                <h2 className="text-sm font-semibold">{t("metadataSection")}</h2>
+                                <LanguageSelector
+                                    activeLang={activeLang}
+                                    onChange={setActiveLang}
+                                    languages={["nl", "en", "fr"]}
+                                />
+                            </div>
+
+                            <div className="space-y-3">
+                                <div className="space-y-1.5">
+                                    <Label className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
+                                        {t("altText")}
+                                    </Label>
+                                    <Input
+                                        value={altText[activeLang]}
+                                        onChange={(e) =>
+                                            setAltText((prev) => ({
+                                                ...prev,
+                                                [activeLang]: e.target.value,
+                                            }))
+                                        }
+                                        placeholder={activeLang.toUpperCase()}
+                                        className="h-9 rounded-none border text-sm"
+                                    />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <Label className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
+                                        {t("credit")}
+                                    </Label>
+                                    <Input
+                                        value={credit[activeLang]}
+                                        onChange={(e) =>
+                                            setCredit((prev) => ({
+                                                ...prev,
+                                                [activeLang]: e.target.value,
+                                            }))
+                                        }
+                                        placeholder={activeLang.toUpperCase()}
+                                        className="h-9 rounded-none border text-sm"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -203,51 +226,5 @@ export function MediaUploadDialog({ open, onOpenChange, onSuccess }: MediaUpload
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-    );
-}
-
-function LocalizedInputs({
-    label,
-    nl,
-    en,
-    fr,
-    onChangeNl,
-    onChangeEn,
-    onChangeFr,
-}: {
-    label: string;
-    nl: string;
-    en: string;
-    fr: string;
-    onChangeNl: (v: string) => void;
-    onChangeEn: (v: string) => void;
-    onChangeFr: (v: string) => void;
-}) {
-    return (
-        <div className="space-y-2">
-            <Label className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
-                {label}
-            </Label>
-            <div className="grid grid-cols-3 gap-2">
-                <Input
-                    placeholder="NL"
-                    value={nl}
-                    onChange={(e) => onChangeNl(e.target.value)}
-                    className="h-9 rounded-none border text-sm"
-                />
-                <Input
-                    placeholder="EN"
-                    value={en}
-                    onChange={(e) => onChangeEn(e.target.value)}
-                    className="h-9 rounded-none border text-sm"
-                />
-                <Input
-                    placeholder="FR"
-                    value={fr}
-                    onChange={(e) => onChangeFr(e.target.value)}
-                    className="h-9 rounded-none border text-sm"
-                />
-            </div>
-        </div>
     );
 }
