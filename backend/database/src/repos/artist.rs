@@ -38,12 +38,14 @@ impl<'a> ArtistRepo<'a> {
     }
 
     pub async fn insert(&self, name: &str, slug: &str) -> Result<Artist, DatabaseError> {
-        sqlx::query_as::<_, Artist>("INSERT INTO artists (name, slug) VALUES ($1, $2) RETURNING *")
-            .bind(name)
-            .bind(slug)
-            .fetch_one(self.db)
-            .await
-            .map_err(Into::into)
+        sqlx::query_as::<_, Artist>(
+            "INSERT INTO artists (name, slug) VALUES ($1, $2) ON CONFLICT (slug) DO NOTHING RETURNING *",
+        )
+        .bind(name)
+        .bind(slug)
+        .fetch_optional(self.db)
+        .await?
+        .ok_or_else(|| DatabaseError::Conflict(format!("artist with slug '{slug}' already exists")))
     }
 
     pub async fn update(&self, id: Uuid, name: &str, slug: &str) -> Result<Artist, DatabaseError> {

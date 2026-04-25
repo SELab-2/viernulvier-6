@@ -20,7 +20,7 @@ export function makeArtistColumns(
     const actions: Action<Artist>[] = [
         {
             key: "edit",
-            label: t("edit", { label: "artist" }),
+            label: tPerformers("editPerformer"),
             icon: SquarePen,
             display: ActionDisplay.Inline,
             onClick: onEdit,
@@ -39,7 +39,7 @@ export function makeArtistColumns(
         },
         {
             key: "delete",
-            label: t("delete", { label: "artist" }),
+            label: tPerformers("deletePerformer"),
             icon: Trash2,
             variant: ActionVariant.Destructive,
             onClick: onDelete,
