@@ -35,6 +35,7 @@ export function MediaEditSheet({
     isSaving,
 }: MediaEditSheetProps) {
     const t = useTranslations("Cms.Ingest");
+    const tMedia = useTranslations("Cms.ProductionMedia");
     const [form, setForm] = useState<Partial<Media>>({});
     const [activeLang, setActiveLang] = useState<Lang>("nl");
 
@@ -74,7 +75,7 @@ export function MediaEditSheet({
                 <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-5">
                     <div className="space-y-4">
                         <div className="border-foreground/10 flex items-center justify-between border-b pb-2">
-                            <h2 className="text-sm font-semibold">{t("metadataSection")}</h2>
+                            <h2 className="text-sm font-semibold">{tMedia("editMetadata")}</h2>
                             <LanguageSelector
                                 activeLang={activeLang}
                                 onChange={setActiveLang}
@@ -85,7 +86,7 @@ export function MediaEditSheet({
                         <div className="space-y-3">
                             <div className="space-y-1.5">
                                 <Label className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
-                                    {t("altText")}
+                                    {tMedia("altText")}
                                 </Label>
                                 <Input
                                     value={(form[altKey] as string | null) ?? ""}
@@ -97,7 +98,7 @@ export function MediaEditSheet({
 
                             <div className="space-y-1.5">
                                 <Label className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
-                                    {t("credit")}
+                                    {tMedia("credit")}
                                 </Label>
                                 <Input
                                     value={(form[creditKey] as string | null) ?? ""}
@@ -120,7 +121,7 @@ export function MediaEditSheet({
                             ) : (
                                 <Save className="mr-2 h-3.5 w-3.5" />
                             )}
-                            {t("save")}
+                            {tMedia("save")}
                         </Button>
                     </div>
                 </form>

@@ -598,6 +598,8 @@
             "attachError": "Koppelen van media mislukt",
             "save": "Opslaan",
             "cancel": "Annuleren",
+            "altText": "Alt-tekst",
+            "credit": "Credit",
             "altTextNl": "Alt-tekst (NL)",
             "altTextEn": "Alt-tekst (EN)",
             "altTextFr": "Alt-tekst (FR)",

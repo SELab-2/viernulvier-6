@@ -29,6 +29,7 @@ interface MediaUploadDialogProps {
 
 export function MediaUploadDialog({ open, onOpenChange, onSuccess }: MediaUploadDialogProps) {
     const t = useTranslations("Cms.Ingest");
+    const tMedia = useTranslations("Cms.ProductionMedia");
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
@@ -153,7 +154,7 @@ export function MediaUploadDialog({ open, onOpenChange, onSuccess }: MediaUpload
                     {file && (
                         <div className="space-y-4">
                             <div className="border-foreground/10 flex items-center justify-between border-b pb-2">
-                                <h2 className="text-sm font-semibold">{t("metadataSection")}</h2>
+                                <h2 className="text-sm font-semibold">{tMedia("editMetadata")}</h2>
                                 <LanguageSelector
                                     activeLang={activeLang}
                                     onChange={setActiveLang}
@@ -164,7 +165,7 @@ export function MediaUploadDialog({ open, onOpenChange, onSuccess }: MediaUpload
                             <div className="space-y-3">
                                 <div className="space-y-1.5">
                                     <Label className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
-                                        {t("altText")}
+                                        {tMedia("altText")}
                                     </Label>
                                     <Input
                                         value={altText[activeLang]}
@@ -181,7 +182,7 @@ export function MediaUploadDialog({ open, onOpenChange, onSuccess }: MediaUpload
 
                                 <div className="space-y-1.5">
                                     <Label className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
-                                        {t("credit")}
+                                        {tMedia("credit")}
                                     </Label>
                                     <Input
                                         value={credit[activeLang]}
@@ -208,7 +209,7 @@ export function MediaUploadDialog({ open, onOpenChange, onSuccess }: MediaUpload
                         disabled={upload.isPending}
                         className="rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
                     >
-                        {t("cancel")}
+                        {tMedia("cancel")}
                     </Button>
                     <Button
                         size="sm"
@@ -221,7 +222,7 @@ export function MediaUploadDialog({ open, onOpenChange, onSuccess }: MediaUpload
                         ) : (
                             <Upload className="mr-2 h-3.5 w-3.5" />
                         )}
-                        {t("upload")}
+                        {tMedia("upload")}
                     </Button>
                 </DialogFooter>
             </DialogContent>
