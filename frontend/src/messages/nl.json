@@ -139,7 +139,9 @@
             ],
             "weekdays": ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"]
         },
-        "clearAll": "Wis alles"
+        "clearAll": "Wis alles",
+        "showMore": "Meer tonen",
+        "showLess": "Minder tonen"
     },
     "Home": {
         "loading": "Archief laden...",
