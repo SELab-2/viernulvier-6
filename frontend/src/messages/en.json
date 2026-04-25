@@ -469,6 +469,17 @@
             "items": "items",
             "loading": "Loading",
             "confirmDelete": "Are you sure you want to delete this media? This action cannot be undone.",
+            "confirmCleanup": "Delete all orphaned media (not linked to any entity)? This cannot be undone.",
+            "cleanupSuccess": "{count} orphaned media items deleted.",
+            "cleanupError": "Cleanup failed.",
+            "reconcile": "Reconcile",
+            "cleanup": "Cleanup",
+            "reconcileClean": "Storage is in sync — no issues found.",
+            "reconcileMissingInS3": "{count} DB entries have no S3 object.",
+            "reconcileMissingInDb": "{count} S3 objects have no DB entry.",
+            "reconcileApply": "Apply fix",
+            "reconcileApplied": "{count} orphaned DB entries removed.",
+            "reconcileError": "Reconcile failed.",
             "mediaPreview": "Media preview"
         },
         "Collections": {

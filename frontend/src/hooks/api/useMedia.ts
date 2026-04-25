@@ -361,3 +361,41 @@ export const useDeleteMedia = () => {
         },
     });
 };
+
+export const useCleanupOrphanedMedia = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async () => {
+            const { data } = await api.post<{
+                deleted_count: number;
+                s3_keys: string[];
+            }>("/media/cleanup");
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.media.all() });
+        },
+    });
+};
+
+export const useReconcileMediaStorage = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (apply: boolean = false) => {
+            const { data } = await api.post<{
+                applied: boolean;
+                db_key_count: number;
+                deleted_missing_in_s3_count: number;
+                missing_in_db: string[];
+                missing_in_s3: string[];
+                s3_key_count: number;
+            }>(`/media/reconcile?apply=${apply}`);
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.media.all() });
+        },
+    });
+};
