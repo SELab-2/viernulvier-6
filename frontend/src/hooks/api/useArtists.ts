@@ -59,7 +59,7 @@ export const useCreateArtist = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (payload: ArtistCreateInput) => {
-            const { data } = await api.post<ArtistResponse>("/artists/cms", payload);
+            const { data } = await api.post<ArtistResponse>("/artists", payload);
             return mapArtist(data);
         },
         onSuccess: () => {
@@ -72,7 +72,7 @@ export const useUpdateArtist = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (payload: ArtistUpdateInput) => {
-            const { data } = await api.put<ArtistResponse>(`/artists/cms/${payload.id}`, {
+            const { data } = await api.put<ArtistResponse>(`/artists/${payload.id}`, {
                 name: payload.name,
                 slug: payload.slug,
             });
@@ -89,7 +89,7 @@ export const useDeleteArtist = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {
-            await api.delete(`/artists/cms/${id}`);
+            await api.delete(`/artists/${id}`);
             return id;
         },
         onSuccess: (id) => {

@@ -76,7 +76,7 @@ pub async fn get_productions(
 
 #[utoipa::path(
     method(post),
-    path = "/artists/cms",
+    path = "/artists",
     tag = "Artists",
     operation_id = "create_artist",
     description = "Create a new artist — editor only",
@@ -97,7 +97,7 @@ pub async fn post(
 
 #[utoipa::path(
     method(put),
-    path = "/artists/cms/{id}",
+    path = "/artists/{id}",
     tag = "Artists",
     operation_id = "update_artist",
     description = "Update an artist — editor only",
@@ -123,7 +123,7 @@ pub async fn put(
 
 #[utoipa::path(
     method(delete),
-    path = "/artists/cms/{id}",
+    path = "/artists/{id}",
     tag = "Artists",
     operation_id = "delete_artist",
     description = "Delete an artist — editor only",
