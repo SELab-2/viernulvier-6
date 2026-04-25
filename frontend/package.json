@@ -57,6 +57,7 @@
         "radix-ui": "^1.4.3",
         "react": "19.2.3",
         "react-dom": "19.2.3",
+        "react-masonry-css": "^1.0.16",
         "sonner": "^2.0.7",
         "tailwind-merge": "^3.5.0",
         "webpack": "^5.105.2",

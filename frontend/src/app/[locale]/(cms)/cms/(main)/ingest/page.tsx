@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Upload, Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/cms/PageHeader";
@@ -28,7 +28,7 @@ export default function IngestPage() {
     const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
         useGetInfiniteMedia();
 
-    const mediaItems = data?.pages.flatMap((page) => page.data) ?? [];
+    const mediaItems = useMemo(() => data?.pages.flatMap((page) => page.data) ?? [], [data]);
 
     const spotlightItems: SpotlightItem[] = mediaItems.map((m) => ({ kind: "media", media: m }));
 
@@ -53,10 +53,14 @@ export default function IngestPage() {
     const updateMedia = useUpdateMedia();
     const deleteMedia = useDeleteMedia();
 
-    const handleView = useCallback((_media: Media, index: number) => {
-        setSpotlightIndex(index);
-        setSpotlightOpen(true);
-    }, []);
+    const handleView = useCallback(
+        (media: Media) => {
+            const index = mediaItems.findIndex((m) => m.id === media.id);
+            setSpotlightIndex(index >= 0 ? index : 0);
+            setSpotlightOpen(true);
+        },
+        [mediaItems]
+    );
 
     const handleEdit = useCallback((media: Media) => {
         setEditMedia(media);
