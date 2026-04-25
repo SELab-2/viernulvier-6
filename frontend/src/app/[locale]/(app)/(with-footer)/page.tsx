@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
 import Link from "next/link";
 
 import { useGetProductions } from "@/hooks/api/useProductions";
+import { useGetArticles } from "@/hooks/api/useArticles";
 
 import { UnifiedHeader } from "@/components/layout/header";
 import { SearchBar } from "@/components/homepage/search-bar";
 import { FeaturedSection } from "@/components/homepage/featured-section";
+import { ArticlesSection } from "@/components/homepage/articles-section";
 import { ProductionItem } from "@/components/searchpage/production-list";
 
 export default function HomePage() {
@@ -47,6 +49,8 @@ export default function HomePage() {
     const featuredProductions = productions.slice(0, 3);
     const latestProductions = productions.slice(3, 7);
 
+    const { data: articles } = useGetArticles();
+
     return (
         <>
             <UnifiedHeader
@@ -57,7 +61,6 @@ export default function HomePage() {
                 searchHint={tSearch("hint")}
             />
 
-            {/* Hero */}
             <section className="flex flex-col items-center gap-6 px-4 py-16 text-center sm:px-10 sm:py-24">
                 <h1 className="font-display text-foreground text-[40px] leading-[1.05] font-bold tracking-[-0.03em] sm:text-[64px] md:text-[72px]">
                     {t("hero.title")}
@@ -67,28 +70,18 @@ export default function HomePage() {
                 </p>
 
                 <SearchBar onSearch={handleHeroSearch} placeholder={t("hero.searchPlaceholder")} />
-
-                <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-                    {["theater", "dance", "concert", "nightlife"].map((tag) => (
-                        <Link
-                            key={tag}
-                            href={`/search?q=${t(`tags.${tag}`)}`}
-                            className="border-border text-muted-foreground hover:border-foreground hover:text-foreground border px-3 py-1.5 font-mono text-[9px] tracking-[1.1px] uppercase transition-all sm:text-[10px]"
-                        >
-                            {t(`tags.${tag}`)}
-                        </Link>
-                    ))}
-                </div>
             </section>
 
-            {/* Featured */}
             <section className="px-4 pt-8 sm:px-[30px] sm:pt-12">
                 <FeaturedSection productions={featuredProductions} locale={locale} />
             </section>
 
-            {/* Latest productions */}
+            <section className="px-4 pt-10 sm:px-[30px] sm:pt-14">
+                <ArticlesSection articles={articles ?? []} />
+            </section>
+
             {latestProductions.length > 0 && (
-                <section className="border-muted/30 border-t px-4 py-10 sm:px-[30px] sm:py-14">
+                <section className="px-4 py-10 sm:px-[30px] sm:py-14">
                     <div className="mb-6 flex items-baseline justify-between">
                         <h3 className="font-display text-foreground text-[20px] font-bold tracking-[-0.02em] sm:text-[24px]">
                             {t("latest.label")}
@@ -112,7 +105,6 @@ export default function HomePage() {
                 </section>
             )}
 
-            {/* About */}
             <section className="border-foreground/10 flex flex-col items-center gap-5 border-t px-4 py-14 text-center sm:px-10 sm:py-20">
                 <h3 className="font-display text-foreground text-[24px] leading-tight font-bold tracking-[-0.02em] sm:text-[32px]">
                     {t("about.title")}
