@@ -16,6 +16,7 @@ export function LanguageSelector<L extends string = "nl" | "en">({
             {languages.map((lang) => (
                 <button
                     key={lang}
+                    type="button"
                     onClick={() => onChange(lang as L)}
                     className={`px-3 py-1 text-xs font-medium transition-colors ${
                         activeLang === lang
