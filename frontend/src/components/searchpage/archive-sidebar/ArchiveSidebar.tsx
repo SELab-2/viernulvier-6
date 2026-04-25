@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { SlidersHorizontal, X } from "lucide-react";
+import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 
 import type { Location } from "@/types/models/location.types";
 import type { Facet } from "@/types/models/taxonomy.types";
@@ -175,12 +175,20 @@ export function ArchiveSidebar({
                     </h2>
                     <div className="bg-foreground mt-1 h-0.5 w-10" />
                 </div>
-                <button
-                    onClick={() => setMobileOpen(false)}
-                    className="text-muted-foreground hover:text-foreground cursor-pointer p-1 lg:hidden"
-                >
-                    <X className="h-5 w-5" />
-                </button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={clearAll}
+                        className="text-muted-foreground hover:text-foreground cursor-pointer font-mono text-[9px] tracking-[1.2px] uppercase transition-colors"
+                    >
+                        {t("clearAll")}
+                    </button>
+                    <button
+                        onClick={() => setMobileOpen(false)}
+                        className="text-muted-foreground hover:text-foreground cursor-pointer p-1 lg:hidden"
+                    >
+                        <X className="h-5 w-5" />
+                    </button>
+                </div>
             </div>
 
             <FilterGroup label={t("categories.label")}>
@@ -260,8 +268,8 @@ export function ArchiveSidebar({
                 </div>
             </FilterGroup>
 
-            {/* Date filter — tabs replace the section title */}
-            <div className="border-border border-t pt-2.5 pr-5 pb-3 pl-4">
+            {/* Date filter — collapsible section */}
+            <CollapsibleDateSection label={t("year.label")}>
                 <div className="mb-3.5 flex gap-5">
                     <ModeTab
                         label={t("year.rangeMode")}
@@ -304,14 +312,7 @@ export function ArchiveSidebar({
                         />
                     </div>
                 )}
-            </div>
-
-            <button
-                onClick={clearAll}
-                className="border-foreground text-foreground hover:bg-foreground hover:text-background mx-auto mt-4 block w-[calc(100%-40px)] max-w-[230px] cursor-pointer border bg-transparent px-4 py-[9px] font-mono text-[10px] font-medium tracking-[1.4px] uppercase transition-all"
-            >
-                {t("clearAll")}
-            </button>
+            </CollapsibleDateSection>
         </>
     );
 
@@ -369,12 +370,39 @@ function ModeTab({
 }
 
 function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
+    const [open, setOpen] = useState(false);
     return (
-        <div className="border-border border-t px-5 py-2.5 pl-4">
-            <span className="text-foreground mb-2.5 block font-mono text-[11px] font-medium tracking-[1.2px] uppercase">
-                {label}
-            </span>
-            {children}
+        <div className="border-border border-t">
+            <button
+                type="button"
+                onClick={() => setOpen((v) => !v)}
+                className="flex w-full cursor-pointer items-center justify-between px-4 py-2.5 font-mono text-[11px] font-medium tracking-[1.2px] uppercase transition-colors"
+            >
+                <span className="text-foreground">{label}</span>
+                <ChevronDown
+                    className={`text-muted-foreground h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`}
+                />
+            </button>
+            {open && <div className="px-4 pb-2.5">{children}</div>}
+        </div>
+    );
+}
+
+function CollapsibleDateSection({ label, children }: { label: string; children: React.ReactNode }) {
+    const [open, setOpen] = useState(false);
+    return (
+        <div className="border-border border-t">
+            <button
+                type="button"
+                onClick={() => setOpen((v) => !v)}
+                className="flex w-full cursor-pointer items-center justify-between px-4 py-2.5 font-mono text-[11px] font-medium tracking-[1.2px] uppercase transition-colors"
+            >
+                <span className="text-foreground">{label}</span>
+                <ChevronDown
+                    className={`text-muted-foreground h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`}
+                />
+            </button>
+            {open && <div className="px-4 pr-5 pb-3">{children}</div>}
         </div>
     );
 }

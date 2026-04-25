@@ -63,6 +63,7 @@
     },
     "ResultsBar": {
         "sortBy": "Sort by:",
+        "relevant": "Most relevant",
         "recent": "Most recent",
         "oldest": "Oldest first",
         "az": "A–Z"
