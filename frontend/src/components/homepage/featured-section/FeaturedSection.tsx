@@ -27,7 +27,7 @@ export function FeaturedSection({ productions, locale }: FeaturedSectionProps) {
                 <span className="bg-muted/40 h-px flex-1" />
             </div>
 
-            <div className="bg-muted border-foreground -mx-4 grid grid-cols-1 gap-px border-x border-b-2 sm:-mx-[30px] sm:grid-cols-[1.6fr_1fr_1fr]">
+            <div className="bg-muted border-foreground -mx-4 grid grid-cols-1 gap-px sm:-mx-[30px] sm:grid-cols-[1.6fr_1fr_1fr]">
                 {featured.map((production, index) => (
                     <FeaturedCard
                         key={production.id}
@@ -61,7 +61,7 @@ function FeaturedCard({
             className="group bg-background hover:bg-muted/5 relative block cursor-pointer p-4 pb-5 transition-colors sm:p-5"
         >
             <div
-                className={`relative mb-3 h-[160px] w-full overflow-hidden bg-[#CCC6BC] ${isFirst ? "sm:h-[200px]" : "sm:h-[140px]"}`}
+                className={`relative mb-3 w-full overflow-hidden bg-[#CCC6BC] ${isFirst ? "h-[180px] sm:h-[260px]" : "h-[140px] sm:h-[170px]"}`}
             >
                 {production.coverImageUrl ? (
                     <Image
@@ -87,25 +87,23 @@ function FeaturedCard({
             )}
 
             <div
-                className={`font-display text-foreground mb-0.5 leading-[1.15] font-bold tracking-[-0.02em] ${
-                    isFirst ? "text-[24px] sm:text-[30px]" : "text-[20px] sm:text-[22px]"
+                className={`font-display text-foreground leading-[1.1] font-bold tracking-[-0.02em] ${
+                    isFirst ? "text-[26px] sm:text-[34px]" : "text-[19px] sm:text-[21px]"
                 }`}
             >
                 {title}
             </div>
 
             {artist && (
-                <div
-                    className={`font-display text-foreground/40 mb-2.5 font-bold ${
-                        isFirst ? "text-[24px] sm:text-[30px]" : "text-[20px] sm:text-[22px]"
-                    }`}
-                >
+                <div className="font-body text-muted-foreground mt-1.5 mb-2 text-xs italic">
                     {artist}
                 </div>
             )}
 
             {tagline && (
-                <p className="font-body text-muted-foreground group-hover:text-foreground text-xs leading-relaxed transition-colors">
+                <p
+                    className={`font-body text-foreground/70 group-hover:text-foreground border-muted/30 border-t pt-2.5 leading-snug transition-colors ${isFirst ? "text-sm" : "text-xs"}`}
+                >
                     {tagline}
                 </p>
             )}

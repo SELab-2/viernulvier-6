@@ -6,10 +6,12 @@ import { useRouter } from "@/i18n/routing";
 import Link from "next/link";
 
 import { useGetProductions } from "@/hooks/api/useProductions";
+import { useGetArticles } from "@/hooks/api/useArticles";
 
 import { UnifiedHeader } from "@/components/layout/header";
 import { SearchBar } from "@/components/homepage/search-bar";
 import { FeaturedSection } from "@/components/homepage/featured-section";
+import { ArticlesSection } from "@/components/homepage/articles-section";
 import { ProductionItem } from "@/components/searchpage/production-list";
 
 export default function HomePage() {
@@ -47,6 +49,9 @@ export default function HomePage() {
     const featuredProductions = productions.slice(0, 3);
     const latestProductions = productions.slice(3, 7);
 
+    const { data: articles } = useGetArticles();
+    const publishedArticles = (articles ?? []).filter((a) => a.status === "published");
+
     return (
         <>
             <UnifiedHeader
@@ -67,18 +72,6 @@ export default function HomePage() {
                 </p>
 
                 <SearchBar onSearch={handleHeroSearch} placeholder={t("hero.searchPlaceholder")} />
-
-                <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-                    {["theater", "dance", "concert", "nightlife"].map((tag) => (
-                        <Link
-                            key={tag}
-                            href={`/search?q=${t(`tags.${tag}`)}`}
-                            className="border-border text-muted-foreground hover:border-foreground hover:text-foreground border px-3 py-1.5 font-mono text-[9px] tracking-[1.1px] uppercase transition-all sm:text-[10px]"
-                        >
-                            {t(`tags.${tag}`)}
-                        </Link>
-                    ))}
-                </div>
             </section>
 
             {/* Featured */}
@@ -86,9 +79,14 @@ export default function HomePage() {
                 <FeaturedSection productions={featuredProductions} locale={locale} />
             </section>
 
+            {/* Articles */}
+            <section className="px-4 pt-10 sm:px-[30px] sm:pt-14">
+                <ArticlesSection articles={publishedArticles} />
+            </section>
+
             {/* Latest productions */}
             {latestProductions.length > 0 && (
-                <section className="border-muted/30 border-t px-4 py-10 sm:px-[30px] sm:py-14">
+                <section className="px-4 py-10 sm:px-[30px] sm:py-14">
                     <div className="mb-6 flex items-baseline justify-between">
                         <h3 className="font-display text-foreground text-[20px] font-bold tracking-[-0.02em] sm:text-[24px]">
                             {t("latest.label")}
