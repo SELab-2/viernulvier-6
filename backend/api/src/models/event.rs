@@ -55,7 +55,6 @@ impl ApiEvent {
     pub fn to_create(
         self,
         production_id: Uuid,
-        hall_id: Option<Uuid>,
     ) -> Result<ItemConversion<EventCreate>, ImportItemError> {
         let max_tickets_per_order = self
             .max_tickets_per_order
@@ -83,7 +82,6 @@ impl ApiEvent {
             max_tickets_per_order,
             production_id,
             status: self.status,
-            hall_id,
         }))
     }
 }
@@ -125,7 +123,7 @@ mod tests {
         let too_big = (i32::MAX as u32) + 1;
         let event = make_event(Some(too_big));
 
-        let err = event.to_create(Uuid::nil(), None).unwrap_err();
+        let err = event.to_create(Uuid::nil()).unwrap_err();
         match err {
             ImportItemError::OutOfRange {
                 entity,
@@ -144,7 +142,7 @@ mod tests {
     fn to_create_accepts_max_tickets_within_i32() {
         let event = make_event(Some(10));
         let conversion = event
-            .to_create(Uuid::nil(), None)
+            .to_create(Uuid::nil())
             .expect("conversion succeeds");
         assert_eq!(conversion.value.max_tickets_per_order, Some(10));
     }
