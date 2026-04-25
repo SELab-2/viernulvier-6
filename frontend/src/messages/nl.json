@@ -469,6 +469,17 @@
             "items": "items",
             "loading": "Laden",
             "confirmDelete": "Weet u zeker dat u deze media wilt verwijderen? Dit kan niet ongedaan worden gemaakt.",
+            "confirmCleanup": "Alle orphaned media verwijderen (niet gekoppeld aan een entity)? Dit kan niet ongedaan worden gemaakt.",
+            "cleanupSuccess": "{count} orphaned media items verwijderd.",
+            "cleanupError": "Cleanup mislukt.",
+            "reconcile": "Reconciliëren",
+            "cleanup": "Cleanup",
+            "reconcileClean": "Opslag is gesynchroniseerd — geen problemen gevonden.",
+            "reconcileMissingInS3": "{count} DB entries hebben geen S3 object.",
+            "reconcileMissingInDb": "{count} S3 objecten hebben geen DB entry.",
+            "reconcileApply": "Fix toepassen",
+            "reconcileApplied": "{count} orphaned DB entries verwijderd.",
+            "reconcileError": "Reconciliëren mislukt.",
             "mediaPreview": "Media voorbeeld"
         },
         "Collections": {

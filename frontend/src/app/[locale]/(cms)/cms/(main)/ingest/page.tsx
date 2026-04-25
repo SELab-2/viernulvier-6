@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Upload, Loader2 } from "lucide-react";
+import { Upload, Loader2, Trash2, HardDrive } from "lucide-react";
 import { PageHeader } from "@/components/cms/PageHeader";
 import { MediaMasonryGrid } from "@/components/ingest/media-masonry-grid";
 import { MediaUploadDialog } from "@/components/ingest/media-upload-dialog";
@@ -10,7 +10,14 @@ import { MediaEditSheet } from "@/components/ingest/media-edit-sheet";
 import { ImageSpotlight } from "@/components/ui/image-spotlight";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { useGetInfiniteMedia, useUpdateMedia, useDeleteMedia } from "@/hooks/api/useMedia";
+import {
+    useGetInfiniteMedia,
+    useUpdateMedia,
+    useDeleteMedia,
+    useCleanupOrphanedMedia,
+    useReconcileMediaStorage,
+} from "@/hooks/api/useMedia";
+import { toast } from "sonner";
 import { Media } from "@/types/models/media.types";
 import type { SpotlightItem } from "@/components/ui/image-spotlight";
 
@@ -52,6 +59,8 @@ export default function IngestPage() {
 
     const updateMedia = useUpdateMedia();
     const deleteMedia = useDeleteMedia();
+    const cleanupOrphaned = useCleanupOrphanedMedia();
+    const reconcileStorage = useReconcileMediaStorage();
 
     const handleView = useCallback(
         (media: Media) => {
@@ -88,6 +97,60 @@ export default function IngestPage() {
         [deleteMedia, t]
     );
 
+    const handleCleanup = useCallback(() => {
+        if (typeof window !== "undefined" && window.confirm(t("confirmCleanup"))) {
+            cleanupOrphaned.mutate(undefined, {
+                onSuccess: (data) => {
+                    toast.success(t("cleanupSuccess", { count: data.deleted_count }));
+                },
+                onError: () => {
+                    toast.error(t("cleanupError"));
+                },
+            });
+        }
+    }, [cleanupOrphaned, t]);
+
+    const handleReconcile = useCallback(() => {
+        reconcileStorage.mutate(false, {
+            onSuccess: (data) => {
+                const missingInDb = data.missing_in_db.length;
+                const missingInS3 = data.missing_in_s3.length;
+                if (missingInDb === 0 && missingInS3 === 0) {
+                    toast.success(t("reconcileClean"));
+                    return;
+                }
+                const msg = [
+                    missingInS3 > 0 ? t("reconcileMissingInS3", { count: missingInS3 }) : null,
+                    missingInDb > 0 ? t("reconcileMissingInDb", { count: missingInDb }) : null,
+                ]
+                    .filter(Boolean)
+                    .join(" ");
+                toast(msg, {
+                    action: {
+                        label: t("reconcileApply"),
+                        onClick: () => {
+                            reconcileStorage.mutate(true, {
+                                onSuccess: (applyData) => {
+                                    toast.success(
+                                        t("reconcileApplied", {
+                                            count: applyData.deleted_missing_in_s3_count,
+                                        })
+                                    );
+                                },
+                                onError: () => {
+                                    toast.error(t("reconcileError"));
+                                },
+                            });
+                        },
+                    },
+                });
+            },
+            onError: () => {
+                toast.error(t("reconcileError"));
+            },
+        });
+    }, [reconcileStorage, t]);
+
     return (
         <div className="flex h-full flex-col px-3 py-1 lg:px-4 lg:py-3">
             <PageHeader eyebrow={tEditions("edition5")} title={t("title")} />
@@ -97,14 +160,36 @@ export default function IngestPage() {
                 <div className="text-muted-foreground font-mono text-[10px] tracking-[1.5px] uppercase">
                     {mediaItems.length} {t("items")}
                 </div>
-                <Button
-                    size="sm"
-                    onClick={() => setUploadOpen(true)}
-                    className="rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
-                >
-                    <Upload className="mr-2 h-3.5 w-3.5" />
-                    {t("upload")}
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleReconcile}
+                        disabled={reconcileStorage.isPending}
+                        className="rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                    >
+                        <HardDrive className="mr-2 h-3.5 w-3.5" />
+                        {t("reconcile")}
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCleanup}
+                        disabled={cleanupOrphaned.isPending}
+                        className="hover:text-destructive-foreground hover:bg-destructive rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                    >
+                        <Trash2 className="mr-2 h-3.5 w-3.5" />
+                        {t("cleanup")}
+                    </Button>
+                    <Button
+                        size="sm"
+                        onClick={() => setUploadOpen(true)}
+                        className="rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                    >
+                        <Upload className="mr-2 h-3.5 w-3.5" />
+                        {t("upload")}
+                    </Button>
+                </div>
             </div>
 
             {/* Grid */}
