@@ -338,6 +338,31 @@ impl SeedImporter {
 
         info!("Applying {} hall merges", merges.len());
         for merge in merges {
+            let keep_exists = sqlx::query("SELECT 1 FROM halls WHERE source_id = $1")
+                .bind(merge.keep_source_id)
+                .fetch_optional(self.db.pool())
+                .await
+                .map_err(DatabaseError::from)?
+                .is_some();
+
+            let remove_exists = sqlx::query("SELECT 1 FROM halls WHERE source_id = $1")
+                .bind(merge.remove_source_id)
+                .fetch_optional(self.db.pool())
+                .await
+                .map_err(DatabaseError::from)?
+                .is_some();
+
+            if !keep_exists || !remove_exists {
+                warn!(
+                    keep_source_id = merge.keep_source_id,
+                    remove_source_id = merge.remove_source_id,
+                    keep_exists,
+                    remove_exists,
+                    "hall merge skipped: referenced hall not found"
+                );
+                continue;
+            }
+
             sqlx::query(
                 "INSERT INTO event_halls (event_id, hall_id)
                  SELECT event_id, (SELECT id FROM halls WHERE source_id = $1)
@@ -360,19 +385,11 @@ impl SeedImporter {
             .await
             .map_err(DatabaseError::from)?;
 
-            let rows = sqlx::query("DELETE FROM halls WHERE source_id = $1")
+            sqlx::query("DELETE FROM halls WHERE source_id = $1")
                 .bind(merge.remove_source_id)
                 .execute(self.db.pool())
                 .await
-                .map_err(DatabaseError::from)?
-                .rows_affected();
-
-            if rows == 0 {
-                warn!(
-                    remove_source_id = merge.remove_source_id,
-                    "hall merge: hall to remove not found"
-                );
-            }
+                .map_err(DatabaseError::from)?;
         }
         Ok(())
     }
@@ -403,6 +420,42 @@ impl SeedImporter {
 
         info!("Applying {} hall expansions", expansions.len());
         for expansion in expansions {
+            let combo_exists = sqlx::query("SELECT 1 FROM halls WHERE source_id = $1")
+                .bind(expansion.combo_source_id)
+                .fetch_optional(self.db.pool())
+                .await
+                .map_err(DatabaseError::from)?
+                .is_some();
+
+            if !combo_exists {
+                warn!(
+                    combo_source_id = expansion.combo_source_id,
+                    "hall expansion skipped: combo hall not found"
+                );
+                continue;
+            }
+
+            let mut missing_components = false;
+            for component_source_id in &expansion.component_source_ids {
+                let exists = sqlx::query("SELECT 1 FROM halls WHERE source_id = $1")
+                    .bind(component_source_id)
+                    .fetch_optional(self.db.pool())
+                    .await
+                    .map_err(DatabaseError::from)?
+                    .is_some();
+                if !exists {
+                    warn!(
+                        combo_source_id = expansion.combo_source_id,
+                        component_source_id,
+                        "hall expansion skipped: component hall not found"
+                    );
+                    missing_components = true;
+                }
+            }
+            if missing_components {
+                continue;
+            }
+
             for component_source_id in &expansion.component_source_ids {
                 sqlx::query(
                     "INSERT INTO event_halls (event_id, hall_id)
@@ -427,19 +480,11 @@ impl SeedImporter {
             .await
             .map_err(DatabaseError::from)?;
 
-            let rows = sqlx::query("DELETE FROM halls WHERE source_id = $1")
+            sqlx::query("DELETE FROM halls WHERE source_id = $1")
                 .bind(expansion.combo_source_id)
                 .execute(self.db.pool())
                 .await
-                .map_err(DatabaseError::from)?
-                .rows_affected();
-
-            if rows == 0 {
-                warn!(
-                    combo_source_id = expansion.combo_source_id,
-                    "hall expansion: combo hall not found"
-                );
-            }
+                .map_err(DatabaseError::from)?;
         }
         Ok(())
     }
@@ -737,7 +782,12 @@ impl SeedImporter {
 
         let mut link_count = 0u64;
         for (prod_id, nl_artist, en_artist) in rows {
-            let Some(text) = nl_artist.or(en_artist) else {
+            let Some(text) = nl_artist
+                .as_deref()
+                .filter(|s| !s.trim().is_empty())
+                .or_else(|| en_artist.as_deref().filter(|s| !s.trim().is_empty()))
+                .map(str::to_owned)
+            else {
                 continue;
             };
             for fragment in text.split('/') {

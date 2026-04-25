@@ -452,6 +452,7 @@
             "nameField": "Naam",
             "slugField": "Slug",
             "editPerformer": "Artiest bewerken",
+            "deletePerformer": "Artiest verwijderen",
             "deleteConfirm": "Weet je zeker dat je \"{name}\" wilt verwijderen?",
             "deleteSuccess": "Artiest verwijderd.",
             "deleteError": "Verwijderen mislukt.",

@@ -452,6 +452,7 @@
             "nameField": "Name",
             "slugField": "Slug",
             "editPerformer": "Edit performer",
+            "deletePerformer": "Delete performer",
             "deleteConfirm": "Are you sure you want to delete \"{name}\"?",
             "deleteSuccess": "Artist deleted.",
             "deleteError": "Failed to delete artist.",
