@@ -14,7 +14,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { LanguageSelector } from "@/components/cms/language-selector";
 import { Media } from "@/types/models/media.types";
+
+type Lang = "nl" | "en" | "fr";
 
 interface MediaEditSheetProps {
     media: Media | null;
@@ -33,12 +36,10 @@ export function MediaEditSheet({
 }: MediaEditSheetProps) {
     const t = useTranslations("Cms.Ingest");
     const [form, setForm] = useState<Partial<Media>>({});
+    const [activeLang, setActiveLang] = useState<Lang>("nl");
 
     useEffect(() => {
         if (media) {
-            // Initialize form when media changes; using a microtask avoids
-            // the synchronous setState-in-effect lint rule while keeping
-            // the form in sync when switching between media items.
             const id = setTimeout(() => setForm({ ...media }), 0);
             return () => clearTimeout(id);
         }
@@ -55,6 +56,9 @@ export function MediaEditSheet({
         setForm((prev) => ({ ...prev, [field]: value === "" ? null : value }));
     };
 
+    const altKey = `altText${capitalize(activeLang)}` as keyof Media;
+    const creditKey = `credit${capitalize(activeLang)}` as keyof Media;
+
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent className="border-l sm:max-w-md">
@@ -69,24 +73,40 @@ export function MediaEditSheet({
 
                 <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-5">
                     <div className="space-y-4">
-                        <LocalizedField
-                            label={t("altText")}
-                            nlValue={form.altTextNl ?? ""}
-                            enValue={form.altTextEn ?? ""}
-                            frValue={form.altTextFr ?? ""}
-                            onChangeNl={(v) => updateField("altTextNl", v)}
-                            onChangeEn={(v) => updateField("altTextEn", v)}
-                            onChangeFr={(v) => updateField("altTextFr", v)}
-                        />
-                        <LocalizedField
-                            label={t("credit")}
-                            nlValue={form.creditNl ?? ""}
-                            enValue={form.creditEn ?? ""}
-                            frValue={form.creditFr ?? ""}
-                            onChangeNl={(v) => updateField("creditNl", v)}
-                            onChangeEn={(v) => updateField("creditEn", v)}
-                            onChangeFr={(v) => updateField("creditFr", v)}
-                        />
+                        <div className="border-foreground/10 flex items-center justify-between border-b pb-2">
+                            <h2 className="text-sm font-semibold">{t("metadataSection")}</h2>
+                            <LanguageSelector
+                                activeLang={activeLang}
+                                onChange={setActiveLang}
+                                languages={["nl", "en", "fr"]}
+                            />
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="space-y-1.5">
+                                <Label className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
+                                    {t("altText")}
+                                </Label>
+                                <Input
+                                    value={(form[altKey] as string | null) ?? ""}
+                                    onChange={(e) => updateField(altKey, e.target.value)}
+                                    placeholder={activeLang.toUpperCase()}
+                                    className="h-9 rounded-none border text-sm"
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
+                                    {t("credit")}
+                                </Label>
+                                <Input
+                                    value={(form[creditKey] as string | null) ?? ""}
+                                    onChange={(e) => updateField(creditKey, e.target.value)}
+                                    placeholder={activeLang.toUpperCase()}
+                                    className="h-9 rounded-none border text-sm"
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     <div className="border-t pt-4">
@@ -109,48 +129,6 @@ export function MediaEditSheet({
     );
 }
 
-function LocalizedField({
-    label,
-    nlValue,
-    enValue,
-    frValue,
-    onChangeNl,
-    onChangeEn,
-    onChangeFr,
-}: {
-    label: string;
-    nlValue: string;
-    enValue: string;
-    frValue: string;
-    onChangeNl: (v: string) => void;
-    onChangeEn: (v: string) => void;
-    onChangeFr: (v: string) => void;
-}) {
-    return (
-        <div className="space-y-2">
-            <Label className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
-                {label}
-            </Label>
-            <div className="grid grid-cols-3 gap-2">
-                <Input
-                    placeholder="NL"
-                    value={nlValue}
-                    onChange={(e) => onChangeNl(e.target.value)}
-                    className="h-9 rounded-none border text-sm"
-                />
-                <Input
-                    placeholder="EN"
-                    value={enValue}
-                    onChange={(e) => onChangeEn(e.target.value)}
-                    className="h-9 rounded-none border text-sm"
-                />
-                <Input
-                    placeholder="FR"
-                    value={frValue}
-                    onChange={(e) => onChangeFr(e.target.value)}
-                    className="h-9 rounded-none border text-sm"
-                />
-            </div>
-        </div>
-    );
+function capitalize(s: string) {
+    return s.charAt(0).toUpperCase() + s.slice(1);
 }

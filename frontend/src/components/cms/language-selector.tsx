@@ -1,33 +1,31 @@
 "use client";
 
-interface LanguageSelectorProps {
-    activeLang: "nl" | "en";
-    onChange: (lang: "nl" | "en") => void;
+interface LanguageSelectorProps<L extends string = "nl" | "en"> {
+    activeLang: L;
+    onChange: (lang: L) => void;
+    languages?: readonly string[];
 }
 
-export function LanguageSelector({ activeLang, onChange }: LanguageSelectorProps) {
+export function LanguageSelector<L extends string = "nl" | "en">({
+    activeLang,
+    onChange,
+    languages = ["nl", "en"],
+}: LanguageSelectorProps<L>) {
     return (
         <div className="flex items-center gap-1">
-            <button
-                onClick={() => onChange("nl")}
-                className={`px-3 py-1 text-xs font-medium transition-colors ${
-                    activeLang === "nl"
-                        ? "bg-foreground text-background"
-                        : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-                NL
-            </button>
-            <button
-                onClick={() => onChange("en")}
-                className={`px-3 py-1 text-xs font-medium transition-colors ${
-                    activeLang === "en"
-                        ? "bg-foreground text-background"
-                        : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-                EN
-            </button>
+            {languages.map((lang) => (
+                <button
+                    key={lang}
+                    onClick={() => onChange(lang as L)}
+                    className={`px-3 py-1 text-xs font-medium transition-colors ${
+                        activeLang === lang
+                            ? "bg-foreground text-background"
+                            : "text-muted-foreground hover:text-foreground"
+                    }`}
+                >
+                    {lang.toUpperCase()}
+                </button>
+            ))}
         </div>
     );
 }
