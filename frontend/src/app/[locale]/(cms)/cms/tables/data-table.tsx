@@ -160,12 +160,14 @@ export function DataTable<TData, TValue>({
             id: "select",
             header: () => null,
             cell: ({ row }) => (
-                <Checkbox
-                    checked={row.getIsSelected()}
-                    onCheckedChange={(value) => row.toggleSelected(!!value)}
-                    aria-label="Select row"
-                    className="border-foreground/30 data-[state=checked]:bg-foreground data-[state=checked]:border-foreground"
-                />
+                <div onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                        checked={row.getIsSelected()}
+                        onCheckedChange={(value) => row.toggleSelected(!!value)}
+                        aria-label="Select row"
+                        className="border-foreground/30 data-[state=checked]:bg-foreground data-[state=checked]:border-foreground"
+                    />
+                </div>
             ),
             enableSorting: false,
             enableHiding: false,

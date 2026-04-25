@@ -254,6 +254,9 @@
             "eventsSelected": "{count, plural, one {# voorstelling} other {# voorstellingen}} geselecteerd",
             "locationsSelected": "{count, plural, one {# locatie} other {# locaties}} geselecteerd",
             "hallsSelected": "{count, plural, one {# zaal} other {# zalen}} geselecteerd",
+            "articlesSelected": "{count, plural, one {# artikel} other {# artikelen}} geselecteerd",
+            "collectionsSelected": "{count, plural, one {# collectie} other {# collecties}} geselecteerd",
+            "importErrorsSelected": "{count, plural, one {# fout} other {# fouten}} geselecteerd",
             "bulkEdit": "Bulk bewerken",
             "delete": "Verwijderen"
         },

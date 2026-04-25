@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
 import { StatusBadge } from "@/components/cms/status-badge";
+import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
 import { makeActionsColumn } from "../actions-column";
 import { Action, ActionDisplay, ActionVariant } from "@/types/cms/actions";
 import { ArticleListItem } from "@/types/models/article.types";
@@ -47,6 +48,19 @@ export function makeArticleColumns(
                     toast.error(t("copyFailed"));
                 }
             },
+        },
+        {
+            key: "add-to-collection",
+            render: (article, closeMenu) => (
+                <CollectionPickerSubmenu
+                    item={{
+                        contentId: article.id,
+                        contentType: "blogpost",
+                        label: article.slug ?? article.id,
+                    }}
+                    onComplete={closeMenu}
+                />
+            ),
         },
         {
             key: "delete",
