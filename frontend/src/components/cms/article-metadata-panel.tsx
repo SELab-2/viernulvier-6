@@ -129,8 +129,8 @@ export function ArticleMetadataPanel({ article, onArticleChange }: ArticleMetada
                     <Input
                         id="slug"
                         value={article.slug}
-                        onChange={(e) => onArticleChange({ slug: e.target.value })}
-                        className="h-8 font-mono text-xs"
+                        readOnly
+                        className="text-muted-foreground h-8 cursor-default font-mono text-xs"
                     />
                 </div>
 
