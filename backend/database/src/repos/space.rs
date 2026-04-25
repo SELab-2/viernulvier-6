@@ -1,4 +1,4 @@
-use ormlite::{Insert, Model};
+use ormlite::Model;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -42,7 +42,19 @@ impl<'a> SpaceRepo<'a> {
     }
 
     pub async fn insert(&self, space: SpaceCreate) -> Result<Space, DatabaseError> {
-        Ok(space.insert(self.db).await?)
+        Ok(sqlx::query_as::<_, Space>(
+            "INSERT INTO spaces (source_id, name_nl, location_id)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (source_id) DO UPDATE SET
+                 name_nl     = EXCLUDED.name_nl,
+                 location_id = EXCLUDED.location_id
+             RETURNING *",
+        )
+        .bind(space.source_id)
+        .bind(&space.name_nl)
+        .bind(space.location_id)
+        .fetch_one(self.db)
+        .await?)
     }
 
     pub async fn upsert_by_source_id(&self, space: SpaceCreate) -> Result<Space, DatabaseError> {

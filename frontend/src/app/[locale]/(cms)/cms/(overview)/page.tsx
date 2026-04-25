@@ -53,7 +53,6 @@ const CONTENT_SECTIONS: ContentSection[] = [
         href: "/cms/performers",
         editionKey: "edition4",
         span: "lg:col-span-6",
-        comingSoon: true,
         icon: Users,
     },
     {

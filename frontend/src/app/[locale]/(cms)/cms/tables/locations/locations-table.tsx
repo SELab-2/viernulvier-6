@@ -45,8 +45,10 @@ export function LocationsTable() {
         isFetchingNextPage,
     } = useGetInfiniteLocations();
 
-    const { data: hallsResult, isLoading: hallsLoading } = useGetHalls();
-    const { data: spacesResult } = useGetSpaces();
+    const { data: hallsResult, isLoading: hallsLoading } = useGetHalls({
+        pagination: { limit: 1000 },
+    });
+    const { data: spacesResult } = useGetSpaces({ pagination: { limit: 1000 } });
 
     const locations = useMemo(
         () => infiniteData?.pages.flatMap((page) => page.data) ?? [],

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use ormlite::{Insert, Model};
+use ormlite::Model;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -130,7 +130,28 @@ impl<'a> ProductionRepo<'a> {
         production: ProductionCreate,
         translations: Vec<ProductionTranslationData>,
     ) -> Result<ProductionWithTranslations, DatabaseError> {
-        let production = production.insert(self.db).await?;
+        let production = sqlx::query_as::<_, Production>(
+            "INSERT INTO productions (source_id, slug, video_1, video_2, eticket_info, uitdatabank_theme, uitdatabank_type)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT (source_id) DO UPDATE SET
+                 slug              = EXCLUDED.slug,
+                 video_1           = EXCLUDED.video_1,
+                 video_2           = EXCLUDED.video_2,
+                 eticket_info      = EXCLUDED.eticket_info,
+                 uitdatabank_theme = EXCLUDED.uitdatabank_theme,
+                 uitdatabank_type  = EXCLUDED.uitdatabank_type
+             RETURNING *",
+        )
+        .bind(production.source_id)
+        .bind(&production.slug)
+        .bind(&production.video_1)
+        .bind(&production.video_2)
+        .bind(&production.eticket_info)
+        .bind(&production.uitdatabank_theme)
+        .bind(&production.uitdatabank_type)
+        .fetch_one(self.db)
+        .await?;
+
         self.upsert_translations(production.id, &translations)
             .await?;
         let translation_rows = self.fetch_translations_for(production.id).await?;

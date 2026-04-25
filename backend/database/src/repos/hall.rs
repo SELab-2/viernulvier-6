@@ -1,4 +1,4 @@
-use ormlite::{Insert, Model};
+use ormlite::Model;
 use sqlx::PgPool;
 use tracing::debug;
 use uuid::Uuid;
@@ -120,7 +120,31 @@ impl<'a> HallRepo<'a> {
     }
 
     pub async fn insert(&self, hall: HallCreate) -> Result<Hall, DatabaseError> {
-        Ok(hall.insert(self.db).await?)
+        Ok(sqlx::query_as::<_, Hall>(
+            "INSERT INTO halls (source_id, slug, vendor_id, box_office_id, seat_selection, open_seating, name, remark, space_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+             ON CONFLICT (source_id) DO UPDATE SET
+                 slug           = EXCLUDED.slug,
+                 vendor_id      = EXCLUDED.vendor_id,
+                 box_office_id  = EXCLUDED.box_office_id,
+                 seat_selection = EXCLUDED.seat_selection,
+                 open_seating   = EXCLUDED.open_seating,
+                 name           = EXCLUDED.name,
+                 remark         = EXCLUDED.remark,
+                 space_id       = EXCLUDED.space_id
+             RETURNING *",
+        )
+        .bind(hall.source_id)
+        .bind(&hall.slug)
+        .bind(&hall.vendor_id)
+        .bind(&hall.box_office_id)
+        .bind(hall.seat_selection)
+        .bind(hall.open_seating)
+        .bind(&hall.name)
+        .bind(&hall.remark)
+        .bind(hall.space_id)
+        .fetch_one(self.db)
+        .await?)
     }
 
     pub async fn upsert_by_source_id(&self, hall: HallCreate) -> Result<Hall, DatabaseError> {

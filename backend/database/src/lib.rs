@@ -172,6 +172,10 @@ impl Database {
         NormalizationLogRepo::new(&self.db)
     }
 
+    pub fn pool(&self) -> &PgPool {
+        &self.db
+    }
+
     pub fn import_errors<'a>(&'a self) -> ImportErrorRepo<'a> {
         ImportErrorRepo::new(&self.db)
     }
