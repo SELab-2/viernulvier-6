@@ -8,12 +8,12 @@ description: How historical data from the 404 API is cleaned and imported into t
 The seed pipeline imports historical data from the 404 API (Peppered platform) into the clean
 Postgres schema. It runs in two decoupled stages:
 
-1. **Fetch** — mirrors the full 404 API to `backend/seed/raw/*.json`. No database, no transforms.
-2. **Seed** — reads the cached raw JSON, inserts everything in dependency order, then applies the
+1. **Fetch**: mirrors the full 404 API to `backend/seed/raw/*.json`. No database, no transforms.
+2. **Seed**: reads the cached raw JSON, inserts everything in dependency order, then applies the
    normalisation patches from `backend/seed/normalization/`.
 
 The seed stage runs automatically on first boot when `seed/raw/manifest.json` exists.
-Re-running it only requires resetting the database — no re-fetch needed.
+Re-running it only requires resetting the database. No re-fetch needed.
 
 ## Import order
 
@@ -21,27 +21,27 @@ Entities are inserted in dependency order, then patches are applied:
 
 ```
 locations → spaces → halls → productions → prices → price_ranks → events → event_prices
-  → location_names        (patch)
-  → location_creations    (patch)
-  → space_locations       (patch)
-  → location_deletions    (patch)
-  → hall_merges           (patch)
-  → hall_names            (patch)
-  → hall_expansions       (patch)
-  → hall_deletions        (patch)
+  → location_names              (patch)
+  → location_creations          (patch)
+  → space_locations             (patch)
+  → location_deletions          (patch)
+  → hall_merges                 (patch)
+  → hall_names                  (patch)
+  → hall_expansions             (patch)
+  → hall_deletions              (patch)
   → genre_tag_mappings          (patch)
   → uitdatabank_theme_mappings  (patch)
   → genre_location_mappings     (patch)
   → genre_series_mappings       (patch)
-  → artists               (derived from productions)
-  → artist_merges         (patch)
-  → artist_names          (patch)
+  → artists                     (derived from productions)
+  → artist_merges               (patch)
+  → artist_names                (patch)
 ```
 
 ## Patch files
 
 All patch files are JSON arrays in `backend/seed/normalization/`. They are encrypted in the
-repository — see [Accessing Patch Files](/normalization/git-crypt) for setup.
+repository, see [Accessing Patch Files](/normalization/git-crypt) for setup.
 
 For the full reference on each patch file format, see [Patch Reference](/normalization/patches).
 
@@ -51,5 +51,5 @@ To apply updated patches:
 
 ```bash
 npm run dev:cleanup   # wipe DB
-npm run dev           # restart — seed runs automatically on boot
+npm run dev           # restart; seed runs automatically on boot
 ```
