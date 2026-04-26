@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { Save, X } from "lucide-react";
+import { Save } from "lucide-react";
 import {
     Sheet,
     SheetContent,
@@ -64,18 +64,9 @@ export function MediaEditSheet({
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent className="border-foreground/20 flex flex-col gap-0 overflow-y-auto border-l p-0 sm:max-w-lg">
                 <SheetHeader className="border-foreground/10 border-b px-6 pt-6 pb-4">
-                    <div className="flex items-center justify-between">
-                        <SheetDescription className="text-muted-foreground font-mono text-[9px] tracking-[2px] uppercase">
-                            {t("editMedia")}
-                        </SheetDescription>
-                        <button
-                            type="button"
-                            onClick={() => onOpenChange(false)}
-                            className="text-muted-foreground hover:text-foreground"
-                        >
-                            <X className="size-4" />
-                        </button>
-                    </div>
+                    <SheetDescription className="text-muted-foreground font-mono text-[9px] tracking-[2px] uppercase">
+                        {t("editMedia")}
+                    </SheetDescription>
                     <SheetTitle className="font-display text-xl font-bold tracking-tight">
                         {media.s3Key.split("/").pop() ?? media.id}
                     </SheetTitle>
