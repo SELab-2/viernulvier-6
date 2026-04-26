@@ -15,6 +15,7 @@ Entities are inserted in dependency order, then patches are applied:
 
 ```
 locations → spaces → halls → productions → prices → price_ranks → events → event_prices
+  → productions/production_corrections  (patch)
   → locations/location_names      (patch)
   → locations/location_creations  (patch)
   → locations/space_locations     (patch)
@@ -38,14 +39,30 @@ All files are JSON arrays. Unknown fields (e.g. `note`) are silently ignored by 
 
 Source IDs come from the `@id` hyperlink in the raw JSON (`/api/v1/halls/42` → source_id `42`). Use `backend/seed/raw/halls.json` (or the relevant raw file) to look up source IDs.
 
-Files are grouped into four subdirectories by entity type:
+Files are grouped into five subdirectories by entity type:
 
+- `productions/` — production_corrections
 - `locations/` — location_names, location_creations, location_deletions, space_locations
 - `halls/` — hall_merges, hall_names, hall_expansions, hall_deletions
 - `genres/` — genre_tag_mappings, uitdatabank_theme_mappings, genre_location_mappings, genre_series_mappings
 - `artists/` — artist_merges, artist_names
 
 All `*.json` files in subdirectories are encrypted by git-crypt (the `.gitattributes` pattern applies recursively).
+
+---
+
+### `productions/production_corrections.json` - correct title and/or artist per production
+
+Overwrites the `title` and/or `artist` columns on `production_translations` rows. Applied immediately after productions are imported, before artists are derived, so the corrected `artist` value feeds into artist extraction.
+
+All per-language fields are optional — only fields present are written; others are left as-is. Omit a language block entirely if only one language needs correcting.
+
+The primary use case is fixing the systematic field swap in the 404 API export, where theatre/dance productions have the company/director name in `title` and the show title in `artist`.
+
+```json
+{ "source_id": 34, "title_nl": "Ghost Writer and the Broken Hand Break", "artist_nl": "Miet Warlop / NTGent" }
+{ "source_id": 22, "title_nl": "Ellipsis", "artist_nl": "Kevin Trappeniers", "title_en": "Ellipsis", "artist_en": "Kevin Trappeniers" }
+```
 
 ---
 

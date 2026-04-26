@@ -120,6 +120,15 @@ struct GenreLocationMapping {
 }
 
 #[derive(Deserialize)]
+struct ProductionCorrection {
+    source_id: i32,
+    title_nl: Option<String>,
+    title_en: Option<String>,
+    artist_nl: Option<String>,
+    artist_en: Option<String>,
+}
+
+#[derive(Deserialize)]
 struct ArtistMerge {
     keep_slug: String,
     remove_slug: String,
@@ -171,6 +180,7 @@ impl SeedImporter {
         self.import_spaces().await?;
         self.import_halls().await?;
         self.import_productions().await?;
+        self.apply_production_corrections().await?;
         self.import_prices().await?;
         self.import_price_ranks().await?;
         self.import_events().await?;
@@ -219,6 +229,41 @@ impl SeedImporter {
         serde_json::from_str(&raw)
             .map_err(|e| warn!("failed to parse normalization file {filename}: {e}"))
             .ok()
+    }
+
+    async fn apply_production_corrections(&self) -> Result<(), SeedError> {
+        let Some(corrections) = self
+            .read_normalization_file::<ProductionCorrection>("productions/production_corrections.json")
+        else {
+            return Ok(());
+        };
+
+        info!("Applying {} production corrections", corrections.len());
+        for c in corrections {
+            for (lang, new_title, new_artist) in [
+                ("nl", c.title_nl.as_deref(), c.artist_nl.as_deref()),
+                ("en", c.title_en.as_deref(), c.artist_en.as_deref()),
+            ] {
+                if new_title.is_none() && new_artist.is_none() {
+                    continue;
+                }
+                sqlx::query(
+                    "UPDATE production_translations
+                     SET title  = COALESCE($1, title),
+                         artist = COALESCE($2, artist)
+                     WHERE production_id = (SELECT id FROM productions WHERE source_id = $3)
+                       AND language_code = $4",
+                )
+                .bind(new_title)
+                .bind(new_artist)
+                .bind(c.source_id)
+                .bind(lang)
+                .execute(self.db.pool())
+                .await
+                .map_err(DatabaseError::from)?;
+            }
+        }
+        Ok(())
     }
 
     async fn apply_location_name_patches(&self) -> Result<(), SeedError> {
