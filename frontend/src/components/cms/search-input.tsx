@@ -19,18 +19,25 @@ export function SearchInput({ placeholder = "Search…" }: SearchInputProps) {
 
     useEffect(() => {
         const timeout = setTimeout(() => {
-            const params = new URLSearchParams(window.location.search);
+            const params = new URLSearchParams(searchParams.toString());
             if (value) {
                 params.set("q", value);
             } else {
                 params.delete("q");
             }
             params.delete("cursor");
+
             const qs = params.toString();
-            router.replace(qs ? `${pathname}?${qs}` : pathname);
+            const nextUrl = qs ? `${pathname}?${qs}` : pathname;
+            const currentQs = searchParams.toString();
+            const currentUrl = currentQs ? `${pathname}?${currentQs}` : pathname;
+
+            if (nextUrl !== currentUrl) {
+                router.replace(nextUrl);
+            }
         }, 300);
         return () => clearTimeout(timeout);
-    }, [value, pathname, router]);
+    }, [value, pathname, router, searchParams]);
 
     return (
         <div className="relative">
