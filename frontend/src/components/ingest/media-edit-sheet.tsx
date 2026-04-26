@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { Save } from "lucide-react";
+import { Save, X } from "lucide-react";
 import {
     Sheet,
     SheetContent,
@@ -62,20 +62,31 @@ export function MediaEditSheet({
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="border-l sm:max-w-md">
-                <SheetHeader className="px-0 pt-0">
-                    <SheetDescription className="text-muted-foreground font-mono text-[9px] tracking-[2px] uppercase">
-                        {t("editMedia")}
-                    </SheetDescription>
-                    <SheetTitle className="font-display text-2xl font-bold tracking-tight">
+            <SheetContent className="border-foreground/20 flex flex-col gap-0 overflow-y-auto border-l p-0 sm:max-w-lg">
+                <SheetHeader className="border-foreground/10 border-b px-6 pt-6 pb-4">
+                    <div className="flex items-center justify-between">
+                        <SheetDescription className="text-muted-foreground font-mono text-[9px] tracking-[2px] uppercase">
+                            {t("editMedia")}
+                        </SheetDescription>
+                        <button
+                            type="button"
+                            onClick={() => onOpenChange(false)}
+                            className="text-muted-foreground hover:text-foreground"
+                        >
+                            <X className="size-4" />
+                        </button>
+                    </div>
+                    <SheetTitle className="font-display text-xl font-bold tracking-tight">
                         {media.s3Key.split("/").pop() ?? media.id}
                     </SheetTitle>
                 </SheetHeader>
 
-                <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-5">
+                <form onSubmit={handleSubmit} className="flex flex-col gap-6 px-6 py-6">
                     <div className="space-y-4">
                         <div className="border-foreground/10 flex items-center justify-between border-b pb-2">
-                            <h2 className="text-sm font-semibold">{tMedia("editMetadata")}</h2>
+                            <h3 className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
+                                {tMedia("editMetadata")}
+                            </h3>
                             <LanguageSelector
                                 activeLang={activeLang}
                                 onChange={setActiveLang}
@@ -84,42 +95,42 @@ export function MediaEditSheet({
                         </div>
 
                         <div className="space-y-3">
-                            <div className="space-y-1.5">
-                                <Label className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
-                                    {tMedia("altText")}
-                                </Label>
+                            <div className="space-y-1">
+                                <Label className="text-xs">{tMedia("altText")}</Label>
                                 <Input
                                     value={(form[altKey] as string | null) ?? ""}
                                     onChange={(e) => updateField(altKey, e.target.value)}
                                     placeholder={activeLang.toUpperCase()}
-                                    className="h-9 rounded-none border text-sm"
+                                    className="h-7 text-xs"
                                 />
                             </div>
 
-                            <div className="space-y-1.5">
-                                <Label className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
-                                    {tMedia("credit")}
-                                </Label>
+                            <div className="space-y-1">
+                                <Label className="text-xs">{tMedia("credit")}</Label>
                                 <Input
                                     value={(form[creditKey] as string | null) ?? ""}
                                     onChange={(e) => updateField(creditKey, e.target.value)}
                                     placeholder={activeLang.toUpperCase()}
-                                    className="h-9 rounded-none border text-sm"
+                                    className="h-7 text-xs"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <div className="border-t pt-4">
+                    <div className="flex justify-end gap-2">
                         <Button
-                            type="submit"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onOpenChange(false)}
                             disabled={isSaving}
-                            className="w-full rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
                         >
+                            {tMedia("cancel")}
+                        </Button>
+                        <Button type="submit" size="sm" disabled={isSaving}>
                             {isSaving ? (
-                                <Spinner className="mr-2 h-3 w-3" />
+                                <Spinner className="mr-1.5 size-3" />
                             ) : (
-                                <Save className="mr-2 h-3.5 w-3.5" />
+                                <Save className="mr-1.5 size-3.5" />
                             )}
                             {tMedia("save")}
                         </Button>
