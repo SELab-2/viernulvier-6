@@ -648,9 +648,10 @@ impl SeedImporter {
                 None
             };
 
-            match location_id {
-                Some(id) => { location_index.insert(m.genre_source_id, id); }
-                None => warn!(genre_source_id = m.genre_source_id, "genre_location_mapping: location not found, skipping"),
+            if let Some(id) = location_id {
+                location_index.insert(m.genre_source_id, id);
+            } else {
+                warn!(genre_source_id = m.genre_source_id, "genre_location_mapping: location not found, skipping");
             }
         }
 
