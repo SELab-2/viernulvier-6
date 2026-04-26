@@ -3,19 +3,31 @@
 import { useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { mapUploadUrlInput, mapUploadUrlResult, mapMedia } from "@/mappers/media.mapper";
-import { GenerateUploadUrlResponse, GetMediaByIdResponse } from "@/types/api/media.api.types";
-import { AttachMediaInput, Media } from "@/types/models/media.types";
+import { GenerateUploadUrlResponse } from "@/types/api/media.api.types";
+import { Media } from "@/types/models/media.types";
+
+async function sha256(file: File): Promise<string> {
+    const buffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+type CheckMediaResponse = {
+    exists: boolean;
+    media?: {
+        id: string;
+        [key: string]: unknown;
+    };
+};
 
 /**
- * Upload flow for the media ingest page.
+ * Upload flow for the media ingest page with content-based deduplication.
  *
- * 1. Generates a presigned S3 URL
- * 2. Uploads the file directly to S3
- * 3. Registers the media record in the backend
- *
- * TODO: Step 3 currently calls POST /media which does not exist yet.
- *       The backend needs a standalone media creation endpoint.
- *       Until then, this hook will fail at step 3 with a 404.
+ * 1. Computes SHA256 checksum of the file
+ * 2. Checks if a media with that checksum already exists
+ * 3. If yes: returns the existing media (no upload needed)
+ * 4. If no: generates presigned S3 URL, uploads, and registers the media
  */
 export function useIngestMediaUpload() {
     return useMutation({
@@ -24,9 +36,30 @@ export function useIngestMediaUpload() {
             metadata,
         }: {
             file: File;
-            metadata?: Omit<AttachMediaInput, "s3Key" | "mimeType" | "uploadToken">;
+            metadata?: {
+                altTextNl?: string | null;
+                altTextEn?: string | null;
+                altTextFr?: string | null;
+                creditNl?: string | null;
+                creditEn?: string | null;
+                creditFr?: string | null;
+            };
         }): Promise<Media> => {
-            // 1. Generate presigned URL
+            // 1. Compute checksum
+            const checksum = await sha256(file);
+
+            // 2. Check for existing media by checksum
+            const { data: checkData } = await api.post<CheckMediaResponse>("/media/check", {
+                checksum,
+            });
+
+            if (checkData.exists && checkData.media) {
+                // Deduplication: return existing media without uploading
+                const { data: existingMedia } = await api.get(`/media/${checkData.media.id}`);
+                return mapMedia(existingMedia);
+            }
+
+            // 3. Generate presigned URL
             const { data: urlData } = await api.post<GenerateUploadUrlResponse>(
                 "/media/upload-url",
                 mapUploadUrlInput({
@@ -37,7 +70,7 @@ export function useIngestMediaUpload() {
             );
             const { s3Key, uploadUrl, uploadToken } = mapUploadUrlResult(urlData);
 
-            // 2. Upload to S3
+            // 4. Upload to S3
             const uploadResponse = await fetch(uploadUrl, {
                 method: "PUT",
                 body: file,
@@ -49,13 +82,13 @@ export function useIngestMediaUpload() {
                 );
             }
 
-            // 3. Register media in backend
-            // TODO: This endpoint does not exist yet. Backend needs POST /media.
-            const { data: mediaData } = await api.post<GetMediaByIdResponse>("/media", {
+            // 5. Register media in backend
+            const { data: mediaData } = await api.post("/media", {
                 s3_key: s3Key,
                 upload_token: uploadToken,
                 mime_type: file.type,
                 file_size: file.size,
+                checksum,
                 ...metadata,
             });
 

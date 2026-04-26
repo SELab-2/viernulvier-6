@@ -59,6 +59,14 @@ impl<'a> MediaRepo<'a> {
             .ok_or(DatabaseError::NotFound)
     }
 
+    pub async fn by_checksum(&self, checksum: &str) -> Result<Option<Media>, DatabaseError> {
+        Ok(Media::select()
+            .where_("checksum = $1")
+            .bind(checksum)
+            .fetch_optional(self.db)
+            .await?)
+    }
+
     pub async fn insert(&self, media: MediaCreate) -> Result<Media, DatabaseError> {
         Ok(media.insert(self.db).await?)
     }
