@@ -60,7 +60,7 @@ export function MediaIngestCard({ media, onView, onEdit, onDelete }: MediaIngest
             {/* Info bar + actions */}
             <div className="border-foreground/10 flex items-center justify-between border-t px-2 py-1.5">
                 <div className="min-w-0 flex-1">
-                    <div className="text-muted-foreground truncate font-mono text-[9px] tracking-wider">
+                    <div className="text-foreground truncate font-mono text-[9px] tracking-wider">
                         {metaLabel}
                     </div>
                 </div>
