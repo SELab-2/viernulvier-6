@@ -480,6 +480,7 @@
             "reconcileApply": "Fix toepassen",
             "reconcileApplied": "{count} orphaned DB entries verwijderd.",
             "reconcileError": "Reconciliëren mislukt.",
+            "duplicateUpload": "Dit bestand bestaat al — metadata is bijgewerkt.",
             "mediaPreview": "Media voorbeeld"
         },
         "Collections": {

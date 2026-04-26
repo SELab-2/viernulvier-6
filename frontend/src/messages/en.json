@@ -480,6 +480,7 @@
             "reconcileApply": "Apply fix",
             "reconcileApplied": "{count} orphaned DB entries removed.",
             "reconcileError": "Reconcile failed.",
+            "duplicateUpload": "This file already exists — metadata has been updated.",
             "mediaPreview": "Media preview"
         },
         "Collections": {
