@@ -94,7 +94,7 @@ impl MediaPayload {
 
 /// Response payload for a media item. The `url` field is the direct public URL
 /// the frontend can use to load the file (either from S3/Garage or an external CDN).
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct MediaPayload {
     pub id: Uuid,
     pub created_at: DateTime<Utc>,
@@ -301,6 +301,34 @@ pub struct LinkMediaRequest {
     pub role: Option<String>,
     pub sort_order: Option<i32>,
     pub is_cover_image: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct CheckMediaRequest {
+    pub checksum: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct CheckMediaResponse {
+    pub exists: bool,
+    pub media: Option<MediaPayload>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct CreateMediaRequest {
+    pub s3_key: String,
+    pub upload_token: String,
+    pub mime_type: String,
+    pub alt_text_nl: Option<String>,
+    pub alt_text_en: Option<String>,
+    pub alt_text_fr: Option<String>,
+    pub credit_nl: Option<String>,
+    pub credit_en: Option<String>,
+    pub credit_fr: Option<String>,
+    pub width: Option<i32>,
+    pub height: Option<i32>,
+    pub file_size: Option<i64>,
+    pub checksum: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]

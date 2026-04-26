@@ -326,6 +326,8 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(series::remove_production))
         // Media
         .routes(routes!(media::generate_upload_url))
+        .routes(routes!(media::check))
+        .routes(routes!(media::create))
         .routes(routes!(media::put))
         .routes(routes!(media::delete))
         .routes(routes!(media::attach_to_entity))
