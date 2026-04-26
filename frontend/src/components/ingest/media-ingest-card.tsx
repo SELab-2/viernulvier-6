@@ -24,9 +24,9 @@ export function MediaIngestCard({ media, onView, onEdit, onDelete }: MediaIngest
     const naturalAspect =
         media.width && media.height && media.height > 0 ? media.width / media.height : 1;
 
-    const fileName = media.s3Key.split("/").pop() ?? media.id;
     const fileExt = media.mimeType.split("/").pop();
     const dimensions = media.width && media.height ? `${media.width}×${media.height}` : null;
+    const metaLabel = alt || [fileExt, dimensions].filter(Boolean).join(" · ") || "—";
 
     return (
         <div
@@ -60,12 +60,8 @@ export function MediaIngestCard({ media, onView, onEdit, onDelete }: MediaIngest
             {/* Info bar + actions */}
             <div className="border-foreground/10 flex items-center justify-between border-t px-2 py-1.5">
                 <div className="min-w-0 flex-1">
-                    <div className="text-foreground font-body truncate text-[10px] leading-tight">
-                        {fileName}
-                    </div>
-                    <div className="text-muted-foreground mt-0.5 flex gap-1.5 font-mono text-[8px] tracking-wider uppercase">
-                        <span>{fileExt}</span>
-                        {dimensions && <span>{dimensions}</span>}
+                    <div className="text-muted-foreground truncate font-mono text-[9px] tracking-wider">
+                        {metaLabel}
                     </div>
                 </div>
                 <div className="ml-2 flex items-center gap-1">
