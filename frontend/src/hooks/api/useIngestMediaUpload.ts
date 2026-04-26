@@ -1,6 +1,8 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { api } from "@/lib/api-client";
 import { mapUploadUrlInput, mapUploadUrlResult, mapMedia } from "@/mappers/media.mapper";
 import { GenerateUploadUrlResponse } from "@/types/api/media.api.types";
@@ -26,10 +28,12 @@ type CheckMediaResponse = {
  *
  * 1. Computes SHA256 checksum of the file
  * 2. Checks if a media with that checksum already exists
- * 3. If yes: returns the existing media (no upload needed)
- * 4. If no: generates presigned S3 URL, uploads, and registers the media
+ * 3. If yes: shows a toast, uploads to S3, and backend updates metadata on existing media
+ * 4. If no: normal upload flow
  */
 export function useIngestMediaUpload() {
+    const t = useTranslations("Cms.Ingest");
+
     return useMutation({
         mutationFn: async ({
             file,
@@ -53,10 +57,9 @@ export function useIngestMediaUpload() {
                 checksum,
             });
 
-            if (checkData.exists && checkData.media) {
-                // Deduplication: return existing media without uploading
-                const { data: existingMedia } = await api.get(`/media/${checkData.media.id}`);
-                return mapMedia(existingMedia);
+            const isDuplicate = checkData.exists;
+            if (isDuplicate) {
+                toast.info(t("duplicateUpload"));
             }
 
             // 3. Generate presigned URL
@@ -82,7 +85,7 @@ export function useIngestMediaUpload() {
                 );
             }
 
-            // 5. Register media in backend
+            // 5. Register media in backend (deduplication + metadata update handled server-side)
             const { data: mediaData } = await api.post("/media", {
                 s3_key: s3Key,
                 upload_token: uploadToken,

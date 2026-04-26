@@ -274,11 +274,26 @@ pub async fn create(
         return Err(AppError::PayloadError("invalid upload token".into()));
     }
 
-    // Content-based deduplication
+    // Content-based deduplication — update metadata if provided
     if let Some(ref checksum) = req.checksum {
         if let Some(existing) = db.media().by_checksum(checksum).await? {
             let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
-            return MediaPayload::from_model(existing, public_url).json_created();
+            let payload = MediaPayload::from_model(existing.clone(), public_url);
+            let merged = MediaPayload {
+                alt_text_nl: req.alt_text_nl.or(payload.alt_text_nl),
+                alt_text_en: req.alt_text_en.or(payload.alt_text_en),
+                alt_text_fr: req.alt_text_fr.or(payload.alt_text_fr),
+                credit_nl: req.credit_nl.or(payload.credit_nl),
+                credit_en: req.credit_en.or(payload.credit_en),
+                credit_fr: req.credit_fr.or(payload.credit_fr),
+                width: req.width.or(payload.width),
+                height: req.height.or(payload.height),
+                file_size: req.file_size.or(payload.file_size),
+                checksum: req.checksum.clone().or(payload.checksum),
+                ..payload
+            };
+            let updated = db.media().update(merged.merge_into_existing(existing)).await?;
+            return MediaPayload::from_model(updated, public_url).json_created();
         }
     }
 
