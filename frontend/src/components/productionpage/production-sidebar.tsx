@@ -60,7 +60,6 @@ export function ProductionSidebar({
 
                 {events.length > 0 ? (
                     events.map((event) => {
-                        const isPast = new Date(event.startsAt) < new Date();
                         return (
                             <div
                                 key={event.id}
