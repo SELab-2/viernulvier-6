@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Save } from "lucide-react";
 import {
@@ -73,6 +74,18 @@ export function MediaEditSheet({
                 </SheetHeader>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-6 px-6 py-6">
+                    {media.url && (
+                        <div className="relative mx-auto aspect-video w-full max-w-xs overflow-hidden">
+                            <Image
+                                src={media.url}
+                                alt=""
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 1024px) 50vw, 320px"
+                            />
+                        </div>
+                    )}
+
                     <div className="space-y-4">
                         <div className="border-foreground/10 flex items-center justify-between border-b pb-2">
                             <h3 className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
