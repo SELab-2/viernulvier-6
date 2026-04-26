@@ -64,6 +64,15 @@ export type ProductionUpdateInput = ProductionCreateInput & {
     id: string;
 };
 
+export type ProductionSortOption = "recent" | "oldest" | "relevance";
+
+export type ProductionSearchParams = {
+    q?: string;
+    cursor?: string | null;
+    limit?: number;
+    sort?: ProductionSortOption;
+};
+
 export type ProductionRow = {
     id: string;
     slug: string;

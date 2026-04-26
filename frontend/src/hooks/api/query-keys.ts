@@ -1,7 +1,8 @@
-import { PaginationParams, SearchPaginationParams } from "@/types/api/api.types";
+import { PaginationParams } from "@/types/api/api.types";
 import { EntityMediaParams, MediaSearchParams } from "@/types/models/media.types";
+import { ProductionSearchParams } from "@/types/models/production.types";
 
-type QueryKeyParams = PaginationParams | SearchPaginationParams | Record<string, unknown>;
+type QueryKeyParams = PaginationParams | ProductionSearchParams | Record<string, unknown>;
 
 const buildQueryKey = (base: readonly string[], params?: QueryKeyParams): readonly unknown[] => {
     if (!params || Object.keys(params).length === 0) return base;
@@ -22,7 +23,7 @@ export const queryKeys = {
         bySlug: (slug: string) => ["locations", "slug", slug] as const,
     },
     productions: {
-        all: (params?: SearchPaginationParams) => buildQueryKey(["productions"], params),
+        all: (params?: ProductionSearchParams) => buildQueryKey(["productions"], params),
         detail: (id: string) => ["productions", id] as const,
         events: (id: string) => ["productions", id, "events"] as const,
     },
