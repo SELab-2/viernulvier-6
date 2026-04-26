@@ -258,31 +258,28 @@ export function LocationsTable() {
 
     return (
         <div className="flex h-full flex-col">
-            <div className="bg-background sticky top-0 z-10">
-                <div className="py-1">
-                    <SearchInput placeholder={t("search")} />
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                    <ActionBar
-                        entityCounts={[
-                            { countKey: "locationsSelected", count: selectedLocationCount },
-                            { countKey: "hallsSelected", count: selectedHallCount },
-                        ]}
-                        actions={actions}
-                        onClear={clearSelection}
-                    />
-                    {hasExpanded && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={collapseAll}
-                            className="text-muted-foreground hover:text-foreground shrink-0 cursor-pointer rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
-                        >
-                            <ChevronsUp className="mr-1 h-3.5 w-3.5" />
-                            {tCommon("collapseAll")}
-                        </Button>
-                    )}
-                </div>
+            <div className="bg-background sticky top-0 z-10 flex items-center gap-2">
+                <ActionBar
+                    entityCounts={[
+                        { countKey: "locationsSelected", count: selectedLocationCount },
+                        { countKey: "hallsSelected", count: selectedHallCount },
+                    ]}
+                    actions={actions}
+                    onClear={clearSelection}
+                    search={<SearchInput placeholder={t("search")} />}
+                    className="flex-1"
+                />
+                {hasExpanded && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={collapseAll}
+                        className="text-muted-foreground hover:text-foreground shrink-0 cursor-pointer rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                    >
+                        <ChevronsUp className="mr-1 h-3.5 w-3.5" />
+                        {tCommon("collapseAll")}
+                    </Button>
+                )}
             </div>
             <div className="flex-1 overflow-auto">
                 <DataTable
