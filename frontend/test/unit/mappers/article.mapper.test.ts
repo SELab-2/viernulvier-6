@@ -68,6 +68,7 @@ describe("article mapper", () => {
                 publishedAt: null,
                 subjectPeriodStart: "1960-01-01",
                 subjectPeriodEnd: "1970-12-31",
+                coverImageUrl: null,
             });
         });
 
@@ -111,6 +112,7 @@ describe("article mapper", () => {
                 publishedAt: null,
                 subjectPeriodStart: "1960-01-01",
                 subjectPeriodEnd: "1970-12-31",
+                coverImageUrl: null,
             });
         });
 

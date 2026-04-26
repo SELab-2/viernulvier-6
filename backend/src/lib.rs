@@ -1,17 +1,17 @@
+use crate::extractors::auth::{AdminUser, EditorUser};
+use api::ApiImporter;
 use argon2::{
     Argon2,
     password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
 };
-use crate::extractors::auth::{AdminUser, EditorUser};
-use api::ApiImporter;
 use aws_sdk_s3::config::{Builder as S3Builder, Credentials, Region};
 use axum::http::{HeaderValue, Method};
 use axum::middleware::from_extractor_with_state;
 use axum::{Router, routing::get};
 use database::Database;
 use database::models::entity_type::EntityType;
-use database::models::user::{UserCreate, UserRole};
 use database::models::facet::Facet;
+use database::models::user::{UserCreate, UserRole};
 use handlers::queries::sort::Sort;
 use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info, warn};
@@ -130,6 +130,8 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
             .endpoint_url(&s3_config.endpoint)
             .credentials_provider(creds)
             .force_path_style(true)
+            .request_checksum_calculation(aws_sdk_s3::config::RequestChecksumCalculation::WhenRequired)
+            .response_checksum_validation(aws_sdk_s3::config::ResponseChecksumValidation::WhenRequired)
             .build();
 
         aws_sdk_s3::Client::from_conf(s3_conf)
@@ -269,6 +271,7 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // collections
         .routes(routes!(collection::get_all))
         .routes(routes!(collection::get_one))
+        .routes(routes!(collection::get_by_slug))
         // series
         .routes(routes!(series::get_all))
         .routes(routes!(series::get_one))

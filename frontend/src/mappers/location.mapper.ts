@@ -38,7 +38,7 @@ const buildAddress = (
 };
 
 export const mapLocation = (response: LocationResponse): Location => {
-    const location: Omit<Location, "address" | "translations"> = {
+    const location: Omit<Location, "address" | "translations" | "coverImageUrl"> = {
         id: response.id,
         sourceId: toNullable(response.source_id),
         slug: toNullable(response.slug),
@@ -59,6 +59,7 @@ export const mapLocation = (response: LocationResponse): Location => {
         ...location,
         address: buildAddress(location),
         translations: (response.translations ?? []).map(mapLocationTranslation),
+        coverImageUrl: toNullable(response.cover_image_url),
     };
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
@@ -9,23 +9,38 @@ import { DataTable } from "../data-table";
 import { makeArticleColumns } from "./columns";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/routing";
-import { useCreateArticle, useGetArticlesCms } from "@/hooks/api/useArticles";
+import { useCreateArticle, useDeleteArticle, useGetArticlesCms } from "@/hooks/api/useArticles";
+import { ArticleListItem } from "@/types/models/article.types";
 
 export function ArticlesTable() {
     const t = useTranslations("Cms.Articles");
     const router = useRouter();
     const { data: articles = [], isLoading } = useGetArticlesCms();
     const createArticle = useCreateArticle();
+    const deleteArticle = useDeleteArticle();
 
     const tActions = useTranslations("Cms.ActionsColumn");
+    const handleDelete = useCallback(
+        (article: ArticleListItem) => {
+            const ok = window.confirm(t("deleteConfirm", { title: article.title || article.slug }));
+            if (!ok) return;
+            deleteArticle.mutate(article.id, {
+                onSuccess: () => toast.success(t("deleteSuccess")),
+                onError: () => toast.error(t("deleteError")),
+            });
+        },
+        [deleteArticle, t]
+    );
+
     const columns = useMemo(
         () =>
             makeArticleColumns(
                 (article) => router.push(`/cms/articles/${article.id}/edit`),
+                handleDelete,
                 tActions,
                 t
             ),
-        [router, tActions, t]
+        [router, handleDelete, tActions, t]
     );
 
     const handleNew = () => {
