@@ -179,7 +179,7 @@ export function LocationsTable() {
     return (
         <div className="flex h-full flex-col">
             <div className="bg-background sticky top-0 z-10">
-                <div className="flex items-center justify-between py-1">
+                <div className="py-1">
                     <SearchInput placeholder={t("search")} />
                 </div>
                 <ActionBar
