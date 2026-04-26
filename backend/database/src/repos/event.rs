@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use chrono::{DateTime, Utc};
-use ormlite::Model;
+use ormlite::{Insert, Model};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -65,39 +65,7 @@ impl<'a> EventRepo<'a> {
     }
 
     pub async fn insert(&self, event: EventCreate) -> Result<Event, DatabaseError> {
-        Ok(sqlx::query_as::<_, Event>(
-            "INSERT INTO events (source_id, created_at, updated_at, starts_at, ends_at, intermission_at, doors_at, vendor_id, box_office_id, uitdatabank_id, max_tickets_per_order, production_id, status)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-             ON CONFLICT (source_id) DO UPDATE SET
-                 created_at            = EXCLUDED.created_at,
-                 updated_at            = EXCLUDED.updated_at,
-                 starts_at             = EXCLUDED.starts_at,
-                 ends_at               = EXCLUDED.ends_at,
-                 intermission_at       = EXCLUDED.intermission_at,
-                 doors_at              = EXCLUDED.doors_at,
-                 vendor_id             = EXCLUDED.vendor_id,
-                 box_office_id         = EXCLUDED.box_office_id,
-                 uitdatabank_id        = EXCLUDED.uitdatabank_id,
-                 max_tickets_per_order = EXCLUDED.max_tickets_per_order,
-                 production_id         = EXCLUDED.production_id,
-                 status                = EXCLUDED.status
-             RETURNING *",
-        )
-        .bind(event.source_id)
-        .bind(event.created_at)
-        .bind(event.updated_at)
-        .bind(event.starts_at)
-        .bind(event.ends_at)
-        .bind(event.intermission_at)
-        .bind(event.doors_at)
-        .bind(&event.vendor_id)
-        .bind(&event.box_office_id)
-        .bind(&event.uitdatabank_id)
-        .bind(event.max_tickets_per_order)
-        .bind(event.production_id)
-        .bind(&event.status)
-        .fetch_one(self.db)
-        .await?)
+        Ok(event.insert(self.db).await?)
     }
 
     pub async fn link_halls(&self, event_id: Uuid, hall_ids: &[Uuid]) -> Result<(), DatabaseError> {
