@@ -222,7 +222,7 @@ impl SeedImporter {
     }
 
     async fn apply_location_name_patches(&self) -> Result<(), SeedError> {
-        let Some(patches) = self.read_normalization_file::<LocationNamePatch>("location_names.json")
+        let Some(patches) = self.read_normalization_file::<LocationNamePatch>("locations/location_names.json")
         else {
             return Ok(());
         };
@@ -243,7 +243,7 @@ impl SeedImporter {
 
     async fn apply_space_location_patches(&self) -> Result<(), SeedError> {
         let Some(patches) =
-            self.read_normalization_file::<SpaceLocationPatch>("space_locations.json")
+            self.read_normalization_file::<SpaceLocationPatch>("locations/space_locations.json")
         else {
             return Ok(());
         };
@@ -275,7 +275,7 @@ impl SeedImporter {
 
     async fn apply_location_creations(&self) -> Result<(), SeedError> {
         let Some(creations) =
-            self.read_normalization_file::<LocationCreation>("location_creations.json")
+            self.read_normalization_file::<LocationCreation>("locations/location_creations.json")
         else {
             return Ok(());
         };
@@ -315,7 +315,7 @@ impl SeedImporter {
 
     async fn apply_location_deletions(&self) -> Result<(), SeedError> {
         let Some(deletions) =
-            self.read_normalization_file::<LocationDeletion>("location_deletions.json")
+            self.read_normalization_file::<LocationDeletion>("locations/location_deletions.json")
         else {
             return Ok(());
         };
@@ -332,7 +332,7 @@ impl SeedImporter {
     }
 
     async fn apply_hall_merges(&self) -> Result<(), SeedError> {
-        let Some(merges) = self.read_normalization_file::<HallMerge>("hall_merges.json") else {
+        let Some(merges) = self.read_normalization_file::<HallMerge>("halls/hall_merges.json") else {
             return Ok(());
         };
 
@@ -395,7 +395,7 @@ impl SeedImporter {
     }
 
     async fn apply_hall_name_patches(&self) -> Result<(), SeedError> {
-        let Some(patches) = self.read_normalization_file::<HallNamePatch>("hall_names.json") else {
+        let Some(patches) = self.read_normalization_file::<HallNamePatch>("halls/hall_names.json") else {
             return Ok(());
         };
 
@@ -413,7 +413,7 @@ impl SeedImporter {
 
     async fn apply_hall_expansions(&self) -> Result<(), SeedError> {
         let Some(expansions) =
-            self.read_normalization_file::<HallExpansion>("hall_expansions.json")
+            self.read_normalization_file::<HallExpansion>("halls/hall_expansions.json")
         else {
             return Ok(());
         };
@@ -490,7 +490,7 @@ impl SeedImporter {
     }
 
     async fn apply_hall_deletions(&self) -> Result<(), SeedError> {
-        let Some(deletions) = self.read_normalization_file::<HallDeletion>("hall_deletions.json")
+        let Some(deletions) = self.read_normalization_file::<HallDeletion>("halls/hall_deletions.json")
         else {
             return Ok(());
         };
@@ -517,7 +517,7 @@ impl SeedImporter {
 
     async fn apply_genre_tag_mappings(&self) -> Result<(), SeedError> {
         let Some(mappings) =
-            self.read_normalization_file::<GenreTagMapping>("genre_tag_mappings.json")
+            self.read_normalization_file::<GenreTagMapping>("genres/genre_tag_mappings.json")
         else {
             return Ok(());
         };
@@ -570,7 +570,7 @@ impl SeedImporter {
 
     async fn apply_uitdatabank_theme_mappings(&self) -> Result<(), SeedError> {
         let Some(mappings) = self
-            .read_normalization_file::<UitdatabankThemeMapping>("uitdatabank_theme_mappings.json")
+            .read_normalization_file::<UitdatabankThemeMapping>("genres/uitdatabank_theme_mappings.json")
         else {
             return Ok(());
         };
@@ -624,7 +624,7 @@ impl SeedImporter {
 
     async fn apply_genre_location_mappings(&self) -> Result<(), SeedError> {
         let Some(mappings) =
-            self.read_normalization_file::<GenreLocationMapping>("genre_location_mappings.json")
+            self.read_normalization_file::<GenreLocationMapping>("genres/genre_location_mappings.json")
         else {
             return Ok(());
         };
@@ -696,7 +696,7 @@ impl SeedImporter {
 
     async fn apply_genre_series_mappings(&self) -> Result<(), SeedError> {
         let Some(mappings) =
-            self.read_normalization_file::<GenreSeriesMapping>("genre_series_mappings.json")
+            self.read_normalization_file::<GenreSeriesMapping>("genres/genre_series_mappings.json")
         else {
             return Ok(());
         };
@@ -831,7 +831,7 @@ impl SeedImporter {
     }
 
     async fn apply_artist_merges(&self) -> Result<(), SeedError> {
-        let Some(merges) = self.read_normalization_file::<ArtistMerge>("artist_merges.json") else {
+        let Some(merges) = self.read_normalization_file::<ArtistMerge>("artists/artist_merges.json") else {
             return Ok(());
         };
 
@@ -876,7 +876,7 @@ impl SeedImporter {
 
     async fn apply_artist_name_patches(&self) -> Result<(), SeedError> {
         let Some(patches) =
-            self.read_normalization_file::<ArtistNamePatch>("artist_names.json")
+            self.read_normalization_file::<ArtistNamePatch>("artists/artist_names.json")
         else {
             return Ok(());
         };

@@ -15,21 +15,21 @@ Entities are inserted in dependency order, then patches are applied:
 
 ```
 locations → spaces → halls → productions → prices → price_ranks → events → event_prices
-  → location_names      (patch)
-  → location_creations  (patch)
-  → space_locations     (patch)
-  → location_deletions  (patch)
-  → hall_merges            (patch)
-  → hall_names             (patch)
-  → hall_expansions        (patch)
-  → hall_deletions         (patch)
-  → genre_tag_mappings           (patch)
-  → uitdatabank_theme_mappings   (patch)
-  → genre_location_mappings      (patch)
-  → genre_series_mappings        (patch)
+  → locations/location_names      (patch)
+  → locations/location_creations  (patch)
+  → locations/space_locations     (patch)
+  → locations/location_deletions  (patch)
+  → halls/hall_merges             (patch)
+  → halls/hall_names              (patch)
+  → halls/hall_expansions         (patch)
+  → halls/hall_deletions          (patch)
+  → genres/genre_tag_mappings           (patch)
+  → genres/uitdatabank_theme_mappings   (patch)
+  → genres/genre_location_mappings      (patch)
+  → genres/genre_series_mappings        (patch)
   → artists              (derived from already-inserted productions)
-  → artist_merges        (patch)
-  → artist_names         (patch)
+  → artists/artist_merges        (patch)
+  → artists/artist_names         (patch)
 ```
 
 ## Normalisation files (`seed/normalization/`)
@@ -38,9 +38,18 @@ All files are JSON arrays. Unknown fields (e.g. `note`) are silently ignored by 
 
 Source IDs come from the `@id` hyperlink in the raw JSON (`/api/v1/halls/42` → source_id `42`). Use `backend/seed/raw/halls.json` (or the relevant raw file) to look up source IDs.
 
+Files are grouped into four subdirectories by entity type:
+
+- `locations/` — location_names, location_creations, location_deletions, space_locations
+- `halls/` — hall_merges, hall_names, hall_expansions, hall_deletions
+- `genres/` — genre_tag_mappings, uitdatabank_theme_mappings, genre_location_mappings, genre_series_mappings
+- `artists/` — artist_merges, artist_names
+
+All `*.json` files in subdirectories are encrypted by git-crypt (the `.gitattributes` pattern applies recursively).
+
 ---
 
-### `location_names.json` - rename a location
+### `locations/location_names.json` - rename a location
 
 Overwrites the `name` column on a location row.
 
@@ -50,7 +59,7 @@ Overwrites the `name` column on a location row.
 
 ---
 
-### `space_locations.json` - reassign a space to a different location
+### `locations/space_locations.json` - reassign a space to a different location
 
 Points a space at a location that differs from what the API returned. Useful when the API linked a space to a catch-all or incorrect location.
 
@@ -60,7 +69,7 @@ Points a space at a location that differs from what the API returned. Useful whe
 
 ---
 
-### `hall_names.json` - rename a hall
+### `halls/hall_names.json` - rename a hall
 
 Overwrites the `name` column on a hall row. Applied after merges, so the surviving hall gets the clean name.
 
@@ -70,7 +79,7 @@ Overwrites the `name` column on a hall row. Applied after merges, so the survivi
 
 ---
 
-### `location_creations.json` - create a new location and assign spaces to it
+### `locations/location_creations.json` - create a new location and assign spaces to it
 
 Use when a known venue has no location record in the raw API data. The entry creates the row and immediately re-points the listed spaces to it, so no separate `space_locations.json` entry is needed.
 
@@ -91,7 +100,7 @@ To find the space source_ids for a venue, search `backend/seed/raw/spaces.json` 
 
 ---
 
-### `location_deletions.json` - delete a duplicate or empty location
+### `locations/location_deletions.json` - delete a duplicate or empty location
 
 Deletes a location row. Because `spaces.location_id` is `ON DELETE CASCADE`, any spaces (and their halls) under the deleted location are also removed. Only use this when you have confirmed the location has no spaces, or you intend to drop those spaces too.
 
@@ -105,7 +114,7 @@ Applied after `space_locations` patches so any spaces that were re-pointed away 
 
 ---
 
-### `hall_merges.json` - merge two duplicate halls into one
+### `halls/hall_merges.json` - merge two duplicate halls into one
 
 The API sometimes has multiple hall records for the same physical room (different names, different spaces). A merge:
 1. Re-points all `event_halls` rows from the removed hall to the kept hall (`ON CONFLICT DO NOTHING`).
@@ -121,7 +130,7 @@ The API sometimes has multiple hall records for the same physical room (differen
 
 ---
 
-### `hall_expansions.json` - expand a combo hall into its components
+### `halls/hall_expansions.json` - expand a combo hall into its components
 
 Some API records represent a combination of multiple physical rooms (e.g. "Concertzaal + Balzaal"). An expansion:
 1. For each component, inserts `event_halls` rows copying all events from the combo hall.
@@ -137,7 +146,7 @@ Some API records represent a combination of multiple physical rooms (e.g. "Conce
 
 ---
 
-### `genre_tag_mappings.json` - map 404 API genres to taxonomy tags
+### `genres/genre_tag_mappings.json` - map 404 API genres to taxonomy tags
 
 Maps each raw genre (by source_id from `seed/raw/genres.json`) to a tag slug + facet in the clean taxonomy. Runs after all hall patches. For each production, every genre link is resolved via this mapping and a `taggings` row is inserted. Unmapped genres are silently skipped.
 
@@ -149,7 +158,7 @@ Maps each raw genre (by source_id from `seed/raw/genres.json`) to a tag slug + f
 
 ---
 
-### `uitdatabank_theme_mappings.json` - map UIT databank themes to discipline tags
+### `genres/uitdatabank_theme_mappings.json` - map UIT databank themes to discipline tags
 
 Maps each `uitdatabank_theme` URL on a production (e.g. `/api/v1/uitdatabank/themes/4`) to a tag slug + facet. Runs after genre tag mappings as a gap-filler — `ON CONFLICT DO NOTHING` ensures genres always take precedence. 970/2658 productions have a theme.
 
@@ -159,7 +168,7 @@ Maps each `uitdatabank_theme` URL on a production (e.g. `/api/v1/uitdatabank/the
 
 ---
 
-### `genre_series_mappings.json` - create series and link productions via genre signals
+### `genres/genre_series_mappings.json` - create series and link productions via genre signals
 
 Some genres represent recurring VIERNULVIER programme strands (e.g. "Podium", "Monument"). This file maps those genre source_ids to series. The seed step upserts each series by slug, inserts both language translations, then links all matched productions via `series_productions`.
 
@@ -169,7 +178,7 @@ Some genres represent recurring VIERNULVIER programme strands (e.g. "Podium", "M
 
 ---
 
-### `genre_location_mappings.json` - link productions to locations via genre signals
+### `genres/genre_location_mappings.json` - link productions to locations via genre signals
 
 Some 404 API genres encode venue information ("in NTGent", "in Minard", etc.). This file maps those genre source_ids to locations, creating rows in the `production_locations` junction table. Runs after all other patches.
 
@@ -182,7 +191,7 @@ Use `location_source_id` for locations that exist in the raw API, or `location_s
 
 ---
 
-### `hall_deletions.json` - delete a hall with no useful data
+### `halls/hall_deletions.json` - delete a hall with no useful data
 
 Removes a hall and all its `event_halls` links outright. Use when the hall is noise (test records, catch-all entries) with no value for the archive.
 
@@ -192,7 +201,7 @@ Removes a hall and all its `event_halls` links outright. Use when the hall is no
 
 ---
 
-### `artist_merges.json` - merge two duplicate artist records
+### `artists/artist_merges.json` - merge two duplicate artist records
 
 The 404 API has no structured artist entities — artists are derived from the free-text `artist` field on each production by splitting on `/`. If the same person appears under two slightly different name variants (e.g. a typo, different capitalisation that produces a different slug), they end up as separate records. A merge:
 
@@ -208,7 +217,7 @@ Unlike location/hall patches, artist patches reference records by **slug** (ther
 
 ---
 
-### `artist_names.json` - rename/correct an artist's display name
+### `artists/artist_names.json` - rename/correct an artist's display name
 
 Overwrites the `name` column on an artist row. Does not change the slug. Applied after merges, so the surviving artist gets the clean display name.
 
