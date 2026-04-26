@@ -189,6 +189,7 @@ impl SeedImporter {
         self.apply_location_creations().await?;
         self.apply_space_location_patches().await?;
         self.apply_location_deletions().await?;
+        self.derive_location_slugs().await?;
         self.apply_hall_merges().await?;
         self.apply_hall_name_patches().await?;
         self.apply_hall_expansions().await?;
@@ -373,6 +374,58 @@ impl SeedImporter {
                 .await
                 .map_err(DatabaseError::from)?;
         }
+        Ok(())
+    }
+
+    async fn derive_location_slugs(&self) -> Result<(), SeedError> {
+        let rows: Vec<(uuid::Uuid, String)> = sqlx::query_as(
+            "SELECT id, name FROM locations WHERE slug IS NULL ORDER BY id",
+        )
+        .fetch_all(self.db.pool())
+        .await
+        .map_err(DatabaseError::from)?;
+
+        info!("Deriving slugs for {} locations without a slug", rows.len());
+
+        let mut used: std::collections::HashSet<String> = sqlx::query_scalar(
+            "SELECT slug FROM locations WHERE slug IS NOT NULL",
+        )
+        .fetch_all(self.db.pool())
+        .await
+        .map_err(DatabaseError::from)?
+        .into_iter()
+        .collect();
+
+        for (id, name) in rows {
+            let base = slug::slugify(&name);
+            if base.is_empty() {
+                warn!(location_id = %id, "derive_location_slugs: could not derive slug from name {:?}, skipping", name);
+                continue;
+            }
+
+            let slug = if !used.contains(&base) {
+                base.clone()
+            } else {
+                let mut n = 2u32;
+                loop {
+                    let candidate = format!("{}-{}", base, n);
+                    if !used.contains(&candidate) {
+                        break candidate;
+                    }
+                    n += 1;
+                }
+            };
+
+            used.insert(slug.clone());
+
+            sqlx::query("UPDATE locations SET slug = $1 WHERE id = $2")
+                .bind(&slug)
+                .bind(id)
+                .execute(self.db.pool())
+                .await
+                .map_err(DatabaseError::from)?;
+        }
+
         Ok(())
     }
 

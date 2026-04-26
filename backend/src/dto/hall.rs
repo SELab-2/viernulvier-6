@@ -48,6 +48,16 @@ impl HallPayload {
         Ok(db.halls().by_id(id).await?.into())
     }
 
+    pub async fn by_location_id(db: &Database, location_id: Uuid) -> Result<Vec<Self>, AppError> {
+        Ok(db
+            .halls()
+            .by_location_id(location_id)
+            .await?
+            .into_iter()
+            .map(Self::from)
+            .collect())
+    }
+
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {
         Ok(db.halls().update(self.into()).await?.into())
     }
