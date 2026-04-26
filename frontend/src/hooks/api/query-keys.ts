@@ -54,6 +54,7 @@ export const queryKeys = {
         relations: (id: string) => ["articles", id, "relations"] as const,
         published: ["articles", "published"] as const,
         bySlug: (slug: string) => ["articles", "bySlug", slug] as const,
+        byProduction: (id: string) => ["articles", "byProduction", id] as const,
     },
     media: {
         all: (params?: MediaSearchParams) =>

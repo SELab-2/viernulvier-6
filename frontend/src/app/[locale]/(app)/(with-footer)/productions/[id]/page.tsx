@@ -6,6 +6,7 @@ import { notFound, useSearchParams } from "next/navigation";
 
 import { useGetProduction, useGetProductions } from "@/hooks/api/useProductions";
 import { useGetEventsByProduction } from "@/hooks/api/useEvents";
+import { useGetArticlesByProduction } from "@/hooks/api/useArticles";
 import { useHasPreview } from "@/hooks/usePreviewData";
 import {
     useProductionWithPreview,
@@ -22,6 +23,7 @@ import { ProductionHero } from "@/components/productionpage/production-hero";
 import { ProductionArticle } from "@/components/productionpage/production-article";
 import { ProductionSidebar } from "@/components/productionpage/production-sidebar";
 import { ProductionRelated } from "@/components/productionpage/production-related";
+import { ProductionArticles } from "@/components/productionpage/production-articles";
 import { Production, ProductionRow } from "@/types/models/production.types";
 
 // Helper to get title from Production or ProductionRow
@@ -77,6 +79,7 @@ export default function ProductionPage({
     const { data: apiProduction, isLoading: isProdLoading, isError } = useGetProduction(id);
     const { data: apiEvents = [], isLoading: isEventsLoading } = useGetEventsByProduction(id);
     const { data: productionsResult, isLoading: isAllProdLoading } = useGetProductions();
+    const { data: linkedArticles = [] } = useGetArticlesByProduction(id);
     const { data: media = [] } = useGetEntityMedia("production", id);
 
     // Always call preview hooks (they handle preview mode internally)
@@ -166,6 +169,9 @@ export default function ProductionPage({
                     />
                 </div>
             </div>
+
+            {/* Linked Articles */}
+            <ProductionArticles articles={linkedArticles} locale={locale} />
 
             {/* Related Section */}
             {relatedProductions.length > 0 && (

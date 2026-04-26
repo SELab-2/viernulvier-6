@@ -647,7 +647,12 @@
         "breadcrumbProductions": "Productions",
         "loading": "Loading…",
         "openCoverImage": "Open cover image",
-        "openGalleryImage": "Open image"
+        "openGalleryImage": "Open image",
+        "shareWhatsApp": "Share via WhatsApp",
+        "shareEmail": "Share via email",
+        "articlesTitle": "Articles",
+        "articlesLabel": "Article",
+        "articlesFallbackTitle": "Untitled"
     },
     "NewsArticleComponent": {
         "subTitle": "Vooruit Archive",
