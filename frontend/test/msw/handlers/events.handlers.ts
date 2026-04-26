@@ -18,7 +18,7 @@ const event1: components["schemas"]["EventPayload"] = {
     max_tickets_per_order: 10,
     production_id: "4f327f95-3a64-4fc0-8f6a-a9dc44c01111",
     status: "available",
-    hall_id: "d30f5f95-3a64-4fc0-8f6a-a9dc44c02222",
+    hall_ids: ["d30f5f95-3a64-4fc0-8f6a-a9dc44c02222"],
 };
 
 const event2: components["schemas"]["EventPayload"] = {
@@ -36,7 +36,7 @@ const event2: components["schemas"]["EventPayload"] = {
     max_tickets_per_order: 10,
     production_id: "5g438g06-4b75-5gd1-9g7b-b0ed55d12222",
     status: "available",
-    hall_id: "e41g6g06-4b75-5gd1-9g7b-b0ed55d13333",
+    hall_ids: ["e41g6g06-4b75-5gd1-9g7b-b0ed55d13333"],
 };
 
 export const eventHandlers = [

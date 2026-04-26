@@ -1,6 +1,8 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import { components, operations } from "@/types/api/generated";
+import { ArtistResponse } from "@/types/api/artist.api.types";
+import { CollectionResponse } from "@/types/api/collection.api.types";
 import { EventCreateRequest, EventResponse, EventUpdateRequest } from "@/types/api/event.api.types";
 import { HallCreateRequest, HallResponse, HallUpdateRequest } from "@/types/api/hall.api.types";
 import {
@@ -58,6 +60,27 @@ describe("OpenAPI type contract", () => {
         expectTypeOf<TagResponse>().toEqualTypeOf<components["schemas"]["TagResponse"]>();
         expectTypeOf<EntityType>().toEqualTypeOf<components["schemas"]["EntityType"]>();
         expectTypeOf<Facet>().toEqualTypeOf<components["schemas"]["Facet"]>();
+    });
+
+    it("exposes cover_image_url on location, collection, and artist payloads", () => {
+        expectTypeOf<components["schemas"]["LocationPayload"]["cover_image_url"]>().toEqualTypeOf<
+            string | null | undefined
+        >();
+
+        expectTypeOf<components["schemas"]["CollectionPayload"]["cover_image_url"]>().toEqualTypeOf<
+            string | null | undefined
+        >();
+
+        expectTypeOf<components["schemas"]["ArtistPayload"]["cover_image_url"]>().toEqualTypeOf<
+            string | null | undefined
+        >();
+    });
+
+    it("keeps ArtistResponse and CollectionResponse tied to generated schemas", () => {
+        expectTypeOf<ArtistResponse>().toEqualTypeOf<components["schemas"]["ArtistPayload"]>();
+        expectTypeOf<CollectionResponse>().toEqualTypeOf<
+            components["schemas"]["CollectionPayload"]
+        >();
     });
 
     it("keeps key operation schemas available", () => {

@@ -26,7 +26,7 @@ export function makeEventFields(
         { key: "doorsAt", label: t("fieldEventDoorsAt"), type: "text" },
         { key: "intermissionAt", label: t("fieldEventIntermissionAt"), type: "text" },
         { key: "status", label: t("fieldEventStatus"), type: "text" },
-        { key: "hallId", label: t("fieldEventHallId"), type: "text" },
+        { key: "hallIds", label: t("fieldEventHallId"), type: "hall-multiselect" },
         { key: "maxTicketsPerOrder", label: t("fieldEventMaxTickets"), type: "text" },
         { key: "vendorId", label: t("fieldEventVendorId"), type: "text" },
         { key: "boxOfficeId", label: t("fieldEventBoxOfficeId"), type: "text" },
@@ -48,7 +48,7 @@ export function toEventUpdateInput(entity: Event): EventUpdateInput {
         boxOfficeId: entity.boxOfficeId,
         uitdatabankId: entity.uitdatabankId,
         maxTicketsPerOrder: entity.maxTicketsPerOrder,
-        hallId: entity.hallId,
+        hallIds: entity.hallIds,
         createdAt: entity.createdAt,
         prices: entity.prices,
     };
@@ -109,7 +109,14 @@ export function makeEventColumns(options: {
             cell: ({ getValue }) => formatDateTime(getValue<string | null>()),
         },
         { accessorKey: "status", header: tProductions("eventStatusColumn") },
-        { accessorKey: "hallId", header: tProductions("eventHallColumn") },
+        {
+            accessorKey: "hallIds",
+            header: tProductions("eventHallColumn"),
+            cell: ({ getValue }) => {
+                const ids = getValue<string[]>();
+                return ids.length === 0 ? "—" : ids.length === 1 ? "1 hall" : `${ids.length} halls`;
+            },
+        },
         makeActionsColumn<Event>({ actions }),
     ];
 }

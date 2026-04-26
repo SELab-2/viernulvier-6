@@ -1,0 +1,2 @@
+backend/seed/*.sql filter=lfs diff=lfs merge=lfs -text
+backend/seed/raw/*.json filter=lfs diff=lfs merge=lfs -text

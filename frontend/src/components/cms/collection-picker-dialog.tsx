@@ -51,13 +51,18 @@ export function CollectionPickerDialog({
 
     const [query, setQuery] = useState("");
     const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
-    const [newCollectionTitle, setNewCollectionTitle] = useState("");
 
     const filteredCollections = useMemo(() => {
         const q = query.trim().toLowerCase();
         if (!q) return collections;
         return collections.filter((c) => getCollectionTitle(c).toLowerCase().includes(q));
     }, [collections, query]);
+
+    const showCreate =
+        query.trim().length > 0 &&
+        !collections.some(
+            (c) => getCollectionTitle(c).toLowerCase() === query.trim().toLowerCase()
+        );
 
     const selectedCollection = collections.find((c) => c.id === selectedCollectionId) ?? null;
 
@@ -92,7 +97,7 @@ export function CollectionPickerDialog({
     };
 
     const createNewCollection = async () => {
-        const title = newCollectionTitle.trim();
+        const title = query.trim();
         if (!title) return;
 
         const slug = slugify(title);
@@ -107,7 +112,7 @@ export function CollectionPickerDialog({
         });
 
         setSelectedCollectionId(created.id);
-        setNewCollectionTitle("");
+        setQuery("");
     };
 
     return (
@@ -131,16 +136,26 @@ export function CollectionPickerDialog({
                         placeholder={t("searchCollections")}
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
+                        className="border-foreground/20 h-9 rounded-none text-sm focus-visible:ring-0"
                     />
-                    <div className="max-h-56 space-y-1 overflow-auto rounded border p-2">
+                    <div className="max-h-56 min-h-56 space-y-1 overflow-auto border p-2">
+                        {showCreate && (
+                            <button
+                                type="button"
+                                className="text-muted-foreground hover:bg-muted hover:text-background block w-full cursor-pointer px-2 py-1 text-left text-sm"
+                                onClick={createNewCollection}
+                            >
+                                + {t("createNamed", { name: query.trim() })}
+                            </button>
+                        )}
                         {filteredCollections.map((collection) => (
                             <button
                                 key={collection.id}
                                 type="button"
-                                className={`block w-full rounded px-2 py-1 text-left text-sm ${
+                                className={`text-muted-foreground block w-full cursor-pointer px-2 py-1 text-left text-sm ${
                                     selectedCollectionId === collection.id
-                                        ? "bg-muted"
-                                        : "hover:bg-muted"
+                                        ? "bg-muted text-background"
+                                        : "hover:bg-muted hover:text-background"
                                 }`}
                                 onClick={() => setSelectedCollectionId(collection.id)}
                             >
@@ -148,38 +163,24 @@ export function CollectionPickerDialog({
                             </button>
                         ))}
                     </div>
-                    <div className="space-y-2 border-t pt-2">
-                        <Input
-                            placeholder={t("createNewCollection")}
-                            value={newCollectionTitle}
-                            onChange={(event) => setNewCollectionTitle(event.target.value)}
-                        />
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={createNewCollection}
-                            disabled={!newCollectionTitle.trim()}
-                        >
-                            {t("createNewCollection")}
-                        </Button>
-                    </div>
                 </div>
                 <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setResolvedOpen(false)}>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setResolvedOpen(false)}
+                        className="cursor-pointer rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                    >
                         {t("cancel")}
                     </Button>
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={() => addToCollection(true)}
-                        disabled={!selectedCollectionId}
-                    >
-                        {t("addAndOpen")}
-                    </Button>
-                    <Button
-                        type="button"
+                        size="sm"
                         onClick={() => addToCollection(false)}
                         disabled={!selectedCollectionId}
+                        className="cursor-pointer rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
                     >
                         {t("addToCollection")}
                     </Button>

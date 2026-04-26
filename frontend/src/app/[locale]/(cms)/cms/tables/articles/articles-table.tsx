@@ -12,7 +12,12 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { SearchInput } from "@/components/cms/search-input";
 import { useRouter } from "@/i18n/routing";
-import { useCreateArticle, useGetInfiniteArticlesCms } from "@/hooks/api/useArticles";
+import {
+    useCreateArticle,
+    useDeleteArticle,
+    useGetInfiniteArticlesCms,
+} from "@/hooks/api/useArticles";
+import { ArticleListItem } from "@/types/models/article.types";
 
 export function ArticlesTable() {
     const t = useTranslations("Cms.Articles");
@@ -53,16 +58,30 @@ export function ArticlesTable() {
     }, [loadMore]);
 
     const createArticle = useCreateArticle();
+    const deleteArticle = useDeleteArticle();
 
     const tActions = useTranslations("Cms.ActionsColumn");
+    const handleDelete = useCallback(
+        (article: ArticleListItem) => {
+            const ok = window.confirm(t("deleteConfirm", { title: article.title || article.slug }));
+            if (!ok) return;
+            deleteArticle.mutate(article.id, {
+                onSuccess: () => toast.success(t("deleteSuccess")),
+                onError: () => toast.error(t("deleteError")),
+            });
+        },
+        [deleteArticle, t]
+    );
+
     const columns = useMemo(
         () =>
             makeArticleColumns(
                 (article) => router.push(`/cms/articles/${article.id}/edit`),
+                handleDelete,
                 tActions,
                 t
             ),
-        [router, tActions, t]
+        [router, handleDelete, tActions, t]
     );
 
     const handleNew = () => {

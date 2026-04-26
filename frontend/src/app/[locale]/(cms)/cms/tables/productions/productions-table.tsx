@@ -3,8 +3,9 @@
 import { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Archive } from "lucide-react";
-import type { Row } from "@tanstack/react-table";
+import { Archive, ChevronsUp } from "lucide-react";
+import { toast } from "sonner";
+import type { ExpandedState, Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
 import { makeProductionColumns } from "./columns";
@@ -13,8 +14,9 @@ import { ActionBar } from "../action-bar";
 import { SearchInput } from "@/components/cms/search-input";
 import { useParentChildSelection } from "../use-parent-child-selection";
 import { makeEventColumns } from "./event-columns";
+import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { useGetInfiniteProductions } from "@/hooks/api/useProductions";
+import { useDeleteProduction, useGetInfiniteProductions } from "@/hooks/api/useProductions";
 import { useGetEvents, useUpdateEvent } from "@/hooks/api/useEvents";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
 import { ProductionMediaSheet } from "@/components/cms/production-media-sheet";
@@ -25,6 +27,7 @@ import type { Event } from "@/types/models/event.types";
 
 export function ProductionsTable() {
     const t = useTranslations("Cms.Productions");
+    const tCommon = useTranslations("Cms.common");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
     const locale = useLocale();
@@ -38,6 +41,7 @@ export function ProductionsTable() {
         hasNextPage,
         isFetchingNextPage,
     } = useGetInfiniteProductions(q ? { q } : undefined);
+    const deleteProduction = useDeleteProduction();
 
     const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
 
@@ -76,6 +80,7 @@ export function ProductionsTable() {
     const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
     const [mediaProduction, setMediaProduction] = useState<Production | null>(null);
     const [spotlight, setSpotlight] = useState<{ src: string; alt: string } | null>(null);
+    const [expanded, setExpanded] = useState<ExpandedState>({});
     const openSpotlight = useCallback((src: string, alt: string) => setSpotlight({ src, alt }), []);
     const spotlightItems: SpotlightItem[] = spotlight
         ? [{ kind: "plain", src: spotlight.src, alt: spotlight.alt }]
@@ -110,19 +115,40 @@ export function ProductionsTable() {
         [locale]
     );
 
+    const handleDeleteProduction = useCallback(
+        (production: Production) => {
+            const ok = window.confirm(t("deleteConfirm", { title: production.slug }));
+            if (!ok) return;
+            deleteProduction.mutate(production.id, {
+                onSuccess: () => toast.success(t("deleteSuccess")),
+                onError: () => toast.error(t("deleteError")),
+            });
+        },
+        [deleteProduction, t]
+    );
+
     const productionCols = useMemo(
         () => [
             selectColumn,
             ...makeProductionColumns({
                 onEdit: handleEditProduction,
                 onMedia: setMediaProduction,
+                onDelete: handleDeleteProduction,
                 t: tActions,
                 tProductions: t,
                 locale,
                 onOpenSpotlight: openSpotlight,
             }),
         ],
-        [selectColumn, tActions, handleEditProduction, t, locale, openSpotlight]
+        [
+            selectColumn,
+            tActions,
+            handleEditProduction,
+            handleDeleteProduction,
+            t,
+            locale,
+            openSpotlight,
+        ]
     );
 
     const eventCols = useMemo(
@@ -144,6 +170,31 @@ export function ProductionsTable() {
         () => allProductions.filter((production) => parentSelection[production.id]),
         [parentSelection, allProductions]
     );
+
+    const handleBulkDelete = useCallback(() => {
+        const ok = window.confirm(t("deleteConfirmMultiple", { count: selectedProductionCount }));
+        if (!ok) return;
+        let success = 0;
+        let failed = 0;
+        selectedProductions.forEach((production) => {
+            deleteProduction.mutate(production.id, {
+                onSuccess: () => {
+                    success++;
+                    if (success + failed === selectedProductions.length) {
+                        toast.success(t("deleteSuccess"));
+                        clearSelection();
+                    }
+                },
+                onError: () => {
+                    failed++;
+                    if (success + failed === selectedProductions.length) {
+                        if (failed > 0) toast.error(t("deleteError"));
+                        clearSelection();
+                    }
+                },
+            });
+        });
+    }, [selectedProductions, selectedProductionCount, deleteProduction, t, clearSelection]);
 
     const eventsById = useMemo(
         () => new Map(allEvents.map((event) => [event.id, event])),
@@ -208,6 +259,9 @@ export function ProductionsTable() {
         ]
     );
 
+    const hasExpanded = Object.keys(expanded).length > 0;
+    const collapseAll = useCallback(() => setExpanded({}), []);
+
     const actions = useMemo(
         () => [
             {
@@ -218,10 +272,11 @@ export function ProductionsTable() {
             },
             {
                 key: "delete",
-                label: t("deleteAction"),
+                label: tCommon("delete"),
+                onClick: handleBulkDelete,
             },
         ],
-        [tCollections, t]
+        [tCollections, tCommon, handleBulkDelete]
     );
 
     return (
@@ -230,14 +285,27 @@ export function ProductionsTable() {
                 <div className="py-1">
                     <SearchInput placeholder={t("search")} />
                 </div>
-                <ActionBar
-                    entityCounts={[
-                        { countKey: "productionsSelected", count: selectedProductionCount },
-                        { countKey: "eventsSelected", count: selectedEventCount },
-                    ]}
-                    actions={actions}
-                    onClear={clearSelection}
-                />
+                <div className="flex items-center justify-between gap-2">
+                    <ActionBar
+                        entityCounts={[
+                            { countKey: "productionsSelected", count: selectedProductionCount },
+                            { countKey: "eventsSelected", count: selectedEventCount },
+                        ]}
+                        actions={actions}
+                        onClear={clearSelection}
+                    />
+                    {hasExpanded && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={collapseAll}
+                            className="text-muted-foreground hover:text-foreground shrink-0 cursor-pointer rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                        >
+                            <ChevronsUp className="mr-1 h-3.5 w-3.5" />
+                            {tCommon("collapseAll")}
+                        </Button>
+                    )}
+                </div>
             </div>
 
             <div className="flex-1 overflow-auto">
@@ -249,6 +317,8 @@ export function ProductionsTable() {
                     rowSelection={parentSelection}
                     onRowSelectionChange={setParentSelection}
                     expanderLabels={expanderLabels}
+                    expanded={expanded}
+                    onExpandedChange={setExpanded}
                     getRowId={getProductionRowId}
                 />
 

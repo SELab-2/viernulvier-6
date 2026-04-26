@@ -1,9 +1,10 @@
-use chrono::{DateTime, NaiveDate, Utc};
 use base64::{Engine, prelude::BASE64_URL_SAFE};
+use chrono::{DateTime, NaiveDate, Utc};
 use database::{
     Database,
     models::{
         article::{Article, ArticleCreate, ArticleRelations, ArticleSearch, ArticleStatus},
+        entity_type::EntityType,
         filtering::cursor::CursorData,
     },
 };
@@ -14,7 +15,7 @@ use uuid::Uuid;
 
 use slug::slugify;
 
-use crate::{dto::paginated::PaginatedResponse, error::AppError};
+use crate::{dto::{build_cover_url, paginated::PaginatedResponse}, error::AppError};
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ArticlePayload {
@@ -28,6 +29,10 @@ pub struct ArticlePayload {
     pub published_at: Option<DateTime<Utc>>,
     pub subject_period_start: Option<NaiveDate>,
     pub subject_period_end: Option<NaiveDate>,
+    /// Cover image URL resolved from the entity_media link (output-only).
+    #[serde(default)]
+    #[schema(read_only, nullable)]
+    pub cover_image_url: Option<String>,
 }
 
 impl From<Article> for ArticlePayload {
@@ -43,17 +48,43 @@ impl From<Article> for ArticlePayload {
             published_at: a.published_at,
             subject_period_start: a.subject_period_start,
             subject_period_end: a.subject_period_end,
+            cover_image_url: None,
         }
     }
 }
 
 impl ArticlePayload {
-    pub async fn by_id(db: &Database, id: Uuid) -> Result<Self, AppError> {
-        Ok(db.articles().by_id(id).await?.into())
+    pub async fn by_id(db: &Database, id: Uuid, public_url: Option<&str>) -> Result<Self, AppError> {
+        let mut payload: Self = db.articles().by_id(id).await?.into();
+
+        if let Some(base) = public_url {
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Article, &[id])
+                .await?;
+            if let Some(key) = cover_keys.get(&id) {
+                payload.cover_image_url = Some(build_cover_url(base, key));
+            }
+        }
+
+        Ok(payload)
     }
 
-    pub async fn by_slug_published(db: &Database, slug: &str) -> Result<Self, AppError> {
-        Ok(db.articles().by_slug_published(slug).await?.into())
+    pub async fn by_slug_published(db: &Database, slug: &str, public_url: Option<&str>) -> Result<Self, AppError> {
+        let mut payload: Self = db.articles().by_slug_published(slug).await?.into();
+
+        if let Some(base) = public_url {
+            let id = payload.id;
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Article, &[id])
+                .await?;
+            if let Some(key) = cover_keys.get(&id) {
+                payload.cover_image_url = Some(build_cover_url(base, key));
+            }
+        }
+
+        Ok(payload)
     }
 
     pub async fn delete(db: &Database, id: Uuid) -> Result<(), AppError> {
@@ -116,6 +147,10 @@ pub struct ArticleListPayload {
     pub published_at: Option<DateTime<Utc>>,
     pub subject_period_start: Option<NaiveDate>,
     pub subject_period_end: Option<NaiveDate>,
+    /// Cover image URL resolved from the entity_media link (output-only).
+    #[serde(default)]
+    #[schema(read_only, nullable)]
+    pub cover_image_url: Option<String>,
 }
 
 impl From<Article> for ArticleListPayload {
@@ -129,19 +164,35 @@ impl From<Article> for ArticleListPayload {
             published_at: a.published_at,
             subject_period_start: a.subject_period_start,
             subject_period_end: a.subject_period_end,
+            cover_image_url: None,
         }
     }
 }
 
 impl ArticleListPayload {
-    pub async fn all_cms(db: &Database) -> Result<Vec<Self>, AppError> {
-        Ok(db
+    pub async fn all_cms(db: &Database, public_url: Option<&str>) -> Result<Vec<Self>, AppError> {
+        let mut result: Vec<Self> = db
             .articles()
             .all()
             .await?
             .into_iter()
             .map(Self::from)
-            .collect())
+            .collect();
+
+        if let Some(base) = public_url {
+            let ids: Vec<Uuid> = result.iter().map(|a| a.id).collect();
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Article, &ids)
+                .await?;
+            for a in &mut result {
+                if let Some(key) = cover_keys.get(&a.id) {
+                    a.cover_image_url = Some(build_cover_url(base, key));
+                }
+            }
+        }
+
+        Ok(result)
     }
 
     pub async fn list_published(
@@ -149,6 +200,7 @@ impl ArticleListPayload {
         id_cursor: Option<String>,
         limit: u32,
         search: ArticleSearch,
+        public_url: Option<&str>,
     ) -> Result<PaginatedResponse<Self>, AppError> {
         let cursor: Option<CursorData> = id_cursor.and_then(|b64| {
             let bytes = BASE64_URL_SAFE.decode(b64).ok()?;
@@ -157,14 +209,24 @@ impl ArticleListPayload {
 
         let (articles, next_cursor) = db
             .articles()
-            .search_published(
-                limit,
-                cursor,
-                search,
-            )
+            .search_published(limit, cursor, search)
             .await?;
 
-        let data = articles.into_iter().map(Self::from).collect();
+        let mut data: Vec<Self> = articles.into_iter().map(Self::from).collect();
+
+        if let Some(base) = public_url {
+            let ids: Vec<Uuid> = data.iter().map(|a| a.id).collect();
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Article, &ids)
+                .await?;
+            for a in &mut data {
+                if let Some(key) = cover_keys.get(&a.id) {
+                    a.cover_image_url = Some(build_cover_url(base, key));
+                }
+            }
+        }
+
         let next_cursor = next_cursor.and_then(|cursor| {
             let data = serde_json::to_vec(&cursor).ok()?;
             Some(BASE64_URL_SAFE.encode(data))
