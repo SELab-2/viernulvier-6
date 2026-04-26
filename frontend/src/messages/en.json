@@ -65,7 +65,7 @@
         "sortBy": "Sort by:",
         "recent": "Most recent",
         "oldest": "Oldest first",
-        "az": "A–Z"
+        "relevance": "Most relevant"
     },
     "Featured": {
         "label": "Featured from the archive"
