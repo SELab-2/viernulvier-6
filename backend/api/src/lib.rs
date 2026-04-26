@@ -37,6 +37,7 @@ mod helper;
 pub mod insert;
 #[cfg(feature = "ai-normalization")]
 pub mod normalization;
+pub mod seed;
 pub mod models {
     pub mod collection;
     pub mod event;
@@ -118,19 +119,40 @@ impl ApiImporter {
         let current_ts = Utc::now().to_rfc3339();
         let last_update_ts = self.get_last_updated().await;
 
+        // On first run, bootstrap from local seed files before hitting the live API.
+        // The seed's max_updated_at becomes the starting point for the live fetch so
+        // only records newer than the snapshot are pulled from the network.
+        //
+        // We persist the seed timestamp immediately after a successful seed import so
+        // that a subsequent live-fetch failure doesn't cause the seed to re-run on the
+        // next boot (and doesn't fall back to a full live fetch from EPOCH).
+        let live_start_ts = if last_update_ts == "2000-01-01T00:00:00Z" {
+            match self.bootstrap_from_seed().await {
+                Some(seed_ts) => {
+                    self.set_last_updated(seed_ts.clone()).await;
+                    seed_ts
+                }
+                None => last_update_ts,
+            }
+        } else {
+            last_update_ts
+        };
+
+        info!(live_start_ts = %live_start_ts, "starting live API fetch");
+
         // Order matters: a location contains spaces, a space contains halls,
         // a production has events, and events reference halls. We import the
         // dependencies before the dependents so relation lookups in each loop
         // can resolve to existing rows.
         let res = async {
-            self.update_locations(&last_update_ts, run_id).await?;
-            self.update_spaces(&last_update_ts, run_id).await?;
-            self.update_halls(&last_update_ts, run_id).await?;
-            self.update_productions(&last_update_ts, run_id).await?;
-            self.update_prices(&last_update_ts, run_id).await?;
-            self.update_price_ranks(&last_update_ts, run_id).await?;
-            self.update_events(&last_update_ts, run_id).await?;
-            self.update_event_prices(&last_update_ts, run_id).await?;
+            self.update_locations(&live_start_ts, run_id).await?;
+            self.update_spaces(&live_start_ts, run_id).await?;
+            self.update_halls(&live_start_ts, run_id).await?;
+            self.update_productions(&live_start_ts, run_id).await?;
+            self.update_prices(&live_start_ts, run_id).await?;
+            self.update_price_ranks(&live_start_ts, run_id).await?;
+            self.update_events(&live_start_ts, run_id).await?;
+            self.update_event_prices(&live_start_ts, run_id).await?;
             Ok::<(), reqwest::Error>(())
         }
         .await;
@@ -140,6 +162,21 @@ impl ApiImporter {
         }
 
         res
+    }
+
+    /// Imports seed JSON files and returns the seed's `max_updated_at` timestamp.
+    /// Returns `None` if no seed is configured or if the import fails.
+    async fn bootstrap_from_seed(&self) -> Option<String> {
+        use crate::seed::SeedImporter;
+
+        let seeder = SeedImporter::from_env(self.db.clone())?;
+        let max_ts = seeder.max_updated_at()?;
+        if let Err(e) = seeder.import_all().await {
+            warn!(error = %e, "seed import failed, falling back to full live import");
+            return None;
+        }
+        info!(max_updated_at = %max_ts, "seed import complete");
+        Some(max_ts)
     }
 
     /// fetch a collection of objects from the api

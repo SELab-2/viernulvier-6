@@ -447,8 +447,17 @@
         "Performers": {
             "title": "Performers",
             "subtitle": "Manage artists",
-            "comingSoon": "Coming soon",
-            "notAvailable": "Performers API is not yet available. No data to display."
+            "nameColumn": "Name",
+            "slugColumn": "Slug",
+            "nameField": "Name",
+            "slugField": "Slug",
+            "editPerformer": "Edit performer",
+            "deletePerformer": "Delete performer",
+            "deleteConfirm": "Are you sure you want to delete \"{name}\"?",
+            "deleteSuccess": "Artist deleted.",
+            "deleteError": "Failed to delete artist.",
+            "updateSuccess": "Artist updated.",
+            "updateError": "Failed to update artist."
         },
         "Ingest": {
             "title": "Ingest",

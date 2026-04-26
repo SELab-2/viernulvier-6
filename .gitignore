@@ -47,3 +47,6 @@ next-env.d.ts
 .eslintcache
 /CLAUDE.md
 .serena
+
+# normalisation patches (local-only, not shared)
+backend/seed/normalization/

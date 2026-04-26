@@ -345,6 +345,10 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(article::delete))
         .routes(routes!(article::get_relations))
         .routes(routes!(article::put_relations))
+        // Artists (CMS)
+        .routes(routes!(artist::post))
+        .routes(routes!(artist::put))
+        .routes(routes!(artist::delete))
         .layer(from_extractor_with_state::<EditorUser, AppState>(state))
 }
 
