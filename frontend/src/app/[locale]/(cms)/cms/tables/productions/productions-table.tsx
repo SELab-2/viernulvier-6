@@ -111,6 +111,13 @@ export function ProductionsTable() {
         [locale]
     );
 
+    const handleJumpToEnd = useCallback(async () => {
+        while (hasNextPage) {
+            await fetchNextPage();
+            await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+    }, [hasNextPage, fetchNextPage]);
+
     const handleDeleteProduction = useCallback(
         (production: Production) => {
             const ok = window.confirm(t("deleteConfirm", { title: production.slug }));
@@ -311,6 +318,7 @@ export function ProductionsTable() {
                     expanded={expanded}
                     onExpandedChange={setExpanded}
                     getRowId={getProductionRowId}
+                    onJumpToEnd={handleJumpToEnd}
                 />
 
                 {/* Infinite scroll trigger */}
