@@ -29,6 +29,7 @@ export const queryKeys = {
     collections: {
         all: ["collections"] as const,
         detail: (id: string) => ["collections", id] as const,
+        bySlug: (slug: string) => ["collections", "slug", slug] as const,
     },
     events: {
         all: (pagination?: PaginationParams) => buildQueryKey(["events"], pagination),
@@ -44,6 +45,8 @@ export const queryKeys = {
     },
     artists: {
         all: ["artists"] as const,
+        detail: (id: string) => ["artists", id] as const,
+        productions: (id: string) => ["artists", id, "productions"] as const,
     },
     articles: {
         all: ["articles"] as const,

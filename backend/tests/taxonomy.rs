@@ -16,20 +16,24 @@ async fn get_all(db: PgPool) {
     assert_eq!(response.status(), StatusCode::OK);
 
     let data: Vec<FacetResponse> = response.into_struct().await;
-    assert_eq!(data.len(), 4);
+    assert_eq!(data.len(), 6);
 
     assert_eq!(data[0].slug, "discipline");
     assert_eq!(data[1].slug, "format");
     assert_eq!(data[2].slug, "theme");
     assert_eq!(data[3].slug, "audience");
+    assert_eq!(data[4].slug, "accessibility");
+    assert_eq!(data[5].slug, "language");
 
-    assert_eq!(data[0].tags.len(), 8); // discipline
-    assert_eq!(data[1].tags.len(), 8); // format
-    assert_eq!(data[2].tags.len(), 5); // theme
-    assert_eq!(data[3].tags.len(), 4); // audience
+    assert_eq!(data[0].tags.len(), 13);
+    assert_eq!(data[1].tags.len(), 11);
+    assert_eq!(data[2].tags.len(), 5);
+    assert_eq!(data[3].tags.len(), 5);
+    assert_eq!(data[4].tags.len(), 5);
+    assert_eq!(data[5].tags.len(), 3);
 
     assert_eq!(data[0].tags[0].slug, "theatre");
-    assert_eq!(data[0].tags[7].slug, "installation");
+    assert_eq!(data[0].tags[6].slug, "installation");
 }
 
 #[sqlx::test]
@@ -41,9 +45,11 @@ async fn get_filtered_by_production(db: PgPool) {
     assert_eq!(response.status(), StatusCode::OK);
 
     let data: Vec<FacetResponse> = response.into_struct().await;
-    assert_eq!(data.len(), 4);
+    assert_eq!(data.len(), 6);
     assert_eq!(data[0].slug, "discipline");
     assert_eq!(data[3].slug, "audience");
+    assert_eq!(data[4].slug, "accessibility");
+    assert_eq!(data[5].slug, "language");
 }
 
 #[sqlx::test]
@@ -57,7 +63,7 @@ async fn get_filtered_by_artist(db: PgPool) {
     let data: Vec<FacetResponse> = response.into_struct().await;
     assert_eq!(data.len(), 1);
     assert_eq!(data[0].slug, "discipline");
-    assert_eq!(data[0].tags.len(), 8);
+    assert_eq!(data[0].tags.len(), 13);
 }
 
 #[sqlx::test]

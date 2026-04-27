@@ -237,6 +237,12 @@
             "locations": "Locations",
             "performers": "Performers"
         },
+        "common": {
+            "collapseAll": "Collapse all",
+            "delete": "Delete",
+            "save": "Save",
+            "saving": "Saving…"
+        },
         "DataTable": {
             "noResults": "No results."
         },
@@ -266,6 +272,7 @@
             "copied": "Copied {key}",
             "copyFailed": "Failed to copy to clipboard",
             "edit": "Edit {label}",
+            "delete": "Delete {label}",
             "media": "Media"
         },
         "EditSheet": {
@@ -329,6 +336,10 @@
             "saving": "Saving…",
             "saveSuccess": "Production saved.",
             "saveFailed": "Failed to save production.",
+            "deleteConfirm": "Are you sure you want to delete \"{title}\"?",
+            "deleteConfirmMultiple": "Are you sure you want to delete {count} productions?",
+            "deleteSuccess": "Production deleted.",
+            "deleteError": "Failed to delete production.",
             "preview": "Preview",
             "hidePreview": "Hide Preview",
             "previewLabel": "Preview",
@@ -378,7 +389,12 @@
             "showHalls": "Show halls",
             "hideHalls": "Hide halls",
             "editLocation": "Edit location",
-            "editHall": "Edit hall"
+            "editHall": "Edit hall",
+            "deleteConfirm": "Are you sure you want to delete \"{title}\"?",
+            "deleteConfirmMultiple": "Are you sure you want to delete {count} locations?",
+            "deleteSuccess": "Location deleted.",
+            "deleteError": "Failed to delete location.",
+            "eyebrow": "Location"
         },
         "Articles": {
             "title": "Articles",
@@ -387,6 +403,9 @@
             "notAvailable": "Articles API is not yet available. No data to display.",
             "newArticle": "New article",
             "createFailed": "Failed to create article.",
+            "deleteConfirm": "Are you sure you want to delete \"{title}\"?",
+            "deleteSuccess": "Article deleted.",
+            "deleteError": "Failed to delete article.",
             "save": "Save",
             "saving": "Saving…",
             "saveSuccess": "Article saved.",
@@ -440,6 +459,7 @@
         },
         "Collections": {
             "title": "Collections",
+            "eyebrow": "Collection",
             "newCollection": "New collection",
             "noCollections": "No collections yet.",
             "noItems": "No items yet. Add items from the Content tab.",
@@ -451,6 +471,9 @@
             "titleEn": "Title (EN)",
             "descriptionNl": "Description (NL)",
             "descriptionEn": "Description (EN)",
+            "fieldTitle": "Title",
+            "fieldDescription": "Description",
+            "metadataSection": "Metadata",
             "shareableLink": "Shareable link",
             "copyLink": "Copy link",
             "linkCopied": "Link copied",
@@ -466,20 +489,23 @@
             "copyError": "Failed to copy link",
             "events": "Events",
             "invalidSlug": "Title must contain at least one letter or number",
-            "deleteCollection": "Delete collection",
             "deleteConfirm": "Are you sure you want to delete \"{title}\"? All items will be removed.",
+            "deleteCollection": "Delete",
             "backToCollections": "Back to collections",
+            "preview": "Preview",
+            "hidePreview": "Hide Preview",
+            "previewLabel": "Preview",
             "addToCollection": "Add to collection",
             "addAndOpen": "Add and open collection",
             "createNewCollection": "Create new collection",
+            "createNamed": "Create ''{name}''",
             "searchCollections": "Search collections…",
             "selectedItems": "{count, plural, one {# selected item} other {# selected items}}",
             "alreadyInCollection": "{title} is already in this collection",
             "addedToCollection": "Added to \"{collection}\"",
             "addedToCollectionMultiple": "Added {count} items to \"{collection}\"",
             "removeItem": "Remove item",
-            "commentNl": "Comment (NL)",
-            "commentEn": "Comment (EN)",
+            "comment": "Comment",
             "contentTypes": {
                 "production": "Production",
                 "event": "Event",
@@ -513,6 +539,26 @@
             "uploadError": "Failed to upload media",
             "detachSuccess": "Media unlinked",
             "detachError": "Failed to unlink media"
+        },
+        "CollectionCoverImage": {
+            "label": "Cover image",
+            "add": "Add cover image",
+            "edit": "Edit",
+            "remove": "Remove",
+            "setSuccess": "Cover image set.",
+            "setError": "Failed to set cover image.",
+            "removeSuccess": "Cover image removed.",
+            "removeError": "Failed to remove cover image."
+        },
+        "LocationCoverImage": {
+            "label": "Cover image",
+            "add": "Add cover image",
+            "edit": "Edit cover image",
+            "remove": "Remove",
+            "setSuccess": "Cover image set.",
+            "setError": "Failed to set cover image.",
+            "removeSuccess": "Cover image removed.",
+            "removeError": "Failed to remove cover image."
         },
         "ProductionMedia": {
             "title": "Production media",
@@ -659,5 +705,19 @@
         "nextImage": "Next image",
         "archive": "Archive",
         "openImage": "Open image"
+    },
+    "Collections": {
+        "sectionLabel": "COLLECTION",
+        "loading": "Loading collection...",
+        "notFoundTitle": "Collection not found",
+        "notFoundText": "This collection does not exist or has been deleted.",
+        "items": "{count, plural, one {# ITEM} other {# ITEMS}}",
+        "typeLabels": {
+            "production": "PRODUCTION",
+            "location": "LOCATION",
+            "blogpost": "ARTICLE",
+            "artist": "ARTIST",
+            "media": "MEDIA"
+        }
     }
 }

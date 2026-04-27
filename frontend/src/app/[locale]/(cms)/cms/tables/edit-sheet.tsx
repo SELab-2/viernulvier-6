@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Eye } from "lucide-react";
+import { Eye, X, Check, ChevronsUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -20,13 +20,26 @@ import {
     SheetTitle,
 } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { useGetHalls } from "@/hooks/api/useHalls";
 
 export interface SelectOption {
     value: string;
     label: string;
 }
 
-export type FieldType = "text" | "boolean" | "select";
+export type FieldType = "text" | "boolean" | "select" | "hall-multiselect";
 
 export interface FieldDef<TData> {
     key: keyof TData;
@@ -46,9 +59,120 @@ export interface EditSheetProps<TData extends { id: string } & Record<string, un
     onSave?: (data: TData) => void;
     previewUrl?: string;
     onPreview?: () => void;
+    /** Optional slot rendered inside the sheet body, below the form fields, for a given entity. */
+    extraContent?: (entity: TData) => React.ReactNode;
 }
 
 const NULL_SENTINEL = "__null__";
+
+function HallMultiSelectField({
+    fieldId,
+    label,
+    value,
+    onChange,
+}: {
+    fieldId: string;
+    label: string;
+    value: string[];
+    onChange: (value: string[]) => void;
+}) {
+    const [open, setOpen] = useState(false);
+    const { data } = useGetHalls();
+    const halls = data?.data ?? [];
+
+    const toggle = (id: string) => {
+        if (value.includes(id)) {
+            onChange(value.filter((v) => v !== id));
+        } else {
+            onChange([...value, id]);
+        }
+    };
+
+    const selectedHalls = halls.filter((h) => value.includes(h.id));
+
+    return (
+        <div className="flex flex-col gap-1.5">
+            <Label
+                htmlFor={fieldId}
+                className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase"
+            >
+                {label}
+            </Label>
+            <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                    <Button
+                        id={fieldId}
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
+                        className="border-foreground/20 focus:ring-foreground/30 h-auto min-h-9 w-full justify-between px-3 py-2 text-sm font-normal"
+                    >
+                        <div className="flex flex-wrap gap-1">
+                            {selectedHalls.length === 0 ? (
+                                <span className="text-muted-foreground">—</span>
+                            ) : (
+                                selectedHalls.map((h) => (
+                                    <Badge
+                                        key={h.id}
+                                        variant="secondary"
+                                        className="gap-1 pr-1 text-xs"
+                                    >
+                                        {h.name}
+                                        <span
+                                            role="button"
+                                            tabIndex={0}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggle(h.id);
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter" || e.key === " ") {
+                                                    e.stopPropagation();
+                                                    toggle(h.id);
+                                                }
+                                            }}
+                                            className="hover:text-destructive ml-0.5 cursor-pointer"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </span>
+                                    </Badge>
+                                ))
+                            )}
+                        </div>
+                        <ChevronsUpDown className="text-muted-foreground ml-2 h-4 w-4 shrink-0" />
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="border-foreground/20 w-[320px] p-0" align="start">
+                    <Command>
+                        <CommandInput placeholder="Search halls..." />
+                        <CommandList>
+                            <CommandEmpty>No halls found.</CommandEmpty>
+                            <CommandGroup>
+                                {halls.map((hall) => (
+                                    <CommandItem
+                                        key={hall.id}
+                                        value={hall.name}
+                                        onSelect={() => toggle(hall.id)}
+                                    >
+                                        <Check
+                                            className={cn(
+                                                "mr-2 h-4 w-4",
+                                                value.includes(hall.id)
+                                                    ? "opacity-100"
+                                                    : "opacity-0"
+                                            )}
+                                        />
+                                        {hall.name}
+                                    </CommandItem>
+                                ))}
+                            </CommandGroup>
+                        </CommandList>
+                    </Command>
+                </PopoverContent>
+            </Popover>
+        </div>
+    );
+}
 
 interface FieldRowProps<TData> {
     field: FieldDef<TData>;
@@ -139,6 +263,18 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
         );
     }
 
+    if (field.type === "hall-multiselect") {
+        const ids = Array.isArray(value) ? (value as string[]) : [];
+        return (
+            <HallMultiSelectField
+                fieldId={fieldId}
+                label={field.label}
+                value={ids}
+                onChange={onChange}
+            />
+        );
+    }
+
     const options = field.options ?? [];
 
     return (
@@ -173,6 +309,7 @@ interface SheetFormBodyProps<TData extends { id: string } & Record<string, unkno
     fields: FieldDef<TData>[];
     onSave?: (data: TData) => void;
     onClose: () => void;
+    extraContent?: (entity: TData) => React.ReactNode;
 }
 
 function SheetFormBody<TData extends { id: string } & Record<string, unknown>>({
@@ -180,6 +317,7 @@ function SheetFormBody<TData extends { id: string } & Record<string, unknown>>({
     fields,
     onSave,
     onClose,
+    extraContent,
 }: SheetFormBodyProps<TData>) {
     const t = useTranslations("Cms.EditSheet");
     const [values, setValues] = useState<Partial<TData>>(() => ({ ...entity }));
@@ -204,6 +342,9 @@ function SheetFormBody<TData extends { id: string } & Record<string, unknown>>({
                         onChange={(v) => handleChange(field.key, v)}
                     />
                 ))}
+                {extraContent && (
+                    <div className="border-foreground/10 border-t pt-5">{extraContent(entity)}</div>
+                )}
             </div>
             <div className="border-foreground/10 border-t px-6 py-4">
                 <SheetFooter className="flex-row justify-end gap-3 sm:justify-end">
@@ -237,6 +378,7 @@ export function EditSheet<TData extends { id: string } & Record<string, unknown>
     onSave,
     previewUrl,
     onPreview,
+    extraContent,
 }: EditSheetProps<TData>) {
     const t = useTranslations("Cms.EditSheet");
     const tArticles = useTranslations("Cms.Articles");
@@ -285,6 +427,7 @@ export function EditSheet<TData extends { id: string } & Record<string, unknown>
                         fields={fields}
                         onSave={onSave}
                         onClose={() => onOpenChange(false)}
+                        extraContent={extraContent}
                     />
                 )}
             </SheetContent>

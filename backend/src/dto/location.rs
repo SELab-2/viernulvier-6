@@ -2,6 +2,7 @@ use base64::{Engine, prelude::BASE64_URL_SAFE};
 use database::{
     Database,
     models::{
+        entity_type::EntityType,
         filtering::cursor::CursorData,
         location::{Location, LocationCreate, LocationTranslationData, LocationWithTranslations},
     },
@@ -12,7 +13,8 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::{
-    dto::paginated::PaginatedResponse, error::AppError,
+    dto::{build_cover_url, paginated::PaginatedResponse},
+    error::AppError,
     handlers::queries::location::LocationSearchQuery,
 };
 
@@ -21,6 +23,7 @@ impl LocationPayload {
         db: &Database,
         id_cursor: Option<String>,
         limit: u32,
+        public_url: Option<&str>,
         search: LocationSearchQuery,
     ) -> Result<PaginatedResponse<Self>, AppError> {
         let cursor: Option<CursorData> = id_cursor.and_then(|b64| {
@@ -29,12 +32,25 @@ impl LocationPayload {
         });
 
         let (locations, next_cursor) = db.locations().all(limit, cursor, search.into()).await?;
-        let locations: Vec<_> = locations.into_iter().map(Self::from).collect();
+        let mut locations: Vec<_> = locations.into_iter().map(Self::from).collect();
 
         let next_cursor_data = next_cursor.and_then(|c| {
             let data = serde_json::to_vec(&c).ok()?;
             Some(BASE64_URL_SAFE.encode(data))
         });
+
+        if let Some(base) = public_url {
+            let ids: Vec<Uuid> = locations.iter().map(|l| l.id).collect();
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Location, &ids)
+                .await?;
+            for l in &mut locations {
+                if let Some(key) = cover_keys.get(&l.id) {
+                    l.cover_image_url = Some(build_cover_url(base, key));
+                }
+            }
+        }
 
         debug!("Returning {} locations", locations.len());
         Ok(PaginatedResponse {
@@ -43,12 +59,44 @@ impl LocationPayload {
         })
     }
 
-    pub async fn by_id(db: &Database, id: Uuid) -> Result<Self, AppError> {
-        Ok(Self::from(db.locations().by_id(id).await?))
+    pub async fn by_id(
+        db: &Database,
+        id: Uuid,
+        public_url: Option<&str>,
+    ) -> Result<Self, AppError> {
+        let mut payload = Self::from(db.locations().by_id(id).await?);
+
+        if let Some(base) = public_url {
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Location, &[id])
+                .await?;
+            if let Some(key) = cover_keys.get(&id) {
+                payload.cover_image_url = Some(build_cover_url(base, key));
+            }
+        }
+
+        Ok(payload)
     }
 
-    pub async fn by_slug(db: &Database, slug: &str) -> Result<Self, AppError> {
-        Ok(Self::from(db.locations().by_slug(slug).await?))
+    pub async fn by_slug(
+        db: &Database,
+        slug: &str,
+        public_url: Option<&str>,
+    ) -> Result<Self, AppError> {
+        let mut payload = Self::from(db.locations().by_slug(slug).await?);
+
+        if let Some(base) = public_url {
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Location, &[payload.id])
+                .await?;
+            if let Some(key) = cover_keys.get(&payload.id) {
+                payload.cover_image_url = Some(build_cover_url(base, key));
+            }
+        }
+
+        Ok(payload)
     }
 
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {
@@ -116,6 +164,11 @@ pub struct LocationPayload {
 
     #[serde(default)]
     pub translations: Vec<LocationTranslationPayload>,
+
+    /// Cover image URL resolved from the entity_media link (output-only).
+    #[serde(default)]
+    #[schema(read_only, nullable)]
+    pub cover_image_url: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -167,6 +220,7 @@ impl From<LocationWithTranslations> for LocationPayload {
             uitdatabank_id: lwt.location.uitdatabank_id,
             slug: lwt.location.slug,
             translations,
+            cover_image_url: None,
         }
     }
 }

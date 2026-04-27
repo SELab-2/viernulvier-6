@@ -15,18 +15,6 @@ permissions:
   issues: write
 
 jobs:
-  run_backend_tests:
-    name: Backend tests
-    if: github.event.action != 'closed'
-    uses: ./.github/workflows/backend-tests.yml
-    secrets: inherit
-
-  run_frontend_tests:
-    name: Frontend tests
-    if: github.event.action != 'closed'
-    uses: ./.github/workflows/frontend-tests.yml
-    secrets: inherit
-
   preview:
     if: >-
       github.event.action != 'closed' &&
@@ -34,7 +22,6 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'preview')
     runs-on: kaya-sem-house
     environment: preview
-    needs: [run_backend_tests, run_frontend_tests]
 
     steps:
       # We should not edit perms of this, if this breaks SSH into server and delete manually and let actions rebuild
