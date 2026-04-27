@@ -753,5 +753,14 @@
             "artist": "ARTIEST",
             "media": "MEDIA"
         }
+    },
+    "ArtistPage": {
+        "eyebrow": "Artiest",
+        "loading": "Laden…",
+        "breadcrumbArchive": "Archief",
+        "breadcrumbArtists": "Artiesten",
+        "descriptionPlaceholder": "Beschrijving komt later",
+        "contentPlaceholder": "Tijdlijn / raster — wordt later ingevuld",
+        "imageFallback": "Archief VIERNULVIER"
     }
 }

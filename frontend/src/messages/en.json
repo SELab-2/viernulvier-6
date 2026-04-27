@@ -753,5 +753,14 @@
             "artist": "ARTIST",
             "media": "MEDIA"
         }
+    },
+    "ArtistPage": {
+        "eyebrow": "Artist",
+        "loading": "Loading…",
+        "breadcrumbArchive": "Archive",
+        "breadcrumbArtists": "Artists",
+        "descriptionPlaceholder": "Description coming later",
+        "contentPlaceholder": "Timeline / grid — to be filled in later",
+        "imageFallback": "VIERNULVIER Archive"
     }
 }
