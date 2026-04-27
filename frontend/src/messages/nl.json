@@ -759,8 +759,7 @@
         "loading": "Laden…",
         "breadcrumbArchive": "Archief",
         "breadcrumbArtists": "Artiesten",
-        "descriptionPlaceholder": "Beschrijving komt later",
-        "contentPlaceholder": "Tijdlijn / raster — wordt later ingevuld",
-        "imageFallback": "Archief VIERNULVIER"
+        "descriptionPlaceholder": "Geen beschrijving",
+        "contentPlaceholder": "Geen gekpppelde producties"
     }
 }

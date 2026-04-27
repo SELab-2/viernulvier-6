@@ -1,15 +1,17 @@
 "use client";
 
-import { use, useState, useCallback } from "react";
+import { use, useMemo, useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { notFound } from "next/navigation";
 
-import { useGetArtist } from "@/hooks/api/useArtists";
+import { useGetArtist, useGetProductionsByArtist } from "@/hooks/api/useArtists";
 import { Link, useRouter } from "@/i18n/routing";
 
 import { UnifiedHeader } from "@/components/layout/header";
 import { LoadingState } from "@/components/shared/loading-state";
+import { EntityGrid } from "@/components/masonry/entity-grid";
 import { ArtistHero } from "@/components/artistpage/artist-hero";
+import type { EntityGridItem } from "@/types/models/collection.types";
 
 export default function ArtistPage({
     params,
@@ -34,6 +36,19 @@ export default function ArtistPage({
     );
 
     const { data: artist, isLoading, isError } = useGetArtist(id);
+    const { data: productions = [], isLoading: isProductionsLoading } =
+        useGetProductionsByArtist(id);
+
+    const gridItems = useMemo<EntityGridItem[]>(
+        () =>
+            productions.map((p, index) => ({
+                id: p.id,
+                contentType: "production" as const,
+                contentId: p.id,
+                position: index,
+            })),
+        [productions]
+    );
 
     if (isError) notFound();
 
@@ -78,11 +93,15 @@ export default function ArtistPage({
             {/* Hero */}
             <ArtistHero artist={artist} />
 
-            {/* Content — timeline / masonry placeholder */}
+            {/* Productions */}
             <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both p-6 delay-150 duration-500 sm:p-10">
-                <div className="border-muted/30 text-muted-foreground flex min-h-[320px] items-center justify-center border border-dashed font-mono text-[10px] tracking-[1.2px] uppercase">
-                    {t("contentPlaceholder")}
-                </div>
+                {!isProductionsLoading && gridItems.length > 0 ? (
+                    <EntityGrid items={gridItems} />
+                ) : (
+                    <div className="border-muted/30 text-muted-foreground flex min-h-[320px] items-center justify-center border border-dashed font-mono text-[10px] tracking-[1.2px] uppercase">
+                        {t("contentPlaceholder")}
+                    </div>
+                )}
             </div>
         </div>
     );
