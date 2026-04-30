@@ -10,6 +10,7 @@ import { MediaEditSheet } from "@/components/ingest/media-edit-sheet";
 import { ImageSpotlight } from "@/components/ui/image-spotlight";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
     useGetInfiniteMedia,
     useUpdateMedia,
@@ -132,10 +133,20 @@ export default function IngestPage() {
                         onClick: () => {
                             reconcileStorage.mutate(true, {
                                 onSuccess: (applyData) => {
+                                    const msgs = [
+                                        applyData.deleted_missing_in_s3_count > 0
+                                            ? t("reconcileDeletedDb", {
+                                                  count: applyData.deleted_missing_in_s3_count,
+                                              })
+                                            : null,
+                                        applyData.deleted_missing_in_db_count > 0
+                                            ? t("reconcileDeletedS3", {
+                                                  count: applyData.deleted_missing_in_db_count,
+                                              })
+                                            : null,
+                                    ].filter(Boolean);
                                     toast.success(
-                                        t("reconcileApplied", {
-                                            count: applyData.deleted_missing_in_s3_count,
-                                        })
+                                        msgs.length > 0 ? msgs.join(" ") : t("reconcileClean")
                                     );
                                 },
                                 onError: () => {
@@ -159,36 +170,48 @@ export default function IngestPage() {
             {/* Toolbar */}
             <div className="mb-4 flex items-center justify-between">
                 <IngestCount />
-                <div className="flex items-center gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleReconcile}
-                        disabled={reconcileStorage.isPending}
-                        className="rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
-                    >
-                        <HardDrive className="mr-2 h-3.5 w-3.5" />
-                        {t("reconcile")}
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleCleanup}
-                        disabled={cleanupOrphaned.isPending}
-                        className="hover:text-destructive-foreground hover:bg-destructive rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
-                    >
-                        <Trash2 className="mr-2 h-3.5 w-3.5" />
-                        {t("cleanup")}
-                    </Button>
-                    <Button
-                        size="sm"
-                        onClick={() => setUploadOpen(true)}
-                        className="rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
-                    >
-                        <Upload className="mr-2 h-3.5 w-3.5" />
-                        {t("upload")}
-                    </Button>
-                </div>
+                <TooltipProvider>
+                    <div className="flex items-center gap-2">
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleReconcile}
+                                    disabled={reconcileStorage.isPending}
+                                    className="rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                                >
+                                    <HardDrive className="mr-2 h-3.5 w-3.5" />
+                                    {t("reconcile")}
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{t("reconcileTooltip")}</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleCleanup}
+                                    disabled={cleanupOrphaned.isPending}
+                                    className="hover:text-destructive-foreground hover:bg-destructive rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                                >
+                                    <Trash2 className="mr-2 h-3.5 w-3.5" />
+                                    {t("cleanup")}
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{t("cleanupTooltip")}</TooltipContent>
+                        </Tooltip>
+                        <Button
+                            size="sm"
+                            onClick={() => setUploadOpen(true)}
+                            className="rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                        >
+                            <Upload className="mr-2 h-3.5 w-3.5" />
+                            {t("upload")}
+                        </Button>
+                    </div>
+                </TooltipProvider>
             </div>
 
             {/* Grid */}
