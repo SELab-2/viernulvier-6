@@ -65,17 +65,22 @@ export function MediaEditSheet({
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent className="border-foreground/20 flex flex-col gap-0 overflow-y-auto border-l p-0 sm:max-w-lg">
                 <SheetHeader className="border-foreground/10 border-b px-6 pt-6 pb-4">
-                    <SheetDescription className="text-muted-foreground font-mono text-[9px] tracking-[2px] uppercase">
-                        {t("editMedia")}
-                    </SheetDescription>
                     <SheetTitle className="font-display text-xl font-bold tracking-tight">
-                        {media.s3Key.split("/").pop() ?? media.id}
+                        {t("editMedia")}
                     </SheetTitle>
                 </SheetHeader>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-6 px-6 py-6">
                     {media.url && (
-                        <div className="relative mx-auto aspect-video w-full max-w-xs overflow-hidden">
+                        <div
+                            className="relative mx-auto w-full max-w-xs overflow-hidden"
+                            style={{
+                                aspectRatio:
+                                    media.width && media.height && media.height > 0
+                                        ? media.width / media.height
+                                        : 16 / 9,
+                            }}
+                        >
                             <Image
                                 src={media.url}
                                 alt=""

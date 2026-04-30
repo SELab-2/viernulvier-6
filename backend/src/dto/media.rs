@@ -339,4 +339,5 @@ pub struct ReconcileResponse {
     pub missing_in_s3: Vec<String>,
     pub missing_in_db: Vec<String>,
     pub deleted_missing_in_s3_count: u64,
+    pub deleted_missing_in_db_count: u64,
 }

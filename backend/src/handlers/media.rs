@@ -795,6 +795,23 @@ pub async fn reconcile_storage(
         0
     };
 
+    let mut deleted_missing_in_db_count = 0u64;
+    if applied {
+        if let (Some(s3_config), Some(s3_client)) = (&state.config.s3, &state.s3_client) {
+            for key in &missing_in_db {
+                let result = s3_client
+                    .delete_object()
+                    .bucket(&s3_config.bucket)
+                    .key(key)
+                    .send()
+                    .await;
+                if result.is_ok() {
+                    deleted_missing_in_db_count += 1;
+                }
+            }
+        }
+    }
+
     Ok(Json(ReconcileResponse {
         applied,
         db_key_count: db_keys.len(),
@@ -802,6 +819,7 @@ pub async fn reconcile_storage(
         missing_in_s3,
         missing_in_db,
         deleted_missing_in_s3_count,
+        deleted_missing_in_db_count,
     }))
 }
 

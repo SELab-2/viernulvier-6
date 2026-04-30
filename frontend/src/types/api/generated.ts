@@ -1689,6 +1689,8 @@ export interface components {
             applied: boolean;
             db_key_count: number;
             /** Format: int64 */
+            deleted_missing_in_db_count: number;
+            /** Format: int64 */
             deleted_missing_in_s3_count: number;
             missing_in_db: string[];
             missing_in_s3: string[];

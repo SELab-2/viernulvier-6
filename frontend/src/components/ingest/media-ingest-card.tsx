@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { Pencil, Trash2, ImageIcon } from "lucide-react";
+import { useLocale } from "next-intl";
 import { Media } from "@/types/models/media.types";
 import { resolveLocalized } from "@/components/ui/localized-text";
 
@@ -18,8 +19,11 @@ function thumbnailUrl(media: Media): string | null {
 }
 
 export function MediaIngestCard({ media, onView, onEdit, onDelete }: MediaIngestCardProps) {
+    const locale = useLocale();
     const url = thumbnailUrl(media);
-    const alt = resolveLocalized(media.altTextNl ?? "", media.altTextEn ?? "").value;
+    const primaryAlt = locale === "en" ? media.altTextEn : media.altTextNl;
+    const fallbackAlt = locale === "en" ? media.altTextNl : media.altTextEn;
+    const alt = resolveLocalized(primaryAlt ?? "", fallbackAlt ?? "").value;
 
     const naturalAspect =
         media.width && media.height && media.height > 0 ? media.width / media.height : 1;

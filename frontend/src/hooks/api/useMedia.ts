@@ -387,6 +387,7 @@ export const useReconcileMediaStorage = () => {
             const { data } = await api.post<{
                 applied: boolean;
                 db_key_count: number;
+                deleted_missing_in_db_count: number;
                 deleted_missing_in_s3_count: number;
                 missing_in_db: string[];
                 missing_in_s3: string[];
