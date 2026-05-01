@@ -209,6 +209,7 @@ impl<'a> ArticleRepo<'a> {
                 .push(" <<-> a.title AS distance_score");
         }
 
+        // WHERE 1=1 lets all subsequent filters attach as `AND …` unconditionally
         builder.push(" FROM articles a WHERE 1=1");
         if published_only {
             builder.push(" AND a.status = 'published'");
