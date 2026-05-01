@@ -484,7 +484,14 @@
             "reconcileDeletedS3": "{count} orphaned S3 objecten verwijderd.",
             "reconcileError": "Reconciliëren mislukt.",
             "duplicateUpload": "Dit bestand bestaat al — metadata is bijgewerkt.",
-            "mediaPreview": "Media voorbeeld"
+            "mediaPreview": "Media voorbeeld",
+            "search": "Zoeken",
+            "sort": "Sorteren",
+            "sortRecent": "Meest recent",
+            "sortOldest": "Oudste eerst",
+            "sortRelevance": "Relevantie",
+            "entityLinks": "Gebruikt in",
+            "noEntityLinks": "Niet gekoppeld aan een entity."
         },
         "Collections": {
             "title": "Collecties",

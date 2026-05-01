@@ -341,3 +341,12 @@ pub struct ReconcileResponse {
     pub deleted_missing_in_s3_count: u64,
     pub deleted_missing_in_db_count: u64,
 }
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct MediaEntityLink {
+    pub entity_type: String,
+    pub entity_id: Uuid,
+    pub role: String,
+    pub sort_order: i32,
+    pub is_cover_image: bool,
+}

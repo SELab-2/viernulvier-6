@@ -484,7 +484,14 @@
             "reconcileDeletedS3": "{count} orphaned S3 objects removed.",
             "reconcileError": "Reconcile failed.",
             "duplicateUpload": "This file already exists — metadata has been updated.",
-            "mediaPreview": "Media preview"
+            "mediaPreview": "Media preview",
+            "search": "Search",
+            "sort": "Sort",
+            "sortRecent": "Most recent",
+            "sortOldest": "Oldest first",
+            "sortRelevance": "Relevance",
+            "entityLinks": "Used in",
+            "noEntityLinks": "Not linked to any entity."
         },
         "Collections": {
             "title": "Collections",

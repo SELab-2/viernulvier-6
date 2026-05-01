@@ -602,6 +602,26 @@ impl<'a> MediaRepo<'a> {
         Ok(rows.into_iter().collect())
     }
 
+    /// Get all entity links for a given media item.
+    pub async fn entity_links(
+        &self,
+        media_id: Uuid,
+    ) -> Result<Vec<crate::models::entity_media::EntityMedia>, DatabaseError> {
+        Ok(sqlx::query_as::<_, crate::models::entity_media::EntityMedia>(
+            r#"
+            SELECT
+                id, entity_type, entity_id, media_id,
+                role, sort_order, is_cover_image, created_at
+            FROM entity_media
+            WHERE media_id = $1
+            ORDER BY entity_type, entity_id
+            "#,
+        )
+        .bind(media_id)
+        .fetch_all(self.db)
+        .await?)
+    }
+
     pub async fn delete_by_s3_keys(&self, keys: &[String]) -> Result<u64, DatabaseError> {
         if keys.is_empty() {
             return Ok(0);

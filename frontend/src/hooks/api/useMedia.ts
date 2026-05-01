@@ -379,6 +379,25 @@ export const useCleanupOrphanedMedia = () => {
     });
 };
 
+export type MediaEntityLink = {
+    entity_type: string;
+    entity_id: string;
+    role: string;
+    sort_order: number;
+    is_cover_image: boolean;
+};
+
+export const useGetMediaEntityLinks = (mediaId: string | null) => {
+    return useQuery({
+        queryKey: queryKeys.media.entityLinks(mediaId),
+        queryFn: async () => {
+            const { data } = await api.get<MediaEntityLink[]>(`/media/${mediaId}/entities`);
+            return data;
+        },
+        enabled: !!mediaId,
+    });
+};
+
 export const useReconcileMediaStorage = () => {
     const queryClient = useQueryClient();
 
