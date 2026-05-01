@@ -133,10 +133,12 @@ pub async fn get_all_cms(
     security(("cookie_auth" = []))
 )]
 pub async fn get_all_cms_search(
+    State(state): State<AppState>,
     db: Database,
     Query(pagination): Query<PaginationQuery>,
     Query(search): Query<ArticleSearchQuery>,
 ) -> JsonResponse<PaginatedResponse<ArticleListPayload>> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
     ArticleListPayload::list_cms_search(
         &db,
         pagination.cursor,
@@ -149,6 +151,7 @@ pub async fn get_all_cms_search(
             related_entity_id: None,
             related_entity_type: None,
         },
+        public_url,
     )
     .await?
     .json()
