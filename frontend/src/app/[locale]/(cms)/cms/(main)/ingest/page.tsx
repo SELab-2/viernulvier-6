@@ -198,7 +198,10 @@ export default function IngestPage() {
                     value={sort}
                     onValueChange={(v) => setSort(v as "recent" | "oldest" | "relevance")}
                 >
-                    <SelectTrigger className="h-8 w-[140px] rounded-none border font-mono text-[10px] tracking-wider uppercase">
+                    <SelectTrigger
+                        size="sm"
+                        className="w-[140px] rounded-none border font-mono text-[10px] tracking-wider uppercase"
+                    >
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-none">
