@@ -153,6 +153,10 @@
             "concert": "Concert",
             "nightlife": "Nightlife"
         },
+        "articles": {
+            "label": "From the editors",
+            "viewAll": "All articles"
+        },
         "about": {
             "title": "Arts Centre VIERNULVIER",
             "text": "Since 1883, De Vooruit has been a breeding ground for art, culture and society. From revolutionary parties to contemporary performance. The archive preserves it all."

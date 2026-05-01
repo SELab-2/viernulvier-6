@@ -153,6 +153,10 @@
             "concert": "Concert",
             "nightlife": "Nightlife"
         },
+        "articles": {
+            "label": "Van de redactie",
+            "viewAll": "Alle artikels"
+        },
         "about": {
             "title": "Kunstencentrum VIERNULVIER",
             "text": "Sinds 1883 is De Vooruit een broedplaats voor kunst, cultuur en samenleving. Van revolutionaire feesten tot hedendaagse performance. Het archief bewaart het allemaal."
