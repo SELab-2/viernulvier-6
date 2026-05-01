@@ -14,5 +14,6 @@ pub struct EntityMediaLink {
     pub sort_order: i32,
     pub is_cover_image: bool,
     pub created_at: DateTime<Utc>,
-    pub title: Option<String>,
+    pub title_en: Option<String>,
+    pub title_nl: Option<String>,
 }

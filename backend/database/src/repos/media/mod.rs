@@ -612,19 +612,8 @@ impl<'a> MediaRepo<'a> {
             SELECT
                 em.id, em.entity_type, em.entity_id, em.media_id,
                 em.role, em.sort_order, em.is_cover_image, em.created_at,
-                COALESCE(
-                    pt_en.title,
-                    pt_nl.title,
-                    a.title,
-                    ct_en.title,
-                    ct_nl.title,
-                    ar.name,
-                    l.name,
-                    st_en.name,
-                    st_nl.name,
-                    ept_en.title,
-                    ept_nl.title
-                ) as title
+                COALESCE(pt_en.title, a.title, ct_en.title, ar.name, l.name, st_en.name, ept_en.title) as title_en,
+                COALESCE(pt_nl.title, a.title, ct_nl.title, ar.name, l.name, st_nl.name, ept_nl.title) as title_nl
             FROM entity_media em
             LEFT JOIN production_translations pt_en
                 ON em.entity_type = 'production' AND em.entity_id = pt_en.production_id AND pt_en.language_code = 'en'

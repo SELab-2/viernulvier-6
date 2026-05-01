@@ -1451,7 +1451,7 @@ export interface components {
             role: string;
             /** Format: int32 */
             sort_order: number;
-            title?: string | null;
+            title?: null | components["schemas"]["TitleTranslations"];
         };
         /**
          * @description Response payload for a media item. The `url` field is the direct public URL
@@ -1845,6 +1845,10 @@ export interface components {
             description?: string | null;
             label: string;
             language_code: string;
+        };
+        TitleTranslations: {
+            en?: string | null;
+            nl?: string | null;
         };
         UploadUrlRequest: {
             /**

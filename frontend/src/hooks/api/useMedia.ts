@@ -385,7 +385,7 @@ export type MediaEntityLink = {
     role: string;
     sort_order: number;
     is_cover_image: boolean;
-    title: string | null;
+    title: { en: string | null; nl: string | null } | null;
 };
 
 export const useGetMediaEntityLinks = (mediaId: string | null) => {
