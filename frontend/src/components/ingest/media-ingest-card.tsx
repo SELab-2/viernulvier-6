@@ -35,10 +35,7 @@ export function MediaIngestCard({ media, onView, onEdit, onDelete }: MediaIngest
     const metaLabel = alt || [fileExt, dimensions].filter(Boolean).join(" · ") || "—";
 
     return (
-        <div
-            className="border-foreground/20 hover:border-foreground/40 group relative border transition-colors"
-            style={{ contentVisibility: "auto", containIntrinsicSize: "0 250px" }}
-        >
+        <div className="border-foreground/20 hover:border-foreground/40 group relative border transition-colors">
             {/* Image — clickable to open spotlight (production page pattern) */}
             <button
                 type="button"
