@@ -11,10 +11,11 @@ import { makeArticleColumns } from "./columns";
 import { ActionBar } from "../action-bar";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/routing";
-import { useCreateArticle, useDeleteArticle, useGetArticlesCms } from "@/hooks/api/useArticles";
+import { useDeleteArticle, useGetArticlesCms } from "@/hooks/api/useArticles";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
 import type { PickerItem } from "@/lib/collection-picker-utils";
 import { ArticleListItem } from "@/types/models/article.types";
+import { CreateArticleDialog } from "./create-article-dialog";
 
 export function ArticlesTable() {
     const t = useTranslations("Cms.Articles");
@@ -22,8 +23,8 @@ export function ArticlesTable() {
     const tActions = useTranslations("Cms.ActionsColumn");
     const router = useRouter();
     const { data: articles = [], isLoading } = useGetArticlesCms();
-    const createArticle = useCreateArticle();
     const deleteArticle = useDeleteArticle();
+    const [dialogOpen, setDialogOpen] = useState(false);
 
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
     const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
@@ -78,20 +79,6 @@ export function ArticlesTable() {
         [tCollections]
     );
 
-    const handleNew = () => {
-        createArticle.mutate(
-            { title: undefined },
-            {
-                onSuccess: (article) => {
-                    router.push(`/cms/articles/${article.id}/edit`);
-                },
-                onError: () => {
-                    toast.error(t("createFailed"));
-                },
-            }
-        );
-    };
-
     return (
         <div className="flex h-full flex-col">
             <div className="bg-background sticky top-0 z-10 flex items-center justify-between gap-2 py-2">
@@ -102,7 +89,7 @@ export function ArticlesTable() {
                     actions={bulkActions}
                     onClear={() => setRowSelection({})}
                 />
-                <Button onClick={handleNew} disabled={createArticle.isPending} size="sm">
+                <Button onClick={() => setDialogOpen(true)} size="sm">
                     <Plus className="mr-2 h-4 w-4" />
                     {t("newArticle")}
                 </Button>
@@ -122,6 +109,7 @@ export function ArticlesTable() {
                 onOpenChange={setCollectionDialogOpen}
                 items={pickerItems}
             />
+            <CreateArticleDialog open={dialogOpen} onOpenChange={setDialogOpen} />
         </div>
     );
 }
