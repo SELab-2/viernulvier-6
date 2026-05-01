@@ -234,6 +234,46 @@ impl ArticleListPayload {
 
         Ok(PaginatedResponse { data, next_cursor })
     }
+
+    pub async fn list_cms_search(
+        db: &Database,
+        id_cursor: Option<String>,
+        limit: u32,
+        search: ArticleSearch,
+        public_url: Option<&str>,
+    ) -> Result<PaginatedResponse<Self>, AppError> {
+        let cursor: Option<CursorData> = id_cursor.and_then(|b64| {
+            let bytes = BASE64_URL_SAFE.decode(b64).ok()?;
+            serde_json::from_slice(&bytes).ok()
+        });
+
+        let (articles, next_cursor) = db
+            .articles()
+            .search_cms(limit, cursor, search)
+            .await?;
+
+        let mut data: Vec<Self> = articles.into_iter().map(Self::from).collect();
+
+        if let Some(base) = public_url {
+            let ids: Vec<Uuid> = data.iter().map(|a| a.id).collect();
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Article, &ids)
+                .await?;
+            for a in &mut data {
+                if let Some(key) = cover_keys.get(&a.id) {
+                    a.cover_image_url = Some(build_cover_url(base, key));
+                }
+            }
+        }
+
+        let next_cursor = next_cursor.and_then(|cursor| {
+            let data = serde_json::to_vec(&cursor).ok()?;
+            Some(BASE64_URL_SAFE.encode(data))
+        });
+
+        Ok(PaginatedResponse { data, next_cursor })
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
