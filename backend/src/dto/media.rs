@@ -343,11 +343,17 @@ pub struct ReconcileResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct TitleTranslations {
+    pub en: Option<String>,
+    pub nl: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct MediaEntityLink {
     pub entity_type: String,
     pub entity_id: Uuid,
     pub role: String,
     pub sort_order: i32,
     pub is_cover_image: bool,
-    pub title: Option<String>,
+    pub title: Option<TitleTranslations>,
 }

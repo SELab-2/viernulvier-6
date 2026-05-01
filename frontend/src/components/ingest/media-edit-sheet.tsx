@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Save, Link2, ExternalLink, Crown } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -46,6 +46,7 @@ export function MediaEditSheet({
 }: MediaEditSheetProps) {
     const t = useTranslations("Cms.Ingest");
     const tMedia = useTranslations("Cms.ProductionMedia");
+    const locale = useLocale();
     const [form, setForm] = useState<Partial<Media>>({});
     const [activeLang, setActiveLang] = useState<Lang>("nl");
 
@@ -149,7 +150,11 @@ export function MediaEditSheet({
                             <div className="space-y-1.5">
                                 {entityLinks.map((link) => {
                                     const path = entityEditPath(link.entity_type, link.entity_id);
-                                    const displayTitle = link.title || link.entity_type;
+                                    const displayTitle =
+                                        (locale === "en" ? link.title?.en : link.title?.nl) ||
+                                        link.title?.en ||
+                                        link.title?.nl ||
+                                        link.entity_type;
                                     const isGallery = link.role === "gallery";
                                     const content = (
                                         <div className="hover:bg-foreground/[0.02] group flex items-center justify-between border px-2 py-1.5 transition-colors">

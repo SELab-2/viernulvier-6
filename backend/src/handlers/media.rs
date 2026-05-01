@@ -18,7 +18,7 @@ use crate::{
         media::{
             AttachMediaRequest, CheckMediaRequest, CheckMediaResponse,
             CreateMediaRequest, LinkMediaRequest, MediaEntityLink, MediaPayload, MediaVariantPayload,
-            ReconcileResponse, UploadUrlRequest, UploadUrlResponse,
+            ReconcileResponse, TitleTranslations, UploadUrlRequest, UploadUrlResponse,
         },
         paginated::PaginatedResponse,
     },
@@ -115,7 +115,10 @@ pub async fn get_media_entities(
             role: l.role,
             sort_order: l.sort_order,
             is_cover_image: l.is_cover_image,
-            title: l.title,
+            title: Some(TitleTranslations {
+                en: l.title_en.clone(),
+                nl: l.title_nl.clone(),
+            }).filter(|t| t.en.is_some() || t.nl.is_some()),
         })
         .collect();
     Ok(Json(result))
