@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Upload, Loader2, Trash2, HardDrive, Search, ArrowDownUp } from "lucide-react";
+import { Upload, Loader2, Trash2, HardDrive, Search } from "lucide-react";
 import { PageHeader } from "@/components/cms/PageHeader";
 import { MediaMasonryGrid } from "@/components/ingest/media-masonry-grid";
 import { MediaUploadDialog } from "@/components/ingest/media-upload-dialog";

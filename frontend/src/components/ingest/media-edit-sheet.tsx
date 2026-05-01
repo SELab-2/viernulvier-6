@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Save, Link2, ExternalLink, Crown } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -46,7 +46,6 @@ export function MediaEditSheet({
 }: MediaEditSheetProps) {
     const t = useTranslations("Cms.Ingest");
     const tMedia = useTranslations("Cms.ProductionMedia");
-    const locale = useLocale();
     const [form, setForm] = useState<Partial<Media>>({});
     const [activeLang, setActiveLang] = useState<Lang>("nl");
 
