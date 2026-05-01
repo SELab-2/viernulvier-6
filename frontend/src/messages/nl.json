@@ -380,7 +380,8 @@
             "fieldEventVendorId": "Vendor-ID",
             "fieldEventBoxOfficeId": "Box office ID",
             "fieldEventUitdatabankId": "UiTdatabank ID",
-            "eyebrow": "Productie"
+            "eyebrow": "Productie",
+            "search": "Zoek producties…"
         },
         "Locations": {
             "title": "Locaties",
@@ -390,6 +391,7 @@
             "hideHalls": "Zalen verbergen",
             "editLocation": "Locatie bewerken",
             "editHall": "Zaal bewerken",
+            "search": "Zoek locaties…",
             "deleteConfirm": "Weet je zeker dat je \"{title}\" wil verwijderen?",
             "deleteConfirmMultiple": "Weet je zeker dat je {count} locaties wil verwijderen?",
             "deleteSuccess": "Locatie verwijderd.",
@@ -446,7 +448,8 @@
             "untitledEvent": "Naamloze voorstelling",
             "contentPlaceholder": "Schrijf artikelinhoud…",
             "statusColumn": "Status",
-            "dateRangeColumn": "Periode"
+            "dateRangeColumn": "Periode",
+            "search": "Zoek artikels…"
         },
         "Performers": {
             "title": "Uitvoerders",

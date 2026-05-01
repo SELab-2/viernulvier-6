@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Archive, ChevronsUp } from "lucide-react";
 import { toast } from "sonner";
@@ -17,6 +18,7 @@ import {
 } from "./columns";
 import { makeHallColumns, hallFields, toHallUpdateInput } from "./hall-columns";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
+import { SearchInput } from "@/components/cms/search-input";
 import { LocationCoverField } from "@/components/cms/location-cover-field";
 import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
 import { Button } from "@/components/ui/button";
@@ -37,13 +39,15 @@ export function LocationsTable() {
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
     const loadMoreRef = useRef<HTMLDivElement>(null);
+    const searchParams = useSearchParams();
+    const q = searchParams.get("q") ?? undefined;
 
     const {
         data: infiniteData,
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,
-    } = useGetInfiniteLocations();
+    } = useGetInfiniteLocations(q ? { q } : undefined);
 
     const { data: hallsResult, isLoading: hallsLoading } = useGetHalls();
     const { data: spacesResult } = useGetSpaces();
@@ -254,7 +258,7 @@ export function LocationsTable() {
 
     return (
         <div className="flex h-full flex-col">
-            <div className="bg-background sticky top-0 z-10 flex items-center justify-between gap-2">
+            <div className="bg-background sticky top-0 z-10 flex items-center gap-2">
                 <ActionBar
                     entityCounts={[
                         { countKey: "locationsSelected", count: selectedLocationCount },
@@ -262,6 +266,8 @@ export function LocationsTable() {
                     ]}
                     actions={actions}
                     onClear={clearSelection}
+                    search={<SearchInput placeholder={t("search")} />}
+                    className="flex-1"
                 />
                 {hasExpanded && (
                     <Button
