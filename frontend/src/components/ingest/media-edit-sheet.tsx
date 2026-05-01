@@ -2,20 +2,15 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
-import { Save } from "lucide-react";
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetDescription,
-} from "@/components/ui/sheet";
+import { useTranslations, useLocale } from "next-intl";
+import { Save, Link2, ExternalLink, Crown } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { LanguageSelector } from "@/components/cms/language-selector";
+import { useGetMediaEntityLinks } from "@/hooks/api/useMedia";
 import { Media } from "@/types/models/media.types";
 
 type Lang = "nl" | "en" | "fr";
@@ -28,6 +23,19 @@ interface MediaEditSheetProps {
     isSaving?: boolean;
 }
 
+function entityEditPath(entityType: string, entityId: string): string | null {
+    switch (entityType) {
+        case "production":
+            return `/cms/content/productions/${entityId}/edit`;
+        case "article":
+            return `/cms/content/articles/${entityId}/edit`;
+        case "collection":
+            return `/cms/main/collections/${entityId}`;
+        default:
+            return null;
+    }
+}
+
 export function MediaEditSheet({
     media,
     open,
@@ -37,8 +45,11 @@ export function MediaEditSheet({
 }: MediaEditSheetProps) {
     const t = useTranslations("Cms.Ingest");
     const tMedia = useTranslations("Cms.ProductionMedia");
+    const locale = useLocale();
     const [form, setForm] = useState<Partial<Media>>({});
     const [activeLang, setActiveLang] = useState<Lang>("nl");
+
+    const { data: entityLinks } = useGetMediaEntityLinks(media?.id ?? null);
 
     useEffect(() => {
         if (media) {
@@ -124,6 +135,55 @@ export function MediaEditSheet({
                                 />
                             </div>
                         </div>
+                    </div>
+
+                    {/* Entity links */}
+                    <div className="space-y-3">
+                        <div className="border-foreground/10 flex items-center gap-1.5 border-b pb-2">
+                            <Link2 className="text-muted-foreground h-3.5 w-3.5" />
+                            <h3 className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
+                                {t("entityLinks")}
+                            </h3>
+                        </div>
+                        {entityLinks && entityLinks.length > 0 ? (
+                            <div className="space-y-1.5">
+                                {entityLinks.map((link) => {
+                                    const path = entityEditPath(link.entity_type, link.entity_id);
+                                    return (
+                                        <div
+                                            key={`${link.entity_type}-${link.entity_id}`}
+                                            className="flex items-center justify-between border px-2 py-1.5"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                {link.is_cover_image && (
+                                                    <Crown className="text-foreground h-3 w-3" />
+                                                )}
+                                                <span className="font-mono text-[10px] tracking-wider uppercase">
+                                                    {link.entity_type}
+                                                </span>
+                                                <span className="text-muted-foreground text-[10px]">
+                                                    {link.role}
+                                                </span>
+                                            </div>
+                                            {path && (
+                                                <a
+                                                    href={`/${locale}${path}`}
+                                                    className="text-muted-foreground hover:text-foreground flex h-5 w-5 items-center justify-center transition-colors"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                >
+                                                    <ExternalLink className="h-3 w-3" />
+                                                </a>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <p className="text-muted-foreground font-mono text-[10px] tracking-wider">
+                                {t("noEntityLinks")}
+                            </p>
+                        )}
                     </div>
 
                     <div className="flex justify-end gap-2">

@@ -17,7 +17,7 @@ use crate::{
     dto::{
         media::{
             AttachMediaRequest, CheckMediaRequest, CheckMediaResponse,
-            CreateMediaRequest, LinkMediaRequest, MediaPayload, MediaVariantPayload,
+            CreateMediaRequest, LinkMediaRequest, MediaEntityLink, MediaPayload, MediaVariantPayload,
             ReconcileResponse, UploadUrlRequest, UploadUrlResponse,
         },
         paginated::PaginatedResponse,
@@ -86,6 +86,38 @@ pub async fn get_one(
         .collect();
 
     Ok(Json(payload))
+}
+
+#[utoipa::path(
+    method(get),
+    path = "/media/{id}/entities",
+    tag = "Media",
+    operation_id = "get_media_entity_links",
+    description = "Get all entity links for a given media item.",
+    params(
+        ("id" = Uuid, Path, description = "Media UUID")
+    ),
+    responses(
+        (status = 200, description = "Success", body = [MediaEntityLink]),
+        (status = 404, description = "Not found")
+    )
+)]
+pub async fn get_media_entities(
+    db: Database,
+    Path(id): Path<Uuid>,
+) -> JsonResponse<Vec<MediaEntityLink>> {
+    let links = db.media().entity_links(id).await?;
+    let result: Vec<MediaEntityLink> = links
+        .into_iter()
+        .map(|l| MediaEntityLink {
+            entity_type: format!("{:?}", l.entity_type).to_lowercase(),
+            entity_id: l.entity_id,
+            role: l.role,
+            sort_order: l.sort_order,
+            is_cover_image: l.is_cover_image,
+        })
+        .collect();
+    Ok(Json(result))
 }
 
 const ALLOWED_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png", "gif", "webp", "svg", "mp4", "pdf"];

@@ -267,6 +267,7 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // media
         .routes(routes!(media::get_all))
         .routes(routes!(media::get_one))
+        .routes(routes!(media::get_media_entities))
         .routes(routes!(media::get_entity_media))
         // collections
         .routes(routes!(collection::get_all))

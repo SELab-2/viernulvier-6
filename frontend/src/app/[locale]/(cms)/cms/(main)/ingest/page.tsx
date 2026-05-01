@@ -2,13 +2,14 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Upload, Loader2, Trash2, HardDrive } from "lucide-react";
+import { Upload, Loader2, Trash2, HardDrive, Search, ArrowDownUp } from "lucide-react";
 import { PageHeader } from "@/components/cms/PageHeader";
 import { MediaMasonryGrid } from "@/components/ingest/media-masonry-grid";
 import { MediaUploadDialog } from "@/components/ingest/media-upload-dialog";
 import { MediaEditSheet } from "@/components/ingest/media-edit-sheet";
 import { ImageSpotlight } from "@/components/ui/image-spotlight";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -33,9 +34,16 @@ export default function IngestPage() {
     const [editOpen, setEditOpen] = useState(false);
     const [spotlightOpen, setSpotlightOpen] = useState(false);
     const [spotlightIndex, setSpotlightIndex] = useState(0);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [sort, setSort] = useState<"recent" | "oldest" | "relevance">("recent");
+
+    const searchParams = useMemo(
+        () => ({ q: searchQuery || undefined, sort }),
+        [searchQuery, sort]
+    );
 
     const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
-        useGetInfiniteMedia();
+        useGetInfiniteMedia(searchParams);
 
     const mediaItems = useMemo(() => data?.pages.flatMap((page) => page.data) ?? [], [data]);
 
@@ -168,8 +176,31 @@ export default function IngestPage() {
             <PageHeader eyebrow={tEditions("edition5")} title={t("title")} />
 
             {/* Toolbar */}
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex items-center gap-3">
                 <IngestCount />
+                <div className="relative flex-1">
+                    <Search className="text-muted-foreground absolute top-1/2 left-2 h-3.5 w-3.5 -translate-y-1/2" />
+                    <Input
+                        placeholder={t("search")}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="h-8 rounded-none border pl-8 font-mono text-xs"
+                    />
+                </div>
+                <div className="flex items-center gap-1">
+                    <ArrowDownUp className="text-muted-foreground h-3.5 w-3.5" />
+                    <select
+                        value={sort}
+                        onChange={(e) =>
+                            setSort(e.target.value as "recent" | "oldest" | "relevance")
+                        }
+                        className="text-muted-foreground h-8 rounded-none border bg-transparent px-2 font-mono text-[10px] tracking-wider uppercase"
+                    >
+                        <option value="recent">{t("sortRecent")}</option>
+                        <option value="oldest">{t("sortOldest")}</option>
+                        <option value="relevance">{t("sortRelevance")}</option>
+                    </select>
+                </div>
                 <TooltipProvider>
                     <div className="flex items-center gap-2">
                         <Tooltip>
