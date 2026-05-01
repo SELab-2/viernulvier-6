@@ -50,9 +50,13 @@ const fetchArticleRelations = async (id: string): Promise<ArticleRelations> => {
 };
 
 const fetchArticlesByProduction = async (productionId: string): Promise<ArticleListItem[]> => {
-    const { data } = await api.get<{ data: ArticleListResponse[] }>(
-        `/articles?related_entity_id=${productionId}&related_entity_type=production&limit=10`
-    );
+    const { data } = await api.get<{ data: ArticleListResponse[] }>("/articles", {
+        params: {
+            related_entity_id: productionId,
+            related_entity_type: "production",
+            limit: 10,
+        },
+    });
     return mapArticleListItems(data.data);
 };
 

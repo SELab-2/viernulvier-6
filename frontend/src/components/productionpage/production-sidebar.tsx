@@ -9,7 +9,7 @@ import type { Event } from "@/types/models/event.types";
 
 function formatDateFull(dateStr: string, locale: string): string {
     const date = new Date(dateStr);
-    return date.toLocaleDateString(locale === "en" ? "en-US" : "nl-BE", {
+    return date.toLocaleDateString(locale === "en" ? "en-GB" : "nl-BE", {
         weekday: "long",
         day: "numeric",
         month: "long",
@@ -19,7 +19,7 @@ function formatDateFull(dateStr: string, locale: string): string {
 
 function formatTime(dateStr: string, locale: string): string {
     const date = new Date(dateStr);
-    return date.toLocaleTimeString(locale === "en" ? "en-US" : "nl-BE", {
+    return date.toLocaleTimeString(locale === "en" ? "en-GB" : "nl-BE", {
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
@@ -44,10 +44,8 @@ export function ProductionSidebar({
     const productionTitle = getLocalizedField(production, "title", locale) ?? production.slug;
 
     const copyLink = () => {
-        if (typeof window !== "undefined") {
-            navigator.clipboard.writeText(window.location.href);
-            toast.success("Link gekopieerd!");
-        }
+        navigator.clipboard.writeText(window.location.href);
+        toast.success(tProd("copyLinkSuccess"));
     };
 
     return (
@@ -114,14 +112,14 @@ export function ProductionSidebar({
             {/* Share */}
             <div className="pb-6">
                 <span className="text-muted-foreground mb-4 block font-mono text-[11px] font-medium tracking-[2px] uppercase">
-                    Delen
+                    {tProd("shareSectionTitle")}
                 </span>
                 <button
                     onClick={copyLink}
                     className="border-border text-muted-foreground hover:border-foreground hover:text-foreground mb-2 flex w-full cursor-pointer items-center justify-center gap-2 border bg-transparent px-2 py-2 font-mono text-[11px] tracking-[1.2px] uppercase transition-all"
                 >
                     <Link2 size={10} strokeWidth={2} />
-                    Kopieer link
+                    {tProd("copyLink")}
                 </button>
                 <div className="flex gap-2">
                     <a
@@ -132,7 +130,8 @@ export function ProductionSidebar({
                         }
                         target="_blank"
                         rel="noreferrer"
-                        title={tProd("shareWhatsApp")}
+                        aria-label={tProd("shareWhatsApp")}
+                        suppressHydrationWarning
                         className="border-border text-muted-foreground hover:border-foreground hover:text-foreground flex flex-1 cursor-pointer items-center justify-center border bg-transparent py-2 transition-all"
                     >
                         <svg
@@ -151,7 +150,8 @@ export function ProductionSidebar({
                                 ? `mailto:?subject=${encodeURIComponent(productionTitle)}&body=${encodeURIComponent(window.location.href)}`
                                 : "mailto:"
                         }
-                        title={tProd("shareEmail")}
+                        aria-label={tProd("shareEmail")}
+                        suppressHydrationWarning
                         className="border-border text-muted-foreground hover:border-foreground hover:text-foreground flex flex-1 cursor-pointer items-center justify-center border bg-transparent py-2 transition-all"
                     >
                         <Mail size={11} strokeWidth={2} />

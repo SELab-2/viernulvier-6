@@ -7,7 +7,7 @@ import { Link } from "@/i18n/routing";
 import type { ArticleListItem } from "@/types/models/article.types";
 
 function formatPublishDate(dateStr: string, locale: string): string {
-    return new Date(dateStr).toLocaleDateString(locale === "en" ? "en-US" : "nl-BE", {
+    return new Date(dateStr).toLocaleDateString(locale === "en" ? "en-GB" : "nl-BE", {
         day: "numeric",
         month: "long",
         year: "numeric",
@@ -26,7 +26,7 @@ function ArticleCard({ article, locale }: { article: ArticleListItem; locale: st
                 {article.coverImageUrl ? (
                     <Image
                         src={article.coverImageUrl}
-                        alt={article.title ?? ""}
+                        alt={article.title ?? t("articlesFallbackTitle")}
                         fill
                         className="object-cover grayscale-[15%] transition-all duration-300 group-hover:grayscale-0"
                         sizes="(max-width: 640px) 100vw, 50vw"

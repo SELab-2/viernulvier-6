@@ -73,7 +73,7 @@ function parseInfo(info: string | null | undefined) {
 function getYouTubeId(url: string): string | null {
     try {
         const u = new URL(url);
-        if (u.hostname === "youtu.be") return u.pathname.slice(1).split("?")[0];
+        if (u.hostname === "youtu.be") return u.pathname.slice(1).split("?")[0].split("/")[0];
         if (u.hostname.includes("youtube.com")) {
             if (u.pathname === "/watch") return u.searchParams.get("v");
             const embedMatch = u.pathname.match(/^\/embed\/([^/?]+)/);
