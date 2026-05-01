@@ -183,7 +183,7 @@ export default function IngestPage() {
 
             {/* Toolbar */}
             <div className="mb-4 flex items-center gap-3">
-                <div className="relative w-80">
+                <div className="relative w-96">
                     <Search className="text-muted-foreground absolute top-1/2 left-2 h-3.5 w-3.5 -translate-y-1/2" />
                     <Input
                         placeholder={t("search")}
