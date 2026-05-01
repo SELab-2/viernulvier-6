@@ -1451,6 +1451,7 @@ export interface components {
             role: string;
             /** Format: int32 */
             sort_order: number;
+            title?: string | null;
         };
         /**
          * @description Response payload for a media item. The `url` field is the direct public URL

@@ -349,4 +349,5 @@ pub struct MediaEntityLink {
     pub role: String,
     pub sort_order: i32,
     pub is_cover_image: bool,
+    pub title: Option<String>,
 }
