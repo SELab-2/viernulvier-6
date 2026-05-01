@@ -63,6 +63,7 @@
     },
     "ResultsBar": {
         "sortBy": "Sorteren:",
+        "relevant": "Meest relevant",
         "recent": "Meest recent",
         "oldest": "Oudste eerst",
         "az": "A–Z"
@@ -138,7 +139,9 @@
             ],
             "weekdays": ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"]
         },
-        "clearAll": "Wis alles"
+        "clearAll": "Wis alles",
+        "showMore": "Meer tonen",
+        "showLess": "Minder tonen"
     },
     "Home": {
         "loading": "Archief laden...",
