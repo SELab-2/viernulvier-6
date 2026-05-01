@@ -48,11 +48,7 @@ export function MediaIngestCard({ media, onView, onEdit, onDelete }: MediaIngest
             >
                 {url ? (
                     <>
-                        <div
-                            className={`bg-foreground/5 absolute inset-0 transition-opacity duration-500 ${loaded ? "opacity-0" : "opacity-100"}`}
-                        >
-                            <div className="via-foreground/5 absolute inset-0 animate-[shimmer_1.5s_infinite_linear] bg-gradient-to-r from-transparent to-transparent" />
-                        </div>
+                        {!loaded && <div className="bg-muted absolute inset-0 animate-pulse" />}
                         <Image
                             src={url}
                             alt={alt}
