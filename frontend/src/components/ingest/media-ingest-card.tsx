@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { Pencil, Trash2, ImageIcon } from "lucide-react";
 import { useLocale } from "next-intl";
@@ -19,6 +20,7 @@ function thumbnailUrl(media: Media): string | null {
 }
 
 export function MediaIngestCard({ media, onView, onEdit, onDelete }: MediaIngestCardProps) {
+    const [loaded, setLoaded] = useState(false);
     const locale = useLocale();
     const url = thumbnailUrl(media);
     const primaryAlt = locale === "en" ? media.altTextEn : media.altTextNl;
@@ -45,15 +47,23 @@ export function MediaIngestCard({ media, onView, onEdit, onDelete }: MediaIngest
                 style={{ aspectRatio: naturalAspect }}
             >
                 {url ? (
-                    <Image
-                        src={url}
-                        alt={alt}
-                        fill
-                        loading="lazy"
-                        decoding="async"
-                        className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                    />
+                    <>
+                        <div
+                            className={`bg-foreground/5 absolute inset-0 transition-opacity duration-500 ${loaded ? "opacity-0" : "opacity-100"}`}
+                        >
+                            <div className="via-foreground/5 absolute inset-0 animate-[shimmer_1.5s_infinite_linear] bg-gradient-to-r from-transparent to-transparent" />
+                        </div>
+                        <Image
+                            src={url}
+                            alt={alt}
+                            fill
+                            loading="lazy"
+                            decoding="async"
+                            onLoad={() => setLoaded(true)}
+                            className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                        />
+                    </>
                 ) : (
                     <div className="bg-muted flex h-full w-full items-center justify-center">
                         <ImageIcon className="text-muted-foreground h-5 w-5" />
