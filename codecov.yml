@@ -1,0 +1,2 @@
+ignore:
+  - "backend/api/src/seed.rs"
