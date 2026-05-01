@@ -11,6 +11,13 @@ import { ImageSpotlight } from "@/components/ui/image-spotlight";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
     useGetInfiniteMedia,
@@ -187,20 +194,19 @@ export default function IngestPage() {
                         className="h-8 rounded-none border pl-8 font-mono text-xs"
                     />
                 </div>
-                <div className="flex items-center gap-1">
-                    <ArrowDownUp className="text-muted-foreground h-3.5 w-3.5" />
-                    <select
-                        value={sort}
-                        onChange={(e) =>
-                            setSort(e.target.value as "recent" | "oldest" | "relevance")
-                        }
-                        className="text-muted-foreground h-8 rounded-none border bg-transparent px-2 font-mono text-[10px] tracking-wider uppercase"
-                    >
-                        <option value="recent">{t("sortRecent")}</option>
-                        <option value="oldest">{t("sortOldest")}</option>
-                        <option value="relevance">{t("sortRelevance")}</option>
-                    </select>
-                </div>
+                <Select
+                    value={sort}
+                    onValueChange={(v) => setSort(v as "recent" | "oldest" | "relevance")}
+                >
+                    <SelectTrigger className="h-8 w-[140px] rounded-none border font-mono text-[10px] tracking-wider uppercase">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-none">
+                        <SelectItem value="recent">{t("sortRecent")}</SelectItem>
+                        <SelectItem value="oldest">{t("sortOldest")}</SelectItem>
+                        <SelectItem value="relevance">{t("sortRelevance")}</SelectItem>
+                    </SelectContent>
+                </Select>
                 <TooltipProvider>
                     <div className="flex items-center gap-2">
                         <Tooltip>

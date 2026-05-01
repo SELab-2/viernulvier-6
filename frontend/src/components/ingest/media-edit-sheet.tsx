@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useTranslations, useLocale } from "next-intl";
 import { Save, Link2, ExternalLink, Crown } from "lucide-react";
+import { Link } from "@/i18n/routing";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,9 +27,9 @@ interface MediaEditSheetProps {
 function entityEditPath(entityType: string, entityId: string): string | null {
     switch (entityType) {
         case "production":
-            return `/cms/content/productions/${entityId}/edit`;
+            return `/cms/productions/${entityId}/edit`;
         case "article":
-            return `/cms/content/articles/${entityId}/edit`;
+            return `/cms/articles/${entityId}/edit`;
         case "collection":
             return `/cms/main/collections/${entityId}`;
         default:
@@ -149,11 +150,8 @@ export function MediaEditSheet({
                             <div className="space-y-1.5">
                                 {entityLinks.map((link) => {
                                     const path = entityEditPath(link.entity_type, link.entity_id);
-                                    return (
-                                        <div
-                                            key={`${link.entity_type}-${link.entity_id}`}
-                                            className="flex items-center justify-between border px-2 py-1.5"
-                                        >
+                                    const content = (
+                                        <div className="hover:bg-foreground/[0.02] flex items-center justify-between border px-2 py-1.5 transition-colors">
                                             <div className="flex items-center gap-2">
                                                 {link.is_cover_image && (
                                                     <Crown className="text-foreground h-3 w-3" />
@@ -166,15 +164,24 @@ export function MediaEditSheet({
                                                 </span>
                                             </div>
                                             {path && (
-                                                <a
-                                                    href={`/${locale}${path}`}
-                                                    className="text-muted-foreground hover:text-foreground flex h-5 w-5 items-center justify-center transition-colors"
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                >
+                                                <span className="text-muted-foreground flex h-5 w-5 items-center justify-center">
                                                     <ExternalLink className="h-3 w-3" />
-                                                </a>
+                                                </span>
                                             )}
+                                        </div>
+                                    );
+                                    return path ? (
+                                        <Link
+                                            key={`${link.entity_type}-${link.entity_id}`}
+                                            href={path as never}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            {content}
+                                        </Link>
+                                    ) : (
+                                        <div key={`${link.entity_type}-${link.entity_id}`}>
+                                            {content}
                                         </div>
                                     );
                                 })}
