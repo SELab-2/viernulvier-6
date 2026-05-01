@@ -149,21 +149,28 @@ export function MediaEditSheet({
                             <div className="space-y-1.5">
                                 {entityLinks.map((link) => {
                                     const path = entityEditPath(link.entity_type, link.entity_id);
+                                    const displayTitle = link.title || link.entity_type;
+                                    const isGallery = link.role === "gallery";
                                     const content = (
-                                        <div className="hover:bg-foreground/[0.02] flex items-center justify-between border px-2 py-1.5 transition-colors">
-                                            <div className="flex items-center gap-2">
-                                                {link.is_cover_image && (
-                                                    <Crown className="text-foreground h-3 w-3" />
-                                                )}
-                                                <span className="font-mono text-[10px] tracking-wider uppercase">
+                                        <div className="hover:bg-foreground/[0.02] group flex items-center justify-between border px-2 py-1.5 transition-colors">
+                                            <div className="flex min-w-0 flex-1 items-center gap-2">
+                                                <span className="bg-foreground/[0.06] px-1.5 py-0.5 font-mono text-[9px] tracking-wider uppercase">
                                                     {link.entity_type}
                                                 </span>
-                                                <span className="text-muted-foreground text-[10px]">
-                                                    {link.role}
+                                                <span className="truncate text-xs">
+                                                    {displayTitle}
                                                 </span>
+                                                {link.is_cover_image && (
+                                                    <Crown className="text-foreground h-3 w-3 shrink-0" />
+                                                )}
+                                                {!isGallery && (
+                                                    <span className="text-muted-foreground shrink-0 text-[10px]">
+                                                        {link.role}
+                                                    </span>
+                                                )}
                                             </div>
                                             {path && (
-                                                <span className="text-muted-foreground flex h-5 w-5 items-center justify-center">
+                                                <span className="text-muted-foreground group-hover:text-foreground ml-2 flex h-5 w-5 shrink-0 items-center justify-center transition-colors">
                                                     <ExternalLink className="h-3 w-3" />
                                                 </span>
                                             )}

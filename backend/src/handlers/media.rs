@@ -115,6 +115,7 @@ pub async fn get_media_entities(
             role: l.role,
             sort_order: l.sort_order,
             is_cover_image: l.is_cover_image,
+            title: l.title,
         })
         .collect();
     Ok(Json(result))

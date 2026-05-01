@@ -20,6 +20,7 @@ pub mod models {
     pub mod collection;
     pub mod collection_item;
     pub mod entity_media;
+    pub mod entity_media_link;
     pub mod entity_type;
     pub mod event;
     pub mod event_price;
