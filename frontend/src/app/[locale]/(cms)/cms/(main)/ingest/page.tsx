@@ -210,6 +210,7 @@ export default function IngestPage() {
                         <SelectItem value="relevance">{t("sortRelevance")}</SelectItem>
                     </SelectContent>
                 </Select>
+                <div className="flex-1" />
                 <TooltipProvider>
                     <div className="flex items-center gap-2">
                         <Tooltip>
@@ -326,11 +327,11 @@ export default function IngestPage() {
 
 function IngestCount() {
     const t = useTranslations("Cms.Ingest");
-    const { data: stats } = useGetStats();
+    const { data: stats, isLoading } = useGetStats();
     const count = stats?.media_count ?? 0;
     return (
         <div className="text-muted-foreground font-mono text-[10px] tracking-[1.5px] uppercase">
-            {count} {t("items")}
+            {isLoading ? "—" : `${count} ${t("items")}`}
         </div>
     );
 }
