@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -12,12 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { SearchInput } from "@/components/cms/search-input";
 import { useRouter } from "@/i18n/routing";
-import {
-    useCreateArticle,
-    useDeleteArticle,
-    useGetInfiniteArticlesCms,
-} from "@/hooks/api/useArticles";
+import { useDeleteArticle, useGetInfiniteArticlesCms } from "@/hooks/api/useArticles";
 import { ArticleListItem } from "@/types/models/article.types";
+import { CreateArticleDialog } from "./create-article-dialog";
 
 export function ArticlesTable() {
     const t = useTranslations("Cms.Articles");
@@ -57,8 +54,8 @@ export function ArticlesTable() {
         };
     }, [loadMore]);
 
-    const createArticle = useCreateArticle();
     const deleteArticle = useDeleteArticle();
+    const [dialogOpen, setDialogOpen] = useState(false);
 
     const tActions = useTranslations("Cms.ActionsColumn");
     const handleDelete = useCallback(
@@ -84,25 +81,11 @@ export function ArticlesTable() {
         [router, handleDelete, tActions, t]
     );
 
-    const handleNew = () => {
-        createArticle.mutate(
-            { title: undefined },
-            {
-                onSuccess: (article) => {
-                    router.push(`/cms/articles/${article.id}/edit`);
-                },
-                onError: () => {
-                    toast.error(t("createFailed"));
-                },
-            }
-        );
-    };
-
     return (
         <div className="flex h-full flex-col">
             <div className="bg-background sticky top-0 z-10 flex items-center justify-between py-2">
                 <SearchInput placeholder={t("search")} />
-                <Button onClick={handleNew} disabled={createArticle.isPending} size="sm">
+                <Button onClick={() => setDialogOpen(true)} size="sm">
                     <Plus className="mr-2 h-4 w-4" />
                     {t("newArticle")}
                 </Button>
@@ -115,6 +98,7 @@ export function ArticlesTable() {
                     </div>
                 )}
             </div>
+            <CreateArticleDialog open={dialogOpen} onOpenChange={setDialogOpen} />
         </div>
     );
 }
