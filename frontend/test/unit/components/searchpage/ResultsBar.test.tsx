@@ -7,9 +7,9 @@ import { NextIntlClientProvider } from "next-intl";
 const messages = {
     ResultsBar: {
         sortBy: "Sort by",
+        relevant: "Relevant",
         recent: "Most Recent",
         oldest: "Oldest First",
-        az: "A-Z",
     },
     Search: {
         heroPlaceholder: "Search the archive",
@@ -35,9 +35,9 @@ describe("ResultsBar component", () => {
         );
 
         expect(screen.getByText("Sort by")).toBeInTheDocument();
+        expect(screen.getByText("Relevant")).toBeInTheDocument();
         expect(screen.getByText("Most Recent")).toBeInTheDocument();
         expect(screen.getByText("Oldest First")).toBeInTheDocument();
-        expect(screen.getByText("A-Z")).toBeInTheDocument();
     });
 
     it("updates active sort option on click", async () => {
@@ -46,18 +46,18 @@ describe("ResultsBar component", () => {
             <ResultsBar query="" onQueryChange={() => {}} onSearch={() => {}} showSearch={false} />
         );
 
-        const recentBtn = screen.getByText("Most Recent");
-        const azBtn = screen.getByText("A-Z");
+        const relevantBtn = screen.getByText("Relevant");
+        const oldestBtn = screen.getByText("Oldest First");
 
         // Initial state
-        expect(recentBtn).toHaveClass("border-foreground");
-        expect(azBtn).not.toHaveClass("border-foreground");
+        expect(relevantBtn).toHaveClass("border-foreground");
+        expect(oldestBtn).not.toHaveClass("border-foreground");
 
-        // Click A-Z
-        await user.click(azBtn);
+        // Click Oldest First
+        await user.click(oldestBtn);
 
         // Updated state
-        expect(recentBtn).not.toHaveClass("border-foreground");
-        expect(azBtn).toHaveClass("border-foreground");
+        expect(relevantBtn).not.toHaveClass("border-foreground");
+        expect(oldestBtn).toHaveClass("border-foreground");
     });
 });

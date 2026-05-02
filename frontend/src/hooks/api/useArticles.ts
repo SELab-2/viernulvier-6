@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api-client";
 import {
@@ -6,6 +6,7 @@ import {
     mapArticleListItems,
     mapArticleRelations,
     mapCreateArticleInput,
+    mapPaginatedArticleListItemsResult,
     mapUpdateArticleInput,
     mapUpdateArticleRelationsInput,
 } from "@/mappers/article.mapper";
@@ -13,6 +14,7 @@ import {
     ArticleListResponse,
     ArticleRelationsResponse,
     ArticleResponse,
+    ArticlesCmsSearchResponse,
 } from "@/types/api/article.api.types";
 import {
     Article,
@@ -21,6 +23,7 @@ import {
     ArticleRelations,
     ArticleUpdateInput,
 } from "@/types/models/article.types";
+import { PaginatedResult, SearchPaginationParams } from "@/types/api/api.types";
 
 import { queryKeys } from "./query-keys";
 
@@ -39,6 +42,13 @@ const fetchArticlesCms = async (): Promise<ArticleListItem[]> => {
     return mapArticleListItems(data);
 };
 
+const fetchArticlesCmsSearch = async (
+    params?: SearchPaginationParams
+): Promise<PaginatedResult<ArticleListItem>> => {
+    const { data } = await api.get<ArticlesCmsSearchResponse>("/articles/cms/search", { params });
+    return mapPaginatedArticleListItemsResult(data);
+};
+
 const fetchArticleById = async (id: string): Promise<Article> => {
     const { data } = await api.get<ArticleResponse>(`/articles/cms/${id}`);
     return mapArticle(data);
@@ -47,6 +57,25 @@ const fetchArticleById = async (id: string): Promise<Article> => {
 const fetchArticleRelations = async (id: string): Promise<ArticleRelations> => {
     const { data } = await api.get<ArticleRelationsResponse>(`/articles/cms/${id}/relations`);
     return mapArticleRelations(data);
+};
+
+const fetchArticlesByProduction = async (productionId: string): Promise<ArticleListItem[]> => {
+    const { data } = await api.get<{ data: ArticleListResponse[] }>("/articles", {
+        params: {
+            related_entity_id: productionId,
+            related_entity_type: "production",
+            limit: 10,
+        },
+    });
+    return mapArticleListItems(data.data);
+};
+
+export const useGetArticlesByProduction = (productionId: string) => {
+    return useQuery({
+        queryKey: queryKeys.articles.byProduction(productionId),
+        queryFn: () => fetchArticlesByProduction(productionId),
+        enabled: Boolean(productionId),
+    });
 };
 
 export const useGetArticles = () => {
@@ -68,6 +97,19 @@ export const useGetArticlesCms = () => {
     return useQuery({
         queryKey: queryKeys.articles.all,
         queryFn: fetchArticlesCms,
+    });
+};
+
+export const useGetInfiniteArticlesCms = (
+    params?: Omit<SearchPaginationParams, "cursor">,
+    options?: { enabled?: boolean }
+) => {
+    return useInfiniteQuery({
+        queryKey: queryKeys.articles.cmsInfinite(params),
+        queryFn: async ({ pageParam }) => fetchArticlesCmsSearch({ ...params, cursor: pageParam }),
+        getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+        initialPageParam: null as string | null,
+        ...options,
     });
 };
 
