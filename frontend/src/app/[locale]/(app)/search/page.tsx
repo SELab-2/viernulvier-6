@@ -27,6 +27,7 @@ export default function SearchPage() {
     const t = useTranslations("Search");
     const loadMoreRef = useRef<HTMLDivElement>(null);
     const heroObserverRef = useRef<IntersectionObserver | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const queryClient = useQueryClient();
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -165,6 +166,28 @@ export default function SearchPage() {
         };
     }, [loadMore]);
 
+    // The sidebar is sticky: without a max-height it would extend below the viewport with no
+    // way to reach the bottom. max-h: calc(100vh - --container-top) caps it to the visible
+    // portion at all times — before sticky (hero on screen) and after. CSS can't express
+    // "100vh minus this element's current top offset", so we track it here.
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el) return;
+        const update = () => {
+            el.style.setProperty(
+                "--container-top",
+                `${Math.max(0, el.getBoundingClientRect().top)}px`
+            );
+        };
+        update();
+        window.addEventListener("scroll", update, { passive: true });
+        window.addEventListener("resize", update, { passive: true });
+        return () => {
+            window.removeEventListener("scroll", update);
+            window.removeEventListener("resize", update);
+        };
+    }, []);
+
     const heroRef = useCallback((node: HTMLDivElement | null) => {
         heroObserverRef.current?.disconnect();
         if (!node) return;
@@ -192,11 +215,12 @@ export default function SearchPage() {
             />
 
             <div
+                ref={containerRef}
                 className="flex min-h-[calc(100vh-300px)] items-start"
                 style={{ ["--results-bar-height" as string]: "0px" }}
             >
                 <ArchiveSidebar minYear={ARCHIVE_MIN_YEAR} />
-                <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                <main className="flex min-w-0 flex-1 flex-col">
                     <ResultsBar
                         query={draftQuery}
                         onQueryChange={setDraftQuery}
