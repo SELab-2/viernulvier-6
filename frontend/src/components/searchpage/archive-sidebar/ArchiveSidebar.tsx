@@ -274,17 +274,6 @@ export function ArchiveSidebar({ minYear: minYearProp }: ArchiveSidebarProps) {
         );
     }, [searchParams, router, pathname]);
 
-    const hasActiveFilters = useMemo(() => {
-        for (const facet of facetList) {
-            if (searchParams.get(facet.slug)) return true;
-        }
-        return (
-            searchParams.has("date_from") ||
-            searchParams.has("date_to") ||
-            searchParams.has("location")
-        );
-    }, [searchParams, facetList]);
-
     const sidebarContent = (
         <>
             <div className="mb-1 flex items-center justify-between px-4 py-3">
