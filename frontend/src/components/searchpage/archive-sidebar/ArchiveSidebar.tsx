@@ -9,7 +9,7 @@ import type { Facet } from "@/types/models/taxonomy.types";
 import type { Location } from "@/types/models/location.types";
 import { getLabel } from "@/lib/utils";
 import { useGetStats } from "@/hooks/api/useStats";
-import { useGetLocations } from "@/hooks/api/useLocations";
+import { useGetInfiniteLocations } from "@/hooks/api/useLocations";
 import { useGetFacets } from "@/hooks/api/useTaxonomy";
 import { useRouter, usePathname } from "@/i18n/routing";
 
@@ -33,10 +33,22 @@ export function ArchiveSidebar({ minYear: minYearProp }: ArchiveSidebarProps) {
     const searchParams = useSearchParams();
 
     const { data: stats } = useGetStats();
-    const { data: locationsResult } = useGetLocations();
+    const {
+        data: locationsPages,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = useGetInfiniteLocations();
     const { data: facets } = useGetFacets({ entityType: "production" });
 
-    const locations = useMemo(() => locationsResult?.data ?? [], [locationsResult?.data]);
+    useEffect(() => {
+        if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+    const locations = useMemo(
+        () => locationsPages?.pages.flatMap((p) => p.data) ?? [],
+        [locationsPages]
+    );
     const facetList = useMemo<Facet[]>(() => facets ?? [], [facets]);
 
     const bounds = useMemo(
