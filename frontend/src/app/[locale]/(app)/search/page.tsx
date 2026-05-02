@@ -37,7 +37,7 @@ export default function SearchPage() {
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
     const [isHeroVisible, setIsHeroVisible] = useState(true);
 
-    const query = searchParams.get("q") ?? "";
+    const query = searchParams.get("q")?.trim() ?? "";
     const dateFrom = searchParams.get("date_from") ?? undefined;
     const dateTo = searchParams.get("date_to") ?? undefined;
     const sort = searchParams.get("sort") ?? undefined;
@@ -67,13 +67,15 @@ export default function SearchPage() {
         dateTo,
         sort,
     ].join("|");
-    const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
-    if (filterKey !== prevFilterKey) {
-        setPrevFilterKey(filterKey);
-        setDraftQuery(query);
-        setCursorHistory([null]);
-        setCurrentPageIndex(0);
-    }
+    const prevFilterKeyRef = useRef(filterKey);
+    useEffect(() => {
+        if (filterKey !== prevFilterKeyRef.current) {
+            prevFilterKeyRef.current = filterKey;
+            setDraftQuery(query);
+            setCursorHistory([null]);
+            setCurrentPageIndex(0);
+        }
+    }, [filterKey, query]);
 
     const currentCursor = cursorHistory[currentPageIndex];
 

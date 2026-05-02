@@ -5,13 +5,11 @@ import { ArchiveSidebar } from "@/components/searchpage/archive-sidebar/ArchiveS
 import { NextIntlClientProvider } from "next-intl";
 import type { Facet } from "@/types/models/taxonomy.types";
 import type { StatsPayload } from "@/types/api/stats.api.types";
-import type { Location } from "@/types/models/location.types";
-import type { PaginatedResult } from "@/types/api/api.types";
 
 const mockReplace = vi.fn();
 const mockSearchParams = new URLSearchParams();
 
-const { useGetStatsMock, useGetFacetsMock, useGetLocationsMock } = vi.hoisted(() => ({
+const { useGetStatsMock, useGetFacetsMock, useGetInfiniteLocationsMock } = vi.hoisted(() => ({
     useGetStatsMock: vi.fn(() => ({
         data: undefined as StatsPayload | undefined,
         isLoading: false,
@@ -20,8 +18,12 @@ const { useGetStatsMock, useGetFacetsMock, useGetLocationsMock } = vi.hoisted(()
     useGetFacetsMock: vi.fn(() => ({
         data: undefined as Facet[] | undefined,
     })),
-    useGetLocationsMock: vi.fn(() => ({
-        data: undefined as PaginatedResult<Location> | undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    useGetInfiniteLocationsMock: vi.fn((): any => ({
+        data: undefined,
+        fetchNextPage: vi.fn(),
+        hasNextPage: false,
+        isFetchingNextPage: false,
     })),
 }));
 
@@ -34,7 +36,7 @@ vi.mock("@/hooks/api/useTaxonomy", () => ({
 }));
 
 vi.mock("@/hooks/api/useLocations", () => ({
-    useGetLocations: useGetLocationsMock,
+    useGetInfiniteLocations: useGetInfiniteLocationsMock,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -162,9 +164,16 @@ describe("ArchiveSidebar component", () => {
             isError: false,
         });
         useGetFacetsMock.mockReturnValue({ data: undefined });
-        useGetLocationsMock.mockReturnValue({ data: undefined });
+        useGetInfiniteLocationsMock.mockReturnValue({
+            data: undefined,
+            fetchNextPage: vi.fn(),
+            hasNextPage: false,
+            isFetchingNextPage: false,
+        });
         mockReplace.mockClear();
-        mockSearchParams.forEach((_, key) => mockSearchParams.delete(key));
+        for (const key of Array.from(mockSearchParams.keys())) {
+            mockSearchParams.delete(key);
+        }
     });
 
     afterEach(() => {
@@ -263,31 +272,39 @@ describe("ArchiveSidebar component", () => {
 
     it("renders provided locations from the API hook and toggles them", async () => {
         const user = userEvent.setup();
-        useGetLocationsMock.mockReturnValue({
+        useGetInfiniteLocationsMock.mockReturnValue({
             data: {
-                data: [
+                pages: [
                     {
-                        id: "loc1",
-                        name: "Venue A",
-                        address: "Street 1",
-                        sourceId: null,
-                        code: null,
-                        street: null,
-                        number: null,
-                        postalCode: null,
-                        city: null,
-                        country: null,
-                        phone1: null,
-                        phone2: null,
-                        isOwnedByViernulvier: null,
-                        uitdatabankId: null,
-                        slug: null,
-                        translations: [],
-                        coverImageUrl: null,
+                        data: [
+                            {
+                                id: "loc1",
+                                name: "Venue A",
+                                address: "Street 1",
+                                sourceId: null,
+                                code: null,
+                                street: null,
+                                number: null,
+                                postalCode: null,
+                                city: null,
+                                country: null,
+                                phone1: null,
+                                phone2: null,
+                                isOwnedByViernulvier: null,
+                                uitdatabankId: null,
+                                slug: null,
+                                translations: [],
+                                coverImageUrl: null,
+                            },
+                        ],
+                        nextCursor: null,
                     },
                 ],
-                nextCursor: null,
+                pageParams: [null],
             },
+            fetchNextPage: vi.fn(),
+            hasNextPage: false,
+            isFetchingNextPage: false,
         });
         renderWithIntl(<ArchiveSidebar />);
 

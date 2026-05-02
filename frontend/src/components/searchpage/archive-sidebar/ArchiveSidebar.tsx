@@ -19,6 +19,18 @@ import { yearBoundsFromStats } from "./statsYearBounds";
 
 const CATEGORIES = ["artists", "productions", "articles", "posters"] as const;
 
+function parseLocalDate(s: string): Date {
+    const [y, m, d] = s.split("-").map(Number);
+    return new Date(y, m - 1, d);
+}
+
+function formatLocalDate(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+}
+
 type DateFilterMode = "year" | "exact";
 
 interface ArchiveSidebarProps {
@@ -72,11 +84,13 @@ export function ArchiveSidebar({ minYear: minYearProp }: ArchiveSidebarProps) {
     // Reset when the URL date params change (e.g. clearAll, back/forward nav).
     const [yearRangeDraft, setYearRangeDraft] = useState<[number, number] | null>(null);
     const dateParamKey = `${searchParams.get("date_from")}|${searchParams.get("date_to")}`;
-    const [prevDateParamKey, setPrevDateParamKey] = useState(dateParamKey);
-    if (dateParamKey !== prevDateParamKey) {
-        setPrevDateParamKey(dateParamKey);
-        setYearRangeDraft(null);
-    }
+    const prevDateParamKeyRef = useRef(dateParamKey);
+    useEffect(() => {
+        if (dateParamKey !== prevDateParamKeyRef.current) {
+            prevDateParamKeyRef.current = dateParamKey;
+            setYearRangeDraft(null);
+        }
+    }, [dateParamKey]);
 
     const dateMode: DateFilterMode = searchParams.get("date_mode") === "exact" ? "exact" : "year";
 
@@ -111,8 +125,8 @@ export function ArchiveSidebar({ minYear: minYearProp }: ArchiveSidebarProps) {
         const dateFrom = searchParams.get("date_from");
         const dateTo = searchParams.get("date_to");
         if (dateFrom && dateTo && dateMode === "exact") {
-            const start = new Date(dateFrom);
-            const end = new Date(dateTo);
+            const start = parseLocalDate(dateFrom);
+            const end = parseLocalDate(dateTo);
             if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
                 return [start, end];
             }
@@ -139,6 +153,11 @@ export function ArchiveSidebar({ minYear: minYearProp }: ArchiveSidebarProps) {
 
     // Debounce timer for year slider URL writes
     const yearDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    useEffect(() => {
+        return () => {
+            if (yearDebounceRef.current) clearTimeout(yearDebounceRef.current);
+        };
+    }, []);
 
     const updateParam = useCallback(
         (updates: Record<string, string | null>) => {
@@ -208,8 +227,8 @@ export function ArchiveSidebar({ minYear: minYearProp }: ArchiveSidebarProps) {
                 updateParam({ date_from: null, date_to: null });
             } else {
                 updateParam({
-                    date_from: start.toISOString().slice(0, 10),
-                    date_to: end.toISOString().slice(0, 10),
+                    date_from: formatLocalDate(start),
+                    date_to: formatLocalDate(end),
                 });
             }
         },
