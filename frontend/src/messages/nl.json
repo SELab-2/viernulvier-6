@@ -673,7 +673,15 @@
         "breadcrumbProductions": "Producties",
         "loading": "Laden…",
         "openCoverImage": "Coverafbeelding openen",
-        "openGalleryImage": "Afbeelding openen"
+        "openGalleryImage": "Afbeelding openen",
+        "shareSectionTitle": "Delen",
+        "copyLink": "Kopieer link",
+        "copyLinkSuccess": "Link gekopieerd!",
+        "shareWhatsApp": "Delen via WhatsApp",
+        "shareEmail": "Delen via e-mail",
+        "articlesTitle": "Artikels",
+        "articlesLabel": "Artikel",
+        "articlesFallbackTitle": "Zonder titel"
     },
     "NewsArticleComponent": {
         "subTitle": "Vooruit Archief",

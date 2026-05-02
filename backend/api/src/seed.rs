@@ -12,6 +12,7 @@ use crate::helper::extract_source_id;
 use crate::models::{
     event::ApiEvent,
     event_price::ApiEventPrice,
+    event_status::ApiEventStatus,
     hall::ApiHall,
     location::ApiLocation,
     price::ApiPrice,
@@ -998,11 +999,15 @@ impl SeedImporter {
     }
 
     async fn import_events(&self) -> Result<(), SeedError> {
+        let statuses: Vec<ApiEventStatus> = self.read_file("event_statuses.json")?;
+        let status_map: HashMap<String, String> =
+            statuses.into_iter().map(|s| (s.id.clone(), s.display())).collect();
+
         let items: Vec<ApiEvent> = self.read_file("events.json")?;
         info!("Seed: importing {} events", items.len());
         let mut skipped = 0u32;
         for item in items {
-            if let Err(err) = item.upsert_import(&self.db).await {
+            if let Err(err) = item.upsert_import(&self.db, &status_map).await {
                 warn!(error = %err, "skipping event during seed import");
                 skipped += 1;
             }

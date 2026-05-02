@@ -59,6 +59,25 @@ const fetchArticleRelations = async (id: string): Promise<ArticleRelations> => {
     return mapArticleRelations(data);
 };
 
+const fetchArticlesByProduction = async (productionId: string): Promise<ArticleListItem[]> => {
+    const { data } = await api.get<{ data: ArticleListResponse[] }>("/articles", {
+        params: {
+            related_entity_id: productionId,
+            related_entity_type: "production",
+            limit: 10,
+        },
+    });
+    return mapArticleListItems(data.data);
+};
+
+export const useGetArticlesByProduction = (productionId: string) => {
+    return useQuery({
+        queryKey: queryKeys.articles.byProduction(productionId),
+        queryFn: () => fetchArticlesByProduction(productionId),
+        enabled: Boolean(productionId),
+    });
+};
+
 export const useGetArticles = () => {
     return useQuery({
         queryKey: queryKeys.articles.published,
