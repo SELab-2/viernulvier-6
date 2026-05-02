@@ -1,0 +1,59 @@
+---
+title: Accessing Patch Files
+description: How to decrypt the normalisation patches using git-crypt.
+---
+
+# Accessing Patch Files
+
+The normalisation patch files in `backend/seed/normalization/` are encrypted in the repository
+using [git-crypt](https://github.com/AGWA/git-crypt). Anyone without the key sees binary blobs.
+After unlocking once, git handles decryption automatically on every pull.
+
+## Prerequisites
+
+Install git-crypt:
+
+```bash
+# Fedora / RHEL
+sudo dnf install git-crypt
+
+# Ubuntu / Debian
+sudo apt install git-crypt
+
+# macOS
+brew install git-crypt
+```
+
+## Unlocking (one-time setup)
+
+Get the key file from a teammate, then run:
+
+```bash
+git-crypt unlock /path/to/viernulvier-normalization.key
+```
+
+That's it. From this point on, the patch files are transparently decrypted on every checkout and
+pull. You never need to run this again on the same clone.
+
+## Verifying the unlock
+
+Check that the files are readable:
+
+```bash
+git-crypt status
+```
+
+## Files look like binary gibberish?
+
+You cloned the repo before unlocking. Run the unlock command above, then:
+
+```bash
+git checkout HEAD -- backend/seed/normalization/
+```
+
+This re-checks out the files through the decrypt filter.
+
+<Callout type="warn">
+  Anyone with the key file can decrypt all patch files, past and present. Only share it with trusted
+  teammates.
+</Callout>

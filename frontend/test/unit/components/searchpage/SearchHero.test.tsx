@@ -10,14 +10,6 @@ const messages = {
         heroTitleItalic: "the archive",
         heroPlaceholder: "What are you looking for?",
         enter: "Press enter",
-        quickSearch: "Quick search",
-        tags: {
-            dance: "Dance",
-            theater: "Theater",
-            concert: "Concert",
-            nightlife: "Nightlife",
-            performance: "Performance",
-        },
     },
 };
 
@@ -34,7 +26,7 @@ describe("SearchHero component", () => {
         cleanup();
     });
 
-    it("renders title, placeholder, and quick tags based on translations", () => {
+    it("renders title and placeholder based on translations", () => {
         renderWithIntl(<SearchHero query="" onQueryChange={vi.fn()} />);
 
         expect(screen.getByText("Search")).toBeInTheDocument();
@@ -42,10 +34,6 @@ describe("SearchHero component", () => {
 
         const input = screen.getByPlaceholderText("What are you looking for?");
         expect(input).toBeInTheDocument();
-
-        expect(screen.getByText("Quick search")).toBeInTheDocument();
-        expect(screen.getByText("Dance")).toBeInTheDocument();
-        expect(screen.getByText("Theater")).toBeInTheDocument();
     });
 
     it("displays the correct query value", () => {
@@ -65,17 +53,5 @@ describe("SearchHero component", () => {
         await user.type(input, "a");
 
         expect(onQueryChange).toHaveBeenCalledWith("a");
-    });
-
-    it("calls onQueryChange when a quick tag is clicked", async () => {
-        const user = userEvent.setup();
-        const onQueryChange = vi.fn();
-
-        renderWithIntl(<SearchHero query="" onQueryChange={onQueryChange} />);
-
-        const tagButton = screen.getByText("Dance");
-        await user.click(tagButton);
-
-        expect(onQueryChange).toHaveBeenCalledWith("Dance");
     });
 });
