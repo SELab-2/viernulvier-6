@@ -253,7 +253,13 @@ fn apply_location_filters(
         }
         query
             .push(format_args!(
-                " AND EXISTS (SELECT 1 FROM production_locations WHERE production_locations.production_id = {id_column} AND production_locations.location_id = ANY( "
+                " AND EXISTS (
+                    SELECT 1 FROM events e
+                    JOIN event_halls eh ON eh.event_id = e.id
+                    JOIN halls h ON h.id = eh.hall_id
+                    JOIN spaces s ON s.id = h.space_id
+                    WHERE e.production_id = {id_column}
+                    AND s.location_id = ANY( "
             ))
             .push_bind(uuids)
             .push(" )) ");
