@@ -379,7 +379,7 @@ impl SeedImporter {
     }
 
     async fn derive_location_slugs(&self) -> Result<(), SeedError> {
-        let rows: Vec<(uuid::Uuid, String)> = sqlx::query_as(
+        let rows: Vec<(uuid::Uuid, Option<String>)> = sqlx::query_as(
             "SELECT id, name FROM locations WHERE slug IS NULL ORDER BY id",
         )
         .fetch_all(self.db.pool())
@@ -398,6 +398,7 @@ impl SeedImporter {
         .collect();
 
         for (id, name) in rows {
+            let name = name.unwrap_or_default();
             let base = slug::slugify(&name);
             if base.is_empty() {
                 warn!(location_id = %id, "derive_location_slugs: could not derive slug from name {:?}, skipping", name);

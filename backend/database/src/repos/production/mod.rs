@@ -31,7 +31,8 @@ impl<'a> ProductionRepo<'a> {
             "SELECT l.id, l.slug, l.name
              FROM locations l
              INNER JOIN production_locations pl ON pl.location_id = l.id
-             WHERE pl.production_id = $1",
+             WHERE pl.production_id = $1
+             ORDER BY l.name, l.id",
         )
         .bind(production_id)
         .fetch_all(self.db)

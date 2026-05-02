@@ -54,31 +54,27 @@ const mapTranslation = (t: ApiTranslation): ProductionTranslation => ({
     descriptionShort: toNullable(t.description_short),
 });
 
-type ApiLocationSummary = { id: string; slug?: string | null; name?: string | null };
-
-const mapLocationSummary = (loc: ApiLocationSummary): ProductionLocationSummary => ({
+const mapLocationSummary = (
+    loc: NonNullable<ProductionResponse["locations"]>[number]
+): ProductionLocationSummary => ({
     id: loc.id,
     slug: toNullable(loc.slug),
     name: toNullable(loc.name),
 });
 
 export const mapProduction = (response: ProductionResponse): Production => {
-    const r = response as typeof response & {
-        cover_image_url?: string | null;
-        locations?: ApiLocationSummary[];
-    };
     return {
-        id: r.id,
-        sourceId: toNullable(r.source_id),
-        slug: r.slug,
-        video1: toNullable(r.video_1),
-        video2: toNullable(r.video_2),
-        eticketInfo: toNullable(r.eticket_info),
-        uitdatabankTheme: toNullable(r.uitdatabank_theme),
-        uitdatabankType: toNullable(r.uitdatabank_type),
-        translations: (r.translations ?? []).map((t: ApiTranslation) => mapTranslation(t)),
-        coverImageUrl: toNullable(r.cover_image_url),
-        locations: (r.locations ?? []).map(mapLocationSummary),
+        id: response.id,
+        sourceId: toNullable(response.source_id),
+        slug: response.slug,
+        video1: toNullable(response.video_1),
+        video2: toNullable(response.video_2),
+        eticketInfo: toNullable(response.eticket_info),
+        uitdatabankTheme: toNullable(response.uitdatabank_theme),
+        uitdatabankType: toNullable(response.uitdatabank_type),
+        translations: (response.translations ?? []).map((t: ApiTranslation) => mapTranslation(t)),
+        coverImageUrl: toNullable(response.cover_image_url),
+        locations: (response.locations ?? []).map(mapLocationSummary),
     };
 };
 

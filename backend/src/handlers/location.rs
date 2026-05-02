@@ -175,5 +175,6 @@ pub async fn put(
     )
 )]
 pub async fn get_halls(db: Database, Path(id): Path<Uuid>) -> JsonResponse<Vec<HallPayload>> {
+    db.locations().by_id(id).await?;
     HallPayload::by_location_id(&db, id).await?.json()
 }
