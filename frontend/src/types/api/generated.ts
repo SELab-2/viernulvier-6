@@ -39,6 +39,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/articles/cms/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Search all articles (all statuses) — editor only */
+        get: operations["search_articles_cms"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/articles/cms/{id}": {
         parameters: {
             query?: never;
@@ -103,7 +120,8 @@ export interface paths {
         /** @description Get all artists */
         get: operations["get_all_artists"];
         put?: never;
-        post?: never;
+        /** @description Create a new artist — editor only */
+        post: operations["create_artist"];
         delete?: never;
         options?: never;
         head?: never;
@@ -119,9 +137,11 @@ export interface paths {
         };
         /** @description Get an artist by id */
         get: operations["get_one_artist"];
-        put?: never;
+        /** @description Update an artist — editor only */
+        put: operations["update_artist"];
         post?: never;
-        delete?: never;
+        /** @description Delete an artist — editor only */
+        delete: operations["delete_artist"];
         options?: never;
         head?: never;
         patch?: never;
@@ -967,6 +987,13 @@ export interface components {
             readonly cover_image_url?: string | null;
             /** Format: uuid */
             id: string;
+            name: string;
+            slug: string;
+        };
+        ArtistPostPayload: {
+            name: string;
+        };
+        ArtistUpdatePayload: {
             name: string;
             slug: string;
         };
@@ -1895,6 +1922,39 @@ export interface operations {
             };
         };
     };
+    search_articles_cms: {
+        parameters: {
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+                q?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedResponse_ArticleListPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     get_article_by_id_cms: {
         parameters: {
             query?: never;
@@ -2146,6 +2206,39 @@ export interface operations {
             };
         };
     };
+    create_artist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArtistPostPayload"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtistPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     get_one_artist: {
         parameters: {
             query?: never;
@@ -2165,6 +2258,86 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ArtistPayload"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_artist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Artist UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArtistUpdatePayload"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtistPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_artist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Artist UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Not found */

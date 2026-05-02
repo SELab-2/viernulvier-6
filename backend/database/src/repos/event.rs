@@ -68,6 +68,28 @@ impl<'a> EventRepo<'a> {
         Ok(event.insert(self.db).await?)
     }
 
+    pub async fn link_halls(&self, event_id: Uuid, hall_ids: &[Uuid]) -> Result<(), DatabaseError> {
+        for hall_id in hall_ids {
+            sqlx::query(
+                "INSERT INTO event_halls (event_id, hall_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+            )
+            .bind(event_id)
+            .bind(hall_id)
+            .execute(self.db)
+            .await?;
+        }
+        Ok(())
+    }
+
+    pub async fn hall_ids_for_event(&self, event_id: Uuid) -> Result<Vec<Uuid>, DatabaseError> {
+        Ok(sqlx::query_scalar::<_, Uuid>(
+            "SELECT hall_id FROM event_halls WHERE event_id = $1",
+        )
+        .bind(event_id)
+        .fetch_all(self.db)
+        .await?)
+    }
+
     pub async fn by_source_id(&self, source_id: i32) -> Result<Option<Event>, DatabaseError> {
         Ok(Event::select()
             .where_("source_id = $1")

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { SlidersHorizontal, X } from "lucide-react";
+import { Minus, Plus, SlidersHorizontal, X } from "lucide-react";
 
 import type { Location } from "@/types/models/location.types";
 import type { Facet } from "@/types/models/taxonomy.types";
@@ -175,93 +175,24 @@ export function ArchiveSidebar({
                     </h2>
                     <div className="bg-foreground mt-1 h-0.5 w-10" />
                 </div>
-                <button
-                    onClick={() => setMobileOpen(false)}
-                    className="text-muted-foreground hover:text-foreground cursor-pointer p-1 lg:hidden"
-                >
-                    <X className="h-5 w-5" />
-                </button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={clearAll}
+                        className="text-muted-foreground hover:text-foreground cursor-pointer font-mono text-[9px] tracking-[1.2px] uppercase transition-colors"
+                    >
+                        {t("clearAll")}
+                    </button>
+                    <button
+                        onClick={() => setMobileOpen(false)}
+                        className="text-muted-foreground hover:text-foreground cursor-pointer p-1 lg:hidden"
+                    >
+                        <X className="h-5 w-5" />
+                    </button>
+                </div>
             </div>
 
-            <FilterGroup label={t("categories.label")}>
-                <div className="flex flex-wrap gap-2 pb-2.5">
-                    {CATEGORIES.map((cat) => (
-                        <button
-                            key={cat}
-                            type="button"
-                            aria-pressed={checkedCategories.has(cat)}
-                            onClick={() => toggleCategory(cat)}
-                            className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
-                                checkedCategories.has(cat)
-                                    ? "bg-foreground text-background border-foreground"
-                                    : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
-                            }`}
-                        >
-                            {t(`categories.${cat}`)}
-                        </button>
-                    ))}
-                </div>
-            </FilterGroup>
-
-            {facets.map((facet) => (
-                <FilterGroup key={facet.slug} label={getLabel(facet.translations, locale)}>
-                    <div className="flex flex-wrap gap-2 pb-2.5">
-                        {facet.tags.map((tag) => (
-                            <button
-                                key={tag.slug}
-                                type="button"
-                                aria-pressed={activeTags.has(tag.slug)}
-                                onClick={() => toggleTag(tag.slug)}
-                                className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
-                                    activeTags.has(tag.slug)
-                                        ? "bg-foreground text-background border-foreground"
-                                        : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
-                                }`}
-                            >
-                                {getLabel(tag.translations, locale)}
-                            </button>
-                        ))}
-                    </div>
-                </FilterGroup>
-            ))}
-
-            <FilterGroup label={t("locations.label")}>
-                <div className="flex flex-wrap gap-2 pb-2.5">
-                    {locations.length > 0 ? (
-                        locations.map((loc) => (
-                            <button
-                                key={loc.id}
-                                type="button"
-                                aria-pressed={checkedLocations.has(loc.id)}
-                                onClick={() => toggleLocation(loc.id)}
-                                className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
-                                    checkedLocations.has(loc.id)
-                                        ? "bg-foreground text-background border-foreground"
-                                        : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
-                                }`}
-                            >
-                                {loc.name ?? loc.address}
-                            </button>
-                        ))
-                    ) : (
-                        <button
-                            type="button"
-                            aria-pressed={checkedLocations.has("deVooruit")}
-                            onClick={() => toggleLocation("deVooruit")}
-                            className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
-                                checkedLocations.has("deVooruit")
-                                    ? "bg-foreground text-background border-foreground"
-                                    : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
-                            }`}
-                        >
-                            De Vooruit
-                        </button>
-                    )}
-                </div>
-            </FilterGroup>
-
-            {/* Date filter — tabs replace the section title */}
-            <div className="border-border border-t pt-2.5 pr-5 pb-3 pl-4">
+            {/* Date filter */}
+            <div className="border-border border-t px-4 pt-6 pb-2.5">
                 <div className="mb-3.5 flex gap-5">
                     <ModeTab
                         label={t("year.rangeMode")}
@@ -306,12 +237,47 @@ export function ArchiveSidebar({
                 )}
             </div>
 
-            <button
-                onClick={clearAll}
-                className="border-foreground text-foreground hover:bg-foreground hover:text-background mx-auto mt-4 block w-[calc(100%-40px)] max-w-[230px] cursor-pointer border bg-transparent px-4 py-[9px] font-mono text-[10px] font-medium tracking-[1.4px] uppercase transition-all"
-            >
-                {t("clearAll")}
-            </button>
+            <FilterGroup label={t("categories.label")}>
+                <div className="flex flex-wrap gap-2 pb-2.5">
+                    {CATEGORIES.map((cat) => (
+                        <button
+                            key={cat}
+                            type="button"
+                            aria-pressed={checkedCategories.has(cat)}
+                            onClick={() => toggleCategory(cat)}
+                            className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
+                                checkedCategories.has(cat)
+                                    ? "bg-foreground text-background border-foreground"
+                                    : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                            }`}
+                        >
+                            {t(`categories.${cat}`)}
+                        </button>
+                    ))}
+                </div>
+            </FilterGroup>
+
+            {facets.map((facet) => (
+                <FacetFilterGroup
+                    key={facet.slug}
+                    label={getLabel(facet.translations, locale)}
+                    facet={facet}
+                    activeTags={activeTags}
+                    toggleTag={toggleTag}
+                    locale={locale}
+                    showMoreLabel={t("showMore")}
+                    showLessLabel={t("showLess")}
+                />
+            ))}
+
+            <LocationFilterGroup
+                label={t("locations.label")}
+                locations={locations}
+                checkedLocations={checkedLocations}
+                toggleLocation={toggleLocation}
+                showMoreLabel={t("showMore")}
+                showLessLabel={t("showLess")}
+            />
         </>
     );
 
@@ -333,7 +299,7 @@ export function ArchiveSidebar({
             )}
 
             <aside
-                className={`border-border shrink-0 overflow-x-hidden border-r py-5 pb-10 ${
+                className={`border-border shrink-0 overflow-x-hidden overscroll-contain border-r py-5 pb-10 ${
                     mobileOpen
                         ? "bg-background fixed inset-y-0 left-0 z-50 w-[290px] overflow-y-auto shadow-xl"
                         : "hidden lg:sticky lg:top-[var(--results-bar-height,41px)] lg:block lg:max-h-[calc(100vh-var(--results-bar-height,41px))] lg:w-[290px] lg:overflow-y-auto"
@@ -368,13 +334,143 @@ function ModeTab({
     );
 }
 
+const TAGS_INITIAL_COUNT = 4;
+
 function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
     return (
-        <div className="border-border border-t px-5 py-2.5 pl-4">
+        <div className="border-border border-t px-4 py-2.5">
             <span className="text-foreground mb-2.5 block font-mono text-[11px] font-medium tracking-[1.2px] uppercase">
                 {label}
             </span>
             {children}
         </div>
+    );
+}
+
+function FacetFilterGroup({
+    label,
+    facet,
+    activeTags,
+    toggleTag,
+    locale,
+    showMoreLabel,
+    showLessLabel,
+}: {
+    label: string;
+    facet: Facet;
+    activeTags: Set<string>;
+    toggleTag: (slug: string) => void;
+    locale: string;
+    showMoreLabel: string;
+    showLessLabel: string;
+}) {
+    const [expanded, setExpanded] = useState(false);
+    const tags = expanded ? facet.tags : facet.tags.slice(0, TAGS_INITIAL_COUNT);
+    const hasMore = facet.tags.length > TAGS_INITIAL_COUNT;
+    return (
+        <FilterGroup label={label}>
+            <div className="flex flex-wrap gap-2 pb-1">
+                {tags.map((tag) => (
+                    <button
+                        key={tag.slug}
+                        type="button"
+                        aria-pressed={activeTags.has(tag.slug)}
+                        onClick={() => toggleTag(tag.slug)}
+                        className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
+                            activeTags.has(tag.slug)
+                                ? "bg-foreground text-background border-foreground"
+                                : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                        }`}
+                    >
+                        {getLabel(tag.translations, locale)}
+                    </button>
+                ))}
+                {hasMore && (
+                    <button
+                        type="button"
+                        onClick={() => setExpanded((v) => !v)}
+                        className="text-foreground inline-flex cursor-pointer items-center gap-1 px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase"
+                    >
+                        {expanded ? (
+                            <Minus className="h-2.5 w-2.5" />
+                        ) : (
+                            <Plus className="h-2.5 w-2.5" />
+                        )}
+                        {expanded ? showLessLabel : showMoreLabel}
+                    </button>
+                )}
+            </div>
+        </FilterGroup>
+    );
+}
+
+function LocationFilterGroup({
+    label,
+    locations,
+    checkedLocations,
+    toggleLocation,
+    showMoreLabel,
+    showLessLabel,
+}: {
+    label: string;
+    locations: Location[];
+    checkedLocations: Set<string>;
+    toggleLocation: (id: string) => void;
+    showMoreLabel: string;
+    showLessLabel: string;
+}) {
+    const [expanded, setExpanded] = useState(false);
+    const fallback = locations.length === 0;
+    const items = fallback ? [] : expanded ? locations : locations.slice(0, TAGS_INITIAL_COUNT);
+    const hasMore = !fallback && locations.length > TAGS_INITIAL_COUNT;
+    return (
+        <FilterGroup label={label}>
+            <div className="flex flex-wrap gap-2 pb-1">
+                {fallback ? (
+                    <button
+                        type="button"
+                        aria-pressed={checkedLocations.has("deVooruit")}
+                        onClick={() => toggleLocation("deVooruit")}
+                        className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
+                            checkedLocations.has("deVooruit")
+                                ? "bg-foreground text-background border-foreground"
+                                : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                        }`}
+                    >
+                        De Vooruit
+                    </button>
+                ) : (
+                    items.map((loc) => (
+                        <button
+                            key={loc.id}
+                            type="button"
+                            aria-pressed={checkedLocations.has(loc.id)}
+                            onClick={() => toggleLocation(loc.id)}
+                            className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
+                                checkedLocations.has(loc.id)
+                                    ? "bg-foreground text-background border-foreground"
+                                    : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                            }`}
+                        >
+                            {loc.name ?? loc.address}
+                        </button>
+                    ))
+                )}
+                {hasMore && (
+                    <button
+                        type="button"
+                        onClick={() => setExpanded((v) => !v)}
+                        className="text-foreground inline-flex cursor-pointer items-center gap-1 px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase"
+                    >
+                        {expanded ? (
+                            <Minus className="h-2.5 w-2.5" />
+                        ) : (
+                            <Plus className="h-2.5 w-2.5" />
+                        )}
+                        {expanded ? showLessLabel : showMoreLabel}
+                    </button>
+                )}
+            </div>
+        </FilterGroup>
     );
 }

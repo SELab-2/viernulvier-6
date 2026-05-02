@@ -63,6 +63,7 @@
     },
     "ResultsBar": {
         "sortBy": "Sort by:",
+        "relevant": "Most relevant",
         "recent": "Most recent",
         "oldest": "Oldest first",
         "az": "A–Z"
@@ -138,7 +139,9 @@
             ],
             "weekdays": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
         },
-        "clearAll": "Clear all"
+        "clearAll": "Clear all",
+        "showMore": "Show more",
+        "showLess": "Show less"
     },
     "Home": {
         "loading": "Loading archive...",
@@ -152,6 +155,10 @@
             "dance": "Dance",
             "concert": "Concert",
             "nightlife": "Nightlife"
+        },
+        "articles": {
+            "label": "From the editors",
+            "viewAll": "All articles"
         },
         "about": {
             "title": "Arts Centre VIERNULVIER",
@@ -254,6 +261,9 @@
             "eventsSelected": "{count, plural, one {# event} other {# events}} selected",
             "locationsSelected": "{count, plural, one {# location} other {# locations}} selected",
             "hallsSelected": "{count, plural, one {# hall} other {# halls}} selected",
+            "articlesSelected": "{count, plural, one {# article} other {# articles}} selected",
+            "collectionsSelected": "{count, plural, one {# collection} other {# collections}} selected",
+            "importErrorsSelected": "{count, plural, one {# error} other {# errors}} selected",
             "bulkEdit": "Bulk edit",
             "delete": "Delete"
         },
@@ -380,7 +390,8 @@
             "fieldEventVendorId": "Vendor ID",
             "fieldEventBoxOfficeId": "Box office ID",
             "fieldEventUitdatabankId": "UiTdatabank ID",
-            "eyebrow": "Production"
+            "eyebrow": "Production",
+            "search": "Search productions…"
         },
         "Locations": {
             "title": "Locations",
@@ -390,6 +401,7 @@
             "hideHalls": "Hide halls",
             "editLocation": "Edit location",
             "editHall": "Edit hall",
+            "search": "Search locations…",
             "deleteConfirm": "Are you sure you want to delete \"{title}\"?",
             "deleteConfirmMultiple": "Are you sure you want to delete {count} locations?",
             "deleteSuccess": "Location deleted.",
@@ -403,6 +415,10 @@
             "notAvailable": "Articles API is not yet available. No data to display.",
             "newArticle": "New article",
             "createFailed": "Failed to create article.",
+            "dialogTitle": "New article",
+            "titleLabel": "Title",
+            "slugConflict": "An article with this title already exists.",
+            "cancel": "Cancel",
             "deleteConfirm": "Are you sure you want to delete \"{title}\"?",
             "deleteSuccess": "Article deleted.",
             "deleteError": "Failed to delete article.",
@@ -442,13 +458,23 @@
             "untitledEvent": "Untitled event",
             "contentPlaceholder": "Write article content…",
             "statusColumn": "Status",
-            "dateRangeColumn": "Date range"
+            "dateRangeColumn": "Date range",
+            "search": "Search articles…"
         },
         "Performers": {
             "title": "Performers",
             "subtitle": "Manage artists",
-            "comingSoon": "Coming soon",
-            "notAvailable": "Performers API is not yet available. No data to display."
+            "nameColumn": "Name",
+            "slugColumn": "Slug",
+            "nameField": "Name",
+            "slugField": "Slug",
+            "editPerformer": "Edit performer",
+            "deletePerformer": "Delete performer",
+            "deleteConfirm": "Are you sure you want to delete \"{name}\"?",
+            "deleteSuccess": "Artist deleted.",
+            "deleteError": "Failed to delete artist.",
+            "updateSuccess": "Artist updated.",
+            "updateError": "Failed to update artist."
         },
         "Ingest": {
             "title": "Ingest",
