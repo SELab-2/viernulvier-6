@@ -31,6 +31,8 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -46,8 +48,8 @@ jobs:
         with:
           context: ./backend
           push: true
-          cache-from: type=local,src=/tmp/.buildx-cache/backend
-          cache-to: type=local,dest=/tmp/.buildx-cache/backend,mode=max
+          cache-from: type=local,src=/home/server/.buildx-cache/backend
+          cache-to: type=local,dest=/home/server/.buildx-cache-new/backend,mode=max
           tags: |
             kayasem/${{ vars.PROJECT_NAME }}-backend:latest
             kayasem/${{ vars.PROJECT_NAME }}-backend:${{ github.sha }}
@@ -57,8 +59,8 @@ jobs:
         with:
           context: ./frontend
           push: true
-          cache-from: type=local,src=/tmp/.buildx-cache/frontend
-          cache-to: type=local,dest=/tmp/.buildx-cache/frontend,mode=max
+          cache-from: type=local,src=/home/server/.buildx-cache/frontend
+          cache-to: type=local,dest=/home/server/.buildx-cache-new/frontend,mode=max
           build-args: |
             "NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}"
             "NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}/api"
@@ -78,11 +80,16 @@ jobs:
         with:
           context: ./docs
           push: true
-          cache-from: type=local,src=/tmp/.buildx-cache/docs
-          cache-to: type=local,dest=/tmp/.buildx-cache/docs,mode=max
+          cache-from: type=local,src=/home/server/.buildx-cache/docs
+          cache-to: type=local,dest=/home/server/.buildx-cache-new/docs,mode=max
           tags: |
             kayasem/${{ vars.PROJECT_NAME }}-docs:latest
             kayasem/${{ vars.PROJECT_NAME }}-docs:${{ github.sha }}
+
+      - name: Rotate build cache
+        run: |
+          rm -rf /home/server/.buildx-cache
+          mv /home/server/.buildx-cache-new /home/server/.buildx-cache
 
   deploy:
     runs-on: prod

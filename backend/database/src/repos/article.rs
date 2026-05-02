@@ -5,6 +5,7 @@ use uuid::Uuid;
 
 use crate::{
     error::DatabaseError,
+    models::entity_type::EntityType,
     models::{
         article::{
             Article, ArticleCreate, ArticleRelations, ArticleSearch, ArticleStatus,
@@ -12,7 +13,6 @@ use crate::{
         },
         filtering::cursor::CursorData,
     },
-    models::entity_type::EntityType,
 };
 
 pub struct ArticleRepo<'a> {
@@ -171,6 +171,25 @@ impl<'a> ArticleRepo<'a> {
         cursor: Option<CursorData>,
         search: ArticleSearch,
     ) -> Result<(Vec<Article>, Option<CursorData>), DatabaseError> {
+        self.search_articles(limit, cursor, search, true).await
+    }
+
+    pub async fn search_cms(
+        &self,
+        limit: u32,
+        cursor: Option<CursorData>,
+        search: ArticleSearch,
+    ) -> Result<(Vec<Article>, Option<CursorData>), DatabaseError> {
+        self.search_articles(limit, cursor, search, false).await
+    }
+
+    async fn search_articles(
+        &self,
+        limit: u32,
+        cursor: Option<CursorData>,
+        search: ArticleSearch,
+        published_only: bool,
+    ) -> Result<(Vec<Article>, Option<CursorData>), DatabaseError> {
         let limit: i64 = (limit + 1).into();
 
         let ArticleSearch {
@@ -190,7 +209,11 @@ impl<'a> ArticleRepo<'a> {
                 .push(" <<-> a.title AS distance_score");
         }
 
-        builder.push(" FROM articles a WHERE a.status = 'published'");
+        // WHERE 1=1 lets all subsequent filters attach as `AND …` unconditionally
+        builder.push(" FROM articles a WHERE 1=1");
+        if published_only {
+            builder.push(" AND a.status = 'published'");
+        }
 
         if let Some(end) = subject_end {
             builder.push(" AND (a.subject_period_start IS NULL OR a.subject_period_start <= ");
@@ -278,9 +301,7 @@ impl<'a> ArticleRepo<'a> {
                 builder.push_bind(cursor.id);
             }
 
-            builder
-                .push(" ORDER BY a.id DESC LIMIT ")
-                .push_bind(limit);
+            builder.push(" ORDER BY a.id DESC LIMIT ").push_bind(limit);
 
             let mut articles: Vec<Article> = builder.build_query_as().fetch_all(self.db).await?;
 

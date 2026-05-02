@@ -39,6 +39,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/articles/cms/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Search all articles (all statuses) — editor only */
+        get: operations["search_articles_cms"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/articles/cms/{id}": {
         parameters: {
             query?: never;
@@ -103,7 +120,8 @@ export interface paths {
         /** @description Get all artists */
         get: operations["get_all_artists"];
         put?: never;
-        post?: never;
+        /** @description Create a new artist — editor only */
+        post: operations["create_artist"];
         delete?: never;
         options?: never;
         head?: never;
@@ -119,9 +137,11 @@ export interface paths {
         };
         /** @description Get an artist by id */
         get: operations["get_one_artist"];
-        put?: never;
+        /** @description Update an artist — editor only */
+        put: operations["update_artist"];
         post?: never;
-        delete?: never;
+        /** @description Delete an artist — editor only */
+        delete: operations["delete_artist"];
         options?: never;
         head?: never;
         patch?: never;
@@ -208,6 +228,23 @@ export interface paths {
         put: operations["update_collection"];
         /** @description Create a new collection. Requires editor authentication. Supply a human-readable slug that will appear in the shareable URL (e.g. `videodroom-candidates-2026`) and per-language translations (title required, description required but may be empty). Items are added separately via POST /collections/{id}/items. */
         post: operations["create_collection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/collections/slug/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return a single collection by its slug, including all its items in position order. Public endpoint, no authentication required. Use this for shareable collection URLs. */
+        get: operations["get_collection_by_slug"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -888,6 +925,8 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         ArticleListPayload: {
+            /** @description Cover image URL resolved from the entity_media link (output-only). */
+            readonly cover_image_url?: string | null;
             /** Format: uuid */
             id: string;
             /** Format: date-time */
@@ -904,6 +943,8 @@ export interface components {
         };
         ArticlePayload: {
             content?: unknown;
+            /** @description Cover image URL resolved from the entity_media link (output-only). */
+            readonly cover_image_url?: string | null;
             /** Format: date-time */
             created_at: string;
             /** Format: uuid */
@@ -942,8 +983,17 @@ export interface components {
             title?: string | null;
         };
         ArtistPayload: {
+            /** @description Cover image URL resolved from the entity_media link (output-only). */
+            readonly cover_image_url?: string | null;
             /** Format: uuid */
             id: string;
+            name: string;
+            slug: string;
+        };
+        ArtistPostPayload: {
+            name: string;
+        };
+        ArtistUpdatePayload: {
             name: string;
             slug: string;
         };
@@ -1055,6 +1105,8 @@ export interface components {
             items: components["schemas"]["CollectionItemsBulkEntry"][];
         };
         CollectionPayload: {
+            /** @description Cover image URL resolved from the entity_media link (output-only). */
+            readonly cover_image_url?: string | null;
             /**
              * Format: date-time
              * @description ISO 8601 creation timestamp.
@@ -1111,7 +1163,7 @@ export interface components {
             translations: components["schemas"]["TagTranslationPayload"][];
         };
         /** @enum {string} */
-        EntityType: "production" | "artist" | "article" | "media" | "location" | "event" | "series";
+        EntityType: "production" | "artist" | "article" | "media" | "location" | "event" | "series" | "collection";
         ErrorResponse: {
             /** @example An error occurred during processing */
             message: string;
@@ -1169,8 +1221,7 @@ export interface components {
             doors_at?: string | null;
             /** Format: date-time */
             ends_at?: string | null;
-            /** Format: uuid */
-            hall_id?: string | null;
+            hall_ids?: string[];
             /** Format: uuid */
             id: string;
             /** Format: date-time */
@@ -1187,7 +1238,7 @@ export interface components {
             status: string;
             uitdatabank_id?: string | null;
             /** Format: date-time */
-            updated_at: string;
+            updated_at?: string;
             vendor_id?: string | null;
         };
         EventPostPayload: {
@@ -1198,8 +1249,7 @@ export interface components {
             doors_at?: string | null;
             /** Format: date-time */
             ends_at?: string | null;
-            /** Format: uuid */
-            hall_id?: string | null;
+            hall_ids?: string[];
             /** Format: date-time */
             intermission_at?: string | null;
             /** Format: int32 */
@@ -1314,6 +1364,8 @@ export interface components {
             city?: string | null;
             code?: string | null;
             country?: string | null;
+            /** @description Cover image URL resolved from the entity_media link (output-only). */
+            readonly cover_image_url?: string | null;
             /** Format: uuid */
             id: string;
             is_owned_by_viernulvier?: boolean | null;
@@ -1420,6 +1472,8 @@ export interface components {
         };
         PaginatedResponse_ArticleListPayload: {
             data: {
+                /** @description Cover image URL resolved from the entity_media link (output-only). */
+                readonly cover_image_url?: string | null;
                 /** Format: uuid */
                 id: string;
                 /** Format: date-time */
@@ -1445,8 +1499,7 @@ export interface components {
                 doors_at?: string | null;
                 /** Format: date-time */
                 ends_at?: string | null;
-                /** Format: uuid */
-                hall_id?: string | null;
+                hall_ids?: string[];
                 /** Format: uuid */
                 id: string;
                 /** Format: date-time */
@@ -1463,7 +1516,7 @@ export interface components {
                 status: string;
                 uitdatabank_id?: string | null;
                 /** Format: date-time */
-                updated_at: string;
+                updated_at?: string;
                 vendor_id?: string | null;
             }[];
             next_cursor?: string | null;
@@ -1519,6 +1572,8 @@ export interface components {
                 city?: string | null;
                 code?: string | null;
                 country?: string | null;
+                /** @description Cover image URL resolved from the entity_media link (output-only). */
+                readonly cover_image_url?: string | null;
                 /** Format: uuid */
                 id: string;
                 is_owned_by_viernulvier?: boolean | null;
@@ -1786,7 +1841,7 @@ export interface operations {
                 subject_end?: string;
                 tag_slug?: string;
                 related_entity_id?: string | null;
-                related_entity_type?: "production" | "artist" | "article" | "media" | "location" | "event" | "series";
+                related_entity_type?: "production" | "artist" | "article" | "media" | "location" | "event" | "series" | "collection";
             };
             header?: never;
             path?: never;
@@ -1854,6 +1909,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ArticleListPayload"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    search_articles_cms: {
+        parameters: {
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+                q?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedResponse_ArticleListPayload"];
                 };
             };
             /** @description Unauthorized */
@@ -2118,6 +2206,39 @@ export interface operations {
             };
         };
     };
+    create_artist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArtistPostPayload"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtistPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     get_one_artist: {
         parameters: {
             query?: never;
@@ -2137,6 +2258,86 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ArtistPayload"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_artist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Artist UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArtistUpdatePayload"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtistPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_artist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Artist UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Not found */
@@ -2359,6 +2560,36 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
+            };
+        };
+    };
+    get_collection_by_slug: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Collection slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionPayload"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -3149,7 +3380,7 @@ export interface operations {
                 cursor?: string | null;
                 limit?: number;
                 q?: string | null;
-                entity_type?: "production" | "artist" | "article" | "media" | "location" | "event" | "series";
+                entity_type?: "production" | "artist" | "article" | "media" | "location" | "event" | "series" | "collection";
                 entity_id?: string | null;
                 role?: string;
                 sort?: "recent" | "oldest" | "relevance";
@@ -4363,7 +4594,7 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description Filter facets by entity type */
-                entity_type?: "production" | "artist" | "article" | "media" | "location" | "event" | "series";
+                entity_type?: "production" | "artist" | "article" | "media" | "location" | "event" | "series" | "collection";
             };
             header?: never;
             path?: never;

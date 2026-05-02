@@ -5,22 +5,20 @@ import { useTranslations } from "next-intl";
 import { Search } from "lucide-react";
 
 interface ResultsBarProps {
-    shownCount: number;
-    totalCount: number;
     query: string;
     onQueryChange: (query: string) => void;
+    onSearch: (query: string) => void;
     showSearch: boolean;
     sort?: string;
     onSortChange?: (sort: string) => void;
 }
 
-const SORT_OPTIONS = ["recent", "oldest", "az"] as const;
+const SORT_OPTIONS = ["relevant", "recent", "oldest"] as const;
 
 export function ResultsBar({
-    shownCount,
-    totalCount,
     query,
     onQueryChange,
+    onSearch,
     showSearch,
     sort,
     onSortChange,
@@ -38,15 +36,6 @@ export function ResultsBar({
 
     return (
         <div className="border-muted/30 bg-background sticky top-0 z-10 flex items-center gap-4 border-b px-4 py-4 sm:px-7">
-            <span
-                className={`text-muted-foreground font-mono text-[12px] tracking-[1.2px] uppercase transition-opacity ${
-                    showSearch ? "hidden sm:inline" : "inline"
-                }`}
-            >
-                <strong className="text-foreground">{shownCount}</strong> /{" "}
-                <strong className="text-foreground">{totalCount.toLocaleString()}</strong>
-            </span>
-
             <div
                 className={`flex min-w-0 flex-1 transition-all duration-300 ease-out ${
                     showSearch
@@ -61,6 +50,7 @@ export function ResultsBar({
                         type="text"
                         value={query}
                         onChange={(e) => onQueryChange(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && onSearch(query)}
                         placeholder={tSearch("heroPlaceholder")}
                         autoComplete="off"
                         tabIndex={showSearch ? 0 : -1}

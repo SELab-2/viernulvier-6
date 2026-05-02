@@ -13,12 +13,14 @@ import {
     GetLocationByIdResponse,
     UpdateLocationResponse,
 } from "@/types/api/location.api.types";
-import { PaginationParams, PaginatedResult } from "@/types/api/api.types";
+import { PaginationParams, SearchPaginationParams, PaginatedResult } from "@/types/api/api.types";
 import { Location, LocationCreateInput, LocationUpdateInput } from "@/types/models/location.types";
 
 import { queryKeys } from "./query-keys";
 
-const fetchLocations = async (params?: PaginationParams): Promise<PaginatedResult<Location>> => {
+const fetchLocations = async (
+    params?: SearchPaginationParams
+): Promise<PaginatedResult<Location>> => {
     const { data } = await api.get<GetAllLocationsResponse>("/locations", { params });
     return mapPaginatedLocationsResult(data);
 };
@@ -43,11 +45,13 @@ export const useGetLocations = (options?: { enabled?: boolean; pagination?: Pagi
     });
 };
 
-export const useGetInfiniteLocations = (options?: { enabled?: boolean }) => {
+export const useGetInfiniteLocations = (
+    params?: Omit<SearchPaginationParams, "cursor">,
+    options?: { enabled?: boolean }
+) => {
     return useInfiniteQuery({
-        queryKey: ["locations", "infinite"],
-        queryFn: async ({ pageParam }) =>
-            fetchLocations(pageParam ? { cursor: pageParam } : undefined),
+        queryKey: queryKeys.locations.infinite(params),
+        queryFn: async ({ pageParam }) => fetchLocations({ ...params, cursor: pageParam }),
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
         initialPageParam: null as string | null,
         ...options,

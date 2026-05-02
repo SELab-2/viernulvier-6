@@ -1,4 +1,10 @@
-import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import {
+    useMutation,
+    useQuery,
+    useQueryClient,
+    useInfiniteQuery,
+    useQueries,
+} from "@tanstack/react-query";
 
 import { api } from "@/lib/api-client";
 import {
@@ -45,11 +51,13 @@ export const useGetProductions = (options?: {
     });
 };
 
-export const useGetInfiniteProductions = (options?: { enabled?: boolean }) => {
+export const useGetInfiniteProductions = (
+    params?: Omit<SearchPaginationParams, "cursor">,
+    options?: { enabled?: boolean }
+) => {
     return useInfiniteQuery({
-        queryKey: ["productions", "infinite"],
-        queryFn: async ({ pageParam }) =>
-            fetchProductions(pageParam ? { cursor: pageParam } : undefined),
+        queryKey: queryKeys.productions.infinite(params),
+        queryFn: async ({ pageParam }) => fetchProductions({ ...params, cursor: pageParam }),
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
         initialPageParam: null as string | null,
         ...options,
@@ -61,6 +69,16 @@ export const useGetProduction = (id: string, options?: { enabled?: boolean }) =>
         queryKey: queryKeys.productions.detail(id),
         queryFn: () => fetchProductionById(id),
         enabled: Boolean(id) && (options?.enabled ?? true),
+    });
+};
+
+export const useGetProductionsByIds = (ids: string[]) => {
+    return useQueries({
+        queries: ids.map((id) => ({
+            queryKey: queryKeys.productions.detail(id),
+            queryFn: () => fetchProductionById(id),
+            enabled: Boolean(id),
+        })),
     });
 };
 

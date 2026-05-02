@@ -2,6 +2,7 @@
 use std::str::FromStr;
 
 use axum::http::StatusCode;
+use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 use viernulvier_archive::dto::{artist::ArtistPayload, production::ProductionPayload};
@@ -9,6 +10,20 @@ use viernulvier_archive::dto::{artist::ArtistPayload, production::ProductionPayl
 use crate::common::{into_struct::IntoStruct, router::TestRouter};
 
 mod common;
+
+#[sqlx::test(fixtures("artists", "media", "entity_media_artist_cover"))]
+#[test_log::test]
+async fn get_all_artists_returns_cover_image_urls(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/artists").await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: Vec<ArtistPayload> = response.into_struct().await;
+    let with_cover = data.iter().find(|a| a.cover_image_url.is_some());
+    assert!(
+        with_cover.is_some(),
+        "at least one artist should have a resolved cover URL"
+    );
+}
 
 #[sqlx::test(fixtures("artists"))]
 #[test_log::test]
@@ -20,6 +35,42 @@ async fn get_all(db: PgPool) {
 
     let data: Vec<ArtistPayload> = response.into_struct().await;
     assert_eq!(data.len(), 2);
+}
+
+#[sqlx::test(fixtures("artists"))]
+#[test_log::test]
+async fn get_all_artists_without_cover_returns_null(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/artists").await;
+    let data: Vec<ArtistPayload> = response.into_struct().await;
+    for a in &data {
+        assert!(a.cover_image_url.is_none());
+    }
+}
+
+#[sqlx::test(fixtures("artists", "media", "entity_media_artist_cover"))]
+#[test_log::test]
+async fn get_one_artist_returns_cover_image_url(db: PgPool) {
+    let app = TestRouter::new(db);
+    let id = Uuid::from_str("a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1").unwrap();
+
+    let response = app.get(&format!("/artists/{id}")).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let payload: ArtistPayload = response.into_struct().await;
+    assert!(
+        payload.cover_image_url.is_some(),
+        "cover_image_url should be resolved for artist with a cover"
+    );
+}
+
+#[sqlx::test(fixtures("artists"))]
+#[test_log::test]
+async fn get_one_artist_without_cover_returns_null(db: PgPool) {
+    let app = TestRouter::new(db);
+    let id = Uuid::from_str("a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1").unwrap();
+    let response = app.get(&format!("/artists/{id}")).await;
+    let payload: ArtistPayload = response.into_struct().await;
+    assert!(payload.cover_image_url.is_none());
 }
 
 #[sqlx::test(fixtures("artists"))]
@@ -83,4 +134,98 @@ async fn get_productions_not_found(db: PgPool) {
         .get(&format!("/artists/{}/productions", Uuid::nil()))
         .await;
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn post_success(db: PgPool) {
+    let unauth_app = TestRouter::new(db.clone());
+    let unauth_response = unauth_app.post("/artists", &json!({ "name": "New Artist" })).await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
+
+    let app = TestRouter::as_editor(db).await;
+    let response = app.post("/artists", &json!({ "name": "New Artist" })).await;
+    assert_eq!(response.status(), StatusCode::CREATED);
+
+    let data: ArtistPayload = response.into_struct().await;
+    assert_eq!(data.name, "New Artist");
+    assert_eq!(data.slug, "new-artist");
+    assert!(!data.id.is_nil());
+}
+
+#[sqlx::test(fixtures("artists"))]
+#[test_log::test]
+async fn put_success(db: PgPool) {
+    let target_id = Uuid::from_str("a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1").unwrap();
+
+    let unauth_app = TestRouter::new(db.clone());
+    let unauth_response = unauth_app
+        .put(&format!("/artists/{target_id}"), &json!({ "name": "Updated Name", "slug": "updated-name" }))
+        .await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
+
+    let app = TestRouter::as_editor(db).await;
+    let response = app
+        .put(&format!("/artists/{target_id}"), &json!({ "name": "Updated Name", "slug": "updated-name" }))
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: ArtistPayload = response.into_struct().await;
+    assert_eq!(data.id, target_id);
+    assert_eq!(data.name, "Updated Name");
+    assert_eq!(data.slug, "updated-name");
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn put_not_found(db: PgPool) {
+    let unauth_app = TestRouter::new(db.clone());
+    let unauth_response = unauth_app
+        .put(&format!("/artists/{}", Uuid::nil()), &json!({ "name": "Ghost", "slug": "ghost" }))
+        .await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
+
+    let app = TestRouter::as_editor(db).await;
+    let response = app
+        .put(&format!("/artists/{}", Uuid::nil()), &json!({ "name": "Ghost", "slug": "ghost" }))
+        .await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test(fixtures("artists"))]
+#[test_log::test]
+async fn delete_success(db: PgPool) {
+    let target_id = Uuid::from_str("a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1").unwrap();
+
+    let unauth_app = TestRouter::new(db.clone());
+    let unauth_response = unauth_app.delete(&format!("/artists/{target_id}")).await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
+
+    let app = TestRouter::as_editor(db).await;
+    let response = app.delete(&format!("/artists/{target_id}")).await;
+    assert_eq!(response.status(), StatusCode::NO_CONTENT);
+
+    let verify = app.get(&format!("/artists/{target_id}")).await;
+    assert_eq!(verify.status(), StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn delete_not_found(db: PgPool) {
+    let unauth_app = TestRouter::new(db.clone());
+    let unauth_response = unauth_app.delete(&format!("/artists/{}", Uuid::nil())).await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
+
+    let app = TestRouter::as_editor(db).await;
+    let response = app.delete(&format!("/artists/{}", Uuid::nil())).await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test(fixtures("artists"))]
+#[test_log::test]
+async fn post_duplicate_slug_returns_conflict(db: PgPool) {
+    let app = TestRouter::as_editor(db).await;
+
+    let response = app.post("/artists", &json!({ "name": "Test Artist" })).await;
+    assert_eq!(response.status(), StatusCode::CONFLICT);
 }

@@ -40,6 +40,7 @@ export default function SearchPage() {
     const dateFrom = searchParams.get("date_from") ?? undefined;
     const dateTo = searchParams.get("date_to") ?? undefined;
     const sort = searchParams.get("sort") ?? undefined;
+    const locationFilter = searchParams.get("location") ?? undefined;
 
     const { data: facets } = useGetFacets({ entityType: "production" });
 
@@ -60,6 +61,7 @@ export default function SearchPage() {
     const filterKey = [
         query,
         ...(facets ?? []).map(({ slug }) => searchParams.get(slug) ?? ""),
+        locationFilter,
         dateFrom,
         dateTo,
         sort,
@@ -78,11 +80,12 @@ export default function SearchPage() {
         () => ({
             ...(query ? { q: query } : {}),
             ...facetParams,
+            ...(locationFilter ? { location: locationFilter } : {}),
             ...(dateFrom ? { date_from: dateFrom } : {}),
             ...(dateTo ? { date_to: dateTo } : {}),
             ...(sort ? { sort } : {}),
         }),
-        [query, facetParams, dateFrom, dateTo, sort]
+        [query, facetParams, locationFilter, dateFrom, dateTo, sort]
     );
 
     const handleSearch = useCallback(
@@ -189,16 +192,15 @@ export default function SearchPage() {
             />
 
             <div
-                className="flex min-h-[calc(100vh-300px)] overflow-hidden"
+                className="flex min-h-[calc(100vh-300px)] items-start"
                 style={{ ["--results-bar-height" as string]: "0px" }}
             >
                 <ArchiveSidebar minYear={ARCHIVE_MIN_YEAR} />
                 <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
                     <ResultsBar
-                        shownCount={allProductions.length}
-                        totalCount={allProductions.length}
                         query={draftQuery}
                         onQueryChange={setDraftQuery}
+                        onSearch={handleSearch}
                         showSearch={!isHeroVisible}
                         sort={sort}
                         onSortChange={handleSortChange}

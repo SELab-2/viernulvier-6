@@ -12,7 +12,7 @@ impl ApiProduction {
         let data: ProductionImportData = self.into();
 
         db.productions()
-            .upsert_by_source_id(data.production, data.translations)
+            .insert(data.production, data.translations)
             .await
             .map_err(|err| {
                 ImportItemError::database_write(ImportEntity::Production, source_id, err)

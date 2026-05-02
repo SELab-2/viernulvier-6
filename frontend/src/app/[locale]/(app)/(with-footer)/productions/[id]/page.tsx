@@ -6,12 +6,14 @@ import { notFound, useSearchParams } from "next/navigation";
 
 import { useGetProduction, useGetProductions } from "@/hooks/api/useProductions";
 import { useGetEventsByProduction } from "@/hooks/api/useEvents";
+import { useGetArticlesByProduction } from "@/hooks/api/useArticles";
 import { useHasPreview } from "@/hooks/usePreviewData";
 import {
     useProductionWithPreview,
     useProductionEventsWithPreview,
 } from "@/hooks/useProductionPreview";
 import { useGetEntityMedia } from "@/hooks/api/useMedia";
+import { getLocalizedField } from "@/lib/locale";
 import { Link, useRouter } from "@/i18n/routing";
 
 import { UnifiedHeader } from "@/components/layout/header";
@@ -22,6 +24,7 @@ import { ProductionHero } from "@/components/productionpage/production-hero";
 import { ProductionArticle } from "@/components/productionpage/production-article";
 import { ProductionSidebar } from "@/components/productionpage/production-sidebar";
 import { ProductionRelated } from "@/components/productionpage/production-related";
+import { ProductionArticles } from "@/components/productionpage/production-articles";
 import { Production, ProductionRow } from "@/types/models/production.types";
 
 // Helper to get title from Production or ProductionRow
@@ -77,6 +80,7 @@ export default function ProductionPage({
     const { data: apiProduction, isLoading: isProdLoading, isError } = useGetProduction(id);
     const { data: apiEvents = [], isLoading: isEventsLoading } = useGetEventsByProduction(id);
     const { data: productionsResult, isLoading: isAllProdLoading } = useGetProductions();
+    const { data: linkedArticles = [] } = useGetArticlesByProduction(id);
     const { data: media = [] } = useGetEntityMedia("production", id);
 
     // Always call preview hooks (they handle preview mode internally)
@@ -120,6 +124,7 @@ export default function ProductionPage({
     }
 
     const title = getProductionTitle(production, locale) ?? production.slug;
+    const artist = getLocalizedField(production as Production, "artist", locale);
 
     return (
         <div className="bg-background text-foreground font-body min-h-screen">
@@ -150,22 +155,39 @@ export default function ProductionPage({
                 )}
             </div>
 
-            {/* Hero */}
-            <ProductionHero production={production} locale={locale} media={media} />
-
-            {/* Content Grid */}
-            <div className="border-foreground flex min-h-[600px] flex-col border-b-2 lg:flex-row">
-                <div className="border-border animate-in fade-in slide-in-from-bottom-2 fill-mode-both flex-1 border-b p-6 pb-16 delay-150 duration-500 sm:p-10 lg:border-r lg:border-b-0 lg:pr-[50px]">
+            {/* Main layout */}
+            <div className="border-foreground animate-in fade-in slide-in-from-bottom-2 fill-mode-both flex flex-col border-b-2 duration-500 lg:flex-row">
+                {/* Left: title + article */}
+                <div className="border-border order-2 flex-1 border-b p-6 pb-16 sm:p-10 lg:order-1 lg:border-r lg:border-b-0 lg:pr-[50px]">
+                    <div className="mb-2 flex flex-col py-4">
+                        {artist && (
+                            <h1 className="font-display text-foreground mb-1 text-[clamp(32px,4.5vw,58px)] leading-[1.05] font-bold tracking-[-0.03em]">
+                                {artist}
+                            </h1>
+                        )}
+                        <p
+                            className={`font-display text-[clamp(32px,4.5vw,58px)] leading-[1.05] font-bold tracking-[-0.03em] italic ${artist ? "text-foreground/40" : "text-foreground"} mb-8`}
+                        >
+                            {title}
+                        </p>
+                    </div>
                     <ProductionArticle production={production} locale={locale} media={media} />
                 </div>
-                <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both flex w-full shrink-0 flex-col gap-0 p-6 delay-200 duration-500 sm:p-[30px_24px] lg:w-[320px]">
-                    <ProductionSidebar
-                        production={production as Production}
-                        events={events}
-                        locale={locale}
-                    />
+                {/* Right: image + sidebar */}
+                <div className="order-1 flex w-full shrink-0 flex-col lg:order-2 lg:w-[380px] xl:w-[480px]">
+                    <ProductionHero production={production} locale={locale} media={media} />
+                    <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both p-6 delay-200 duration-500 sm:p-[30px_24px]">
+                        <ProductionSidebar
+                            production={production as Production}
+                            events={events}
+                            locale={locale}
+                        />
+                    </div>
                 </div>
             </div>
+
+            {/* Linked Articles */}
+            <ProductionArticles articles={linkedArticles} locale={locale} />
 
             {/* Related Section */}
             {relatedProductions.length > 0 && (

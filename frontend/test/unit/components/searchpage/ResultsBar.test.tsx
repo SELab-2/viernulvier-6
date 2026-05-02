@@ -7,9 +7,9 @@ import { NextIntlClientProvider } from "next-intl";
 const messages = {
     ResultsBar: {
         sortBy: "Sort by",
+        relevant: "Relevant",
         recent: "Most Recent",
         oldest: "Oldest First",
-        az: "A-Z",
     },
     Search: {
         heroPlaceholder: "Search the archive",
@@ -29,36 +29,15 @@ describe("ResultsBar component", () => {
         cleanup();
     });
 
-    it("displays the correct shown and total counts", () => {
-        renderWithIntl(
-            <ResultsBar
-                shownCount={20}
-                totalCount={1000}
-                query=""
-                onQueryChange={() => {}}
-                showSearch={false}
-            />
-        );
-
-        expect(screen.getByText("20")).toBeInTheDocument();
-        expect(screen.getByText(/1.000/)).toBeInTheDocument();
-    });
-
     it("renders sort options based on translations", () => {
         renderWithIntl(
-            <ResultsBar
-                shownCount={20}
-                totalCount={100}
-                query=""
-                onQueryChange={() => {}}
-                showSearch={false}
-            />
+            <ResultsBar query="" onQueryChange={() => {}} onSearch={() => {}} showSearch={false} />
         );
 
         expect(screen.getByText("Sort by")).toBeInTheDocument();
+        expect(screen.getByText("Relevant")).toBeInTheDocument();
         expect(screen.getByText("Most Recent")).toBeInTheDocument();
         expect(screen.getByText("Oldest First")).toBeInTheDocument();
-        expect(screen.getByText("A-Z")).toBeInTheDocument();
     });
 
     it("calls onSortChange with the clicked option", async () => {
@@ -66,34 +45,32 @@ describe("ResultsBar component", () => {
         const onSortChange = vi.fn();
         renderWithIntl(
             <ResultsBar
-                shownCount={20}
-                totalCount={100}
                 query=""
                 onQueryChange={() => {}}
+                onSearch={() => {}}
                 showSearch={false}
                 onSortChange={onSortChange}
             />
         );
 
-        await user.click(screen.getByText("A-Z"));
+        await user.click(screen.getByText("Oldest First"));
 
         expect(onSortChange).toHaveBeenCalledOnce();
-        expect(onSortChange).toHaveBeenCalledWith("az");
+        expect(onSortChange).toHaveBeenCalledWith("oldest");
     });
 
     it("marks the active sort option from the sort prop", () => {
         renderWithIntl(
             <ResultsBar
-                shownCount={20}
-                totalCount={100}
                 query=""
                 onQueryChange={() => {}}
+                onSearch={() => {}}
                 showSearch={false}
-                sort="az"
+                sort="oldest"
             />
         );
 
-        expect(screen.getByText("A-Z")).toHaveClass("border-foreground");
+        expect(screen.getByText("Oldest First")).toHaveClass("border-foreground");
         expect(screen.getByText("Most Recent")).not.toHaveClass("border-foreground");
     });
 });

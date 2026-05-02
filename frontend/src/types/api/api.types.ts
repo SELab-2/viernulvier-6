@@ -42,6 +42,7 @@ export interface SearchPaginationParams extends PaginationParams {
     audience?: string;
     accessibility?: string;
     language?: string;
+    location?: string;
     date_from?: string;
     date_to?: string;
     sort?: string;

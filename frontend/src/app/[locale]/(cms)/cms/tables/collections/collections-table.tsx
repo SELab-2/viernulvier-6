@@ -3,11 +3,14 @@
 import { useCallback, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { RowSelectionState } from "@tanstack/react-table";
 import { useRouter } from "@/i18n/routing";
 import { DataTable } from "../data-table";
 import { makeCollectionColumns } from "./columns";
 import { CreateCollectionDialog } from "./create-collection-dialog";
+import { ActionBar } from "../action-bar";
 import { Button } from "@/components/ui/button";
+import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
 import { useDeleteCollection, useGetCollections } from "@/hooks/api";
 import { toCollectionRow } from "@/mappers/collection.mapper";
 import { CollectionRow } from "@/types/models/collection.types";
@@ -20,6 +23,9 @@ export function CollectionsTable() {
     const deleteCollection = useDeleteCollection();
 
     const [createOpen, setCreateOpen] = useState(false);
+    const [spotlight, setSpotlight] = useState<{ src: string; alt: string } | null>(null);
+    const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+    const openSpotlight = useCallback((src: string, alt: string) => setSpotlight({ src, alt }), []);
 
     const handleRowClick = useCallback(
         (row: CollectionRow) => router.push(`/cms/collections/${row.id}`),
@@ -47,9 +53,22 @@ export function CollectionsTable() {
     );
 
     const columns = useMemo(
-        () => makeCollectionColumns({ onDelete: handleDelete, onOpen: handleOpen, locale, t }),
-        [handleDelete, handleOpen, locale, t]
+        () =>
+            makeCollectionColumns({
+                onDelete: handleDelete,
+                onOpen: handleOpen,
+                locale,
+                t,
+                onOpenSpotlight: openSpotlight,
+            }),
+        [handleDelete, handleOpen, locale, t, openSpotlight]
     );
+
+    const spotlightItems: SpotlightItem[] = spotlight
+        ? [{ kind: "plain", src: spotlight.src, alt: spotlight.alt }]
+        : [];
+
+    const selectedCount = Object.values(rowSelection).filter(Boolean).length;
 
     if (!isLoading && rows.length === 0) {
         return (
@@ -65,7 +84,12 @@ export function CollectionsTable() {
 
     return (
         <div className="flex h-full flex-col">
-            <div className="bg-background sticky top-0 z-10 flex items-center justify-end py-2">
+            <div className="bg-background sticky top-0 z-10 flex items-center justify-between gap-2 py-2">
+                <ActionBar
+                    entityCounts={[{ countKey: "collectionsSelected", count: selectedCount }]}
+                    actions={[]}
+                    onClear={() => setRowSelection({})}
+                />
                 <Button onClick={() => setCreateOpen(true)}>{t("newCollection")}</Button>
             </div>
             <div className="flex-1 overflow-auto">
@@ -74,9 +98,21 @@ export function CollectionsTable() {
                     data={rows}
                     loading={isLoading}
                     onRowClick={handleRowClick}
+                    rowSelection={rowSelection}
+                    onRowSelectionChange={setRowSelection}
+                    getRowId={(row) => row.id}
                 />
             </div>
             <CreateCollectionDialog open={createOpen} onOpenChange={setCreateOpen} />
+            <ImageSpotlight
+                items={spotlightItems}
+                index={0}
+                open={spotlight !== null}
+                onOpenChange={(open) => {
+                    if (!open) setSpotlight(null);
+                }}
+                eyebrow={t("eyebrow")}
+            />
         </div>
     );
 }

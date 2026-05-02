@@ -576,6 +576,93 @@ async fn delete_not_found(db: PgPool) {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
+#[sqlx::test(fixtures("locations", "spaces", "halls", "productions", "events", "event_halls"))]
+#[test_log::test]
+async fn get_one_includes_hall_ids(db: PgPool) {
+    let app = TestRouter::new(db);
+    let target_id = Uuid::from_str("33333333-3333-3333-3333-333333333333").unwrap();
+    let expected_hall_id = Uuid::from_str("30000000-0000-0000-0000-000000000001").unwrap();
+
+    let response = app.get(&format!("/events/{target_id}")).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: EventPayload = response.into_struct().await;
+    assert_eq!(data.hall_ids, vec![expected_hall_id]);
+}
+
+#[sqlx::test(fixtures("locations", "spaces", "halls", "productions", "events"))]
+#[test_log::test]
+async fn post_success_with_halls(db: PgPool) {
+    let app = TestRouter::as_editor(db).await;
+    let hall_id = Uuid::from_str("30000000-0000-0000-0000-000000000001").unwrap();
+
+    let payload: EventPostPayload = serde_json::from_value(json!({
+        "source_id": 9999,
+        "created_at": "2026-03-12T10:00:00Z",
+        "updated_at": "2026-03-12T10:00:00Z",
+        "starts_at": "2026-07-01T19:00:00Z",
+        "status": "draft",
+        "production_id": "11111111-1111-1111-1111-111111111111",
+        "hall_ids": ["30000000-0000-0000-0000-000000000001"]
+    }))
+    .expect("Failed to deserialize mock EventPostPayload");
+
+    let response = app.post("/events", &payload).await;
+    assert_eq!(response.status(), StatusCode::CREATED);
+
+    let data: EventPayload = response.into_struct().await;
+    assert_eq!(data.hall_ids, vec![hall_id]);
+}
+
+#[sqlx::test(fixtures("locations", "spaces", "halls", "productions", "events", "event_halls"))]
+#[test_log::test]
+async fn put_success_updates_halls(db: PgPool) {
+    let target_id = Uuid::from_str("33333333-3333-3333-3333-333333333333").unwrap();
+    let new_hall_id = Uuid::from_str("30000000-0000-0000-0000-000000000002").unwrap();
+    let app = TestRouter::as_editor(db).await;
+
+    let update_payload: EventPayload = serde_json::from_value(json!({
+        "id": target_id,
+        "created_at": "2026-03-01T09:00:00Z",
+        "updated_at": "2026-03-12T10:00:00Z",
+        "starts_at": "2026-05-01T17:00:00Z",
+        "status": "confirmed",
+        "production_id": "11111111-1111-1111-1111-111111111111",
+        "hall_ids": ["30000000-0000-0000-0000-000000000002"]
+    }))
+    .expect("Failed to deserialize mock EventPayload");
+
+    let response = app.put("/events", &update_payload).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: EventPayload = response.into_struct().await;
+    assert_eq!(data.hall_ids, vec![new_hall_id]);
+}
+
+#[sqlx::test(fixtures("locations", "spaces", "halls", "productions", "events", "event_halls"))]
+#[test_log::test]
+async fn put_success_clears_halls_when_empty_array(db: PgPool) {
+    let target_id = Uuid::from_str("33333333-3333-3333-3333-333333333333").unwrap();
+    let app = TestRouter::as_editor(db).await;
+
+    let update_payload: EventPayload = serde_json::from_value(json!({
+        "id": target_id,
+        "created_at": "2026-03-01T09:00:00Z",
+        "updated_at": "2026-03-12T10:00:00Z",
+        "starts_at": "2026-05-01T17:00:00Z",
+        "status": "confirmed",
+        "production_id": "11111111-1111-1111-1111-111111111111",
+        "hall_ids": []
+    }))
+    .expect("Failed to deserialize mock EventPayload");
+
+    let response = app.put("/events", &update_payload).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: EventPayload = response.into_struct().await;
+    assert!(data.hall_ids.is_empty());
+}
+
 fn mock_post_payload() -> EventPostPayload {
     serde_json::from_value(json!({
         "source_id": 9999,

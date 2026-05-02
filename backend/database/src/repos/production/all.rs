@@ -81,6 +81,7 @@ impl<'a> ProductionRepo<'a> {
             .apply_facet_filters(EntityType::Production, "pt.production_id", &filters.facets);
 
         apply_date_filters(&mut query, "pt.production_id", filters);
+        apply_location_filters(&mut query, "pt.production_id", filters);
 
         if let Some(ref cursor) = cursor {
             match filters.sort {
@@ -190,6 +191,7 @@ impl<'a> ProductionRepo<'a> {
 
         // date filters
         apply_date_filters(&mut query, "p.id", filters);
+        apply_location_filters(&mut query, "p.id", filters);
 
         query
             .push(format_args!(" ORDER BY p.id {order_direction} LIMIT "))
@@ -233,5 +235,27 @@ fn apply_date_filters(
         }
 
         query.push(" ) ");
+    }
+}
+
+fn apply_location_filters(
+    query: &mut QueryBuilder<Postgres>,
+    id_column: &str,
+    filters: &ProductionFilters,
+) {
+    if let Some(ref loc_ids) = filters.locations {
+        let uuids: Vec<Uuid> = loc_ids
+            .iter()
+            .filter_map(|s| Uuid::parse_str(s).ok())
+            .collect();
+        if uuids.is_empty() {
+            return;
+        }
+        query
+            .push(format_args!(
+                " AND EXISTS (SELECT 1 FROM production_locations WHERE production_locations.production_id = {id_column} AND production_locations.location_id = ANY( "
+            ))
+            .push_bind(uuids)
+            .push(" )) ");
     }
 }

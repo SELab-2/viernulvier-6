@@ -246,15 +246,23 @@ describe("ArchiveSidebar component", () => {
         expect(calledUrl).toContain("discipline=t1");
     });
 
-    it("renders default 'De Vooruit' location when none provided", () => {
+    it("renders default 'De Vooruit' location when none provided and calls router.replace on click", async () => {
+        const user = userEvent.setup();
         renderWithIntl(<ArchiveSidebar />);
 
         const locBtn = screen.getByRole("button", { name: "De Vooruit" });
         expect(locBtn).toBeInTheDocument();
-        expect(locBtn).toBeDisabled();
+        expect(locBtn).not.toBeDisabled();
+
+        await user.click(locBtn);
+
+        expect(mockReplace).toHaveBeenCalledOnce();
+        const calledUrl = mockReplace.mock.calls[0][0] as string;
+        expect(calledUrl).toContain("location=deVooruit");
     });
 
-    it("renders provided locations from the API hook", () => {
+    it("renders provided locations from the API hook and toggles them", async () => {
+        const user = userEvent.setup();
         useGetLocationsMock.mockReturnValue({
             data: {
                 data: [
@@ -275,6 +283,7 @@ describe("ArchiveSidebar component", () => {
                         uitdatabankId: null,
                         slug: null,
                         translations: [],
+                        coverImageUrl: null,
                     },
                 ],
                 nextCursor: null,
@@ -284,7 +293,13 @@ describe("ArchiveSidebar component", () => {
 
         const locBtn = screen.getByRole("button", { name: "Venue A" });
         expect(locBtn).toBeInTheDocument();
-        expect(locBtn).toBeDisabled();
+        expect(locBtn).not.toBeDisabled();
+
+        await user.click(locBtn);
+
+        expect(mockReplace).toHaveBeenCalledOnce();
+        const calledUrl = mockReplace.mock.calls[0][0] as string;
+        expect(calledUrl).toContain("location=loc1");
     });
 
     it("clearAll strips filter params from URL and resets category state", async () => {

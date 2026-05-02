@@ -11,8 +11,10 @@ import {
     getExpandedRowModel,
     useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { Check, ChevronDown, ChevronRight } from "lucide-react";
 import { Fragment, ReactNode, memo, useMemo, useState } from "react";
+
+import { useTableSelection } from "./use-table-selection";
 
 // Generic memoized subtable that only rerenders when its own row items or selection changes.
 // TanStack Query structural sharing ensures unchanged items keep their reference,
@@ -58,7 +60,7 @@ function shallowEqual(
 }
 
 import { useTranslations } from "next-intl";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
@@ -124,6 +126,7 @@ interface DataTableProps<TData, TValue> {
     onExpandedChange?: OnChangeFn<ExpandedState>;
     getRowId?: (row: TData) => string;
     onRowClick?: (row: TData) => void;
+    onJumpToEnd?: () => Promise<void>;
 }
 
 export function DataTable<TData, TValue>({
@@ -141,6 +144,7 @@ export function DataTable<TData, TValue>({
     onExpandedChange: onExpandedChangeProp,
     getRowId,
     onRowClick,
+    onJumpToEnd,
 }: DataTableProps<TData, TValue>) {
     const t = useTranslations("Cms.DataTable");
     const [expandedInternal, setExpandedInternal] = useState<ExpandedState>({});
@@ -160,12 +164,22 @@ export function DataTable<TData, TValue>({
             id: "select",
             header: () => null,
             cell: ({ row }) => (
-                <Checkbox
-                    checked={row.getIsSelected()}
-                    onCheckedChange={(value) => row.toggleSelected(!!value)}
-                    aria-label="Select row"
-                    className="border-foreground/30 data-[state=checked]:bg-foreground data-[state=checked]:border-foreground"
-                />
+                <div
+                    role="checkbox"
+                    aria-checked={row.getIsSelected()}
+                    className={cn(
+                        "flex size-4 items-center justify-center border",
+                        row.getIsSelected()
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-foreground/30"
+                    )}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        row.toggleSelected(!row.getIsSelected());
+                    }}
+                >
+                    {row.getIsSelected() && <Check className="size-3.5" />}
+                </div>
             ),
             enableSorting: false,
             enableHiding: false,
@@ -250,10 +264,38 @@ export function DataTable<TData, TValue>({
         }),
     });
 
+    const visibleRows = table.getRowModel().rows;
+
+    const {
+        handleRowClick,
+        handleRowMouseDown,
+        handleKeyDown,
+        getRowTabIndex,
+        isRowFocused,
+        focusRowAt,
+        rowRefCallback,
+    } = useTableSelection({
+        rows: visibleRows,
+        rowSelection: effectiveRowSelection,
+        onRowSelectionChange,
+        enableSelection: hasSelection,
+        onJumpToEnd,
+        useGlobal: !compact,
+    });
+
     return (
         <TooltipProvider>
-            <div className={cn("", compact ? "" : "")}>
-                <Table className={compact ? "text-xs [&_tbody_tr]:border-0 [&_td]:py-1" : ""}>
+            <div
+                className={cn("outline-none", compact ? "" : "")}
+                onKeyDown={handleKeyDown}
+                tabIndex={hasSelection ? 0 : -1}
+                role={hasSelection ? "grid" : undefined}
+                aria-multiselectable={hasSelection ? true : undefined}
+            >
+                <Table
+                    className={compact ? "text-xs [&_tbody_tr]:border-0 [&_td]:py-1" : ""}
+                    onMouseLeave={() => focusRowAt(-1)}
+                >
                     <TableHeader className="bg-muted">
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id} className="bg-muted hover:bg-muted">
@@ -283,15 +325,37 @@ export function DataTable<TData, TValue>({
                         ))}
                     </TableHeader>
                     <TableBody>
-                        {table.getRowModel().rows?.length ? (
-                            table.getRowModel().rows.map((row, rowIndex) => (
+                        {visibleRows.length ? (
+                            visibleRows.map((row, rowIndex) => (
                                 <Fragment key={row.id}>
                                     <TableRow
+                                        ref={rowRefCallback(rowIndex)}
+                                        tabIndex={getRowTabIndex(rowIndex)}
                                         data-state={row.getIsSelected() ? "selected" : undefined}
-                                        className={`hover:bg-foreground/[0.04] data-[state=selected]:bg-foreground/[0.06] border-0 transition-colors ${
-                                            rowIndex % 2 === 1 ? "bg-secondary" : ""
-                                        } ${onRowClick ? "cursor-pointer" : ""}`}
-                                        onClick={() => onRowClick?.(row.original)}
+                                        data-focused={isRowFocused(rowIndex) ? "true" : undefined}
+                                        aria-selected={
+                                            hasSelection ? row.getIsSelected() : undefined
+                                        }
+                                        className={cn(
+                                            "border-0 transition-colors outline-none",
+                                            "data-[state=selected]:bg-foreground/[0.18]",
+                                            "data-[focused=true]:bg-foreground/[0.12] data-[state=selected]:data-[focused=true]:bg-foreground/[0.22]",
+                                            rowIndex % 2 === 1 && !row.getIsSelected()
+                                                ? "bg-secondary"
+                                                : "",
+                                            onRowClick && !hasSelection ? "cursor-pointer" : "",
+                                            hasSelection ? "cursor-pointer" : ""
+                                        )}
+                                        onClick={(e) => {
+                                            if (hasSelection) {
+                                                handleRowClick(row, e);
+                                            } else {
+                                                onRowClick?.(row.original);
+                                            }
+                                        }}
+                                        onMouseEnter={() => focusRowAt(rowIndex)}
+                                        onMouseLeave={() => focusRowAt(-1)}
+                                        onMouseDown={handleRowMouseDown}
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell
