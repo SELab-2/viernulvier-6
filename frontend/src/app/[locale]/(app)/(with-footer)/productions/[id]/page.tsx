@@ -164,8 +164,13 @@ export default function ProductionPage({
                 {/* Left: title + article */}
                 <div className="border-border order-2 flex-1 border-b p-6 pb-16 sm:p-10 lg:order-1 lg:border-r lg:border-b-0 lg:pr-[50px]">
                     <div className="mb-2 flex flex-col py-4">
+                        <h1
+                            className={`font-display text-foreground text-[clamp(32px,4.5vw,58px)] leading-[1.05] font-bold tracking-[-0.03em] ${structuredArtists.length > 0 || artist ? "mb-1" : "mb-8"}`}
+                        >
+                            {title}
+                        </h1>
                         {structuredArtists.length > 0 ? (
-                            <h1 className="font-display text-foreground mb-1 text-[clamp(32px,4.5vw,58px)] leading-[1.05] font-bold tracking-[-0.03em]">
+                            <p className="font-display text-foreground/40 mb-8 text-[clamp(32px,4.5vw,58px)] leading-[1.05] font-bold tracking-[-0.03em] italic">
                                 {structuredArtists.map((a, i) => (
                                     <span key={a.id}>
                                         {i > 0 && " / "}
@@ -181,17 +186,12 @@ export default function ProductionPage({
                                         </Link>
                                     </span>
                                 ))}
-                            </h1>
+                            </p>
                         ) : artist ? (
-                            <h1 className="font-display text-foreground mb-1 text-[clamp(32px,4.5vw,58px)] leading-[1.05] font-bold tracking-[-0.03em]">
+                            <p className="font-display text-foreground/40 mb-8 text-[clamp(32px,4.5vw,58px)] leading-[1.05] font-bold tracking-[-0.03em] italic">
                                 {artist}
-                            </h1>
+                            </p>
                         ) : null}
-                        <p
-                            className={`font-display text-[clamp(32px,4.5vw,58px)] leading-[1.05] font-bold tracking-[-0.03em] italic ${artist ? "text-foreground/40" : "text-foreground"} mb-8`}
-                        >
-                            {title}
-                        </p>
                     </div>
                     <ProductionArticle
                         production={production}
