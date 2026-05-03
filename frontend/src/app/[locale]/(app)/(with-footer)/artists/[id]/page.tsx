@@ -10,6 +10,7 @@ import { Link, useRouter } from "@/i18n/routing";
 import { UnifiedHeader } from "@/components/layout/header";
 import { LoadingState } from "@/components/shared/loading-state";
 import { EntityGrid } from "@/components/masonry/entity-grid";
+import { MasonryGridSkeleton } from "@/components/masonry/masonry-grid-skeleton";
 import { ArtistHero } from "@/components/artistpage/artist-hero";
 import type { EntityGridItem } from "@/types/models/collection.types";
 
@@ -95,7 +96,9 @@ export default function ArtistPage({
 
             {/* Productions */}
             <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both p-6 delay-150 duration-500 sm:p-10">
-                {!isProductionsLoading && gridItems.length > 0 ? (
+                {isProductionsLoading ? (
+                    <MasonryGridSkeleton />
+                ) : gridItems.length > 0 ? (
                     <EntityGrid items={gridItems} />
                 ) : (
                     <div className="border-muted/30 text-muted-foreground flex min-h-[320px] items-center justify-center border border-dashed font-mono text-[10px] tracking-[1.2px] uppercase">

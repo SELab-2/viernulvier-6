@@ -2,22 +2,24 @@
 
 import { createContext, useEffect, useState, Fragment } from "react";
 
-/** True when the grid is in single-column mode — cards should use a uniform aspect ratio. */
 export const UniformCardsContext = createContext(false);
 
 const SM_BREAKPOINT = 640;
 const LG_BREAKPOINT = 1024;
 
 function useColumnCount() {
-    const [width, setWidth] = useState(() =>
-        typeof window !== "undefined" ? window.innerWidth : LG_BREAKPOINT
-    );
+    // Always initialize with a static value so the server and initial client render match perfectly.
+    const [width, setWidth] = useState(LG_BREAKPOINT);
 
     useEffect(() => {
-        const onResize = () => setWidth(window.innerWidth);
-        onResize();
-        window.addEventListener("resize", onResize);
-        return () => window.removeEventListener("resize", onResize);
+        // Only check the actual window width AFTER hydration is complete.
+        const handleResize = () => setWidth(window.innerWidth);
+
+        // Sync the width immediately on mount
+        handleResize();
+
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
     }, []);
 
     if (width < SM_BREAKPOINT) return 1;
@@ -34,7 +36,6 @@ function splitIntoColumns<T>(items: T[], cols: number): T[][] {
 
 interface MasonryGridProps<T extends { id: string }> {
     items: T[];
-    /** Called per item. `index` is the global position across all columns — use it for aspect-ratio variation. */
     renderItem: (item: T, index: number) => React.ReactNode;
 }
 
