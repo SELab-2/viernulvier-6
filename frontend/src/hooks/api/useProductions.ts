@@ -57,7 +57,7 @@ export const useGetInfiniteProductions = (
     options?: { enabled?: boolean }
 ) => {
     return useInfiniteQuery({
-        queryKey: ["productions", "infinite", params],
+        queryKey: queryKeys.productions.infinite(params),
         queryFn: async ({ pageParam }) =>
             fetchProductions({ ...params, cursor: pageParam ?? undefined }),
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,

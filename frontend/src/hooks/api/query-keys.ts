@@ -25,6 +25,10 @@ export const queryKeys = {
     productions: {
         all: (params?: ProductionSearchParams) => buildQueryKey(["productions"], params),
         detail: (id: string) => ["productions", id] as const,
+        infinite: (params?: Omit<ProductionSearchParams, "cursor">) =>
+            params
+                ? (["productions", "infinite", params] as const)
+                : (["productions", "infinite"] as const),
         events: (id: string) => ["productions", id, "events"] as const,
     },
     collections: {
