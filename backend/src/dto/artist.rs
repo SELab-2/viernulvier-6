@@ -3,6 +3,7 @@ use database::{
     models::{artist::Artist, entity_type::EntityType},
 };
 use serde::{Deserialize, Serialize};
+use slug::slugify;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -27,6 +28,39 @@ impl From<Artist> for ArtistPayload {
             name: a.name,
             cover_image_url: None,
         }
+    }
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct ArtistPostPayload {
+    pub name: String,
+}
+
+impl ArtistPostPayload {
+    pub async fn create(&self, db: &Database, public_url: Option<&str>) -> Result<ArtistPayload, AppError> {
+        let slug = slugify(&self.name);
+        let artist = db.artists().insert(&self.name, &slug).await?;
+        ArtistPayload::by_id(db, artist.id, public_url).await
+    }
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct ArtistUpdatePayload {
+    pub name: String,
+    pub slug: String,
+}
+
+impl ArtistUpdatePayload {
+    pub async fn update(&self, db: &Database, id: Uuid, public_url: Option<&str>) -> Result<ArtistPayload, AppError> {
+        db.artists().update(id, &self.name, &self.slug).await?;
+        ArtistPayload::by_id(db, id, public_url).await
+    }
+}
+
+impl ArtistPayload {
+    pub async fn delete(db: &Database, id: Uuid) -> Result<(), AppError> {
+        db.artists().delete(id).await?;
+        Ok(())
     }
 }
 

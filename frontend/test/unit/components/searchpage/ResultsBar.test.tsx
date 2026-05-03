@@ -7,6 +7,7 @@ import { NextIntlClientProvider } from "next-intl";
 const messages = {
     ResultsBar: {
         sortBy: "Sort by",
+        relevant: "Relevant",
         recent: "Most Recent",
         oldest: "Oldest First",
         relevance: "Most Relevant",
@@ -42,6 +43,7 @@ describe("ResultsBar component", () => {
         );
 
         expect(screen.getByText("Sort by")).toBeInTheDocument();
+        expect(screen.getByText("Relevant")).toBeInTheDocument();
         expect(screen.getByText("Most Recent")).toBeInTheDocument();
         expect(screen.getByText("Oldest First")).toBeInTheDocument();
         expect(screen.getByText("Most Relevant")).toBeInTheDocument();

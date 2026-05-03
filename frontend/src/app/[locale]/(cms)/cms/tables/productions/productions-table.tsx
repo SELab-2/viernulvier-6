@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Archive, ChevronsUp } from "lucide-react";
 import { toast } from "sonner";
@@ -10,6 +11,7 @@ import { EditSheet } from "../edit-sheet";
 import { makeProductionColumns } from "./columns";
 import { makeEventFields, toEventUpdateInput } from "./event-columns";
 import { ActionBar } from "../action-bar";
+import { SearchInput } from "@/components/cms/search-input";
 import { useParentChildSelection } from "../use-parent-child-selection";
 import { makeEventColumns } from "./event-columns";
 import { Button } from "@/components/ui/button";
@@ -30,13 +32,15 @@ export function ProductionsTable() {
     const tActions = useTranslations("Cms.ActionsColumn");
     const locale = useLocale();
     const loadMoreRef = useRef<HTMLDivElement>(null);
+    const searchParams = useSearchParams();
+    const q = searchParams.get("q") ?? undefined;
 
     const {
         data: infiniteData,
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,
-    } = useGetInfiniteProductions();
+    } = useGetInfiniteProductions(q ? { q } : undefined);
     const deleteProduction = useDeleteProduction();
 
     const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
@@ -110,6 +114,13 @@ export function ProductionsTable() {
         },
         [locale]
     );
+
+    const handleJumpToEnd = useCallback(async () => {
+        while (hasNextPage) {
+            await fetchNextPage();
+            await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+    }, [hasNextPage, fetchNextPage]);
 
     const handleDeleteProduction = useCallback(
         (production: Production) => {
@@ -277,7 +288,7 @@ export function ProductionsTable() {
 
     return (
         <div className="flex h-full flex-col">
-            <div className="bg-background sticky top-0 z-10 flex items-center justify-between gap-2">
+            <div className="bg-background sticky top-0 z-10 flex items-center gap-2">
                 <ActionBar
                     entityCounts={[
                         { countKey: "productionsSelected", count: selectedProductionCount },
@@ -285,6 +296,8 @@ export function ProductionsTable() {
                     ]}
                     actions={actions}
                     onClear={clearSelection}
+                    search={<SearchInput placeholder={t("search")} />}
+                    className="flex-1"
                 />
                 {hasExpanded && (
                     <Button
@@ -311,6 +324,7 @@ export function ProductionsTable() {
                     expanded={expanded}
                     onExpandedChange={setExpanded}
                     getRowId={getProductionRowId}
+                    onJumpToEnd={handleJumpToEnd}
                 />
 
                 {/* Infinite scroll trigger */}

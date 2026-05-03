@@ -63,6 +63,7 @@
     },
     "ResultsBar": {
         "sortBy": "Sorteren:",
+        "relevant": "Meest relevant",
         "recent": "Meest recent",
         "oldest": "Oudste eerst",
         "relevance": "Meest relevant"
@@ -138,7 +139,9 @@
             ],
             "weekdays": ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"]
         },
-        "clearAll": "Wis alles"
+        "clearAll": "Wis alles",
+        "showMore": "Meer tonen",
+        "showLess": "Minder tonen"
     },
     "Home": {
         "loading": "Archief laden...",
@@ -152,6 +155,10 @@
             "dance": "Dans",
             "concert": "Concert",
             "nightlife": "Nightlife"
+        },
+        "articles": {
+            "label": "Van de redactie",
+            "viewAll": "Alle artikels"
         },
         "about": {
             "title": "Kunstencentrum VIERNULVIER",
@@ -254,6 +261,9 @@
             "eventsSelected": "{count, plural, one {# voorstelling} other {# voorstellingen}} geselecteerd",
             "locationsSelected": "{count, plural, one {# locatie} other {# locaties}} geselecteerd",
             "hallsSelected": "{count, plural, one {# zaal} other {# zalen}} geselecteerd",
+            "articlesSelected": "{count, plural, one {# artikel} other {# artikelen}} geselecteerd",
+            "collectionsSelected": "{count, plural, one {# collectie} other {# collecties}} geselecteerd",
+            "importErrorsSelected": "{count, plural, one {# fout} other {# fouten}} geselecteerd",
             "bulkEdit": "Bulk bewerken",
             "delete": "Verwijderen"
         },
@@ -380,7 +390,8 @@
             "fieldEventVendorId": "Vendor-ID",
             "fieldEventBoxOfficeId": "Box office ID",
             "fieldEventUitdatabankId": "UiTdatabank ID",
-            "eyebrow": "Productie"
+            "eyebrow": "Productie",
+            "search": "Zoek producties…"
         },
         "Locations": {
             "title": "Locaties",
@@ -390,6 +401,7 @@
             "hideHalls": "Zalen verbergen",
             "editLocation": "Locatie bewerken",
             "editHall": "Zaal bewerken",
+            "search": "Zoek locaties…",
             "deleteConfirm": "Weet je zeker dat je \"{title}\" wil verwijderen?",
             "deleteConfirmMultiple": "Weet je zeker dat je {count} locaties wil verwijderen?",
             "deleteSuccess": "Locatie verwijderd.",
@@ -403,6 +415,10 @@
             "notAvailable": "Artikelen-API is nog niet beschikbaar. Geen gegevens om weer te geven.",
             "newArticle": "Nieuw artikel",
             "createFailed": "Aanmaken van artikel mislukt.",
+            "dialogTitle": "Nieuw artikel",
+            "titleLabel": "Titel",
+            "slugConflict": "Er bestaat al een artikel met deze titel.",
+            "cancel": "Annuleren",
             "deleteConfirm": "Weet je zeker dat je \"{title}\" wil verwijderen?",
             "deleteSuccess": "Artikel verwijderd.",
             "deleteError": "Artikel verwijderen mislukt.",
@@ -442,13 +458,23 @@
             "untitledEvent": "Naamloze voorstelling",
             "contentPlaceholder": "Schrijf artikelinhoud…",
             "statusColumn": "Status",
-            "dateRangeColumn": "Periode"
+            "dateRangeColumn": "Periode",
+            "search": "Zoek artikels…"
         },
         "Performers": {
             "title": "Uitvoerders",
             "subtitle": "Beheer artiesten",
-            "comingSoon": "Binnenkort beschikbaar",
-            "notAvailable": "Uitvoerders-API is nog niet beschikbaar. Geen gegevens om weer te geven."
+            "nameColumn": "Naam",
+            "slugColumn": "Slug",
+            "nameField": "Naam",
+            "slugField": "Slug",
+            "editPerformer": "Artiest bewerken",
+            "deletePerformer": "Artiest verwijderen",
+            "deleteConfirm": "Weet je zeker dat je \"{name}\" wilt verwijderen?",
+            "deleteSuccess": "Artiest verwijderd.",
+            "deleteError": "Verwijderen mislukt.",
+            "updateSuccess": "Artiest bijgewerkt.",
+            "updateError": "Bijwerken mislukt."
         },
         "Ingest": {
             "title": "Ingest",
@@ -647,7 +673,15 @@
         "breadcrumbProductions": "Producties",
         "loading": "Laden…",
         "openCoverImage": "Coverafbeelding openen",
-        "openGalleryImage": "Afbeelding openen"
+        "openGalleryImage": "Afbeelding openen",
+        "shareSectionTitle": "Delen",
+        "copyLink": "Kopieer link",
+        "copyLinkSuccess": "Link gekopieerd!",
+        "shareWhatsApp": "Delen via WhatsApp",
+        "shareEmail": "Delen via e-mail",
+        "articlesTitle": "Artikels",
+        "articlesLabel": "Artikel",
+        "articlesFallbackTitle": "Zonder titel"
     },
     "NewsArticleComponent": {
         "subTitle": "Vooruit Archief",

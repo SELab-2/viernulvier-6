@@ -39,6 +39,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/articles/cms/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Search all articles (all statuses) — editor only */
+        get: operations["search_articles_cms"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/articles/cms/{id}": {
         parameters: {
             query?: never;
@@ -103,7 +120,8 @@ export interface paths {
         /** @description Get all artists */
         get: operations["get_all_artists"];
         put?: never;
-        post?: never;
+        /** @description Create a new artist — editor only */
+        post: operations["create_artist"];
         delete?: never;
         options?: never;
         head?: never;
@@ -119,9 +137,11 @@ export interface paths {
         };
         /** @description Get an artist by id */
         get: operations["get_one_artist"];
-        put?: never;
+        /** @description Update an artist — editor only */
+        put: operations["update_artist"];
         post?: never;
-        delete?: never;
+        /** @description Delete an artist — editor only */
+        delete: operations["delete_artist"];
         options?: never;
         head?: never;
         patch?: never;
@@ -458,6 +478,23 @@ export interface paths {
         post?: never;
         /** @description Delete a location */
         delete: operations["delete_location"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/locations/{id}/halls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get all halls belonging to a location */
+        get: operations["get_halls_for_location"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -970,6 +1007,13 @@ export interface components {
             name: string;
             slug: string;
         };
+        ArtistPostPayload: {
+            name: string;
+        };
+        ArtistUpdatePayload: {
+            name: string;
+            slug: string;
+        };
         AttachMediaRequest: {
             alt_text_en?: string | null;
             alt_text_fr?: string | null;
@@ -1371,6 +1415,13 @@ export interface components {
             translations?: components["schemas"]["LocationTranslationPayload"][];
             uitdatabank_id?: string | null;
         };
+        /** @description Minimal location info embedded in a production response. */
+        LocationSummary: {
+            /** Format: uuid */
+            id: string;
+            name?: string | null;
+            slug?: string | null;
+        };
         /** @description The per-language content for a location. */
         LocationTranslationPayload: {
             description?: string | null;
@@ -1614,6 +1665,8 @@ export interface components {
                 eticket_info?: string | null;
                 /** Format: uuid */
                 id: string;
+                /** @description Locations associated with this production via production_locations (output-only). */
+                locations?: components["schemas"]["LocationSummary"][];
                 slug: string;
                 /** Format: int32 */
                 source_id?: number | null;
@@ -1643,6 +1696,8 @@ export interface components {
             eticket_info?: string | null;
             /** Format: uuid */
             id: string;
+            /** @description Locations associated with this production via production_locations (output-only). */
+            locations?: components["schemas"]["LocationSummary"][];
             slug: string;
             /** Format: int32 */
             source_id?: number | null;
@@ -1882,6 +1937,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ArticleListPayload"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    search_articles_cms: {
+        parameters: {
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+                q?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedResponse_ArticleListPayload"];
                 };
             };
             /** @description Unauthorized */
@@ -2146,6 +2234,39 @@ export interface operations {
             };
         };
     };
+    create_artist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArtistPostPayload"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtistPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     get_one_artist: {
         parameters: {
             query?: never;
@@ -2165,6 +2286,86 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ArtistPayload"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_artist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Artist UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArtistUpdatePayload"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtistPayload"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_artist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Artist UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Not found */
@@ -3190,6 +3391,36 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_halls_for_location: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Location UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HallPayload"][];
                 };
             };
             /** @description Not found */

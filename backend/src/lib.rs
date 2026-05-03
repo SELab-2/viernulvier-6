@@ -247,6 +247,7 @@ fn public_routes() -> OpenApiRouter<AppState> {
         .routes(routes!(location::get_all))
         .routes(routes!(location::get_one))
         .routes(routes!(location::get_by_slug))
+        .routes(routes!(location::get_halls))
         // production
         .routes(routes!(production::get_all))
         .routes(routes!(production::get_one))
@@ -339,12 +340,17 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(tagging::put_tags))
         // Articles (CMS)
         .routes(routes!(article::get_all_cms))
+        .routes(routes!(article::get_all_cms_search))
         .routes(routes!(article::get_one_cms))
         .routes(routes!(article::post))
         .routes(routes!(article::put))
         .routes(routes!(article::delete))
         .routes(routes!(article::get_relations))
         .routes(routes!(article::put_relations))
+        // Artists (CMS)
+        .routes(routes!(artist::post))
+        .routes(routes!(artist::put))
+        .routes(routes!(artist::delete))
         .layer(from_extractor_with_state::<EditorUser, AppState>(state))
 }
 
