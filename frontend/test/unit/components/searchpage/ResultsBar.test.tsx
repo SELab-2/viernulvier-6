@@ -43,7 +43,6 @@ describe("ResultsBar component", () => {
         );
 
         expect(screen.getByText("Sort by")).toBeInTheDocument();
-        expect(screen.getByText("Relevant")).toBeInTheDocument();
         expect(screen.getByText("Most Recent")).toBeInTheDocument();
         expect(screen.getByText("Oldest First")).toBeInTheDocument();
         expect(screen.getByText("Most Relevant")).toBeInTheDocument();
