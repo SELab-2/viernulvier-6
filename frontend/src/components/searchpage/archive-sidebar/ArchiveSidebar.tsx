@@ -45,17 +45,8 @@ export function ArchiveSidebar({ minYear: minYearProp }: ArchiveSidebarProps) {
     const searchParams = useSearchParams();
 
     const { data: stats } = useGetStats();
-    const {
-        data: locationsPages,
-        fetchNextPage,
-        hasNextPage,
-        isFetchingNextPage,
-    } = useGetInfiniteLocations();
+    const { data: locationsPages, fetchNextPage, hasNextPage } = useGetInfiniteLocations();
     const { data: facets } = useGetFacets({ entityType: "production" });
-
-    useEffect(() => {
-        if (hasNextPage && !isFetchingNextPage) fetchNextPage();
-    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
     const locations = useMemo(
         () => locationsPages?.pages.flatMap((p) => p.data) ?? [],
@@ -161,7 +152,7 @@ export function ArchiveSidebar({ minYear: minYearProp }: ArchiveSidebarProps) {
 
     const updateParam = useCallback(
         (updates: Record<string, string | null>) => {
-            const params = new URLSearchParams(searchParams.toString());
+            const params = new URLSearchParams(window.location.search);
             for (const [key, value] of Object.entries(updates)) {
                 if (value === null) {
                     params.delete(key);
@@ -174,12 +165,12 @@ export function ArchiveSidebar({ minYear: minYearProp }: ArchiveSidebarProps) {
                 (qs ? `${pathname}?${qs}` : pathname) as Parameters<typeof router.replace>[0]
             );
         },
-        [searchParams, router, pathname]
+        [router, pathname]
     );
 
     const toggleTag = useCallback(
         (facetSlug: string, tagSlug: string) => {
-            const params = new URLSearchParams(searchParams.toString());
+            const params = new URLSearchParams(window.location.search);
             const raw = params.get(facetSlug);
             const next = new Set(raw ? raw.split(",").filter(Boolean) : []);
             if (next.has(tagSlug)) {
@@ -197,7 +188,7 @@ export function ArchiveSidebar({ minYear: minYearProp }: ArchiveSidebarProps) {
                 (qs ? `${pathname}?${qs}` : pathname) as Parameters<typeof router.replace>[0]
             );
         },
-        [searchParams, router, pathname]
+        [router, pathname]
     );
 
     const handleYearRangeChange = useCallback(
@@ -240,10 +231,8 @@ export function ArchiveSidebar({ minYear: minYearProp }: ArchiveSidebarProps) {
     }, [updateParam]);
 
     const switchToYear = useCallback(() => {
-        // Convert current exact date range to year range, remove date_mode param
-        const params = new URLSearchParams(searchParams.toString());
+        const params = new URLSearchParams(window.location.search);
         params.delete("date_mode");
-        // Keep date_from/date_to as year-based if already set
         const dateFrom = params.get("date_from");
         const dateTo = params.get("date_to");
         if (dateFrom && dateTo) {
@@ -258,7 +247,7 @@ export function ArchiveSidebar({ minYear: minYearProp }: ArchiveSidebarProps) {
         router.replace(
             (qs ? `${pathname}?${qs}` : pathname) as Parameters<typeof router.replace>[0]
         );
-    }, [searchParams, router, pathname]);
+    }, [router, pathname]);
 
     const toggleCategory = useCallback((cat: string) => {
         setCheckedCategories((prev) => {
@@ -271,7 +260,7 @@ export function ArchiveSidebar({ minYear: minYearProp }: ArchiveSidebarProps) {
 
     const toggleLocation = useCallback(
         (id: string) => {
-            const params = new URLSearchParams(searchParams.toString());
+            const params = new URLSearchParams(window.location.search);
             const raw = params.get("location");
             const next = new Set(raw ? raw.split(",").filter(Boolean) : []);
             if (next.has(id)) {
@@ -289,7 +278,7 @@ export function ArchiveSidebar({ minYear: minYearProp }: ArchiveSidebarProps) {
                 (qs ? `${pathname}?${qs}` : pathname) as Parameters<typeof router.replace>[0]
             );
         },
-        [searchParams, router, pathname]
+        [router, pathname]
     );
 
     const clearAll = useCallback(() => {
@@ -416,6 +405,8 @@ export function ArchiveSidebar({ minYear: minYearProp }: ArchiveSidebarProps) {
                 toggleLocation={toggleLocation}
                 showMoreLabel={t("showMore")}
                 showLessLabel={t("showLess")}
+                fetchNextPage={fetchNextPage}
+                hasNextPage={!!hasNextPage}
             />
         </>
     );
@@ -550,6 +541,8 @@ function LocationFilterGroup({
     toggleLocation,
     showMoreLabel,
     showLessLabel,
+    fetchNextPage,
+    hasNextPage,
 }: {
     label: string;
     locations: Location[];
@@ -557,48 +550,37 @@ function LocationFilterGroup({
     toggleLocation: (id: string) => void;
     showMoreLabel: string;
     showLessLabel: string;
+    fetchNextPage: () => void;
+    hasNextPage: boolean;
 }) {
     const [expanded, setExpanded] = useState(false);
-    const fallback = locations.length === 0;
-    const items = fallback ? [] : expanded ? locations : locations.slice(0, TAGS_INITIAL_COUNT);
-    const hasMore = !fallback && locations.length > TAGS_INITIAL_COUNT;
+    const items = expanded ? locations : locations.slice(0, TAGS_INITIAL_COUNT);
+    const hasMore = locations.length > TAGS_INITIAL_COUNT || (!expanded && hasNextPage);
     return (
         <FilterGroup label={label}>
             <div className="flex flex-wrap gap-2 pb-1">
-                {fallback ? (
+                {items.map((loc) => (
                     <button
+                        key={loc.id}
                         type="button"
-                        aria-pressed={checkedLocations.has("deVooruit")}
-                        onClick={() => toggleLocation("deVooruit")}
+                        aria-pressed={checkedLocations.has(loc.id)}
+                        onClick={() => toggleLocation(loc.id)}
                         className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
-                            checkedLocations.has("deVooruit")
+                            checkedLocations.has(loc.id)
                                 ? "bg-foreground text-background border-foreground"
                                 : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
                         }`}
                     >
-                        De Vooruit
+                        {loc.name ?? loc.address}
                     </button>
-                ) : (
-                    items.map((loc) => (
-                        <button
-                            key={loc.id}
-                            type="button"
-                            aria-pressed={checkedLocations.has(loc.id)}
-                            onClick={() => toggleLocation(loc.id)}
-                            className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
-                                checkedLocations.has(loc.id)
-                                    ? "bg-foreground text-background border-foreground"
-                                    : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
-                            }`}
-                        >
-                            {loc.name ?? loc.address}
-                        </button>
-                    ))
-                )}
+                ))}
                 {hasMore && (
                     <button
                         type="button"
-                        onClick={() => setExpanded((v) => !v)}
+                        onClick={() => {
+                            if (!expanded && hasNextPage) fetchNextPage();
+                            setExpanded((v) => !v);
+                        }}
                         className="text-foreground inline-flex cursor-pointer items-center gap-1 px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase"
                     >
                         {expanded ? (

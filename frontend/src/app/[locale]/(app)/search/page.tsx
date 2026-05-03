@@ -11,7 +11,10 @@ import { useGetProductions } from "@/hooks/api/useProductions";
 import { useGetFacets } from "@/hooks/api/useTaxonomy";
 import { queryKeys } from "@/hooks/api/query-keys";
 import type { Production } from "@/types/models/production.types";
+import type { components } from "@/types/api/generated";
 import type { PaginatedResult, SearchPaginationParams } from "@/types/api/api.types";
+
+const SORT_VALUES: components["schemas"]["Sort"][] = ["recent", "oldest", "relevance"];
 
 import { UnifiedHeader } from "@/components/layout/header";
 import { SearchHero } from "@/components/searchpage/search-hero";
@@ -40,7 +43,11 @@ export default function SearchPage() {
     const query = searchParams.get("q")?.trim() ?? "";
     const dateFrom = searchParams.get("date_from") ?? undefined;
     const dateTo = searchParams.get("date_to") ?? undefined;
-    const sort = searchParams.get("sort") ?? undefined;
+    const rawSort = searchParams.get("sort");
+    const sort =
+        rawSort !== null && SORT_VALUES.includes(rawSort as components["schemas"]["Sort"])
+            ? (rawSort as components["schemas"]["Sort"])
+            : undefined;
     const locationFilter = searchParams.get("location") ?? undefined;
 
     const { data: facets } = useGetFacets({ entityType: "production" });
@@ -109,7 +116,11 @@ export default function SearchPage() {
     const handleSortChange = useCallback(
         (newSort: string) => {
             const params = new URLSearchParams(searchParams.toString());
-            params.set("sort", newSort);
+            if (newSort === "relevance") {
+                params.delete("sort");
+            } else {
+                params.set("sort", newSort);
+            }
             const qs = params.toString();
             router.replace(
                 (qs ? `${pathname}?${qs}` : pathname) as Parameters<typeof router.replace>[0]

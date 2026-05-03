@@ -7,7 +7,7 @@ import { NextIntlClientProvider } from "next-intl";
 const messages = {
     ResultsBar: {
         sortBy: "Sort by",
-        relevant: "Relevant",
+        relevance: "Relevant",
         recent: "Most Recent",
         oldest: "Oldest First",
     },

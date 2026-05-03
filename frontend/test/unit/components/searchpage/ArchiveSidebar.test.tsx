@@ -255,21 +255,6 @@ describe("ArchiveSidebar component", () => {
         expect(calledUrl).toContain("discipline=t1");
     });
 
-    it("renders default 'De Vooruit' location when none provided and calls router.replace on click", async () => {
-        const user = userEvent.setup();
-        renderWithIntl(<ArchiveSidebar />);
-
-        const locBtn = screen.getByRole("button", { name: "De Vooruit" });
-        expect(locBtn).toBeInTheDocument();
-        expect(locBtn).not.toBeDisabled();
-
-        await user.click(locBtn);
-
-        expect(mockReplace).toHaveBeenCalledOnce();
-        const calledUrl = mockReplace.mock.calls[0][0] as string;
-        expect(calledUrl).toContain("location=deVooruit");
-    });
-
     it("renders provided locations from the API hook and toggles them", async () => {
         const user = userEvent.setup();
         useGetInfiniteLocationsMock.mockReturnValue({

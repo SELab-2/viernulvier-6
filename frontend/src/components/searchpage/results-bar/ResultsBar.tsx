@@ -13,7 +13,7 @@ interface ResultsBarProps {
     onSortChange?: (sort: string) => void;
 }
 
-const SORT_OPTIONS = ["relevant", "recent", "oldest"] as const;
+const SORT_OPTIONS = ["relevance", "recent", "oldest"] as const;
 
 export function ResultsBar({
     query,
@@ -25,7 +25,7 @@ export function ResultsBar({
 }: ResultsBarProps) {
     const t = useTranslations("ResultsBar");
     const tSearch = useTranslations("Search");
-    const activeSort = sort ?? "recent";
+    const activeSort = sort ?? "relevance";
 
     const handleSort = useCallback(
         (option: string) => {
