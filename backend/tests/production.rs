@@ -145,6 +145,45 @@ async fn get_search_filter_location(db: PgPool) {
     );
 }
 
+#[sqlx::test(fixtures("productions", "events", "locations", "spaces", "halls", "event_halls"))]
+#[test_log::test]
+async fn get_filter_location_by_uuid(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    // location UUID 10000000-...-0001 → space → hall → event 33333333 → production 11111111
+    let loc_id = "10000000-0000-0000-0000-000000000001";
+    let response = app
+        .get(&format!("/productions?location={loc_id}&limit=10"))
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 1, "expected exactly 1 production at this location");
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "11111111-1111-1111-1111-111111111111"
+    );
+}
+
+#[sqlx::test(fixtures("productions", "events", "locations", "spaces", "halls", "event_halls"))]
+#[test_log::test]
+async fn get_filter_location_by_uuid_no_match(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    // valid UUID that has no associated events
+    let unrelated_loc = "10000000-0000-0000-0000-000000000005";
+    let response = app
+        .get(&format!("/productions?location={unrelated_loc}&limit=10"))
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert!(
+        data.data.is_empty(),
+        "expected no productions for a location with no events"
+    );
+}
+
 #[sqlx::test(fixtures("productions", "events"))]
 #[test_log::test]
 async fn get_search_filter_date_from(db: PgPool) {

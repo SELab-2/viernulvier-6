@@ -69,6 +69,8 @@ const messages = {
             label: "Locations",
             showAll: "Show all",
         },
+        showMore: "Show more",
+        showLess: "Show less",
         year: {
             label: "Year",
             rangeMode: "Year range",
@@ -174,6 +176,7 @@ describe("ArchiveSidebar component", () => {
         for (const key of Array.from(mockSearchParams.keys())) {
             mockSearchParams.delete(key);
         }
+        window.history.pushState({}, "", "/");
     });
 
     afterEach(() => {
@@ -255,6 +258,111 @@ describe("ArchiveSidebar component", () => {
         expect(calledUrl).toContain("discipline=t1");
     });
 
+    it("clicking an active tag removes it from the URL param", async () => {
+        const user = userEvent.setup();
+        useGetFacetsMock.mockReturnValue({ data: mockFacets });
+        mockSearchParams.set("discipline", "t1");
+        window.history.pushState({}, "", "?discipline=t1");
+        renderWithIntl(<ArchiveSidebar />);
+
+        await user.click(screen.getByRole("button", { name: "Tag 1" }));
+
+        expect(mockReplace).toHaveBeenCalledOnce();
+        const calledUrl = mockReplace.mock.calls[0][0] as string;
+        expect(calledUrl).not.toContain("discipline");
+    });
+
+    it("location appears checked when its id is in URL params", () => {
+        mockSearchParams.set("location", "loc1");
+        useGetInfiniteLocationsMock.mockReturnValue({
+            data: {
+                pages: [
+                    {
+                        data: [
+                            {
+                                id: "loc1",
+                                name: "Venue A",
+                                address: "Street 1",
+                                sourceId: null,
+                                code: null,
+                                street: null,
+                                number: null,
+                                postalCode: null,
+                                city: null,
+                                country: null,
+                                phone1: null,
+                                phone2: null,
+                                isOwnedByViernulvier: null,
+                                uitdatabankId: null,
+                                slug: null,
+                                translations: [],
+                                coverImageUrl: null,
+                            },
+                        ],
+                        nextCursor: null,
+                    },
+                ],
+                pageParams: [null],
+            },
+            fetchNextPage: vi.fn(),
+            hasNextPage: false,
+            isFetchingNextPage: false,
+        });
+        renderWithIntl(<ArchiveSidebar />);
+
+        expect(screen.getByRole("button", { name: "Venue A" })).toHaveAttribute(
+            "aria-pressed",
+            "true"
+        );
+    });
+
+    it("clicking an active location removes it from the URL param", async () => {
+        const user = userEvent.setup();
+        mockSearchParams.set("location", "loc1");
+        window.history.pushState({}, "", "?location=loc1");
+        useGetInfiniteLocationsMock.mockReturnValue({
+            data: {
+                pages: [
+                    {
+                        data: [
+                            {
+                                id: "loc1",
+                                name: "Venue A",
+                                address: "Street 1",
+                                sourceId: null,
+                                code: null,
+                                street: null,
+                                number: null,
+                                postalCode: null,
+                                city: null,
+                                country: null,
+                                phone1: null,
+                                phone2: null,
+                                isOwnedByViernulvier: null,
+                                uitdatabankId: null,
+                                slug: null,
+                                translations: [],
+                                coverImageUrl: null,
+                            },
+                        ],
+                        nextCursor: null,
+                    },
+                ],
+                pageParams: [null],
+            },
+            fetchNextPage: vi.fn(),
+            hasNextPage: false,
+            isFetchingNextPage: false,
+        });
+        renderWithIntl(<ArchiveSidebar />);
+
+        await user.click(screen.getByRole("button", { name: "Venue A" }));
+
+        expect(mockReplace).toHaveBeenCalledOnce();
+        const calledUrl = mockReplace.mock.calls[0][0] as string;
+        expect(calledUrl).not.toContain("location");
+    });
+
     it("renders provided locations from the API hook and toggles them", async () => {
         const user = userEvent.setup();
         useGetInfiniteLocationsMock.mockReturnValue({
@@ -302,6 +410,82 @@ describe("ArchiveSidebar component", () => {
         expect(mockReplace).toHaveBeenCalledOnce();
         const calledUrl = mockReplace.mock.calls[0][0] as string;
         expect(calledUrl).toContain("location=loc1");
+    });
+
+    it("Show more button calls fetchNextPage when hasNextPage is true", async () => {
+        const user = userEvent.setup();
+        const fetchNextPage = vi.fn();
+        useGetInfiniteLocationsMock.mockReturnValue({
+            data: {
+                pages: [
+                    {
+                        data: Array.from({ length: 5 }, (_, i) => ({
+                            id: `loc${i}`,
+                            name: `Venue ${i}`,
+                            address: `Street ${i}`,
+                            sourceId: null,
+                            code: null,
+                            street: null,
+                            number: null,
+                            postalCode: null,
+                            city: null,
+                            country: null,
+                            phone1: null,
+                            phone2: null,
+                            isOwnedByViernulvier: null,
+                            uitdatabankId: null,
+                            slug: null,
+                            translations: [],
+                            coverImageUrl: null,
+                        })),
+                        nextCursor: "cursor-abc",
+                    },
+                ],
+                pageParams: [null],
+            },
+            fetchNextPage,
+            hasNextPage: true,
+            isFetchingNextPage: false,
+        });
+        renderWithIntl(<ArchiveSidebar />);
+
+        const showMore = screen.getByRole("button", { name: /show more/i });
+        await user.click(showMore);
+
+        expect(fetchNextPage).toHaveBeenCalledOnce();
+    });
+
+    it("switches back to year mode and removes date_mode param from URL", async () => {
+        const user = userEvent.setup();
+        mockSearchParams.set("date_mode", "exact");
+        renderWithIntl(<ArchiveSidebar minYear={2000} />);
+
+        await user.click(screen.getByRole("button", { name: "Year range" }));
+
+        expect(mockReplace).toHaveBeenCalledOnce();
+        const calledUrl = mockReplace.mock.calls[0][0] as string;
+        expect(calledUrl).not.toContain("date_mode");
+    });
+
+    it("switchToYear converts existing exact dates to year-boundary params", async () => {
+        const user = userEvent.setup();
+        mockSearchParams.set("date_mode", "exact");
+        mockSearchParams.set("date_from", "2018-03-15");
+        mockSearchParams.set("date_to", "2022-11-20");
+        window.history.pushState(
+            {},
+            "",
+            "?date_mode=exact&date_from=2018-03-15&date_to=2022-11-20"
+        );
+        renderWithIntl(<ArchiveSidebar minYear={2000} />);
+
+        await user.click(screen.getByRole("button", { name: "Year range" }));
+
+        expect(mockReplace).toHaveBeenCalledOnce();
+        const calledUrl = mockReplace.mock.calls[0][0] as string;
+        expect(calledUrl).not.toContain("date_mode");
+        expect(calledUrl).toContain("date_from=2018-01-01");
+        expect(calledUrl).toContain("date_to=2022-12-31");
     });
 
     it("clearAll strips filter params from URL and resets category state", async () => {
