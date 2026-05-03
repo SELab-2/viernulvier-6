@@ -35,7 +35,7 @@ function ProductionCard({ item, locale }: { item: EntityGridItem; locale: string
     );
 }
 
-function LocationCard({ item, locale }: { item: EntityGridItem; locale: string }) {
+function LocationCard({ item }: { item: EntityGridItem; locale: string }) {
     const t = useTranslations("Collections");
     const { data: location, isLoading } = useGetLocation(item.contentId);
 
@@ -52,7 +52,7 @@ function LocationCard({ item, locale }: { item: EntityGridItem; locale: string }
     );
 }
 
-function BlogpostCard({ item, locale }: { item: EntityGridItem; locale: string }) {
+function BlogpostCard({ item }: { item: EntityGridItem; locale: string }) {
     const t = useTranslations("Collections");
     const { data: article, isLoading } = useGetArticle(item.contentId);
 
@@ -69,7 +69,7 @@ function BlogpostCard({ item, locale }: { item: EntityGridItem; locale: string }
     );
 }
 
-function ArtistCard({ item, locale }: { item: EntityGridItem; locale: string }) {
+function ArtistCard({ item }: { item: EntityGridItem; locale: string }) {
     const t = useTranslations("Collections");
     const { data: artist, isLoading } = useGetArtist(item.contentId);
 
