@@ -1,4 +1,5 @@
 import { renderHook, waitFor, act } from "@testing-library/react";
+import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 
 import { queryKeys } from "@/hooks/api/query-keys";
@@ -7,6 +8,9 @@ import {
     useGetProduction,
     useCreateProduction,
 } from "@/hooks/api/useProductions";
+import type { components } from "@/types/api/generated";
+import { server } from "../../msw/server";
+import { apiUrl } from "../../utils/env";
 import { createQueryClientWrapper } from "../../utils/query-client";
 
 describe("useGetProductions", () => {
@@ -105,5 +109,57 @@ describe("useCreateProduction", () => {
         await waitFor(() => {
             expect(result.current.isSuccess).toBe(true);
         });
+    });
+});
+
+describe("useGetProductions sort param", () => {
+    it("forwards sort param to the API request", async () => {
+        const captured = { url: null as URL | null };
+
+        server.use(
+            http.get(apiUrl("/productions"), ({ request }) => {
+                captured.url = new URL(request.url);
+                return HttpResponse.json({
+                    data: [],
+                    next_cursor: null,
+                } satisfies components["schemas"]["PaginatedResponse_ProductionPayload"]);
+            })
+        );
+
+        const { wrapper } = createQueryClientWrapper();
+        const { result } = renderHook(() => useGetProductions({ params: { sort: "recent" } }), {
+            wrapper,
+        });
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        expect(captured.url).not.toBeNull();
+        expect(captured.url!.searchParams.get("sort")).toBe("recent");
+    });
+
+    it("omits sort param when not provided", async () => {
+        const captured = { url: null as URL | null };
+
+        server.use(
+            http.get(apiUrl("/productions"), ({ request }) => {
+                captured.url = new URL(request.url);
+                return HttpResponse.json({
+                    data: [],
+                    next_cursor: null,
+                } satisfies components["schemas"]["PaginatedResponse_ProductionPayload"]);
+            })
+        );
+
+        const { wrapper } = createQueryClientWrapper();
+        const { result } = renderHook(() => useGetProductions(), { wrapper });
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        expect(captured.url).not.toBeNull();
+        expect(captured.url!.searchParams.has("sort")).toBe(false);
     });
 });
