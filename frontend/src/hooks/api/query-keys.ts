@@ -85,4 +85,7 @@ export const queryKeys = {
                 ? (["taxonomy", "facets", entityType] as const)
                 : (["taxonomy", "facets"] as const),
     },
+    users: {
+        all: () => ["users"] as const,
+    },
 };

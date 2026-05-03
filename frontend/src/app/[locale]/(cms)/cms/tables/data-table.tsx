@@ -305,12 +305,13 @@ export function DataTable<TData, TValue>({
                                         className={cn(
                                             "bg-muted relative z-10 shadow-[0_1px_0_0_hsl(var(--border))]",
                                             compact ? "" : "sticky top-0",
-                                            header.column.id === "select" ||
-                                                header.column.id === "expander"
-                                                ? "w-px px-2 py-2 whitespace-nowrap"
-                                                : header.column.id === "actions"
-                                                  ? "text-background px-3 py-2 text-right font-mono text-[10px] tracking-[1.2px] uppercase"
-                                                  : "text-background max-w-[300px] px-3 py-2 font-mono text-[10px] tracking-[1.2px] break-words whitespace-normal uppercase"
+                                            header.column.id === "select"
+                                                ? "w-px px-4 py-2 whitespace-nowrap"
+                                                : header.column.id === "expander"
+                                                  ? "w-px px-2 py-2 whitespace-nowrap"
+                                                  : header.column.id === "actions"
+                                                    ? "text-background px-3 py-2 text-right font-mono text-[10px] tracking-[1.2px] uppercase"
+                                                    : "text-background max-w-[300px] px-3 py-2 font-mono text-[10px] tracking-[1.2px] break-words whitespace-normal uppercase"
                                         )}
                                     >
                                         {header.isPlaceholder
@@ -361,12 +362,13 @@ export function DataTable<TData, TValue>({
                                             <TableCell
                                                 key={cell.id}
                                                 className={cn(
-                                                    cell.column.id === "select" ||
-                                                        cell.column.id === "expander"
-                                                        ? "w-px px-2 whitespace-nowrap"
-                                                        : cell.column.id === "actions"
-                                                          ? "font-body px-3 py-2.5 text-right text-sm whitespace-nowrap"
-                                                          : "font-body max-w-[300px] px-3 py-2.5 text-sm break-words whitespace-normal"
+                                                    cell.column.id === "select"
+                                                        ? "w-px px-4 whitespace-nowrap"
+                                                        : cell.column.id === "expander"
+                                                          ? "w-px px-2 whitespace-nowrap"
+                                                          : cell.column.id === "actions"
+                                                            ? "font-body px-3 py-2.5 text-right text-sm whitespace-nowrap"
+                                                            : "font-body max-w-[300px] px-3 py-2.5 text-sm break-words whitespace-normal"
                                                 )}
                                             >
                                                 {flexRender(

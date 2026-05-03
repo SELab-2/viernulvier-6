@@ -204,6 +204,7 @@
         "ingest": "Ingest",
         "import": "Import",
         "importErrors": "Importfouten",
+        "users": "Gebruikers",
         "TabBar": {
             "overview": "CMS Overzicht",
             "content": "Inhoud beheren",
@@ -312,6 +313,8 @@
             "importDescription": "Importeer data van externe bronnen",
             "importErrors": "Importfouten",
             "importErrorsDescription": "Bekijk waarschuwingen en fouten uit de automatische importer",
+            "users": "Gebruikers",
+            "usersDescription": "Beheer gebruikers en rollen",
             "items": "items",
             "openSection": "Open sectie",
             "backToOverview": "Terug naar overzicht"
@@ -322,7 +325,8 @@
             "edition3": "Ed. 03",
             "edition4": "Ed. 04",
             "edition5": "Ed. 05",
-            "edition6": "Ed. 06"
+            "edition6": "Ed. 06",
+            "edition7": "Ed. 07"
         },
         "sidebar": {
             "contentManagement": "Content Management",
@@ -460,6 +464,32 @@
             "statusColumn": "Status",
             "dateRangeColumn": "Periode",
             "search": "Zoek artikels…"
+        },
+        "Users": {
+            "title": "Gebruikers",
+            "subtitle": "Beheer gebruikers en rollen",
+            "usersCount": "gebruikers",
+            "noUsers": "Nog geen gebruikers",
+            "newUser": "Nieuwe gebruiker",
+            "editUser": "Gebruiker bewerken",
+            "username": "Gebruikersnaam",
+            "email": "E-mail",
+            "password": "Wachtwoord",
+            "role": "Rol",
+            "edit": "Bewerken",
+            "delete": "Verwijderen",
+            "cancel": "Annuleren",
+            "save": "Opslaan",
+            "create": "Aanmaken",
+            "updateSuccess": "Gebruiker bijgewerkt.",
+            "updateError": "Bijwerken mislukt.",
+            "createSuccess": "Gebruiker aangemaakt.",
+            "createError": "Aanmaken mislukt.",
+            "deleteSuccess": "Gebruiker verwijderd.",
+            "deleteError": "Verwijderen mislukt.",
+            "deleteLastAdminError": "De laatste admin kan niet worden verwijderd.",
+            "lastAdminRoleHint": "De rol van de laatste admin kan niet worden gewijzigd.",
+            "deleteConfirm": "Weet je zeker dat je \"{name}\" wilt verwijderen?"
         },
         "Performers": {
             "title": "Uitvoerders",

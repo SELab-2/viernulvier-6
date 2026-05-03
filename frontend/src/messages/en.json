@@ -204,6 +204,7 @@
         "ingest": "Ingest",
         "import": "Import",
         "importErrors": "Import errors",
+        "users": "Users",
         "TabBar": {
             "overview": "CMS Overview",
             "content": "Manage content",
@@ -312,6 +313,8 @@
             "importDescription": "Import data from external sources",
             "importErrors": "Import errors",
             "importErrorsDescription": "Review warnings and errors from the automatic importer",
+            "users": "Users",
+            "usersDescription": "Manage users and roles",
             "items": "items",
             "openSection": "Open section",
             "backToOverview": "Back to overview"
@@ -322,7 +325,8 @@
             "edition3": "Ed. 03",
             "edition4": "Ed. 04",
             "edition5": "Ed. 05",
-            "edition6": "Ed. 06"
+            "edition6": "Ed. 06",
+            "edition7": "Ed. 07"
         },
         "sidebar": {
             "contentManagement": "Content Management",
@@ -460,6 +464,32 @@
             "statusColumn": "Status",
             "dateRangeColumn": "Date range",
             "search": "Search articles…"
+        },
+        "Users": {
+            "title": "Users",
+            "subtitle": "Manage users and roles",
+            "usersCount": "users",
+            "noUsers": "No users yet",
+            "newUser": "New user",
+            "editUser": "Edit user",
+            "username": "Username",
+            "email": "Email",
+            "password": "Password",
+            "role": "Role",
+            "edit": "Edit",
+            "delete": "Delete",
+            "cancel": "Cancel",
+            "save": "Save",
+            "create": "Create",
+            "updateSuccess": "User updated.",
+            "updateError": "Failed to update user.",
+            "createSuccess": "User created.",
+            "createError": "Failed to create user.",
+            "deleteSuccess": "User deleted.",
+            "deleteError": "Failed to delete user.",
+            "deleteLastAdminError": "Cannot delete the last admin user.",
+            "lastAdminRoleHint": "The last admin's role cannot be changed.",
+            "deleteConfirm": "Are you sure you want to delete \"{name}\"?"
         },
         "Performers": {
             "title": "Performers",

@@ -1,0 +1,4 @@
+CREATE TABLE revoked_users (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    revoked_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

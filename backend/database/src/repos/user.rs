@@ -46,9 +46,27 @@ impl<'a> UserRepo<'a> {
         Ok(count > 0)
     }
 
+    pub async fn all(&self) -> Result<Vec<User>, DatabaseError> {
+        Ok(User::select().fetch_all(self.db).await?)
+    }
+
+    pub async fn delete(&self, user_id: Uuid) -> Result<(), DatabaseError> {
+        let res = sqlx::query("DELETE FROM users WHERE id = $1")
+            .bind(user_id)
+            .execute(self.db)
+            .await?;
+        if res.rows_affected() == 0 {
+            return Err(DatabaseError::NotFound);
+        }
+        Ok(())
+    }
+
     pub async fn patch(&self, user_id: Uuid, patch_user: UserPatch) -> Result<User, DatabaseError> {
         let mut user = self.by_id(user_id).await?;
         user.username = patch_user.username;
+        if let Some(role) = patch_user.role {
+            user.role = role;
+        }
         Ok(user.update_all_fields(self.db).await?)
     }
 }
