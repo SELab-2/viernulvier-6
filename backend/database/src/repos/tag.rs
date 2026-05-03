@@ -1,10 +1,15 @@
+use std::collections::HashMap;
+
 use serde_json::Value as JsonValue;
 use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::{
     error::DatabaseError,
-    models::{entity_type::EntityType, tag::TaxonomyRow},
+    models::{
+        entity_type::EntityType,
+        tag::{EntityTagSlim, TaxonomyRow},
+    },
 };
 
 pub struct TagRepo<'a> {
@@ -59,6 +64,38 @@ impl<'a> TagRepo<'a> {
         .bind(entity_type)
         .fetch_all(self.db)
         .await?)
+    }
+
+    /// Returns slim tag projections grouped by entity id for a list of entities.
+    pub async fn slim_tags_for_entities(
+        &self,
+        entity_type: EntityType,
+        entity_ids: &[Uuid],
+    ) -> Result<HashMap<Uuid, Vec<EntityTagSlim>>, DatabaseError> {
+        if entity_ids.is_empty() {
+            return Ok(HashMap::new());
+        }
+
+        let rows: Vec<(Uuid, String, String)> = sqlx::query_as(
+            "SELECT tg.entity_id, t.slug, t.facet::text AS facet
+             FROM taggings tg
+             JOIN tags t ON t.id = tg.tag_id
+             WHERE tg.entity_type = $1 AND tg.entity_id = ANY($2)
+             ORDER BY tg.entity_id, t.facet, t.sort_order",
+        )
+        .bind(entity_type)
+        .bind(entity_ids)
+        .fetch_all(self.db)
+        .await?;
+
+        let mut grouped: HashMap<Uuid, Vec<EntityTagSlim>> = HashMap::new();
+        for (entity_id, slug, facet) in rows {
+            grouped
+                .entry(entity_id)
+                .or_default()
+                .push(EntityTagSlim { slug, facet });
+        }
+        Ok(grouped)
     }
 
     /// Returns pre-grouped facets+tags JSONB for a single entity via the SQL function.
