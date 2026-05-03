@@ -60,6 +60,20 @@ impl<'a> ArtistRepo<'a> {
         .ok_or(DatabaseError::NotFound)
     }
 
+    pub async fn by_production_id(&self, production_id: Uuid) -> Result<Vec<Artist>, DatabaseError> {
+        Ok(
+            sqlx::query_as::<_, Artist>(
+                "SELECT a.* FROM artists a \
+                 INNER JOIN production_artists pa ON pa.artist_id = a.id \
+                 WHERE pa.production_id = $1 \
+                 ORDER BY a.id ASC",
+            )
+            .bind(production_id)
+            .fetch_all(self.db)
+            .await?,
+        )
+    }
+
     pub async fn delete(&self, id: Uuid) -> Result<(), DatabaseError> {
         let result = sqlx::query("DELETE FROM artists WHERE id = $1")
             .bind(id)

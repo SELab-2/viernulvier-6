@@ -125,18 +125,28 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                    <Link
-                        href={`/productions/${production.id}`}
-                        className="font-display text-foreground mb-0.5 block text-[19px] leading-[1.1] font-bold tracking-[-0.02em] hover:underline sm:text-[22px]"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        {title}
-                    </Link>
-
                     {artist && (
-                        <div className="font-display text-foreground/38 mb-1.5 text-[19px] font-bold tracking-[-0.02em] sm:text-[22px]">
+                        <Link
+                            href={`/productions/${production.id}`}
+                            className="font-display text-foreground mb-0.5 block text-[19px] leading-[1.1] font-bold tracking-[-0.02em] hover:underline sm:text-[22px]"
+                            onClick={(e) => e.stopPropagation()}
+                        >
                             {artist}
+                        </Link>
+                    )}
+
+                    {artist ? (
+                        <div className="font-display text-foreground/40 mb-1.5 text-[19px] leading-[1.1] font-bold tracking-[-0.02em] italic sm:text-[22px]">
+                            {title}
                         </div>
+                    ) : (
+                        <Link
+                            href={`/productions/${production.id}`}
+                            className="font-display text-foreground mb-1.5 block text-[19px] leading-[1.1] font-bold tracking-[-0.02em] hover:underline sm:text-[22px]"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {title}
+                        </Link>
                     )}
 
                     {tagline && (

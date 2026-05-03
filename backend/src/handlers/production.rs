@@ -9,6 +9,7 @@ use uuid::Uuid;
 use crate::{
     AppState,
     dto::{
+        artist::ArtistPayload,
         event::EventPayload,
         paginated::PaginatedResponse,
         production::{ProductionPayload, ProductionPostPayload},
@@ -88,6 +89,29 @@ pub async fn get_one(
 )]
 pub async fn get_events(db: Database, Path(id): Path<Uuid>) -> JsonResponse<Vec<EventPayload>> {
     EventPayload::by_production(&db, id).await?.json()
+}
+
+#[utoipa::path(
+    method(get),
+    path = "/productions/{id}/artists",
+    tag = "Productions",
+    operation_id = "get_artists_by_production_id",
+    description = "Get all artists for a production",
+    params(
+        ("id" = Uuid, Path, description = "Production UUID")
+    ),
+    responses(
+        (status = 200, description = "Success", body = [ArtistPayload]),
+        (status = 404, description = "Not found")
+    )
+)]
+pub async fn get_artists(
+    State(state): State<AppState>,
+    db: Database,
+    Path(id): Path<Uuid>,
+) -> JsonResponse<Vec<ArtistPayload>> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    ArtistPayload::by_production_id(&db, id, public_url).await?.json()
 }
 
 #[utoipa::path(

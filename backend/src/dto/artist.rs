@@ -106,6 +106,35 @@ impl ArtistPayload {
         Ok(payload)
     }
 
+    pub async fn by_production_id(
+        db: &Database,
+        production_id: Uuid,
+        public_url: Option<&str>,
+    ) -> Result<Vec<Self>, AppError> {
+        let mut result: Vec<Self> = db
+            .artists()
+            .by_production_id(production_id)
+            .await?
+            .into_iter()
+            .map(Self::from)
+            .collect();
+
+        if let Some(base) = public_url {
+            let ids: Vec<Uuid> = result.iter().map(|a| a.id).collect();
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Artist, &ids)
+                .await?;
+            for a in &mut result {
+                if let Some(key) = cover_keys.get(&a.id) {
+                    a.cover_image_url = Some(build_cover_url(base, key));
+                }
+            }
+        }
+
+        Ok(result)
+    }
+
     pub async fn productions(db: &Database, id: Uuid) -> Result<Vec<ProductionPayload>, AppError> {
         Ok(db
             .productions()

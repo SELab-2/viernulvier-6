@@ -6,6 +6,7 @@ import {
     ArtistResponse,
     GetAllArtistsResponse,
     GetArtistByIdResponse,
+    GetArtistsByProductionIdResponse,
     GetProductionsByArtistIdResponse,
 } from "@/types/api/artist.api.types";
 import { mapProductions } from "@/mappers/production.mapper";
@@ -43,6 +44,21 @@ export const useGetArtist = (id: string, options?: { enabled?: boolean }) => {
     return useQuery({
         queryKey: queryKeys.artists.detail(id),
         queryFn: () => fetchArtistById(id),
+        enabled: Boolean(id) && (options?.enabled ?? true),
+    });
+};
+
+const fetchArtistsByProductionId = async (productionId: string): Promise<Artist[]> => {
+    const { data } = await api.get<GetArtistsByProductionIdResponse>(
+        `/productions/${productionId}/artists`
+    );
+    return mapArtists(data);
+};
+
+export const useGetArtistsByProduction = (id: string, options?: { enabled?: boolean }) => {
+    return useQuery({
+        queryKey: queryKeys.artists.byProduction(id),
+        queryFn: () => fetchArtistsByProductionId(id),
         enabled: Boolean(id) && (options?.enabled ?? true),
     });
 };
