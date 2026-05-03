@@ -2,10 +2,13 @@
 
 import { Link2, Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
 import { getLocalizedField } from "@/lib/locale";
 import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
+import { useFallbackLocation } from "@/hooks/api/useFallbackLocation";
+import { Link } from "@/i18n/routing";
 
 function formatDateFull(dateStr: string, locale: string): string {
     const date = new Date(dateStr);
@@ -42,6 +45,10 @@ export function ProductionSidebar({
         (tr) => tr.languageCode === "en" && tr.title
     );
     const productionTitle = getLocalizedField(production, "title", locale) ?? production.slug;
+
+    const primaryLocation = production.locations.find((loc) => loc.slug) ?? null;
+    const needsFallback = !primaryLocation;
+    const fallbackLocation = useFallbackLocation(events, needsFallback);
 
     const copyLink = () => {
         navigator.clipboard.writeText(window.location.href);
@@ -95,17 +102,29 @@ export function ProductionSidebar({
                         {hasEnglishTitle ? tProd("languageNlEn") : tProd("languageNl")}
                     </span>
                 </div>
-                <div className="border-muted/25 font-body flex items-baseline justify-between border-b py-1.5 text-[15px]">
+                <div className="font-body flex items-baseline justify-between py-1.5 text-[15px]">
                     <span className="text-muted-foreground font-mono text-[11px] tracking-[1.2px] uppercase">
                         Locatie
                     </span>
-                    <span className="text-foreground font-medium">De Vooruit</span>
-                </div>
-                <div className="font-body flex items-baseline justify-between py-1.5 text-[15px]">
-                    <span className="text-muted-foreground font-mono text-[11px] tracking-[1.2px] uppercase">
-                        Adres
-                    </span>
-                    <span className="text-foreground font-medium">Sint-Pietersnieuwstraat 23</span>
+                    {primaryLocation?.slug ? (
+                        <Link
+                            href={`/locations/${primaryLocation.slug}`}
+                            className="text-foreground group inline-flex items-center gap-0.5 font-medium underline decoration-dotted underline-offset-2 hover:decoration-solid"
+                        >
+                            {primaryLocation.name ?? "-"}
+                            <ArrowUpRight className="size-3 opacity-40 transition-opacity group-hover:opacity-100" />
+                        </Link>
+                    ) : fallbackLocation?.slug ? (
+                        <Link
+                            href={`/locations/${fallbackLocation.slug}`}
+                            className="text-foreground group inline-flex items-center gap-0.5 font-medium underline decoration-dotted underline-offset-2 hover:decoration-solid"
+                        >
+                            {fallbackLocation.name ?? "-"}
+                            <ArrowUpRight className="size-3 opacity-40 transition-opacity group-hover:opacity-100" />
+                        </Link>
+                    ) : (
+                        <span className="text-foreground font-medium">-</span>
+                    )}
                 </div>
             </div>
 
