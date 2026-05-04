@@ -6,6 +6,7 @@ use database::{
         production::{
             Production, ProductionCreate, ProductionTranslationData, ProductionWithTranslations,
         },
+        tag::EntityTagSlim,
     },
 };
 use serde::{Deserialize, Serialize};
@@ -44,8 +45,9 @@ impl ProductionPayload {
             Some(BASE64_URL_SAFE.encode(data))
         });
 
+        let ids: Vec<Uuid> = productions.iter().map(|p| p.id).collect();
+
         if let Some(base) = public_url {
-            let ids: Vec<Uuid> = productions.iter().map(|p| p.id).collect();
             let cover_keys = db
                 .media()
                 .cover_s3_keys_for_entities(EntityType::Production, &ids)
@@ -55,6 +57,14 @@ impl ProductionPayload {
                     p.cover_image_url = Some(build_cover_url(base, s3_key));
                 }
             }
+        }
+
+        let mut tags_by_id = db
+            .tags()
+            .slim_tags_for_entities(EntityType::Production, &ids)
+            .await?;
+        for p in &mut productions {
+            p.tags = tags_by_id.remove(&p.id).unwrap_or_default();
         }
 
         debug!("Returning {} productions", productions.len());
@@ -88,6 +98,12 @@ impl ProductionPayload {
             .into_iter()
             .map(|(loc_id, slug, name)| LocationSummary { id: loc_id, slug, name })
             .collect();
+
+        let mut tags_by_id = db
+            .tags()
+            .slim_tags_for_entities(EntityType::Production, &[id])
+            .await?;
+        payload.tags = tags_by_id.remove(&id).unwrap_or_default();
 
         Ok(payload)
     }
@@ -199,6 +215,11 @@ pub struct ProductionPayload {
     #[serde(default)]
     #[schema(read_only)]
     pub locations: Vec<LocationSummary>,
+
+    /// Slim tag projection for list contexts. Empty if the production has no taggings.
+    #[serde(default)]
+    #[schema(read_only)]
+    pub tags: Vec<EntityTagSlim>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -254,6 +275,7 @@ impl From<ProductionWithTranslations> for ProductionPayload {
             translations,
             cover_image_url: None,
             locations: vec![],
+            tags: vec![],
         }
     }
 }

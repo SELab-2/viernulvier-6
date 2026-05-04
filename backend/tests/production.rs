@@ -686,6 +686,42 @@ async fn delete_not_found(db: PgPool) {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
+#[sqlx::test(fixtures("productions", "production_taggings"))]
+#[test_log::test]
+async fn list_includes_slim_tags(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/productions?limit=10").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body: serde_json::Value = response.into_struct().await;
+    let data = body["data"].as_array().expect("data is an array");
+
+    let prod_1 = data
+        .iter()
+        .find(|p| p["id"] == "11111111-1111-1111-1111-111111111111")
+        .expect("production 1 present");
+    let tags = prod_1["tags"].as_array().expect("tags is an array");
+    let slugs: Vec<&str> = tags.iter().map(|t| t["slug"].as_str().unwrap()).collect();
+    assert!(slugs.contains(&"concert"));
+    assert!(slugs.contains(&"workshop"));
+    let facets: Vec<&str> = tags.iter().map(|t| t["facet"].as_str().unwrap()).collect();
+    assert!(facets.contains(&"discipline"));
+    assert!(facets.contains(&"format"));
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn list_untagged_production_has_empty_tags(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/productions?limit=10").await;
+    let body: serde_json::Value = response.into_struct().await;
+    let data = body["data"].as_array().unwrap();
+    for prod in data {
+        let tags = prod["tags"].as_array().expect("every row has a tags array");
+        assert!(tags.is_empty(), "expected empty tags for {prod}");
+    }
+}
+
 /// return a test payload for `ProductionPostPayload`
 fn mock_post_payload() -> ProductionPostPayload {
     serde_json::from_value(json!({
