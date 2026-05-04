@@ -9,14 +9,6 @@ interface MasonryGridProps {
     columns?: ColumnCount;
 }
 
-const COLUMN_CLASSES: Record<ColumnCount, string> = {
-    2: "columns-1 gap-3 sm:columns-2",
-    3: "columns-1 gap-3 sm:columns-2 lg:columns-3",
-    4: "columns-1 gap-3 sm:columns-2 md:columns-3 lg:columns-4",
-    5: "columns-1 gap-3 sm:columns-2 md:columns-3 lg:columns-5",
-    6: "columns-1 gap-3 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-6",
-};
-
 /**
  * Masonry layout using CSS columns.
  *
@@ -25,6 +17,13 @@ const COLUMN_CLASSES: Record<ColumnCount, string> = {
  *
  * The `columns` prop sets the max column count on large screens.
  */
-export function MasonryGrid({ children, columns = 3 }: MasonryGridProps) {
-    return <div className={COLUMN_CLASSES[columns]}>{children}</div>;
+export function MasonryGrid({ children, columns = 4 }: MasonryGridProps) {
+    const max = Math.min(Math.max(columns, 2), 6);
+    return (
+        <div
+            className={`columns-1 gap-3 sm:columns-2 md:columns-3 lg:columns-4 ${max >= 5 ? "xl:columns-5" : ""} ${max === 6 ? "2xl:columns-6" : ""}`}
+        >
+            {children}
+        </div>
+    );
 }

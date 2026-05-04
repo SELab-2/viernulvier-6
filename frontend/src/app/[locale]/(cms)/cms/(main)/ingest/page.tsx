@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Upload, Loader2, Trash2, HardDrive, Search } from "lucide-react";
+import { Upload, Loader2, Trash2, HardDrive, Search, LayoutGrid } from "lucide-react";
 import { PageHeader } from "@/components/cms/PageHeader";
 import { MasonryGrid, type ColumnCount } from "@/components/ingest/masonry-grid";
 import { MediaIngestCard } from "@/components/ingest/media-ingest-card";
@@ -211,22 +211,25 @@ export default function IngestPage() {
                     </SelectContent>
                 </Select>
                 {/* Column selector */}
-                <div className="flex items-center gap-0.5">
-                    {[2, 3, 4, 5, 6].map((n) => (
-                        <button
-                            key={n}
-                            type="button"
-                            onClick={() => setGridColumns(n as ColumnCount)}
-                            className={`h-8 w-8 cursor-pointer border font-mono text-[10px] transition-colors ${
-                                gridColumns === n
-                                    ? "bg-foreground text-background border-foreground"
-                                    : "border-border text-muted-foreground hover:border-foreground hover:text-foreground bg-transparent"
-                            }`}
-                        >
-                            {n}
-                        </button>
-                    ))}
-                </div>
+                <Select
+                    value={String(gridColumns)}
+                    onValueChange={(v) => setGridColumns(Number(v) as ColumnCount)}
+                >
+                    <SelectTrigger
+                        size="sm"
+                        className="w-[72px] rounded-none border font-mono text-[10px] tracking-wider uppercase"
+                    >
+                        <LayoutGrid className="mr-1.5 h-3 w-3 shrink-0" />
+                        <SelectValue>{gridColumns}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="rounded-none">
+                        {[2, 3, 4, 5, 6].map((n) => (
+                            <SelectItem key={n} value={String(n)}>
+                                {n}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
 
                 <div className="flex-1" />
                 <TooltipProvider>
