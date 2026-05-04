@@ -23,6 +23,22 @@ impl<'a> ProductionRepo<'a> {
         Self { db }
     }
 
+    pub async fn fetch_location_summaries_for(
+        &self,
+        production_id: Uuid,
+    ) -> Result<Vec<(Uuid, Option<String>, Option<String>)>, DatabaseError> {
+        Ok(sqlx::query_as::<_, (Uuid, Option<String>, Option<String>)>(
+            "SELECT l.id, l.slug, l.name
+             FROM locations l
+             INNER JOIN production_locations pl ON pl.location_id = l.id
+             WHERE pl.production_id = $1
+             ORDER BY l.name, l.id",
+        )
+        .bind(production_id)
+        .fetch_all(self.db)
+        .await?)
+    }
+
     pub async fn count(&self) -> Result<i64, DatabaseError> {
         let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM productions")
             .fetch_one(self.db)

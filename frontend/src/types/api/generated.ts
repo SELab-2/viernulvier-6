@@ -483,6 +483,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/locations/{id}/halls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get all halls belonging to a location */
+        get: operations["get_halls_for_location"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/media": {
         parameters: {
             query?: never;
@@ -1415,6 +1432,13 @@ export interface components {
             translations?: components["schemas"]["LocationTranslationPayload"][];
             uitdatabank_id?: string | null;
         };
+        /** @description Minimal location info embedded in a production response. */
+        LocationSummary: {
+            /** Format: uuid */
+            id: string;
+            name?: string | null;
+            slug?: string | null;
+        };
         /** @description The per-language content for a location. */
         LocationTranslationPayload: {
             description?: string | null;
@@ -1658,6 +1682,8 @@ export interface components {
                 eticket_info?: string | null;
                 /** Format: uuid */
                 id: string;
+                /** @description Locations associated with this production via production_locations (output-only). */
+                locations?: components["schemas"]["LocationSummary"][];
                 slug: string;
                 /** Format: int32 */
                 source_id?: number | null;
@@ -1687,6 +1713,8 @@ export interface components {
             eticket_info?: string | null;
             /** Format: uuid */
             id: string;
+            /** @description Locations associated with this production via production_locations (output-only). */
+            locations?: components["schemas"]["LocationSummary"][];
             slug: string;
             /** Format: int32 */
             source_id?: number | null;
@@ -3380,6 +3408,36 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_halls_for_location: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Location UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HallPayload"][];
                 };
             };
             /** @description Not found */

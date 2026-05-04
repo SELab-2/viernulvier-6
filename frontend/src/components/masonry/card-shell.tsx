@@ -77,7 +77,8 @@ export function CardShell({
     );
 
     if (href) {
-        return <Link href={href as string}>{inner}</Link>;
+        return <Link href={href}>{inner}</Link>;
     }
+
     return inner;
 }

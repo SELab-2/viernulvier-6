@@ -9,6 +9,7 @@ use uuid::Uuid;
 use crate::{
     AppState,
     dto::{
+        hall::HallPayload,
         location::{LocationPayload, LocationPostPayload},
         paginated::PaginatedResponse,
     },
@@ -157,4 +158,23 @@ pub async fn put(
     Json(location): Json<LocationPayload>,
 ) -> JsonResponse<LocationPayload> {
     Ok(Json(location.update(&db).await?))
+}
+
+#[utoipa::path(
+    method(get),
+    path = "/locations/{id}/halls",
+    tag = "Locations",
+    operation_id = "get_halls_for_location",
+    description = "Get all halls belonging to a location",
+    params(
+        ("id" = Uuid, Path, description = "Location UUID")
+    ),
+    responses(
+        (status = 200, description = "Success", body = Vec<HallPayload>),
+        (status = 404, description = "Not found")
+    )
+)]
+pub async fn get_halls(db: Database, Path(id): Path<Uuid>) -> JsonResponse<Vec<HallPayload>> {
+    db.locations().by_id(id).await?;
+    HallPayload::by_location_id(&db, id).await?.json()
 }

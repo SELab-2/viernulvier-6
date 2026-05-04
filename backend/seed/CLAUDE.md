@@ -20,6 +20,7 @@ locations → spaces → halls → productions → prices → price_ranks → ev
   → locations/location_creations  (patch)
   → locations/space_locations     (patch)
   → locations/location_deletions  (patch)
+  → locations/derive_slugs        (auto: slugify name for every location still missing a slug)
   → halls/hall_merges             (patch)
   → halls/hall_names              (patch)
   → halls/hall_expansions         (patch)

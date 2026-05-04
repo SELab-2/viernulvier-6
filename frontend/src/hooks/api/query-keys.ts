@@ -1,7 +1,8 @@
-import { PaginationParams, SearchPaginationParams } from "@/types/api/api.types";
+import { PaginationParams } from "@/types/api/api.types";
 import { EntityMediaParams, MediaSearchParams } from "@/types/models/media.types";
+import { ProductionSearchParams } from "@/types/models/production.types";
 
-type QueryKeyParams = PaginationParams | SearchPaginationParams | Record<string, unknown>;
+type QueryKeyParams = PaginationParams | ProductionSearchParams | Record<string, unknown>;
 
 const buildQueryKey = (base: readonly string[], params?: QueryKeyParams): readonly unknown[] => {
     if (!params || Object.keys(params).length === 0) return base;
@@ -18,7 +19,7 @@ export const queryKeys = {
     },
     locations: {
         all: (pagination?: PaginationParams) => buildQueryKey(["locations"], pagination),
-        infinite: (params?: Omit<SearchPaginationParams, "cursor">) =>
+        infinite: (params?: Omit<PaginationParams, "cursor">) =>
             params
                 ? (["locations", "infinite", params] as const)
                 : (["locations", "infinite"] as const),
@@ -26,12 +27,12 @@ export const queryKeys = {
         bySlug: (slug: string) => ["locations", "slug", slug] as const,
     },
     productions: {
-        all: (params?: SearchPaginationParams) => buildQueryKey(["productions"], params),
-        infinite: (params?: Omit<SearchPaginationParams, "cursor">) =>
+        all: (params?: ProductionSearchParams) => buildQueryKey(["productions"], params),
+        detail: (id: string) => ["productions", id] as const,
+        infinite: (params?: Omit<ProductionSearchParams, "cursor">) =>
             params
                 ? (["productions", "infinite", params] as const)
                 : (["productions", "infinite"] as const),
-        detail: (id: string) => ["productions", id] as const,
         events: (id: string) => ["productions", id, "events"] as const,
     },
     collections: {
@@ -64,7 +65,7 @@ export const queryKeys = {
         published: ["articles", "published"] as const,
         bySlug: (slug: string) => ["articles", "bySlug", slug] as const,
         byProduction: (id: string) => ["articles", "byProduction", id] as const,
-        cmsInfinite: (params?: Omit<SearchPaginationParams, "cursor">) =>
+        cmsInfinite: (params?: Omit<PaginationParams, "cursor">) =>
             params
                 ? (["articles", "cms", "infinite", params] as const)
                 : (["articles", "cms", "infinite"] as const),
