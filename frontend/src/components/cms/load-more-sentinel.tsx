@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { Spinner } from "@/components/ui/spinner";
 
 interface LoadMoreSentinelProps {
@@ -8,11 +8,11 @@ interface LoadMoreSentinelProps {
     onLoadMore: () => void;
 }
 
-function findScrollParent(el: Element): Element | null {
+function findScrollParent(el: Element): HTMLElement | null {
     let parent = el.parentElement;
     while (parent) {
         const { overflowY } = getComputedStyle(parent);
-        if (overflowY === "auto" || overflowY === "scroll") return parent;
+        if (overflowY === "auto" || overflowY === "scroll") return parent as HTMLElement;
         parent = parent.parentElement;
     }
     return null;
@@ -20,23 +20,29 @@ function findScrollParent(el: Element): Element | null {
 
 export function LoadMoreSentinel({ hasNextPage, onLoadMore }: LoadMoreSentinelProps) {
     const ref = useRef<HTMLDivElement>(null);
-
-    const loadMore = useCallback(() => onLoadMore(), [onLoadMore]);
+    const onLoadMoreRef = useRef(onLoadMore);
+    useLayoutEffect(() => {
+        onLoadMoreRef.current = onLoadMore;
+    });
 
     useEffect(() => {
+        if (!hasNextPage) return;
         const el = ref.current;
         if (!el) return;
+        const container = findScrollParent(el);
+        if (!container) return;
 
-        const root = findScrollParent(el);
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting) loadMore();
-            },
-            { threshold: 0, rootMargin: "400px", root }
-        );
-        observer.observe(el);
-        return () => observer.unobserve(el);
-    }, [loadMore]);
+        const check = () => {
+            const { scrollTop, scrollHeight, clientHeight } = container;
+            if (scrollHeight - scrollTop - clientHeight < 400) {
+                onLoadMoreRef.current();
+            }
+        };
+
+        check();
+        container.addEventListener("scroll", check, { passive: true });
+        return () => container.removeEventListener("scroll", check);
+    }, [hasNextPage]);
 
     if (!hasNextPage) return null;
 
