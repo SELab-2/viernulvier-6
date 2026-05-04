@@ -54,6 +54,12 @@ export const queryKeys = {
     },
     artists: {
         all: ["artists"] as const,
+        list: (params?: { q?: string }) =>
+            params?.q ? (["artists", "list", params] as const) : (["artists", "list"] as const),
+        infinite: (params?: { q?: string }) =>
+            params?.q
+                ? (["artists", "infinite", params] as const)
+                : (["artists", "infinite"] as const),
         detail: (id: string) => ["artists", id] as const,
         productions: (id: string) => ["artists", id, "productions"] as const,
         byProduction: (id: string) => ["artists", "byProduction", id] as const,

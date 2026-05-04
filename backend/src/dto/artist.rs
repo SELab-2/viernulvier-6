@@ -1,3 +1,4 @@
+use base64::{Engine, prelude::BASE64_URL_SAFE};
 use database::{
     Database,
     models::{artist::Artist, entity_type::EntityType},
@@ -7,7 +8,13 @@ use slug::slugify;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::{dto::production::ProductionPayload, dto::build_cover_url, error::AppError};
+use crate::{dto::paginated::PaginatedResponse, dto::production::ProductionPayload, dto::build_cover_url, error::AppError};
+
+#[derive(Serialize, Deserialize)]
+struct ArtistCursor {
+    name: String,
+    id: Uuid,
+}
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ArtistPayload {
@@ -65,14 +72,27 @@ impl ArtistPayload {
 }
 
 impl ArtistPayload {
-    pub async fn all(db: &Database, public_url: Option<&str>) -> Result<Vec<Self>, AppError> {
-        let mut result: Vec<Self> = db
-            .artists()
-            .all()
-            .await?
-            .into_iter()
-            .map(Self::from)
-            .collect();
+    pub async fn all(
+        db: &Database,
+        cursor_str: Option<String>,
+        limit: u32,
+        public_url: Option<&str>,
+        q: Option<&str>,
+    ) -> Result<PaginatedResponse<Self>, AppError> {
+        let cursor: Option<(String, Uuid)> = cursor_str.and_then(|b64| {
+            let bytes = BASE64_URL_SAFE.decode(b64).ok()?;
+            let c: ArtistCursor = serde_json::from_slice(&bytes).ok()?;
+            Some((c.name, c.id))
+        });
+
+        let (artists, next) = db.artists().paginated(limit, cursor, q).await?;
+        let mut result: Vec<Self> = artists.into_iter().map(Self::from).collect();
+
+        let next_cursor = next.and_then(|(name, id)| {
+            serde_json::to_vec(&ArtistCursor { name, id })
+                .ok()
+                .map(|v| BASE64_URL_SAFE.encode(v))
+        });
 
         if let Some(base) = public_url {
             let ids: Vec<Uuid> = result.iter().map(|a| a.id).collect();
@@ -87,7 +107,10 @@ impl ArtistPayload {
             }
         }
 
-        Ok(result)
+        Ok(PaginatedResponse {
+            data: result,
+            next_cursor,
+        })
     }
 
     pub async fn by_id(db: &Database, id: Uuid, public_url: Option<&str>) -> Result<Self, AppError> {

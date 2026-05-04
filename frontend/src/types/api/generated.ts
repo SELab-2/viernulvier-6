@@ -1031,6 +1031,10 @@ export interface components {
             name: string;
             slug: string;
         };
+        PaginatedResponse_ArtistPayload: {
+            data: components["schemas"]["ArtistPayload"][];
+            next_cursor?: string | null;
+        };
         AttachMediaRequest: {
             alt_text_en?: string | null;
             alt_text_fr?: string | null;
@@ -2233,7 +2237,11 @@ export interface operations {
     };
     get_all_artists: {
         parameters: {
-            query?: never;
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+                q?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2246,7 +2254,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ArtistPayload"][];
+                    "application/json": components["schemas"]["PaginatedResponse_ArtistPayload"];
                 };
             };
         };

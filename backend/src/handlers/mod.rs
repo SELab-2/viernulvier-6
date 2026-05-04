@@ -25,6 +25,7 @@ pub mod taxonomy;
 pub mod version;
 pub mod queries {
     pub mod article;
+    pub mod artist;
     pub mod hall;
     pub mod import_error;
     pub mod location;
