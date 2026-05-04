@@ -106,7 +106,7 @@ describe("useTaxonomyLookup", () => {
                 },
             ],
             isLoading: false,
-        } as ReturnType<typeof useTaxonomyModule.useGetFacets>);
+        } as unknown as ReturnType<typeof useTaxonomyModule.useGetFacets>);
 
         const { result } = renderHook(() => useTaxonomyLookup("nl"), { wrapper });
         expect(result.current.get("workshop")?.label).toBe("workshop");
