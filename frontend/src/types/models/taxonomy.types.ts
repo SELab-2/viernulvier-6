@@ -30,3 +30,8 @@ export type Facet = {
     translations: FacetTranslation[];
     tags: Tag[];
 };
+
+export type EntityTagSlim = {
+    slug: string;
+    facet: string;
+};
