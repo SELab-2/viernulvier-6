@@ -5,6 +5,7 @@ import { Link } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 
 import type { ArticleListItem } from "@/types/models/article.types";
+import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
 
 interface ArticleCardProps {
     article: ArticleListItem;
@@ -67,6 +68,12 @@ export function ArticleCard({ article, locale }: ArticleCardProps) {
                     <h3 className="font-display text-foreground mb-1 text-[20px] leading-[1.15] font-bold tracking-[-0.02em] sm:text-[24px]">
                         {article.title ?? t("untitled")}
                     </h3>
+
+                    {article.tags.length > 0 && (
+                        <div className="mt-2">
+                            <EntityTagStrip tags={article.tags} locale={locale} cap={4} />
+                        </div>
+                    )}
 
                     <span className="text-muted-foreground mt-auto pt-3 font-mono text-[9px] tracking-[1.4px] uppercase">
                         {formatDate(article.updatedAt, locale)}
