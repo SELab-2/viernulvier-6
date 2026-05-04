@@ -69,6 +69,7 @@ describe("article mapper", () => {
                 subjectPeriodStart: "1960-01-01",
                 subjectPeriodEnd: "1970-12-31",
                 coverImageUrl: null,
+                tags: [],
             });
         });
 

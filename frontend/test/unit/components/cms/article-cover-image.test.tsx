@@ -91,6 +91,7 @@ const mockArticle: Article = {
     subjectPeriodStart: null,
     subjectPeriodEnd: null,
     coverImageUrl: null,
+    tags: [],
 };
 
 const coverMedia: Media = {

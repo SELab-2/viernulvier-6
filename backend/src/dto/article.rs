@@ -34,6 +34,9 @@ pub struct ArticlePayload {
     #[serde(default)]
     #[schema(read_only, nullable)]
     pub cover_image_url: Option<String>,
+    #[serde(default)]
+    #[schema(read_only)]
+    pub tags: Vec<EntityTagSlim>,
 }
 
 impl From<Article> for ArticlePayload {
@@ -50,6 +53,7 @@ impl From<Article> for ArticlePayload {
             subject_period_start: a.subject_period_start,
             subject_period_end: a.subject_period_end,
             cover_image_url: None,
+            tags: vec![],
         }
     }
 }
@@ -68,14 +72,22 @@ impl ArticlePayload {
             }
         }
 
+        let mut tag_map = db
+            .tags()
+            .slim_tags_for_entities(EntityType::Article, &[id])
+            .await?;
+        if let Some(tags) = tag_map.remove(&id) {
+            payload.tags = tags;
+        }
+
         Ok(payload)
     }
 
     pub async fn by_slug_published(db: &Database, slug: &str, public_url: Option<&str>) -> Result<Self, AppError> {
         let mut payload: Self = db.articles().by_slug_published(slug).await?.into();
+        let id = payload.id;
 
         if let Some(base) = public_url {
-            let id = payload.id;
             let cover_keys = db
                 .media()
                 .cover_s3_keys_for_entities(EntityType::Article, &[id])
@@ -83,6 +95,14 @@ impl ArticlePayload {
             if let Some(key) = cover_keys.get(&id) {
                 payload.cover_image_url = Some(build_cover_url(base, key));
             }
+        }
+
+        let mut tag_map = db
+            .tags()
+            .slim_tags_for_entities(EntityType::Article, &[id])
+            .await?;
+        if let Some(tags) = tag_map.remove(&id) {
+            payload.tags = tags;
         }
 
         Ok(payload)

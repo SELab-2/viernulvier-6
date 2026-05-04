@@ -14,6 +14,7 @@ export type Article = {
     subjectPeriodStart: string | null;
     subjectPeriodEnd: string | null;
     coverImageUrl: string | null;
+    tags: EntityTagSlim[];
 };
 
 export type ArticleListItem = {
@@ -35,7 +36,7 @@ export type ArticleCreateInput = {
 
 export type ArticleUpdateInput = Omit<
     Article,
-    "createdAt" | "updatedAt" | "publishedAt" | "coverImageUrl"
+    "createdAt" | "updatedAt" | "publishedAt" | "coverImageUrl" | "tags"
 >;
 
 export type ArticleRelations = {

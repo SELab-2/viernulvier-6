@@ -34,6 +34,7 @@ export const mapArticle = (response: ArticleResponse): Article => ({
     subjectPeriodStart: toNullable(response.subject_period_start),
     subjectPeriodEnd: toNullable(response.subject_period_end),
     coverImageUrl: toNullable(response.cover_image_url),
+    tags: (response.tags ?? []).map((t) => ({ slug: t.slug, facet: t.facet })),
 });
 
 export const mapArticleListItem = (response: ArticleListResponse): ArticleListItem => ({

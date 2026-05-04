@@ -976,6 +976,7 @@ export interface components {
             subject_period_end?: string | null;
             /** Format: date */
             subject_period_start?: string | null;
+            tags?: components["schemas"]["EntityTagSlim"][];
             title?: string | null;
             /** Format: date-time */
             updated_at: string;
