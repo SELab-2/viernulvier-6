@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 
 import { useTaxonomyLookup } from "@/hooks/api/useTaxonomyLookup";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export type EntityTagStripProps = {
     tags: { slug: string; facet: string }[];
@@ -62,13 +63,32 @@ export function EntityTagStrip({
                 </span>
             ))}
             {hidden.length > 0 && (
-                <span
-                    data-testid="entity-tag-overflow"
-                    title={hidden.map((t) => t.label).join(", ")}
-                    className={`${CHIP_BASE} ${padding}`}
-                >
-                    +{hidden.length}
-                </span>
+                <TooltipProvider delayDuration={100}>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <span
+                                data-testid="entity-tag-overflow"
+                                title={hidden.map((t) => t.label).join(", ")}
+                                className={`${CHIP_BASE} ${padding} cursor-default`}
+                            >
+                                +{hidden.length}
+                            </span>
+                        </TooltipTrigger>
+                        <TooltipContent sideOffset={4}>
+                            <div className="flex max-w-[260px] flex-col gap-0.5">
+                                {hidden.map((tag) => (
+                                    <span
+                                        key={tag.slug}
+                                        data-testid="entity-tag-overflow-chip"
+                                        className="font-mono text-[10px] tracking-[1.1px] uppercase"
+                                    >
+                                        {tag.label}
+                                    </span>
+                                ))}
+                            </div>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             )}
         </div>
     );
