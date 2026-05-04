@@ -6,6 +6,7 @@ use database::{
         article::{Article, ArticleCreate, ArticleRelations, ArticleSearch, ArticleStatus},
         entity_type::EntityType,
         filtering::cursor::CursorData,
+        tag::EntityTagSlim,
     },
 };
 use serde::{Deserialize, Serialize};
@@ -151,6 +152,10 @@ pub struct ArticleListPayload {
     #[serde(default)]
     #[schema(read_only, nullable)]
     pub cover_image_url: Option<String>,
+    /// Slim tag projection for list contexts. Empty if the article has no taggings.
+    #[serde(default)]
+    #[schema(read_only)]
+    pub tags: Vec<EntityTagSlim>,
 }
 
 impl From<Article> for ArticleListPayload {
@@ -165,6 +170,7 @@ impl From<Article> for ArticleListPayload {
             subject_period_start: a.subject_period_start,
             subject_period_end: a.subject_period_end,
             cover_image_url: None,
+            tags: vec![],
         }
     }
 }
@@ -179,8 +185,9 @@ impl ArticleListPayload {
             .map(Self::from)
             .collect();
 
+        let ids: Vec<Uuid> = result.iter().map(|a| a.id).collect();
+
         if let Some(base) = public_url {
-            let ids: Vec<Uuid> = result.iter().map(|a| a.id).collect();
             let cover_keys = db
                 .media()
                 .cover_s3_keys_for_entities(EntityType::Article, &ids)
@@ -190,6 +197,14 @@ impl ArticleListPayload {
                     a.cover_image_url = Some(build_cover_url(base, key));
                 }
             }
+        }
+
+        let mut tags_by_id = db
+            .tags()
+            .slim_tags_for_entities(EntityType::Article, &ids)
+            .await?;
+        for a in &mut result {
+            a.tags = tags_by_id.remove(&a.id).unwrap_or_default();
         }
 
         Ok(result)
@@ -213,9 +228,9 @@ impl ArticleListPayload {
             .await?;
 
         let mut data: Vec<Self> = articles.into_iter().map(Self::from).collect();
+        let ids: Vec<Uuid> = data.iter().map(|a| a.id).collect();
 
         if let Some(base) = public_url {
-            let ids: Vec<Uuid> = data.iter().map(|a| a.id).collect();
             let cover_keys = db
                 .media()
                 .cover_s3_keys_for_entities(EntityType::Article, &ids)
@@ -225,6 +240,14 @@ impl ArticleListPayload {
                     a.cover_image_url = Some(build_cover_url(base, key));
                 }
             }
+        }
+
+        let mut tags_by_id = db
+            .tags()
+            .slim_tags_for_entities(EntityType::Article, &ids)
+            .await?;
+        for a in &mut data {
+            a.tags = tags_by_id.remove(&a.id).unwrap_or_default();
         }
 
         let next_cursor = next_cursor.and_then(|cursor| {
@@ -253,9 +276,9 @@ impl ArticleListPayload {
             .await?;
 
         let mut data: Vec<Self> = articles.into_iter().map(Self::from).collect();
+        let ids: Vec<Uuid> = data.iter().map(|a| a.id).collect();
 
         if let Some(base) = public_url {
-            let ids: Vec<Uuid> = data.iter().map(|a| a.id).collect();
             let cover_keys = db
                 .media()
                 .cover_s3_keys_for_entities(EntityType::Article, &ids)
@@ -265,6 +288,14 @@ impl ArticleListPayload {
                     a.cover_image_url = Some(build_cover_url(base, key));
                 }
             }
+        }
+
+        let mut tags_by_id = db
+            .tags()
+            .slim_tags_for_entities(EntityType::Article, &ids)
+            .await?;
+        for a in &mut data {
+            a.tags = tags_by_id.remove(&a.id).unwrap_or_default();
         }
 
         let next_cursor = next_cursor.and_then(|cursor| {

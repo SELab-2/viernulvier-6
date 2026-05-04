@@ -1,3 +1,4 @@
+#![allow(clippy::indexing_slicing)]
 use std::str::FromStr;
 
 use axum::http::StatusCode;
@@ -921,4 +922,36 @@ async fn search_cms_paginates(db: PgPool) {
     let page2: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
     assert_eq!(page2.data.len(), 1);
     assert_ne!(page2.data[0].slug, page1.data[0].slug);
+}
+
+#[sqlx::test(fixtures("articles", "article_taggings"))]
+#[test_log::test]
+async fn published_list_includes_slim_tags(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/articles?limit=10").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body: serde_json::Value = response.into_struct().await;
+    let data = body["data"].as_array().expect("data array present");
+
+    let article = data
+        .iter()
+        .find(|a| a["id"] == "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+        .expect("seeded article present");
+    let tags = article["tags"].as_array().expect("tags array");
+    assert_eq!(tags.len(), 1);
+    assert_eq!(tags[0]["slug"], "theatre");
+    assert_eq!(tags[0]["facet"], "discipline");
+}
+
+#[sqlx::test(fixtures("articles"))]
+#[test_log::test]
+async fn cms_list_includes_empty_tags_when_untagged(db: PgPool) {
+    let app = TestRouter::as_editor(db).await;
+    let response = app.get("/articles/cms").await;
+    let body: serde_json::Value = response.into_struct().await;
+    let data = body.as_array().expect("articles array");
+    for article in data {
+        assert!(article["tags"].as_array().expect("tags").is_empty());
+    }
 }
