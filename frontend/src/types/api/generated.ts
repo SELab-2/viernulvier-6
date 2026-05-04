@@ -954,6 +954,8 @@ export interface components {
             subject_period_end?: string | null;
             /** Format: date */
             subject_period_start?: string | null;
+            /** @description Slim tag projection for list contexts. Empty if the article has no taggings. */
+            tags?: components["schemas"]["EntityTagSlim"][];
             title?: string | null;
             /** Format: date-time */
             updated_at: string;
@@ -1178,6 +1180,14 @@ export interface components {
             /** Format: int32 */
             sort_order: number;
             translations: components["schemas"]["TagTranslationPayload"][];
+        };
+        /**
+         * @description Slim per-entity tag projection used by list endpoints. Just enough
+         *     for the frontend to look up the localized label in the taxonomy cache.
+         */
+        EntityTagSlim: {
+            facet: string;
+            slug: string;
         };
         /** @enum {string} */
         EntityType: "production" | "artist" | "article" | "media" | "location" | "event" | "series" | "collection";
@@ -1508,6 +1518,8 @@ export interface components {
                 subject_period_end?: string | null;
                 /** Format: date */
                 subject_period_start?: string | null;
+                /** @description Slim tag projection for list contexts. Empty if the article has no taggings. */
+                tags?: components["schemas"]["EntityTagSlim"][];
                 title?: string | null;
                 /** Format: date-time */
                 updated_at: string;
@@ -1670,6 +1682,8 @@ export interface components {
                 slug: string;
                 /** Format: int32 */
                 source_id?: number | null;
+                /** @description Slim tag projection for list contexts. Empty if the production has no taggings. */
+                tags?: components["schemas"]["EntityTagSlim"][];
                 translations?: components["schemas"]["ProductionTranslationPayload"][];
                 uitdatabank_theme?: string | null;
                 uitdatabank_type?: string | null;
@@ -1701,6 +1715,8 @@ export interface components {
             slug: string;
             /** Format: int32 */
             source_id?: number | null;
+            /** @description Slim tag projection for list contexts. Empty if the production has no taggings. */
+            tags?: components["schemas"]["EntityTagSlim"][];
             translations?: components["schemas"]["ProductionTranslationPayload"][];
             uitdatabank_theme?: string | null;
             uitdatabank_type?: string | null;
