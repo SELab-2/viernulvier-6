@@ -4122,13 +4122,6 @@ export interface operations {
                     "application/json": components["schemas"]["ArtistPayload"][];
                 };
             };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
         };
     };
     get_events_by_production_id: {
@@ -4151,13 +4144,6 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["EventPayload"][];
                 };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };
