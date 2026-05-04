@@ -9,6 +9,7 @@ import { makeActionsColumn } from "../actions-column";
 import { LocalizedText, resolveLocalized } from "@/components/ui/localized-text";
 import type { FieldDef } from "../edit-sheet";
 import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
+import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
 import { Action, ActionDisplay, ActionVariant } from "@/types/cms/actions";
 import type {
     Production,
@@ -293,6 +294,19 @@ export function makeProductionColumns(options: {
                     />
                 );
             },
+        },
+        {
+            id: "tags",
+            header: "Tags",
+            enableSorting: false,
+            cell: ({ row }) => (
+                <EntityTagStrip
+                    tags={row.original.tags}
+                    locale={locale}
+                    cap={3}
+                    variant="compact"
+                />
+            ),
         },
         makeActionsColumn<Production>({ actions }),
     ];
