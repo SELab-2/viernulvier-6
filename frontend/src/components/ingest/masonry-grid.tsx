@@ -1,7 +1,6 @@
 "use client";
 
 import { ReactNode } from "react";
-import { UniformCardsContext } from "@/components/collections/CollectionItemCard";
 
 export type ColumnCount = 2 | 3 | 4 | 5 | 6;
 
@@ -19,18 +18,13 @@ const COLUMN_CLASSES: Record<ColumnCount, string> = {
 };
 
 /**
- * Generic masonry layout using CSS columns.
+ * Masonry layout using CSS columns.
  *
- * The `columns` prop sets the maximum column count on large screens.
- * Responsive downscaling is automatic (always at least 1 column on mobile).
+ * Items flow top-to-bottom per column, creating a Pinterest-style
+ * masonry effect when cards have varying heights.
  *
- * UniformCardsContext forces uniform aspect ratios on the narrowest
- * breakpoint to avoid ragged column breaks.
+ * The `columns` prop sets the max column count on large screens.
  */
 export function MasonryGrid({ children, columns = 3 }: MasonryGridProps) {
-    return (
-        <UniformCardsContext.Provider value={true}>
-            <div className={COLUMN_CLASSES[columns]}>{children}</div>
-        </UniformCardsContext.Provider>
-    );
+    return <div className={COLUMN_CLASSES[columns]}>{children}</div>;
 }

@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useContext } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { Pencil, Trash2, ImageIcon } from "lucide-react";
 import { useLocale } from "next-intl";
 import { Media } from "@/types/models/media.types";
 import { resolveLocalized } from "@/components/ui/localized-text";
-import { UniformCardsContext } from "@/components/collections/CollectionItemCard";
 
 interface MediaIngestCardProps {
     media: Media;
@@ -23,7 +22,6 @@ function thumbnailUrl(media: Media): string | null {
 export function MediaIngestCard({ media, onView, onEdit, onDelete }: MediaIngestCardProps) {
     const [loaded, setLoaded] = useState(false);
     const locale = useLocale();
-    const uniform = useContext(UniformCardsContext);
     const url = thumbnailUrl(media);
     const primaryAlt = locale === "en" ? media.altTextEn : media.altTextNl;
     const fallbackAlt = locale === "en" ? media.altTextNl : media.altTextEn;
@@ -31,7 +29,6 @@ export function MediaIngestCard({ media, onView, onEdit, onDelete }: MediaIngest
 
     const naturalAspect =
         media.width && media.height && media.height > 0 ? media.width / media.height : 1;
-    const aspectRatio = uniform ? 1 : naturalAspect;
 
     const fileExt = media.mimeType.split("/").pop();
     const dimensions = media.width && media.height ? `${media.width}×${media.height}` : null;
@@ -44,7 +41,7 @@ export function MediaIngestCard({ media, onView, onEdit, onDelete }: MediaIngest
                 type="button"
                 onClick={onView}
                 className="relative block w-full cursor-zoom-in overflow-hidden"
-                style={{ aspectRatio }}
+                style={{ aspectRatio: naturalAspect }}
             >
                 {url ? (
                     <>
