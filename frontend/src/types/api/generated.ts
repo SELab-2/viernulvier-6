@@ -1031,10 +1031,6 @@ export interface components {
             name: string;
             slug: string;
         };
-        PaginatedResponse_ArtistPayload: {
-            data: components["schemas"]["ArtistPayload"][];
-            next_cursor?: string | null;
-        };
         AttachMediaRequest: {
             alt_text_en?: string | null;
             alt_text_fr?: string | null;
@@ -2254,7 +2250,17 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedResponse_ArtistPayload"];
+                    "application/json": {
+                        data: {
+                            /** @description Cover image URL resolved from the entity_media link (output-only). */
+                            readonly cover_image_url?: string | null;
+                            /** Format: uuid */
+                            id: string;
+                            name: string;
+                            slug: string;
+                        }[];
+                        next_cursor?: string | null;
+                    };
                 };
             };
         };
