@@ -891,7 +891,7 @@ impl SeedImporter {
             else {
                 continue;
             };
-            for fragment in text.split('/') {
+            for fragment in text.split(['/', '&', '|']) {
                 let name = fragment.trim();
                 if name.is_empty() {
                     continue;
