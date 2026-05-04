@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Upload, Loader2, Trash2, HardDrive, Search } from "lucide-react";
 import { PageHeader } from "@/components/cms/PageHeader";
-import { MasonryGrid } from "@/components/ingest/masonry-grid";
+import { MasonryGrid, type ColumnCount } from "@/components/ingest/masonry-grid";
 import { MediaIngestCard } from "@/components/ingest/media-ingest-card";
 import { MediaUploadDialog } from "@/components/ingest/media-upload-dialog";
 import { MediaEditSheet } from "@/components/ingest/media-edit-sheet";
@@ -43,6 +43,7 @@ export default function IngestPage() {
     const [spotlightIndex, setSpotlightIndex] = useState(0);
     const [searchQuery, setSearchQuery] = useState("");
     const [sort, setSort] = useState<"recent" | "oldest" | "relevance">("recent");
+    const [gridColumns, setGridColumns] = useState<ColumnCount>(4);
 
     const searchParams = useMemo(
         () => ({ q: searchQuery || undefined, sort }),
@@ -209,6 +210,24 @@ export default function IngestPage() {
                         <SelectItem value="relevance">{t("sortRelevance")}</SelectItem>
                     </SelectContent>
                 </Select>
+                {/* Column selector */}
+                <div className="flex items-center gap-0.5">
+                    {[2, 3, 4, 5, 6].map((n) => (
+                        <button
+                            key={n}
+                            type="button"
+                            onClick={() => setGridColumns(n as ColumnCount)}
+                            className={`h-8 w-8 cursor-pointer border font-mono text-[10px] transition-colors ${
+                                gridColumns === n
+                                    ? "bg-foreground text-background border-foreground"
+                                    : "border-border text-muted-foreground hover:border-foreground hover:text-foreground bg-transparent"
+                            }`}
+                        >
+                            {n}
+                        </button>
+                    ))}
+                </div>
+
                 <div className="flex-1" />
                 <TooltipProvider>
                     <div className="flex items-center gap-2">
@@ -269,7 +288,7 @@ export default function IngestPage() {
                     </div>
                 ) : (
                     <>
-                        <MasonryGrid>
+                        <MasonryGrid columns={gridColumns}>
                             {mediaItems.map((media) => (
                                 <div key={media.id} className="mb-3 break-inside-avoid">
                                     <MediaIngestCard
