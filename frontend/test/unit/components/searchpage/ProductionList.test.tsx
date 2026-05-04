@@ -57,6 +57,7 @@ describe("ProductionList component", () => {
             translations: [],
             coverImageUrl: null,
             locations: [],
+            tags: [],
         },
         {
             id: "2",
@@ -70,6 +71,7 @@ describe("ProductionList component", () => {
             translations: [],
             coverImageUrl: null,
             locations: [],
+            tags: [],
         },
     ];
 
