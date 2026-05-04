@@ -83,8 +83,7 @@ pub async fn get_one(
         ("id" = Uuid, Path, description = "Production UUID")
     ),
     responses(
-        (status = 200, description = "Success", body = [EventPayload]),
-        (status = 404, description = "Not found")
+        (status = 200, description = "Success", body = [EventPayload])
     )
 )]
 pub async fn get_events(db: Database, Path(id): Path<Uuid>) -> JsonResponse<Vec<EventPayload>> {
@@ -101,8 +100,7 @@ pub async fn get_events(db: Database, Path(id): Path<Uuid>) -> JsonResponse<Vec<
         ("id" = Uuid, Path, description = "Production UUID")
     ),
     responses(
-        (status = 200, description = "Success", body = [ArtistPayload]),
-        (status = 404, description = "Not found")
+        (status = 200, description = "Success", body = [ArtistPayload])
     )
 )]
 pub async fn get_artists(
