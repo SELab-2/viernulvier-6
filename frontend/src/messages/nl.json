@@ -753,5 +753,13 @@
             "artist": "ARTIEST",
             "media": "MEDIA"
         }
+    },
+    "ArtistPage": {
+        "eyebrow": "Artiest",
+        "loading": "Laden…",
+        "breadcrumbArchive": "Archief",
+        "breadcrumbArtists": "Artiesten",
+        "descriptionPlaceholder": "Geen beschrijving",
+        "contentPlaceholder": "Geen gekpppelde producties"
     }
 }

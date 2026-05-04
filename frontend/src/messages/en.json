@@ -753,5 +753,13 @@
             "artist": "ARTIST",
             "media": "MEDIA"
         }
+    },
+    "ArtistPage": {
+        "eyebrow": "Artist",
+        "loading": "Loading…",
+        "breadcrumbArchive": "Archive",
+        "breadcrumbArtists": "Artists",
+        "descriptionPlaceholder": "No description",
+        "contentPlaceholder": "No productions linked yet"
     }
 }
