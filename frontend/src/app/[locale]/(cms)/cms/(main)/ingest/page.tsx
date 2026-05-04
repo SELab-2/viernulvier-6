@@ -4,7 +4,8 @@ import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Upload, Loader2, Trash2, HardDrive, Search } from "lucide-react";
 import { PageHeader } from "@/components/cms/PageHeader";
-import { MediaMasonryGrid } from "@/components/ingest/media-masonry-grid";
+import { MasonryGrid } from "@/components/ingest/masonry-grid";
+import { MediaIngestCard } from "@/components/ingest/media-ingest-card";
 import { MediaUploadDialog } from "@/components/ingest/media-upload-dialog";
 import { MediaEditSheet } from "@/components/ingest/media-edit-sheet";
 import { ImageSpotlight } from "@/components/ui/image-spotlight";
@@ -268,12 +269,18 @@ export default function IngestPage() {
                     </div>
                 ) : (
                     <>
-                        <MediaMasonryGrid
-                            items={mediaItems}
-                            onView={handleView}
-                            onEdit={handleEdit}
-                            onDelete={handleDelete}
-                        />
+                        <MasonryGrid>
+                            {mediaItems.map((media) => (
+                                <div key={media.id} className="mb-3 break-inside-avoid">
+                                    <MediaIngestCard
+                                        media={media}
+                                        onView={() => handleView(media)}
+                                        onEdit={() => handleEdit(media)}
+                                        onDelete={() => handleDelete(media)}
+                                    />
+                                </div>
+                            ))}
+                        </MasonryGrid>
 
                         {/* Infinite scroll trigger */}
                         {hasNextPage && (
