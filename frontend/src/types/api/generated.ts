@@ -1750,6 +1750,8 @@ export interface components {
             tag_slugs: string[];
         };
         SeriesPayload: {
+            /** @description Cover image URL resolved from the entity_media link (output-only). */
+            readonly cover_image_url?: string | null;
             /** Format: date-time */
             created_at: string;
             /** Format: uuid */
@@ -3923,6 +3925,7 @@ export interface operations {
                 language?: string;
                 artist?: string;
                 location?: string;
+                series?: string;
                 date_from?: string;
                 date_to?: string;
                 sort?: "recent" | "oldest" | "relevance";

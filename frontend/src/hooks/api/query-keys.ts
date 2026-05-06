@@ -40,6 +40,12 @@ export const queryKeys = {
         detail: (id: string) => ["collections", id] as const,
         bySlug: (slug: string) => ["collections", "slug", slug] as const,
     },
+    series: {
+        all: ["series"] as const,
+        detail: (id: string) => ["series", id] as const,
+        bySlug: (slug: string) => ["series", "slug", slug] as const,
+        forProduction: (id: string) => ["series", "forProduction", id] as const,
+    },
     events: {
         all: (pagination?: PaginationParams) => buildQueryKey(["events"], pagination),
         detail: (id: string) => ["events", id] as const,
