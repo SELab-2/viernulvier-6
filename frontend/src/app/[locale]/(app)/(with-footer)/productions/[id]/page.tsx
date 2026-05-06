@@ -24,6 +24,7 @@ import { ProductionHero } from "@/components/productionpage/production-hero";
 import { ProductionArticle } from "@/components/productionpage/production-article";
 import { ProductionSidebar } from "@/components/productionpage/production-sidebar";
 import { ProductionRelated } from "@/components/productionpage/production-related";
+import { ProductionSeriesBlock } from "@/components/productionpage/production-series-block";
 import { ProductionArticles } from "@/components/productionpage/production-articles";
 import { Production, ProductionRow } from "@/types/models/production.types";
 
@@ -188,6 +189,9 @@ export default function ProductionPage({
 
             {/* Linked Articles */}
             <ProductionArticles articles={linkedArticles} locale={locale} />
+
+            {/* Part of Series */}
+            <ProductionSeriesBlock productionId={id} />
 
             {/* Related Section */}
             {relatedProductions.length > 0 && (

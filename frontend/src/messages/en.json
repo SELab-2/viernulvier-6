@@ -4,7 +4,7 @@
     },
     "Footer": {
         "address": "Kunstencentrum VIERNULVIER vzw · Sint-Pietersnieuwstraat 23 · 9000 Ghent",
-        "contact": "T. 09 267 28 20 · info@viernulvier.gent · BTW BE 0423.063.619"
+        "contact": "T. 09 267 28 20 · info@viernulvier.gent · VAT BE 0423.063.619"
     },
     "Header": {
         "logout": "Logout",
@@ -201,6 +201,7 @@
         "articles": "Articles",
         "performers": "Performers",
         "collections": "Collections",
+        "series": "Series",
         "ingest": "Ingest",
         "import": "Import",
         "importErrors": "Import errors",
@@ -208,6 +209,7 @@
             "overview": "CMS Overview",
             "content": "Manage content",
             "collections": "Collections",
+            "series": "Series",
             "ingest": "Ingest",
             "import": "Automatic import",
             "importErrors": "Import errors"
@@ -263,6 +265,7 @@
             "hallsSelected": "{count, plural, one {# hall} other {# halls}} selected",
             "articlesSelected": "{count, plural, one {# article} other {# articles}} selected",
             "collectionsSelected": "{count, plural, one {# collection} other {# collections}} selected",
+            "seriesSelected": "{count, plural, one {# series} other {# series}} selected",
             "importErrorsSelected": "{count, plural, one {# error} other {# errors}} selected",
             "bulkEdit": "Bulk edit",
             "delete": "Delete"
@@ -306,6 +309,8 @@
             "performersDescription": "Manage artists and performers",
             "collections": "Collections",
             "collectionsDescription": "Manage content collections",
+            "series": "Series",
+            "seriesDescription": "Manage series of productions",
             "ingest": "Ingest",
             "ingestDescription": "Upload and process archive materials",
             "import": "Import",
@@ -345,13 +350,13 @@
             "save": "Save",
             "saving": "Saving…",
             "saveSuccess": "Production saved.",
-            "saveFailed": "Failed to save production.",
+            "saveFailed": "Save failed.",
             "deleteConfirm": "Are you sure you want to delete \"{title}\"?",
             "deleteConfirmMultiple": "Are you sure you want to delete {count} productions?",
             "deleteSuccess": "Production deleted.",
             "deleteError": "Failed to delete production.",
             "preview": "Preview",
-            "hidePreview": "Hide Preview",
+            "hidePreview": "Hide preview",
             "previewLabel": "Preview",
             "generalSection": "General",
             "contentSection": "Content",
@@ -540,6 +545,27 @@
                 "location": "Location"
             }
         },
+        "Series": {
+            "title": "Series",
+            "eyebrow": "Series",
+            "newSeries": "New series",
+            "noSeries": "No series yet.",
+            "fieldName": "Name",
+            "fieldSubtitle": "Subtitle",
+            "fieldDescription": "Description",
+            "nameNl": "Name (NL)",
+            "nameEn": "Name (EN)",
+            "subtitleNl": "Subtitle (NL)",
+            "subtitleEn": "Subtitle (EN)",
+            "descriptionNl": "Description (NL)",
+            "descriptionEn": "Description (EN)",
+            "deleteConfirm": "Are you sure you want to delete \"{name}\"?",
+            "saveSuccess": "Series saved.",
+            "saveError": "Failed to save series.",
+            "deleteSuccess": "Series deleted.",
+            "deleteError": "Failed to delete series.",
+            "items": "{count, plural, one {# ITEM} other {# ITEMS}}"
+        },
         "Media": {
             "title": "Media",
             "selectMedia": "Select media",
@@ -567,6 +593,16 @@
             "detachError": "Failed to unlink media"
         },
         "CollectionCoverImage": {
+            "label": "Cover image",
+            "add": "Add cover image",
+            "edit": "Edit",
+            "remove": "Remove",
+            "setSuccess": "Cover image set.",
+            "setError": "Failed to set cover image.",
+            "removeSuccess": "Cover image removed.",
+            "removeError": "Failed to remove cover image."
+        },
+        "SeriesCoverImage": {
             "label": "Cover image",
             "add": "Add cover image",
             "edit": "Edit",
@@ -753,6 +789,17 @@
             "artist": "ARTIST",
             "media": "MEDIA"
         }
+    },
+    "Series": {
+        "sectionLabel": "SERIES",
+        "loading": "Loading series...",
+        "notFoundTitle": "Series not found",
+        "notFoundText": "This series does not exist or has been removed.",
+        "items": "{count, plural, one {# ITEM} other {# ITEMS}}",
+        "noProductions": "No productions in this series",
+        "viewGrid": "Grid",
+        "viewList": "List",
+        "partOf": "Part of"
     },
     "ArtistPage": {
         "eyebrow": "Artist",

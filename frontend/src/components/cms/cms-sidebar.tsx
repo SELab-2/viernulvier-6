@@ -13,6 +13,7 @@ import {
     FileUp,
     FolderArchive,
     TriangleAlert,
+    Layers,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -27,6 +28,7 @@ const navItems = [
     { key: "articles", href: "/cms/articles", icon: Newspaper, editionKey: "edition3" },
     { key: "performers", href: "/cms/performers", icon: Users, editionKey: "edition4" },
     { key: "collections", href: "/cms/collections", icon: FolderArchive, editionKey: "edition5" },
+    { key: "series", href: "/cms/series", icon: Layers, editionKey: "edition5" },
 ];
 
 const utilityItems = [

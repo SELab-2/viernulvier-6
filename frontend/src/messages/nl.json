@@ -201,6 +201,7 @@
         "articles": "Artikelen",
         "performers": "Uitvoerders",
         "collections": "Collecties",
+        "series": "Reeksen",
         "ingest": "Ingest",
         "import": "Import",
         "importErrors": "Importfouten",
@@ -208,6 +209,7 @@
             "overview": "CMS Overzicht",
             "content": "Inhoud beheren",
             "collections": "Collecties",
+            "series": "Reeksen",
             "ingest": "Importeren",
             "import": "Automatische import",
             "importErrors": "Importfouten"
@@ -263,6 +265,7 @@
             "hallsSelected": "{count, plural, one {# zaal} other {# zalen}} geselecteerd",
             "articlesSelected": "{count, plural, one {# artikel} other {# artikelen}} geselecteerd",
             "collectionsSelected": "{count, plural, one {# collectie} other {# collecties}} geselecteerd",
+            "seriesSelected": "{count, plural, one {# reeks} other {# reeksen}} geselecteerd",
             "importErrorsSelected": "{count, plural, one {# fout} other {# fouten}} geselecteerd",
             "bulkEdit": "Bulk bewerken",
             "delete": "Verwijderen"
@@ -306,6 +309,8 @@
             "performersDescription": "Beheer artiesten en uitvoerders",
             "collections": "Collecties",
             "collectionsDescription": "Beheer inhoudscollecties",
+            "series": "Reeksen",
+            "seriesDescription": "Beheer reeksen van producties",
             "ingest": "Ingest",
             "ingestDescription": "Upload en verwerk archiefmaterialen",
             "import": "Import",
@@ -540,6 +545,27 @@
                 "location": "Locatie"
             }
         },
+        "Series": {
+            "title": "Reeksen",
+            "eyebrow": "Reeks",
+            "newSeries": "Nieuwe reeks",
+            "noSeries": "Nog geen reeksen.",
+            "fieldName": "Naam",
+            "fieldSubtitle": "Ondertitel",
+            "fieldDescription": "Beschrijving",
+            "nameNl": "Naam (NL)",
+            "nameEn": "Naam (EN)",
+            "subtitleNl": "Ondertitel (NL)",
+            "subtitleEn": "Ondertitel (EN)",
+            "descriptionNl": "Beschrijving (NL)",
+            "descriptionEn": "Beschrijving (EN)",
+            "deleteConfirm": "Weet je zeker dat je \"{name}\" wilt verwijderen?",
+            "saveSuccess": "Reeks opgeslagen.",
+            "saveError": "Opslaan van reeks mislukt.",
+            "deleteSuccess": "Reeks verwijderd.",
+            "deleteError": "Verwijderen van reeks mislukt.",
+            "items": "{count, plural, one {# ITEM} other {# ITEMS}}"
+        },
         "Media": {
             "title": "Media",
             "selectMedia": "Media selecteren",
@@ -567,6 +593,16 @@
             "detachError": "Ontkoppelen van media mislukt"
         },
         "CollectionCoverImage": {
+            "label": "Omslagafbeelding",
+            "add": "Omslagafbeelding toevoegen",
+            "edit": "Bewerken",
+            "remove": "Verwijderen",
+            "setSuccess": "Omslagafbeelding ingesteld.",
+            "setError": "Omslagafbeelding instellen mislukt.",
+            "removeSuccess": "Omslagafbeelding verwijderd.",
+            "removeError": "Omslagafbeelding verwijderen mislukt."
+        },
+        "SeriesCoverImage": {
             "label": "Omslagafbeelding",
             "add": "Omslagafbeelding toevoegen",
             "edit": "Bewerken",
@@ -754,12 +790,23 @@
             "media": "MEDIA"
         }
     },
+    "Series": {
+        "sectionLabel": "REEKS",
+        "loading": "Reeks laden...",
+        "notFoundTitle": "Reeks niet gevonden",
+        "notFoundText": "Deze reeks bestaat niet of is verwijderd.",
+        "items": "{count, plural, one {# ITEM} other {# ITEMS}}",
+        "noProductions": "Geen producties in deze reeks",
+        "viewGrid": "Raster",
+        "viewList": "Lijst",
+        "partOf": "Maakt deel uit van"
+    },
     "ArtistPage": {
         "eyebrow": "Artiest",
         "loading": "Laden…",
         "breadcrumbArchive": "Archief",
         "breadcrumbArtists": "Artiesten",
         "descriptionPlaceholder": "Geen beschrijving",
-        "contentPlaceholder": "Geen gekpppelde producties"
+        "contentPlaceholder": "Geen gekoppelde producties"
     }
 }
