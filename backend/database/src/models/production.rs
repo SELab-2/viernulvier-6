@@ -83,6 +83,7 @@ pub struct ProductionFilters {
     pub facets: FacetFilters,
     // search on location
     pub locations: Option<Vec<String>>,
+    pub series: Option<String>,
     // date of a production's events
     pub date_from: Option<NaiveDate>,
     pub date_to: Option<NaiveDate>,

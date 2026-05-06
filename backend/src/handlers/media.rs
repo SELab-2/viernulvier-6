@@ -722,6 +722,7 @@ fn parse_entity_type(s: &str) -> Result<EntityType, AppError> {
         "event" => Ok(EntityType::Event),
         "location" => Ok(EntityType::Location),
         "collection" => Ok(EntityType::Collection),
+        "series" => Ok(EntityType::Series),
         _ => Err(AppError::PayloadError(format!("invalid entity type: {s}"))),
     }
 }

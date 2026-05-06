@@ -1,13 +1,16 @@
 use chrono::{DateTime, Utc};
 use database::{
     Database,
-    models::series::{SeriesCreate, SeriesTranslationData, SeriesWithTranslations},
+    models::{
+        entity_type::EntityType,
+        series::{SeriesCreate, SeriesTranslationData, SeriesWithTranslations},
+    },
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::error::AppError;
+use crate::{dto::build_cover_url, error::AppError};
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct SeriesTranslationPayload {
@@ -27,6 +30,10 @@ pub struct SeriesPayload {
     pub period_end: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    /// Cover image URL resolved from the entity_media link (output-only).
+    #[serde(default)]
+    #[schema(read_only, nullable)]
+    pub cover_image_url: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -57,6 +64,7 @@ fn build_payload(
     production_ids: Vec<Uuid>,
     period_start: Option<DateTime<Utc>>,
     period_end: Option<DateTime<Utc>>,
+    cover_image_url: Option<String>,
 ) -> SeriesPayload {
     SeriesPayload {
         id: swt.series.id,
@@ -76,11 +84,12 @@ fn build_payload(
         period_end,
         created_at: swt.series.created_at,
         updated_at: swt.series.updated_at,
+        cover_image_url,
     }
 }
 
 impl SeriesPayload {
-    pub async fn all(db: &Database) -> Result<Vec<Self>, AppError> {
+    pub async fn all(db: &Database, public_url: Option<&str>) -> Result<Vec<Self>, AppError> {
         let all_series = db.series().all().await?;
 
         if all_series.is_empty() {
@@ -91,23 +100,38 @@ impl SeriesPayload {
         let mut production_map = db.series().production_ids_for_many(&ids).await?;
         let mut period_map = db.series().derived_periods_for(&ids).await?;
 
+        let cover_keys = if public_url.is_some() {
+            db.media()
+                .cover_s3_keys_for_entities(EntityType::Series, &ids)
+                .await?
+        } else {
+            Default::default()
+        };
+
         Ok(all_series
             .into_iter()
             .map(|swt| {
                 let id = swt.series.id;
                 let prod_ids = production_map.remove(&id).unwrap_or_default();
                 let period = period_map.remove(&id);
+                let cover_image_url = public_url.and_then(|base| {
+                    cover_keys
+                        .get(&id)
+                        .map(|key| build_cover_url(base, key))
+                });
+
                 build_payload(
                     swt,
                     prod_ids,
                     period.as_ref().and_then(|p| p.period_start),
                     period.as_ref().and_then(|p| p.period_end),
+                    cover_image_url,
                 )
             })
             .collect())
     }
 
-    pub async fn by_slug(db: &Database, slug: &str) -> Result<Self, AppError> {
+    pub async fn by_slug(db: &Database, slug: &str, public_url: Option<&str>) -> Result<Self, AppError> {
         let swt = db.series().by_slug(slug).await?.ok_or(AppError::NotFound)?;
 
         let id = swt.series.id;
@@ -115,15 +139,26 @@ impl SeriesPayload {
         let period_map = db.series().derived_periods_for(&[id]).await?;
         let period = period_map.get(&id);
 
+        let cover_image_url = if let Some(base) = public_url {
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Series, &[id])
+                .await?;
+            cover_keys.get(&id).map(|key| build_cover_url(base, key))
+        } else {
+            None
+        };
+
         Ok(build_payload(
             swt,
             production_ids,
             period.and_then(|p| p.period_start),
             period.and_then(|p| p.period_end),
+            cover_image_url,
         ))
     }
 
-    pub async fn for_production(db: &Database, production_id: Uuid) -> Result<Vec<Self>, AppError> {
+    pub async fn for_production(db: &Database, production_id: Uuid, public_url: Option<&str>) -> Result<Vec<Self>, AppError> {
         let all_series = db.series().series_for_production(production_id).await?;
 
         if all_series.is_empty() {
@@ -134,23 +169,38 @@ impl SeriesPayload {
         let mut production_map = db.series().production_ids_for_many(&ids).await?;
         let mut period_map = db.series().derived_periods_for(&ids).await?;
 
+        let cover_keys = if public_url.is_some() {
+            db.media()
+                .cover_s3_keys_for_entities(EntityType::Series, &ids)
+                .await?
+        } else {
+            Default::default()
+        };
+
         Ok(all_series
             .into_iter()
             .map(|swt| {
                 let id = swt.series.id;
                 let prod_ids = production_map.remove(&id).unwrap_or_default();
                 let period = period_map.remove(&id);
+                let cover_image_url = public_url.and_then(|base| {
+                    cover_keys
+                        .get(&id)
+                        .map(|key| build_cover_url(base, key))
+                });
+
                 build_payload(
                     swt,
                     prod_ids,
                     period.as_ref().and_then(|p| p.period_start),
                     period.as_ref().and_then(|p| p.period_end),
+                    cover_image_url,
                 )
             })
             .collect())
     }
 
-    pub async fn update(self, db: &Database) -> Result<Self, AppError> {
+    pub async fn update(self, db: &Database, public_url: Option<&str>) -> Result<Self, AppError> {
         if db
             .series()
             .slug_exists_excluding(&self.slug, self.id)
@@ -174,11 +224,22 @@ impl SeriesPayload {
         let period_map = db.series().derived_periods_for(&[id]).await?;
         let period = period_map.get(&id);
 
+        let cover_image_url = if let Some(base) = public_url {
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Series, &[id])
+                .await?;
+            cover_keys.get(&id).map(|key| build_cover_url(base, key))
+        } else {
+            None
+        };
+
         Ok(build_payload(
             swt,
             production_ids,
             period.and_then(|p| p.period_start),
             period.and_then(|p| p.period_end),
+            cover_image_url,
         ))
     }
 
@@ -204,6 +265,6 @@ impl SeriesPostPayload {
             .series()
             .insert(SeriesCreate { slug: self.slug }, translations)
             .await?;
-        Ok(build_payload(swt, vec![], None, None))
+        Ok(build_payload(swt, vec![], None, None, None))
     }
 }

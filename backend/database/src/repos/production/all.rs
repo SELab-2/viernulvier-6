@@ -81,6 +81,7 @@ impl<'a> ProductionRepo<'a> {
             .apply_facet_filters(EntityType::Production, "pt.production_id", &filters.facets);
 
         apply_date_filters(&mut query, "pt.production_id", filters);
+        apply_series_filter(&mut query, "pt.production_id", filters);
 
         if let Some(ref cursor) = cursor {
             match filters.sort {
@@ -191,6 +192,9 @@ impl<'a> ProductionRepo<'a> {
         // date filters
         apply_date_filters(&mut query, "p.id", filters);
 
+        // series filter
+        apply_series_filter(&mut query, "p.id", filters);
+
         query
             .push(format_args!(" ORDER BY p.id {order_direction} LIMIT "))
             .push_bind(limit);
@@ -214,10 +218,10 @@ impl<'a> ProductionRepo<'a> {
     }
 }
 
-fn apply_date_filters(
-    query: &mut QueryBuilder<Postgres>,
+fn apply_date_filters<'a>(
+    query: &mut QueryBuilder<'a, Postgres>,
     id_column: &str,
-    filters: &ProductionFilters,
+    filters: &'a ProductionFilters,
 ) {
     if filters.date_from.is_some() || filters.date_to.is_some() {
         query
@@ -233,5 +237,21 @@ fn apply_date_filters(
         }
 
         query.push(" ) ");
+    }
+}
+
+fn apply_series_filter<'a>(
+    query: &mut QueryBuilder<'a, Postgres>,
+    id_column: &str,
+    filters: &'a ProductionFilters,
+) {
+    if let Some(ref series_slug) = filters.series {
+        query
+            .push(" AND EXISTS (SELECT 1 FROM series_productions sp ")
+            .push(" INNER JOIN series s ON s.id = sp.series_id ")
+            .push(format_args!(" WHERE sp.production_id = {id_column} "))
+            .push(" AND s.slug = ")
+            .push_bind(series_slug)
+            .push(" ) ");
     }
 }

@@ -24,6 +24,8 @@ pub struct ProductionSearchQuery {
     pub artist: Option<String>,
     #[param(value_type = String, required = false)]
     pub location: Option<String>,
+    #[param(value_type = String, required = false)]
+    pub series: Option<String>,
     #[param(value_type = NaiveDate, required = false)]
     pub date_from: Option<NaiveDate>,
     #[param(value_type = NaiveDate, required = false)]
@@ -46,6 +48,7 @@ impl From<ProductionSearchQuery> for ProductionFilters {
                 languages:      value.language.as_deref().map(split_strip),
             },
             locations: value.location.as_deref().map(split_strip),
+            series: value.series,
             date_from: value.date_from,
             date_to: value.date_to,
             sort: value.sort.unwrap_or_default().into(),

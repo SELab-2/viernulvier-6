@@ -1,8 +1,9 @@
-use axum::{Json, extract::Path, http::StatusCode};
+use axum::{Json, extract::{Path, State}, http::StatusCode};
 use database::Database;
 use uuid::Uuid;
 
 use crate::{
+    AppState,
     dto::series::{SeriesPayload, SeriesPostPayload, SeriesProductionsPayload},
     error::{AppError, ErrorResponse},
     handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
@@ -18,8 +19,12 @@ use crate::{
         (status = 200, description = "Success", body = [SeriesPayload])
     )
 )]
-pub async fn get_all(db: Database) -> JsonResponse<Vec<SeriesPayload>> {
-    SeriesPayload::all(&db).await?.json()
+pub async fn get_all(
+    State(state): State<AppState>,
+    db: Database,
+) -> JsonResponse<Vec<SeriesPayload>> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    SeriesPayload::all(&db, public_url).await?.json()
 }
 
 #[utoipa::path(
@@ -36,8 +41,13 @@ pub async fn get_all(db: Database) -> JsonResponse<Vec<SeriesPayload>> {
         (status = 404, description = "Not found")
     )
 )]
-pub async fn get_one(db: Database, Path(slug): Path<String>) -> JsonResponse<SeriesPayload> {
-    SeriesPayload::by_slug(&db, &slug).await?.json()
+pub async fn get_one(
+    State(state): State<AppState>,
+    db: Database,
+    Path(slug): Path<String>,
+) -> JsonResponse<SeriesPayload> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    SeriesPayload::by_slug(&db, &slug, public_url).await?.json()
 }
 
 #[utoipa::path(
@@ -54,10 +64,12 @@ pub async fn get_one(db: Database, Path(slug): Path<String>) -> JsonResponse<Ser
     )
 )]
 pub async fn get_for_production(
+    State(state): State<AppState>,
     db: Database,
     Path(id): Path<Uuid>,
 ) -> JsonResponse<Vec<SeriesPayload>> {
-    SeriesPayload::for_production(&db, id).await?.json()
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    SeriesPayload::for_production(&db, id, public_url).await?.json()
 }
 
 #[utoipa::path(
@@ -96,8 +108,13 @@ pub async fn post(
         ("cookie_auth" = [])
     )
 )]
-pub async fn put(db: Database, Json(series): Json<SeriesPayload>) -> JsonResponse<SeriesPayload> {
-    series.update(&db).await?.json()
+pub async fn put(
+    State(state): State<AppState>,
+    db: Database,
+    Json(series): Json<SeriesPayload>,
+) -> JsonResponse<SeriesPayload> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    series.update(&db, public_url).await?.json()
 }
 
 #[utoipa::path(
@@ -142,6 +159,7 @@ pub async fn delete(db: Database, Path(slug): Path<String>) -> StatusResponse {
     )
 )]
 pub async fn add_productions(
+    State(state): State<AppState>,
     db: Database,
     Path(slug): Path<String>,
     Json(payload): Json<SeriesProductionsPayload>,
@@ -156,7 +174,8 @@ pub async fn add_productions(
         .add_productions(swt.series.id, &payload.production_ids)
         .await?;
 
-    SeriesPayload::by_slug(&db, &slug).await?.json()
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    SeriesPayload::by_slug(&db, &slug, public_url).await?.json()
 }
 
 #[utoipa::path(
