@@ -1,0 +1,183 @@
+---
+title: Patch Reference
+description: All normalisation patch file formats and their effects.
+---
+
+# Patch Reference
+
+All files live in `backend/seed/normalization/` and are JSON arrays. Unknown fields (e.g. `note`)
+are silently ignored, so you can always add a `"note"` for human reference. A missing file is
+skipped with a warning, not an error.
+
+Source IDs come from the `@id` field in the raw JSON
+(`/api/v1/halls/42` → source_id `42`). Use the relevant `backend/seed/raw/*.json` file to look
+up IDs.
+
+---
+
+## `location_names.json`
+
+Overwrites the `name` column on a location row.
+
+```json
+{ "source_id": 33, "name": "de Bijloke" }
+```
+
+---
+
+## `location_creations.json`
+
+Creates a new location and assigns spaces to it. Use when a known venue has no location record in
+the raw API data.
+
+`name` and `slug` are required. `slug` must be unique and kebab-case. `space_source_ids` defaults
+to `[]`. Address fields are optional.
+
+```json
+{
+  "name": "De Krook",
+  "slug": "de-krook",
+  "city": "Gent",
+  "space_source_ids": [96]
+}
+```
+
+---
+
+## `space_locations.json`
+
+Points a space at a different location than the API returned.
+
+```json
+{ "source_id": 14, "location_source_id": 1, "note": "Dansstudio → De Vooruit" }
+```
+
+---
+
+## `location_deletions.json`
+
+Deletes a location. Because `spaces.location_id` is `ON DELETE CASCADE`, any spaces (and their
+halls) under the deleted location are also removed. Only use when the location has no spaces, or
+you intend to drop them too.
+
+Applied after `space_locations` patches, so re-pointed spaces are already moved before the DELETE.
+
+```json
+{ "source_id": 88, "note": "Duplicate De Vooruit — merged into source_id 1" }
+```
+
+---
+
+## `hall_merges.json`
+
+Merges two duplicate halls. Re-points all `event_halls` rows from the removed hall to the kept
+hall, then deletes the removed hall.
+
+```json
+{ "keep_source_id": 8, "remove_source_id": 227, "note": "Concertzaal duplicate" }
+```
+
+---
+
+## `hall_names.json`
+
+Overwrites the `name` column on a hall. Applied after merges, so the surviving hall gets the
+clean name.
+
+```json
+{ "source_id": 351, "name": "Kraakhuis" }
+```
+
+---
+
+## `hall_expansions.json`
+
+Dissolves a combo hall (e.g. "Concertzaal + Balzaal") into its component halls. Copies all events
+from the combo to each component, then deletes the combo.
+
+```json
+{ "combo_source_id": 291, "component_source_ids": [8, 10], "note": "Concertzaal + Balzaal" }
+```
+
+---
+
+## `hall_deletions.json`
+
+Removes a hall and all its `event_halls` links. Use for test records or catch-all entries with no
+archive value.
+
+```json
+{ "source_id": 999 }
+```
+
+---
+
+## `genre_tag_mappings.json`
+
+Maps a raw genre (by source_id from `seed/raw/genres.json`) to a tag slug + facet. For each
+production, every genre link is resolved and a `taggings` row is inserted. Unmapped genres are
+skipped.
+
+`facet` must be one of: `discipline`, `format`, `theme`, `audience`, `accessibility`, `language`.
+
+```json
+{ "genre_source_id": 73, "tag_slug": "theatre", "facet": "discipline", "note": "Theater" }
+```
+
+---
+
+## `uitdatabank_theme_mappings.json`
+
+Maps a UIT databank theme URL to a tag slug + facet. Runs after genre mappings as a gap-filler —
+`ON CONFLICT DO NOTHING` ensures genres always take precedence.
+
+```json
+{ "theme_source_id": 4, "tag_slug": "concert", "facet": "discipline", "note": "pop en rock" }
+```
+
+---
+
+## `genre_location_mappings.json`
+
+Maps a genre source_id to a location, creating rows in the `production_locations` junction table.
+Use `location_source_id` for raw API locations, or `location_slug` for locations created via
+`location_creations.json`.
+
+```json
+{ "genre_source_id": 111, "location_source_id": 56, "note": "in NTGent" }
+{ "genre_source_id": 105, "location_slug": "vlaamse-opera", "note": "in Opera Gent" }
+```
+
+---
+
+## `genre_series_mappings.json`
+
+Maps a genre to a series. Upserts each series by slug, inserts both language translations, then
+links all matched productions via `series_productions`.
+
+```json
+{ "genre_source_id": 37, "series_slug": "podium", "name_nl": "Podium", "name_en": "Podium" }
+```
+
+---
+
+## `artist_merges.json`
+
+Merges two duplicate artist records. Re-points all `production_artists` rows from the removed
+artist to the kept artist, then deletes the removed record.
+
+Artist patches reference records by **slug**, not source ID (there are no source IDs for artists).
+
+```json
+{ "keep_slug": "jan-de-smedt", "remove_slug": "jan-de-smeth", "note": "typo variant" }
+```
+
+---
+
+## `artist_names.json`
+
+Overwrites the `name` column on an artist. Does not change the slug. Applied after merges.
+
+```json
+{ "slug": "jan-de-smedt", "name": "Jan De Smedt", "note": "capitalisation fix" }
+```

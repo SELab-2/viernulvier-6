@@ -65,13 +65,13 @@ describe("production mapper", () => {
         expect(en?.title).toBe("EN");
     });
 
-    it("maps cover_image_url to coverImageUrl", () => {
+    it("maps cover_image_url to coverImageUrl when present", () => {
         const mapped = mapProduction({
             id: "id-1",
             slug: "slug",
             translations: [],
             cover_image_url: "https://s3.example.com/media/cover.jpg",
-        });
+        } as unknown as Parameters<typeof mapProduction>[0]);
         expect(mapped.coverImageUrl).toBe("https://s3.example.com/media/cover.jpg");
     });
 
@@ -80,7 +80,6 @@ describe("production mapper", () => {
             id: "id-1",
             slug: "slug",
             translations: [],
-            cover_image_url: undefined,
         });
         expect(mapped.coverImageUrl).toBeNull();
     });

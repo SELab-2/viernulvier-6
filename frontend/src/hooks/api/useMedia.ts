@@ -1,14 +1,17 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api-client";
 import {
     mapAttachMediaInput,
+    mapLinkMediaInput,
     mapMedia,
     mapMediaList,
     mapMediaToPayload,
+    mapPaginatedMediaResult,
     mapUploadUrlInput,
     mapUploadUrlResult,
 } from "@/mappers/media.mapper";
+import { PaginatedResult } from "@/types/api/api.types";
 import {
     AttachMediaResponse,
     GenerateUploadUrlResponse,
@@ -19,12 +22,27 @@ import {
 import {
     AttachMediaInput,
     EntityMediaParams,
+    LinkMediaInput,
     Media,
+    MediaSearchParams,
     UploadUrlInput,
     UploadUrlResult,
 } from "@/types/models/media.types";
 
 import { queryKeys } from "./query-keys";
+
+// ── Constants ────────────────────────────────────────────────────────
+
+/** Maps entity type strings to the query-key prefix that covers both the list
+ *  and detail queries for that entity.  Invalidating by prefix is enough — TanStack
+ *  Query matches all keys that start with the prefix, so detail queries are included. */
+const ENTITY_LIST_PREFIXES: Record<string, readonly string[]> = {
+    collection: ["collections"],
+    location: ["locations"],
+    article: ["articles"],
+    production: ["productions"],
+    artist: ["artists"],
+};
 
 // ── Fetch functions ──────────────────────────────────────────────────
 
@@ -53,9 +71,19 @@ const fetchMediaById = async (id: string): Promise<Media> => {
     return mapMedia(data);
 };
 
-const fetchAllMedia = async (params?: { limit?: number; offset?: number }): Promise<Media[]> => {
-    const { data } = await api.get<GetAllMediaResponse>("/media", { params });
-    return mapMediaList(data);
+const fetchAllMedia = async (params?: MediaSearchParams): Promise<PaginatedResult<Media>> => {
+    const { data } = await api.get<GetAllMediaResponse>("/media", {
+        params: params && {
+            q: params.q,
+            entity_type: params.entityType,
+            entity_id: params.entityId,
+            role: params.role,
+            sort: params.sort,
+            cursor: params.cursor,
+            limit: params.limit,
+        },
+    });
+    return mapPaginatedMediaResult(data);
 };
 
 // ── Query hooks ──────────────────────────────────────────────────────
@@ -80,15 +108,32 @@ export const useGetMedia = (id: string, options?: { enabled?: boolean }) => {
     });
 };
 
-export const useGetAllMedia = (options?: {
-    enabled?: boolean;
-    limit?: number;
-    offset?: number;
-}) => {
+export const useGetAllMedia = (options?: { enabled?: boolean; params?: MediaSearchParams }) => {
     return useQuery({
-        queryKey: queryKeys.media.all({ limit: options?.limit, offset: options?.offset }),
-        queryFn: () => fetchAllMedia({ limit: options?.limit, offset: options?.offset }),
+        queryKey: queryKeys.media.all(options?.params),
+        queryFn: () => fetchAllMedia(options?.params),
         enabled: options?.enabled ?? true,
+    });
+};
+
+export const useSearchMedia = (params: MediaSearchParams, options?: { enabled?: boolean }) => {
+    return useQuery({
+        queryKey: queryKeys.media.all(params),
+        queryFn: () => fetchAllMedia(params),
+        enabled: options?.enabled ?? true,
+    });
+};
+
+export const useGetInfiniteMedia = (
+    params?: Omit<MediaSearchParams, "cursor">,
+    options?: { enabled?: boolean }
+) => {
+    return useInfiniteQuery({
+        queryKey: queryKeys.media.infinite(params),
+        queryFn: async ({ pageParam }) => fetchAllMedia({ ...params, cursor: pageParam }),
+        getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+        initialPageParam: null as string | null,
+        ...options,
     });
 };
 
@@ -153,6 +198,84 @@ export const useUnlinkMedia = () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.media.entity(variables.entityType, variables.entityId),
             });
+            const entityListPrefix = ENTITY_LIST_PREFIXES[variables.entityType];
+            if (entityListPrefix) {
+                queryClient.invalidateQueries({ queryKey: entityListPrefix });
+            }
+        },
+    });
+};
+
+export const useLinkMedia = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({
+            entityType,
+            entityId,
+            input,
+        }: {
+            entityType: string;
+            entityId: string;
+            input: LinkMediaInput;
+        }): Promise<Media> => {
+            const { data } = await api.post<AttachMediaResponse>(
+                `/media/entity/${entityType}/${entityId}/link`,
+                mapLinkMediaInput(input)
+            );
+            return mapMedia(data);
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.media.entity(variables.entityType, variables.entityId),
+            });
+            queryClient.invalidateQueries({ queryKey: queryKeys.media.all() });
+            const entityListPrefix = ENTITY_LIST_PREFIXES[variables.entityType];
+            if (entityListPrefix) {
+                queryClient.invalidateQueries({ queryKey: entityListPrefix });
+            }
+        },
+    });
+};
+
+export const useSetCoverMedia = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({
+            entityType,
+            entityId,
+            mediaId,
+        }: {
+            entityType: string;
+            entityId: string;
+            mediaId: string;
+        }) => {
+            await api.post(`/media/entity/${entityType}/${entityId}/${mediaId}/set-cover`);
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.media.entity(variables.entityType, variables.entityId),
+            });
+        },
+    });
+};
+
+export const useClearCoverMedia = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ entityType, entityId }: { entityType: string; entityId: string }) => {
+            await api.delete(`/media/entity/${entityType}/${entityId}/cover`);
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.media.entity(variables.entityType, variables.entityId),
+            });
+            const entityListPrefix = ENTITY_LIST_PREFIXES[variables.entityType];
+            if (entityListPrefix) {
+                queryClient.invalidateQueries({ queryKey: entityListPrefix });
+            }
         },
     });
 };
@@ -171,6 +294,54 @@ export const useUpdateMedia = () => {
         onSuccess: (updated) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.media.all() });
             queryClient.setQueryData(queryKeys.media.detail(updated.id), updated);
+        },
+    });
+};
+
+export const useUploadMedia = () => {
+    const generateUploadUrl = useGenerateUploadUrl();
+    const attachMedia = useAttachMedia();
+
+    return useMutation({
+        mutationFn: async ({
+            file,
+            entityType,
+            entityId,
+            metadata,
+        }: {
+            file: File;
+            entityType: string;
+            entityId: string;
+            metadata?: Omit<AttachMediaInput, "s3Key" | "mimeType" | "uploadToken">;
+        }): Promise<Media> => {
+            const { s3Key, uploadUrl, uploadToken } = await generateUploadUrl.mutateAsync({
+                filename: file.name,
+                mimeType: file.type,
+                fileSize: file.size,
+            });
+
+            const uploadResponse = await fetch(uploadUrl, {
+                method: "PUT",
+                body: file,
+                headers: { "Content-Type": file.type },
+            });
+            if (!uploadResponse.ok) {
+                throw new Error(
+                    `S3 upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`
+                );
+            }
+
+            return attachMedia.mutateAsync({
+                entityType,
+                entityId,
+                input: {
+                    s3Key,
+                    uploadToken,
+                    mimeType: file.type,
+                    fileSize: file.size,
+                    ...metadata,
+                },
+            });
         },
     });
 };

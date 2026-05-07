@@ -1,14 +1,15 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { SquarePen } from "lucide-react";
+import Image from "next/image";
+import { SquarePen, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
 import { BooleanCell } from "../boolean-cell";
 import type { FieldDef } from "../edit-sheet";
 import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
-import { Action, ActionDisplay } from "@/types/cms/actions";
+import { Action, ActionDisplay, ActionVariant } from "@/types/cms/actions";
 import type { Location, LocationRow, LocationUpdateInput } from "@/types/models/location.types";
 
 export const locationFields: FieldDef<LocationRow>[] = [
@@ -54,6 +55,7 @@ export function toLocationRow(entity: Location): LocationRow {
         isOwnedByViernulvier: entity.isOwnedByViernulvier,
         uitdatabankId: entity.uitdatabankId,
         address: entity.address,
+        coverImageUrl: entity.coverImageUrl,
         descriptionNl: nl?.description ?? null,
         descriptionEn: en?.description ?? null,
         historyNl: nl?.history ?? null,
@@ -94,9 +96,11 @@ export function toLocationUpdateInput(row: LocationRow): LocationUpdateInput {
 
 export function makeLocationColumns(options: {
     onEdit: (row: LocationRow) => void;
+    onDelete: (location: Location) => void;
     t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>;
+    onOpenSpotlight?: (src: string, alt: string) => void;
 }): ColumnDef<Location>[] {
-    const { onEdit, t } = options;
+    const { onEdit, onDelete, t, onOpenSpotlight } = options;
 
     const actions: Action<Location>[] = [
         {
@@ -132,9 +136,58 @@ export function makeLocationColumns(options: {
                 />
             ),
         },
+        {
+            key: "delete",
+            label: t("delete", { label: "location" }),
+            icon: Trash2,
+            variant: ActionVariant.Destructive,
+            onClick: onDelete,
+        },
     ];
 
     return [
+        {
+            id: "cover",
+            header: "",
+            enableSorting: false,
+            cell: ({ row }) => {
+                const src = row.original.coverImageUrl;
+                if (!src) {
+                    return <div className="bg-muted h-10 w-10" />;
+                }
+                const alt = row.original.name ?? row.original.id;
+                if (!onOpenSpotlight) {
+                    return (
+                        <Image
+                            src={src}
+                            alt={alt}
+                            width={40}
+                            height={40}
+                            className="h-10 w-10 object-cover"
+                        />
+                    );
+                }
+                return (
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenSpotlight(src, alt);
+                        }}
+                        className="block h-10 w-10 cursor-zoom-in"
+                        aria-label={alt}
+                    >
+                        <Image
+                            src={src}
+                            alt={alt}
+                            width={40}
+                            height={40}
+                            className="h-10 w-10 object-cover"
+                        />
+                    </button>
+                );
+            },
+        },
         {
             accessorKey: "name",
             header: "Naam",

@@ -40,10 +40,11 @@ describe("useGetArticles (public)", () => {
             slug: articleListItems[0]!.slug,
             status: articleListItems[0]!.status,
             title: articleListItems[0]!.title,
-            publishedAt: null,
             updatedAt: articleListItems[0]!.updated_at,
+            publishedAt: articleListItems[0]!.published_at,
             subjectPeriodStart: articleListItems[0]!.subject_period_start,
             subjectPeriodEnd: articleListItems[0]!.subject_period_end,
+            coverImageUrl: articleListItems[0]!.cover_image_url ?? null,
         });
 
         // Verify query cache key

@@ -1,13 +1,15 @@
 "use client";
 
+import Image from "next/image";
 import { ColumnDef } from "@tanstack/react-table";
-import { SquarePen } from "lucide-react";
+import { ImageIcon, SquarePen, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
 import { StatusBadge } from "@/components/cms/status-badge";
+import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
 import { makeActionsColumn } from "../actions-column";
-import { Action, ActionDisplay } from "@/types/cms/actions";
+import { Action, ActionDisplay, ActionVariant } from "@/types/cms/actions";
 import { ArticleListItem } from "@/types/models/article.types";
 
 function formatDate(date: string | null): string {
@@ -22,6 +24,7 @@ function formatDate(date: string | null): string {
 
 export function makeArticleColumns(
     onEdit: (article: ArticleListItem) => void,
+    onDelete: (article: ArticleListItem) => void,
     t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>,
     tArticles: ReturnType<typeof useTranslations<"Cms.Articles">>
 ): ColumnDef<ArticleListItem>[] {
@@ -46,12 +49,46 @@ export function makeArticleColumns(
                 }
             },
         },
+        {
+            key: "add-to-collection",
+            render: (article, closeMenu) => (
+                <CollectionPickerSubmenu
+                    item={{
+                        contentId: article.id,
+                        contentType: "blogpost",
+                        label: article.slug ?? article.id,
+                    }}
+                    onComplete={closeMenu}
+                />
+            ),
+        },
+        {
+            key: "delete",
+            label: t("delete", { label: "article" }),
+            icon: Trash2,
+            variant: ActionVariant.Destructive,
+            onClick: onDelete,
+        },
     ];
 
     return [
         {
+            id: "cover",
+            header: "",
+            cell: ({ row }) => {
+                const url = row.original.coverImageUrl;
+                if (!url) return <ImageIcon className="text-muted-foreground size-4" />;
+                return (
+                    <div className="relative size-10 overflow-hidden rounded">
+                        <Image src={url} alt="" fill className="object-cover" sizes="40px" />
+                    </div>
+                );
+            },
+            size: 52,
+        },
+        {
             accessorKey: "status",
-            header: "Status",
+            header: tArticles("statusColumn"),
             cell: ({ row }) => <StatusBadge status={row.original.status} />,
         },
         {
@@ -68,7 +105,7 @@ export function makeArticleColumns(
         },
         {
             id: "subjectPeriod",
-            header: "Date range",
+            header: tArticles("dateRangeColumn"),
             cell: ({ row }) => {
                 const { subjectPeriodStart, subjectPeriodEnd } = row.original;
                 if (!subjectPeriodStart && !subjectPeriodEnd) {

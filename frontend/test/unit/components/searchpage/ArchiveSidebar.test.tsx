@@ -210,7 +210,7 @@ describe("ArchiveSidebar component", () => {
 
     it("renders provided locations and toggles them", async () => {
         const user = userEvent.setup();
-        const locations = [
+        const locations: import("@/types/models/location.types").Location[] = [
             {
                 id: "loc1",
                 name: "Venue A",
@@ -228,6 +228,7 @@ describe("ArchiveSidebar component", () => {
                 uitdatabankId: null,
                 slug: null,
                 translations: [],
+                coverImageUrl: null,
             },
         ];
         renderWithIntl(<ArchiveSidebar locations={locations} />);

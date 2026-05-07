@@ -1,40 +1,67 @@
 "use client";
 
-import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { Search } from "lucide-react";
+
+import type { ProductionSortOption } from "@/types/models/production.types";
 
 interface ResultsBarProps {
-    shownCount: number;
-    totalCount: number;
+    query: string;
+    onQueryChange: (query: string) => void;
+    onSearch: (query: string) => void;
+    showSearch: boolean;
+    sort: ProductionSortOption;
+    onSortChange: (sort: ProductionSortOption) => void;
 }
 
-const SORT_OPTIONS = ["recent", "oldest", "az"] as const;
+const SORT_OPTIONS: ProductionSortOption[] = ["recent", "oldest", "relevance"];
 
-export function ResultsBar({ shownCount, totalCount }: ResultsBarProps) {
+export function ResultsBar({
+    query,
+    onQueryChange,
+    onSearch,
+    showSearch,
+    sort,
+    onSortChange,
+}: ResultsBarProps) {
     const t = useTranslations("ResultsBar");
-    const [activeSort, setActiveSort] = useState<string>("recent");
-
-    const handleSort = useCallback((option: string) => {
-        setActiveSort(option);
-        // TODO: wire up actual sort logic when API supports it
-    }, []);
+    const tSearch = useTranslations("Search");
 
     return (
-        <div className="border-muted/30 bg-background sticky top-0 z-10 flex items-center justify-between border-b px-4 py-2.5 sm:px-10">
-            <span className="text-muted-foreground font-mono text-[10px] tracking-[1.2px] uppercase">
-                <strong className="text-foreground">{shownCount}</strong> /{" "}
-                <strong className="text-foreground">{totalCount.toLocaleString()}</strong>
-            </span>
+        <div className="border-muted/30 bg-background sticky top-0 z-10 flex items-center gap-4 border-b px-4 py-4 sm:px-7">
+            <div
+                className={`flex min-w-0 flex-1 transition-all duration-300 ease-out ${
+                    showSearch
+                        ? "translate-y-0 opacity-100"
+                        : "pointer-events-none -translate-y-1 opacity-0"
+                }`}
+                aria-hidden={!showSearch}
+            >
+                <div className="relative w-full max-w-[420px]">
+                    <Search className="stroke-muted-foreground pointer-events-none absolute top-1/2 left-0 h-4 w-4 -translate-y-1/2 fill-none stroke-[1.5]" />
+                    <input
+                        type="text"
+                        value={query}
+                        onChange={(e) => onQueryChange(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && onSearch(query)}
+                        placeholder={tSearch("heroPlaceholder")}
+                        autoComplete="off"
+                        tabIndex={showSearch ? 0 : -1}
+                        className="font-display text-foreground placeholder:text-muted-foreground border-foreground/40 focus:border-primary w-full border-b bg-transparent py-1 pr-2 pl-6 text-[15px] outline-none placeholder:italic"
+                    />
+                </div>
+            </div>
+
             <div className="hidden items-center gap-4 sm:flex">
-                <span className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
+                <span className="text-muted-foreground font-mono text-[11px] tracking-[1.2px] uppercase">
                     {t("sortBy")}
                 </span>
                 {SORT_OPTIONS.map((option) => (
                     <button
                         key={option}
-                        onClick={() => handleSort(option)}
-                        className={`cursor-pointer border-b pb-0.5 font-mono text-[9px] tracking-[1.2px] uppercase transition-all ${
-                            activeSort === option
+                        onClick={() => onSortChange(option)}
+                        className={`cursor-pointer border-b pb-0.5 font-mono text-[11px] tracking-[1.2px] uppercase transition-all ${
+                            sort === option
                                 ? "border-foreground text-foreground"
                                 : "text-muted-foreground hover:text-foreground border-transparent"
                         }`}

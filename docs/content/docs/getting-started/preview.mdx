@@ -38,23 +38,25 @@ cp infra/preview/.env.preview.example infra/preview/.env
 
 **Service environment variables** (`infra/preview/.env` or `infra/production/.env`):
 
-| Variable                                   | Description                                       |
-| ------------------------------------------ | ------------------------------------------------- |
-| `PREVIEW_NAME` / `PROD_NAME`               | `pr-123` or `production`                          |
-| `PREVIEW_HOST` / `PROD_HOST`               | Server IP/hostname                                |
-| `NEXT_PUBLIC_SITE_URL`                     | Public URL                                        |
-| `PREVIEW_DB_USER` / `PROD_DB_USER`         | PostgreSQL username                               |
-| `PREVIEW_DB_PASSWORD` / `PROD_DB_PASSWORD` | PostgreSQL password                               |
-| `PREVIEW_DB_NAME` / `PROD_DB_NAME`         | PostgreSQL database                               |
-| `PREVIEW_JWT_SECRET` / `PROD_JWT_SECRET`   | JWT signing secret                                |
-| `COOKIE_SECURE`                            | `true` or `false` (defaults to `true`)            |
-| `COOKIE_SAME_SITE`                         | `strict`, `lax`, or `none` (defaults to `strict`) |
-| `PREVIEW_API_KEY_404` / `PROD_API_KEY_404` | API key (optional)                                |
-| `GARAGE_RPC_SECRET`                        | S3 RPC secret                                     |
-| `GARAGE_S3_ACCESS_KEY`                     | S3 access key                                     |
-| `GARAGE_S3_SECRET_KEY`                     | S3 secret key                                     |
-| `GARAGE_S3_BUCKET`                         | S3 bucket name                                    |
-| `MAX_UPLOAD_SIZE_MIB`                      | Max upload size in MiB (default `50`)             |
+| Variable                                         | Description                                                       |
+| ------------------------------------------------ | ----------------------------------------------------------------- |
+| `PREVIEW_NAME` / `PROD_NAME`                     | `pr-123` or `production`                                          |
+| `PREVIEW_HOST` / `PROD_HOST`                     | Server IP/hostname                                                |
+| `NEXT_PUBLIC_SITE_URL`                           | Public URL                                                        |
+| `PREVIEW_DB_USER` / `PROD_DB_USER`               | PostgreSQL username                                               |
+| `PREVIEW_DB_PASSWORD` / `PROD_DB_PASSWORD`       | PostgreSQL password                                               |
+| `PREVIEW_DB_NAME` / `PROD_DB_NAME`               | PostgreSQL database                                               |
+| `PREVIEW_JWT_SECRET` / `PROD_JWT_SECRET`         | JWT signing secret                                                |
+| `COOKIE_SECURE`                                  | `true` or `false` (defaults to `true`)                            |
+| `COOKIE_SAME_SITE`                               | `strict`, `lax`, or `none` (defaults to `strict`)                 |
+| `PREVIEW_API_KEY_404` / `PROD_API_KEY_404`       | API key (optional)                                                |
+| `PREVIEW_ADMIN_EMAIL` / `PROD_ADMIN_EMAIL`       | Admin email for bootstrap (defaults to `admin@viernulvier.be`)    |
+| `PREVIEW_ADMIN_PASSWORD` / `PROD_ADMIN_PASSWORD` | **Required** on first startup to create the initial admin account |
+| `GARAGE_RPC_SECRET`                              | S3 RPC secret                                                     |
+| `GARAGE_S3_ACCESS_KEY`                           | S3 access key                                                     |
+| `GARAGE_S3_SECRET_KEY`                           | S3 secret key                                                     |
+| `GARAGE_S3_BUCKET`                               | S3 bucket name                                                    |
+| `MAX_UPLOAD_SIZE_MIB`                            | Max upload size in MiB (default `50`)                             |
 
 <Callout type="info">
   Replace `PREVIEW_` with `PROD_` for production deployments. For example: `PREVIEW_DB_USER` becomes

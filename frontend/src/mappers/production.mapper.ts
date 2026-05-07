@@ -8,6 +8,7 @@ import { PaginatedResult } from "@/types/api/api.types";
 import {
     Production,
     ProductionCreateInput,
+    ProductionLocationSummary,
     ProductionTranslation,
     ProductionTranslationInput,
     ProductionUpdateInput,
@@ -53,6 +54,14 @@ const mapTranslation = (t: ApiTranslation): ProductionTranslation => ({
     descriptionShort: toNullable(t.description_short),
 });
 
+const mapLocationSummary = (
+    loc: NonNullable<ProductionResponse["locations"]>[number]
+): ProductionLocationSummary => ({
+    id: loc.id,
+    slug: toNullable(loc.slug),
+    name: toNullable(loc.name),
+});
+
 export const mapProduction = (response: ProductionResponse): Production => {
     return {
         id: response.id,
@@ -65,6 +74,7 @@ export const mapProduction = (response: ProductionResponse): Production => {
         uitdatabankType: toNullable(response.uitdatabank_type),
         translations: (response.translations ?? []).map((t: ApiTranslation) => mapTranslation(t)),
         coverImageUrl: toNullable(response.cover_image_url),
+        locations: (response.locations ?? []).map(mapLocationSummary),
     };
 };
 

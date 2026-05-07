@@ -1,12 +1,13 @@
 use axum::{
     Json,
-    extract::{Path, Query},
+    extract::{Path, Query, State},
     http::StatusCode,
 };
 use database::Database;
 use uuid::Uuid;
 
 use crate::{
+    AppState,
     dto::{
         collection::{
             CollectionItemPayload, CollectionItemPostPayload, CollectionItemsBulkPayload,
@@ -36,11 +37,13 @@ use crate::{
     )
 )]
 pub async fn get_all(
+    State(state): State<AppState>,
     db: Database,
     Query(pagination): Query<PaginationQuery>,
     Query(search): Query<CollectionSearchQuery>,
 ) -> JsonResponse<PaginatedResponse<CollectionPayload>> {
-    CollectionPayload::all(&db, pagination.cursor, pagination.limit, search)
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    CollectionPayload::all(&db, pagination.cursor, pagination.limit, search, public_url)
         .await?
         .json()
 }
@@ -59,8 +62,38 @@ pub async fn get_all(
         (status = 404, description = "Not found")
     )
 )]
-pub async fn get_one(db: Database, Path(id): Path<Uuid>) -> JsonResponse<CollectionPayload> {
-    CollectionPayload::by_id(&db, id).await?.json()
+pub async fn get_one(
+    State(state): State<AppState>,
+    db: Database,
+    Path(id): Path<Uuid>,
+) -> JsonResponse<CollectionPayload> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    CollectionPayload::by_id(&db, id, public_url).await?.json()
+}
+
+#[utoipa::path(
+    method(get),
+    path = "/collections/slug/{slug}",
+    tag = "Collections",
+    operation_id = "get_collection_by_slug",
+    description = "Return a single collection by its slug, including all its items in position order. Public endpoint, no authentication required. Use this for shareable collection URLs.",
+    params(
+        ("slug" = String, Path, description = "Collection slug")
+    ),
+    responses(
+        (status = 200, description = "Success", body = CollectionPayload),
+        (status = 404, description = "Not found")
+    )
+)]
+pub async fn get_by_slug(
+    State(state): State<AppState>,
+    db: Database,
+    Path(slug): Path<String>,
+) -> JsonResponse<CollectionPayload> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    CollectionPayload::by_slug(&db, &slug, public_url)
+        .await?
+        .json()
 }
 
 #[utoipa::path(
