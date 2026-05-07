@@ -152,10 +152,7 @@ export default function ArticlesPage() {
                 searchHint={tSearch("hint")}
             />
 
-            <section className="border-foreground border-b-2 px-4 py-10 text-center sm:px-10 sm:py-14">
-                <span className="text-muted-foreground mb-3 block font-mono text-[9px] tracking-[2px] uppercase">
-                    {t("heroEyebrow")}
-                </span>
+            <section className="px-4 py-10 text-center sm:px-10 sm:py-14">
                 <h1 className="font-display text-foreground text-[36px] leading-[1.05] font-bold tracking-[-0.03em] sm:text-[52px] md:text-[64px]">
                     {t("heroTitle")}
                 </h1>

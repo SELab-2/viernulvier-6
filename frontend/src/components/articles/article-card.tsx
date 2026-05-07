@@ -11,31 +11,19 @@ interface ArticleCardProps {
     locale: string;
 }
 
-function formatPeriod(start: string | null, end: string | null, locale: string): string | null {
-    const loc = locale === "en" ? "en-GB" : "nl-BE";
-    const opts: Intl.DateTimeFormatOptions = { month: "short", year: "numeric" };
-
-    if (start && end) {
-        return `${new Date(start).toLocaleDateString(loc, opts)} — ${new Date(end).toLocaleDateString(loc, opts)}`;
-    }
-    if (start) {
-        return new Date(start).toLocaleDateString(loc, opts);
-    }
-    return null;
-}
-
-function formatDate(dateStr: string, locale: string): string {
+function formatDate(dateStr: string | null, locale: string): string | null {
+    if (!dateStr) return null;
     const loc = locale === "en" ? "en-GB" : "nl-BE";
     return new Date(dateStr).toLocaleDateString(loc, {
-        day: "2-digit",
-        month: "2-digit",
+        day: "numeric",
+        month: "long",
         year: "numeric",
     });
 }
 
 export function ArticleCard({ article, locale }: ArticleCardProps) {
     const t = useTranslations("Articles");
-    const period = formatPeriod(article.subjectPeriodStart, article.subjectPeriodEnd, locale);
+    const publishedAt = formatDate(article.publishedAt ?? null, locale);
 
     const coverUrl = article.coverImageUrl;
 
@@ -73,20 +61,13 @@ export function ArticleCard({ article, locale }: ArticleCardProps) {
                 </div>
 
                 <div className="flex min-w-0 flex-col">
-                    <div className="mb-3 flex items-center gap-3">
-                        <span className="bg-foreground h-px w-5" />
-                        <span className="text-muted-foreground group-hover:text-foreground font-mono text-[9px] tracking-[2.5px] uppercase transition-colors">
-                            {formatDate(article.updatedAt, locale)}
-                        </span>
-                    </div>
-
                     <h3 className="font-display text-foreground mb-2 min-w-0 text-[20px] leading-[1.15] font-bold tracking-[-0.02em] break-words sm:text-[26px]">
                         {article.title ?? t("untitled")}
                     </h3>
 
-                    {period && (
-                        <span className="text-muted-foreground font-display mt-1 text-[13px] italic sm:text-[14px]">
-                            {period}
+                    {publishedAt && (
+                        <span className="text-muted-foreground mt-1 font-mono text-[11px] tracking-[1px]">
+                            {publishedAt}
                         </span>
                     )}
                 </div>
