@@ -1,4 +1,6 @@
-use ormlite::{Insert, Model};
+use std::collections::HashMap;
+
+use ormlite::Model;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -19,6 +21,22 @@ pub struct ProductionRepo<'a> {
 impl<'a> ProductionRepo<'a> {
     pub fn new(db: &'a PgPool) -> Self {
         Self { db }
+    }
+
+    pub async fn fetch_location_summaries_for(
+        &self,
+        production_id: Uuid,
+    ) -> Result<Vec<(Uuid, Option<String>, Option<String>)>, DatabaseError> {
+        Ok(sqlx::query_as::<_, (Uuid, Option<String>, Option<String>)>(
+            "SELECT l.id, l.slug, l.name
+             FROM locations l
+             INNER JOIN production_locations pl ON pl.location_id = l.id
+             WHERE pl.production_id = $1
+             ORDER BY l.name, l.id",
+        )
+        .bind(production_id)
+        .fetch_all(self.db)
+        .await?)
     }
 
     pub async fn count(&self) -> Result<i64, DatabaseError> {
@@ -44,13 +62,112 @@ impl<'a> ProductionRepo<'a> {
             translations,
         })
     }
+    pub async fn by_ids(
+        &self,
+        ids: &[Uuid],
+    ) -> Result<Vec<ProductionWithTranslations>, DatabaseError> {
+        if ids.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let productions = Production::select()
+            .where_("id = ANY($1)")
+            .bind(ids)
+            .fetch_all(self.db)
+            .await?;
+
+        if productions.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let mut translation_map = self.fetch_translations_for_many(ids).await?;
+        let mut production_map: HashMap<Uuid, Production> = productions
+            .into_iter()
+            .map(|production| (production.id, production))
+            .collect();
+
+        Ok(ids
+            .iter()
+            .filter_map(|id| {
+                production_map
+                    .remove(id)
+                    .map(|production| ProductionWithTranslations {
+                        production,
+                        translations: translation_map.remove(id).unwrap_or_default(),
+                    })
+            })
+            .collect())
+    }
+
+    pub async fn by_artist_id(
+        &self,
+        artist_id: Uuid,
+    ) -> Result<Vec<ProductionWithTranslations>, DatabaseError> {
+        let productions = sqlx::query_as::<_, Production>(
+            "SELECT p.*
+             FROM productions p
+             INNER JOIN production_artists pa ON pa.production_id = p.id
+             WHERE pa.artist_id = $1
+             ORDER BY p.id DESC",
+        )
+        .bind(artist_id)
+        .fetch_all(self.db)
+        .await?;
+
+        if productions.is_empty() {
+            let artist_exists = sqlx::query_scalar::<_, bool>(
+                "SELECT EXISTS(SELECT 1 FROM artists WHERE id = $1)",
+            )
+            .bind(artist_id)
+            .fetch_one(self.db)
+            .await?;
+
+            if !artist_exists {
+                return Err(DatabaseError::NotFound);
+            }
+
+            return Ok(vec![]);
+        }
+
+        let ids: Vec<Uuid> = productions.iter().map(|production| production.id).collect();
+        let mut translation_map = self.fetch_translations_for_many(&ids).await?;
+
+        Ok(productions
+            .into_iter()
+            .map(|production| ProductionWithTranslations {
+                translations: translation_map.remove(&production.id).unwrap_or_default(),
+                production,
+            })
+            .collect())
+    }
 
     pub async fn insert(
         &self,
         production: ProductionCreate,
         translations: Vec<ProductionTranslationData>,
     ) -> Result<ProductionWithTranslations, DatabaseError> {
-        let production = production.insert(self.db).await?;
+        let production = sqlx::query_as::<_, Production>(
+            "INSERT INTO productions (source_id, slug, video_1, video_2, eticket_info, uitdatabank_theme, uitdatabank_type)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT (source_id) DO UPDATE SET
+                 slug              = EXCLUDED.slug,
+                 video_1           = EXCLUDED.video_1,
+                 video_2           = EXCLUDED.video_2,
+                 eticket_info      = EXCLUDED.eticket_info,
+                 uitdatabank_theme = EXCLUDED.uitdatabank_theme,
+                 uitdatabank_type  = EXCLUDED.uitdatabank_type
+             RETURNING *",
+        )
+        .bind(production.source_id)
+        .bind(&production.slug)
+        .bind(&production.video_1)
+        .bind(&production.video_2)
+        .bind(&production.eticket_info)
+        .bind(&production.uitdatabank_theme)
+        .bind(&production.uitdatabank_type)
+        .fetch_one(self.db)
+        .await?;
+
         self.upsert_translations(production.id, &translations)
             .await?;
         let translation_rows = self.fetch_translations_for(production.id).await?;
@@ -121,6 +238,26 @@ impl<'a> ProductionRepo<'a> {
         .bind(production_id)
         .fetch_all(self.db)
         .await?)
+    }
+
+    /// Fetch translations for many productions and group them by production id.
+    async fn fetch_translations_for_many(
+        &self,
+        production_ids: &[Uuid],
+    ) -> Result<HashMap<Uuid, Vec<ProductionTranslation>>, DatabaseError> {
+        let all_translations = sqlx::query_as::<_, ProductionTranslation>(
+            "SELECT * FROM production_translations WHERE production_id = ANY($1)",
+        )
+        .bind(production_ids)
+        .fetch_all(self.db)
+        .await?;
+
+        let mut translation_map: HashMap<Uuid, Vec<ProductionTranslation>> = HashMap::new();
+        for t in all_translations {
+            translation_map.entry(t.production_id).or_default().push(t);
+        }
+
+        Ok(translation_map)
     }
 
     /// Insert or update translations for a production. Clears all translations when the list is empty.

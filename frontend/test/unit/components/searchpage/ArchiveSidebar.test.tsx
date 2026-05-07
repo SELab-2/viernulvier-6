@@ -228,6 +228,7 @@ describe("ArchiveSidebar component", () => {
                 uitdatabankId: null,
                 slug: null,
                 translations: [],
+                coverImageUrl: null,
             },
         ];
         renderWithIntl(<ArchiveSidebar locations={locations} />);

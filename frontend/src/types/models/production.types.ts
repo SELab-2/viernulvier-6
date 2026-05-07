@@ -17,6 +17,12 @@ export type ProductionTranslation = {
     descriptionShort: string | null;
 };
 
+export type ProductionLocationSummary = {
+    id: string;
+    slug: string | null;
+    name: string | null;
+};
+
 export type Production = {
     id: string;
     sourceId: number | null;
@@ -28,6 +34,7 @@ export type Production = {
     uitdatabankType: string | null;
     translations: ProductionTranslation[];
     coverImageUrl: string | null;
+    locations: ProductionLocationSummary[];
 };
 
 export type ProductionTranslationInput = {
@@ -62,6 +69,15 @@ export type ProductionCreateInput = {
 
 export type ProductionUpdateInput = ProductionCreateInput & {
     id: string;
+};
+
+export type ProductionSortOption = "recent" | "oldest" | "relevance";
+
+export type ProductionSearchParams = {
+    q?: string;
+    cursor?: string | null;
+    limit?: number;
+    sort?: ProductionSortOption;
 };
 
 export type ProductionRow = {

@@ -10,6 +10,7 @@ import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
 import { getLocalizedField } from "@/lib/locale";
 import { useGetEventsByProduction } from "@/hooks/api/useEvents";
+import { LoadingState } from "@/components/shared/loading-state";
 
 interface ProductionItemProps {
     production: Production;
@@ -109,14 +110,14 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
                 }`}
                 style={{ animation: "fadein 0.3s ease both" }}
             >
-                <div className="bg-muted relative h-[52px] w-[68px] shrink-0 overflow-hidden sm:h-[62px] sm:w-[86px]">
+                <div className="bg-muted relative h-[108px] w-[144px] shrink-0 overflow-hidden sm:h-[136px] sm:w-[180px]">
                     {production.coverImageUrl ? (
                         <Image
                             src={production.coverImageUrl}
                             alt={title}
                             fill
                             className="object-cover"
-                            sizes="86px"
+                            sizes="180px"
                         />
                     ) : (
                         <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
@@ -126,20 +127,20 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
                 <div className="min-w-0 flex-1">
                     <Link
                         href={`/productions/${production.id}`}
-                        className="font-display text-foreground mb-0.5 block text-[16px] leading-[1.1] font-bold tracking-[-0.02em] hover:underline sm:text-[18px]"
+                        className="font-display text-foreground mb-0.5 block text-[19px] leading-[1.1] font-bold tracking-[-0.02em] hover:underline sm:text-[22px]"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {title}
                     </Link>
 
                     {artist && (
-                        <div className="font-display text-foreground/38 mb-1.5 text-[16px] font-bold tracking-[-0.02em] sm:text-[18px]">
+                        <div className="font-display text-foreground/38 mb-1.5 text-[19px] font-bold tracking-[-0.02em] sm:text-[22px]">
                             {artist}
                         </div>
                     )}
 
                     {tagline && (
-                        <p className="font-body text-muted-foreground mb-1 text-xs leading-relaxed">
+                        <p className="font-body text-muted-foreground mb-1 text-sm leading-relaxed">
                             {tagline}
                         </p>
                     )}
@@ -171,7 +172,7 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
             </div>
 
             {expanded && (
-                <div className="border-muted/35 bg-muted/4 flex flex-col border-b pl-4 sm:pl-[calc(28px+86px+18px)]">
+                <div className="border-muted/35 bg-muted/4 flex flex-col border-b pl-4 sm:pl-[calc(28px+180px+18px)]">
                     <EventList productionId={production.id} locale={locale} />
                 </div>
             )}
@@ -182,11 +183,23 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
 interface ProductionListProps {
     productions: Production[];
     locale: string;
+    isLoading?: boolean;
 }
 
-export function ProductionList({ productions, locale }: ProductionListProps) {
+export function ProductionList({ productions, locale, isLoading }: ProductionListProps) {
+    const t = useTranslations("Home");
+
     return (
-        <div className="overflow-hidden">
+        <div
+            className={`relative overflow-hidden ${
+                isLoading && productions.length === 0 ? "flex-1" : ""
+            }`}
+        >
+            {isLoading && productions.length === 0 && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <LoadingState message={t("loading")} className="min-h-0" />
+                </div>
+            )}
             {productions.map((production) => (
                 <ProductionItem key={production.id} production={production} locale={locale} />
             ))}

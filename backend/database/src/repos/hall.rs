@@ -119,8 +119,44 @@ impl<'a> HallRepo<'a> {
         Ok((halls, next_cursor))
     }
 
+    pub async fn by_location_id(&self, location_id: Uuid) -> Result<Vec<Hall>, DatabaseError> {
+        Ok(sqlx::query_as::<_, Hall>(
+            "SELECT h.* FROM halls h
+             JOIN spaces s ON s.id = h.space_id
+             WHERE s.location_id = $1
+             ORDER BY h.name",
+        )
+        .bind(location_id)
+        .fetch_all(self.db)
+        .await?)
+    }
+
     pub async fn insert(&self, hall: HallCreate) -> Result<Hall, DatabaseError> {
         Ok(hall.insert(self.db).await?)
+    }
+
+    pub async fn upsert_by_source_id(&self, hall: HallCreate) -> Result<Hall, DatabaseError> {
+        let Some(source_id) = hall.source_id else {
+            return self.insert(hall).await;
+        };
+
+        match self.by_source_id(source_id).await? {
+            Some(existing) => Ok(Hall {
+                id: existing.id,
+                source_id: hall.source_id,
+                slug: hall.slug,
+                vendor_id: hall.vendor_id,
+                box_office_id: hall.box_office_id,
+                seat_selection: hall.seat_selection,
+                open_seating: hall.open_seating,
+                name: hall.name,
+                remark: hall.remark,
+                space_id: hall.space_id,
+            }
+            .update_all_fields(self.db)
+            .await?),
+            None => self.insert(hall).await,
+        }
     }
 
     pub async fn update(&self, hall: Hall) -> Result<Hall, DatabaseError> {

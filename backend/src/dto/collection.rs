@@ -1,3 +1,4 @@
+use base64::{Engine, prelude::BASE64_URL_SAFE};
 use chrono::{DateTime, Utc};
 use database::{
     Database,
@@ -7,14 +8,21 @@ use database::{
             CollectionContentType, CollectionItemBulkUpdate, CollectionItemCreate,
             CollectionItemTranslationData, CollectionItemWithTranslations,
         },
+        entity_type::EntityType,
+        filtering::cursor::CursorData,
     },
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use tracing::debug;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::error::AppError;
+use crate::{
+    dto::{build_cover_url, paginated::PaginatedResponse},
+    error::AppError,
+    handlers::queries::collection::CollectionSearchQuery,
+};
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct CollectionTranslationPayload {
@@ -43,6 +51,10 @@ pub struct CollectionPayload {
     pub created_at: DateTime<Utc>,
     /// ISO 8601 last-updated timestamp.
     pub updated_at: DateTime<Utc>,
+    /// Cover image URL resolved from the entity_media link (output-only).
+    #[serde(default)]
+    #[schema(read_only, nullable)]
+    pub cover_image_url: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -121,6 +133,7 @@ fn build_payload(
         items: items.into_iter().map(CollectionItemPayload::from).collect(),
         created_at: cwt.collection.created_at,
         updated_at: cwt.collection.updated_at,
+        cover_image_url: None,
     }
 }
 
@@ -150,8 +163,20 @@ fn collection_translations_to_data(
 }
 
 impl CollectionPayload {
-    pub async fn all(db: &Database) -> Result<Vec<Self>, AppError> {
-        let collections = db.collections().all().await?;
+    pub async fn all(
+        db: &Database,
+        id_cursor: Option<String>,
+        limit: u32,
+        search: CollectionSearchQuery,
+        public_url: Option<&str>,
+    ) -> Result<PaginatedResponse<Self>, AppError> {
+        let cursor: Option<CursorData> = id_cursor.and_then(|b64| {
+            let bytes = BASE64_URL_SAFE.decode(b64).ok()?;
+            serde_json::from_slice(&bytes).ok()
+        });
+
+        let (collections, next_cursor) = db.collections().all(limit, cursor, search.into()).await?;
+
         let ids: Vec<Uuid> = collections.iter().map(|c| c.collection.id).collect();
         let all_items = db.collections().items_for_collections(&ids).await?;
 
@@ -163,23 +188,89 @@ impl CollectionPayload {
                 .push(item);
         }
 
-        Ok(collections
+        let mut result: Vec<Self> = collections
             .into_iter()
             .map(|cwt| {
                 let items = items_map.remove(&cwt.collection.id).unwrap_or_default();
                 build_payload(cwt, items)
             })
-            .collect())
+            .collect();
+
+        if let Some(base) = public_url {
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Collection, &ids)
+                .await?;
+            for c in &mut result {
+                if let Some(key) = cover_keys.get(&c.id) {
+                    c.cover_image_url = Some(build_cover_url(base, key));
+                }
+            }
+        }
+
+        let next_cursor_data = next_cursor.and_then(|c| {
+            let data = serde_json::to_vec(&c).ok()?;
+            Some(BASE64_URL_SAFE.encode(data))
+        });
+
+        debug!("Returning {} collections", result.len());
+        Ok(PaginatedResponse {
+            data: result,
+            next_cursor: next_cursor_data,
+        })
     }
 
-    pub async fn by_id(db: &Database, id: Uuid) -> Result<Self, AppError> {
+    pub async fn by_id(
+        db: &Database,
+        id: Uuid,
+        public_url: Option<&str>,
+    ) -> Result<Self, AppError> {
         let cwt = db
             .collections()
             .by_id(id)
             .await?
             .ok_or(AppError::NotFound)?;
         let items = db.collections().items_for(id).await?;
-        Ok(build_payload(cwt, items))
+        let mut payload = build_payload(cwt, items);
+
+        if let Some(base) = public_url {
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Collection, &[id])
+                .await?;
+            if let Some(key) = cover_keys.get(&id) {
+                payload.cover_image_url = Some(build_cover_url(base, key));
+            }
+        }
+
+        Ok(payload)
+    }
+
+    pub async fn by_slug(
+        db: &Database,
+        slug: &str,
+        public_url: Option<&str>,
+    ) -> Result<Self, AppError> {
+        let cwt = db
+            .collections()
+            .by_slug(slug)
+            .await?
+            .ok_or(AppError::NotFound)?;
+        let collection_id = cwt.collection.id;
+        let items = db.collections().items_for(collection_id).await?;
+        let mut payload = build_payload(cwt, items);
+
+        if let Some(base) = public_url {
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Collection, &[collection_id])
+                .await?;
+            if let Some(key) = cover_keys.get(&collection_id) {
+                payload.cover_image_url = Some(build_cover_url(base, key));
+            }
+        }
+
+        Ok(payload)
     }
 
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {

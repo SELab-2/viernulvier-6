@@ -16,6 +16,9 @@ pub enum DatabaseError {
 
     #[error("Bad request: {0}")]
     BadRequest(String),
+
+    #[error("Conflict: {0}")]
+    Conflict(String),
 }
 
 impl From<ormlite::Error> for DatabaseError {

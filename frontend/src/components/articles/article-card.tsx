@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Link } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 
@@ -36,6 +37,8 @@ export function ArticleCard({ article, locale }: ArticleCardProps) {
     const t = useTranslations("Articles");
     const period = formatPeriod(article.subjectPeriodStart, article.subjectPeriodEnd, locale);
 
+    const coverUrl = article.coverImageUrl;
+
     return (
         <Link href={`/articles/${article.slug}`} className="group block w-full">
             <article
@@ -43,18 +46,30 @@ export function ArticleCard({ article, locale }: ArticleCardProps) {
                 style={{ animation: "fadein 0.3s ease both" }}
             >
                 <div className="bg-muted/15 border-muted/30 relative aspect-[4/3] w-full overflow-hidden border">
-                    <div
-                        className="absolute inset-0 opacity-[0.08]"
-                        style={{
-                            backgroundImage:
-                                "repeating-linear-gradient(45deg, currentColor 0 1px, transparent 1px 8px)",
-                        }}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-muted-foreground/50 font-mono text-[9px] tracking-[2px] uppercase">
-                            N°{article.id.slice(-3)}
-                        </span>
-                    </div>
+                    {coverUrl ? (
+                        <Image
+                            src={coverUrl}
+                            alt={article.title ?? ""}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 640px) 110px, 160px"
+                        />
+                    ) : (
+                        <>
+                            <div
+                                className="absolute inset-0 opacity-[0.08]"
+                                style={{
+                                    backgroundImage:
+                                        "repeating-linear-gradient(45deg, currentColor 0 1px, transparent 1px 8px)",
+                                }}
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-muted-foreground/50 font-mono text-[9px] tracking-[2px] uppercase">
+                                    N°{article.id.slice(-3)}
+                                </span>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 <div className="flex min-w-0 flex-col">

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api-client";
 import {
@@ -6,6 +6,8 @@ import {
     mapArticleListItems,
     mapArticleRelations,
     mapCreateArticleInput,
+    mapPaginatedArticlesResult,
+    mapPaginatedArticleListItemsResult,
     mapUpdateArticleInput,
     mapUpdateArticleRelationsInput,
 } from "@/mappers/article.mapper";
@@ -13,7 +15,10 @@ import {
     ArticleListResponse,
     ArticleRelationsResponse,
     ArticleResponse,
+    ArticlesCmsSearchResponse,
+    GetAllArticlesResponse,
 } from "@/types/api/article.api.types";
+import { PaginatedResult, PaginationParams, SearchPaginationParams } from "@/types/api/api.types";
 import {
     Article,
     ArticleCreateInput,
@@ -24,9 +29,18 @@ import {
 
 import { queryKeys } from "./query-keys";
 
-const fetchArticlesPublished = async (): Promise<ArticleListItem[]> => {
-    const { data } = await api.get<ArticleListResponse[]>("/articles");
-    return mapArticleListItems(data);
+const fetchArticlesPublished = async (
+    params?: SearchPaginationParams
+): Promise<PaginatedResult<ArticleListItem>> => {
+    const { data } = await api.get<GetAllArticlesResponse>("/articles", { params });
+    return mapPaginatedArticlesResult(data);
+};
+
+const fetchArticlesPublishedList = async (): Promise<ArticleListItem[]> => {
+    const { data } = await api.get<GetAllArticlesResponse>("/articles", {
+        params: { limit: 1000 },
+    });
+    return mapArticleListItems(data.data);
 };
 
 const fetchArticleBySlug = async (slug: string): Promise<Article> => {
@@ -39,6 +53,13 @@ const fetchArticlesCms = async (): Promise<ArticleListItem[]> => {
     return mapArticleListItems(data);
 };
 
+const fetchArticlesCmsSearch = async (
+    params?: SearchPaginationParams
+): Promise<PaginatedResult<ArticleListItem>> => {
+    const { data } = await api.get<ArticlesCmsSearchResponse>("/articles/cms/search", { params });
+    return mapPaginatedArticleListItemsResult(data);
+};
+
 const fetchArticleById = async (id: string): Promise<Article> => {
     const { data } = await api.get<ArticleResponse>(`/articles/cms/${id}`);
     return mapArticle(data);
@@ -49,10 +70,44 @@ const fetchArticleRelations = async (id: string): Promise<ArticleRelations> => {
     return mapArticleRelations(data);
 };
 
+const fetchArticlesByProduction = async (productionId: string): Promise<ArticleListItem[]> => {
+    const { data } = await api.get<{ data: ArticleListResponse[] }>("/articles", {
+        params: {
+            related_entity_id: productionId,
+            related_entity_type: "production",
+            limit: 10,
+        },
+    });
+    return mapArticleListItems(data.data);
+};
+
+export const useGetInfiniteArticles = (options?: {
+    enabled?: boolean;
+    pagination?: PaginationParams;
+}) => {
+    const { pagination, ...queryOptions } = options ?? {};
+    return useInfiniteQuery({
+        queryKey: queryKeys.articles.infinite(pagination),
+        queryFn: async ({ pageParam }) =>
+            fetchArticlesPublished({ ...pagination, cursor: pageParam ?? undefined }),
+        getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+        initialPageParam: null as string | null,
+        ...queryOptions,
+    });
+};
+
 export const useGetArticles = () => {
     return useQuery({
         queryKey: queryKeys.articles.published,
-        queryFn: fetchArticlesPublished,
+        queryFn: fetchArticlesPublishedList,
+    });
+};
+
+export const useGetArticlesByProduction = (productionId: string) => {
+    return useQuery({
+        queryKey: queryKeys.articles.byProduction(productionId),
+        queryFn: () => fetchArticlesByProduction(productionId),
+        enabled: Boolean(productionId),
     });
 };
 
@@ -68,6 +123,19 @@ export const useGetArticlesCms = () => {
     return useQuery({
         queryKey: queryKeys.articles.all,
         queryFn: fetchArticlesCms,
+    });
+};
+
+export const useGetInfiniteArticlesCms = (
+    params?: Omit<SearchPaginationParams, "cursor">,
+    options?: { enabled?: boolean }
+) => {
+    return useInfiniteQuery({
+        queryKey: queryKeys.articles.cmsInfinite(params),
+        queryFn: async ({ pageParam }) => fetchArticlesCmsSearch({ ...params, cursor: pageParam }),
+        getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+        initialPageParam: null as string | null,
+        ...options,
     });
 };
 

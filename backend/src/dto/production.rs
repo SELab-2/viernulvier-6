@@ -16,7 +16,8 @@ use uuid::Uuid;
 use base64::{Engine, prelude::BASE64_URL_SAFE};
 
 use crate::{
-    dto::paginated::PaginatedResponse, error::AppError,
+    dto::{build_cover_url, paginated::PaginatedResponse},
+    error::AppError,
     handlers::queries::production::ProductionSearchQuery,
 };
 
@@ -51,7 +52,7 @@ impl ProductionPayload {
                 .await?;
             for p in &mut productions {
                 if let Some(s3_key) = cover_keys.get(&p.id) {
-                    p.cover_image_url = Some(format!("{}/{}", base.trim_end_matches('/'), s3_key));
+                    p.cover_image_url = Some(build_cover_url(base, s3_key));
                 }
             }
         }
@@ -76,10 +77,17 @@ impl ProductionPayload {
                 .cover_s3_keys_for_entities(EntityType::Production, &[id])
                 .await?;
             if let Some(s3_key) = cover_keys.get(&id) {
-                payload.cover_image_url =
-                    Some(format!("{}/{}", base.trim_end_matches('/'), s3_key));
+                payload.cover_image_url = Some(build_cover_url(base, s3_key));
             }
         }
+
+        payload.locations = db
+            .productions()
+            .fetch_location_summaries_for(id)
+            .await?
+            .into_iter()
+            .map(|(loc_id, slug, name)| LocationSummary { id: loc_id, slug, name })
+            .collect();
 
         Ok(payload)
     }
@@ -137,6 +145,14 @@ fn translations_to_data(
         .collect()
 }
 
+/// Minimal location info embedded in a production response.
+#[derive(Debug, Serialize, Deserialize, ToSchema, Clone, PartialEq, Eq)]
+pub struct LocationSummary {
+    pub id: Uuid,
+    pub slug: Option<String>,
+    pub name: Option<String>,
+}
+
 /// The per-language content for a production.
 #[derive(Debug, Serialize, Deserialize, ToSchema, Clone, PartialEq, Eq)]
 pub struct ProductionTranslationPayload {
@@ -178,6 +194,11 @@ pub struct ProductionPayload {
     #[serde(default)]
     #[schema(read_only, nullable)]
     pub cover_image_url: Option<String>,
+
+    /// Locations associated with this production via production_locations (output-only).
+    #[serde(default)]
+    #[schema(read_only)]
+    pub locations: Vec<LocationSummary>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -232,6 +253,7 @@ impl From<ProductionWithTranslations> for ProductionPayload {
             uitdatabank_type: pwt.production.uitdatabank_type,
             translations,
             cover_image_url: None,
+            locations: vec![],
         }
     }
 }
