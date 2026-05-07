@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
-import { useGetArticles } from "@/hooks/api/useArticles";
+import { useGetInfiniteArticles } from "@/hooks/api/useArticles";
 
 import { UnifiedHeader } from "@/components/layout/header";
 import { ArticleCard } from "@/components/articles";
@@ -16,6 +17,8 @@ export default function ArticlesPage() {
     const t = useTranslations("Articles");
     const tSearch = useTranslations("Search");
     const router = useRouter();
+
+    const loadMoreRef = useRef<HTMLDivElement>(null);
 
     const [headerQuery, setHeaderQuery] = useState("");
 
@@ -30,7 +33,27 @@ export default function ArticlesPage() {
         [router]
     );
 
-    const { data: articles, isLoading } = useGetArticles();
+    const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+        useGetInfiniteArticles();
+
+    const articles = data?.pages.flatMap((page) => page.data) ?? [];
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+                    fetchNextPage();
+                }
+            },
+            { threshold: 0.1, rootMargin: "100px" }
+        );
+
+        const currentRef = loadMoreRef.current;
+        if (currentRef) observer.observe(currentRef);
+        return () => {
+            if (currentRef) observer.unobserve(currentRef);
+        };
+    }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
     return (
         <>
@@ -76,7 +99,7 @@ export default function ArticlesPage() {
                 {!isLoading && articles && articles.length > 0 && (
                     <>
                         <div className="text-muted-foreground mb-4 flex items-center gap-2.5 font-mono text-[9px] font-medium tracking-[2px] uppercase">
-                            {t("listLabel", { count: articles.length })}
+                            {t("articles")}
                             <span className="bg-muted/40 h-px flex-1" />
                         </div>
                         <div className="border-muted/35 grid grid-cols-1 border-t sm:grid-cols-2 lg:grid-cols-3">
@@ -85,6 +108,20 @@ export default function ArticlesPage() {
                             ))}
                         </div>
                     </>
+                )}
+
+                {/* Infinite Scroll Trigger */}
+                {hasNextPage && (
+                    <div ref={loadMoreRef} className="mt-8 flex justify-center py-8">
+                        {isFetchingNextPage && (
+                            <div className="text-muted-foreground flex items-center gap-2">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span className="font-mono text-xs tracking-wider uppercase">
+                                    {t("loading")}
+                                </span>
+                            </div>
+                        )}
+                    </div>
                 )}
             </section>
         </>
