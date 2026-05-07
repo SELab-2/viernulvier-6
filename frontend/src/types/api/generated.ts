@@ -510,7 +510,25 @@ export interface paths {
         /** @description List and search media records with cursor-based pagination. */
         get: operations["get_all_media"];
         put?: never;
-        post?: never;
+        /** @description Create a standalone media record. If a checksum is provided and a media with that checksum already exists, the existing media is returned instead (deduplication). */
+        post: operations["create_media"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Check if a media item with the given checksum already exists. Used for content-based deduplication before upload. */
+        post: operations["check_media"];
         delete?: never;
         options?: never;
         head?: never;
@@ -684,6 +702,23 @@ export interface paths {
         post?: never;
         /** @description Delete a media record and attempt to delete its S3 object. */
         delete: operations["delete_media"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/{id}/entities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get all entity links for a given media item. */
+        get: operations["get_media_entity_links"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1051,6 +1086,13 @@ export interface components {
             message: string;
             success: boolean;
         };
+        CheckMediaRequest: {
+            checksum: string;
+        };
+        CheckMediaResponse: {
+            exists: boolean;
+            media?: null | components["schemas"]["MediaPayload"];
+        };
         CleanupResponse: {
             deleted_count: number;
             s3_keys: string[];
@@ -1161,6 +1203,24 @@ export interface components {
             email: string;
             password: string;
             username: string;
+        };
+        CreateMediaRequest: {
+            alt_text_en?: string | null;
+            alt_text_fr?: string | null;
+            alt_text_nl?: string | null;
+            checksum?: string | null;
+            credit_en?: string | null;
+            credit_fr?: string | null;
+            credit_nl?: string | null;
+            /** Format: int64 */
+            file_size?: number | null;
+            /** Format: int32 */
+            height?: number | null;
+            mime_type: string;
+            s3_key: string;
+            upload_token: string;
+            /** Format: int32 */
+            width?: number | null;
         };
         EditorResponse: {
             email: string;
@@ -1431,6 +1491,16 @@ export interface components {
         LoginRequest: {
             email: string;
             password: string;
+        };
+        MediaEntityLink: {
+            /** Format: uuid */
+            entity_id: string;
+            entity_type: string;
+            is_cover_image: boolean;
+            role: string;
+            /** Format: int32 */
+            sort_order: number;
+            title?: null | components["schemas"]["TitleTranslations"];
         };
         /**
          * @description Response payload for a media item. The `url` field is the direct public URL
@@ -1769,6 +1839,8 @@ export interface components {
             applied: boolean;
             db_key_count: number;
             /** Format: int64 */
+            deleted_missing_in_db_count: number;
+            /** Format: int64 */
             deleted_missing_in_s3_count: number;
             missing_in_db: string[];
             missing_in_s3: string[];
@@ -1834,6 +1906,8 @@ export interface components {
             event_count: number;
             /** Format: int64 */
             location_count: number;
+            /** Format: int64 */
+            media_count: number;
             /** Format: date-time */
             newest_event?: string | null;
             /** Format: date-time */
@@ -1851,6 +1925,10 @@ export interface components {
             description?: string | null;
             label: string;
             language_code: string;
+        };
+        TitleTranslations: {
+            en?: string | null;
+            nl?: string | null;
         };
         UploadUrlRequest: {
             /**
@@ -3492,6 +3570,79 @@ export interface operations {
             };
         };
     };
+    create_media: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateMediaRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaPayload"];
+                };
+            };
+            /** @description Bad request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    check_media: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckMediaRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckMediaResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     cleanup_orphaned_media: {
         parameters: {
             query?: never;
@@ -3930,6 +4081,36 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_media_entity_links: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaEntityLink"][];
                 };
             };
             /** @description Not found */
