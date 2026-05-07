@@ -83,13 +83,14 @@ export const useGetInfiniteArticles = (options?: {
     enabled?: boolean;
     pagination?: PaginationParams;
 }) => {
+    const { pagination, ...queryOptions } = options ?? {};
     return useInfiniteQuery({
-        queryKey: queryKeys.articles.infinite(options?.pagination),
+        queryKey: queryKeys.articles.infinite(pagination),
         queryFn: async ({ pageParam }) =>
-            fetchArticlesPublished(pageParam ? { cursor: pageParam } : undefined),
+            fetchArticlesPublished({ ...pagination, cursor: pageParam ?? undefined }),
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
         initialPageParam: null as string | null,
-        ...options,
+        ...queryOptions,
     });
 };
 
