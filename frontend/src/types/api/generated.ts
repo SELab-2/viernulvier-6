@@ -1514,6 +1514,34 @@ export interface components {
             }[];
             next_cursor?: string | null;
         };
+        PaginatedResponse_CollectionPayload: {
+            data: {
+                /** @description Cover image URL resolved from the entity_media link (output-only). */
+                readonly cover_image_url?: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 creation timestamp.
+                 */
+                created_at: string;
+                /**
+                 * Format: uuid
+                 * @description Unique identifier for the collection (UUIDv7).
+                 */
+                id: string;
+                /** @description Ordered list of items in this collection. */
+                items: components["schemas"]["CollectionItemPayload"][];
+                /** @description URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections. */
+                slug: string;
+                /** @description Per-language title and description. */
+                translations: components["schemas"]["CollectionTranslationPayload"][];
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 last-updated timestamp.
+                 */
+                updated_at: string;
+            }[];
+            next_cursor?: string | null;
+        };
         PaginatedResponse_EventPayload: {
             data: {
                 box_office_id?: string | null;
@@ -2500,7 +2528,11 @@ export interface operations {
     };
     get_all_collections: {
         parameters: {
-            query?: never;
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+                q?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2513,7 +2545,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CollectionPayload"][];
+                    "application/json": components["schemas"]["PaginatedResponse_CollectionPayload"];
                 };
             };
         };
