@@ -867,3 +867,58 @@ async fn get_one_cms_returns_cover_image_url(db: PgPool) {
         "cover_image_url should be resolved for article with a cover in CMS view"
     );
 }
+
+#[sqlx::test(fixtures("articles"))]
+#[test_log::test]
+async fn search_cms_requires_auth(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/articles/cms/search").await;
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[sqlx::test(fixtures("articles"))]
+#[test_log::test]
+async fn search_cms_returns_all_statuses(db: PgPool) {
+    let app = TestRouter::as_editor(db).await;
+    let response = app.get("/articles/cms/search").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    let slugs: Vec<&str> = data.data.iter().map(|a| a.slug.as_str()).collect();
+    assert!(slugs.contains(&"published-article"));
+    assert!(slugs.contains(&"draft-article"));
+    assert!(slugs.contains(&"archived-article"));
+}
+
+#[sqlx::test(fixtures("articles"))]
+#[test_log::test]
+async fn search_cms_filters_by_query(db: PgPool) {
+    let app = TestRouter::as_editor(db).await;
+    let response = app.get("/articles/cms/search?q=Draft").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 1);
+    assert_eq!(data.data[0].slug, "draft-article");
+}
+
+#[sqlx::test(fixtures("articles"))]
+#[test_log::test]
+async fn search_cms_paginates(db: PgPool) {
+    let app = TestRouter::as_editor(db).await;
+
+    let response = app.get("/articles/cms/search?limit=1").await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let page1: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    assert_eq!(page1.data.len(), 1);
+    assert!(page1.next_cursor.is_some(), "first page should have a next_cursor");
+
+    let cursor = page1.next_cursor.unwrap();
+    let response = app
+        .get(&format!("/articles/cms/search?limit=1&cursor={cursor}"))
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let page2: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    assert_eq!(page2.data.len(), 1);
+    assert_ne!(page2.data[0].slug, page1.data[0].slug);
+}

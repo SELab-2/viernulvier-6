@@ -70,6 +70,21 @@ function parseInfo(info: string | null | undefined) {
     };
 }
 
+function getYouTubeId(url: string): string | null {
+    try {
+        const u = new URL(url);
+        if (u.hostname === "youtu.be") return u.pathname.slice(1).split("?")[0].split("/")[0];
+        if (u.hostname.includes("youtube.com")) {
+            if (u.pathname === "/watch") return u.searchParams.get("v");
+            const embedMatch = u.pathname.match(/^\/embed\/([^/?]+)/);
+            if (embedMatch) return embedMatch[1];
+        }
+    } catch {
+        // ignore invalid URLs
+    }
+    return null;
+}
+
 // Helper to render text with double newlines as paragraphs
 // We use dangerouslySetInnerHTML so that HTML entities like &eacute; or &euro; are naturally decoded by the browser
 function TextBlocks({ text, className }: { text: string; className?: string }) {
@@ -254,22 +269,36 @@ export function ProductionArticle({
                         <div className="bg-muted/25 h-px flex-1" />
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
-                        {videos.map((v, i) => (
-                            <a
-                                key={i}
-                                href={v}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="group border-border hover:border-foreground flex flex-col border p-4 transition-colors"
-                            >
-                                <span className="text-muted-foreground group-hover:text-foreground mb-2 font-mono text-[10px] uppercase">
-                                    {t("externalVideoLink")}
-                                </span>
-                                <span className="font-body text-foreground truncate text-[13px]">
-                                    {v}
-                                </span>
-                            </a>
-                        ))}
+                        {videos.map((v, i) => {
+                            const ytId = getYouTubeId(v);
+                            return ytId ? (
+                                <div key={i} className="aspect-video w-full overflow-hidden">
+                                    <iframe
+                                        src={`https://www.youtube.com/embed/${ytId}`}
+                                        title={`Video ${i + 1}`}
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen
+                                        loading="lazy"
+                                        className="h-full w-full"
+                                    />
+                                </div>
+                            ) : (
+                                <a
+                                    key={i}
+                                    href={v}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="group border-border hover:border-foreground flex flex-col border p-4 transition-colors"
+                                >
+                                    <span className="text-muted-foreground group-hover:text-foreground mb-2 font-mono text-[10px] uppercase">
+                                        {t("externalVideoLink")}
+                                    </span>
+                                    <span className="font-body text-foreground truncate text-[13px]">
+                                        {v}
+                                    </span>
+                                </a>
+                            );
+                        })}
                     </div>
                 </div>
             )}

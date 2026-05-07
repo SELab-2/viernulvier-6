@@ -1,4 +1,4 @@
-import { components } from "@/types/api/generated";
+import { components, operations } from "@/types/api/generated";
 import { PaginatedListResponse } from "./api.types";
 
 export type ArticleStatus = components["schemas"]["ArticleStatus"];
@@ -10,3 +10,5 @@ export type ArticleRelationsResponse = components["schemas"]["ArticleRelationsPa
 
 export type GetAllArticlesResponse = PaginatedListResponse<"get_all_articles">;
 export type PaginatedArticleResponse = GetAllArticlesResponse;
+export type ArticlesCmsSearchResponse =
+    operations["search_articles_cms"]["responses"][200]["content"]["application/json"];

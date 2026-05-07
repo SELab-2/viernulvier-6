@@ -1,3 +1,4 @@
+use base64::{Engine, prelude::BASE64_URL_SAFE};
 use chrono::{DateTime, Utc};
 use database::{
     Database,
@@ -8,14 +9,20 @@ use database::{
             CollectionItemTranslationData, CollectionItemWithTranslations,
         },
         entity_type::EntityType,
+        filtering::cursor::CursorData,
     },
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use tracing::debug;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::{dto::build_cover_url, error::AppError};
+use crate::{
+    dto::{build_cover_url, paginated::PaginatedResponse},
+    error::AppError,
+    handlers::queries::collection::CollectionSearchQuery,
+};
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct CollectionTranslationPayload {
@@ -156,8 +163,20 @@ fn collection_translations_to_data(
 }
 
 impl CollectionPayload {
-    pub async fn all(db: &Database, public_url: Option<&str>) -> Result<Vec<Self>, AppError> {
-        let collections = db.collections().all().await?;
+    pub async fn all(
+        db: &Database,
+        id_cursor: Option<String>,
+        limit: u32,
+        search: CollectionSearchQuery,
+        public_url: Option<&str>,
+    ) -> Result<PaginatedResponse<Self>, AppError> {
+        let cursor: Option<CursorData> = id_cursor.and_then(|b64| {
+            let bytes = BASE64_URL_SAFE.decode(b64).ok()?;
+            serde_json::from_slice(&bytes).ok()
+        });
+
+        let (collections, next_cursor) = db.collections().all(limit, cursor, search.into()).await?;
+
         let ids: Vec<Uuid> = collections.iter().map(|c| c.collection.id).collect();
         let all_items = db.collections().items_for_collections(&ids).await?;
 
@@ -189,7 +208,16 @@ impl CollectionPayload {
             }
         }
 
-        Ok(result)
+        let next_cursor_data = next_cursor.and_then(|c| {
+            let data = serde_json::to_vec(&c).ok()?;
+            Some(BASE64_URL_SAFE.encode(data))
+        });
+
+        debug!("Returning {} collections", result.len());
+        Ok(PaginatedResponse {
+            data: result,
+            next_cursor: next_cursor_data,
+        })
     }
 
     pub async fn by_id(

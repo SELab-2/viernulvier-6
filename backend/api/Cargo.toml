@@ -21,6 +21,7 @@ ai-normalization = ["dep:scraper"]
 
 [dependencies]
 database = { path = "../database" }
+sqlx = { version = "0.8.6", default-features = false, features = ["runtime-tokio", "postgres"] }
 tracing = { workspace = true }
 tokio = { workspace = true, features = ["fs", "io-util", "rt", "rt-multi-thread", "macros", "time"] }
 tracing-subscriber = { version = "=0.3", default-features = false, features = ["env-filter", "fmt", "ansi"] }

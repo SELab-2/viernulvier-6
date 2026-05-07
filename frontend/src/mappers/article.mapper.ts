@@ -4,6 +4,7 @@ import {
     ArticleRelationsResponse,
     ArticleResponse,
     ArticleUpdateRequest,
+    ArticlesCmsSearchResponse,
     PaginatedArticleResponse,
 } from "@/types/api/article.api.types";
 import { PaginatedResult } from "@/types/api/api.types";
@@ -53,6 +54,13 @@ export const mapArticleListItems = (responses: ArticleListResponse[]): ArticleLi
 
 export const mapPaginatedArticlesResult = (
     response: PaginatedArticleResponse
+): PaginatedResult<ArticleListItem> => ({
+    data: mapArticleListItems(response.data),
+    nextCursor: response.next_cursor ?? null,
+});
+
+export const mapPaginatedArticleListItemsResult = (
+    response: ArticlesCmsSearchResponse
 ): PaginatedResult<ArticleListItem> => ({
     data: mapArticleListItems(response.data),
     nextCursor: response.next_cursor ?? null,
