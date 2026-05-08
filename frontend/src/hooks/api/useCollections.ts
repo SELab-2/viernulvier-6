@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api-client";
 import {
@@ -8,10 +8,12 @@ import {
     mapItemsBulkInput,
     mapUpdateInput,
 } from "@/mappers/collection.mapper";
+import { PaginatedResult, PaginationParams } from "@/types/api/api.types";
 import {
     CollectionCreateRequest,
     CollectionItemResponse,
     CollectionItemsBulkRequest,
+    CollectionPaginatedResponse,
     CollectionResponse,
 } from "@/types/api/collection.api.types";
 import {
@@ -26,8 +28,20 @@ import {
 import { queryKeys } from "./query-keys";
 
 const fetchCollections = async (): Promise<Collection[]> => {
-    const { data } = await api.get<CollectionResponse[]>("/collections");
-    return mapCollections(data);
+    const { data } = await api.get<CollectionPaginatedResponse>("/collections", {
+        params: { limit: 200 },
+    });
+    return mapCollections(data.data);
+};
+
+const fetchCollectionsPage = async (
+    params?: Omit<PaginationParams, "cursor"> & { cursor?: string | null }
+): Promise<PaginatedResult<Collection>> => {
+    const { data } = await api.get<CollectionPaginatedResponse>("/collections", { params });
+    return {
+        data: mapCollections(data.data),
+        nextCursor: data.next_cursor ?? null,
+    };
 };
 
 const fetchCollectionById = async (id: string): Promise<Collection> => {
@@ -63,6 +77,16 @@ export const useGetCollectionBySlug = (slug: string, options?: { enabled?: boole
         queryKey: queryKeys.collections.bySlug(slug),
         queryFn: () => fetchCollectionBySlug(slug),
         enabled: Boolean(slug) && (options?.enabled ?? true),
+    });
+};
+
+export const useGetInfiniteCollections = (options?: { enabled?: boolean }) => {
+    return useInfiniteQuery({
+        queryKey: queryKeys.collections.cmsInfinite(),
+        queryFn: async ({ pageParam }) => fetchCollectionsPage({ cursor: pageParam }),
+        getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+        initialPageParam: null as string | null,
+        ...options,
     });
 };
 

@@ -44,6 +44,10 @@ export const queryKeys = {
             visibility
                 ? (["collections", "production", id, visibility] as const)
                 : (["collections", "production", id] as const),
+        cmsInfinite: (params?: Record<string, unknown>) =>
+            params
+                ? (["collections", "cms", "infinite", params] as const)
+                : (["collections", "cms", "infinite"] as const),
     },
     events: {
         all: (pagination?: PaginationParams) => buildQueryKey(["events"], pagination),
