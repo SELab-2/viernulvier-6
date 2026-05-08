@@ -263,7 +263,8 @@ async fn put_success(db: PgPool) {
         ],
         "items": [],
         "created_at": "2026-01-01T00:00:00Z",
-        "updated_at": "2026-01-01T00:00:00Z"
+        "updated_at": "2026-01-01T00:00:00Z",
+        "visibility": "public"
     }))
     .expect("Failed to deserialize CollectionPayload");
 
@@ -300,7 +301,8 @@ async fn put_not_found(db: PgPool) {
         ],
         "items": [],
         "created_at": "2026-01-01T00:00:00Z",
-        "updated_at": "2026-01-01T00:00:00Z"
+        "updated_at": "2026-01-01T00:00:00Z",
+        "visibility": "public"
     }))
     .expect("Failed to deserialize CollectionPayload");
 
