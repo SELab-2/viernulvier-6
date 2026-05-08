@@ -146,7 +146,7 @@ export const useProductionCollections = (
     options?: { enabled?: boolean }
 ) => {
     return useQuery({
-        queryKey: queryKeys.collections.forProduction(productionId),
+        queryKey: queryKeys.collections.forProduction(productionId, visibility),
         queryFn: () => fetchProductionCollections(productionId, visibility),
         enabled: Boolean(productionId) && (options?.enabled ?? true),
     });
