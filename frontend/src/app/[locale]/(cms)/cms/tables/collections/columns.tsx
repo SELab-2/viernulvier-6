@@ -6,6 +6,7 @@ import { ExternalLink, Link2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
+import { Badge } from "@/components/ui/badge";
 import { LocalizedText, resolveLocalized } from "@/components/ui/localized-text";
 import { Action, ActionVariant } from "@/types/cms/actions";
 import { CollectionRow } from "@/types/models/collection.types";
@@ -157,6 +158,16 @@ export function makeCollectionColumns(options: {
                     {getValue() as number}
                 </span>
             ),
+        },
+        {
+            accessorKey: "visibility",
+            header: "Visibility",
+            cell: ({ row }) =>
+                row.original.visibility === "unlisted" ? (
+                    <Badge variant="secondary">Unlisted</Badge>
+                ) : (
+                    <Badge variant="outline">Public</Badge>
+                ),
         },
         {
             id: "updatedAt",
