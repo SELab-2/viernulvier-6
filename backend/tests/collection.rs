@@ -3,6 +3,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use std::str::FromStr;
 use uuid::Uuid;
+use database::models::collection::CollectionVisibility;
 use viernulvier_archive::dto::{
     collection::{
         CollectionItemPayload, CollectionItemPostPayload, CollectionPayload, CollectionPostPayload,
@@ -496,4 +497,72 @@ fn mock_post_payload() -> CollectionPostPayload {
         ]
     }))
     .expect("Failed to deserialize mock CollectionPostPayload")
+}
+
+#[sqlx::test(fixtures("collections", "productions", "collection_items_production"))]
+#[test_log::test]
+async fn get_collections_for_production_returns_public(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app
+        .get("/productions/11111111-1111-1111-1111-111111111111/collections")
+        .await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: Vec<CollectionPayload> = response.into_struct().await;
+    assert_eq!(data.len(), 1, "should return only the public collection");
+    assert_eq!(data[0].slug, "zomerselectie");
+    assert_eq!(data[0].visibility, CollectionVisibility::Public);
+}
+
+#[sqlx::test(fixtures("collections", "productions", "collection_items_production"))]
+#[test_log::test]
+async fn get_collections_for_production_unlisted(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app
+        .get("/productions/11111111-1111-1111-1111-111111111111/collections?visibility=unlisted")
+        .await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: Vec<CollectionPayload> = response.into_struct().await;
+    assert_eq!(data.len(), 1, "should return only the unlisted collection");
+    assert_eq!(data[0].slug, "lentespecial");
+    assert_eq!(data[0].visibility, CollectionVisibility::Unlisted);
+}
+
+#[sqlx::test(fixtures("collections", "productions"))]
+#[test_log::test]
+async fn get_collections_for_production_empty(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app
+        .get("/productions/11111111-1111-1111-1111-111111111111/collections")
+        .await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: Vec<CollectionPayload> = response.into_struct().await;
+    assert!(data.is_empty(), "should return empty when production has no collection items");
+}
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn collection_has_visibility_field(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/collections/slug/zomerselectie").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: CollectionPayload = response.into_struct().await;
+    assert_eq!(data.visibility, CollectionVisibility::Public);
+}
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn unlisted_collection_has_visibility_field(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/collections/slug/lentespecial").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: CollectionPayload = response.into_struct().await;
+    assert_eq!(data.visibility, CollectionVisibility::Unlisted);
 }
