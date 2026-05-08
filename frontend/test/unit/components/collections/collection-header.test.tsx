@@ -31,6 +31,7 @@ const makeItem = (id: string): CollectionItem => ({
 const makeCollection = (overrides: Partial<Collection> = {}): Collection => ({
     id: "col-1",
     slug: "test-collection",
+    visibility: "public",
     translations: [
         { languageCode: "en", title: "Test Collection", description: "A test description." },
         { languageCode: "nl", title: "Testcollectie", description: "Een testbeschrijving." },
