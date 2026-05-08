@@ -761,6 +761,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/productions/{id}/collections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return all collections that contain the given production. Defaults to visibility=public. Pass ?visibility=unlisted for series-type collections. */
+        get: operations["get_collections_for_production"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/productions/{id}/events": {
         parameters: {
             query?: never;
@@ -773,94 +790,6 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/productions/{id}/series": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Return all series that contain the given production. Public endpoint, no authentication required. */
-        get: operations["get_series_for_production"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/series": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Return all series with translations, production IDs, and derived period. Public endpoint, no authentication required. */
-        get: operations["get_all_series"];
-        /** @description Update the metadata (slug, translations) of an existing series. Requires editor authentication. Does not affect production membership. */
-        put: operations["update_series"];
-        /** @description Create a new series. Requires editor authentication. Supply a slug and per-language translations (name, subtitle, description). Productions are added separately via POST /series/{slug}/productions. */
-        post: operations["create_series"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/series/{slug}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Return a single series by its slug, including translations, production IDs, and derived period. Public endpoint, no authentication required. */
-        get: operations["get_one_series"];
-        put?: never;
-        post?: never;
-        /** @description Permanently delete a series. Requires editor authentication. Productions are not affected. */
-        delete: operations["delete_series"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/series/{slug}/productions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** @description Add one or more productions to a series. Requires editor authentication. Duplicates are silently ignored. */
-        post: operations["add_productions_to_series"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/series/{slug}/productions/{production_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** @description Remove a production from a series. Requires editor authentication. The production itself is not deleted. */
-        delete: operations["remove_production_from_series"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1187,22 +1116,24 @@ export interface components {
              * @description ISO 8601 last-updated timestamp.
              */
             updated_at: string;
-            /** @description Whether the collection is publicly listed or only accessible via direct link. */
-            visibility: "public" | "unlisted";
+            /** @description Whether this collection appears on entity detail pages (public) or is only accessible via its URL (unlisted). */
+            visibility: components["schemas"]["CollectionVisibility"];
         };
         CollectionPostPayload: {
             /** @description URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections. */
             slug: string;
             /** @description Per-language title and description. */
             translations: components["schemas"]["CollectionTranslationPayload"][];
-            /** @description Whether the collection is publicly listed or only accessible via direct link. Defaults to public. */
-            visibility?: "public" | "unlisted";
+            /** @description Whether this collection appears on entity detail pages (public) or is only accessible via its URL (unlisted). */
+            visibility?: components["schemas"]["CollectionVisibility"];
         };
         CollectionTranslationPayload: {
             description: string;
             language_code: string;
             title: string;
         };
+        /** @enum {string} */
+        CollectionVisibility: "public" | "unlisted";
         CreateEditorRequest: {
             email: string;
             password: string;
@@ -1613,6 +1544,8 @@ export interface components {
                  * @description ISO 8601 last-updated timestamp.
                  */
                 updated_at: string;
+                /** @description Whether this collection appears on entity detail pages (public) or is only accessible via its URL (unlisted). */
+                visibility: components["schemas"]["CollectionVisibility"];
             }[];
             next_cursor?: string | null;
         };
@@ -1852,34 +1785,6 @@ export interface components {
         };
         ReplaceTagsRequest: {
             tag_slugs: string[];
-        };
-        SeriesPayload: {
-            /** Format: date-time */
-            created_at: string;
-            /** Format: uuid */
-            id: string;
-            /** Format: date-time */
-            period_end?: string | null;
-            /** Format: date-time */
-            period_start?: string | null;
-            production_ids: string[];
-            slug: string;
-            translations: components["schemas"]["SeriesTranslationPayload"][];
-            /** Format: date-time */
-            updated_at: string;
-        };
-        SeriesPostPayload: {
-            slug: string;
-            translations: components["schemas"]["SeriesTranslationPayload"][];
-        };
-        SeriesProductionsPayload: {
-            production_ids: string[];
-        };
-        SeriesTranslationPayload: {
-            description: string;
-            language_code: string;
-            name: string;
-            subtitle: string;
         };
         /** @enum {string} */
         Sort: "recent" | "oldest" | "relevance";
@@ -2614,6 +2519,7 @@ export interface operations {
                 cursor?: string | null;
                 limit?: number;
                 q?: string | null;
+                visibility?: null | components["schemas"]["CollectionVisibility"];
             };
             header?: never;
             path?: never;
@@ -4301,6 +4207,31 @@ export interface operations {
             };
         };
     };
+    get_collections_for_production: {
+        parameters: {
+            query?: {
+                visibility?: null | components["schemas"]["CollectionVisibility"];
+            };
+            header?: never;
+            path: {
+                /** @description Production UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionPayload"][];
+                };
+            };
+        };
+    };
     get_events_by_production_id: {
         parameters: {
             query?: never;
@@ -4320,271 +4251,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EventPayload"][];
-                };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    get_series_for_production: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Production UUID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SeriesPayload"][];
-                };
-            };
-        };
-    };
-    get_all_series: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SeriesPayload"][];
-                };
-            };
-        };
-    };
-    update_series: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SeriesPayload"];
-            };
-        };
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SeriesPayload"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    create_series: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SeriesPostPayload"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SeriesPayload"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    get_one_series: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Series slug */
-                slug: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SeriesPayload"];
-                };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    delete_series: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Series slug */
-                slug: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    add_productions_to_series: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Series slug */
-                slug: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SeriesProductionsPayload"];
-            };
-        };
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SeriesPayload"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    remove_production_from_series: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Series slug */
-                slug: string;
-                /** @description Production UUID */
-                production_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Not found */
