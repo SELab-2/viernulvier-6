@@ -30,11 +30,22 @@ import { slugify } from "@/lib/slugify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CollectionCoverField } from "@/components/cms/collection-cover-field";
 import { LanguageSelector } from "@/components/cms/language-selector";
-import type { Collection, CollectionItem } from "@/types/models/collection.types";
+import type {
+    Collection,
+    CollectionItem,
+    CollectionVisibility,
+} from "@/types/models/collection.types";
 import { CollectionPreviewData } from "@/types/collection-preview.types";
 import { usePreviewContext } from "@/contexts/PreviewContext";
 import type { Production } from "@/types/models/production.types";
@@ -373,6 +384,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
     const [titleEn, setTitleEn] = useState<string | null>(null);
     const [descriptionNl, setDescriptionNl] = useState<string | null>(null);
     const [descriptionEn, setDescriptionEn] = useState<string | null>(null);
+    const [visibility, setVisibility] = useState<CollectionVisibility | null>(null);
     const [items, setItems] = useState<LocalCollectionItem[] | null>(null);
 
     const itemsContainerRef = useRef<HTMLDivElement>(null);
@@ -482,8 +494,11 @@ export function CollectionEditorPage({ id }: { id: string }) {
         );
     }, [initialItems, localItems]);
 
+    const effectiveVisibility: CollectionVisibility =
+        visibility ?? collection?.visibility ?? "public";
+    const visibilityDirty = visibility !== null && visibility !== collection?.visibility;
     const isSaving = updateCollection.isPending || updateItems.isPending;
-    const canSave = hydrationReady && (metadataDirty || itemsDirty) && !isSaving;
+    const canSave = hydrationReady && (metadataDirty || itemsDirty || visibilityDirty) && !isSaving;
 
     const descriptionRef = useRef<HTMLTextAreaElement>(null);
     const descriptionValue =
@@ -751,11 +766,12 @@ export function CollectionEditorPage({ id }: { id: string }) {
     const save = () => {
         if (!collection || !metadata) return;
 
-        if (metadataDirty) {
+        if (metadataDirty || visibilityDirty) {
             updateCollection.mutate(
                 {
                     ...collection,
                     slug: metadata.slug,
+                    visibility: effectiveVisibility,
                     translations: metadata.translations,
                 },
                 {
@@ -924,6 +940,29 @@ export function CollectionEditorPage({ id }: { id: string }) {
                                             className="min-h-[100px] resize-y text-sm"
                                         />
                                     </div>
+                                </div>
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium">
+                                        {t("fieldVisibility")}
+                                    </label>
+                                    <Select
+                                        value={effectiveVisibility}
+                                        onValueChange={(v) =>
+                                            setVisibility(v as CollectionVisibility)
+                                        }
+                                    >
+                                        <SelectTrigger className="h-9 text-sm">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="public">
+                                                {t("visibilityPublic")}
+                                            </SelectItem>
+                                            <SelectItem value="unlisted">
+                                                {t("visibilityUnlisted")}
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <CollectionCoverField collection={collection} />
                             </section>
