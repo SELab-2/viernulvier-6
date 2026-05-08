@@ -17,6 +17,8 @@ import { useGetEntityMedia } from "@/hooks/api/useMedia";
 import { getLocalizedField } from "@/lib/locale";
 import { Link, useRouter } from "@/i18n/routing";
 
+import Image from "next/image";
+
 import { UnifiedHeader } from "@/components/layout/header";
 import { LoadingState } from "@/components/shared/loading-state";
 import { PreviewBadge } from "@/components/preview";
@@ -194,22 +196,44 @@ export default function ProductionPage({
             {/* Part of Collections */}
             {publicCollections.length > 0 && (
                 <section className="border-foreground/10 border-t px-6 py-10 sm:px-10">
-                    <h2 className="text-muted-foreground mb-4 font-mono text-[9px] tracking-[2px] uppercase">
+                    <h2 className="text-muted-foreground mb-6 font-mono text-[9px] tracking-[2px] uppercase">
                         {tProd("partOfTitle")}
                     </h2>
-                    <ul className="flex flex-wrap gap-3">
+                    <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {publicCollections.map((col) => {
-                            const colTitle =
-                                col.translations.find((tr) => tr.languageCode === locale)?.title ??
-                                col.translations[0]?.title ??
-                                col.slug;
+                            const translation =
+                                col.translations.find((tr) => tr.languageCode === locale) ??
+                                col.translations[0];
+                            const colTitle = translation?.title ?? col.slug;
+                            const colDescription = translation?.description;
                             return (
                                 <li key={col.id}>
                                     <Link
                                         href={`/collections/${col.slug}`}
-                                        className="border-foreground/20 hover:bg-muted/10 inline-block border px-4 py-2 text-sm font-medium transition-colors"
+                                        className="border-foreground/10 hover:border-foreground/30 hover:bg-muted/5 group flex gap-4 border p-4 transition-colors"
                                     >
-                                        {colTitle}
+                                        <div className="bg-muted relative h-20 w-20 shrink-0 overflow-hidden">
+                                            {col.coverImageUrl ? (
+                                                <Image
+                                                    src={col.coverImageUrl}
+                                                    alt={colTitle}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            ) : (
+                                                <div className="from-muted to-muted/40 h-full w-full bg-gradient-to-br" />
+                                            )}
+                                        </div>
+                                        <div className="flex min-w-0 flex-col justify-center gap-1">
+                                            <span className="font-display text-foreground line-clamp-2 text-sm leading-tight font-semibold">
+                                                {colTitle}
+                                            </span>
+                                            {colDescription && (
+                                                <p className="text-muted-foreground line-clamp-2 text-xs leading-relaxed">
+                                                    {colDescription}
+                                                </p>
+                                            )}
+                                        </div>
                                     </Link>
                                 </li>
                             );
