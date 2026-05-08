@@ -6,7 +6,7 @@ import { Link2, SquarePen, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
-import { Badge } from "@/components/ui/badge";
+import { VisibilityBadge } from "@/components/cms/visibility-badge";
 import { LocalizedText, resolveLocalized } from "@/components/ui/localized-text";
 import { Action, ActionDisplay, ActionVariant } from "@/types/cms/actions";
 import { CollectionRow } from "@/types/models/collection.types";
@@ -162,13 +162,8 @@ export function makeCollectionColumns(options: {
         },
         {
             accessorKey: "visibility",
-            header: "Visibility",
-            cell: ({ row }) =>
-                row.original.visibility === "unlisted" ? (
-                    <Badge variant="secondary">Unlisted</Badge>
-                ) : (
-                    <Badge variant="outline">Public</Badge>
-                ),
+            header: t("fieldVisibility"),
+            cell: ({ row }) => <VisibilityBadge visibility={row.original.visibility} />,
         },
         {
             id: "updatedAt",
