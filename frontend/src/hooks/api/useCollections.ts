@@ -20,6 +20,7 @@ import {
     CollectionCreateInput,
     CollectionItemTranslation,
     CollectionItemsBulkInput,
+    CollectionVisibility,
 } from "@/types/models/collection.types";
 
 import { queryKeys } from "./query-keys";
@@ -126,6 +127,28 @@ export const useDeleteCollection = () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.collections.all });
             queryClient.removeQueries({ queryKey: queryKeys.collections.detail(id) });
         },
+    });
+};
+
+const fetchProductionCollections = async (
+    productionId: string,
+    visibility: CollectionVisibility
+): Promise<Collection[]> => {
+    const { data } = await api.get<CollectionResponse[]>(
+        `/productions/${productionId}/collections?visibility=${visibility}`
+    );
+    return mapCollections(data);
+};
+
+export const useProductionCollections = (
+    productionId: string,
+    visibility: CollectionVisibility = "public",
+    options?: { enabled?: boolean }
+) => {
+    return useQuery({
+        queryKey: queryKeys.collections.forProduction(productionId),
+        queryFn: () => fetchProductionCollections(productionId, visibility),
+        enabled: Boolean(productionId) && (options?.enabled ?? true),
     });
 };
 

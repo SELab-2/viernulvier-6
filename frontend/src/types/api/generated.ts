@@ -1187,12 +1187,16 @@ export interface components {
              * @description ISO 8601 last-updated timestamp.
              */
             updated_at: string;
+            /** @description Whether the collection is publicly listed or only accessible via direct link. */
+            visibility: "public" | "unlisted";
         };
         CollectionPostPayload: {
             /** @description URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections. */
             slug: string;
             /** @description Per-language title and description. */
             translations: components["schemas"]["CollectionTranslationPayload"][];
+            /** @description Whether the collection is publicly listed or only accessible via direct link. Defaults to public. */
+            visibility?: "public" | "unlisted";
         };
         CollectionTranslationPayload: {
             description: string;
