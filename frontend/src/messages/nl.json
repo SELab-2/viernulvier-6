@@ -722,7 +722,8 @@
         "shareEmail": "Delen via e-mail",
         "articlesTitle": "Artikels",
         "articlesLabel": "Artikel",
-        "articlesFallbackTitle": "Zonder titel"
+        "articlesFallbackTitle": "Zonder titel",
+        "partOfTitle": "Deel van"
     },
     "NewsArticleComponent": {
         "subTitle": "Vooruit Archief",

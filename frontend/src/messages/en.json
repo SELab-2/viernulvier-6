@@ -722,7 +722,8 @@
         "shareEmail": "Share via email",
         "articlesTitle": "Articles",
         "articlesLabel": "Article",
-        "articlesFallbackTitle": "Untitled"
+        "articlesFallbackTitle": "Untitled",
+        "partOfTitle": "Part of"
     },
     "NewsArticleComponent": {
         "subTitle": "Vooruit Archive",

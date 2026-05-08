@@ -7,6 +7,7 @@ import { notFound, useSearchParams } from "next/navigation";
 import { useGetProduction, useGetProductions } from "@/hooks/api/useProductions";
 import { useGetEventsByProduction } from "@/hooks/api/useEvents";
 import { useGetArticlesByProduction } from "@/hooks/api/useArticles";
+import { useProductionCollections } from "@/hooks/api/useCollections";
 import { useHasPreview } from "@/hooks/usePreviewData";
 import {
     useProductionWithPreview,
@@ -82,6 +83,7 @@ export default function ProductionPage({
     const { data: productionsResult, isLoading: isAllProdLoading } = useGetProductions();
     const { data: linkedArticles = [] } = useGetArticlesByProduction(id);
     const { data: media = [] } = useGetEntityMedia("production", id);
+    const { data: publicCollections = [] } = useProductionCollections(id, "public");
 
     // Always call preview hooks (they handle preview mode internally)
     const previewProduction = useProductionWithPreview(id, apiProduction, sessionId);
@@ -188,6 +190,33 @@ export default function ProductionPage({
 
             {/* Linked Articles */}
             <ProductionArticles articles={linkedArticles} locale={locale} />
+
+            {/* Part of Collections */}
+            {publicCollections.length > 0 && (
+                <section className="border-foreground/10 border-t px-6 py-10 sm:px-10">
+                    <h2 className="text-muted-foreground mb-4 font-mono text-[9px] tracking-[2px] uppercase">
+                        {tProd("partOfTitle")}
+                    </h2>
+                    <ul className="flex flex-wrap gap-3">
+                        {publicCollections.map((col) => {
+                            const colTitle =
+                                col.translations.find((tr) => tr.languageCode === locale)?.title ??
+                                col.translations[0]?.title ??
+                                col.slug;
+                            return (
+                                <li key={col.id}>
+                                    <Link
+                                        href={`/collections/${col.slug}`}
+                                        className="border-foreground/20 hover:bg-muted/10 inline-block border px-4 py-2 text-sm font-medium transition-colors"
+                                    >
+                                        {colTitle}
+                                    </Link>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </section>
+            )}
 
             {/* Related Section */}
             {relatedProductions.length > 0 && (
