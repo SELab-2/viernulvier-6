@@ -268,6 +268,7 @@ fn public_routes() -> OpenApiRouter<AppState> {
         // media
         .routes(routes!(media::get_all))
         .routes(routes!(media::get_one))
+        .routes(routes!(media::get_media_entities))
         .routes(routes!(media::get_entity_media))
         // collections
         .routes(routes!(collection::get_all))
@@ -327,6 +328,8 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(series::remove_production))
         // Media
         .routes(routes!(media::generate_upload_url))
+        .routes(routes!(media::check))
+        .routes(routes!(media::create))
         .routes(routes!(media::put))
         .routes(routes!(media::delete))
         .routes(routes!(media::attach_to_entity))
