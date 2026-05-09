@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { mapFacet, mapFacets, mapTag } from "@/mappers/taxonomy.mapper";
+import { mapEntityFacets } from "@/mappers/taxonomy.mapper";
 
 describe("taxonomy mapper", () => {
     it("maps tag response to domain model", () => {
@@ -85,5 +86,38 @@ describe("taxonomy mapper", () => {
         expect(mapped).toHaveLength(2);
         expect(mapped[0].slug).toBe("discipline");
         expect(mapped[1].translations.find((t) => t.languageCode === "nl")?.label).toBe("Formaat");
+    });
+});
+
+describe("mapEntityFacets", () => {
+    it("maps entity facet response including inherited flag", () => {
+        const mapped = mapEntityFacets([
+            {
+                slug: "discipline",
+                translations: [{ language_code: "nl", label: "Discipline" }],
+                tags: [
+                    {
+                        slug: "theatre",
+                        sort_order: 1,
+                        inherited: false,
+                        translations: [
+                            { language_code: "nl", label: "Theater", description: null },
+                        ],
+                    },
+                    {
+                        slug: "music",
+                        sort_order: 2,
+                        inherited: true,
+                        translations: [{ language_code: "nl", label: "Muziek", description: null }],
+                    },
+                ],
+            },
+        ]);
+
+        expect(mapped).toHaveLength(1);
+        expect(mapped[0].slug).toBe("discipline");
+        expect(mapped[0].tags[0].inherited).toBe(false);
+        expect(mapped[0].tags[1].inherited).toBe(true);
+        expect(mapped[0].tags[1].slug).toBe("music");
     });
 });
