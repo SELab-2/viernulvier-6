@@ -624,6 +624,11 @@
             "removeSuccess": "Omslagafbeelding verwijderd.",
             "removeError": "Omslagafbeelding verwijderen mislukt."
         },
+        "Tags": {
+            "sectionLabel": "Tags",
+            "inherited": "Overgenomen",
+            "loading": "Tags laden…"
+        },
         "ProductionMedia": {
             "title": "Media productie",
             "editMode": "Mediabeheer",
