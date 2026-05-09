@@ -13,8 +13,15 @@ mod common;
 
 #[derive(Deserialize)]
 struct EditorResponse {
+    id: String,
     email: String,
     role: UserRole,
+}
+
+#[derive(Debug, Deserialize)]
+struct UserResponse {
+    id: String,
+    username: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -117,6 +124,99 @@ async fn create_editor_editor_denied(db: PgPool) {
 
     let response = app.post("/editor/create", &payload).await;
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn users_endpoints_are_admin_only(db: PgPool) {
+    let unauth_app = TestRouter::new(db.clone());
+    let unauth_response = unauth_app.get("/users").await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
+
+    let editor_app = TestRouter::as_editor(db.clone()).await;
+    let editor_response = editor_app.get("/users").await;
+    assert_eq!(editor_response.status(), StatusCode::UNAUTHORIZED);
+
+    let user_app = TestRouter::as_user(db.clone()).await;
+    let user_response = user_app.get("/users").await;
+    assert_eq!(user_response.status(), StatusCode::UNAUTHORIZED);
+
+    let admin_app = TestRouter::as_admin(db).await;
+    let admin_response = admin_app.get("/users").await;
+    assert_eq!(admin_response.status(), StatusCode::OK);
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn last_admin_cannot_be_demoted_or_deleted(db: PgPool) {
+    let admin_app = TestRouter::as_admin(db).await;
+    let me: EditorResponse = admin_app.get("/editor/me").await.into_struct().await;
+    let users: Vec<UserResponse> = admin_app.get("/users").await.into_struct().await;
+    let admin_username = users
+        .into_iter()
+        .find(|u| u.id == me.id)
+        .map(|u| u.username)
+        .expect("expected current admin user");
+
+    let demote_payload = serde_json::json!({
+        "username": admin_username,
+        "role": "user"
+    });
+    let demote_response = admin_app
+        .put(&format!("/users/{}", me.id), &demote_payload)
+        .await;
+    assert_eq!(demote_response.status(), StatusCode::CONFLICT);
+
+    let delete_response = admin_app.delete(&format!("/users/{}", me.id)).await;
+    assert_eq!(delete_response.status(), StatusCode::CONFLICT);
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn role_change_revokes_existing_token(db: PgPool) {
+    let admin_app = TestRouter::as_admin(db.clone()).await;
+    let me: EditorResponse = admin_app.get("/editor/me").await.into_struct().await;
+    let users: Vec<UserResponse> = admin_app.get("/users").await.into_struct().await;
+    let admin_username = users
+        .iter()
+        .find(|u| u.id == me.id)
+        .map(|u| u.username.clone())
+        .expect("expected current admin user");
+
+    let create_admin_payload = serde_json::json!({
+        "username": "second-admin",
+        "email": "second-admin@test.com",
+        "password": "password123",
+        "role": "admin"
+    });
+    let create_response = admin_app.post("/users", &create_admin_payload).await;
+    assert_eq!(create_response.status(), StatusCode::OK);
+
+    let demote_payload = serde_json::json!({
+        "username": admin_username,
+        "role": "user"
+    });
+    let demote_response = admin_app
+        .put(&format!("/users/{}", me.id), &demote_payload)
+        .await;
+    assert_eq!(demote_response.status(), StatusCode::OK);
+
+    let revoked_response = admin_app.get("/editor/me").await;
+    assert_eq!(revoked_response.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn delete_user_revokes_existing_token(db: PgPool) {
+    let editor_app = TestRouter::as_editor(db.clone()).await;
+    let editor_me: EditorResponse = editor_app.get("/editor/me").await.into_struct().await;
+
+    let admin_app = TestRouter::as_admin(db).await;
+    let delete_response = admin_app.delete(&format!("/users/{}", editor_me.id)).await;
+    assert_eq!(delete_response.status(), StatusCode::NO_CONTENT);
+
+    let revoked_response = editor_app.get("/editor/me").await;
+    assert_eq!(revoked_response.status(), StatusCode::UNAUTHORIZED);
 }
 
 #[sqlx::test]

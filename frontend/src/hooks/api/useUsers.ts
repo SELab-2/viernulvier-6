@@ -1,34 +1,27 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "@/lib/api-client";
+import {
+    CreateUserRequest,
+    CreateUserResponse,
+    GetUsersResponse,
+    UpdateUserRequest,
+    UpdateUserResponse,
+    UserResponse,
+    UserRole,
+} from "@/types/api/user.api.types";
 import { queryKeys } from "./query-keys";
 
-export type UserRole = "admin" | "editor" | "user";
-
-export type User = {
-    id: string;
-    username: string;
-    email: string;
-    role: UserRole;
-};
-
-export type CreateUserInput = {
-    username: string;
-    email: string;
-    password: string;
-    role: UserRole;
-};
-
-export type UpdateUserInput = {
-    username: string;
-    role: UserRole;
-};
+export type User = UserResponse;
+export type CreateUserInput = CreateUserRequest;
+export type UpdateUserInput = UpdateUserRequest;
+export type { UserRole };
 
 export const useGetUsers = () => {
     return useQuery({
         queryKey: queryKeys.users.all(),
-        queryFn: async (): Promise<User[]> => {
-            const { data } = await api.get("/users");
+        queryFn: async (): Promise<GetUsersResponse> => {
+            const { data } = await api.get<GetUsersResponse>("/users");
             return data;
         },
     });
@@ -37,8 +30,8 @@ export const useGetUsers = () => {
 export const useCreateUser = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async (payload: CreateUserInput) => {
-            const { data } = await api.post("/users", payload);
+        mutationFn: async (payload: CreateUserInput): Promise<CreateUserResponse> => {
+            const { data } = await api.post<CreateUserResponse>("/users", payload);
             return data;
         },
         onSuccess: () => {
@@ -50,8 +43,14 @@ export const useCreateUser = () => {
 export const useUpdateUser = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ id, payload }: { id: string; payload: UpdateUserInput }) => {
-            const { data } = await api.put(`/users/${id}`, payload);
+        mutationFn: async ({
+            id,
+            payload,
+        }: {
+            id: string;
+            payload: UpdateUserInput;
+        }): Promise<UpdateUserResponse> => {
+            const { data } = await api.put<UpdateUserResponse>(`/users/${id}`, payload);
             return data;
         },
         onSuccess: () => {
