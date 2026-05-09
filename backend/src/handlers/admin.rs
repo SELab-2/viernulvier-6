@@ -215,8 +215,7 @@ pub async fn update_user(
 ) -> Result<Json<UserResponse>, AppError> {
     let target = db.users().by_id(id).await?;
     if target.role == UserRole::Admin && payload.role != UserRole::Admin {
-        let all_users = db.users().all().await?;
-        let admin_count = all_users.iter().filter(|u| u.role == UserRole::Admin).count();
+        let admin_count = db.users().admin_count().await?;
         if admin_count <= 1 {
             return Err(AppError::Conflict(
                 "Cannot change the role of the last admin user".into(),
@@ -270,8 +269,7 @@ pub async fn delete_user(
 ) -> Result<axum::http::StatusCode, AppError> {
     let user = db.users().by_id(id).await?;
     if user.role == UserRole::Admin {
-        let all_users = db.users().all().await?;
-        let admin_count = all_users.iter().filter(|u| u.role == UserRole::Admin).count();
+        let admin_count = db.users().admin_count().await?;
         if admin_count <= 1 {
             return Err(AppError::Conflict(
                 "Cannot delete the last admin user".into(),
