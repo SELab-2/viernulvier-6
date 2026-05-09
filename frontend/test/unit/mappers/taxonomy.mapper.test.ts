@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { mapFacet, mapFacets, mapTag } from "@/mappers/taxonomy.mapper";
-import { mapEntityFacets } from "@/mappers/taxonomy.mapper";
+import { mapFacet, mapFacets, mapTag, mapEntityFacets } from "@/mappers/taxonomy.mapper";
 
 describe("taxonomy mapper", () => {
     it("maps tag response to domain model", () => {
@@ -87,9 +86,7 @@ describe("taxonomy mapper", () => {
         expect(mapped[0].slug).toBe("discipline");
         expect(mapped[1].translations.find((t) => t.languageCode === "nl")?.label).toBe("Formaat");
     });
-});
 
-describe("mapEntityFacets", () => {
     it("maps entity facet response including inherited flag", () => {
         const mapped = mapEntityFacets([
             {
