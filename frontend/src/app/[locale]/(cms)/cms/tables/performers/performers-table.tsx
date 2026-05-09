@@ -9,6 +9,8 @@ import { EditSheet } from "../edit-sheet";
 import { makeArtistColumns, getArtistFields, toArtistUpdateInput } from "./columns";
 import { useDeleteArtist, useGetArtists, useUpdateArtist } from "@/hooks/api/useArtists";
 import { Artist } from "@/types/models/artist.types";
+import { useGetEntityTags, useReplaceEntityTags } from "@/hooks/api/useEntityTags";
+import { TagPickerSection } from "@/components/cms/tag-picker-section";
 
 export function PerformersTable() {
     const t = useTranslations("Cms.Performers");
@@ -17,8 +19,26 @@ export function PerformersTable() {
     const { data: artists = [], isLoading } = useGetArtists();
     const updateArtist = useUpdateArtist();
     const deleteArtist = useDeleteArtist();
+    const replaceEntityTags = useReplaceEntityTags();
 
     const [editArtist, setEditArtist] = useState<Artist | null>(null);
+    const [tagEdits, setTagEdits] = useState<string[] | null>(null);
+
+    const { data: entityTags } = useGetEntityTags("artist", editArtist?.id ?? "", {
+        enabled: !!editArtist,
+    });
+
+    const baseTagSlugs = useMemo(() => {
+        if (!entityTags) return [];
+        return entityTags.flatMap((f) => f.tags.filter((t) => !t.inherited).map((t) => t.slug));
+    }, [entityTags]);
+
+    const inheritedTagSlugs = useMemo(() => {
+        if (!entityTags) return [];
+        return entityTags.flatMap((f) => f.tags.filter((t) => t.inherited).map((t) => t.slug));
+    }, [entityTags]);
+
+    const tagSlugs = tagEdits ?? baseTagSlugs;
 
     const handleDelete = useCallback(
         (artist: Artist) => {
@@ -34,9 +54,14 @@ export function PerformersTable() {
 
     const artistFields = useMemo(() => getArtistFields(t), [t]);
 
+    const openEdit = useCallback((artist: Artist) => {
+        setEditArtist(artist);
+        setTagEdits(null);
+    }, []);
+
     const columns = useMemo(
-        () => makeArtistColumns(setEditArtist, handleDelete, tActions, t),
-        [handleDelete, tActions, t]
+        () => makeArtistColumns(openEdit, handleDelete, tActions, t),
+        [openEdit, handleDelete, tActions, t]
     );
 
     return (
@@ -46,16 +71,39 @@ export function PerformersTable() {
             </div>
             <EditSheet
                 open={!!editArtist}
-                onOpenChange={(open) => !open && setEditArtist(null)}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setEditArtist(null);
+                        setTagEdits(null);
+                    }
+                }}
                 entity={editArtist as (Artist & Record<string, unknown>) | null}
                 fields={artistFields}
                 title={t("editPerformer")}
-                onSave={(data) =>
-                    updateArtist.mutateAsync(toArtistUpdateInput(data as Artist), {
-                        onSuccess: () => toast.success(t("updateSuccess")),
-                        onError: () => toast.error(t("updateError")),
-                    })
-                }
+                onSave={async (data) => {
+                    try {
+                        await Promise.all([
+                            updateArtist.mutateAsync(toArtistUpdateInput(data as Artist)),
+                            replaceEntityTags.mutateAsync({
+                                entityType: "artist",
+                                entityId: data.id,
+                                tagSlugs,
+                            }),
+                        ]);
+                        toast.success(t("updateSuccess"));
+                    } catch {
+                        toast.error(t("updateError"));
+                    }
+                }}
+                extraContent={() => (
+                    <TagPickerSection
+                        entityType="artist"
+                        selectedSlugs={tagSlugs}
+                        inheritedSlugs={inheritedTagSlugs}
+                        onChange={(next) => setTagEdits(next)}
+                        compact
+                    />
+                )}
             />
         </div>
     );
