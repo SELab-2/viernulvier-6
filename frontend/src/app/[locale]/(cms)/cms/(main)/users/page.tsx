@@ -155,8 +155,8 @@ export default function UsersPage() {
     );
 
     const columns = useMemo(
-        () => makeUserColumns({ onEdit: openEdit, onDelete: handleDelete }),
-        [openEdit, handleDelete]
+        () => makeUserColumns({ onEdit: openEdit, onDelete: handleDelete, lastAdminId }),
+        [openEdit, handleDelete, lastAdminId]
     );
 
     return (

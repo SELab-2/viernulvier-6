@@ -41,26 +41,9 @@ function RoleIcon({ role }: { role: UserRole }) {
 export function makeUserColumns(options: {
     onEdit: (user: User) => void;
     onDelete: (user: User) => void;
+    lastAdminId: string | null;
 }): ColumnDef<User>[] {
-    const { onEdit, onDelete } = options;
-
-    const actions: Action<User>[] = [
-        {
-            key: "edit",
-            label: "Edit",
-            icon: Pencil,
-            display: ActionDisplay.Inline,
-            onClick: onEdit,
-        },
-        {
-            key: "delete",
-            label: "Delete",
-            icon: Trash2,
-            variant: ActionVariant.Destructive,
-            display: ActionDisplay.Inline,
-            onClick: onDelete,
-        },
-    ];
+    const { onEdit, onDelete, lastAdminId } = options;
 
     return [
         {
@@ -96,7 +79,29 @@ export function makeUserColumns(options: {
             },
         },
         {
-            ...makeActionsColumn<User>({ actions }),
+            ...makeActionsColumn<User>({
+                actions: (user) => [
+                    {
+                        key: "edit",
+                        label: "Edit",
+                        icon: Pencil,
+                        display: ActionDisplay.Inline,
+                        onClick: onEdit,
+                    },
+                    ...(user.id === lastAdminId
+                        ? []
+                        : [
+                              {
+                                  key: "delete",
+                                  label: "Delete",
+                                  icon: Trash2,
+                                  variant: ActionVariant.Destructive,
+                                  display: ActionDisplay.Inline,
+                                  onClick: onDelete,
+                              } as Action<User>,
+                          ]),
+                ],
+            }),
         },
     ];
 }
