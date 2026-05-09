@@ -19,6 +19,8 @@ import { ProductionRow } from "@/types/models/production.types";
 import { ProductionPreviewData } from "@/types/production-preview.types";
 import { toProductionRow, toProductionUpdateInput } from "../../../../tables/productions/columns";
 import { convertProductionRowToProduction } from "@/lib/production-converter";
+import { useGetEntityTags, useReplaceEntityTags } from "@/hooks/api/useEntityTags";
+import { TagPickerSection } from "@/components/cms/tag-picker-section";
 
 interface ProductionEditorPageProps {
     id: string;
@@ -120,6 +122,10 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
     const { data: eventsResult } = useGetEvents();
     const updateProduction = useUpdateProduction();
 
+    const { data: entityTags } = useGetEntityTags("production", id);
+    const replaceEntityTags = useReplaceEntityTags();
+    const [tagEdits, setTagEdits] = useState<string[] | null>(null);
+
     const [edits, setEdits] = useState<Partial<ProductionRow>>({});
     const [isPreviewOpen, setIsPreviewOpen] = useState(() => {
         if (typeof window !== "undefined" && window.innerWidth >= 1024) {
@@ -146,6 +152,18 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
         if (!fetchedProduction) return null;
         return toProductionRow(fetchedProduction);
     }, [fetchedProduction]);
+
+    const baseTagSlugs = useMemo(() => {
+        if (!entityTags) return [];
+        return entityTags.flatMap((f) => f.tags.filter((t) => !t.inherited).map((t) => t.slug));
+    }, [entityTags]);
+
+    const inheritedTagSlugs = useMemo(() => {
+        if (!entityTags) return [];
+        return entityTags.flatMap((f) => f.tags.filter((t) => t.inherited).map((t) => t.slug));
+    }, [entityTags]);
+
+    const tagSlugs = tagEdits ?? baseTagSlugs;
 
     // Merge base with edits
     const production = useMemo(() => {
@@ -237,9 +255,17 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
 
         try {
             const updateInput = toProductionUpdateInput(production);
-            await updateProduction.mutateAsync(updateInput);
+            await Promise.all([
+                updateProduction.mutateAsync(updateInput),
+                replaceEntityTags.mutateAsync({
+                    entityType: "production",
+                    entityId: production.id,
+                    tagSlugs,
+                }),
+            ]);
             clearPreviewFor("production", production.id);
             setEdits({});
+            setTagEdits(null);
             toast.success(t("saveSuccess"));
         } catch {
             toast.error(t("saveFailed"));
@@ -405,6 +431,13 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                                     })}
                                 </div>
                             </section>
+
+                            <TagPickerSection
+                                entityType="production"
+                                selectedSlugs={tagSlugs}
+                                inheritedSlugs={inheritedTagSlugs}
+                                onChange={(next) => setTagEdits(next)}
+                            />
                         </div>
                     </div>
                 </div>
