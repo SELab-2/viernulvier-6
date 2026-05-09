@@ -16,6 +16,7 @@ import { CmsMobileMenu } from "@/components/cms";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useGetArticle, useUpdateArticle } from "@/hooks/api/useArticles";
 import { Article } from "@/types/models/article.types";
+import { useGetEntityTags, useReplaceEntityTags } from "@/hooks/api/useEntityTags";
 
 interface ArticleEditorPageProps {
     id: string;
@@ -29,6 +30,9 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
 
     const { data: fetchedArticle, isLoading: articleLoading } = useGetArticle(id);
     const updateArticle = useUpdateArticle();
+    const { data: entityTags } = useGetEntityTags("article", id);
+    const replaceEntityTags = useReplaceEntityTags();
+    const [tagEdits, setTagEdits] = useState<string[] | null>(null);
 
     const [edits, setEdits] = useState<Partial<Article>>({});
     const [isPreviewOpen, setIsPreviewOpen] = useState(() => {
@@ -78,6 +82,18 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
         [fetchedArticle, edits]
     );
 
+    const baseTagSlugs = useMemo(() => {
+        if (!entityTags) return [];
+        return entityTags.flatMap((f) => f.tags.filter((t) => !t.inherited).map((t) => t.slug));
+    }, [entityTags]);
+
+    const inheritedTagSlugs = useMemo(() => {
+        if (!entityTags) return [];
+        return entityTags.flatMap((f) => f.tags.filter((t) => t.inherited).map((t) => t.slug));
+    }, [entityTags]);
+
+    const tagSlugs = tagEdits ?? baseTagSlugs;
+
     // Set iframe src when preview opens or article slug changes
     useEffect(() => {
         if (!iframeRef.current || !isPreviewOpen || !article) return;
@@ -110,9 +126,16 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
         if (!article) return;
 
         try {
-            await updateArticle.mutateAsync(article);
-            // Clear preview after successful save
+            await Promise.all([
+                updateArticle.mutateAsync(article),
+                replaceEntityTags.mutateAsync({
+                    entityType: "article",
+                    entityId: article.id,
+                    tagSlugs,
+                }),
+            ]);
             clearPreviewFor("article", article.slug, previewSessionId);
+            setTagEdits(null);
             toast.success(t("saveSuccess"));
         } catch {
             toast.error(t("saveFailed"));
@@ -217,7 +240,13 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
 
                 {/* Desktop Metadata panel */}
                 <aside className="hidden shrink-0 overflow-y-auto border-t lg:block lg:h-full lg:w-64 lg:border-t-0 lg:border-l">
-                    <ArticleMetadataPanel article={article} onArticleChange={patchArticle} />
+                    <ArticleMetadataPanel
+                        article={article}
+                        onArticleChange={patchArticle}
+                        tagSlugs={tagSlugs}
+                        inheritedTagSlugs={inheritedTagSlugs}
+                        onTagsChange={(next) => setTagEdits(next)}
+                    />
                 </aside>
 
                 {/* Mobile Metadata panel in Sheet */}
@@ -242,6 +271,9 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                                 <ArticleMetadataPanel
                                     article={article}
                                     onArticleChange={patchArticle}
+                                    tagSlugs={tagSlugs}
+                                    inheritedTagSlugs={inheritedTagSlugs}
+                                    onTagsChange={(next) => setTagEdits(next)}
                                 />
                             </div>
                         </SheetContent>
