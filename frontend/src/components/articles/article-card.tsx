@@ -21,9 +21,20 @@ function formatDate(dateStr: string | null, locale: string): string | null {
     });
 }
 
+function formatPeriodDate(dateStr: string | null, locale: string): string | null {
+    if (!dateStr) return null;
+    const loc = locale === "en" ? "en-GB" : "nl-BE";
+    return new Date(dateStr).toLocaleDateString(loc, {
+        month: "short",
+        year: "numeric",
+    });
+}
+
 export function ArticleCard({ article, locale }: ArticleCardProps) {
     const t = useTranslations("Articles");
     const publishedAt = formatDate(article.publishedAt ?? null, locale);
+    const periodStart = formatPeriodDate(article.subjectPeriodStart ?? null, locale);
+    const periodEnd = formatPeriodDate(article.subjectPeriodEnd ?? null, locale);
 
     const coverUrl = article.coverImageUrl;
 
@@ -64,6 +75,12 @@ export function ArticleCard({ article, locale }: ArticleCardProps) {
                     <h3 className="font-display text-foreground mb-2 min-w-0 text-[20px] leading-[1.15] font-bold tracking-[-0.02em] break-words sm:text-[26px]">
                         {article.title ?? t("untitled")}
                     </h3>
+
+                    {periodStart && periodEnd && (
+                        <span className="text-muted-foreground mt-1 font-mono text-[11px] tracking-[1px]">
+                            {periodStart} — {periodEnd}
+                        </span>
+                    )}
 
                     {publishedAt && (
                         <span className="text-muted-foreground mt-1 font-mono text-[11px] tracking-[1px]">
