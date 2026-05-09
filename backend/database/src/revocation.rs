@@ -28,13 +28,28 @@ impl RevokedUsers {
 
     /// Load previously revoked users from the database into memory.
     pub async fn load_from_db(&self, pool: &PgPool) -> Result<(), sqlx::Error> {
-        let rows: Vec<(Uuid,)> = sqlx::query_as("SELECT user_id FROM revoked_users")
-            .fetch_all(pool)
-            .await?;
+        let max_age_secs = self.max_age.as_secs() as i64;
+        sqlx::query(
+            "DELETE FROM revoked_users WHERE revoked_at < NOW() - ($1 * INTERVAL '1 second')",
+        )
+        .bind(max_age_secs)
+        .execute(pool)
+        .await?;
 
+        let rows: Vec<(Uuid, i64)> = sqlx::query_as(
+            "SELECT user_id, EXTRACT(EPOCH FROM (NOW() - revoked_at))::BIGINT AS age_seconds
+             FROM revoked_users",
+        )
+        .fetch_all(pool)
+        .await?;
+
+        let now = Instant::now();
         let mut map = self.inner.write().expect("revoked lock poisoned");
-        for (user_id,) in rows {
-            map.insert(user_id, Instant::now());
+        map.clear();
+        for (user_id, age_seconds) in rows {
+            let age = Duration::from_secs(age_seconds.max(0) as u64);
+            let revoked_at = now.checked_sub(age).unwrap_or(now);
+            map.insert(user_id, revoked_at);
         }
         Ok(())
     }
