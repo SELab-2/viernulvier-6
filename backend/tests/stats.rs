@@ -51,9 +51,9 @@ async fn get_stats_matches_fixture(db: PgPool) {
         event_count: 3,
         production_count: 2,
         location_count: 4,
-        // One published article seeded in the stats fixture, plus one from the
-        // `seed_article_kleurenstudies` migration.
-        article_count: 2,
+        // One published article seeded in the stats fixture, plus articles from
+        // the `seed_article_kleurenstudies` and `seed_articles` migrations.
+        article_count: 9,
         artist_count: 2,
         collection_count: 3,
     };
@@ -82,8 +82,8 @@ async fn get_stats_empty_database(db: PgPool) {
         event_count: 0,
         production_count: 0,
         location_count: 0,
-        // Migrations seed one published article.
-        article_count: 1,
+        // Migrations seed articles via seed_article_kleurenstudies and seed_articles.
+        article_count: 8,
         artist_count: 0,
         collection_count: 0,
     };

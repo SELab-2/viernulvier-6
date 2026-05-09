@@ -37,8 +37,10 @@ const fetchArticlesPublished = async (
 };
 
 const fetchArticlesPublishedList = async (): Promise<ArticleListItem[]> => {
-    const { data } = await api.get<ArticleListResponse[]>("/articles");
-    return mapArticleListItems(data);
+    const { data } = await api.get<GetAllArticlesResponse>("/articles", {
+        params: { limit: 1000 },
+    });
+    return mapArticleListItems(data.data);
 };
 
 const fetchArticleBySlug = async (slug: string): Promise<Article> => {

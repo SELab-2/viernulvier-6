@@ -46,6 +46,7 @@
         "@tiptap/pm": "^3.21.0",
         "@tiptap/react": "^3.21.0",
         "@tiptap/starter-kit": "^3.21.0",
+        "all": "^0.0.0",
         "animejs": "^4.3.6",
         "axios": "^1.15.2",
         "class-variance-authority": "^0.7.1",
