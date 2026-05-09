@@ -519,7 +519,8 @@
             "sortOldest": "Oldest first",
             "sortRelevance": "Relevance",
             "entityLinks": "Used in",
-            "noEntityLinks": "Not linked to any entity."
+            "noEntityLinks": "Not linked to any entity.",
+            "editSaveFailed": "Failed to save media."
         },
         "Collections": {
             "title": "Collections",

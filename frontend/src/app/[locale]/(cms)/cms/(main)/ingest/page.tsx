@@ -30,6 +30,7 @@ import {
 import { toast } from "sonner";
 import { Media } from "@/types/models/media.types";
 import type { SpotlightItem } from "@/components/ui/image-spotlight";
+import { useGetEntityTags, useReplaceEntityTags } from "@/hooks/api/useEntityTags";
 
 export default function IngestPage() {
     const t = useTranslations("Cms.Ingest");
@@ -76,6 +77,25 @@ export default function IngestPage() {
     }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
     const updateMedia = useUpdateMedia();
+    const replaceEntityTags = useReplaceEntityTags();
+    const [tagEdits, setTagEdits] = useState<string[] | null>(null);
+
+    const { data: entityTags } = useGetEntityTags("media", editMedia?.id ?? "", {
+        enabled: !!editMedia && editOpen,
+    });
+
+    const baseTagSlugs = useMemo(() => {
+        if (!entityTags) return [];
+        return entityTags.flatMap((f) => f.tags.filter((t) => !t.inherited).map((t) => t.slug));
+    }, [entityTags]);
+
+    const inheritedTagSlugs = useMemo(() => {
+        if (!entityTags) return [];
+        return entityTags.flatMap((f) => f.tags.filter((t) => t.inherited).map((t) => t.slug));
+    }, [entityTags]);
+
+    const tagSlugs = tagEdits ?? baseTagSlugs;
+
     const deleteMedia = useDeleteMedia();
     const cleanupOrphaned = useCleanupOrphanedMedia();
     const reconcileStorage = useReconcileMediaStorage();
@@ -92,18 +112,29 @@ export default function IngestPage() {
     const handleEdit = useCallback((media: Media) => {
         setEditMedia(media);
         setEditOpen(true);
+        setTagEdits(null);
     }, []);
 
     const handleSaveEdit = useCallback(
         (media: Media) => {
-            updateMedia.mutate(media, {
-                onSuccess: () => {
+            Promise.all([
+                updateMedia.mutateAsync(media),
+                replaceEntityTags.mutateAsync({
+                    entityType: "media",
+                    entityId: media.id,
+                    tagSlugs,
+                }),
+            ])
+                .then(() => {
                     setEditOpen(false);
                     setEditMedia(null);
-                },
-            });
+                    setTagEdits(null);
+                })
+                .catch(() => {
+                    toast.error(t("editSaveFailed"));
+                });
         },
-        [updateMedia]
+        [updateMedia, replaceEntityTags, tagSlugs, t]
     );
 
     const handleDelete = useCallback(
@@ -337,6 +368,9 @@ export default function IngestPage() {
                 onOpenChange={setEditOpen}
                 onSave={handleSaveEdit}
                 isSaving={updateMedia.isPending}
+                tagSlugs={tagSlugs}
+                inheritedTagSlugs={inheritedTagSlugs}
+                onTagsChange={(next) => setTagEdits(next)}
             />
 
             {/* Spotlight */}
