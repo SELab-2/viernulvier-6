@@ -6,6 +6,14 @@ export type CollectionContentType =
     | "location"
     | "media";
 
+export type EntityGridItem = {
+    id: string;
+    contentType: CollectionContentType;
+    contentId: string;
+    position: number;
+    comment?: string | null;
+};
+
 export type CollectionTranslation = {
     languageCode: string;
     title: string;

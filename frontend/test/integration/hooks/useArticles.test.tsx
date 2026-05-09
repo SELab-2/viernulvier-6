@@ -58,9 +58,10 @@ describe("useGetArticles (public)", () => {
             http.get(apiUrl("/articles"), ({ request }) => {
                 const url = new URL(request.url);
                 if (url.pathname.includes("/cms")) return;
-                return HttpResponse.json(
-                    [] satisfies components["schemas"]["ArticleListPayload"][]
-                );
+                return HttpResponse.json({
+                    data: [],
+                    next_cursor: null,
+                } satisfies components["schemas"]["PaginatedResponse_ArticleListPayload"]);
             })
         );
 

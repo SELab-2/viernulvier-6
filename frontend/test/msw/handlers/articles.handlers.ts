@@ -63,9 +63,10 @@ export const articleHandlers = [
         const url = new URL(request.url);
         // Don't match CMS paths
         if (url.pathname.includes("/cms")) return;
-        return HttpResponse.json(
-            articleListItems satisfies components["schemas"]["ArticleListPayload"][]
-        );
+        return HttpResponse.json({
+            data: articleListItems,
+            next_cursor: null,
+        } satisfies components["schemas"]["PaginatedResponse_ArticleListPayload"]);
     }),
 
     // Public: single article by slug

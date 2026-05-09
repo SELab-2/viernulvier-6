@@ -94,7 +94,7 @@ impl MediaPayload {
 
 /// Response payload for a media item. The `url` field is the direct public URL
 /// the frontend can use to load the file (either from S3/Garage or an external CDN).
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct MediaPayload {
     pub id: Uuid,
     pub created_at: DateTime<Utc>,
@@ -304,6 +304,34 @@ pub struct LinkMediaRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct CheckMediaRequest {
+    pub checksum: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct CheckMediaResponse {
+    pub exists: bool,
+    pub media: Option<MediaPayload>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct CreateMediaRequest {
+    pub s3_key: String,
+    pub upload_token: String,
+    pub mime_type: String,
+    pub alt_text_nl: Option<String>,
+    pub alt_text_en: Option<String>,
+    pub alt_text_fr: Option<String>,
+    pub credit_nl: Option<String>,
+    pub credit_en: Option<String>,
+    pub credit_fr: Option<String>,
+    pub width: Option<i32>,
+    pub height: Option<i32>,
+    pub file_size: Option<i64>,
+    pub checksum: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ReconcileResponse {
     pub applied: bool,
     pub db_key_count: usize,
@@ -311,4 +339,21 @@ pub struct ReconcileResponse {
     pub missing_in_s3: Vec<String>,
     pub missing_in_db: Vec<String>,
     pub deleted_missing_in_s3_count: u64,
+    pub deleted_missing_in_db_count: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct TitleTranslations {
+    pub en: Option<String>,
+    pub nl: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct MediaEntityLink {
+    pub entity_type: String,
+    pub entity_id: Uuid,
+    pub role: String,
+    pub sort_order: i32,
+    pub is_cover_image: bool,
+    pub title: Option<TitleTranslations>,
 }
