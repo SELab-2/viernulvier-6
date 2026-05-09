@@ -177,7 +177,7 @@ pub async fn create_user(
     )
 )]
 pub async fn list_users(db: Database) -> Result<Json<Vec<UserResponse>>, AppError> {
-    let users = db.users().all().await?;
+    let users = db.users().list_summaries().await?;
     Ok(Json(
         users
             .into_iter()
