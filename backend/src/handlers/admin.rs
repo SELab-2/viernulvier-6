@@ -276,9 +276,9 @@ pub async fn delete_user(
             ));
         }
     }
+    db.users().delete(id).await?;
     state.revoked.revoke(db.pool(), id).await.map_err(|e| {
         AppError::Internal(format!("Failed to revoke user: {e}"))
     })?;
-    db.users().delete(id).await?;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
