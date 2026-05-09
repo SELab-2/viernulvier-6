@@ -517,7 +517,8 @@
             "sortOldest": "Oudste eerst",
             "sortRelevance": "Relevantie",
             "entityLinks": "Gebruikt in",
-            "noEntityLinks": "Niet gekoppeld aan een entity."
+            "noEntityLinks": "Niet gekoppeld aan een entity.",
+            "editSaveFailed": "Opslaan mislukt."
         },
         "Collections": {
             "title": "Collecties",
