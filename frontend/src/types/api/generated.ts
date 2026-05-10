@@ -483,6 +483,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/locations/{id}/halls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get all halls belonging to a location */
+        get: operations["get_halls_for_location"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/media": {
         parameters: {
             query?: never;
@@ -493,7 +510,25 @@ export interface paths {
         /** @description List and search media records with cursor-based pagination. */
         get: operations["get_all_media"];
         put?: never;
-        post?: never;
+        /** @description Create a standalone media record. If a checksum is provided and a media with that checksum already exists, the existing media is returned instead (deduplication). */
+        post: operations["create_media"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Check if a media item with the given checksum already exists. Used for content-based deduplication before upload. */
+        post: operations["check_media"];
         delete?: never;
         options?: never;
         head?: never;
@@ -672,6 +707,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/media/{id}/entities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get all entity links for a given media item. */
+        get: operations["get_media_entity_links"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/productions": {
         parameters: {
             query?: never;
@@ -704,6 +756,23 @@ export interface paths {
         post?: never;
         /** @description Delete a production */
         delete: operations["delete_production"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/productions/{id}/artists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get all artists for a production */
+        get: operations["get_artists_by_production_id"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1034,6 +1103,13 @@ export interface components {
             message: string;
             success: boolean;
         };
+        CheckMediaRequest: {
+            checksum: string;
+        };
+        CheckMediaResponse: {
+            exists: boolean;
+            media?: null | components["schemas"]["MediaPayload"];
+        };
         CleanupResponse: {
             deleted_count: number;
             s3_keys: string[];
@@ -1144,6 +1220,24 @@ export interface components {
             email: string;
             password: string;
             username: string;
+        };
+        CreateMediaRequest: {
+            alt_text_en?: string | null;
+            alt_text_fr?: string | null;
+            alt_text_nl?: string | null;
+            checksum?: string | null;
+            credit_en?: string | null;
+            credit_fr?: string | null;
+            credit_nl?: string | null;
+            /** Format: int64 */
+            file_size?: number | null;
+            /** Format: int32 */
+            height?: number | null;
+            mime_type: string;
+            s3_key: string;
+            upload_token: string;
+            /** Format: int32 */
+            width?: number | null;
         };
         EditorResponse: {
             email: string;
@@ -1398,6 +1492,13 @@ export interface components {
             translations?: components["schemas"]["LocationTranslationPayload"][];
             uitdatabank_id?: string | null;
         };
+        /** @description Minimal location info embedded in a production response. */
+        LocationSummary: {
+            /** Format: uuid */
+            id: string;
+            name?: string | null;
+            slug?: string | null;
+        };
         /** @description The per-language content for a location. */
         LocationTranslationPayload: {
             description?: string | null;
@@ -1407,6 +1508,16 @@ export interface components {
         LoginRequest: {
             email: string;
             password: string;
+        };
+        MediaEntityLink: {
+            /** Format: uuid */
+            entity_id: string;
+            entity_type: string;
+            is_cover_image: boolean;
+            role: string;
+            /** Format: int32 */
+            sort_order: number;
+            title?: null | components["schemas"]["TitleTranslations"];
         };
         /**
          * @description Response payload for a media item. The `url` field is the direct public URL
@@ -1486,6 +1597,34 @@ export interface components {
                 subject_period_start?: string | null;
                 title?: string | null;
                 /** Format: date-time */
+                updated_at: string;
+            }[];
+            next_cursor?: string | null;
+        };
+        PaginatedResponse_CollectionPayload: {
+            data: {
+                /** @description Cover image URL resolved from the entity_media link (output-only). */
+                readonly cover_image_url?: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 creation timestamp.
+                 */
+                created_at: string;
+                /**
+                 * Format: uuid
+                 * @description Unique identifier for the collection (UUIDv7).
+                 */
+                id: string;
+                /** @description Ordered list of items in this collection. */
+                items: components["schemas"]["CollectionItemPayload"][];
+                /** @description URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections. */
+                slug: string;
+                /** @description Per-language title and description. */
+                translations: components["schemas"]["CollectionTranslationPayload"][];
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 last-updated timestamp.
+                 */
                 updated_at: string;
             }[];
             next_cursor?: string | null;
@@ -1641,6 +1780,8 @@ export interface components {
                 eticket_info?: string | null;
                 /** Format: uuid */
                 id: string;
+                /** @description Locations associated with this production via production_locations (output-only). */
+                locations?: components["schemas"]["LocationSummary"][];
                 slug: string;
                 /** Format: int32 */
                 source_id?: number | null;
@@ -1670,6 +1811,8 @@ export interface components {
             eticket_info?: string | null;
             /** Format: uuid */
             id: string;
+            /** @description Locations associated with this production via production_locations (output-only). */
+            locations?: components["schemas"]["LocationSummary"][];
             slug: string;
             /** Format: int32 */
             source_id?: number | null;
@@ -1712,6 +1855,8 @@ export interface components {
         ReconcileResponse: {
             applied: boolean;
             db_key_count: number;
+            /** Format: int64 */
+            deleted_missing_in_db_count: number;
             /** Format: int64 */
             deleted_missing_in_s3_count: number;
             missing_in_db: string[];
@@ -1778,6 +1923,8 @@ export interface components {
             event_count: number;
             /** Format: int64 */
             location_count: number;
+            /** Format: int64 */
+            media_count: number;
             /** Format: date-time */
             newest_event?: string | null;
             /** Format: date-time */
@@ -1795,6 +1942,10 @@ export interface components {
             description?: string | null;
             label: string;
             language_code: string;
+        };
+        TitleTranslations: {
+            en?: string | null;
+            nl?: string | null;
         };
         UploadUrlRequest: {
             /**
@@ -2188,7 +2339,11 @@ export interface operations {
     };
     get_all_artists: {
         parameters: {
-            query?: never;
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+                q?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2201,7 +2356,17 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ArtistPayload"][];
+                    "application/json": {
+                        data: {
+                            /** @description Cover image URL resolved from the entity_media link (output-only). */
+                            readonly cover_image_url?: string | null;
+                            /** Format: uuid */
+                            id: string;
+                            name: string;
+                            slug: string;
+                        }[];
+                        next_cursor?: string | null;
+                    };
                 };
             };
         };
@@ -2472,7 +2637,11 @@ export interface operations {
     };
     get_all_collections: {
         parameters: {
-            query?: never;
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+                q?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2485,7 +2654,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CollectionPayload"][];
+                    "application/json": components["schemas"]["PaginatedResponse_CollectionPayload"];
                 };
             };
         };
@@ -3374,6 +3543,36 @@ export interface operations {
             };
         };
     };
+    get_halls_for_location: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Location UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HallPayload"][];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     get_all_media: {
         parameters: {
             query?: {
@@ -3398,6 +3597,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaginatedResponse_MediaPayload"];
+                };
+            };
+        };
+    };
+    create_media: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateMediaRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaPayload"];
+                };
+            };
+            /** @description Bad request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    check_media: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckMediaRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckMediaResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -3851,6 +4123,36 @@ export interface operations {
             };
         };
     };
+    get_media_entity_links: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaEntityLink"][];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     get_all_productions: {
         parameters: {
             query?: {
@@ -4026,6 +4328,29 @@ export interface operations {
             };
         };
     };
+    get_artists_by_production_id: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Production UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtistPayload"][];
+                };
+            };
+        };
+    };
     get_events_by_production_id: {
         parameters: {
             query?: never;
@@ -4046,13 +4371,6 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["EventPayload"][];
                 };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };

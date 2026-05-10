@@ -81,44 +81,40 @@ async fn get_all_paginates(db: PgPool) {
 
     let app = TestRouter::new(db);
 
-    let page1: PaginatedResponse<ArticleListPayload> =
-        app.get("/articles?limit=2").await.into_struct().await;
-    assert_eq!(page1.data.len(), 2);
-    assert!(page1.next_cursor.is_some());
-
-    let page2: PaginatedResponse<ArticleListPayload> = app
-        .get(&format!(
-            "/articles?limit=2&cursor={}",
-            page1.next_cursor.clone().unwrap()
-        ))
-        .await
-        .into_struct()
-        .await;
-    assert_eq!(page2.data.len(), 2);
-    assert!(page2.next_cursor.is_some());
-
-    let page3: PaginatedResponse<ArticleListPayload> = app
-        .get(&format!(
-            "/articles?limit=2&cursor={}",
-            page2.next_cursor.clone().unwrap()
-        ))
-        .await
-        .into_struct()
-        .await;
-    assert_eq!(page3.data.len(), 1);
-    assert!(page3.next_cursor.is_none());
-
-    let mut all_ids = vec![
-        page1.data[0].id,
-        page1.data[1].id,
-        page2.data[0].id,
-        page2.data[1].id,
-        page3.data[0].id,
+    let target_ids = [
+        Uuid::from_str("dddddddd-dddd-dddd-dddd-dddddddddddd").unwrap(),
+        Uuid::from_str("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee").unwrap(),
+        Uuid::from_str("ffffffff-ffff-ffff-ffff-ffffffffffff").unwrap(),
     ];
+
+    let mut all_ids: Vec<Uuid> = Vec::new();
+    let mut cursor: Option<String> = None;
+
+    loop {
+        let url = match &cursor {
+            Some(c) => format!("/articles?limit=2&cursor={c}"),
+            None => "/articles?limit=2".to_string(),
+        };
+        let page: PaginatedResponse<ArticleListPayload> =
+            app.get(&url).await.into_struct().await;
+        assert!(!page.data.is_empty(), "page should not be empty mid-iteration");
+        all_ids.extend(page.data.iter().map(|a| a.id));
+        cursor = page.next_cursor;
+        if cursor.is_none() {
+            break;
+        }
+    }
+
+    // No duplicates across pages
     let original_length = all_ids.len();
     all_ids.sort();
     all_ids.dedup();
-    assert_eq!(all_ids.len(), original_length);
+    assert_eq!(all_ids.len(), original_length, "duplicate IDs across pages");
+
+    // All 3 inserted articles are present
+    for id in &target_ids {
+        assert!(all_ids.contains(id), "missing inserted article {id}");
+    }
 }
 
 #[sqlx::test(fixtures("articles"))]

@@ -171,6 +171,6 @@ export async function mockApi(page: Page) {
             }
             return;
         }
-        await route.fulfill({ json: articles });
+        await route.fulfill({ json: { data: articles, next_cursor: null } });
     });
 }

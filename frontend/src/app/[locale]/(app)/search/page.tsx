@@ -10,11 +10,8 @@ import { useRouter, usePathname } from "@/i18n/routing";
 import { useGetProductions } from "@/hooks/api/useProductions";
 import { useGetFacets } from "@/hooks/api/useTaxonomy";
 import { queryKeys } from "@/hooks/api/query-keys";
-import type { Production } from "@/types/models/production.types";
-import type { components } from "@/types/api/generated";
+import type { Production, ProductionSortOption } from "@/types/models/production.types";
 import type { PaginatedResult, SearchPaginationParams } from "@/types/api/api.types";
-
-const SORT_VALUES: components["schemas"]["Sort"][] = ["recent", "oldest", "relevance"];
 
 import { UnifiedHeader } from "@/components/layout/header";
 import { SearchHero } from "@/components/searchpage/search-hero";
@@ -24,6 +21,7 @@ import { ProductionList } from "@/components/searchpage/production-list";
 import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
 
 const ARCHIVE_MIN_YEAR = 1980;
+const SORT_VALUES: ProductionSortOption[] = ["recent", "oldest", "relevance"];
 
 export default function SearchPage() {
     const locale = useLocale();
@@ -45,8 +43,8 @@ export default function SearchPage() {
     const dateTo = searchParams.get("date_to") ?? undefined;
     const rawSort = searchParams.get("sort");
     const sort =
-        rawSort !== null && SORT_VALUES.includes(rawSort as components["schemas"]["Sort"])
-            ? (rawSort as components["schemas"]["Sort"])
+        rawSort !== null && SORT_VALUES.includes(rawSort as ProductionSortOption)
+            ? (rawSort as ProductionSortOption)
             : undefined;
     const locationFilter = searchParams.get("location") ?? undefined;
 
@@ -114,7 +112,7 @@ export default function SearchPage() {
     );
 
     const handleSortChange = useCallback(
-        (newSort: string) => {
+        (newSort: ProductionSortOption) => {
             const params = new URLSearchParams(searchParams.toString());
             if (newSort === "relevance") {
                 params.delete("sort");
@@ -239,7 +237,7 @@ export default function SearchPage() {
                         onQueryChange={setDraftQuery}
                         onSearch={handleSearch}
                         showSearch={!isHeroVisible}
-                        sort={sort}
+                        sort={sort ?? "relevance"}
                         onSortChange={handleSortChange}
                     />
                     {allProductions.length === 0 && !productionsLoading ? (

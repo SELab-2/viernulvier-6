@@ -7,3 +7,4 @@ export type GetProductionsByArtistIdResponse =
     operations["get_productions_by_artist_id"]["responses"][200]["content"]["application/json"];
 
 export type ArtistResponse = GetArtistByIdResponse;
+export type GetArtistsByProductionIdResponse = ArtistResponse[];

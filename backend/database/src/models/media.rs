@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::models::{entity_type::EntityType, filtering::sort::Sort};
 
-#[derive(Debug, Model, PartialEq)]
+#[derive(Debug, Clone, Model, PartialEq)]
 #[ormlite(insert = "MediaCreate")]
 #[ormlite(table = "media")]
 pub struct Media {

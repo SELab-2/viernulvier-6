@@ -6,6 +6,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 use viernulvier_archive::dto::{
+    artist::ArtistPayload,
     paginated::PaginatedResponse,
     production::{ProductionPayload, ProductionPostPayload},
 };
@@ -723,6 +724,36 @@ async fn delete_not_found(db: PgPool) {
 
     let response = app.delete(&format!("/productions/{}", Uuid::nil())).await;
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test(fixtures("productions", "artists", "production_artists"))]
+#[test_log::test]
+async fn get_artists_by_production_success(db: PgPool) {
+    let app = TestRouter::new(db);
+    let target_id = Uuid::from_str("11111111-1111-1111-1111-111111111111").unwrap();
+
+    let response = app.get(&format!("/productions/{target_id}/artists")).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: Vec<ArtistPayload> = response.into_struct().await;
+    assert_eq!(data.len(), 1);
+    assert_eq!(
+        data[0].id.to_string(),
+        "a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1"
+    );
+}
+
+#[sqlx::test(fixtures("productions", "artists"))]
+#[test_log::test]
+async fn get_artists_by_production_empty(db: PgPool) {
+    let app = TestRouter::new(db);
+    let target_id = Uuid::from_str("33333333-3333-3333-3333-333333333333").unwrap();
+
+    let response = app.get(&format!("/productions/{target_id}/artists")).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: Vec<ArtistPayload> = response.into_struct().await;
+    assert!(data.is_empty());
 }
 
 /// return a test payload for `ProductionPostPayload`

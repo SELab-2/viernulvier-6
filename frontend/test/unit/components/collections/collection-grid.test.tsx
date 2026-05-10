@@ -1,12 +1,10 @@
 import { describe, expect, it, afterEach, vi } from "vitest";
-import React from "react";
 import { render, screen, cleanup } from "../../../utils/test-utils";
 import { CollectionGrid } from "@/components/collections/CollectionGrid";
-import type { CollectionItem } from "@/types/models/collection.types";
+import type { CollectionItem, EntityGridItem } from "@/types/models/collection.types";
 
-vi.mock("@/components/collections/CollectionItemCard", () => ({
-    UniformCardsContext: React.createContext(false),
-    CollectionItemCard: ({ item }: { item: CollectionItem }) => (
+vi.mock("@/components/masonry/entity-card", () => ({
+    EntityCard: ({ item }: { item: EntityGridItem }) => (
         <div data-testid="card" data-position={String(item.position)} datatype={item.contentType} />
     ),
 }));
