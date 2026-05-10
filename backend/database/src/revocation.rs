@@ -1,7 +1,10 @@
 use sqlx::PgPool;
 use std::{
     collections::HashMap,
-    sync::{Arc, RwLock},
+    sync::{
+        Arc, RwLock,
+        atomic::{AtomicUsize, Ordering},
+    },
     time::{Duration, Instant},
 };
 use uuid::Uuid;
@@ -15,6 +18,7 @@ use uuid::Uuid;
 #[derive(Clone)]
 pub struct RevokedUsers {
     inner: Arc<RwLock<HashMap<Uuid, Instant>>>,
+    checks_since_cleanup: Arc<AtomicUsize>,
     max_age: Duration,
 }
 
@@ -22,6 +26,7 @@ impl RevokedUsers {
     pub fn new(max_age: Duration) -> Self {
         Self {
             inner: Arc::new(RwLock::new(HashMap::new())),
+            checks_since_cleanup: Arc::new(AtomicUsize::new(0)),
             max_age,
         }
     }
@@ -90,8 +95,31 @@ impl RevokedUsers {
 
     /// Fast in-memory check.
     pub fn is_revoked(&self, user_id: Uuid) -> bool {
+        let mut should_remove_current = false;
+        {
+            let map = self.inner.read().expect("revoked lock poisoned");
+            match map.get(&user_id) {
+                Some(ts) if ts.elapsed() < self.max_age => return true,
+                Some(_) => should_remove_current = true,
+                None => {}
+            }
+        }
+
+        let should_cleanup_all =
+            self.checks_since_cleanup.fetch_add(1, Ordering::Relaxed) % 256 == 0;
+        if !should_remove_current && !should_cleanup_all {
+            return false;
+        }
+
         let mut map = self.inner.write().expect("revoked lock poisoned");
-        map.retain(|_, ts| ts.elapsed() < self.max_age);
-        map.contains_key(&user_id)
+        if should_cleanup_all {
+            map.retain(|_, ts| ts.elapsed() < self.max_age);
+        } else if should_remove_current {
+            map.remove(&user_id);
+        }
+
+        map.get(&user_id)
+            .map(|ts| ts.elapsed() < self.max_age)
+            .unwrap_or(false)
     }
 }
