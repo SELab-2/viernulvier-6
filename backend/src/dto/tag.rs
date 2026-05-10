@@ -19,7 +19,7 @@ pub struct TagTranslationInput {
     pub label: String,
 }
 
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct TagUsageResponse {
     pub usage_count: i64,
 }
