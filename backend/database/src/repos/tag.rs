@@ -188,25 +188,20 @@ impl<'a> TagRepo<'a> {
         slug: &str,
         sort_order: i32,
     ) -> Result<Uuid, DatabaseError> {
-        let row: (Uuid,) = sqlx::query_as(
-            "INSERT INTO tags (facet, slug, sort_order) VALUES ($1, $2, $3) RETURNING id",
+        let row: Option<(Uuid,)> = sqlx::query_as(
+            "INSERT INTO tags (facet, slug, sort_order)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (facet, slug) DO NOTHING
+             RETURNING id",
         )
         .bind(facet)
         .bind(slug)
         .bind(sort_order)
-        .fetch_one(self.db)
-        .await
-        .map_err(|e| {
-            if let sqlx::Error::Database(ref db_err) = e {
-                if db_err.code().as_deref() == Some("23505") {
-                    return DatabaseError::Conflict(
-                        "tag slug already exists in this facet".into(),
-                    );
-                }
-            }
-            DatabaseError::Sqlx(e)
-        })?;
-        Ok(row.0)
+        .fetch_optional(self.db)
+        .await?;
+
+        row.map(|(id,)| id)
+            .ok_or_else(|| DatabaseError::Conflict("tag slug already exists in this facet".into()))
     }
 
     pub async fn set_tag_translations(
