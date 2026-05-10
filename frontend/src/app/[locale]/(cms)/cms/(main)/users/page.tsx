@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
@@ -97,7 +97,7 @@ export default function UsersPage() {
     }, []);
 
     const handleSubmit = useCallback(
-        (e: React.FormEvent) => {
+        (e: FormEvent) => {
             e.preventDefault();
             if (editingUser) {
                 updateUser.mutate(
@@ -189,8 +189,9 @@ export default function UsersPage() {
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
-                            <Label>{t("username")}</Label>
+                            <Label htmlFor="user-username">{t("username")}</Label>
                             <Input
+                                id="user-username"
                                 value={form.username}
                                 onChange={(e) =>
                                     setForm((f) => ({ ...f, username: e.target.value }))
@@ -202,8 +203,9 @@ export default function UsersPage() {
                         {!editingUser && (
                             <>
                                 <div className="space-y-2">
-                                    <Label>{t("email")}</Label>
+                                    <Label htmlFor="user-email">{t("email")}</Label>
                                     <Input
+                                        id="user-email"
                                         type="email"
                                         value={form.email}
                                         onChange={(e) =>
@@ -213,8 +215,9 @@ export default function UsersPage() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>{t("password")}</Label>
+                                    <Label htmlFor="user-password">{t("password")}</Label>
                                     <Input
+                                        id="user-password"
                                         type="password"
                                         value={form.password}
                                         onChange={(e) =>
@@ -227,7 +230,7 @@ export default function UsersPage() {
                         )}
 
                         <div className="space-y-2">
-                            <Label>{t("role")}</Label>
+                            <Label htmlFor="user-role">{t("role")}</Label>
                             <Select
                                 value={form.role}
                                 onValueChange={(v) =>
@@ -235,7 +238,7 @@ export default function UsersPage() {
                                 }
                                 disabled={editingUser?.id === lastAdminId}
                             >
-                                <SelectTrigger>
+                                <SelectTrigger id="user-role">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
