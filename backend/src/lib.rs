@@ -341,6 +341,9 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(media::reconcile_storage))
         // Tags
         .routes(routes!(tagging::put_tags))
+        .routes(routes!(taxonomy::create_tag))
+        .routes(routes!(taxonomy::patch_tag))
+        .routes(routes!(taxonomy::delete_tag))
         // Articles (CMS)
         .routes(routes!(article::get_all_cms))
         .routes(routes!(article::get_all_cms_search))
