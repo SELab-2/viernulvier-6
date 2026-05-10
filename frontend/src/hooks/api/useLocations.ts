@@ -13,7 +13,7 @@ import {
     GetLocationByIdResponse,
     UpdateLocationResponse,
 } from "@/types/api/location.api.types";
-import { PaginationParams, SearchPaginationParams, PaginatedResult } from "@/types/api/api.types";
+import { SearchPaginationParams, PaginatedResult } from "@/types/api/api.types";
 import { Location, LocationCreateInput, LocationUpdateInput } from "@/types/models/location.types";
 
 import { queryKeys } from "./query-keys";
@@ -37,7 +37,10 @@ const fetchLocationBySlug = async (slug: string): Promise<Location> => {
     return mapLocation(data);
 };
 
-export const useGetLocations = (options?: { enabled?: boolean; pagination?: PaginationParams }) => {
+export const useGetLocations = (options?: {
+    enabled?: boolean;
+    pagination?: SearchPaginationParams;
+}) => {
     return useQuery({
         queryKey: queryKeys.locations.all(options?.pagination),
         queryFn: () => fetchLocations(options?.pagination),

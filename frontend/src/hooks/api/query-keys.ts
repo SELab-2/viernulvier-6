@@ -1,4 +1,4 @@
-import { PaginationParams } from "@/types/api/api.types";
+import { PaginationParams, SearchPaginationParams } from "@/types/api/api.types";
 import { EntityMediaParams, MediaSearchParams } from "@/types/models/media.types";
 import { ProductionSearchParams } from "@/types/models/production.types";
 
@@ -18,7 +18,7 @@ export const queryKeys = {
             buildQueryKey(["import-errors"], { ...pagination, resolved: resolved ?? false }),
     },
     locations: {
-        all: (pagination?: PaginationParams) => buildQueryKey(["locations"], pagination),
+        all: (pagination?: SearchPaginationParams) => buildQueryKey(["locations"], pagination),
         infinite: (params?: Omit<PaginationParams, "cursor">) =>
             params
                 ? (["locations", "infinite", params] as const)
@@ -68,7 +68,7 @@ export const queryKeys = {
         all: ["articles"] as const,
         list: (pagination?: PaginationParams) =>
             buildQueryKey([...queryKeys.articles.all, "list"], pagination),
-        infinite: (pagination?: PaginationParams) =>
+        infinite: (pagination?: SearchPaginationParams) =>
             buildQueryKey([...queryKeys.articles.all, "infinite"], pagination),
         detail: (id: string) => [...queryKeys.articles.all, id] as const,
         relations: (id: string) => [...queryKeys.articles.all, id, "relations"] as const,

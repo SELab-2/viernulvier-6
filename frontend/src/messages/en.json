@@ -75,10 +75,10 @@
         "title": "Filters",
         "categories": {
             "label": "Category",
-            "artists": "Artists",
             "productions": "Productions",
-            "articles": "Articles",
-            "posters": "Posters"
+            "artists": "Artists",
+            "locations": "Locations",
+            "articles": "Articles"
         },
         "tags": {
             "label": "Tags",

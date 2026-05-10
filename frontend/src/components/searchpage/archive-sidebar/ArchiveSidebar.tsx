@@ -13,7 +13,7 @@ import { YearRangeSlider } from "./YearRangeSlider";
 import { DateRangePicker } from "./DateRangePicker";
 import { yearBoundsFromStats } from "./statsYearBounds";
 
-const CATEGORIES = ["artists", "productions", "articles", "posters"] as const;
+const CATEGORIES = ["productions", "artists", "locations", "articles"] as const;
 
 type DateFilterMode = "year" | "exact";
 

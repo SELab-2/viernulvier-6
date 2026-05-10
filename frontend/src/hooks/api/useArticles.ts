@@ -18,7 +18,7 @@ import {
     ArticlesCmsSearchResponse,
     GetAllArticlesResponse,
 } from "@/types/api/article.api.types";
-import { PaginatedResult, PaginationParams, SearchPaginationParams } from "@/types/api/api.types";
+import { PaginatedResult, SearchPaginationParams } from "@/types/api/api.types";
 import {
     Article,
     ArticleCreateInput,
@@ -83,7 +83,7 @@ const fetchArticlesByProduction = async (productionId: string): Promise<ArticleL
 
 export const useGetInfiniteArticles = (options?: {
     enabled?: boolean;
-    pagination?: PaginationParams;
+    pagination?: SearchPaginationParams;
 }) => {
     const { pagination, ...queryOptions } = options ?? {};
     return useInfiniteQuery({
