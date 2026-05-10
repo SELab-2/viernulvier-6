@@ -346,6 +346,7 @@ describe("ArchiveSidebar component", () => {
             article_count: 2,
             artist_count: 0,
             collection_count: 0,
+            media_count: 0,
         };
 
         useGetStatsMock.mockReturnValue({

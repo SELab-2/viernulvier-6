@@ -192,6 +192,11 @@ export default function CmsOverviewPage() {
                                     description={t(`${util.key}Description`)}
                                     actionLabel={t("openSection")}
                                     icon={util.icon}
+                                    count={
+                                        util.key === "ingest" && stats
+                                            ? stats.media_count
+                                            : undefined
+                                    }
                                 />
                             </div>
                         </SectionCard>
