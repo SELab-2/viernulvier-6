@@ -249,6 +249,7 @@ fn apply_location_filters(
             .filter_map(|s| Uuid::parse_str(s).ok())
             .collect();
         if uuids.is_empty() {
+            query.push(" AND FALSE ");
             return;
         }
         query

@@ -136,14 +136,12 @@ async fn get_search_filter_audience(db: PgPool) {
 async fn get_search_filter_location(db: PgPool) {
     let app = TestRouter::new(db);
 
+    // non-UUID values should not silently disable filtering
     let response = app.get("/productions?location=de-vooruit&limit=10").await;
     assert_eq!(response.status(), StatusCode::OK);
 
     let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
-    assert!(
-        !data.data.is_empty(),
-        "Expected at least one production for this location"
-    );
+    assert!(data.data.is_empty(), "invalid location should not return unfiltered data");
 }
 
 #[sqlx::test(fixtures("productions", "events", "locations", "spaces", "halls", "event_halls"))]
