@@ -42,13 +42,14 @@ export function makeUserColumns(options: {
     onEdit: (user: User) => void;
     onDelete: (user: User) => void;
     lastAdminId: string | null;
+    t: (key: "username" | "email" | "role" | "edit" | "delete") => string;
 }): ColumnDef<User>[] {
-    const { onEdit, onDelete, lastAdminId } = options;
+    const { onEdit, onDelete, lastAdminId, t } = options;
 
     return [
         {
             id: "username",
-            header: "Username",
+            header: t("username"),
             accessorKey: "username",
             cell: ({ row }) => (
                 <span className="font-display text-sm tracking-tight">{row.original.username}</span>
@@ -56,7 +57,7 @@ export function makeUserColumns(options: {
         },
         {
             id: "email",
-            header: "Email",
+            header: t("email"),
             accessorKey: "email",
             cell: ({ row }) => (
                 <span className="text-muted-foreground text-sm">{row.original.email}</span>
@@ -64,7 +65,7 @@ export function makeUserColumns(options: {
         },
         {
             id: "role",
-            header: "Role",
+            header: t("role"),
             accessorKey: "role",
             cell: ({ row }) => {
                 const role = row.original.role;
@@ -83,7 +84,7 @@ export function makeUserColumns(options: {
                 actions: (user) => [
                     {
                         key: "edit",
-                        label: "Edit",
+                        label: t("edit"),
                         icon: Pencil,
                         display: ActionDisplay.Inline,
                         onClick: onEdit,
@@ -93,7 +94,7 @@ export function makeUserColumns(options: {
                         : [
                               {
                                   key: "delete",
-                                  label: "Delete",
+                                  label: t("delete"),
                                   icon: Trash2,
                                   variant: ActionVariant.Destructive,
                                   display: ActionDisplay.Inline,

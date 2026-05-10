@@ -59,7 +59,11 @@ export default function UsersPage() {
     const tEditions = useTranslations("Cms.editions");
     const router = useRouter();
     const { data: currentUser, isLoading: userLoading } = useUser();
-    const { data: users = [], isLoading } = useGetUsers();
+    const canManageUsers = currentUser?.role === UserRoleEnum.ADMIN;
+    const { data: users = [], isLoading } = useGetUsers({
+        enabled: canManageUsers,
+        retry: false,
+    });
     const createUser = useCreateUser();
     const updateUser = useUpdateUser();
     const deleteUser = useDeleteUser();
@@ -155,8 +159,8 @@ export default function UsersPage() {
     );
 
     const columns = useMemo(
-        () => makeUserColumns({ onEdit: openEdit, onDelete: handleDelete, lastAdminId }),
-        [openEdit, handleDelete, lastAdminId]
+        () => makeUserColumns({ onEdit: openEdit, onDelete: handleDelete, lastAdminId, t }),
+        [openEdit, handleDelete, lastAdminId, t]
     );
 
     return (

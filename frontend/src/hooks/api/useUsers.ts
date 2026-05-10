@@ -17,13 +17,14 @@ export type CreateUserInput = CreateUserRequest;
 export type UpdateUserInput = UpdateUserRequest;
 export type { UserRole };
 
-export const useGetUsers = () => {
+export const useGetUsers = (options?: { enabled?: boolean; retry?: boolean }) => {
     return useQuery({
         queryKey: queryKeys.users.all(),
         queryFn: async (): Promise<GetUsersResponse> => {
             const { data } = await api.get<GetUsersResponse>("/users");
             return data;
         },
+        ...options,
     });
 };
 
