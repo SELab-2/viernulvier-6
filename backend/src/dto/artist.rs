@@ -1,3 +1,4 @@
+use base64::{Engine, prelude::BASE64_URL_SAFE};
 use database::{
     Database,
     models::{artist::Artist, entity_type::EntityType},
@@ -7,7 +8,13 @@ use slug::slugify;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::{dto::production::ProductionPayload, dto::build_cover_url, error::AppError};
+use crate::{dto::paginated::PaginatedResponse, dto::production::ProductionPayload, dto::build_cover_url, error::AppError};
+
+#[derive(Serialize, Deserialize)]
+struct ArtistCursor {
+    name: String,
+    id: Uuid,
+}
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ArtistPayload {
@@ -65,10 +72,71 @@ impl ArtistPayload {
 }
 
 impl ArtistPayload {
-    pub async fn all(db: &Database, public_url: Option<&str>) -> Result<Vec<Self>, AppError> {
+    pub async fn all(
+        db: &Database,
+        cursor_str: Option<String>,
+        limit: u32,
+        public_url: Option<&str>,
+        q: Option<&str>,
+    ) -> Result<PaginatedResponse<Self>, AppError> {
+        let cursor: Option<(String, Uuid)> = cursor_str.and_then(|b64| {
+            let bytes = BASE64_URL_SAFE.decode(b64).ok()?;
+            let c: ArtistCursor = serde_json::from_slice(&bytes).ok()?;
+            Some((c.name, c.id))
+        });
+
+        let (artists, next) = db.artists().paginated(limit, cursor, q).await?;
+        let mut result: Vec<Self> = artists.into_iter().map(Self::from).collect();
+
+        let next_cursor = next.and_then(|(name, id)| {
+            serde_json::to_vec(&ArtistCursor { name, id })
+                .ok()
+                .map(|v| BASE64_URL_SAFE.encode(v))
+        });
+
+        if let Some(base) = public_url {
+            let ids: Vec<Uuid> = result.iter().map(|a| a.id).collect();
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Artist, &ids)
+                .await?;
+            for a in &mut result {
+                if let Some(key) = cover_keys.get(&a.id) {
+                    a.cover_image_url = Some(build_cover_url(base, key));
+                }
+            }
+        }
+
+        Ok(PaginatedResponse {
+            data: result,
+            next_cursor,
+        })
+    }
+
+    pub async fn by_id(db: &Database, id: Uuid, public_url: Option<&str>) -> Result<Self, AppError> {
+        let mut payload: Self = db.artists().by_id(id).await?.into();
+
+        if let Some(base) = public_url {
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Artist, &[id])
+                .await?;
+            if let Some(key) = cover_keys.get(&id) {
+                payload.cover_image_url = Some(build_cover_url(base, key));
+            }
+        }
+
+        Ok(payload)
+    }
+
+    pub async fn by_production_id(
+        db: &Database,
+        production_id: Uuid,
+        public_url: Option<&str>,
+    ) -> Result<Vec<Self>, AppError> {
         let mut result: Vec<Self> = db
             .artists()
-            .all()
+            .by_production_id(production_id)
             .await?
             .into_iter()
             .map(Self::from)
@@ -88,22 +156,6 @@ impl ArtistPayload {
         }
 
         Ok(result)
-    }
-
-    pub async fn by_id(db: &Database, id: Uuid, public_url: Option<&str>) -> Result<Self, AppError> {
-        let mut payload: Self = db.artists().by_id(id).await?.into();
-
-        if let Some(base) = public_url {
-            let cover_keys = db
-                .media()
-                .cover_s3_keys_for_entities(EntityType::Artist, &[id])
-                .await?;
-            if let Some(key) = cover_keys.get(&id) {
-                payload.cover_image_url = Some(build_cover_url(base, key));
-            }
-        }
-
-        Ok(payload)
     }
 
     pub async fn productions(db: &Database, id: Uuid) -> Result<Vec<ProductionPayload>, AppError> {
