@@ -262,6 +262,7 @@
             "locationsSelected": "{count, plural, one {# locatie} other {# locaties}} geselecteerd",
             "hallsSelected": "{count, plural, one {# zaal} other {# zalen}} geselecteerd",
             "articlesSelected": "{count, plural, one {# artikel} other {# artikelen}} geselecteerd",
+            "performersSelected": "{count, plural, one {# uitvoerder} other {# uitvoerders}} geselecteerd",
             "collectionsSelected": "{count, plural, one {# collectie} other {# collecties}} geselecteerd",
             "importErrorsSelected": "{count, plural, one {# fout} other {# fouten}} geselecteerd",
             "bulkEdit": "Bulk bewerken",
@@ -464,6 +465,7 @@
         "Performers": {
             "title": "Uitvoerders",
             "subtitle": "Beheer artiesten",
+            "search": "Zoek uitvoerders…",
             "nameColumn": "Naam",
             "slugColumn": "Slug",
             "nameField": "Naam",

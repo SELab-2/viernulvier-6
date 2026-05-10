@@ -27,7 +27,7 @@ export default function ImportErrorsPage() {
     }, []);
 
     return (
-        <div className="flex h-full flex-col px-4 py-3">
+        <div className="flex h-full flex-col px-4 pt-3">
             <PageHeader eyebrow={tEditions("edition6")} title={t("title")} />
 
             <div ref={contentRef} className="flex-1 space-y-6 overflow-auto">

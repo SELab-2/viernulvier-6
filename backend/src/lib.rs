@@ -252,6 +252,7 @@ fn public_routes() -> OpenApiRouter<AppState> {
         .routes(routes!(production::get_all))
         .routes(routes!(production::get_one))
         .routes(routes!(production::get_events))
+        .routes(routes!(production::get_artists))
         // hall
         .routes(routes!(hall::get_all))
         .routes(routes!(hall::get_one))

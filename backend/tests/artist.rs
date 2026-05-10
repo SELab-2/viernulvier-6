@@ -5,7 +5,11 @@ use axum::http::StatusCode;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
-use viernulvier_archive::dto::{artist::ArtistPayload, production::ProductionPayload};
+use viernulvier_archive::dto::{
+    artist::ArtistPayload,
+    paginated::PaginatedResponse,
+    production::ProductionPayload,
+};
 
 use crate::common::{into_struct::IntoStruct, router::TestRouter};
 
@@ -17,8 +21,8 @@ async fn get_all_artists_returns_cover_image_urls(db: PgPool) {
     let app = TestRouter::new(db);
     let response = app.get("/artists").await;
     assert_eq!(response.status(), StatusCode::OK);
-    let data: Vec<ArtistPayload> = response.into_struct().await;
-    let with_cover = data.iter().find(|a| a.cover_image_url.is_some());
+    let body: PaginatedResponse<ArtistPayload> = response.into_struct().await;
+    let with_cover = body.data.iter().find(|a| a.cover_image_url.is_some());
     assert!(
         with_cover.is_some(),
         "at least one artist should have a resolved cover URL"
@@ -33,8 +37,8 @@ async fn get_all(db: PgPool) {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let data: Vec<ArtistPayload> = response.into_struct().await;
-    assert_eq!(data.len(), 2);
+    let body: PaginatedResponse<ArtistPayload> = response.into_struct().await;
+    assert_eq!(body.data.len(), 2);
 }
 
 #[sqlx::test(fixtures("artists"))]
@@ -42,8 +46,8 @@ async fn get_all(db: PgPool) {
 async fn get_all_artists_without_cover_returns_null(db: PgPool) {
     let app = TestRouter::new(db);
     let response = app.get("/artists").await;
-    let data: Vec<ArtistPayload> = response.into_struct().await;
-    for a in &data {
+    let body: PaginatedResponse<ArtistPayload> = response.into_struct().await;
+    for a in &body.data {
         assert!(a.cover_image_url.is_none());
     }
 }

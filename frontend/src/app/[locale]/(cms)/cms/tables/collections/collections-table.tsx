@@ -84,11 +84,12 @@ export function CollectionsTable() {
 
     return (
         <div className="flex h-full flex-col">
-            <div className="bg-background sticky top-0 z-10 flex items-center justify-between gap-2 py-2">
+            <div className="bg-background sticky top-0 z-10 flex items-center gap-2">
                 <ActionBar
                     entityCounts={[{ countKey: "collectionsSelected", count: selectedCount }]}
                     actions={[]}
                     onClear={() => setRowSelection({})}
+                    className="flex-1"
                 />
                 <Button onClick={() => setCreateOpen(true)}>{t("newCollection")}</Button>
             </div>
