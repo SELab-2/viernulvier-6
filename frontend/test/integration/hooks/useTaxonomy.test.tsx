@@ -1,8 +1,9 @@
+import { act } from "@testing-library/react";
 import { renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { queryKeys } from "@/hooks/api/query-keys";
-import { useGetFacets } from "@/hooks/api/useTaxonomy";
+import { useGetFacets, useCreateTag, useUpdateTag, useDeleteTag } from "@/hooks/api/useTaxonomy";
 import { createQueryClientWrapper } from "../../utils/query-client";
 
 describe("useGetFacets", () => {
@@ -79,5 +80,77 @@ describe("useGetFacets", () => {
         expect(queryClient.getQueryData(queryKeys.taxonomy.facets("production"))).toEqual(
             filtered.result.current.data
         );
+    });
+});
+
+describe("useCreateTag", () => {
+    it("calls POST and returns mapped tag on success", async () => {
+        const { wrapper } = createQueryClientWrapper();
+        const { result } = renderHook(() => useCreateTag(), { wrapper });
+
+        await act(async () => {
+            await result.current.mutateAsync({
+                facet: "discipline",
+                translations: [
+                    { language_code: "nl", label: "Nieuwe Tag" },
+                    { language_code: "en", label: "New Tag" },
+                ],
+            });
+        });
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+        expect(result.current.data?.slug).toBe("new-tag");
+    });
+});
+
+describe("useUpdateTag", () => {
+    it("calls PATCH and resolves on 204", async () => {
+        const { wrapper } = createQueryClientWrapper();
+        const { result } = renderHook(() => useUpdateTag(), { wrapper });
+
+        await act(async () => {
+            await result.current.mutateAsync({
+                slug: "theatre",
+                translations: [
+                    { language_code: "nl", label: "Theater Nieuw" },
+                    { language_code: "en", label: "Theatre New" },
+                ],
+            });
+        });
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+    });
+});
+
+describe("useDeleteTag", () => {
+    it("returns usage_count when tag is in use and force is false", async () => {
+        const { wrapper } = createQueryClientWrapper();
+        const { result } = renderHook(() => useDeleteTag(), { wrapper });
+
+        await act(async () => {
+            await result.current.mutateAsync({ slug: "theatre", force: false });
+        });
+
+        await waitFor(() => {
+            expect(result.current.data?.usage_count).toBe(3);
+        });
+    });
+
+    it("resolves with no usage_count when force is true", async () => {
+        const { wrapper } = createQueryClientWrapper();
+        const { result } = renderHook(() => useDeleteTag(), { wrapper });
+
+        await act(async () => {
+            await result.current.mutateAsync({ slug: "theatre", force: true });
+        });
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+        expect(result.current.data?.usage_count).toBeUndefined();
     });
 });
