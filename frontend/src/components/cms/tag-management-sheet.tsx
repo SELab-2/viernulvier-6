@@ -28,8 +28,6 @@ export function TagManagementSheet({
     openWithCreate,
 }: TagManagementSheetProps) {
     const locale = useLocale();
-    // openWithCreate is a one-shot initializer. To re-arm the create flow with a new
-    // prefill value, the parent should change the component's `key` prop.
     const [formMode, setFormMode] = React.useState<FormMode | null>(() =>
         openWithCreate !== undefined ? { type: "create", prefill: openWithCreate } : null
     );
