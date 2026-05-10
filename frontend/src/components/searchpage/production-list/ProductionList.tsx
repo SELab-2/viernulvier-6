@@ -94,8 +94,6 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
     const artist = getLocalizedField(production, "artist", locale);
     const tagline = getLocalizedField(production, "tagline", locale);
 
-    const displayType = production.uitdatabankType ?? "Productie";
-
     return (
         <>
             <div
@@ -145,10 +143,7 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
                     <EntityTagStrip tags={production.tags} locale={locale} cap={4} />
                 </div>
 
-                <div className="flex shrink-0 items-center gap-2 pt-0.5">
-                    <span className="border-foreground text-foreground border px-2 py-1 font-mono text-[8px] font-medium tracking-[1.3px] uppercase sm:px-2 sm:py-1">
-                        {displayType}
-                    </span>
+                <div className="flex shrink-0 items-center pt-0.5">
                     <ChevronDown
                         className={`text-muted-foreground h-4 w-4 shrink-0 transition-transform duration-200 ${
                             expanded ? "rotate-180" : ""
