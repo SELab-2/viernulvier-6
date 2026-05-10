@@ -1,9 +1,12 @@
 "use client";
 
+import * as React from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FacetCombobox } from "@/components/cms/facet-combobox";
+import { TagManagementSheet } from "@/components/cms/tag-management-sheet";
 import { useGetFacets } from "@/hooks/api/useTaxonomy";
 import { EntityType } from "@/types/models/taxonomy.types";
 
@@ -26,14 +29,10 @@ export function TagPickerSection({
     const locale = useLocale();
     const { data: facets, isLoading } = useGetFacets({ entityType });
 
-    const toggle = (slug: string) => {
-        if (inheritedSlugs.includes(slug)) return;
-        if (selectedSlugs.includes(slug)) {
-            onChange(selectedSlugs.filter((s) => s !== slug));
-        } else {
-            onChange([...selectedSlugs, slug]);
-        }
-    };
+    const [manageState, setManageState] = React.useState<{
+        facetSlug: string;
+        openWithCreate?: string;
+    } | null>(null);
 
     const getLabel = (translations: { languageCode: string; label: string }[]) => {
         return (
@@ -69,42 +68,53 @@ export function TagPickerSection({
                 <div className="space-y-3">
                     {facets.map((facet) => (
                         <div key={facet.slug} className="space-y-1.5">
-                            <span className="text-muted-foreground block text-[10px] font-medium tracking-wider uppercase">
-                                {getLabel(facet.translations)}
-                            </span>
-                            <div className="flex flex-wrap gap-x-3 gap-y-1.5">
-                                {facet.tags.map((tag) => {
-                                    const isInherited = inheritedSlugs.includes(tag.slug);
-                                    const isChecked =
-                                        isInherited || selectedSlugs.includes(tag.slug);
-                                    const checkboxId = `tag-${tag.slug}`;
-                                    return (
-                                        <div key={tag.slug} className="flex items-center gap-1.5">
-                                            <Checkbox
-                                                id={checkboxId}
-                                                checked={isChecked}
-                                                disabled={isInherited}
-                                                onCheckedChange={() => toggle(tag.slug)}
-                                                className="h-3.5 w-3.5"
-                                            />
-                                            <label
-                                                htmlFor={checkboxId}
-                                                className={`cursor-pointer text-xs ${isInherited ? "text-muted-foreground" : ""}`}
-                                            >
-                                                {getLabel(tag.translations)}
-                                                {isInherited && (
-                                                    <span className="text-muted-foreground ml-1 text-[9px]">
-                                                        ({t("inherited")})
-                                                    </span>
-                                                )}
-                                            </label>
-                                        </div>
-                                    );
-                                })}
+                            <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground block text-[10px] font-medium tracking-wider uppercase">
+                                    {getLabel(facet.translations)}
+                                </span>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 px-1.5 text-[10px]"
+                                    onClick={() => setManageState({ facetSlug: facet.slug })}
+                                >
+                                    {t("manage")}
+                                </Button>
                             </div>
+                            <FacetCombobox
+                                facet={facet}
+                                selectedSlugs={selectedSlugs.filter((s) =>
+                                    facet.tags.some((tag) => tag.slug === s)
+                                )}
+                                inheritedSlugs={inheritedSlugs.filter((s) =>
+                                    facet.tags.some((tag) => tag.slug === s)
+                                )}
+                                onChange={(newSlugsForFacet) => {
+                                    const otherFacetSlugs = selectedSlugs.filter(
+                                        (s) => !facet.tags.some((tag) => tag.slug === s)
+                                    );
+                                    onChange([...otherFacetSlugs, ...newSlugsForFacet]);
+                                }}
+                                onCreateTag={(query) =>
+                                    setManageState({
+                                        facetSlug: facet.slug,
+                                        openWithCreate: query,
+                                    })
+                                }
+                                compact={compact}
+                            />
                         </div>
                     ))}
                 </div>
+                {manageState && (
+                    <TagManagementSheet
+                        key={`${manageState.facetSlug}-${manageState.openWithCreate ?? ""}`}
+                        open={true}
+                        facet={facets.find((f) => f.slug === manageState.facetSlug)!}
+                        onOpenChange={(o) => !o && setManageState(null)}
+                        openWithCreate={manageState.openWithCreate}
+                    />
+                )}
             </div>
         );
     }
@@ -117,40 +127,53 @@ export function TagPickerSection({
             <div className="space-y-5">
                 {facets.map((facet) => (
                     <div key={facet.slug} className="space-y-2">
-                        <h3 className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                            {getLabel(facet.translations)}
-                        </h3>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
-                            {facet.tags.map((tag) => {
-                                const isInherited = inheritedSlugs.includes(tag.slug);
-                                const isChecked = isInherited || selectedSlugs.includes(tag.slug);
-                                const checkboxId = `tag-${tag.slug}`;
-                                return (
-                                    <div key={tag.slug} className="flex items-center gap-2">
-                                        <Checkbox
-                                            id={checkboxId}
-                                            checked={isChecked}
-                                            disabled={isInherited}
-                                            onCheckedChange={() => toggle(tag.slug)}
-                                        />
-                                        <label
-                                            htmlFor={checkboxId}
-                                            className={`cursor-pointer text-sm ${isInherited ? "text-muted-foreground" : ""}`}
-                                        >
-                                            {getLabel(tag.translations)}
-                                            {isInherited && (
-                                                <span className="text-muted-foreground ml-1 text-xs">
-                                                    ({t("inherited")})
-                                                </span>
-                                            )}
-                                        </label>
-                                    </div>
-                                );
-                            })}
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
+                                {getLabel(facet.translations)}
+                            </h3>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-xs"
+                                onClick={() => setManageState({ facetSlug: facet.slug })}
+                            >
+                                {t("manage")}
+                            </Button>
                         </div>
+                        <FacetCombobox
+                            facet={facet}
+                            selectedSlugs={selectedSlugs.filter((s) =>
+                                facet.tags.some((tag) => tag.slug === s)
+                            )}
+                            inheritedSlugs={inheritedSlugs.filter((s) =>
+                                facet.tags.some((tag) => tag.slug === s)
+                            )}
+                            onChange={(newSlugsForFacet) => {
+                                const otherFacetSlugs = selectedSlugs.filter(
+                                    (s) => !facet.tags.some((tag) => tag.slug === s)
+                                );
+                                onChange([...otherFacetSlugs, ...newSlugsForFacet]);
+                            }}
+                            onCreateTag={(query) =>
+                                setManageState({
+                                    facetSlug: facet.slug,
+                                    openWithCreate: query,
+                                })
+                            }
+                            compact={compact}
+                        />
                     </div>
                 ))}
             </div>
+            {manageState && (
+                <TagManagementSheet
+                    key={`${manageState.facetSlug}-${manageState.openWithCreate ?? ""}`}
+                    open={true}
+                    facet={facets.find((f) => f.slug === manageState.facetSlug)!}
+                    onOpenChange={(o) => !o && setManageState(null)}
+                    openWithCreate={manageState.openWithCreate}
+                />
+            )}
         </section>
     );
 }

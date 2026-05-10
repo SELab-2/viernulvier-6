@@ -626,7 +626,8 @@
         "Tags": {
             "sectionLabel": "Tags",
             "inherited": "Overgenomen",
-            "loading": "Tags laden…"
+            "loading": "Tags laden…",
+            "manage": "Beheren"
         },
         "ProductionMedia": {
             "title": "Media productie",

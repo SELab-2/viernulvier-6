@@ -626,7 +626,8 @@
         "Tags": {
             "sectionLabel": "Tags",
             "inherited": "Inherited",
-            "loading": "Loading tags…"
+            "loading": "Loading tags…",
+            "manage": "Manage"
         },
         "ProductionMedia": {
             "title": "Production media",

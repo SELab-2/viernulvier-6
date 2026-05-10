@@ -6,6 +6,11 @@ import * as useTaxonomyModule from "@/hooks/api/useTaxonomy";
 import { Facet } from "@/types/models/taxonomy.types";
 
 vi.mock("@/hooks/api/useTaxonomy");
+vi.mock("@/components/cms/tag-management-sheet", () => ({
+    TagManagementSheet: vi.fn(() => null),
+}));
+
+import { TagManagementSheet } from "@/components/cms/tag-management-sheet";
 
 const mockFacets: Facet[] = [
     {
@@ -61,92 +66,62 @@ beforeEach(() => {
 
 afterEach(() => {
     cleanup();
+    vi.clearAllMocks();
 });
 
 import { TagPickerSection } from "@/components/cms/tag-picker-section";
 
 describe("TagPickerSection", () => {
-    it("renders a checkbox for each tag in each facet", () => {
-        render(<TagPickerSection entityType="production" selectedSlugs={[]} onChange={vi.fn()} />);
+    it("renders a combobox trigger for each facet", () => {
+        render(<TagPickerSection entityType="article" selectedSlugs={[]} onChange={vi.fn()} />);
 
-        expect(screen.getByRole("checkbox", { name: /Theatre/i })).toBeInTheDocument();
-        expect(screen.getByRole("checkbox", { name: /Music/i })).toBeInTheDocument();
-        expect(screen.getByRole("checkbox", { name: /Workshop/i })).toBeInTheDocument();
+        expect(screen.getAllByRole("combobox")).toHaveLength(2);
     });
 
-    it("checks a checkbox when its slug is in selectedSlugs", () => {
-        render(
-            <TagPickerSection
-                entityType="production"
-                selectedSlugs={["theatre"]}
-                onChange={vi.fn()}
-            />
+    it("renders a Manage button for each facet", () => {
+        render(<TagPickerSection entityType="article" selectedSlugs={[]} onChange={vi.fn()} />);
+
+        expect(screen.getAllByRole("button", { name: /manage/i })).toHaveLength(2);
+    });
+
+    it("clicking Manage button opens TagManagementSheet for that facet", async () => {
+        const user = userEvent.setup();
+        render(<TagPickerSection entityType="article" selectedSlugs={[]} onChange={vi.fn()} />);
+
+        const manageButtons = screen.getAllByRole("button", { name: /manage/i });
+        await user.click(manageButtons[0]);
+
+        expect(TagManagementSheet).toHaveBeenCalledWith(
+            expect.objectContaining({ open: true, facet: mockFacets[0] }),
+            undefined
         );
-
-        expect(screen.getByRole("checkbox", { name: /Theatre/i })).toBeChecked();
-        expect(screen.getByRole("checkbox", { name: /Music/i })).not.toBeChecked();
     });
 
-    it("calls onChange with slug added when an unchecked tag is clicked", async () => {
+    it("clicking Create in FacetCombobox opens TagManagementSheet with openWithCreate", async () => {
+        const user = userEvent.setup();
+        render(<TagPickerSection entityType="article" selectedSlugs={[]} onChange={vi.fn()} />);
+
+        const comboboxes = screen.getAllByRole("combobox");
+        await user.click(comboboxes[0]);
+        await user.type(screen.getByPlaceholderText(/search/i), "brandnew");
+        await user.click(screen.getByText(/Create/i));
+
+        expect(TagManagementSheet).toHaveBeenCalledWith(
+            expect.objectContaining({ openWithCreate: "brandnew" }),
+            undefined
+        );
+    });
+
+    it("onChange propagates correctly when a tag is selected", async () => {
         const user = userEvent.setup();
         const onChange = vi.fn();
+        render(<TagPickerSection entityType="article" selectedSlugs={[]} onChange={onChange} />);
 
-        render(<TagPickerSection entityType="production" selectedSlugs={[]} onChange={onChange} />);
+        const comboboxes = screen.getAllByRole("combobox");
+        await user.click(comboboxes[0]);
+        await user.click(screen.getByText("Theatre"));
 
-        await user.click(screen.getByRole("checkbox", { name: /Theatre/i }));
-
-        expect(onChange).toHaveBeenCalledOnce();
         expect(onChange).toHaveBeenCalledWith(["theatre"]);
-    });
-
-    it("calls onChange with slug removed when a checked tag is clicked", async () => {
-        const user = userEvent.setup();
-        const onChange = vi.fn();
-
-        render(
-            <TagPickerSection
-                entityType="production"
-                selectedSlugs={["theatre", "music"]}
-                onChange={onChange}
-            />
-        );
-
-        await user.click(screen.getByRole("checkbox", { name: /Theatre/i }));
-
-        expect(onChange).toHaveBeenCalledWith(["music"]);
-    });
-
-    it("renders inherited tags as checked and disabled", () => {
-        render(
-            <TagPickerSection
-                entityType="production"
-                selectedSlugs={[]}
-                inheritedSlugs={["theatre"]}
-                onChange={vi.fn()}
-            />
-        );
-
-        const theatreCheckbox = screen.getByRole("checkbox", { name: /Theatre/i });
-        expect(theatreCheckbox).toBeChecked();
-        expect(theatreCheckbox).toBeDisabled();
-    });
-
-    it("does not call onChange when an inherited tag is clicked", async () => {
-        const user = userEvent.setup();
-        const onChange = vi.fn();
-
-        render(
-            <TagPickerSection
-                entityType="production"
-                selectedSlugs={[]}
-                inheritedSlugs={["theatre"]}
-                onChange={onChange}
-            />
-        );
-
-        await user.click(screen.getByRole("checkbox", { name: /Theatre/i }));
-
-        expect(onChange).not.toHaveBeenCalled();
     });
 
     it("passes entityType to useGetFacets", () => {
