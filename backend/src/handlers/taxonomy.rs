@@ -54,6 +54,7 @@ pub async fn get_facets(
         (status = 201, description = "Tag created", body = TagResponse),
         (status = 409, description = "Slug already exists in this facet"),
         (status = 400, description = "Missing NL translation"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
     ),
     security(("cookie_auth" = []))
 )]
@@ -68,6 +69,9 @@ pub async fn create_tag(
         .ok_or_else(|| AppError::PayloadError("NL translation is required".into()))?;
 
     let slug = slugify(&nl.label);
+    if slug.is_empty() {
+        return Err(AppError::PayloadError("NL label must not be empty".into()));
+    }
     let sort_order = db.tags().next_sort_order(body.facet).await?;
     let tag_id = db.tags().create_tag(body.facet, &slug, sort_order).await?;
 
@@ -105,6 +109,7 @@ pub async fn create_tag(
     responses(
         (status = 204, description = "Labels updated"),
         (status = 404, description = "Tag not found"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
     ),
     security(("cookie_auth" = []))
 )]
@@ -141,6 +146,7 @@ pub struct DeleteTagParams {
         (status = 204, description = "Tag deleted"),
         (status = 409, description = "Tag still in use", body = TagUsageResponse),
         (status = 404, description = "Tag not found"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
     ),
     security(("cookie_auth" = []))
 )]
