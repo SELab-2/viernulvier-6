@@ -69,7 +69,14 @@ export default function UsersPage() {
     const deleteUser = useDeleteUser();
 
     useEffect(() => {
-        if (!userLoading && currentUser && currentUser.role !== UserRoleEnum.ADMIN) {
+        if (userLoading) {
+            return;
+        }
+        if (!currentUser) {
+            router.push("/login");
+            return;
+        }
+        if (currentUser.role !== UserRoleEnum.ADMIN) {
             router.push("/cms");
         }
     }, [userLoading, currentUser, router]);
@@ -162,6 +169,10 @@ export default function UsersPage() {
         () => makeUserColumns({ onEdit: openEdit, onDelete: handleDelete, lastAdminId, t }),
         [openEdit, handleDelete, lastAdminId, t]
     );
+
+    if (userLoading || !canManageUsers) {
+        return null;
+    }
 
     return (
         <div className="flex h-full flex-col px-3 py-1 lg:px-4 lg:py-3">

@@ -1,9 +1,9 @@
+use sqlx::PgPool;
 use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
     time::{Duration, Instant},
 };
-use sqlx::PgPool;
 use uuid::Uuid;
 
 /// Persistent + in-memory set of revoked user IDs.
@@ -81,12 +81,17 @@ impl RevokedUsers {
         Ok(())
     }
 
+    /// Update only the in-memory revocation set (used after transactional DB writes).
+    pub fn mark_revoked(&self, user_id: Uuid) {
+        let mut map = self.inner.write().expect("revoked lock poisoned");
+        map.insert(user_id, Instant::now());
+        map.retain(|_, ts| ts.elapsed() < self.max_age);
+    }
+
     /// Fast in-memory check.
     pub fn is_revoked(&self, user_id: Uuid) -> bool {
-        let map = self.inner.read().expect("revoked lock poisoned");
-        match map.get(&user_id) {
-            Some(ts) => ts.elapsed() < self.max_age,
-            None => false,
-        }
+        let mut map = self.inner.write().expect("revoked lock poisoned");
+        map.retain(|_, ts| ts.elapsed() < self.max_age);
+        map.contains_key(&user_id)
     }
 }

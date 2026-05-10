@@ -7,10 +7,11 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::{error::AppError, error::ErrorResponse, extractors::auth::EditorUser};
-use database::Database;
-use database::models::user::{UserCreate, UserPatch, UserRole};
-use uuid::Uuid;
 use axum::extract::Path;
+use database::Database;
+use database::error::DatabaseError;
+use database::models::user::{UserCreate, UserPatch, UserRole, UserSummary};
+use uuid::Uuid;
 
 #[derive(Serialize, ToSchema)]
 pub struct EditorResponse {
@@ -201,6 +202,7 @@ pub async fn list_users(db: Database) -> Result<Json<Vec<UserResponse>>, AppErro
     responses(
         (status = 200, description = "User updated", body = UserResponse),
         (status = 404, description = "User not found", body = ErrorResponse),
+        (status = 409, description = "Conflict", body = ErrorResponse),
         (status = 401, description = "Unauthorized", body = ErrorResponse)
     ),
     security(
@@ -224,20 +226,53 @@ pub async fn update_user(
     }
     let role_changed = target.role != payload.role;
 
-    let user = db
-        .users()
-        .patch(id, UserPatch {
-            username: payload.username,
-            role: Some(payload.role),
-        })
-        .await?;
+    let user = if role_changed {
+        let mut tx = db.pool().begin().await.map_err(DatabaseError::from)?;
 
-    // If role changed, force re-login so the new role is reflected in the token
-    if role_changed {
-        state.revoked.revoke(db.pool(), id).await.map_err(|e| {
-            AppError::Internal(format!("Failed to revoke user: {e}"))
-        })?;
-    }
+        let user: UserSummary = sqlx::query_as(
+            "UPDATE users
+             SET username = $1, role = $2
+             WHERE id = $3
+             RETURNING id, username, email, role",
+        )
+        .bind(&payload.username)
+        .bind(&payload.role)
+        .bind(id)
+        .fetch_one(&mut *tx)
+        .await
+        .map_err(DatabaseError::from)?;
+
+        sqlx::query(
+            "INSERT INTO revoked_users (user_id) VALUES ($1)
+             ON CONFLICT (user_id) DO UPDATE SET revoked_at = NOW()",
+        )
+        .bind(id)
+        .execute(&mut *tx)
+        .await
+        .map_err(DatabaseError::from)?;
+
+        tx.commit().await.map_err(DatabaseError::from)?;
+        state.revoked.mark_revoked(id);
+        user
+    } else {
+        let user = db
+            .users()
+            .patch(
+                id,
+                UserPatch {
+                    username: payload.username,
+                    role: Some(payload.role),
+                },
+            )
+            .await?;
+
+        UserSummary {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+        }
+    };
 
     Ok(Json(UserResponse {
         id: user.id.to_string(),
@@ -256,6 +291,7 @@ pub async fn update_user(
     responses(
         (status = 204, description = "User deleted"),
         (status = 404, description = "User not found", body = ErrorResponse),
+        (status = 409, description = "Conflict", body = ErrorResponse),
         (status = 401, description = "Unauthorized", body = ErrorResponse)
     ),
     security(
@@ -276,9 +312,27 @@ pub async fn delete_user(
             ));
         }
     }
-    db.users().delete(id).await?;
-    state.revoked.revoke(db.pool(), id).await.map_err(|e| {
-        AppError::Internal(format!("Failed to revoke user: {e}"))
-    })?;
+    let mut tx = db.pool().begin().await.map_err(DatabaseError::from)?;
+
+    sqlx::query(
+        "INSERT INTO revoked_users (user_id) VALUES ($1)
+         ON CONFLICT (user_id) DO UPDATE SET revoked_at = NOW()",
+    )
+    .bind(id)
+    .execute(&mut *tx)
+    .await
+    .map_err(DatabaseError::from)?;
+
+    let delete_res = sqlx::query("DELETE FROM users WHERE id = $1")
+        .bind(id)
+        .execute(&mut *tx)
+        .await
+        .map_err(DatabaseError::from)?;
+    if delete_res.rows_affected() == 0 {
+        return Err(AppError::from(DatabaseError::NotFound));
+    }
+
+    tx.commit().await.map_err(DatabaseError::from)?;
+    state.revoked.mark_revoked(id);
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
