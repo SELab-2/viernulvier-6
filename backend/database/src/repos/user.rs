@@ -46,10 +46,6 @@ impl<'a> UserRepo<'a> {
         Ok(count > 0)
     }
 
-    pub async fn all(&self) -> Result<Vec<User>, DatabaseError> {
-        Ok(User::select().fetch_all(self.db).await?)
-    }
-
     pub async fn list_summaries(&self) -> Result<Vec<UserSummary>, DatabaseError> {
         Ok(sqlx::query_as::<_, UserSummary>(
             "SELECT id, username, email, role FROM users ORDER BY username ASC",
