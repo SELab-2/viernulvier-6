@@ -124,6 +124,25 @@ describe("TagPickerSection", () => {
         expect(onChange).toHaveBeenCalledWith(["theatre"]);
     });
 
+    it("preserves slugs from other facets when one facet changes", async () => {
+        const user = userEvent.setup();
+        const onChange = vi.fn();
+        // "workshop" belongs to facet "format" (second facet), not "discipline" (first)
+        render(
+            <TagPickerSection
+                entityType="article"
+                selectedSlugs={["workshop"]}
+                onChange={onChange}
+            />
+        );
+
+        const comboboxes = screen.getAllByRole("combobox");
+        await user.click(comboboxes[0]); // opens "discipline" combobox
+        await user.click(screen.getByText("Theatre"));
+
+        expect(onChange).toHaveBeenCalledWith(["workshop", "theatre"]);
+    });
+
     it("passes entityType to useGetFacets", () => {
         render(<TagPickerSection entityType="article" selectedSlugs={[]} onChange={vi.fn()} />);
 
