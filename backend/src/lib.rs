@@ -183,7 +183,7 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
         .layer(
             CorsLayer::new()
                 .allow_origin(allowed_origins)
-                .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
+                .allow_methods([Method::GET, Method::POST, Method::PUT, Method::PATCH, Method::DELETE])
                 .allow_headers([axum::http::header::CONTENT_TYPE])
                 .allow_credentials(true),
         )
@@ -342,6 +342,9 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(media::reconcile_storage))
         // Tags
         .routes(routes!(tagging::put_tags))
+        .routes(routes!(taxonomy::create_tag))
+        .routes(routes!(taxonomy::patch_tag))
+        .routes(routes!(taxonomy::delete_tag))
         // Articles (CMS)
         .routes(routes!(article::get_all_cms))
         .routes(routes!(article::get_all_cms_search))

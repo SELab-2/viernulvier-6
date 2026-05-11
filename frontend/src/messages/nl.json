@@ -519,7 +519,8 @@
             "sortOldest": "Oudste eerst",
             "sortRelevance": "Relevantie",
             "entityLinks": "Gebruikt in",
-            "noEntityLinks": "Niet gekoppeld aan een entity."
+            "noEntityLinks": "Niet gekoppeld aan een entity.",
+            "editSaveFailed": "Opslaan mislukt."
         },
         "Collections": {
             "title": "Collecties",
@@ -623,6 +624,35 @@
             "setError": "Omslagafbeelding instellen mislukt.",
             "removeSuccess": "Omslagafbeelding verwijderd.",
             "removeError": "Omslagafbeelding verwijderen mislukt."
+        },
+        "Tags": {
+            "sectionLabel": "Tags",
+            "inherited": "Overgenomen",
+            "loading": "Tags laden…",
+            "manage": "Beheren",
+            "addTag": "Tag toevoegen…",
+            "search": "Zoeken…",
+            "createTag": "Aanmaken \"{label}\"",
+            "newTag": "Nieuwe tag",
+            "editTag": "Tag bewerken",
+            "labelNl": "NL-label",
+            "labelEn": "EN-label",
+            "placeholderNl": "Nederlandse naam",
+            "placeholderEn": "Engelse naam",
+            "save": "Opslaan",
+            "saving": "Opslaan…",
+            "manageTitle": "Tags beheren — {facet}",
+            "deleteSuccess": "Tag verwijderd",
+            "deleteError": "Tag verwijderen mislukt",
+            "conflictError": "Er bestaat al een tag met deze naam",
+            "saveError": "Tag opslaan mislukt",
+            "editAriaLabel": "{label} bewerken",
+            "deleteAriaLabel": "{label} verwijderen",
+            "deleteTitle": "\"{label}\" verwijderen?",
+            "deleteDescription": "Deze tag wordt gebruikt door {count, plural, one {# item} other {# items}}. Door het te verwijderen wordt het van alle items verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+            "cancel": "Annuleren",
+            "delete": "Verwijderen",
+            "deleting": "Verwijderen…"
         },
         "ProductionMedia": {
             "title": "Media productie",

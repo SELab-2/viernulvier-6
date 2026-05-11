@@ -1,4 +1,4 @@
-export type EntityType = "production" | "artist" | "article" | "media";
+export type EntityType = "production" | "artist" | "article" | "media" | "collection";
 
 export type FacetSlug =
     | "discipline"
@@ -34,4 +34,12 @@ export type Facet = {
 export type EntityTagSlim = {
     slug: string;
     facet: string;
+};
+
+export type EntityTag = Tag & { inherited: boolean };
+
+export type EntityFacet = {
+    slug: FacetSlug;
+    translations: FacetTranslation[];
+    tags: EntityTag[];
 };

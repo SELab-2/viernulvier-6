@@ -972,6 +972,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/taxonomy/tags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Create a new tag. Slug is derived server-side from the NL label. */
+        post: operations["create_tag"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/taxonomy/tags/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Delete a tag. Returns 409 with usage_count if still in use and force is not set. */
+        delete: operations["delete_tag"];
+        options?: never;
+        head?: never;
+        /** @description Update NL/EN labels for a tag. Slug is read-only. */
+        patch: operations["update_tag"];
+        trace?: never;
+    };
     "/version": {
         parameters: {
             query?: never;
@@ -1241,6 +1276,10 @@ export interface components {
             upload_token: string;
             /** Format: int32 */
             width?: number | null;
+        };
+        CreateTagRequest: {
+            facet: components["schemas"]["Facet"];
+            translations: components["schemas"]["TagTranslationInput"][];
         };
         EditorResponse: {
             email: string;
@@ -1955,14 +1994,25 @@ export interface components {
             sort_order: number;
             translations: components["schemas"]["TagTranslationPayload"][];
         };
+        TagTranslationInput: {
+            label: string;
+            language_code: string;
+        };
         TagTranslationPayload: {
             description?: string | null;
             label: string;
             language_code: string;
         };
+        TagUsageResponse: {
+            /** Format: int64 */
+            usage_count: number;
+        };
         TitleTranslations: {
             en?: string | null;
             nl?: string | null;
+        };
+        UpdateTagRequest: {
+            translations: components["schemas"]["TagTranslationInput"][];
         };
         UploadUrlRequest: {
             /**
@@ -4945,6 +4995,143 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["FacetResponse"][];
                 };
+            };
+        };
+    };
+    create_tag: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTagRequest"];
+            };
+        };
+        responses: {
+            /** @description Tag created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TagResponse"];
+                };
+            };
+            /** @description Missing NL translation */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Slug already exists in this facet */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_tag: {
+        parameters: {
+            query?: {
+                /** @description If true, remove all taggings and delete */
+                force?: boolean;
+            };
+            header?: never;
+            path: {
+                /** @description Tag slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tag deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Tag not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Tag still in use */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TagUsageResponse"];
+                };
+            };
+        };
+    };
+    update_tag: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tag slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTagRequest"];
+            };
+        };
+        responses: {
+            /** @description Labels updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Tag not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

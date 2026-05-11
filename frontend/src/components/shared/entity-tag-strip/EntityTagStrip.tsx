@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 
+import { Link } from "@/i18n/routing";
 import { useTaxonomyLookup } from "@/hooks/api/useTaxonomyLookup";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -54,13 +55,14 @@ export function EntityTagStrip({
     return (
         <div className={`flex flex-wrap gap-1 ${className ?? ""}`}>
             {visible.map((tag) => (
-                <span
+                <Link
                     key={tag.slug}
+                    href={`/search?facet=${tag.facet}&tag=${tag.slug}`}
                     data-testid="entity-tag-chip"
-                    className={`${CHIP_BASE} ${padding}`}
+                    className={`${CHIP_BASE} ${padding} hover:border-foreground hover:text-foreground transition-colors`}
                 >
                     {tag.label}
-                </span>
+                </Link>
             ))}
             {hidden.length > 0 && (
                 <TooltipProvider delayDuration={100}>

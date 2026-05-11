@@ -1,10 +1,13 @@
 import { FacetResponse, TagResponse } from "@/types/api/taxonomy.api.types";
+import { EntityFacetApiResponse, EntityTagApiResponse } from "@/types/api/tagging.api.types";
 import {
     Facet,
     FacetSlug,
     FacetTranslation,
     Tag,
     TagTranslation,
+    EntityFacet,
+    EntityTag,
 } from "@/types/models/taxonomy.types";
 
 const mapTagTranslation = (t: TagResponse["translations"][number]): TagTranslation => ({
@@ -33,3 +36,17 @@ export const mapFacet = (response: FacetResponse): Facet => ({
 });
 
 export const mapFacets = (response: FacetResponse[]): Facet[] => response.map(mapFacet);
+
+const mapEntityTag = (response: EntityTagApiResponse): EntityTag => ({
+    slug: response.slug,
+    sortOrder: response.sort_order,
+    inherited: response.inherited,
+    translations: response.translations.map(mapTagTranslation),
+});
+
+export const mapEntityFacets = (response: EntityFacetApiResponse[]): EntityFacet[] =>
+    response.map((facet) => ({
+        slug: facet.slug as FacetSlug,
+        translations: facet.translations.map(mapFacetTranslation),
+        tags: facet.tags.map(mapEntityTag),
+    }));

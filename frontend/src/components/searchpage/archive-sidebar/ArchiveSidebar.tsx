@@ -22,6 +22,7 @@ interface ArchiveSidebarProps {
     facets?: Facet[];
     minYear?: number;
     maxYear?: number;
+    initialTag?: string;
     onFilterChange?: (filters: {
         categories: Set<string>;
         tags: Set<string>;
@@ -35,6 +36,7 @@ export function ArchiveSidebar({
     facets = [],
     minYear: minYearProp,
     maxYear: maxYearProp,
+    initialTag,
     onFilterChange,
 }: ArchiveSidebarProps) {
     const t = useTranslations("Sidebar");
@@ -49,7 +51,16 @@ export function ArchiveSidebar({
     const minDate = useMemo(() => new Date(bounds.minYear, 0, 1), [bounds.minYear]);
     const maxDate = useMemo(() => new Date(bounds.maxYear, 11, 31), [bounds.maxYear]);
     const [mobileOpen, setMobileOpen] = useState(false);
-    const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
+    const [activeTags, setActiveTags] = useState<Set<string>>(() =>
+        initialTag ? new Set([initialTag]) : new Set()
+    );
+    const prevInitialTagRef = useRef(initialTag);
+    useEffect(() => {
+        if (initialTag !== prevInitialTagRef.current) {
+            prevInitialTagRef.current = initialTag;
+            setActiveTags(initialTag ? new Set([initialTag]) : new Set());
+        }
+    }, [initialTag]);
     const [checkedCategories, setCheckedCategories] = useState<Set<string>>(
         new Set(["productions"])
     );

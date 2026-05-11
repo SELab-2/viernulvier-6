@@ -16,6 +16,8 @@ import { makeArtistColumns, getArtistFields, toArtistUpdateInput } from "./colum
 import { useDeleteArtist, useGetInfiniteArtists, useUpdateArtist } from "@/hooks/api/useArtists";
 import { Artist } from "@/types/models/artist.types";
 import { ActionVariant } from "@/types/cms/actions";
+import { useEntityTagEditor } from "@/hooks/useEntityTagEditor";
+import { TagPickerSection } from "@/components/cms/tag-picker-section";
 
 export function PerformersTable() {
     const t = useTranslations("Cms.Performers");
@@ -48,6 +50,9 @@ export function PerformersTable() {
         [artists, rowSelection]
     );
 
+    const { tagSlugs, inheritedTagSlugs, setTagEdits, resetTagEdits, replaceEntityTags } =
+        useEntityTagEditor("artist", editArtist?.id ?? "", { enabled: !!editArtist });
+
     const handleDelete = useCallback(
         (artist: Artist) => {
             const ok = window.confirm(t("deleteConfirm", { name: artist.name }));
@@ -74,9 +79,17 @@ export function PerformersTable() {
 
     const artistFields = useMemo(() => getArtistFields(t), [t]);
 
+    const openEdit = useCallback(
+        (artist: Artist) => {
+            setEditArtist(artist);
+            resetTagEdits();
+        },
+        [resetTagEdits]
+    );
+
     const columns = useMemo(
-        () => makeArtistColumns(setEditArtist, handleDelete, tActions, t),
-        [handleDelete, tActions, t]
+        () => makeArtistColumns(openEdit, handleDelete, tActions, t),
+        [openEdit, handleDelete, tActions, t]
     );
 
     const bulkActions = useMemo(
@@ -118,16 +131,39 @@ export function PerformersTable() {
             </div>
             <EditSheet
                 open={!!editArtist}
-                onOpenChange={(open) => !open && setEditArtist(null)}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setEditArtist(null);
+                        resetTagEdits();
+                    }
+                }}
                 entity={editArtist as (Artist & Record<string, unknown>) | null}
                 fields={artistFields}
                 title={t("editPerformer")}
-                onSave={(data) =>
-                    updateArtist.mutateAsync(toArtistUpdateInput(data as Artist), {
-                        onSuccess: () => toast.success(t("updateSuccess")),
-                        onError: () => toast.error(t("updateError")),
-                    })
-                }
+                onSave={async (data) => {
+                    try {
+                        await Promise.all([
+                            updateArtist.mutateAsync(toArtistUpdateInput(data as Artist)),
+                            replaceEntityTags.mutateAsync({
+                                entityType: "artist",
+                                entityId: data.id,
+                                tagSlugs,
+                            }),
+                        ]);
+                        toast.success(t("updateSuccess"));
+                    } catch {
+                        toast.error(t("updateError"));
+                    }
+                }}
+                extraContent={() => (
+                    <TagPickerSection
+                        entityType="artist"
+                        selectedSlugs={tagSlugs}
+                        inheritedSlugs={inheritedTagSlugs}
+                        onChange={(next) => setTagEdits(next)}
+                        compact
+                    />
+                )}
             />
         </div>
     );

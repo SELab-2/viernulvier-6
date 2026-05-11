@@ -1,11 +1,12 @@
 "use client";
 
-import { use, useState, useCallback, useEffect } from "react";
+import { use, useMemo, useState, useCallback, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "@/i18n/routing";
 
 import { useGetCollectionBySlug } from "@/hooks/api/useCollections";
+import { useGetEntityTags } from "@/hooks/api/useEntityTags";
 import { useHasPreview } from "@/hooks/usePreviewData";
 import { useCollectionWithPreview } from "@/hooks/useCollectionPreview";
 import { UnifiedHeader } from "@/components/layout/header";
@@ -13,6 +14,7 @@ import { LoadingState } from "@/components/shared/loading-state";
 import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
 import { PreviewBadge } from "@/components/preview";
 import { CollectionHeader, CollectionGrid } from "@/components/collections";
+import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
 
 export default function CollectionPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = use(params);
@@ -52,6 +54,16 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
     const collection = isPreviewMode ? (previewCollection ?? apiCollection) : apiCollection;
     const isPreview = isPreviewMode && hasPreviewData;
 
+    const { data: collectionEntityTags } = useGetEntityTags("collection", collection?.id ?? "", {
+        enabled: !!collection?.id,
+    });
+    const collectionTags = useMemo(() => {
+        if (!collectionEntityTags) return [];
+        return collectionEntityTags.flatMap((f) =>
+            f.tags.map((t) => ({ slug: t.slug, facet: f.slug }))
+        );
+    }, [collectionEntityTags]);
+
     return (
         <>
             <UnifiedHeader
@@ -82,6 +94,9 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
                             ) : null
                         }
                     />
+                    {collectionTags.length > 0 && (
+                        <EntityTagStrip tags={collectionTags} locale={locale} className="mb-6" />
+                    )}
                     <CollectionGrid items={collection.items} />
                 </article>
             )}

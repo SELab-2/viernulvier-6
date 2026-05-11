@@ -163,6 +163,7 @@ export default function SearchPage() {
                     facets={facets ?? []}
                     minYear={ARCHIVE_MIN_YEAR}
                     maxYear={maxYear}
+                    initialTag={searchParams.get("tag") ?? undefined}
                 />
                 <main className="flex min-w-0 flex-1 flex-col">
                     <ResultsBar
