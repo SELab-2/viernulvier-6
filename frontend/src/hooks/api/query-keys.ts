@@ -1,6 +1,7 @@
 import { PaginationParams } from "@/types/api/api.types";
 import { EntityMediaParams, MediaSearchParams } from "@/types/models/media.types";
 import { ProductionSearchParams } from "@/types/models/production.types";
+import { CollectionVisibility } from "@/types/models/collection.types";
 
 type QueryKeyParams = PaginationParams | ProductionSearchParams | Record<string, unknown>;
 
@@ -39,6 +40,14 @@ export const queryKeys = {
         all: ["collections"] as const,
         detail: (id: string) => ["collections", id] as const,
         bySlug: (slug: string) => ["collections", "slug", slug] as const,
+        forProduction: (id: string, visibility?: CollectionVisibility) =>
+            visibility
+                ? (["collections", "production", id, visibility] as const)
+                : (["collections", "production", id] as const),
+        cmsInfinite: (params?: Record<string, unknown>) =>
+            params
+                ? (["collections", "cms", "infinite", params] as const)
+                : (["collections", "cms", "infinite"] as const),
     },
     events: {
         all: (pagination?: PaginationParams) => buildQueryKey(["events"], pagination),

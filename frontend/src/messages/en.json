@@ -538,6 +538,9 @@
             "descriptionEn": "Description (EN)",
             "fieldTitle": "Title",
             "fieldDescription": "Description",
+            "fieldVisibility": "Visibility",
+            "visibilityPublic": "Public",
+            "visibilityUnlisted": "Unlisted (link only)",
             "metadataSection": "Metadata",
             "shareableLink": "Shareable link",
             "copyLink": "Copy link",
@@ -751,7 +754,8 @@
         "shareEmail": "Share via email",
         "articlesTitle": "Articles",
         "articlesLabel": "Article",
-        "articlesFallbackTitle": "Untitled"
+        "articlesFallbackTitle": "Untitled",
+        "partOfTitle": "Part of"
     },
     "NewsArticleComponent": {
         "subTitle": "Vooruit Archive",

@@ -6,6 +6,8 @@ export type CollectionContentType =
     | "location"
     | "media";
 
+export type CollectionVisibility = "public" | "unlisted";
+
 export type EntityGridItem = {
     id: string;
     contentType: CollectionContentType;
@@ -37,6 +39,7 @@ export type CollectionItem = {
 export type Collection = {
     id: string;
     slug: string;
+    visibility: CollectionVisibility;
     translations: CollectionTranslation[];
     items: CollectionItem[];
     createdAt: string;
@@ -46,6 +49,7 @@ export type Collection = {
 
 export type CollectionCreateInput = {
     slug: string;
+    visibility?: CollectionVisibility;
     translations: CollectionTranslation[];
 };
 
@@ -60,6 +64,7 @@ export type CollectionItemsBulkInput = {
 export type CollectionRow = {
     id: string;
     slug: string;
+    visibility: CollectionVisibility;
     titleNl: string;
     titleEn: string;
     descriptionNl: string;

@@ -13,7 +13,7 @@ import { UnifiedHeader } from "@/components/layout/header";
 import { LoadingState } from "@/components/shared/loading-state";
 import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
 import { PreviewBadge } from "@/components/preview";
-import { CollectionHeader, CollectionGrid } from "@/components/collections";
+import { CollectionHeader, CollectionGrid, CollectionList } from "@/components/collections";
 import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
 
 export default function CollectionPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -24,6 +24,7 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
     const router = useRouter();
 
     const [headerQuery, setHeaderQuery] = useState("");
+    const [view, setView] = useState<"grid" | "list">("grid");
 
     const handleHeaderSearch = useCallback(
         (value: string) => {
@@ -84,6 +85,8 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
                 <article className="mx-auto max-w-[1100px] px-4 py-8 sm:px-10 sm:py-12">
                     <CollectionHeader
                         collection={collection}
+                        view={view}
+                        onViewChange={setView}
                         previewNode={
                             isPreview ? (
                                 <PreviewBadge
@@ -94,10 +97,16 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
                             ) : null
                         }
                     />
+            
                     {collectionTags.length > 0 && (
                         <EntityTagStrip tags={collectionTags} locale={locale} className="mb-6" />
                     )}
-                    <CollectionGrid items={collection.items} />
+            
+                    {view === "list" ? (
+                        <CollectionList items={collection.items} />
+                    ) : (
+                        <CollectionGrid items={collection.items} />
+                    )}
                 </article>
             )}
         </>
