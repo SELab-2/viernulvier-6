@@ -761,6 +761,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/productions/{id}/artists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get all artists for a production */
+        get: operations["get_artists_by_production_id"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/productions/{id}/events": {
         parameters: {
             query?: never;
@@ -2389,7 +2406,11 @@ export interface operations {
     };
     get_all_artists: {
         parameters: {
-            query?: never;
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+                q?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2402,7 +2423,17 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ArtistPayload"][];
+                    "application/json": {
+                        data: {
+                            /** @description Cover image URL resolved from the entity_media link (output-only). */
+                            readonly cover_image_url?: string | null;
+                            /** Format: uuid */
+                            id: string;
+                            name: string;
+                            slug: string;
+                        }[];
+                        next_cursor?: string | null;
+                    };
                 };
             };
         };
@@ -4364,6 +4395,29 @@ export interface operations {
             };
         };
     };
+    get_artists_by_production_id: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Production UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtistPayload"][];
+                };
+            };
+        };
+    };
     get_events_by_production_id: {
         parameters: {
             query?: never;
@@ -4384,13 +4438,6 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["EventPayload"][];
                 };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };

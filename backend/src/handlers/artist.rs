@@ -1,5 +1,4 @@
-use axum::extract::State;
-use axum::extract::Path;
+use axum::extract::{Path, Query, State};
 use axum::Json;
 use axum::http::StatusCode;
 use database::Database;
@@ -7,9 +6,17 @@ use uuid::Uuid;
 
 use crate::{
     AppState,
-    dto::{artist::{ArtistPayload, ArtistPostPayload, ArtistUpdatePayload}, production::ProductionPayload},
+    dto::{
+        artist::{ArtistPayload, ArtistPostPayload, ArtistUpdatePayload},
+        paginated::PaginatedResponse,
+        production::ProductionPayload,
+    },
     error::ErrorResponse,
-    handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
+    handlers::{
+        IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse,
+        queries::artist::ArtistSearchQuery,
+        queries::pagination::PaginationQuery,
+    },
 };
 
 #[utoipa::path(
@@ -18,16 +25,21 @@ use crate::{
     tag = "Artists",
     operation_id = "get_all_artists",
     description = "Get all artists",
+    params(PaginationQuery, ArtistSearchQuery),
     responses(
-        (status = 200, description = "Success", body = [ArtistPayload])
+        (status = 200, description = "Success", body = inline(PaginatedResponse<ArtistPayload>))
     )
 )]
 pub async fn get_all(
     State(state): State<AppState>,
     db: Database,
-) -> JsonResponse<Vec<ArtistPayload>> {
+    Query(pagination): Query<PaginationQuery>,
+    Query(search): Query<ArtistSearchQuery>,
+) -> JsonResponse<PaginatedResponse<ArtistPayload>> {
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
-    ArtistPayload::all(&db, public_url).await?.json()
+    ArtistPayload::all(&db, pagination.cursor, pagination.limit, public_url, search.q.as_deref())
+        .await?
+        .json()
 }
 
 #[utoipa::path(
