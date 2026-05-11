@@ -1164,6 +1164,8 @@ export interface components {
             items: components["schemas"]["CollectionItemPayload"][];
             /** @description URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections. */
             slug: string;
+            /** @description Slim tag list attached to this collection (output-only). */
+            tags?: components["schemas"]["EntityTagSlim"][];
             /** @description Per-language title and description. */
             translations: components["schemas"]["CollectionTranslationPayload"][];
             /**
@@ -1606,6 +1608,8 @@ export interface components {
                 items: components["schemas"]["CollectionItemPayload"][];
                 /** @description URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections. */
                 slug: string;
+                /** @description Slim tag list attached to this collection (output-only). */
+                tags?: components["schemas"]["EntityTagSlim"][];
                 /** @description Per-language title and description. */
                 translations: components["schemas"]["CollectionTranslationPayload"][];
                 /**

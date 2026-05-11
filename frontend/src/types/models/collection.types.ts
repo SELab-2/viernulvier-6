@@ -1,3 +1,5 @@
+import type { EntityTagSlim } from "./taxonomy.types";
+
 export type CollectionContentType =
     | "production"
     | "event"
@@ -45,6 +47,7 @@ export type Collection = {
     createdAt: string;
     updatedAt: string;
     coverImageUrl: string | null;
+    tags: EntityTagSlim[];
 };
 
 export type CollectionCreateInput = {
@@ -72,4 +75,5 @@ export type CollectionRow = {
     itemCount: number;
     updatedAt: string;
     coverImageUrl: string | null;
+    tags: EntityTagSlim[];
 };

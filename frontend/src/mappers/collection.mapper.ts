@@ -52,6 +52,7 @@ export const mapCollection = (response: CollectionResponse): Collection => ({
     createdAt: response.created_at,
     updatedAt: response.updated_at,
     coverImageUrl: toNullable(response.cover_image_url),
+    tags: (response.tags ?? []).map((t) => ({ slug: t.slug, facet: t.facet })),
 });
 
 export const mapCollections = (response: CollectionResponse[]): Collection[] =>
@@ -71,6 +72,7 @@ export const toCollectionRow = (collection: Collection): CollectionRow => {
         itemCount: collection.items.length,
         updatedAt: collection.updatedAt,
         coverImageUrl: collection.coverImageUrl,
+        tags: collection.tags,
     };
 };
 

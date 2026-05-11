@@ -23,8 +23,9 @@ export function useEntityTagEditor(
     }, [entityTags]);
 
     const tagSlugs = tagEdits ?? baseTagSlugs;
+    const tagDirty = tagEdits !== null;
 
     const resetTagEdits = useCallback(() => setTagEdits(null), []);
 
-    return { tagSlugs, inheritedTagSlugs, setTagEdits, resetTagEdits, replaceEntityTags };
+    return { tagSlugs, inheritedTagSlugs, tagDirty, setTagEdits, resetTagEdits, replaceEntityTags };
 }
