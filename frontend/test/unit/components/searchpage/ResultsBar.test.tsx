@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, afterEach } from "vitest";
+import { describe, expect, it, afterEach, vi } from "vitest";
 import { render, screen, cleanup } from "../../../../test/utils/test-utils";
 import userEvent from "@testing-library/user-event";
 import { ResultsBar } from "@/components/searchpage/results-bar/ResultsBar";
@@ -7,7 +7,6 @@ import { NextIntlClientProvider } from "next-intl";
 const messages = {
     ResultsBar: {
         sortBy: "Sort by",
-        relevant: "Relevant",
         recent: "Most Recent",
         oldest: "Oldest First",
         relevance: "Most Relevant",
