@@ -1894,8 +1894,12 @@ export interface components {
             location_count: number;
             /** Format: int64 */
             media_count: number;
+            /** Format: date */
+            newest_article?: string | null;
             /** Format: date-time */
             newest_event?: string | null;
+            /** Format: date */
+            oldest_article?: string | null;
             /** Format: date-time */
             oldest_event?: string | null;
             /** Format: int64 */
