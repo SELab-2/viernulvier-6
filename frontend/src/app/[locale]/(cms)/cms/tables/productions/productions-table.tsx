@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState, useRef, useEffect } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Archive, ChevronsUp } from "lucide-react";
@@ -16,6 +16,7 @@ import { useParentChildSelection } from "../use-parent-child-selection";
 import { makeEventColumns } from "./event-columns";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { LoadMoreSentinel } from "@/components/cms/load-more-sentinel";
 import { useDeleteProduction, useGetInfiniteProductions } from "@/hooks/api/useProductions";
 import { useGetEvents, useUpdateEvent } from "@/hooks/api/useEvents";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
@@ -31,7 +32,6 @@ export function ProductionsTable() {
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
     const locale = useLocale();
-    const loadMoreRef = useRef<HTMLDivElement>(null);
     const searchParams = useSearchParams();
     const q = searchParams.get("q") ?? undefined;
 
@@ -39,13 +39,11 @@ export function ProductionsTable() {
         data: infiniteData,
         fetchNextPage,
         hasNextPage,
-        isFetchingNextPage,
     } = useGetInfiniteProductions(q ? { q } : undefined);
     const deleteProduction = useDeleteProduction();
 
     const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
 
-    // Flatten all pages into a single array
     const allProductions = useMemo(
         () => infiniteData?.pages.flatMap((page) => page.data) ?? [],
         [infiniteData]
@@ -53,28 +51,6 @@ export function ProductionsTable() {
 
     const allEvents = useMemo(() => eventsResult?.data ?? [], [eventsResult]);
     const updateEvent = useUpdateEvent();
-
-    // Load more handler
-    const loadMore = useCallback(() => {
-        if (hasNextPage && !isFetchingNextPage) {
-            fetchNextPage();
-        }
-    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-    // Intersection observer for infinite scroll
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting) loadMore();
-            },
-            { threshold: 0.1, rootMargin: "100px" }
-        );
-        const currentRef = loadMoreRef.current;
-        if (currentRef) observer.observe(currentRef);
-        return () => {
-            if (currentRef) observer.unobserve(currentRef);
-        };
-    }, [loadMore]);
 
     const [editEvent, setEditEvent] = useState<Event | null>(null);
     const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
@@ -327,12 +303,7 @@ export function ProductionsTable() {
                     onJumpToEnd={handleJumpToEnd}
                 />
 
-                {/* Infinite scroll trigger */}
-                {hasNextPage && (
-                    <div ref={loadMoreRef} className="flex justify-center py-4">
-                        <Spinner className="text-muted-foreground h-5 w-5" />
-                    </div>
-                )}
+                <LoadMoreSentinel hasNextPage={hasNextPage ?? false} onLoadMore={fetchNextPage} />
             </div>
 
             {editEvent && (

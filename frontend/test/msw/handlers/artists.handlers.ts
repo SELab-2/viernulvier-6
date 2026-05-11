@@ -42,7 +42,10 @@ const production: components["schemas"]["ProductionPayload"] = {
 
 export const artistHandlers = [
     http.get(apiUrl("/artists"), () =>
-        HttpResponse.json([artist] satisfies components["schemas"]["ArtistPayload"][])
+        HttpResponse.json({
+            data: [artist] satisfies components["schemas"]["ArtistPayload"][],
+            next_cursor: null,
+        })
     ),
     http.get(apiUrl(`/artists/${artist.id}`), () =>
         HttpResponse.json(artist satisfies components["schemas"]["ArtistPayload"])

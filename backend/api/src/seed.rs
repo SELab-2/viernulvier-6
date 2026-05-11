@@ -891,7 +891,7 @@ impl SeedImporter {
             else {
                 continue;
             };
-            for fragment in text.split('/') {
+            for fragment in split_artist_field(&text) {
                 let name = fragment.trim();
                 if name.is_empty() {
                     continue;
@@ -1087,4 +1087,30 @@ impl SeedImporter {
         }
         Ok(())
     }
+}
+
+/// Split an artist field on `/`, `&`, `|`, and `,`, but not when inside
+/// single or double quotes — so names like `'hi, paris'` stay intact.
+fn split_artist_field(text: &str) -> Vec<&str> {
+    let mut parts = Vec::new();
+    let mut start = 0;
+    let mut in_single = false;
+    let mut in_double = false;
+    let bytes = text.as_bytes();
+    let mut i = 0;
+
+    while i < bytes.len() {
+        match bytes[i] {
+            b'\'' if !in_double => in_single = !in_single,
+            b'"' if !in_single => in_double = !in_double,
+            b'/' | b'&' | b'|' | b',' if !in_single && !in_double => {
+                parts.push(&text[start..i]);
+                start = i + 1;
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    parts.push(&text[start..]);
+    parts
 }

@@ -127,14 +127,14 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
                 <div className="min-w-0 flex-1">
                     <Link
                         href={`/productions/${production.id}`}
-                        className="font-display text-foreground mb-0.5 block text-[19px] leading-[1.1] font-bold tracking-[-0.02em] hover:underline sm:text-[22px]"
+                        className={`font-display text-foreground block text-[19px] leading-[1.1] font-bold tracking-[-0.02em] hover:underline sm:text-[22px] ${artist ? "mb-0.5" : "mb-1.5"}`}
                         onClick={(e) => e.stopPropagation()}
                     >
                         {title}
                     </Link>
 
                     {artist && (
-                        <div className="font-display text-foreground/38 mb-1.5 text-[19px] font-bold tracking-[-0.02em] sm:text-[22px]">
+                        <div className="font-display text-foreground/40 mb-1.5 text-[19px] leading-[1.1] font-bold tracking-[-0.02em] italic sm:text-[22px]">
                             {artist}
                         </div>
                     )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState, useRef, useEffect } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Archive, ChevronsUp } from "lucide-react";
@@ -23,6 +23,7 @@ import { LocationCoverField } from "@/components/cms/location-cover-field";
 import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { LoadMoreSentinel } from "@/components/cms/load-more-sentinel";
 import {
     useDeleteLocation,
     useGetInfiniteLocations,
@@ -38,7 +39,6 @@ export function LocationsTable() {
     const tCommon = useTranslations("Cms.common");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
-    const loadMoreRef = useRef<HTMLDivElement>(null);
     const searchParams = useSearchParams();
     const q = searchParams.get("q") ?? undefined;
 
@@ -46,7 +46,6 @@ export function LocationsTable() {
         data: infiniteData,
         fetchNextPage,
         hasNextPage,
-        isFetchingNextPage,
     } = useGetInfiniteLocations(q ? { q } : undefined);
 
     const { data: hallsResult, isLoading: hallsLoading } = useGetHalls({
@@ -64,26 +63,6 @@ export function LocationsTable() {
     const updateLocation = useUpdateLocation();
     const updateHall = useUpdateHall();
     const deleteLocation = useDeleteLocation();
-
-    const loadMore = useCallback(() => {
-        if (hasNextPage && !isFetchingNextPage) {
-            fetchNextPage();
-        }
-    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting) loadMore();
-            },
-            { threshold: 0.1, rootMargin: "100px" }
-        );
-        const currentRef = loadMoreRef.current;
-        if (currentRef) observer.observe(currentRef);
-        return () => {
-            if (currentRef) observer.unobserve(currentRef);
-        };
-    }, [loadMore]);
 
     const [editLocationId, setEditLocationId] = useState<string | null>(null);
     const [editHall, setEditHall] = useState<Hall | null>(null);
@@ -297,11 +276,7 @@ export function LocationsTable() {
                     getRowId={getLocationRowId}
                 />
 
-                {hasNextPage && (
-                    <div ref={loadMoreRef} className="flex justify-center py-4">
-                        <Spinner className="text-muted-foreground h-5 w-5" />
-                    </div>
-                )}
+                <LoadMoreSentinel hasNextPage={hasNextPage ?? false} onLoadMore={fetchNextPage} />
             </div>
             <CollectionPickerDialog
                 open={collectionDialogOpen}
