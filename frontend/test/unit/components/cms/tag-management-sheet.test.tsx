@@ -25,9 +25,15 @@ const mockFacet: Facet = {
 const mockMutation = { mutateAsync: vi.fn(), isPending: false };
 
 beforeEach(() => {
-    vi.mocked(hooks.useCreateTag).mockReturnValue(mockMutation as any);
-    vi.mocked(hooks.useUpdateTag).mockReturnValue(mockMutation as any);
-    vi.mocked(hooks.useDeleteTag).mockReturnValue(mockMutation as any);
+    vi.mocked(hooks.useCreateTag).mockReturnValue(
+        mockMutation as unknown as ReturnType<typeof hooks.useCreateTag>
+    );
+    vi.mocked(hooks.useUpdateTag).mockReturnValue(
+        mockMutation as unknown as ReturnType<typeof hooks.useUpdateTag>
+    );
+    vi.mocked(hooks.useDeleteTag).mockReturnValue(
+        mockMutation as unknown as ReturnType<typeof hooks.useDeleteTag>
+    );
 });
 
 afterEach(cleanup);
