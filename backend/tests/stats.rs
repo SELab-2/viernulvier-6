@@ -50,7 +50,7 @@ async fn get_stats_matches_fixture(db: PgPool) {
     let expected = StatsBody {
         oldest_event: Some(utc("2026-04-10T18:00:00Z")),
         newest_event: Some(utc("2026-07-15T17:00:00Z")),
-        // stats-published: start=2020-01-01, end=2020-12-31
+        // stats-published: start=2000-01-01, end=2030-12-31
         // kleurenstudies migration: start=2025-11-04, no end
         oldest_article: Some(NaiveDate::from_ymd_opt(2000, 1, 1).unwrap()),
         newest_article: Some(NaiveDate::from_ymd_opt(2030, 12, 31).unwrap()),
