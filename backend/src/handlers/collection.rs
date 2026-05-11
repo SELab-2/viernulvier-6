@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
 };
-use database::Database;
+use database::{Database, models::collection::CollectionVisibility};
 use uuid::Uuid;
 
 use crate::{
@@ -18,7 +18,10 @@ use crate::{
     error::{AppError, ErrorResponse},
     handlers::{
         IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse,
-        queries::{collection::CollectionSearchQuery, pagination::PaginationQuery},
+        queries::{
+            collection::{CollectionSearchQuery, CollectionVisibilityQuery},
+            pagination::PaginationQuery,
+        },
     },
 };
 
@@ -242,4 +245,31 @@ pub async fn delete_item(
         .await?
         .ok_or(AppError::NotFound)?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
+    method(get),
+    path = "/productions/{id}/collections",
+    tag = "Collections",
+    operation_id = "get_collections_for_production",
+    description = "Return all collections that contain the given production. Defaults to visibility=public. Pass ?visibility=unlisted for series-type collections.",
+    params(
+        ("id" = Uuid, Path, description = "Production UUID"),
+        CollectionVisibilityQuery,
+    ),
+    responses(
+        (status = 200, description = "Success", body = [CollectionPayload])
+    )
+)]
+pub async fn get_for_production(
+    State(state): State<AppState>,
+    db: Database,
+    Path(id): Path<Uuid>,
+    Query(filter): Query<CollectionVisibilityQuery>,
+) -> JsonResponse<Vec<CollectionPayload>> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    let visibility = Some(filter.visibility.unwrap_or(CollectionVisibility::Public));
+    CollectionPayload::for_production(&db, id, visibility, public_url)
+        .await?
+        .json()
 }
