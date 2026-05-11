@@ -59,6 +59,7 @@ export function convertProductionRowToProduction(row: ProductionRow): Production
         translations: [nlTranslation, enTranslation],
         coverImageUrl: null, // ProductionRow doesn't have this field
         locations: [],
+        tags: [],
     };
 }
 

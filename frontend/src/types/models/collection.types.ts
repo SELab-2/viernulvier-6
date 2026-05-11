@@ -1,3 +1,5 @@
+import type { EntityTagSlim } from "./taxonomy.types";
+
 export type CollectionContentType =
     | "production"
     | "event"
@@ -5,6 +7,8 @@ export type CollectionContentType =
     | "artist"
     | "location"
     | "media";
+
+export type CollectionVisibility = "public" | "unlisted";
 
 export type EntityGridItem = {
     id: string;
@@ -37,15 +41,18 @@ export type CollectionItem = {
 export type Collection = {
     id: string;
     slug: string;
+    visibility: CollectionVisibility;
     translations: CollectionTranslation[];
     items: CollectionItem[];
     createdAt: string;
     updatedAt: string;
     coverImageUrl: string | null;
+    tags: EntityTagSlim[];
 };
 
 export type CollectionCreateInput = {
     slug: string;
+    visibility?: CollectionVisibility;
     translations: CollectionTranslation[];
 };
 
@@ -60,6 +67,7 @@ export type CollectionItemsBulkInput = {
 export type CollectionRow = {
     id: string;
     slug: string;
+    visibility: CollectionVisibility;
     titleNl: string;
     titleEn: string;
     descriptionNl: string;
@@ -67,4 +75,5 @@ export type CollectionRow = {
     itemCount: number;
     updatedAt: string;
     coverImageUrl: string | null;
+    tags: EntityTagSlim[];
 };

@@ -2,12 +2,14 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
-import { ExternalLink, Link2, Trash2 } from "lucide-react";
+import { Link2, SquarePen, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
+import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
+import { VisibilityBadge } from "@/components/cms/visibility-badge";
 import { LocalizedText, resolveLocalized } from "@/components/ui/localized-text";
-import { Action, ActionVariant } from "@/types/cms/actions";
+import { Action, ActionDisplay, ActionVariant } from "@/types/cms/actions";
 import { CollectionRow } from "@/types/models/collection.types";
 
 export function makeCollectionColumns(options: {
@@ -57,7 +59,8 @@ export function makeCollectionColumns(options: {
         {
             key: "open",
             label: t("open"),
-            icon: ExternalLink,
+            icon: SquarePen,
+            display: ActionDisplay.Inline,
             onClick: onOpen,
         },
         {
@@ -156,6 +159,24 @@ export function makeCollectionColumns(options: {
                 <span className="text-muted-foreground font-mono text-xs">
                     {getValue() as number}
                 </span>
+            ),
+        },
+        {
+            accessorKey: "visibility",
+            header: t("fieldVisibility"),
+            cell: ({ row }) => <VisibilityBadge visibility={row.original.visibility} />,
+        },
+        {
+            id: "tags",
+            header: "Tags",
+            enableSorting: false,
+            cell: ({ row }) => (
+                <EntityTagStrip
+                    tags={row.original.tags}
+                    locale={locale}
+                    cap={3}
+                    variant="compact"
+                />
             ),
         },
         {

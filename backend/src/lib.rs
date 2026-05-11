@@ -29,7 +29,7 @@ use crate::config::AppConfig;
 use crate::error::AppError;
 use crate::handlers::{
     admin, article, artist, auth, collection, event, hall, import_error, location, media,
-    production, series, space, stats, tagging, taxonomy, version,
+    production, space, stats, tagging, taxonomy, version,
 };
 
 pub mod config;
@@ -51,7 +51,6 @@ pub struct AppState {
     components(schemas(EntityType, Facet, Sort)),
     tags(
         (name = "Collections", description = "A saved, titled selection of archive items with a shareable URL. No login required to view."),
-        (name = "Series", description = "Thematic/programmatic groupings of productions."),
         (name = "Stats", description = "Aggregate public site statistics.")
     )
 )]
@@ -183,7 +182,7 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
         .layer(
             CorsLayer::new()
                 .allow_origin(allowed_origins)
-                .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
+                .allow_methods([Method::GET, Method::POST, Method::PUT, Method::PATCH, Method::DELETE])
                 .allow_headers([axum::http::header::CONTENT_TYPE])
                 .allow_credentials(true),
         )
@@ -275,10 +274,7 @@ fn public_routes() -> OpenApiRouter<AppState> {
         .routes(routes!(collection::get_all))
         .routes(routes!(collection::get_one))
         .routes(routes!(collection::get_by_slug))
-        // series
-        .routes(routes!(series::get_all))
-        .routes(routes!(series::get_one))
-        .routes(routes!(series::get_for_production))
+        .routes(routes!(collection::get_for_production))
         // artists
         .routes(routes!(artist::get_all))
         .routes(routes!(artist::get_one))
@@ -321,12 +317,6 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(collection::post_item))
         .routes(routes!(collection::put_items))
         .routes(routes!(collection::delete_item))
-        // Series
-        .routes(routes!(series::post))
-        .routes(routes!(series::put))
-        .routes(routes!(series::delete))
-        .routes(routes!(series::add_productions))
-        .routes(routes!(series::remove_production))
         // Media
         .routes(routes!(media::generate_upload_url))
         .routes(routes!(media::check))
@@ -342,6 +332,9 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(media::reconcile_storage))
         // Tags
         .routes(routes!(tagging::put_tags))
+        .routes(routes!(taxonomy::create_tag))
+        .routes(routes!(taxonomy::patch_tag))
+        .routes(routes!(taxonomy::delete_tag))
         // Articles (CMS)
         .routes(routes!(article::get_all_cms))
         .routes(routes!(article::get_all_cms_search))

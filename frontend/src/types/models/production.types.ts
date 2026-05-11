@@ -1,3 +1,5 @@
+import type { EntityTagSlim } from "./taxonomy.types";
+
 export type ProductionTranslation = {
     languageCode: string;
     supertitle: string | null;
@@ -35,6 +37,7 @@ export type Production = {
     translations: ProductionTranslation[];
     coverImageUrl: string | null;
     locations: ProductionLocationSummary[];
+    tags: EntityTagSlim[];
 };
 
 export type ProductionTranslationInput = {

@@ -35,9 +35,10 @@ type DateFilterMode = "year" | "exact";
 
 interface ArchiveSidebarProps {
     minYear?: number;
+    initialTag?: string;
 }
 
-export function ArchiveSidebar({ minYear: minYearProp }: ArchiveSidebarProps) {
+export function ArchiveSidebar({ minYear: minYearProp, initialTag }: ArchiveSidebarProps) {
     const t = useTranslations("Sidebar");
     const locale = useLocale();
     const router = useRouter();
@@ -167,6 +168,22 @@ export function ArchiveSidebar({ minYear: minYearProp }: ArchiveSidebarProps) {
         },
         [router, pathname]
     );
+
+    const prevInitialTagRef = useRef<string | undefined>(undefined);
+    useEffect(() => {
+        if (initialTag === prevInitialTagRef.current || facetList.length === 0) return;
+        prevInitialTagRef.current = initialTag;
+        if (!initialTag) return;
+        for (const facet of facetList) {
+            if (facet.tags.some((t) => t.slug === initialTag)) {
+                const params = new URLSearchParams(window.location.search);
+                if (!params.get(facet.slug)?.split(",").includes(initialTag)) {
+                    updateParam({ [facet.slug]: initialTag, tag: null });
+                }
+                break;
+            }
+        }
+    }, [initialTag, facetList, updateParam]);
 
     const toggleTag = useCallback(
         (facetSlug: string, tagSlug: string) => {

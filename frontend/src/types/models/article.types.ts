@@ -1,3 +1,5 @@
+import type { EntityTagSlim } from "./taxonomy.types";
+
 export type ArticleStatus = "draft" | "published" | "archived";
 
 export type Article = {
@@ -12,20 +14,21 @@ export type Article = {
     subjectPeriodStart: string | null;
     subjectPeriodEnd: string | null;
     coverImageUrl: string | null;
+    tags: EntityTagSlim[];
 };
 
-export type ArticleListItem = Pick<
-    Article,
-    | "id"
-    | "slug"
-    | "status"
-    | "title"
-    | "updatedAt"
-    | "publishedAt"
-    | "subjectPeriodStart"
-    | "subjectPeriodEnd"
-    | "coverImageUrl"
->;
+export type ArticleListItem = {
+    id: string;
+    slug: string;
+    status: ArticleStatus;
+    title: string | null;
+    updatedAt: string;
+    publishedAt: string | null;
+    subjectPeriodStart: string | null;
+    subjectPeriodEnd: string | null;
+    coverImageUrl: string | null;
+    tags: EntityTagSlim[];
+};
 
 export type ArticleCreateInput = {
     title?: string | null;
@@ -33,7 +36,7 @@ export type ArticleCreateInput = {
 
 export type ArticleUpdateInput = Omit<
     Article,
-    "createdAt" | "updatedAt" | "publishedAt" | "coverImageUrl"
+    "createdAt" | "updatedAt" | "publishedAt" | "coverImageUrl" | "tags"
 >;
 
 export type ArticleRelations = {

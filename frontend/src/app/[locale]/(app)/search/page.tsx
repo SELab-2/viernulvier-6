@@ -230,7 +230,10 @@ export default function SearchPage() {
                 className="flex min-h-[calc(100vh-300px)] items-start"
                 style={{ ["--results-bar-height" as string]: "0px" }}
             >
-                <ArchiveSidebar minYear={ARCHIVE_MIN_YEAR} />
+                <ArchiveSidebar
+                    minYear={ARCHIVE_MIN_YEAR}
+                    initialTag={searchParams.get("tag") ?? undefined}
+                />
                 <main className="flex min-w-0 flex-1 flex-col">
                     <ResultsBar
                         query={draftQuery}
