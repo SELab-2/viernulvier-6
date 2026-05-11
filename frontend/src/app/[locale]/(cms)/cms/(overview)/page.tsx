@@ -53,7 +53,6 @@ const CONTENT_SECTIONS: ContentSection[] = [
         href: "/cms/performers",
         editionKey: "edition4",
         span: "lg:col-span-6",
-        comingSoon: true,
         icon: Users,
     },
     {
@@ -193,6 +192,11 @@ export default function CmsOverviewPage() {
                                     description={t(`${util.key}Description`)}
                                     actionLabel={t("openSection")}
                                     icon={util.icon}
+                                    count={
+                                        util.key === "ingest" && stats
+                                            ? stats.media_count
+                                            : undefined
+                                    }
                                 />
                             </div>
                         </SectionCard>

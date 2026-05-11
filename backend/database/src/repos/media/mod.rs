@@ -43,6 +43,13 @@ impl<'a> MediaRepo<'a> {
         Self { db }
     }
 
+    pub async fn count(&self) -> Result<i64, DatabaseError> {
+        let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM media")
+            .fetch_one(self.db)
+            .await?;
+        Ok(count)
+    }
+
     pub async fn by_id(&self, id: Uuid) -> Result<Media, DatabaseError> {
         Media::select()
             .where_("id = $1")
@@ -50,6 +57,14 @@ impl<'a> MediaRepo<'a> {
             .fetch_optional(self.db)
             .await?
             .ok_or(DatabaseError::NotFound)
+    }
+
+    pub async fn by_checksum(&self, checksum: &str) -> Result<Option<Media>, DatabaseError> {
+        Ok(Media::select()
+            .where_("checksum = $1")
+            .bind(checksum)
+            .fetch_optional(self.db)
+            .await?)
     }
 
     pub async fn insert(&self, media: MediaCreate) -> Result<Media, DatabaseError> {
@@ -585,6 +600,52 @@ impl<'a> MediaRepo<'a> {
         .await?;
 
         Ok(rows.into_iter().collect())
+    }
+
+    /// Get all entity links for a given media item, with resolved entity titles.
+    pub async fn entity_links(
+        &self,
+        media_id: Uuid,
+    ) -> Result<Vec<crate::models::entity_media_link::EntityMediaLink>, DatabaseError> {
+        Ok(sqlx::query_as::<_, crate::models::entity_media_link::EntityMediaLink>(
+            r#"
+            SELECT
+                em.id, em.entity_type, em.entity_id, em.media_id,
+                em.role, em.sort_order, em.is_cover_image, em.created_at,
+                COALESCE(pt_en.title, a.title, ct_en.title, ar.name, l.name, st_en.name, ept_en.title) as title_en,
+                COALESCE(pt_nl.title, a.title, ct_nl.title, ar.name, l.name, st_nl.name, ept_nl.title) as title_nl
+            FROM entity_media em
+            LEFT JOIN production_translations pt_en
+                ON em.entity_type = 'production' AND em.entity_id = pt_en.production_id AND pt_en.language_code = 'en'
+            LEFT JOIN production_translations pt_nl
+                ON em.entity_type = 'production' AND em.entity_id = pt_nl.production_id AND pt_nl.language_code = 'nl'
+            LEFT JOIN articles a
+                ON em.entity_type = 'article' AND em.entity_id = a.id
+            LEFT JOIN collection_translations ct_en
+                ON em.entity_type = 'collection' AND em.entity_id = ct_en.collection_id AND ct_en.language_code = 'en'
+            LEFT JOIN collection_translations ct_nl
+                ON em.entity_type = 'collection' AND em.entity_id = ct_nl.collection_id AND ct_nl.language_code = 'nl'
+            LEFT JOIN artists ar
+                ON em.entity_type = 'artist' AND em.entity_id = ar.id
+            LEFT JOIN locations l
+                ON em.entity_type = 'location' AND em.entity_id = l.id
+            LEFT JOIN series_translations st_en
+                ON em.entity_type = 'series' AND em.entity_id = st_en.series_id AND st_en.language_code = 'en'
+            LEFT JOIN series_translations st_nl
+                ON em.entity_type = 'series' AND em.entity_id = st_nl.series_id AND st_nl.language_code = 'nl'
+            LEFT JOIN events ev
+                ON em.entity_type = 'event' AND em.entity_id = ev.id
+            LEFT JOIN production_translations ept_en
+                ON em.entity_type = 'event' AND ev.production_id = ept_en.production_id AND ept_en.language_code = 'en'
+            LEFT JOIN production_translations ept_nl
+                ON em.entity_type = 'event' AND ev.production_id = ept_nl.production_id AND ept_nl.language_code = 'nl'
+            WHERE em.media_id = $1
+            ORDER BY em.entity_type, em.entity_id
+            "#,
+        )
+        .bind(media_id)
+        .fetch_all(self.db)
+        .await?)
     }
 
     pub async fn delete_by_s3_keys(&self, keys: &[String]) -> Result<u64, DatabaseError> {

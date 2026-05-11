@@ -17,7 +17,6 @@ pub mod import_error;
 pub mod location;
 pub mod media;
 pub mod production;
-pub mod series;
 pub mod space;
 pub mod stats;
 pub mod tagging;
@@ -25,6 +24,8 @@ pub mod taxonomy;
 pub mod version;
 pub mod queries {
     pub mod article;
+    pub mod artist;
+    pub mod collection;
     pub mod hall;
     pub mod import_error;
     pub mod location;

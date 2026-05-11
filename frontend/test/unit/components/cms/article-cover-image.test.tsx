@@ -22,6 +22,10 @@ vi.mock("@/hooks/api", () => ({
     useUploadMedia: () => ({ mutateAsync: mockUploadMutateAsync, isPending: false }),
 }));
 
+vi.mock("@/hooks/api/useTaxonomy", () => ({
+    useGetFacets: () => ({ data: [], isLoading: false }),
+}));
+
 vi.mock("@/components/cms/media-picker-dialog", () => ({
     MediaPickerDialog: ({
         open,
@@ -90,6 +94,8 @@ const mockArticle: Article = {
     publishedAt: null,
     subjectPeriodStart: null,
     subjectPeriodEnd: null,
+    coverImageUrl: null,
+    tags: [],
 };
 
 const coverMedia: Media = {
@@ -130,6 +136,9 @@ const renderPanel = (articleOverride?: Partial<Article>) =>
             <ArticleMetadataPanel
                 article={{ ...mockArticle, ...articleOverride }}
                 onArticleChange={vi.fn()}
+                tagSlugs={[]}
+                inheritedTagSlugs={[]}
+                onTagsChange={vi.fn()}
             />
         </NextIntlClientProvider>
     );

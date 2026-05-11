@@ -1,13 +1,15 @@
 use std::collections::HashMap;
 
 use sqlx::PgPool;
+use tracing::debug;
 use uuid::Uuid;
 
 use crate::{
     error::DatabaseError,
     models::{
         collection::{
-            Collection, CollectionCreate, CollectionTranslation, CollectionTranslationData,
+            Collection, CollectionCreate, CollectionSearch, CollectionTranslation,
+            CollectionTranslationData, CollectionVisibility, CollectionWithScore,
             CollectionWithTranslations,
         },
         collection_item::{
@@ -15,6 +17,7 @@ use crate::{
             CollectionItemTranslation, CollectionItemTranslationData,
             CollectionItemWithTranslations,
         },
+        filtering::cursor::CursorData,
     },
 };
 
@@ -35,11 +38,284 @@ impl<'a> CollectionRepo<'a> {
         Ok(count)
     }
 
-    pub async fn all(&self) -> Result<Vec<CollectionWithTranslations>, DatabaseError> {
-        let collections =
-            sqlx::query_as::<_, Collection>("SELECT * FROM collections ORDER BY created_at DESC")
+    pub async fn all(
+        &self,
+        limit: u32,
+        cursor: Option<CursorData>,
+        search: CollectionSearch,
+    ) -> Result<(Vec<CollectionWithTranslations>, Option<CursorData>), DatabaseError> {
+        let limit: i64 = (limit + 1).into();
+
+        let (collections, next_cursor): (Vec<Collection>, Option<CursorData>) =
+            if let Some(search_q) = search.q {
+                debug!("querying collections with search: '{search_q}'");
+
+                let mut query = sqlx::QueryBuilder::new("WITH matched_translations AS (");
+                query
+                    .push("SELECT collection_id, MIN(")
+                    .push_bind(&search_q)
+                    .push(" <<-> title) AS distance_score ")
+                    .push("FROM collection_translations ")
+                    .push("WHERE ")
+                    .push_bind(&search_q)
+                    .push(" <% title ")
+                    .push("GROUP BY collection_id ");
+
+                // use the cursor if there is one
+                if let Some(cursor) = cursor
+                    && let Some(score) = cursor.score
+                {
+                    query
+                        .push("HAVING MIN(")
+                        .push_bind(&search_q)
+                        .push(" <<-> title) > ")
+                        .push_bind(score)
+                        .push(" OR (MIN(")
+                        .push_bind(&search_q)
+                        .push(" <<-> title) = ")
+                        .push_bind(score)
+                        .push(" AND collection_id < ")
+                        .push_bind(cursor.id)
+                        .push(") ");
+                }
+
+                query
+                    .push("ORDER BY distance_score ASC, collection_id DESC LIMIT ")
+                    .push_bind(limit)
+                    .push(") ");
+
+                query.push(
+                    "SELECT c.*, distance_score \
+                    FROM collections c \
+                    INNER JOIN matched_translations m ON c.id = m.collection_id ",
+                );
+                if let Some(vis) = &search.visibility {
+                    query.push("WHERE c.visibility = ").push_bind(vis.clone());
+                }
+                query.push(" ORDER BY m.distance_score ASC, c.id DESC");
+
+                debug!("collections query: {}", query.sql());
+
+                let mut collections_with_score: Vec<CollectionWithScore> =
+                    query.build_query_as().fetch_all(self.db).await?;
+
+                let next_cursor = if collections_with_score.len() == limit as usize {
+                    collections_with_score.pop();
+                    collections_with_score.last().map(|c| CursorData {
+                        id: c.collection.id,
+                        score: Some(c.distance_score),
+                    })
+                } else {
+                    None
+                };
+
+                let collections = collections_with_score
+                    .into_iter()
+                    .map(|c| c.collection)
+                    .collect();
+
+                (collections, next_cursor)
+            } else {
+                debug!("querying collections normally");
+
+                let mut query = sqlx::QueryBuilder::new("SELECT * FROM collections ");
+                let mut has_where = false;
+
+                if let Some(cursor) = cursor {
+                    query.push(" WHERE id < ").push_bind(cursor.id);
+                    has_where = true;
+                }
+                if let Some(vis) = search.visibility {
+                    if has_where {
+                        query.push(" AND visibility = ").push_bind(vis);
+                    } else {
+                        query.push(" WHERE visibility = ").push_bind(vis);
+                    }
+                }
+                query.push(" ORDER BY id DESC LIMIT ").push_bind(limit);
+
+                let mut collections: Vec<Collection> =
+                    query.build_query_as().fetch_all(self.db).await?;
+
+                let next_cursor = if collections.len() == limit as usize {
+                    collections.pop();
+                    collections.last().map(|c| CursorData {
+                        id: c.id,
+                        score: None,
+                    })
+                } else {
+                    None
+                };
+
+                (collections, next_cursor)
+            };
+
+        if collections.is_empty() {
+            return Ok((vec![], next_cursor));
+        }
+
+        let ids: Vec<Uuid> = collections.iter().map(|c| c.id).collect();
+        let all_translations = sqlx::query_as::<_, CollectionTranslation>(
+            "SELECT * FROM collection_translations WHERE collection_id = ANY($1)",
+        )
+        .bind(&ids[..])
+        .fetch_all(self.db)
+        .await?;
+
+        let mut translation_map: HashMap<Uuid, Vec<CollectionTranslation>> = HashMap::new();
+        for t in all_translations {
+            translation_map.entry(t.collection_id).or_default().push(t);
+        }
+
+        let collections_with_translations = collections
+            .into_iter()
+            .map(|c| {
+                let translations = translation_map.remove(&c.id).unwrap_or_default();
+                CollectionWithTranslations {
+                    collection: c,
+                    translations,
+                }
+            })
+            .collect();
+
+        Ok((collections_with_translations, next_cursor))
+    }
+
+    pub async fn by_id(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<CollectionWithTranslations>, DatabaseError> {
+        let Some(collection) =
+            sqlx::query_as::<_, Collection>("SELECT * FROM collections WHERE id = $1")
+                .bind(id)
+                .fetch_optional(self.db)
+                .await?
+        else {
+            return Ok(None);
+        };
+
+        let translations = self.fetch_translations_for(collection.id).await?;
+
+        Ok(Some(CollectionWithTranslations {
+            collection,
+            translations,
+        }))
+    }
+
+    pub async fn by_slug(
+        &self,
+        slug: &str,
+    ) -> Result<Option<CollectionWithTranslations>, DatabaseError> {
+        let Some(collection) =
+            sqlx::query_as::<_, Collection>("SELECT * FROM collections WHERE slug = $1")
+                .bind(slug)
+                .fetch_optional(self.db)
+                .await?
+        else {
+            return Ok(None);
+        };
+
+        let translations = self.fetch_translations_for(collection.id).await?;
+
+        Ok(Some(CollectionWithTranslations {
+            collection,
+            translations,
+        }))
+    }
+
+    pub async fn insert(
+        &self,
+        data: CollectionCreate,
+        translations: Vec<CollectionTranslationData>,
+    ) -> Result<CollectionWithTranslations, DatabaseError> {
+        let collection = sqlx::query_as::<_, Collection>(
+            "INSERT INTO collections (slug, visibility) VALUES ($1, $2) RETURNING *",
+        )
+        .bind(data.slug)
+        .bind(data.visibility)
+        .fetch_one(self.db)
+        .await?;
+
+        self.upsert_translations(collection.id, &translations)
+            .await?;
+        let translations = self.fetch_translations_for(collection.id).await?;
+
+        Ok(CollectionWithTranslations {
+            collection,
+            translations,
+        })
+    }
+
+    pub async fn update(
+        &self,
+        id: Uuid,
+        data: CollectionCreate,
+        translations: Vec<CollectionTranslationData>,
+    ) -> Result<Option<CollectionWithTranslations>, DatabaseError> {
+        let Some(collection) = sqlx::query_as::<_, Collection>(
+            "UPDATE collections SET slug = $2, visibility = $3, updated_at = NOW() WHERE id = $1 RETURNING *",
+        )
+        .bind(id)
+        .bind(data.slug)
+        .bind(data.visibility)
+        .fetch_optional(self.db)
+        .await?
+        else {
+            return Ok(None);
+        };
+
+        self.upsert_translations(collection.id, &translations)
+            .await?;
+        let translations = self.fetch_translations_for(collection.id).await?;
+
+        Ok(Some(CollectionWithTranslations {
+            collection,
+            translations,
+        }))
+    }
+
+    pub async fn delete(&self, id: Uuid) -> Result<Option<()>, DatabaseError> {
+        let res = sqlx::query("DELETE FROM collections WHERE id = $1")
+            .bind(id)
+            .execute(self.db)
+            .await?;
+
+        if res.rows_affected() == 0 {
+            return Ok(None);
+        }
+
+        Ok(Some(()))
+    }
+
+    pub async fn for_production(
+        &self,
+        production_id: Uuid,
+        visibility: Option<CollectionVisibility>,
+    ) -> Result<Vec<CollectionWithTranslations>, DatabaseError> {
+        let collections: Vec<Collection> = match visibility {
+            Some(vis) => {
+                sqlx::query_as::<_, Collection>(
+                    "SELECT c.* FROM collections c
+                     INNER JOIN collection_items ci ON ci.collection_id = c.id
+                     WHERE ci.content_id = $1 AND ci.content_type = 'production'
+                     AND c.visibility = $2",
+                )
+                .bind(production_id)
+                .bind(vis)
                 .fetch_all(self.db)
-                .await?;
+                .await?
+            }
+            None => {
+                sqlx::query_as::<_, Collection>(
+                    "SELECT c.* FROM collections c
+                     INNER JOIN collection_items ci ON ci.collection_id = c.id
+                     WHERE ci.content_id = $1 AND ci.content_type = 'production'",
+                )
+                .bind(production_id)
+                .fetch_all(self.db)
+                .await?
+            }
+        };
 
         if collections.is_empty() {
             return Ok(vec![]);
@@ -68,89 +344,6 @@ impl<'a> CollectionRepo<'a> {
                 }
             })
             .collect())
-    }
-
-    pub async fn by_id(
-        &self,
-        id: Uuid,
-    ) -> Result<Option<CollectionWithTranslations>, DatabaseError> {
-        let Some(collection) =
-            sqlx::query_as::<_, Collection>("SELECT * FROM collections WHERE id = $1")
-                .bind(id)
-                .fetch_optional(self.db)
-                .await?
-        else {
-            return Ok(None);
-        };
-
-        let translations = self.fetch_translations_for(collection.id).await?;
-
-        Ok(Some(CollectionWithTranslations {
-            collection,
-            translations,
-        }))
-    }
-
-    pub async fn insert(
-        &self,
-        data: CollectionCreate,
-        translations: Vec<CollectionTranslationData>,
-    ) -> Result<CollectionWithTranslations, DatabaseError> {
-        let collection = sqlx::query_as::<_, Collection>(
-            "INSERT INTO collections (slug) VALUES ($1) RETURNING *",
-        )
-        .bind(data.slug)
-        .fetch_one(self.db)
-        .await?;
-
-        self.upsert_translations(collection.id, &translations)
-            .await?;
-        let translations = self.fetch_translations_for(collection.id).await?;
-
-        Ok(CollectionWithTranslations {
-            collection,
-            translations,
-        })
-    }
-
-    pub async fn update(
-        &self,
-        id: Uuid,
-        data: CollectionCreate,
-        translations: Vec<CollectionTranslationData>,
-    ) -> Result<Option<CollectionWithTranslations>, DatabaseError> {
-        let Some(collection) = sqlx::query_as::<_, Collection>(
-            "UPDATE collections SET slug = $2, updated_at = NOW() WHERE id = $1 RETURNING *",
-        )
-        .bind(id)
-        .bind(data.slug)
-        .fetch_optional(self.db)
-        .await?
-        else {
-            return Ok(None);
-        };
-
-        self.upsert_translations(collection.id, &translations)
-            .await?;
-        let translations = self.fetch_translations_for(collection.id).await?;
-
-        Ok(Some(CollectionWithTranslations {
-            collection,
-            translations,
-        }))
-    }
-
-    pub async fn delete(&self, id: Uuid) -> Result<Option<()>, DatabaseError> {
-        let res = sqlx::query("DELETE FROM collections WHERE id = $1")
-            .bind(id)
-            .execute(self.db)
-            .await?;
-
-        if res.rows_affected() == 0 {
-            return Ok(None);
-        }
-
-        Ok(Some(()))
     }
 
     pub async fn items_for(
@@ -327,7 +520,6 @@ impl<'a> CollectionRepo<'a> {
         .await?)
     }
 
-    /// Insert or update translations for a collection. Clears all translations when the list is empty.
     async fn upsert_translations(
         &self,
         collection_id: Uuid,
@@ -416,7 +608,6 @@ impl<'a> CollectionRepo<'a> {
         .await?)
     }
 
-    /// Insert or update translations for a collection item. Clears all translations when the list is empty.
     async fn upsert_item_translations(
         &self,
         item_id: Uuid,

@@ -44,6 +44,21 @@ describe("queryKeys", () => {
         ]);
     });
 
+    it("builds entity tag keys", () => {
+        expect(queryKeys.taxonomy.entityTags("production", "prod-1")).toEqual([
+            "taxonomy",
+            "entity-tags",
+            "production",
+            "prod-1",
+        ]);
+        expect(queryKeys.taxonomy.entityTags("article", "art-2")).toEqual([
+            "taxonomy",
+            "entity-tags",
+            "article",
+            "art-2",
+        ]);
+    });
+
     describe("pagination support", () => {
         it("includes pagination params in list keys when provided", () => {
             const pagination = { cursor: "page2", limit: 10 };

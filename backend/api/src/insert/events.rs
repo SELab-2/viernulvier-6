@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use database::Database;
 
 use crate::{
@@ -13,6 +15,7 @@ impl ApiEvent {
     pub async fn upsert_import(
         self,
         db: &Database,
+        status_map: &HashMap<String, String>,
     ) -> Result<ItemConversion<Option<i32>>, ImportItemError> {
         let event_source_id = extract_source_id(&self.id);
         let mut warnings = Vec::new();
@@ -71,11 +74,29 @@ impl ApiEvent {
             None
         };
 
-        let event_conversion = self.to_create(production.production.id, hall_uuid)?;
+        let status = status_map
+            .get(&self.status)
+            .cloned()
+            .ok_or_else(|| ImportItemError::invalid_reference(
+                ImportEntity::Event,
+                ImportField::Status,
+                &self.status,
+            ))?;
+
+        let event_conversion = self.to_create(production.production.id, status)?;
         warnings.extend(event_conversion.warnings);
 
-        db.events()
+        let event = db
+            .events()
             .upsert_by_source_id(event_conversion.value)
+            .await
+            .map_err(|err| {
+                ImportItemError::database_write(ImportEntity::Event, event_source_id, err)
+            })?;
+
+        let hall_ids = hall_uuid.into_iter().collect::<Vec<_>>();
+        db.events()
+            .sync_halls(event.id, hall_ids)
             .await
             .map_err(|err| {
                 ImportItemError::database_write(ImportEntity::Event, event_source_id, err)

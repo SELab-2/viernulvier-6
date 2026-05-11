@@ -16,6 +16,9 @@ import { CmsMobileMenu } from "@/components/cms";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useGetArticle, useUpdateArticle } from "@/hooks/api/useArticles";
 import { Article } from "@/types/models/article.types";
+import type { EntityTagSlim } from "@/types/models/taxonomy.types";
+import { useGetFacets } from "@/hooks/api/useTaxonomy";
+import { useEntityTagEditor } from "@/hooks/useEntityTagEditor";
 
 interface ArticleEditorPageProps {
     id: string;
@@ -23,11 +26,15 @@ interface ArticleEditorPageProps {
 
 export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
     const t = useTranslations("Cms.Articles");
+    const tCommon = useTranslations("Cms.common");
     const locale = useLocale();
     const { setPreview, clearPreviewFor } = usePreviewContext();
 
     const { data: fetchedArticle, isLoading: articleLoading } = useGetArticle(id);
     const updateArticle = useUpdateArticle();
+    const { tagSlugs, inheritedTagSlugs, setTagEdits, resetTagEdits, replaceEntityTags } =
+        useEntityTagEditor("article", id);
+    const { data: allFacets } = useGetFacets();
 
     const [edits, setEdits] = useState<Partial<Article>>({});
     const [isPreviewOpen, setIsPreviewOpen] = useState(() => {
@@ -77,6 +84,21 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
         [fetchedArticle, edits]
     );
 
+    const tagToFacetMap = useMemo(() => {
+        const map = new Map<string, string>();
+        allFacets?.forEach((facet) => facet.tags.forEach((tag) => map.set(tag.slug, facet.slug)));
+        return map;
+    }, [allFacets]);
+
+    const resolvedTagsForPreview = useMemo((): EntityTagSlim[] => {
+        return tagSlugs
+            .map((slug) => {
+                const facet = tagToFacetMap.get(slug);
+                return facet ? { slug, facet } : null;
+            })
+            .filter((t): t is EntityTagSlim => t !== null);
+    }, [tagSlugs, tagToFacetMap]);
+
     // Set iframe src when preview opens or article slug changes
     useEffect(() => {
         if (!iframeRef.current || !isPreviewOpen || !article) return;
@@ -92,9 +114,15 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
     // Sync preview data to localStorage whenever data changes and preview is open
     useEffect(() => {
         if (article && isPreviewOpen) {
-            setPreview("article", article.slug, { article }, locale, previewSessionId);
+            setPreview(
+                "article",
+                article.slug,
+                { article: { ...article, tags: resolvedTagsForPreview } },
+                locale,
+                previewSessionId
+            );
         }
-    }, [article, isPreviewOpen, setPreview, locale, previewSessionId]);
+    }, [article, isPreviewOpen, setPreview, locale, previewSessionId, resolvedTagsForPreview]);
 
     // Clean up preview data when the editor unmounts
     useEffect(() => {
@@ -109,9 +137,16 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
         if (!article) return;
 
         try {
-            await updateArticle.mutateAsync(article);
-            // Clear preview after successful save
+            await Promise.all([
+                updateArticle.mutateAsync(article),
+                replaceEntityTags.mutateAsync({
+                    entityType: "article",
+                    entityId: article.id,
+                    tagSlugs,
+                }),
+            ]);
             clearPreviewFor("article", article.slug, previewSessionId);
+            resetTagEdits();
             toast.success(t("saveSuccess"));
         } catch {
             toast.error(t("saveFailed"));
@@ -122,11 +157,16 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
         if (!article) return;
 
         if (!isPreviewOpen) {
-            // Opening preview - set initial data
-            setPreview("article", article.slug, { article }, locale, previewSessionId);
+            setPreview(
+                "article",
+                article.slug,
+                { article: { ...article, tags: resolvedTagsForPreview } },
+                locale,
+                previewSessionId
+            );
         }
         setIsPreviewOpen((prev) => !prev);
-    }, [article, isPreviewOpen, setPreview, locale, previewSessionId]);
+    }, [article, isPreviewOpen, setPreview, locale, previewSessionId, resolvedTagsForPreview]);
 
     const patchArticle = (patch: Partial<Article>) => {
         setEdits((prev) => ({ ...prev, ...patch }));
@@ -142,7 +182,6 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
     }
 
     const isSaving = updateArticle.isPending;
-    const hasChanges = Object.keys(edits).length > 0;
 
     return (
         <div className="flex h-full flex-col overflow-hidden">
@@ -160,7 +199,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                 </Link>
                 <div className="flex-1" />
                 <Button
-                    variant={isPreviewOpen ? "secondary" : "outline"}
+                    variant="outline"
                     size="sm"
                     onClick={togglePreview}
                     disabled={!article.slug}
@@ -177,13 +216,12 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                             <span className="hidden sm:inline">{t("preview")}</span>
                         </>
                     )}
-                    {!isPreviewOpen && hasChanges && (
-                        <span className="bg-primary h-2 w-2 rounded-full" />
-                    )}
                 </Button>
                 <Button onClick={handleSave} disabled={isSaving} size="sm">
                     <Save className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">{isSaving ? t("saving") : t("save")}</span>
+                    <span className="hidden sm:inline">
+                        {isSaving ? tCommon("saving") : tCommon("save")}
+                    </span>
                 </Button>
             </div>
 
@@ -218,7 +256,13 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
 
                 {/* Desktop Metadata panel */}
                 <aside className="hidden shrink-0 overflow-y-auto border-t lg:block lg:h-full lg:w-64 lg:border-t-0 lg:border-l">
-                    <ArticleMetadataPanel article={article} onArticleChange={patchArticle} />
+                    <ArticleMetadataPanel
+                        article={article}
+                        onArticleChange={patchArticle}
+                        tagSlugs={tagSlugs}
+                        inheritedTagSlugs={inheritedTagSlugs}
+                        onTagsChange={(next) => setTagEdits(next)}
+                    />
                 </aside>
 
                 {/* Mobile Metadata panel in Sheet */}
@@ -243,6 +287,9 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                                 <ArticleMetadataPanel
                                     article={article}
                                     onArticleChange={patchArticle}
+                                    tagSlugs={tagSlugs}
+                                    inheritedTagSlugs={inheritedTagSlugs}
+                                    onTagsChange={(next) => setTagEdits(next)}
                                 />
                             </div>
                         </SheetContent>

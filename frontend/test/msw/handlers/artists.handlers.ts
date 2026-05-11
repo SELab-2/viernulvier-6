@@ -42,7 +42,10 @@ const production: components["schemas"]["ProductionPayload"] = {
 
 export const artistHandlers = [
     http.get(apiUrl("/artists"), () =>
-        HttpResponse.json([artist] satisfies components["schemas"]["ArtistPayload"][])
+        HttpResponse.json({
+            data: [artist] satisfies components["schemas"]["ArtistPayload"][],
+            next_cursor: null,
+        })
     ),
     http.get(apiUrl(`/artists/${artist.id}`), () =>
         HttpResponse.json(artist satisfies components["schemas"]["ArtistPayload"])
@@ -50,4 +53,19 @@ export const artistHandlers = [
     http.get(apiUrl(`/artists/${artist.id}/productions`), () =>
         HttpResponse.json([production] satisfies components["schemas"]["ProductionPayload"][])
     ),
+    http.post(apiUrl("/artists"), async ({ request }) => {
+        const body = (await request.json()) as { name: string };
+        return HttpResponse.json(
+            { ...artist, name: body.name } satisfies components["schemas"]["ArtistPayload"],
+            { status: 201 }
+        );
+    }),
+    http.put(apiUrl(`/artists/${artist.id}`), async ({ request }) => {
+        const body = (await request.json()) as { name: string; slug: string };
+        return HttpResponse.json({
+            ...artist,
+            ...body,
+        } satisfies components["schemas"]["ArtistPayload"]);
+    }),
+    http.delete(apiUrl(`/artists/${artist.id}`), () => new HttpResponse(null, { status: 204 })),
 ];

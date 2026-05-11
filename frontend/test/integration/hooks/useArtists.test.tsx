@@ -1,8 +1,15 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { queryKeys } from "@/hooks/api/query-keys";
-import { useGetArtist, useGetArtists, useGetProductionsByArtist } from "@/hooks/api/useArtists";
+import {
+    useGetArtist,
+    useGetArtists,
+    useGetProductionsByArtist,
+    useCreateArtist,
+    useUpdateArtist,
+    useDeleteArtist,
+} from "@/hooks/api/useArtists";
 import { createQueryClientWrapper } from "../../utils/query-client";
 
 const artistId = "1c4d1d7b-3a5e-4b68-b763-9cf92f43d001";
@@ -35,7 +42,7 @@ describe("useGetArtists", () => {
             expect(result.current.isSuccess).toBe(true);
         });
 
-        expect(queryClient.getQueryData(queryKeys.artists.all)).toEqual(result.current.data);
+        expect(queryClient.getQueryData(queryKeys.artists.list())).toEqual(result.current.data);
     });
 });
 
@@ -94,5 +101,73 @@ describe("useGetProductionsByArtist", () => {
         expect(queryClient.getQueryData(queryKeys.artists.productions(artistId))).toEqual(
             result.current.data
         );
+    });
+});
+
+describe("useCreateArtist", () => {
+    it("invalidates artists list on create", async () => {
+        const { wrapper, queryClient } = createQueryClientWrapper();
+        const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+        const { result } = renderHook(() => useCreateArtist(), { wrapper });
+
+        result.current.mutate({ name: "New Artist" });
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: queryKeys.artists.all });
+    });
+
+    it("returns the created artist", async () => {
+        const { wrapper } = createQueryClientWrapper();
+        const { result } = renderHook(() => useCreateArtist(), { wrapper });
+
+        result.current.mutate({ name: "New Artist" });
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        expect(result.current.data).toMatchObject({ name: "New Artist" });
+    });
+});
+
+describe("useUpdateArtist", () => {
+    it("invalidates artists list and updates detail cache on update", async () => {
+        const { wrapper, queryClient } = createQueryClientWrapper();
+        const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+        const setSpy = vi.spyOn(queryClient, "setQueryData");
+        const { result } = renderHook(() => useUpdateArtist(), { wrapper });
+
+        result.current.mutate({ id: artistId, name: "Updated Artist", slug: "updated-artist" });
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: queryKeys.artists.all });
+        expect(setSpy).toHaveBeenCalledWith(
+            queryKeys.artists.detail(artistId),
+            expect.objectContaining({ id: artistId })
+        );
+    });
+});
+
+describe("useDeleteArtist", () => {
+    it("invalidates artists list and removes detail cache on delete", async () => {
+        const { wrapper, queryClient } = createQueryClientWrapper();
+        const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+        const removeSpy = vi.spyOn(queryClient, "removeQueries");
+        const { result } = renderHook(() => useDeleteArtist(), { wrapper });
+
+        result.current.mutate(artistId);
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: queryKeys.artists.all });
+        expect(removeSpy).toHaveBeenCalledWith({ queryKey: queryKeys.artists.detail(artistId) });
     });
 });

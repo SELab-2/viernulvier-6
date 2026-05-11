@@ -63,9 +63,10 @@
     },
     "ResultsBar": {
         "sortBy": "Sort by:",
+        "relevant": "Most relevant",
         "recent": "Most recent",
         "oldest": "Oldest first",
-        "az": "A–Z"
+        "relevance": "Most relevant"
     },
     "Featured": {
         "label": "Featured from the archive"
@@ -138,7 +139,9 @@
             ],
             "weekdays": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
         },
-        "clearAll": "Clear all"
+        "clearAll": "Clear all",
+        "showMore": "Show more",
+        "showLess": "Show less"
     },
     "Home": {
         "loading": "Loading archive...",
@@ -152,6 +155,10 @@
             "dance": "Dance",
             "concert": "Concert",
             "nightlife": "Nightlife"
+        },
+        "articles": {
+            "label": "From the editors",
+            "viewAll": "All articles"
         },
         "about": {
             "title": "Arts Centre VIERNULVIER",
@@ -238,7 +245,10 @@
             "performers": "Performers"
         },
         "common": {
-            "collapseAll": "Collapse all"
+            "collapseAll": "Collapse all",
+            "delete": "Delete",
+            "save": "Save",
+            "saving": "Saving…"
         },
         "DataTable": {
             "noResults": "No results."
@@ -251,6 +261,10 @@
             "eventsSelected": "{count, plural, one {# event} other {# events}} selected",
             "locationsSelected": "{count, plural, one {# location} other {# locations}} selected",
             "hallsSelected": "{count, plural, one {# hall} other {# halls}} selected",
+            "articlesSelected": "{count, plural, one {# article} other {# articles}} selected",
+            "performersSelected": "{count, plural, one {# performer} other {# performers}} selected",
+            "collectionsSelected": "{count, plural, one {# collection} other {# collections}} selected",
+            "importErrorsSelected": "{count, plural, one {# error} other {# errors}} selected",
             "bulkEdit": "Bulk edit",
             "delete": "Delete"
         },
@@ -269,6 +283,7 @@
             "copied": "Copied {key}",
             "copyFailed": "Failed to copy to clipboard",
             "edit": "Edit {label}",
+            "delete": "Delete {label}",
             "media": "Media"
         },
         "EditSheet": {
@@ -332,6 +347,10 @@
             "saving": "Saving…",
             "saveSuccess": "Production saved.",
             "saveFailed": "Failed to save production.",
+            "deleteConfirm": "Are you sure you want to delete \"{title}\"?",
+            "deleteConfirmMultiple": "Are you sure you want to delete {count} productions?",
+            "deleteSuccess": "Production deleted.",
+            "deleteError": "Failed to delete production.",
             "preview": "Preview",
             "hidePreview": "Hide Preview",
             "previewLabel": "Preview",
@@ -372,7 +391,8 @@
             "fieldEventVendorId": "Vendor ID",
             "fieldEventBoxOfficeId": "Box office ID",
             "fieldEventUitdatabankId": "UiTdatabank ID",
-            "eyebrow": "Production"
+            "eyebrow": "Production",
+            "search": "Search productions…"
         },
         "Locations": {
             "title": "Locations",
@@ -381,7 +401,13 @@
             "showHalls": "Show halls",
             "hideHalls": "Hide halls",
             "editLocation": "Edit location",
-            "editHall": "Edit hall"
+            "editHall": "Edit hall",
+            "search": "Search locations…",
+            "deleteConfirm": "Are you sure you want to delete \"{title}\"?",
+            "deleteConfirmMultiple": "Are you sure you want to delete {count} locations?",
+            "deleteSuccess": "Location deleted.",
+            "deleteError": "Failed to delete location.",
+            "eyebrow": "Location"
         },
         "Articles": {
             "title": "Articles",
@@ -390,6 +416,13 @@
             "notAvailable": "Articles API is not yet available. No data to display.",
             "newArticle": "New article",
             "createFailed": "Failed to create article.",
+            "dialogTitle": "New article",
+            "titleLabel": "Title",
+            "slugConflict": "An article with this title already exists.",
+            "cancel": "Cancel",
+            "deleteConfirm": "Are you sure you want to delete \"{title}\"?",
+            "deleteSuccess": "Article deleted.",
+            "deleteError": "Failed to delete article.",
             "save": "Save",
             "saving": "Saving…",
             "saveSuccess": "Article saved.",
@@ -426,23 +459,72 @@
             "untitledEvent": "Untitled event",
             "contentPlaceholder": "Write article content…",
             "statusColumn": "Status",
-            "dateRangeColumn": "Date range"
+            "dateRangeColumn": "Date range",
+            "search": "Search articles…"
         },
         "Performers": {
             "title": "Performers",
             "subtitle": "Manage artists",
-            "comingSoon": "Coming soon",
-            "notAvailable": "Performers API is not yet available. No data to display."
+            "search": "Search performers…",
+            "nameColumn": "Name",
+            "slugColumn": "Slug",
+            "nameField": "Name",
+            "slugField": "Slug",
+            "editPerformer": "Edit performer",
+            "deletePerformer": "Delete performer",
+            "deleteConfirm": "Are you sure you want to delete \"{name}\"?",
+            "deleteSuccess": "Artist deleted.",
+            "deleteError": "Failed to delete artist.",
+            "updateSuccess": "Artist updated.",
+            "updateError": "Failed to update artist."
         },
         "Ingest": {
             "title": "Ingest",
             "subtitle": "Bulk import of media files and archive materials",
             "comingSoon": "Coming soon",
             "notAvailable": "Ingest functionality",
-            "description": "This feature is still under development. Soon you will be able to upload and process media files here."
+            "description": "This feature is still under development. Soon you will be able to upload and process media files here.",
+            "upload": "Upload",
+            "uploadMedia": "Upload media",
+            "uploadTitle": "Upload new media",
+            "selectFile": "Select file",
+            "altText": "Alt text",
+            "credit": "Credit",
+            "save": "Save",
+            "cancel": "Cancel",
+            "editMedia": "Edit media",
+            "noMedia": "No media uploaded yet.",
+            "items": "items",
+            "loading": "Loading",
+            "confirmDelete": "Are you sure you want to delete this media? This action cannot be undone.",
+            "confirmCleanup": "Delete all media files that are not linked to any content? This cannot be undone.",
+            "cleanupSuccess": "{count} unlinked media items deleted.",
+            "cleanupError": "Cleanup failed.",
+            "reconcile": "Reconcile",
+            "reconcileTooltip": "Check that all uploaded files are properly recorded, and remove any inconsistencies.",
+            "cleanup": "Cleanup",
+            "cleanupTooltip": "Delete uploaded files that are not linked to any content.",
+            "reconcileClean": "Storage is in sync — no issues found.",
+            "reconcileMissingInS3": "{count} records have no uploaded file.",
+            "reconcileMissingInDb": "{count} uploaded files have no record.",
+            "reconcileApply": "Apply fix",
+            "reconcileDeletedDb": "{count} records without files removed.",
+            "reconcileDeletedS3": "{count} files without records removed.",
+            "reconcileError": "Reconcile failed.",
+            "duplicateUpload": "This file already exists — metadata has been updated.",
+            "mediaPreview": "Media preview",
+            "search": "Search",
+            "sort": "Sort",
+            "sortRecent": "Most recent",
+            "sortOldest": "Oldest first",
+            "sortRelevance": "Relevance",
+            "entityLinks": "Used in",
+            "noEntityLinks": "Not linked to any entity.",
+            "editSaveFailed": "Failed to save media."
         },
         "Collections": {
             "title": "Collections",
+            "eyebrow": "Collection",
             "newCollection": "New collection",
             "noCollections": "No collections yet.",
             "noItems": "No items yet. Add items from the Content tab.",
@@ -454,6 +536,12 @@
             "titleEn": "Title (EN)",
             "descriptionNl": "Description (NL)",
             "descriptionEn": "Description (EN)",
+            "fieldTitle": "Title",
+            "fieldDescription": "Description",
+            "fieldVisibility": "Visibility",
+            "visibilityPublic": "Public",
+            "visibilityUnlisted": "Unlisted (link only)",
+            "metadataSection": "Metadata",
             "shareableLink": "Shareable link",
             "copyLink": "Copy link",
             "linkCopied": "Link copied",
@@ -469,20 +557,23 @@
             "copyError": "Failed to copy link",
             "events": "Events",
             "invalidSlug": "Title must contain at least one letter or number",
-            "deleteCollection": "Delete collection",
             "deleteConfirm": "Are you sure you want to delete \"{title}\"? All items will be removed.",
+            "deleteCollection": "Delete",
             "backToCollections": "Back to collections",
+            "preview": "Preview",
+            "hidePreview": "Hide Preview",
+            "previewLabel": "Preview",
             "addToCollection": "Add to collection",
             "addAndOpen": "Add and open collection",
             "createNewCollection": "Create new collection",
+            "createNamed": "Create ''{name}''",
             "searchCollections": "Search collections…",
             "selectedItems": "{count, plural, one {# selected item} other {# selected items}}",
             "alreadyInCollection": "{title} is already in this collection",
             "addedToCollection": "Added to \"{collection}\"",
             "addedToCollectionMultiple": "Added {count} items to \"{collection}\"",
             "removeItem": "Remove item",
-            "commentNl": "Comment (NL)",
-            "commentEn": "Comment (EN)",
+            "comment": "Comment",
             "contentTypes": {
                 "production": "Production",
                 "event": "Event",
@@ -537,6 +628,35 @@
             "removeSuccess": "Cover image removed.",
             "removeError": "Failed to remove cover image."
         },
+        "Tags": {
+            "sectionLabel": "Tags",
+            "inherited": "Inherited",
+            "loading": "Loading tags…",
+            "manage": "Manage",
+            "addTag": "Add tag…",
+            "search": "Search…",
+            "createTag": "Create \"{label}\"",
+            "newTag": "New tag",
+            "editTag": "Edit tag",
+            "labelNl": "NL label",
+            "labelEn": "EN label",
+            "placeholderNl": "Nederlandse naam",
+            "placeholderEn": "English name",
+            "save": "Save",
+            "saving": "Saving…",
+            "manageTitle": "Manage tags — {facet}",
+            "deleteSuccess": "Tag deleted",
+            "deleteError": "Failed to delete tag",
+            "conflictError": "A tag with this name already exists",
+            "saveError": "Failed to save tag",
+            "editAriaLabel": "Edit {label}",
+            "deleteAriaLabel": "Delete {label}",
+            "deleteTitle": "Delete \"{label}\"?",
+            "deleteDescription": "This tag is used by {count, plural, one {# item} other {# items}}. Deleting it will remove it from all of them. This action cannot be undone.",
+            "cancel": "Cancel",
+            "delete": "Delete",
+            "deleting": "Deleting…"
+        },
         "ProductionMedia": {
             "title": "Production media",
             "editMode": "Media management",
@@ -561,6 +681,8 @@
             "attachError": "Failed to link media",
             "save": "Save",
             "cancel": "Cancel",
+            "altText": "Alt text",
+            "credit": "Credit",
             "altTextNl": "Alt text (NL)",
             "altTextEn": "Alt text (EN)",
             "altTextFr": "Alt text (FR)",
@@ -624,7 +746,16 @@
         "breadcrumbProductions": "Productions",
         "loading": "Loading…",
         "openCoverImage": "Open cover image",
-        "openGalleryImage": "Open image"
+        "openGalleryImage": "Open image",
+        "shareSectionTitle": "Share",
+        "copyLink": "Copy link",
+        "copyLinkSuccess": "Link copied!",
+        "shareWhatsApp": "Share via WhatsApp",
+        "shareEmail": "Share via email",
+        "articlesTitle": "Articles",
+        "articlesLabel": "Article",
+        "articlesFallbackTitle": "Untitled",
+        "partOfTitle": "Part of"
     },
     "NewsArticleComponent": {
         "subTitle": "Vooruit Archive",
@@ -649,9 +780,10 @@
         "error": "Something went wrong while loading this location."
     },
     "Articles": {
+        "articles": "Articles",
         "heroEyebrow": "Stories from the archive",
         "heroTitle": "Articles & Stories",
-        "heroSubtitle": "Stories from behind the scenes of De Vooruit",
+        "heroSubtitle": "A glimpse behind the scenes of De Vooruit",
         "datelineEdition": "Archive Edition",
         "datelineBrand": "Archives Department",
         "datelinePrice": "Price: Priceless",
@@ -682,5 +814,27 @@
         "nextImage": "Next image",
         "archive": "Archive",
         "openImage": "Open image"
+    },
+    "Collections": {
+        "sectionLabel": "COLLECTION",
+        "loading": "Loading collection...",
+        "notFoundTitle": "Collection not found",
+        "notFoundText": "This collection does not exist or has been deleted.",
+        "items": "{count, plural, one {# ITEM} other {# ITEMS}}",
+        "typeLabels": {
+            "production": "PRODUCTION",
+            "location": "LOCATION",
+            "blogpost": "ARTICLE",
+            "artist": "ARTIST",
+            "media": "MEDIA"
+        }
+    },
+    "ArtistPage": {
+        "eyebrow": "Artist",
+        "loading": "Loading…",
+        "breadcrumbArchive": "Archive",
+        "breadcrumbArtists": "Artists",
+        "descriptionPlaceholder": "No description",
+        "contentPlaceholder": "No productions linked yet"
     }
 }

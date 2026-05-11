@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Backend dev server with bacon auto-reload (always headless)
 set -a
 source "$(dirname "$0")/.env"

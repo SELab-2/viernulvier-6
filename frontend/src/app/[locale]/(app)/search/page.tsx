@@ -11,7 +11,7 @@ import { useGetProductions } from "@/hooks/api/useProductions";
 import { useGetLocations } from "@/hooks/api/useLocations";
 import { useGetFacets } from "@/hooks/api/useTaxonomy";
 import { queryKeys } from "@/hooks/api/query-keys";
-import type { Production } from "@/types/models/production.types";
+import type { Production, ProductionSortOption } from "@/types/models/production.types";
 import type { PaginatedResult } from "@/types/api/api.types";
 
 import { UnifiedHeader } from "@/components/layout/header";
@@ -38,6 +38,7 @@ export default function SearchPage() {
     const [draftQuery, setDraftQuery] = useState(query);
     const [prevQuery, setPrevQuery] = useState(query);
     const [isHeroVisible, setIsHeroVisible] = useState(true);
+    const [activeSort, setActiveSort] = useState<ProductionSortOption>("recent");
 
     if (query !== prevQuery) {
         setPrevQuery(query);
@@ -60,6 +61,12 @@ export default function SearchPage() {
         [router]
     );
 
+    const handleSortChange = useCallback((sort: ProductionSortOption) => {
+        setActiveSort(sort);
+        setCursorHistory([null]);
+        setCurrentPageIndex(0);
+    }, []);
+
     const {
         data: productionsResult,
         isLoading: productionsLoading,
@@ -68,6 +75,7 @@ export default function SearchPage() {
         params: {
             ...(query ? { q: query } : {}),
             ...(currentCursor ? { cursor: currentCursor } : {}),
+            sort: activeSort,
         },
     });
     const { data: locationsResult } = useGetLocations();
@@ -88,12 +96,13 @@ export default function SearchPage() {
                     queryKeys.productions.all({
                         ...(query ? { q: query } : {}),
                         ...(pagination ?? {}),
+                        sort: activeSort,
                     })
                 );
                 return cached?.data ?? [];
             }),
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [cursorHistory, currentPageIndex, queryClient, productionsResult, query]
+        [cursorHistory, currentPageIndex, queryClient, productionsResult, query, activeSort]
     );
 
     const loadMore = useCallback(() => {
@@ -154,6 +163,7 @@ export default function SearchPage() {
                     facets={facets ?? []}
                     minYear={ARCHIVE_MIN_YEAR}
                     maxYear={maxYear}
+                    initialTag={searchParams.get("tag") ?? undefined}
                 />
                 <main className="flex min-w-0 flex-1 flex-col">
                     <ResultsBar
@@ -161,6 +171,8 @@ export default function SearchPage() {
                         onQueryChange={setDraftQuery}
                         onSearch={handleSearch}
                         showSearch={!isHeroVisible}
+                        sort={activeSort}
+                        onSortChange={handleSortChange}
                     />
                     {allProductions.length === 0 && !productionsLoading ? (
                         <VintageEmptyState

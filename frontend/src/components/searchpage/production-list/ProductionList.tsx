@@ -11,6 +11,7 @@ import type { Event } from "@/types/models/event.types";
 import { getLocalizedField } from "@/lib/locale";
 import { useGetEventsByProduction } from "@/hooks/api/useEvents";
 import { LoadingState } from "@/components/shared/loading-state";
+import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
 
 interface ProductionItemProps {
     production: Production;
@@ -93,12 +94,6 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
     const artist = getLocalizedField(production, "artist", locale);
     const tagline = getLocalizedField(production, "tagline", locale);
 
-    const tags = [production.uitdatabankTheme, production.uitdatabankType].filter(
-        (tag): tag is string => Boolean(tag)
-    );
-
-    const displayType = production.uitdatabankType ?? "Productie";
-
     return (
         <>
             <div
@@ -127,14 +122,14 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
                 <div className="min-w-0 flex-1">
                     <Link
                         href={`/productions/${production.id}`}
-                        className="font-display text-foreground mb-0.5 block text-[19px] leading-[1.1] font-bold tracking-[-0.02em] hover:underline sm:text-[22px]"
+                        className={`font-display text-foreground block text-[19px] leading-[1.1] font-bold tracking-[-0.02em] hover:underline sm:text-[22px] ${artist ? "mb-0.5" : "mb-1.5"}`}
                         onClick={(e) => e.stopPropagation()}
                     >
                         {title}
                     </Link>
 
                     {artist && (
-                        <div className="font-display text-foreground/38 mb-1.5 text-[19px] font-bold tracking-[-0.02em] sm:text-[22px]">
+                        <div className="font-display text-foreground/40 mb-1.5 text-[19px] leading-[1.1] font-bold tracking-[-0.02em] italic sm:text-[22px]">
                             {artist}
                         </div>
                     )}
@@ -145,24 +140,10 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
                         </p>
                     )}
 
-                    {tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                            {tags.map((tag) => (
-                                <span
-                                    key={tag}
-                                    className="border-border text-muted-foreground border px-1.5 py-px font-mono text-[8px] tracking-[1.1px] uppercase sm:px-2 sm:py-0.5"
-                                >
-                                    {tag}
-                                </span>
-                            ))}
-                        </div>
-                    )}
+                    <EntityTagStrip tags={production.tags} locale={locale} cap={4} />
                 </div>
 
-                <div className="flex shrink-0 items-center gap-2 pt-0.5">
-                    <span className="border-foreground text-foreground border px-2 py-1 font-mono text-[8px] font-medium tracking-[1.3px] uppercase sm:px-2 sm:py-1">
-                        {displayType}
-                    </span>
+                <div className="flex shrink-0 items-center pt-0.5">
                     <ChevronDown
                         className={`text-muted-foreground h-4 w-4 shrink-0 transition-transform duration-200 ${
                             expanded ? "rotate-180" : ""

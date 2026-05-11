@@ -1,19 +1,23 @@
 "use client";
 
-import { useCallback, useMemo, useState, useRef, useEffect } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Archive, ChevronsUp } from "lucide-react";
+import { toast } from "sonner";
 import type { ExpandedState, Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
 import { makeProductionColumns } from "./columns";
 import { makeEventFields, toEventUpdateInput } from "./event-columns";
 import { ActionBar } from "../action-bar";
+import { SearchInput } from "@/components/cms/search-input";
 import { useParentChildSelection } from "../use-parent-child-selection";
 import { makeEventColumns } from "./event-columns";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { useGetInfiniteProductions } from "@/hooks/api/useProductions";
+import { LoadMoreSentinel } from "@/components/cms/load-more-sentinel";
+import { useDeleteProduction, useGetInfiniteProductions } from "@/hooks/api/useProductions";
 import { useGetEvents, useUpdateEvent } from "@/hooks/api/useEvents";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
 import { ProductionMediaSheet } from "@/components/cms/production-media-sheet";
@@ -28,18 +32,18 @@ export function ProductionsTable() {
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
     const locale = useLocale();
-    const loadMoreRef = useRef<HTMLDivElement>(null);
+    const searchParams = useSearchParams();
+    const q = searchParams.get("q") ?? undefined;
 
     const {
         data: infiniteData,
         fetchNextPage,
         hasNextPage,
-        isFetchingNextPage,
-    } = useGetInfiniteProductions();
+    } = useGetInfiniteProductions(q ? { q } : undefined);
+    const deleteProduction = useDeleteProduction();
 
     const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
 
-    // Flatten all pages into a single array
     const allProductions = useMemo(
         () => infiniteData?.pages.flatMap((page) => page.data) ?? [],
         [infiniteData]
@@ -47,28 +51,6 @@ export function ProductionsTable() {
 
     const allEvents = useMemo(() => eventsResult?.data ?? [], [eventsResult]);
     const updateEvent = useUpdateEvent();
-
-    // Load more handler
-    const loadMore = useCallback(() => {
-        if (hasNextPage && !isFetchingNextPage) {
-            fetchNextPage();
-        }
-    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-    // Intersection observer for infinite scroll
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting) loadMore();
-            },
-            { threshold: 0.1, rootMargin: "100px" }
-        );
-        const currentRef = loadMoreRef.current;
-        if (currentRef) observer.observe(currentRef);
-        return () => {
-            if (currentRef) observer.unobserve(currentRef);
-        };
-    }, [loadMore]);
 
     const [editEvent, setEditEvent] = useState<Event | null>(null);
     const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
@@ -109,19 +91,47 @@ export function ProductionsTable() {
         [locale]
     );
 
+    const handleJumpToEnd = useCallback(async () => {
+        while (hasNextPage) {
+            await fetchNextPage();
+            await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+    }, [hasNextPage, fetchNextPage]);
+
+    const handleDeleteProduction = useCallback(
+        (production: Production) => {
+            const ok = window.confirm(t("deleteConfirm", { title: production.slug }));
+            if (!ok) return;
+            deleteProduction.mutate(production.id, {
+                onSuccess: () => toast.success(t("deleteSuccess")),
+                onError: () => toast.error(t("deleteError")),
+            });
+        },
+        [deleteProduction, t]
+    );
+
     const productionCols = useMemo(
         () => [
             selectColumn,
             ...makeProductionColumns({
                 onEdit: handleEditProduction,
                 onMedia: setMediaProduction,
+                onDelete: handleDeleteProduction,
                 t: tActions,
                 tProductions: t,
                 locale,
                 onOpenSpotlight: openSpotlight,
             }),
         ],
-        [selectColumn, tActions, handleEditProduction, t, locale, openSpotlight]
+        [
+            selectColumn,
+            tActions,
+            handleEditProduction,
+            handleDeleteProduction,
+            t,
+            locale,
+            openSpotlight,
+        ]
     );
 
     const eventCols = useMemo(
@@ -143,6 +153,31 @@ export function ProductionsTable() {
         () => allProductions.filter((production) => parentSelection[production.id]),
         [parentSelection, allProductions]
     );
+
+    const handleBulkDelete = useCallback(() => {
+        const ok = window.confirm(t("deleteConfirmMultiple", { count: selectedProductionCount }));
+        if (!ok) return;
+        let success = 0;
+        let failed = 0;
+        selectedProductions.forEach((production) => {
+            deleteProduction.mutate(production.id, {
+                onSuccess: () => {
+                    success++;
+                    if (success + failed === selectedProductions.length) {
+                        toast.success(t("deleteSuccess"));
+                        clearSelection();
+                    }
+                },
+                onError: () => {
+                    failed++;
+                    if (success + failed === selectedProductions.length) {
+                        if (failed > 0) toast.error(t("deleteError"));
+                        clearSelection();
+                    }
+                },
+            });
+        });
+    }, [selectedProductions, selectedProductionCount, deleteProduction, t, clearSelection]);
 
     const eventsById = useMemo(
         () => new Map(allEvents.map((event) => [event.id, event])),
@@ -220,15 +255,16 @@ export function ProductionsTable() {
             },
             {
                 key: "delete",
-                label: t("deleteAction"),
+                label: tCommon("delete"),
+                onClick: handleBulkDelete,
             },
         ],
-        [tCollections, t]
+        [tCollections, tCommon, handleBulkDelete]
     );
 
     return (
         <div className="flex h-full flex-col">
-            <div className="bg-background sticky top-0 z-10 flex items-center justify-between gap-2">
+            <div className="bg-background sticky top-0 z-10 flex items-center gap-2">
                 <ActionBar
                     entityCounts={[
                         { countKey: "productionsSelected", count: selectedProductionCount },
@@ -236,6 +272,8 @@ export function ProductionsTable() {
                     ]}
                     actions={actions}
                     onClear={clearSelection}
+                    search={<SearchInput placeholder={t("search")} />}
+                    className="flex-1"
                 />
                 {hasExpanded && (
                     <Button
@@ -262,14 +300,10 @@ export function ProductionsTable() {
                     expanded={expanded}
                     onExpandedChange={setExpanded}
                     getRowId={getProductionRowId}
+                    onJumpToEnd={handleJumpToEnd}
                 />
 
-                {/* Infinite scroll trigger */}
-                {hasNextPage && (
-                    <div ref={loadMoreRef} className="flex justify-center py-4">
-                        <Spinner className="text-muted-foreground h-5 w-5" />
-                    </div>
-                )}
+                <LoadMoreSentinel hasNextPage={hasNextPage ?? false} onLoadMore={fetchNextPage} />
             </div>
 
             {editEvent && (
