@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Check, X, PlusCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ export function FacetCombobox({
     onCreateTag,
     compact = false,
 }: FacetComboboxProps) {
+    const t = useTranslations("Cms.Tags");
     const locale = useLocale();
     const [open, setOpen] = React.useState(false);
     const [search, setSearch] = React.useState("");
@@ -75,7 +76,9 @@ export function FacetCombobox({
                                         type="button"
                                         onClick={() => toggle(slug)}
                                         className="hover:text-destructive ml-0.5 rounded-full"
-                                        aria-label={`Remove ${getLabel(tag.translations)}`}
+                                        aria-label={t("deleteAriaLabel", {
+                                            label: getLabel(tag.translations),
+                                        })}
                                     >
                                         <X className="h-3 w-3" />
                                     </button>
@@ -96,13 +99,13 @@ export function FacetCombobox({
                             compact ? "h-7 text-xs" : "h-8 text-sm"
                         )}
                     >
-                        Add tag…
+                        {t("addTag")}
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-56 p-0" align="start">
                     <Command>
                         <CommandInput
-                            placeholder="Search…"
+                            placeholder={t("search")}
                             value={search}
                             onValueChange={setSearch}
                         />
@@ -133,7 +136,7 @@ export function FacetCombobox({
                                             {label}
                                             {isInherited && (
                                                 <span className="text-muted-foreground ml-auto text-[10px]">
-                                                    inherited
+                                                    {t("inherited")}
                                                 </span>
                                             )}
                                         </CommandItem>
@@ -152,7 +155,7 @@ export function FacetCombobox({
                                         }}
                                     >
                                         <PlusCircle className="mr-2 h-4 w-4" />
-                                        Create &ldquo;{search.trim()}&rdquo;
+                                        {t("createTag", { label: search.trim() })}
                                     </CommandItem>
                                 </CommandGroup>
                             )}

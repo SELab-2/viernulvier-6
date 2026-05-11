@@ -19,9 +19,9 @@ import { ProductionRow } from "@/types/models/production.types";
 import { ProductionPreviewData } from "@/types/production-preview.types";
 import { toProductionRow, toProductionUpdateInput } from "../../../../tables/productions/columns";
 import { convertProductionRowToProduction } from "@/lib/production-converter";
-import { useGetEntityTags, useReplaceEntityTags } from "@/hooks/api/useEntityTags";
 import { useGetFacets } from "@/hooks/api/useTaxonomy";
 import type { EntityTagSlim } from "@/types/models/taxonomy.types";
+import { useEntityTagEditor } from "@/hooks/useEntityTagEditor";
 import { TagPickerSection } from "@/components/cms/tag-picker-section";
 
 interface ProductionEditorPageProps {
@@ -124,10 +124,9 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
     const { data: eventsResult } = useGetEvents();
     const updateProduction = useUpdateProduction();
 
-    const { data: entityTags } = useGetEntityTags("production", id);
-    const replaceEntityTags = useReplaceEntityTags();
+    const { tagSlugs, inheritedTagSlugs, setTagEdits, resetTagEdits, replaceEntityTags } =
+        useEntityTagEditor("production", id);
     const { data: allFacets } = useGetFacets();
-    const [tagEdits, setTagEdits] = useState<string[] | null>(null);
 
     const [edits, setEdits] = useState<Partial<ProductionRow>>({});
     const [isPreviewOpen, setIsPreviewOpen] = useState(() => {
@@ -155,18 +154,6 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
         if (!fetchedProduction) return null;
         return toProductionRow(fetchedProduction);
     }, [fetchedProduction]);
-
-    const baseTagSlugs = useMemo(() => {
-        if (!entityTags) return [];
-        return entityTags.flatMap((f) => f.tags.filter((t) => !t.inherited).map((t) => t.slug));
-    }, [entityTags]);
-
-    const inheritedTagSlugs = useMemo(() => {
-        if (!entityTags) return [];
-        return entityTags.flatMap((f) => f.tags.filter((t) => t.inherited).map((t) => t.slug));
-    }, [entityTags]);
-
-    const tagSlugs = tagEdits ?? baseTagSlugs;
 
     const tagToFacetMap = useMemo(() => {
         const map = new Map<string, string>();
@@ -291,7 +278,7 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
             ]);
             clearPreviewFor("production", production.id);
             setEdits({});
-            setTagEdits(null);
+            resetTagEdits();
             toast.success(t("saveSuccess"));
         } catch {
             toast.error(t("saveFailed"));

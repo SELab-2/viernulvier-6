@@ -16,7 +16,7 @@ import { makeArtistColumns, getArtistFields, toArtistUpdateInput } from "./colum
 import { useDeleteArtist, useGetInfiniteArtists, useUpdateArtist } from "@/hooks/api/useArtists";
 import { Artist } from "@/types/models/artist.types";
 import { ActionVariant } from "@/types/cms/actions";
-import { useGetEntityTags, useReplaceEntityTags } from "@/hooks/api/useEntityTags";
+import { useEntityTagEditor } from "@/hooks/useEntityTagEditor";
 import { TagPickerSection } from "@/components/cms/tag-picker-section";
 
 export function PerformersTable() {
@@ -41,7 +41,6 @@ export function PerformersTable() {
 
     const updateArtist = useUpdateArtist();
     const deleteArtist = useDeleteArtist();
-    const replaceEntityTags = useReplaceEntityTags();
 
     const [editArtist, setEditArtist] = useState<Artist | null>(null);
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -51,23 +50,8 @@ export function PerformersTable() {
         [artists, rowSelection]
     );
 
-    const [tagEdits, setTagEdits] = useState<string[] | null>(null);
-
-    const { data: entityTags } = useGetEntityTags("artist", editArtist?.id ?? "", {
-        enabled: !!editArtist,
-    });
-
-    const baseTagSlugs = useMemo(() => {
-        if (!entityTags) return [];
-        return entityTags.flatMap((f) => f.tags.filter((t) => !t.inherited).map((t) => t.slug));
-    }, [entityTags]);
-
-    const inheritedTagSlugs = useMemo(() => {
-        if (!entityTags) return [];
-        return entityTags.flatMap((f) => f.tags.filter((t) => t.inherited).map((t) => t.slug));
-    }, [entityTags]);
-
-    const tagSlugs = tagEdits ?? baseTagSlugs;
+    const { tagSlugs, inheritedTagSlugs, setTagEdits, resetTagEdits, replaceEntityTags } =
+        useEntityTagEditor("artist", editArtist?.id ?? "", { enabled: !!editArtist });
 
     const handleDelete = useCallback(
         (artist: Artist) => {
@@ -95,10 +79,13 @@ export function PerformersTable() {
 
     const artistFields = useMemo(() => getArtistFields(t), [t]);
 
-    const openEdit = useCallback((artist: Artist) => {
-        setEditArtist(artist);
-        setTagEdits(null);
-    }, []);
+    const openEdit = useCallback(
+        (artist: Artist) => {
+            setEditArtist(artist);
+            resetTagEdits();
+        },
+        [resetTagEdits]
+    );
 
     const columns = useMemo(
         () => makeArtistColumns(openEdit, handleDelete, tActions, t),
@@ -147,7 +134,7 @@ export function PerformersTable() {
                 onOpenChange={(open) => {
                     if (!open) {
                         setEditArtist(null);
-                        setTagEdits(null);
+                        resetTagEdits();
                     }
                 }}
                 entity={editArtist as (Artist & Record<string, unknown>) | null}

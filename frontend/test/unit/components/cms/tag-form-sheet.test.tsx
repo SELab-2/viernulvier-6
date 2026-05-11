@@ -58,6 +58,6 @@ describe("TagFormSheet", () => {
 
     it("disables submit button while submitting", () => {
         render(<TagFormSheet {...baseProps} isSubmitting={true} />);
-        expect(screen.getByRole("button", { name: /save/i })).toBeDisabled();
+        expect(screen.getByRole("button", { name: /saving/i })).toBeDisabled();
     });
 });

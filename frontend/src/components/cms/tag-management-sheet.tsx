@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useLocale } from "next-intl";
+import { isAxiosError } from "axios";
+import { useLocale, useTranslations } from "next-intl";
 import { Pencil, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ export function TagManagementSheet({
     onOpenChange,
     openWithCreate,
 }: TagManagementSheetProps) {
+    const t = useTranslations("Cms.Tags");
     const locale = useLocale();
     const [formMode, setFormMode] = React.useState<FormMode | null>(() =>
         openWithCreate !== undefined ? { type: "create", prefill: openWithCreate } : null
@@ -68,8 +70,12 @@ export function TagManagementSheet({
                 });
             }
             setFormMode(null);
-        } catch {
-            setFormError("A tag with this name already exists");
+        } catch (err) {
+            setFormError(
+                isAxiosError(err) && err.response?.status === 409
+                    ? t("conflictError")
+                    : t("saveError")
+            );
         }
     };
 
@@ -79,10 +85,10 @@ export function TagManagementSheet({
             if (result?.usage_count && result.usage_count > 0) {
                 setDeleteTarget({ tag, usageCount: result.usage_count });
             } else {
-                toast.success("Tag deleted");
+                toast.success(t("deleteSuccess"));
             }
         } catch {
-            toast.error("Failed to delete tag");
+            toast.error(t("deleteError"));
         }
     };
 
@@ -90,10 +96,10 @@ export function TagManagementSheet({
         if (!deleteTarget) return;
         try {
             await deleteTag.mutateAsync({ slug: deleteTarget.tag.slug, force: true });
-            toast.success("Tag deleted");
+            toast.success(t("deleteSuccess"));
             setDeleteTarget(null);
         } catch {
-            toast.error("Failed to delete tag");
+            toast.error(t("deleteError"));
         }
     };
 
@@ -102,7 +108,7 @@ export function TagManagementSheet({
             <Sheet open={open} onOpenChange={onOpenChange}>
                 <SheetContent side="right" className="w-96 overflow-y-auto p-0">
                     <SheetHeader className="border-foreground/10 border-b px-6 pt-6 pb-4">
-                        <SheetTitle>Manage tags — {getFacetLabel()}</SheetTitle>
+                        <SheetTitle>{t("manageTitle", { facet: getFacetLabel() })}</SheetTitle>
                     </SheetHeader>
                     <div className="px-6 py-6">
                         <Button
@@ -112,7 +118,7 @@ export function TagManagementSheet({
                             onClick={() => setFormMode({ type: "create" })}
                         >
                             <Plus className="mr-2 h-4 w-4" />
-                            New tag
+                            {t("newTag")}
                         </Button>
                         <div className="space-y-1">
                             {facet.tags.map((tag) => (
@@ -126,7 +132,9 @@ export function TagManagementSheet({
                                             variant="ghost"
                                             size="icon"
                                             className="h-7 w-7"
-                                            aria-label={`Edit ${getLabel(tag)}`}
+                                            aria-label={t("editAriaLabel", {
+                                                label: getLabel(tag),
+                                            })}
                                             onClick={() => setFormMode({ type: "edit", tag })}
                                         >
                                             <Pencil className="h-3.5 w-3.5" />
@@ -135,7 +143,9 @@ export function TagManagementSheet({
                                             variant="ghost"
                                             size="icon"
                                             className="text-destructive hover:text-destructive h-7 w-7"
-                                            aria-label={`Delete ${getLabel(tag)}`}
+                                            aria-label={t("deleteAriaLabel", {
+                                                label: getLabel(tag),
+                                            })}
                                             onClick={() => handleDeleteClick(tag)}
                                         >
                                             <Trash2 className="h-3.5 w-3.5" />

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
     Dialog,
     DialogContent,
@@ -27,27 +28,27 @@ export function DeleteTagDialog({
     onConfirm,
     onCancel,
 }: DeleteTagDialogProps) {
+    const t = useTranslations("Cms.Tags");
     return (
         <Dialog open={open} onOpenChange={(o) => !o && onCancel()}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Delete &ldquo;{tagLabel}&rdquo;?</DialogTitle>
+                    <DialogTitle>{t("deleteTitle", { label: tagLabel })}</DialogTitle>
                     <DialogDescription>
-                        This tag is used by {usageCount} items. Deleting it will remove it from all
-                        of them. This action cannot be undone.
+                        {t("deleteDescription", { count: usageCount })}
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
                     <Button variant="outline" onClick={onCancel} disabled={isDeleting}>
-                        Cancel
+                        {t("cancel")}
                     </Button>
                     <Button
                         variant="destructive"
                         onClick={onConfirm}
                         disabled={isDeleting}
-                        aria-label={isDeleting ? "Deleting" : "Delete"}
+                        aria-label={isDeleting ? t("deleting") : t("delete")}
                     >
-                        {isDeleting ? "Deleting…" : "Delete"}
+                        {isDeleting ? t("deleting") : t("delete")}
                     </Button>
                 </DialogFooter>
             </DialogContent>

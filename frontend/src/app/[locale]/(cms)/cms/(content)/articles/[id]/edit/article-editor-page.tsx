@@ -17,8 +17,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { useGetArticle, useUpdateArticle } from "@/hooks/api/useArticles";
 import { Article } from "@/types/models/article.types";
 import type { EntityTagSlim } from "@/types/models/taxonomy.types";
-import { useGetEntityTags, useReplaceEntityTags } from "@/hooks/api/useEntityTags";
 import { useGetFacets } from "@/hooks/api/useTaxonomy";
+import { useEntityTagEditor } from "@/hooks/useEntityTagEditor";
 
 interface ArticleEditorPageProps {
     id: string;
@@ -32,10 +32,9 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
 
     const { data: fetchedArticle, isLoading: articleLoading } = useGetArticle(id);
     const updateArticle = useUpdateArticle();
-    const { data: entityTags } = useGetEntityTags("article", id);
-    const replaceEntityTags = useReplaceEntityTags();
+    const { tagSlugs, inheritedTagSlugs, setTagEdits, resetTagEdits, replaceEntityTags } =
+        useEntityTagEditor("article", id);
     const { data: allFacets } = useGetFacets();
-    const [tagEdits, setTagEdits] = useState<string[] | null>(null);
 
     const [edits, setEdits] = useState<Partial<Article>>({});
     const [isPreviewOpen, setIsPreviewOpen] = useState(() => {
@@ -84,18 +83,6 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
         () => (fetchedArticle ? { ...fetchedArticle, ...edits } : null),
         [fetchedArticle, edits]
     );
-
-    const baseTagSlugs = useMemo(() => {
-        if (!entityTags) return [];
-        return entityTags.flatMap((f) => f.tags.filter((t) => !t.inherited).map((t) => t.slug));
-    }, [entityTags]);
-
-    const inheritedTagSlugs = useMemo(() => {
-        if (!entityTags) return [];
-        return entityTags.flatMap((f) => f.tags.filter((t) => t.inherited).map((t) => t.slug));
-    }, [entityTags]);
-
-    const tagSlugs = tagEdits ?? baseTagSlugs;
 
     const tagToFacetMap = useMemo(() => {
         const map = new Map<string, string>();
@@ -159,7 +146,7 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
                 }),
             ]);
             clearPreviewFor("article", article.slug, previewSessionId);
-            setTagEdits(null);
+            resetTagEdits();
             toast.success(t("saveSuccess"));
         } catch {
             toast.error(t("saveFailed"));

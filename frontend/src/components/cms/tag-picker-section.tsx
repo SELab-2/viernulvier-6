@@ -101,15 +101,20 @@ export function TagPickerSection({
 
     if (!facets?.length) return null;
 
-    const sheet = manageState ? (
-        <TagManagementSheet
-            key={`${manageState.facetSlug}-${manageState.openWithCreate ?? ""}`}
-            open={true}
-            facet={facets.find((f) => f.slug === manageState.facetSlug)!}
-            onOpenChange={(o) => !o && setManageState(null)}
-            openWithCreate={manageState.openWithCreate}
-        />
-    ) : null;
+    const managedFacet = manageState
+        ? (facets.find((f) => f.slug === manageState.facetSlug) ?? null)
+        : null;
+
+    const sheet =
+        manageState && managedFacet ? (
+            <TagManagementSheet
+                key={`${manageState.facetSlug}-${manageState.openWithCreate ?? ""}`}
+                open={true}
+                facet={managedFacet}
+                onOpenChange={(o) => !o && setManageState(null)}
+                openWithCreate={manageState.openWithCreate}
+            />
+        ) : null;
 
     if (compact) {
         return (

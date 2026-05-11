@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,6 +31,7 @@ export function TagFormSheet({
     initialValues,
     errorMessage,
 }: TagFormSheetProps) {
+    const t = useTranslations("Cms.Tags");
     const [nl, setNl] = React.useState(initialValues?.nl ?? "");
     const [en, setEn] = React.useState(initialValues?.en ?? "");
 
@@ -44,37 +46,32 @@ export function TagFormSheet({
             <SheetContent side="right" className="overflow-y-auto p-0">
                 <SheetHeader className="border-foreground/10 border-b px-6 pt-6 pb-4">
                     <SheetTitle>
-                        {initialValues ? "Edit tag" : "New tag"} — {facetLabel}
+                        {initialValues ? t("editTag") : t("newTag")} — {facetLabel}
                     </SheetTitle>
                 </SheetHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 px-6 py-6">
                     <div className="space-y-1.5">
-                        <Label htmlFor="tag-nl">NL label</Label>
+                        <Label htmlFor="tag-nl">{t("labelNl")}</Label>
                         <Input
                             id="tag-nl"
                             value={nl}
                             onChange={(e) => setNl(e.target.value)}
-                            placeholder="Nederlandse naam"
+                            placeholder={t("placeholderNl")}
                             required
                         />
                     </div>
                     <div className="space-y-1.5">
-                        <Label htmlFor="tag-en">EN label</Label>
+                        <Label htmlFor="tag-en">{t("labelEn")}</Label>
                         <Input
                             id="tag-en"
                             value={en}
                             onChange={(e) => setEn(e.target.value)}
-                            placeholder="English name"
+                            placeholder={t("placeholderEn")}
                         />
                     </div>
                     {errorMessage && <p className="text-destructive text-sm">{errorMessage}</p>}
-                    <Button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="w-full"
-                        aria-label="Save"
-                    >
-                        {isSubmitting ? "Saving…" : "Save"}
+                    <Button type="submit" disabled={isSubmitting} className="w-full">
+                        {isSubmitting ? t("saving") : t("save")}
                     </Button>
                 </form>
             </SheetContent>
