@@ -18,9 +18,9 @@ INSERT INTO locations (id, source_id, name, city, country, slug) VALUES
 ('cc000000-0000-0000-0000-000000000003', 9203, 'Stats Hall C', 'Antwerpen', 'Belgium', 'stats-hall-c'),
 ('cc000000-0000-0000-0000-000000000004', 9204, 'Stats Hall D', 'Brussel', 'Belgium', 'stats-hall-d');
 
-INSERT INTO articles (id, slug, status, title, content, created_at, updated_at) VALUES
-('dd000000-0000-0000-0000-000000000001', 'stats-published', 'published', 'Stats Published', '{"type":"doc","content":[]}', '2026-03-01 10:00:00+00', '2026-03-01 10:00:00+00'),
-('dd000000-0000-0000-0000-000000000002', 'stats-draft', 'draft', 'Stats Draft', NULL, '2026-03-02 10:00:00+00', '2026-03-02 10:00:00+00');
+INSERT INTO articles (id, slug, status, title, content, subject_period_start, subject_period_end, created_at, updated_at) VALUES
+('dd000000-0000-0000-0000-000000000001', 'stats-published', 'published', 'Stats Published', '{"type":"doc","content":[]}', '2020-01-01', '2020-12-31', '2026-03-01 10:00:00+00', '2026-03-01 10:00:00+00'),
+('dd000000-0000-0000-0000-000000000002', 'stats-draft', 'draft', 'Stats Draft', NULL, NULL, NULL, '2026-03-02 10:00:00+00', '2026-03-02 10:00:00+00');
 
 INSERT INTO artists (id, name, slug) VALUES
 ('ee000000-0000-0000-0000-000000000001', 'Stats Artist One', 'stats-artist-one'),

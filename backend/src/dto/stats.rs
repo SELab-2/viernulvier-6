@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use database::Database;
 use serde::Serialize;
 use utoipa::ToSchema;
@@ -9,6 +9,8 @@ use crate::error::AppError;
 pub struct StatsPayload {
     pub oldest_event: Option<DateTime<Utc>>,
     pub newest_event: Option<DateTime<Utc>>,
+    pub oldest_article: Option<NaiveDate>,
+    pub newest_article: Option<NaiveDate>,
     pub event_count: i64,
     pub production_count: i64,
     pub location_count: i64,
@@ -21,6 +23,7 @@ impl StatsPayload {
     pub async fn collect(db: &Database) -> Result<Self, AppError> {
         let (
             (oldest_event, newest_event),
+            (oldest_article, newest_article),
             event_count,
             production_count,
             location_count,
@@ -29,6 +32,7 @@ impl StatsPayload {
             collection_count,
         ) = tokio::try_join!(
             async { db.events().bounds().await },
+            async { db.articles().bounds().await },
             async { db.events().count().await },
             async { db.productions().count().await },
             async { db.locations().count().await },
@@ -39,6 +43,8 @@ impl StatsPayload {
         Ok(Self {
             oldest_event,
             newest_event,
+            oldest_article,
+            newest_article,
             event_count,
             production_count,
             location_count,

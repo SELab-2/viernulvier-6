@@ -1,7 +1,7 @@
 //! Integration tests for `GET /stats`.
 
 use axum::http::{StatusCode, header};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::Deserialize;
 use sqlx::PgPool;
 
@@ -15,6 +15,8 @@ const PUBLIC_CACHE_HEADER: &str = "public, max-age=3600, stale-while-revalidate=
 struct StatsBody {
     oldest_event: Option<DateTime<Utc>>,
     newest_event: Option<DateTime<Utc>>,
+    oldest_article: Option<NaiveDate>,
+    newest_article: Option<NaiveDate>,
     event_count: i64,
     production_count: i64,
     location_count: i64,
@@ -48,6 +50,10 @@ async fn get_stats_matches_fixture(db: PgPool) {
     let expected = StatsBody {
         oldest_event: Some(utc("2026-04-10T18:00:00Z")),
         newest_event: Some(utc("2026-07-15T17:00:00Z")),
+        // stats-published: start=2020-01-01, end=2020-12-31
+        // kleurenstudies migration: start=2025-11-04, no end
+        oldest_article: Some(NaiveDate::from_ymd_opt(2020, 1, 1).unwrap()),
+        newest_article: Some(NaiveDate::from_ymd_opt(2025, 11, 4).unwrap()),
         event_count: 3,
         production_count: 2,
         location_count: 4,
@@ -79,6 +85,9 @@ async fn get_stats_empty_database(db: PgPool) {
     let expected = StatsBody {
         oldest_event: None,
         newest_event: None,
+        // kleurenstudies migration: start=2025-11-04, no end
+        oldest_article: Some(NaiveDate::from_ymd_opt(2025, 11, 4).unwrap()),
+        newest_article: Some(NaiveDate::from_ymd_opt(2025, 11, 4).unwrap()),
         event_count: 0,
         production_count: 0,
         location_count: 0,
