@@ -27,7 +27,6 @@ const messages = {
             artists: "Artists",
             productions: "Productions",
             articles: "Articles",
-            posters: "Posters",
         },
         tags: {
             label: "Tags",
@@ -137,7 +136,6 @@ describe("ArchiveSidebar component", () => {
         expect(screen.getByText("Artists")).toBeInTheDocument();
         expect(screen.getByText("Productions")).toBeInTheDocument();
         expect(screen.getByText("Articles")).toBeInTheDocument();
-        expect(screen.getByText("Posters")).toBeInTheDocument();
     });
 
     it("renders tags (facets) if provided", () => {

@@ -12,6 +12,7 @@ interface ArtistItemProps {
 }
 
 function ArtistItem({ artist }: ArtistItemProps) {
+    const t = useTranslations("Sidebar");
     return (
         <Link
             href={`/artists/${artist.id}`}
@@ -39,7 +40,7 @@ function ArtistItem({ artist }: ArtistItemProps) {
             </div>
 
             <span className="border-foreground text-foreground shrink-0 border px-2 py-1 font-mono text-[8px] font-medium tracking-[1.3px] uppercase">
-                Artiest
+                {t("categories.artists")}
             </span>
         </Link>
     );

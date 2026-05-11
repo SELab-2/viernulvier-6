@@ -12,15 +12,11 @@ interface LocationItemProps {
 }
 
 function LocationItem({ location }: LocationItemProps) {
-    const href = location.slug ? `/locations/${location.slug}` : `/locations/${location.id}`;
+    const t = useTranslations("Sidebar");
     const displayName = location.name ?? location.address;
 
-    return (
-        <Link
-            href={href}
-            className="border-muted/35 hover:bg-muted/5 flex cursor-pointer items-center gap-3 border-b px-4 py-3.5 transition-all sm:gap-[18px] sm:px-7"
-            style={{ animation: "fadein 0.3s ease both" }}
-        >
+    const inner = (
+        <>
             <div className="bg-muted relative h-[108px] w-[144px] shrink-0 overflow-hidden sm:h-[136px] sm:w-[180px]">
                 {location.coverImageUrl ? (
                     <Image
@@ -47,8 +43,29 @@ function LocationItem({ location }: LocationItemProps) {
             </div>
 
             <span className="border-foreground text-foreground shrink-0 border px-2 py-1 font-mono text-[8px] font-medium tracking-[1.3px] uppercase">
-                Locatie
+                {t("categories.locations")}
             </span>
+        </>
+    );
+
+    if (!location.slug) {
+        return (
+            <div
+                className="border-muted/35 flex items-center gap-3 border-b px-4 py-3.5 sm:gap-[18px] sm:px-7"
+                style={{ animation: "fadein 0.3s ease both" }}
+            >
+                {inner}
+            </div>
+        );
+    }
+
+    return (
+        <Link
+            href={`/locations/${location.slug}`}
+            className="border-muted/35 hover:bg-muted/5 flex cursor-pointer items-center gap-3 border-b px-4 py-3.5 transition-all sm:gap-[18px] sm:px-7"
+            style={{ animation: "fadein 0.3s ease both" }}
+        >
+            {inner}
         </Link>
     );
 }

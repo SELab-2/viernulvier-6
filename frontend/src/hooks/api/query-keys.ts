@@ -68,7 +68,7 @@ export const queryKeys = {
         all: ["articles"] as const,
         list: (pagination?: PaginationParams) =>
             buildQueryKey([...queryKeys.articles.all, "list"], pagination),
-        infinite: (pagination?: SearchPaginationParams) =>
+        infinite: (pagination?: Omit<SearchPaginationParams, "cursor">) =>
             buildQueryKey([...queryKeys.articles.all, "infinite"], pagination),
         detail: (id: string) => [...queryKeys.articles.all, id] as const,
         relations: (id: string) => [...queryKeys.articles.all, id, "relations"] as const,

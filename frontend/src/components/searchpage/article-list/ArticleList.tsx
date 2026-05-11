@@ -23,6 +23,7 @@ function formatDate(dateStr: string | null, locale: string): string | null {
 
 function ArticleItem({ article, locale }: ArticleItemProps) {
     const t = useTranslations("Articles");
+    const tSidebar = useTranslations("Sidebar");
     const publishedAt = formatDate(article.publishedAt ?? null, locale);
 
     return (
@@ -35,7 +36,7 @@ function ArticleItem({ article, locale }: ArticleItemProps) {
                 {article.coverImageUrl ? (
                     <Image
                         src={article.coverImageUrl}
-                        alt={article.title ?? ""}
+                        alt={article.title ?? t("untitled")}
                         fill
                         className="object-cover"
                         sizes="180px"
@@ -70,7 +71,7 @@ function ArticleItem({ article, locale }: ArticleItemProps) {
             </div>
 
             <span className="border-foreground text-foreground shrink-0 border px-2 py-1 font-mono text-[8px] font-medium tracking-[1.3px] uppercase">
-                Artikel
+                {tSidebar("categories.articles")}
             </span>
         </Link>
     );
