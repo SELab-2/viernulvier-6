@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "../../../../test/utils/test-utils";
 
 import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
 import * as lookupModule from "@/hooks/api/useTaxonomyLookup";
@@ -82,8 +82,9 @@ describe("EntityTagStrip", () => {
     });
 
     it("renders nothing when no tags resolve", () => {
-        const { container } = render(<EntityTagStrip tags={[]} locale="nl" />);
-        expect(container.firstChild).toBeNull();
+        render(<EntityTagStrip tags={[]} locale="nl" />);
+        expect(screen.queryAllByTestId("entity-tag-chip")).toHaveLength(0);
+        expect(screen.queryByTestId("entity-tag-overflow")).toBeNull();
     });
 
     it("applies tighter padding in compact variant", () => {
