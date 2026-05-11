@@ -1892,10 +1892,10 @@ export interface components {
             event_count: number;
             /** Format: int64 */
             location_count: number;
-            /** Format: date */
-            newest_article?: string | null;
             /** Format: int64 */
             media_count: number;
+            /** Format: date */
+            newest_article?: string | null;
             /** Format: date-time */
             newest_event?: string | null;
             /** Format: date */
