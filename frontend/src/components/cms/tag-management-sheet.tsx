@@ -100,11 +100,11 @@ export function TagManagementSheet({
     return (
         <>
             <Sheet open={open} onOpenChange={onOpenChange}>
-                <SheetContent side="right" className="w-96">
-                    <SheetHeader>
+                <SheetContent side="right" className="w-96 overflow-y-auto p-0">
+                    <SheetHeader className="border-foreground/10 border-b px-6 pt-6 pb-4">
                         <SheetTitle>Manage tags — {getFacetLabel()}</SheetTitle>
                     </SheetHeader>
-                    <div className="mt-4">
+                    <div className="px-6 py-6">
                         <Button
                             variant="outline"
                             size="sm"

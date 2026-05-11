@@ -20,6 +20,8 @@ import { ProductionPreviewData } from "@/types/production-preview.types";
 import { toProductionRow, toProductionUpdateInput } from "../../../../tables/productions/columns";
 import { convertProductionRowToProduction } from "@/lib/production-converter";
 import { useGetEntityTags, useReplaceEntityTags } from "@/hooks/api/useEntityTags";
+import { useGetFacets } from "@/hooks/api/useTaxonomy";
+import type { EntityTagSlim } from "@/types/models/taxonomy.types";
 import { TagPickerSection } from "@/components/cms/tag-picker-section";
 
 interface ProductionEditorPageProps {
@@ -124,6 +126,7 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
 
     const { data: entityTags } = useGetEntityTags("production", id);
     const replaceEntityTags = useReplaceEntityTags();
+    const { data: allFacets } = useGetFacets();
     const [tagEdits, setTagEdits] = useState<string[] | null>(null);
 
     const [edits, setEdits] = useState<Partial<ProductionRow>>({});
@@ -164,6 +167,21 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
     }, [entityTags]);
 
     const tagSlugs = tagEdits ?? baseTagSlugs;
+
+    const tagToFacetMap = useMemo(() => {
+        const map = new Map<string, string>();
+        allFacets?.forEach((facet) => facet.tags.forEach((tag) => map.set(tag.slug, facet.slug)));
+        return map;
+    }, [allFacets]);
+
+    const resolvedTagsForPreview = useMemo((): EntityTagSlim[] => {
+        return tagSlugs
+            .map((slug) => {
+                const facet = tagToFacetMap.get(slug);
+                return facet ? { slug, facet } : null;
+            })
+            .filter((t): t is EntityTagSlim => t !== null);
+    }, [tagSlugs, tagToFacetMap]);
 
     // Merge base with edits
     const production = useMemo(() => {
@@ -230,18 +248,26 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
     useEffect(() => {
         if (!production || !isPreviewOpen) return;
 
-        // Create a hash of the current production to check if it changed
-        const productionHash = JSON.stringify(production);
+        // Create a hash of the current production + tags to check if it changed
+        const productionHash = JSON.stringify({ production, tags: resolvedTagsForPreview });
         if (productionHash === lastSyncedProductionRef.current) return;
 
         lastSyncedProductionRef.current = productionHash;
         const productionForPreview = convertProductionRowToProduction(production);
         const previewData: ProductionPreviewData = {
-            production: productionForPreview,
+            production: { ...productionForPreview, tags: resolvedTagsForPreview },
             events: productionEvents,
         };
         setPreview("production", production.id, previewData, locale, previewSessionId);
-    }, [production, productionEvents, isPreviewOpen, setPreview, locale, previewSessionId]);
+    }, [
+        production,
+        productionEvents,
+        isPreviewOpen,
+        setPreview,
+        locale,
+        previewSessionId,
+        resolvedTagsForPreview,
+    ]);
 
     // Clean up preview data when the editor unmounts
     useEffect(() => {
@@ -278,13 +304,21 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
         if (!isPreviewOpen) {
             const productionForPreview = convertProductionRowToProduction(production);
             const previewData: ProductionPreviewData = {
-                production: productionForPreview,
+                production: { ...productionForPreview, tags: resolvedTagsForPreview },
                 events: productionEvents,
             };
             setPreview("production", production.id, previewData, locale, previewSessionId);
         }
         setIsPreviewOpen((prev) => !prev);
-    }, [production, productionEvents, isPreviewOpen, setPreview, locale, previewSessionId]);
+    }, [
+        production,
+        productionEvents,
+        isPreviewOpen,
+        setPreview,
+        locale,
+        previewSessionId,
+        resolvedTagsForPreview,
+    ]);
 
     const handleChange = (key: keyof ProductionRow, value: string | null) => {
         setEdits((prev) => ({ ...prev, [key]: value }));

@@ -41,13 +41,13 @@ export function TagFormSheet({
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent side="right">
-                <SheetHeader>
+            <SheetContent side="right" className="overflow-y-auto p-0">
+                <SheetHeader className="border-foreground/10 border-b px-6 pt-6 pb-4">
                     <SheetTitle>
                         {initialValues ? "Edit tag" : "New tag"} — {facetLabel}
                     </SheetTitle>
                 </SheetHeader>
-                <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4 px-6 py-6">
                     <div className="space-y-1.5">
                         <Label htmlFor="tag-nl">NL label</Label>
                         <Input

@@ -1,4 +1,4 @@
-export type EntityType = "production" | "artist" | "article" | "media";
+export type EntityType = "production" | "artist" | "article" | "media" | "collection";
 
 export type FacetSlug =
     | "discipline"

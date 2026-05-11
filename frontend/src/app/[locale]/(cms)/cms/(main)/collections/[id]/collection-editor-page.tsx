@@ -34,7 +34,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CollectionCoverField } from "@/components/cms/collection-cover-field";
 import { LanguageSelector } from "@/components/cms/language-selector";
+import { TagPickerSection } from "@/components/cms/tag-picker-section";
 import type { Collection, CollectionItem } from "@/types/models/collection.types";
+import { useGetEntityTags, useReplaceEntityTags } from "@/hooks/api/useEntityTags";
 import { CollectionPreviewData } from "@/types/collection-preview.types";
 import { usePreviewContext } from "@/contexts/PreviewContext";
 import type { Production } from "@/types/models/production.types";
@@ -367,6 +369,9 @@ export function CollectionEditorPage({ id }: { id: string }) {
     const updateCollection = useUpdateCollection();
     const updateItems = useUpdateCollectionItems(id);
     const deleteCollection = useDeleteCollection();
+    const { data: entityTags } = useGetEntityTags("collection", id);
+    const replaceEntityTags = useReplaceEntityTags();
+    const [tagEdits, setTagEdits] = useState<string[] | null>(null);
 
     const [origin] = useState(() => (typeof window !== "undefined" ? window.location.origin : ""));
     const [titleNl, setTitleNl] = useState<string | null>(null);
@@ -445,6 +450,19 @@ export function CollectionEditorPage({ id }: { id: string }) {
 
     const localItems = items ?? initialItems;
 
+    const baseTagSlugs = useMemo(() => {
+        if (!entityTags) return [];
+        return entityTags.flatMap((f) => f.tags.filter((t) => !t.inherited).map((t) => t.slug));
+    }, [entityTags]);
+
+    const inheritedTagSlugs = useMemo(() => {
+        if (!entityTags) return [];
+        return entityTags.flatMap((f) => f.tags.filter((t) => t.inherited).map((t) => t.slug));
+    }, [entityTags]);
+
+    const tagSlugs = tagEdits ?? baseTagSlugs;
+    const tagDirty = tagEdits !== null;
+
     const updateComment = (itemId: string, languageCode: "nl" | "en", value: string) => {
         setItems(
             normalizeItems(
@@ -482,8 +500,9 @@ export function CollectionEditorPage({ id }: { id: string }) {
         );
     }, [initialItems, localItems]);
 
-    const isSaving = updateCollection.isPending || updateItems.isPending;
-    const canSave = hydrationReady && (metadataDirty || itemsDirty) && !isSaving;
+    const isSaving =
+        updateCollection.isPending || updateItems.isPending || replaceEntityTags.isPending;
+    const canSave = hydrationReady && (metadataDirty || itemsDirty || tagDirty) && !isSaving;
 
     const descriptionRef = useRef<HTMLTextAreaElement>(null);
     const descriptionValue =
@@ -748,39 +767,34 @@ export function CollectionEditorPage({ id }: { id: string }) {
         }
     };
 
-    const save = () => {
+    const save = async () => {
         if (!collection || !metadata) return;
 
-        if (metadataDirty) {
-            updateCollection.mutate(
-                {
-                    ...collection,
-                    slug: metadata.slug,
-                    translations: metadata.translations,
-                },
-                {
-                    onSuccess: () => {
-                        toast.success(t("metadataSaved"));
-                        clearPreviewFor("collection", collection.slug);
-                    },
-                    onError: () => toast.error(t("metadataError")),
-                }
-            );
-        }
-
-        if (itemsDirty) {
-            updateItems.mutate(
-                {
-                    items: toItemsSnapshot(localItems),
-                },
-                {
-                    onSuccess: () => {
-                        toast.success(t("itemsSaved"));
-                        clearPreviewFor("collection", collection.slug);
-                    },
-                    onError: () => toast.error(t("itemsError")),
-                }
-            );
+        try {
+            await Promise.all([
+                metadataDirty
+                    ? updateCollection.mutateAsync({
+                          ...collection,
+                          slug: metadata.slug,
+                          translations: metadata.translations,
+                      })
+                    : Promise.resolve(),
+                itemsDirty
+                    ? updateItems.mutateAsync({ items: toItemsSnapshot(localItems) })
+                    : Promise.resolve(),
+                tagDirty
+                    ? replaceEntityTags.mutateAsync({
+                          entityType: "collection",
+                          entityId: collection.id,
+                          tagSlugs,
+                      })
+                    : Promise.resolve(),
+            ]);
+            clearPreviewFor("collection", collection.slug);
+            setTagEdits(null);
+            toast.success(tCommon("save"));
+        } catch {
+            toast.error(t("metadataError"));
         }
     };
 
@@ -927,6 +941,13 @@ export function CollectionEditorPage({ id }: { id: string }) {
                                 </div>
                                 <CollectionCoverField collection={collection} />
                             </section>
+
+                            <TagPickerSection
+                                entityType="collection"
+                                selectedSlugs={tagSlugs}
+                                inheritedSlugs={inheritedTagSlugs}
+                                onChange={(next) => setTagEdits(next)}
+                            />
 
                             {/* Items section */}
                             <section className="space-y-4">
