@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Archive, Plus } from "lucide-react";
 import { RowSelectionState } from "@tanstack/react-table";
@@ -24,6 +24,7 @@ export function ArticlesTable() {
     const t = useTranslations("Cms.Articles");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
+    const locale = useLocale();
     const router = useRouter();
     const searchParams = useSearchParams();
     const q = searchParams.get("q") ?? undefined;
@@ -64,9 +65,10 @@ export function ArticlesTable() {
                 (article) => router.push(`/cms/articles/${article.id}/edit`),
                 handleDelete,
                 tActions,
-                t
+                t,
+                locale
             ),
-        [router, handleDelete, tActions, t]
+        [router, handleDelete, tActions, t, locale]
     );
 
     const selectedArticles = useMemo(

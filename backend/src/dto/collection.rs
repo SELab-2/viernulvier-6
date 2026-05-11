@@ -13,6 +13,7 @@ use database::{
         },
         entity_type::EntityType,
         filtering::cursor::CursorData,
+        tag::EntityTagSlim,
     },
 };
 use serde::{Deserialize, Serialize};
@@ -60,6 +61,10 @@ pub struct CollectionPayload {
     #[serde(default)]
     #[schema(read_only, nullable)]
     pub cover_image_url: Option<String>,
+    /// Slim tag list attached to this collection (output-only).
+    #[serde(default)]
+    #[schema(read_only)]
+    pub tags: Vec<EntityTagSlim>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -143,6 +148,7 @@ fn build_payload(
         created_at: cwt.collection.created_at,
         updated_at: cwt.collection.updated_at,
         cover_image_url: None,
+        tags: vec![],
     }
 }
 
@@ -217,6 +223,14 @@ impl CollectionPayload {
             }
         }
 
+        let mut tags_by_id = db
+            .tags()
+            .slim_tags_for_entities(EntityType::Collection, &ids)
+            .await?;
+        for c in &mut result {
+            c.tags = tags_by_id.remove(&c.id).unwrap_or_default();
+        }
+
         let next_cursor_data = next_cursor.and_then(|c| {
             let data = serde_json::to_vec(&c).ok()?;
             Some(BASE64_URL_SAFE.encode(data))
@@ -252,6 +266,12 @@ impl CollectionPayload {
             }
         }
 
+        let mut tags_by_id = db
+            .tags()
+            .slim_tags_for_entities(EntityType::Collection, &[id])
+            .await?;
+        payload.tags = tags_by_id.remove(&id).unwrap_or_default();
+
         Ok(payload)
     }
 
@@ -278,6 +298,12 @@ impl CollectionPayload {
                 payload.cover_image_url = Some(build_cover_url(base, key));
             }
         }
+
+        let mut tags_by_id = db
+            .tags()
+            .slim_tags_for_entities(EntityType::Collection, &[collection_id])
+            .await?;
+        payload.tags = tags_by_id.remove(&collection_id).unwrap_or_default();
 
         Ok(payload)
     }

@@ -107,5 +107,7 @@ export const queryKeys = {
             entityType
                 ? (["taxonomy", "facets", entityType] as const)
                 : (["taxonomy", "facets"] as const),
+        entityTags: (entityType: string, entityId: string) =>
+            ["taxonomy", "entity-tags", entityType, entityId] as const,
     },
 };

@@ -75,6 +75,7 @@ export const mapProduction = (response: ProductionResponse): Production => {
         translations: (response.translations ?? []).map((t: ApiTranslation) => mapTranslation(t)),
         coverImageUrl: toNullable(response.cover_image_url),
         locations: (response.locations ?? []).map(mapLocationSummary),
+        tags: (response.tags ?? []).map((t) => ({ slug: t.slug, facet: t.facet })),
     };
 };
 

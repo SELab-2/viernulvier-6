@@ -31,6 +31,7 @@ import { ProductionArticle } from "@/components/productionpage/production-articl
 import { ProductionSidebar } from "@/components/productionpage/production-sidebar";
 import { ProductionRelated } from "@/components/productionpage/production-related";
 import { ProductionArticles } from "@/components/productionpage/production-articles";
+import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
 import { Production, ProductionRow } from "@/types/models/production.types";
 
 // Helper to get title from Production or ProductionRow
@@ -202,6 +203,14 @@ export default function ProductionPage({
                                 {artist}
                             </p>
                         ) : null}
+                        {(production as Production).tags?.length > 0 && (
+                            <EntityTagStrip
+                                tags={(production as Production).tags}
+                                locale={locale}
+                                cap={8}
+                                className="mb-4"
+                            />
+                        )}
                     </div>
                     <ProductionArticle
                         production={production}

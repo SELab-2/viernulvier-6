@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 
 import { StatusBadge } from "@/components/cms/status-badge";
 import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
+import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
 import { makeActionsColumn } from "../actions-column";
 import { Action, ActionDisplay, ActionVariant } from "@/types/cms/actions";
 import { ArticleListItem } from "@/types/models/article.types";
@@ -26,7 +27,8 @@ export function makeArticleColumns(
     onEdit: (article: ArticleListItem) => void,
     onDelete: (article: ArticleListItem) => void,
     t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>,
-    tArticles: ReturnType<typeof useTranslations<"Cms.Articles">>
+    tArticles: ReturnType<typeof useTranslations<"Cms.Articles">>,
+    locale: string
 ): ColumnDef<ArticleListItem>[] {
     const actions: Action<ArticleListItem>[] = [
         {
@@ -117,6 +119,19 @@ export function makeArticleColumns(
                     </span>
                 );
             },
+        },
+        {
+            id: "tags",
+            header: "Tags",
+            enableSorting: false,
+            cell: ({ row }) => (
+                <EntityTagStrip
+                    tags={row.original.tags}
+                    locale={locale}
+                    cap={3}
+                    variant="compact"
+                />
+            ),
         },
         makeActionsColumn({ actions }),
     ];

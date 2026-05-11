@@ -5,6 +5,7 @@ import Image from "next/image";
 import { LayoutGrid, List } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Collection } from "@/types/models/collection.types";
+import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
 
 function getLocalized(
     translations: { languageCode: string; title: string; description: string }[],
@@ -83,6 +84,9 @@ export function CollectionHeader({
                             count: collection.items.filter((i) => i.contentType !== "event").length,
                         })}
                     </span>
+                    {collection.tags.length > 0 && (
+                        <EntityTagStrip tags={collection.tags} locale={locale} variant="compact" />
+                    )}
                     {previewNode}
                 </div>
                 <div className="flex items-center gap-3">

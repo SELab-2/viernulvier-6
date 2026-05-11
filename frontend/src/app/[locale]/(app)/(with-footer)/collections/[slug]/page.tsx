@@ -12,7 +12,7 @@ import { UnifiedHeader } from "@/components/layout/header";
 import { LoadingState } from "@/components/shared/loading-state";
 import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
 import { PreviewBadge } from "@/components/preview";
-import { CollectionGrid, CollectionHeader, CollectionList } from "@/components/collections";
+import { CollectionHeader, CollectionGrid, CollectionList } from "@/components/collections";
 
 export default function CollectionPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = use(params);
@@ -85,6 +85,7 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
                             ) : null
                         }
                     />
+
                     {view === "list" ? (
                         <CollectionList items={collection.items} />
                     ) : (

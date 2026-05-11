@@ -45,6 +45,7 @@ describe("useGetArticles (public)", () => {
             subjectPeriodStart: articleListItems[0]!.subject_period_start,
             subjectPeriodEnd: articleListItems[0]!.subject_period_end,
             coverImageUrl: articleListItems[0]!.cover_image_url ?? null,
+            tags: articleListItems[0]!.tags ?? [],
         });
 
         // Verify query cache key
