@@ -24,12 +24,12 @@ export function yearBoundsFromStats(
         const minCandidates = [
             stats.oldest_event ? new Date(stats.oldest_event).getFullYear() : null,
             stats.oldest_article ? new Date(stats.oldest_article).getFullYear() : null,
-        ].filter((y): y is number => y !== null);
+        ].filter((y): y is number => Number.isFinite(y));
 
         const maxCandidates = [
             stats.newest_event ? new Date(stats.newest_event).getFullYear() : null,
             stats.newest_article ? new Date(stats.newest_article).getFullYear() : null,
-        ].filter((y): y is number => y !== null);
+        ].filter((y): y is number => Number.isFinite(y));
 
         minY =
             minCandidates.length > 0

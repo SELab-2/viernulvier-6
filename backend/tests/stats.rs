@@ -85,12 +85,13 @@ async fn get_stats_empty_database(db: PgPool) {
     let expected = StatsBody {
         oldest_event: None,
         newest_event: None,
-        oldest_article: body.oldest_article,
-        newest_article: body.newest_article,
+        // seed_articles (7) + seed_article_kleurenstudies (1) migrations run unconditionally.
+        oldest_article: Some(NaiveDate::from_ymd_opt(2025, 6, 15).unwrap()),
+        newest_article: Some(NaiveDate::from_ymd_opt(2026, 5, 27).unwrap()),
         event_count: 0,
         production_count: 0,
         location_count: 0,
-        article_count: body.article_count,
+        article_count: 8,
         artist_count: 0,
         collection_count: 0,
     };

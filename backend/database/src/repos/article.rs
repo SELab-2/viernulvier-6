@@ -25,16 +25,29 @@ impl<'a> ArticleRepo<'a> {
     }
 
     pub async fn bounds(&self) -> Result<(Option<NaiveDate>, Option<NaiveDate>), DatabaseError> {
-        let (oldest, newest) = sqlx::query_as::<_, (Option<NaiveDate>, Option<NaiveDate>)>(
-            "SELECT MIN(d), MAX(d) FROM (
-                 SELECT subject_period_start AS d FROM articles WHERE status = 'published' AND subject_period_start IS NOT NULL
-                 UNION ALL
-                 SELECT subject_period_end AS d FROM articles WHERE status = 'published' AND subject_period_end IS NOT NULL
-             ) AS all_dates",
+        let (min_start, min_end, max_start, max_end) = sqlx::query_as::<
+            _,
+            (
+                Option<NaiveDate>,
+                Option<NaiveDate>,
+                Option<NaiveDate>,
+                Option<NaiveDate>,
+            ),
+        >(
+            "SELECT
+                 MIN(subject_period_start),
+                 MIN(subject_period_end),
+                 MAX(subject_period_start),
+                 MAX(subject_period_end)
+             FROM articles
+             WHERE status = $1",
         )
+        .bind(ArticleStatus::Published)
         .fetch_one(self.db)
         .await?;
 
+        let oldest = [min_start, min_end].into_iter().flatten().min();
+        let newest = [max_start, max_end].into_iter().flatten().max();
         Ok((oldest, newest))
     }
 
