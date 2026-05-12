@@ -3,14 +3,14 @@
 import { useState, useCallback } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Link } from "@/i18n/routing";
 
 import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
 import { getLocalizedField } from "@/lib/locale";
 import { useGetEventsByProduction } from "@/hooks/api/useEvents";
-import { LoadingState } from "@/components/shared/loading-state";
+import { Skeleton } from "@/components/ui/skeleton";
 import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
 
 interface ProductionItemProps {
@@ -60,8 +60,12 @@ function EventList({ productionId, locale }: { productionId: string; locale: str
 
     if (isLoading) {
         return (
-            <div className="border-muted/35 flex items-center justify-center border-t px-4 py-4 sm:px-0">
-                <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+            <div className="border-muted/35 border-t">
+                <div className="border-muted/25 flex items-center border-b px-4 py-2 sm:px-0">
+                    <Skeleton className="bg-muted/20 h-3 w-28" />
+                    <Skeleton className="bg-muted/20 ml-4 h-3 w-10" />
+                    <Skeleton className="bg-muted/20 mr-2 ml-auto h-4 w-16" />
+                </div>
             </div>
         );
     }
@@ -168,22 +172,26 @@ interface ProductionListProps {
 }
 
 export function ProductionList({ productions, locale, isLoading }: ProductionListProps) {
-    const t = useTranslations("Home");
-
     return (
-        <div
-            className={`relative overflow-hidden ${
-                isLoading && productions.length === 0 ? "flex-1" : ""
-            }`}
-        >
-            {isLoading && productions.length === 0 && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <LoadingState message={t("loading")} className="min-h-0" />
-                </div>
-            )}
-            {productions.map((production) => (
-                <ProductionItem key={production.id} production={production} locale={locale} />
-            ))}
+        <div className="relative overflow-hidden">
+            {isLoading && productions.length === 0
+                ? [0, 1, 2, 3, 4, 5, 6].map((i) => (
+                      <div
+                          key={i}
+                          className="border-muted/35 flex items-start gap-3 border-b px-4 py-3.5 sm:gap-[18px] sm:px-7"
+                      >
+                          <Skeleton className="bg-muted/20 h-[108px] w-[144px] shrink-0 sm:h-[136px] sm:w-[180px]" />
+                          <div className="min-w-0 flex-1 space-y-2 pt-1">
+                              <Skeleton className="bg-muted/20 h-5 w-3/4" />
+                              <Skeleton className="bg-muted/20 h-4 w-1/2" />
+                              <Skeleton className="bg-muted/20 h-3 w-full" />
+                              <Skeleton className="bg-muted/20 h-3 w-2/3" />
+                          </div>
+                      </div>
+                  ))
+                : productions.map((production) => (
+                      <ProductionItem key={production.id} production={production} locale={locale} />
+                  ))}
         </div>
     );
 }

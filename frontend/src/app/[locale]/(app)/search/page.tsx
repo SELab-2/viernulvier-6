@@ -137,7 +137,6 @@ export default function SearchPage() {
             ...(currentCursor ? { cursor: currentCursor } : {}),
         },
     });
-
     const nextCursor = productionsResult?.nextCursor;
 
     // Accumulate all fetched pages from TanStack Query cache

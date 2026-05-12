@@ -12,11 +12,13 @@ const mockSearchParams = new URLSearchParams();
 const { useGetStatsMock, useGetFacetsMock, useGetInfiniteLocationsMock } = vi.hoisted(() => ({
     useGetStatsMock: vi.fn(() => ({
         data: undefined as StatsPayload | undefined,
+        isPending: false,
         isLoading: false,
         isError: false,
     })),
     useGetFacetsMock: vi.fn(() => ({
         data: undefined as Facet[] | undefined,
+        isPending: false,
     })),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     useGetInfiniteLocationsMock: vi.fn((): any => ({
@@ -162,10 +164,11 @@ describe("ArchiveSidebar component", () => {
         window.HTMLElement.prototype.scrollIntoView = vi.fn();
         useGetStatsMock.mockReturnValue({
             data: undefined,
+            isPending: false,
             isLoading: false,
             isError: false,
         });
-        useGetFacetsMock.mockReturnValue({ data: undefined });
+        useGetFacetsMock.mockReturnValue({ data: undefined, isPending: false });
         useGetInfiniteLocationsMock.mockReturnValue({
             data: undefined,
             fetchNextPage: vi.fn(),
@@ -196,7 +199,7 @@ describe("ArchiveSidebar component", () => {
     });
 
     it("renders tags (facets) from API hook", () => {
-        useGetFacetsMock.mockReturnValue({ data: mockFacets });
+        useGetFacetsMock.mockReturnValue({ data: mockFacets, isPending: false });
         renderWithIntl(<ArchiveSidebar />);
 
         expect(screen.getByText("Facet 1")).toBeInTheDocument();
@@ -230,7 +233,7 @@ describe("ArchiveSidebar component", () => {
     });
 
     it("tag starts unchecked when not in URL", () => {
-        useGetFacetsMock.mockReturnValue({ data: mockFacets });
+        useGetFacetsMock.mockReturnValue({ data: mockFacets, isPending: false });
         renderWithIntl(<ArchiveSidebar />);
 
         const tag1 = screen.getByRole("button", { name: "Tag 1" });
@@ -238,7 +241,7 @@ describe("ArchiveSidebar component", () => {
     });
 
     it("tag appears checked when its slug is in URL params", () => {
-        useGetFacetsMock.mockReturnValue({ data: mockFacets });
+        useGetFacetsMock.mockReturnValue({ data: mockFacets, isPending: false });
         mockSearchParams.set("discipline", "t1");
         renderWithIntl(<ArchiveSidebar />);
 
@@ -248,7 +251,7 @@ describe("ArchiveSidebar component", () => {
 
     it("clicking a tag calls router.replace with updated URL param", async () => {
         const user = userEvent.setup();
-        useGetFacetsMock.mockReturnValue({ data: mockFacets });
+        useGetFacetsMock.mockReturnValue({ data: mockFacets, isPending: false });
         renderWithIntl(<ArchiveSidebar />);
 
         await user.click(screen.getByRole("button", { name: "Tag 1" }));
@@ -260,7 +263,7 @@ describe("ArchiveSidebar component", () => {
 
     it("clicking an active tag removes it from the URL param", async () => {
         const user = userEvent.setup();
-        useGetFacetsMock.mockReturnValue({ data: mockFacets });
+        useGetFacetsMock.mockReturnValue({ data: mockFacets, isPending: false });
         mockSearchParams.set("discipline", "t1");
         window.history.pushState({}, "", "?discipline=t1");
         renderWithIntl(<ArchiveSidebar />);
@@ -490,7 +493,7 @@ describe("ArchiveSidebar component", () => {
 
     it("clearAll strips filter params from URL and resets category state", async () => {
         const user = userEvent.setup();
-        useGetFacetsMock.mockReturnValue({ data: mockFacets });
+        useGetFacetsMock.mockReturnValue({ data: mockFacets, isPending: false });
         mockSearchParams.set("discipline", "t1");
         renderWithIntl(<ArchiveSidebar />);
 
@@ -536,6 +539,7 @@ describe("ArchiveSidebar component", () => {
 
         useGetStatsMock.mockReturnValue({
             data: undefined,
+            isPending: false,
             isLoading: false,
             isError: false,
         });
@@ -559,6 +563,7 @@ describe("ArchiveSidebar component", () => {
 
         useGetStatsMock.mockReturnValue({
             data: statsPayload,
+            isPending: false,
             isLoading: false,
             isError: false,
         });
@@ -606,6 +611,26 @@ describe("ArchiveSidebar component", () => {
         await user.click(closeBtn!);
 
         expect(document.body.style.overflow).toBe("");
+    });
+
+    it("shows skeleton year range while stats are loading", () => {
+        useGetStatsMock.mockReturnValue({
+            data: undefined,
+            isPending: true,
+            isLoading: true,
+            isError: false,
+        });
+        renderWithIntl(<ArchiveSidebar minYear={2000} />);
+
+        expect(screen.queryAllByRole("slider")).toHaveLength(0);
+    });
+
+    it("shows skeleton filter groups while facets are loading", () => {
+        useGetFacetsMock.mockReturnValue({ data: undefined, isPending: true });
+        renderWithIntl(<ArchiveSidebar />);
+
+        expect(screen.queryByText("Categories")).not.toBeInTheDocument();
+        expect(screen.queryByText("Locations")).not.toBeInTheDocument();
     });
 
     it("closes mobile sidebar when clicking the backdrop overlay", async () => {
