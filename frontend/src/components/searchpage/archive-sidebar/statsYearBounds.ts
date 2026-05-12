@@ -9,7 +9,8 @@ function currentYear(): number {
 /**
  * Inclusive calendar years for the archive filter, derived from the min of
  * oldest_event/oldest_article and max of newest_event/newest_article in GET /stats.
- * Props are used only as fallback when stats haven't loaded yet.
+ * Props are used as fallback when stats haven't loaded yet or when loaded stats
+ * do not provide any usable min/max year candidates.
  */
 export function yearBoundsFromStats(
     stats: StatsPayload | undefined,

@@ -599,7 +599,12 @@ describe("ArchiveSidebar component", () => {
             newest_article: "2023-01-01",
         };
 
-        useGetStatsMock.mockReturnValue({ data: statsPayload, isLoading: false, isError: false });
+        useGetStatsMock.mockReturnValue({
+            data: statsPayload,
+            isPending: false,
+            isLoading: false,
+            isError: false,
+        });
 
         renderWithIntl(<ArchiveSidebar />);
 
