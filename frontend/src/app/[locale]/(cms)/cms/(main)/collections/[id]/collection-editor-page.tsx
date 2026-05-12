@@ -30,11 +30,26 @@ import { slugify } from "@/lib/slugify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CollectionCoverField } from "@/components/cms/collection-cover-field";
 import { LanguageSelector } from "@/components/cms/language-selector";
-import type { Collection, CollectionItem } from "@/types/models/collection.types";
+import { TagPickerSection } from "@/components/cms/tag-picker-section";
+import { useGetFacets } from "@/hooks/api/useTaxonomy";
+import { useEntityTagEditor } from "@/hooks/useEntityTagEditor";
+import type { EntityTagSlim } from "@/types/models/taxonomy.types";
+import type {
+    Collection,
+    CollectionItem,
+    CollectionVisibility,
+} from "@/types/models/collection.types";
 import { CollectionPreviewData } from "@/types/collection-preview.types";
 import { usePreviewContext } from "@/contexts/PreviewContext";
 import type { Production } from "@/types/models/production.types";
@@ -367,12 +382,16 @@ export function CollectionEditorPage({ id }: { id: string }) {
     const updateCollection = useUpdateCollection();
     const updateItems = useUpdateCollectionItems(id);
     const deleteCollection = useDeleteCollection();
+    const { tagSlugs, inheritedTagSlugs, tagDirty, setTagEdits, resetTagEdits, replaceEntityTags } =
+        useEntityTagEditor("collection", id);
+    const { data: allFacets } = useGetFacets();
 
     const [origin] = useState(() => (typeof window !== "undefined" ? window.location.origin : ""));
     const [titleNl, setTitleNl] = useState<string | null>(null);
     const [titleEn, setTitleEn] = useState<string | null>(null);
     const [descriptionNl, setDescriptionNl] = useState<string | null>(null);
     const [descriptionEn, setDescriptionEn] = useState<string | null>(null);
+    const [visibility, setVisibility] = useState<CollectionVisibility | null>(null);
     const [items, setItems] = useState<LocalCollectionItem[] | null>(null);
 
     const itemsContainerRef = useRef<HTMLDivElement>(null);
@@ -445,6 +464,21 @@ export function CollectionEditorPage({ id }: { id: string }) {
 
     const localItems = items ?? initialItems;
 
+    const tagToFacetMap = useMemo(() => {
+        const map = new Map<string, string>();
+        allFacets?.forEach((facet) => facet.tags.forEach((tag) => map.set(tag.slug, facet.slug)));
+        return map;
+    }, [allFacets]);
+
+    const resolvedTagsForPreview = useMemo((): EntityTagSlim[] => {
+        return tagSlugs
+            .map((slug) => {
+                const facet = tagToFacetMap.get(slug);
+                return facet ? { slug, facet } : null;
+            })
+            .filter((t): t is EntityTagSlim => t !== null);
+    }, [tagSlugs, tagToFacetMap]);
+
     const updateComment = (itemId: string, languageCode: "nl" | "en", value: string) => {
         setItems(
             normalizeItems(
@@ -482,8 +516,13 @@ export function CollectionEditorPage({ id }: { id: string }) {
         );
     }, [initialItems, localItems]);
 
+    const effectiveVisibility: CollectionVisibility =
+        visibility ?? collection?.visibility ?? "public";
+    const visibilityDirty = visibility !== null && visibility !== collection?.visibility;
+
     const isSaving = updateCollection.isPending || updateItems.isPending;
-    const canSave = hydrationReady && (metadataDirty || itemsDirty) && !isSaving;
+    const canSave =
+        hydrationReady && (metadataDirty || itemsDirty || visibilityDirty || tagDirty) && !isSaving;
 
     const descriptionRef = useRef<HTMLTextAreaElement>(null);
     const descriptionValue =
@@ -543,7 +582,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
         localeChangeSourceRef.current = null;
     }, [activeLang, isPreviewOpen, collection?.slug, previewSessionId]);
 
-    // Sync preview data whenever metadata or items change and preview is open
+    // Sync preview data whenever metadata, items, or tags change and preview is open
     useEffect(() => {
         if (!metadata || !collection || !isPreviewOpen) return;
 
@@ -557,6 +596,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
                 position: index + 1,
                 createdAt: createdAtMap.get(item.id) ?? new Date().toISOString(),
             })),
+            tags: resolvedTagsForPreview,
         };
 
         const hash = JSON.stringify(previewCollection);
@@ -565,7 +605,16 @@ export function CollectionEditorPage({ id }: { id: string }) {
 
         const previewData: CollectionPreviewData = { collection: previewCollection };
         setPreview("collection", collection.slug, previewData, locale, previewSessionId);
-    }, [metadata, localItems, collection, isPreviewOpen, setPreview, locale, previewSessionId]);
+    }, [
+        metadata,
+        localItems,
+        collection,
+        isPreviewOpen,
+        setPreview,
+        locale,
+        previewSessionId,
+        resolvedTagsForPreview,
+    ]);
 
     // Clean up preview on unmount
     useEffect(() => {
@@ -590,12 +639,22 @@ export function CollectionEditorPage({ id }: { id: string }) {
                     position: index + 1,
                     createdAt: createdAtMap.get(item.id) ?? new Date().toISOString(),
                 })),
+                tags: resolvedTagsForPreview,
             };
             const previewData: CollectionPreviewData = { collection: previewCollection };
             setPreview("collection", collection.slug, previewData, locale, previewSessionId);
         }
         setIsPreviewOpen((prev) => !prev);
-    }, [metadata, collection, localItems, isPreviewOpen, setPreview, locale, previewSessionId]);
+    }, [
+        metadata,
+        collection,
+        localItems,
+        isPreviewOpen,
+        setPreview,
+        locale,
+        previewSessionId,
+        resolvedTagsForPreview,
+    ]);
 
     const productionIds = useMemo(
         () => localItems.filter((i) => i.contentType === "production").map((i) => i.contentId),
@@ -748,39 +807,33 @@ export function CollectionEditorPage({ id }: { id: string }) {
         }
     };
 
-    const save = () => {
+    const save = async () => {
         if (!collection || !metadata) return;
 
-        if (metadataDirty) {
-            updateCollection.mutate(
-                {
-                    ...collection,
-                    slug: metadata.slug,
-                    translations: metadata.translations,
-                },
-                {
-                    onSuccess: () => {
-                        toast.success(t("metadataSaved"));
-                        clearPreviewFor("collection", collection.slug);
-                    },
-                    onError: () => toast.error(t("metadataError")),
-                }
-            );
-        }
-
-        if (itemsDirty) {
-            updateItems.mutate(
-                {
-                    items: toItemsSnapshot(localItems),
-                },
-                {
-                    onSuccess: () => {
-                        toast.success(t("itemsSaved"));
-                        clearPreviewFor("collection", collection.slug);
-                    },
-                    onError: () => toast.error(t("itemsError")),
-                }
-            );
+        try {
+            await Promise.all([
+                metadataDirty || visibilityDirty
+                    ? updateCollection.mutateAsync({
+                          ...collection,
+                          slug: metadata.slug,
+                          visibility: effectiveVisibility,
+                          translations: metadata.translations,
+                      })
+                    : Promise.resolve(),
+                itemsDirty
+                    ? updateItems.mutateAsync({ items: toItemsSnapshot(localItems) })
+                    : Promise.resolve(),
+                replaceEntityTags.mutateAsync({
+                    entityType: "collection",
+                    entityId: collection.id,
+                    tagSlugs,
+                }),
+            ]);
+            clearPreviewFor("collection", collection.slug);
+            resetTagEdits();
+            toast.success(tCommon("save"));
+        } catch {
+            toast.error(t("metadataError"));
         }
     };
 
@@ -925,8 +978,38 @@ export function CollectionEditorPage({ id }: { id: string }) {
                                         />
                                     </div>
                                 </div>
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium">
+                                        {t("fieldVisibility")}
+                                    </label>
+                                    <Select
+                                        value={effectiveVisibility}
+                                        onValueChange={(v) =>
+                                            setVisibility(v as CollectionVisibility)
+                                        }
+                                    >
+                                        <SelectTrigger className="h-9 text-sm">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="public">
+                                                {t("visibilityPublic")}
+                                            </SelectItem>
+                                            <SelectItem value="unlisted">
+                                                {t("visibilityUnlisted")}
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                                 <CollectionCoverField collection={collection} />
                             </section>
+
+                            <TagPickerSection
+                                entityType="collection"
+                                selectedSlugs={tagSlugs}
+                                inheritedSlugs={inheritedTagSlugs}
+                                onChange={(next) => setTagEdits(next)}
+                            />
 
                             {/* Items section */}
                             <section className="space-y-4">

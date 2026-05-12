@@ -13,6 +13,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { LanguageSelector } from "@/components/cms/language-selector";
 import { useGetMediaEntityLinks } from "@/hooks/api/useMedia";
 import { Media } from "@/types/models/media.types";
+import { TagPickerSection } from "@/components/cms/tag-picker-section";
 
 type Lang = "nl" | "en" | "fr";
 
@@ -22,6 +23,9 @@ interface MediaEditSheetProps {
     onOpenChange: (open: boolean) => void;
     onSave: (media: Media) => void;
     isSaving?: boolean;
+    tagSlugs: string[];
+    inheritedTagSlugs: string[];
+    onTagsChange: (slugs: string[]) => void;
 }
 
 function entityEditPath(entityType: string, entityId: string): string | null {
@@ -43,6 +47,9 @@ export function MediaEditSheet({
     onOpenChange,
     onSave,
     isSaving,
+    tagSlugs,
+    inheritedTagSlugs,
+    onTagsChange,
 }: MediaEditSheetProps) {
     const t = useTranslations("Cms.Ingest");
     const tMedia = useTranslations("Cms.ProductionMedia");
@@ -202,6 +209,21 @@ export function MediaEditSheet({
                                 {t("noEntityLinks")}
                             </p>
                         )}
+                    </div>
+
+                    <div className="space-y-3">
+                        <div className="border-foreground/10 border-b pb-2">
+                            <h3 className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
+                                Tags
+                            </h3>
+                        </div>
+                        <TagPickerSection
+                            entityType="media"
+                            selectedSlugs={tagSlugs}
+                            inheritedSlugs={inheritedTagSlugs}
+                            onChange={onTagsChange}
+                            compact
+                        />
                     </div>
 
                     <div className="flex justify-end gap-2">

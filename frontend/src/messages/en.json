@@ -63,7 +63,7 @@
     },
     "ResultsBar": {
         "sortBy": "Sort by:",
-        "relevant": "Most relevant",
+        "relevance": "Most relevant",
         "recent": "Most recent",
         "oldest": "Oldest first",
         "relevance": "Most relevant"
@@ -519,7 +519,8 @@
             "sortOldest": "Oldest first",
             "sortRelevance": "Relevance",
             "entityLinks": "Used in",
-            "noEntityLinks": "Not linked to any entity."
+            "noEntityLinks": "Not linked to any entity.",
+            "editSaveFailed": "Failed to save media."
         },
         "Collections": {
             "title": "Collections",
@@ -537,6 +538,9 @@
             "descriptionEn": "Description (EN)",
             "fieldTitle": "Title",
             "fieldDescription": "Description",
+            "fieldVisibility": "Visibility",
+            "visibilityPublic": "Public",
+            "visibilityUnlisted": "Unlisted (link only)",
             "metadataSection": "Metadata",
             "shareableLink": "Shareable link",
             "copyLink": "Copy link",
@@ -623,6 +627,35 @@
             "setError": "Failed to set cover image.",
             "removeSuccess": "Cover image removed.",
             "removeError": "Failed to remove cover image."
+        },
+        "Tags": {
+            "sectionLabel": "Tags",
+            "inherited": "Inherited",
+            "loading": "Loading tags…",
+            "manage": "Manage",
+            "addTag": "Add tag…",
+            "search": "Search…",
+            "createTag": "Create \"{label}\"",
+            "newTag": "New tag",
+            "editTag": "Edit tag",
+            "labelNl": "NL label",
+            "labelEn": "EN label",
+            "placeholderNl": "Nederlandse naam",
+            "placeholderEn": "English name",
+            "save": "Save",
+            "saving": "Saving…",
+            "manageTitle": "Manage tags — {facet}",
+            "deleteSuccess": "Tag deleted",
+            "deleteError": "Failed to delete tag",
+            "conflictError": "A tag with this name already exists",
+            "saveError": "Failed to save tag",
+            "editAriaLabel": "Edit {label}",
+            "deleteAriaLabel": "Delete {label}",
+            "deleteTitle": "Delete \"{label}\"?",
+            "deleteDescription": "This tag is used by {count, plural, one {# item} other {# items}}. Deleting it will remove it from all of them. This action cannot be undone.",
+            "cancel": "Cancel",
+            "delete": "Delete",
+            "deleting": "Deleting…"
         },
         "ProductionMedia": {
             "title": "Production media",
@@ -721,7 +754,8 @@
         "shareEmail": "Share via email",
         "articlesTitle": "Articles",
         "articlesLabel": "Article",
-        "articlesFallbackTitle": "Untitled"
+        "articlesFallbackTitle": "Untitled",
+        "partOfTitle": "Part of"
     },
     "NewsArticleComponent": {
         "subTitle": "Vooruit Archive",

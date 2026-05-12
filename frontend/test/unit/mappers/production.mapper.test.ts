@@ -99,4 +99,29 @@ describe("production mapper", () => {
         expect(updatePayload.id).toBe("id-1");
         expect(updatePayload.slug).toBe("updated");
     });
+
+    it("maps slim tags from the API response", () => {
+        const mapped = mapProduction({
+            id: "11111111-1111-1111-1111-111111111111",
+            slug: "p1",
+            translations: [],
+            tags: [
+                { slug: "concert", facet: "discipline" },
+                { slug: "workshop", facet: "format" },
+            ],
+        } as unknown as Parameters<typeof mapProduction>[0]);
+        expect(mapped.tags).toEqual([
+            { slug: "concert", facet: "discipline" },
+            { slug: "workshop", facet: "format" },
+        ]);
+    });
+
+    it("defaults tags to an empty array when missing", () => {
+        const mapped = mapProduction({
+            id: "11111111-1111-1111-1111-111111111111",
+            slug: "p1",
+            translations: [],
+        });
+        expect(mapped.tags).toEqual([]);
+    });
 });

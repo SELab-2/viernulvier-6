@@ -10,9 +10,9 @@ pub mod location;
 pub mod media;
 pub mod paginated;
 pub mod production;
-pub mod series;
 pub mod space;
 pub mod stats;
+pub mod tag;
 
 /// Build a full public URL for an S3 object key given a base URL.
 /// Trims any trailing slash from the base to avoid double slashes.

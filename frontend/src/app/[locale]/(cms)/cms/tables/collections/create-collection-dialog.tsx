@@ -16,6 +16,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import type { CollectionVisibility } from "@/types/models/collection.types";
 
 interface CreateCollectionDialogProps {
     open: boolean;
@@ -29,6 +37,7 @@ export function CreateCollectionDialog({ open, onOpenChange }: CreateCollectionD
     const [titleNl, setTitleNl] = useState("");
     const [titleEn, setTitleEn] = useState("");
     const [manualSlug, setManualSlug] = useState<string | null>(null);
+    const [visibility, setVisibility] = useState<CollectionVisibility>("public");
 
     const slug = manualSlug ?? slugify(titleNl);
     const canSubmit = titleNl.trim().length > 0 && slug.trim().length > 0;
@@ -38,6 +47,7 @@ export function CreateCollectionDialog({ open, onOpenChange }: CreateCollectionD
             setTitleNl("");
             setTitleEn("");
             setManualSlug(null);
+            setVisibility("public");
         }
         onOpenChange(next);
     };
@@ -49,6 +59,7 @@ export function CreateCollectionDialog({ open, onOpenChange }: CreateCollectionD
         createCollection.mutate(
             {
                 slug,
+                visibility,
                 translations: [
                     {
                         languageCode: "nl",
@@ -108,6 +119,21 @@ export function CreateCollectionDialog({ open, onOpenChange }: CreateCollectionD
                             }}
                             required
                         />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="collection-visibility">{t("fieldVisibility")}</Label>
+                        <Select
+                            value={visibility}
+                            onValueChange={(v) => setVisibility(v as CollectionVisibility)}
+                        >
+                            <SelectTrigger id="collection-visibility">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="public">{t("visibilityPublic")}</SelectItem>
+                                <SelectItem value="unlisted">{t("visibilityUnlisted")}</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                     <DialogFooter>
                         <Button

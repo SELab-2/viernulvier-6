@@ -5,6 +5,7 @@ import { mapCollection } from "@/mappers/collection.mapper";
 const baseCollectionDto = {
     id: "coll-1",
     slug: "test-collection",
+    visibility: "public" as const,
     translations: [],
     items: [],
     created_at: "2024-01-01T00:00:00Z",

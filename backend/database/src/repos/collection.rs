@@ -9,7 +9,8 @@ use crate::{
     models::{
         collection::{
             Collection, CollectionCreate, CollectionSearch, CollectionTranslation,
-            CollectionTranslationData, CollectionWithScore, CollectionWithTranslations,
+            CollectionTranslationData, CollectionVisibility, CollectionWithScore,
+            CollectionWithTranslations,
         },
         collection_item::{
             CollectionItem, CollectionItemBulkUpdate, CollectionItemCreate,
@@ -84,13 +85,14 @@ impl<'a> CollectionRepo<'a> {
                     .push(") ");
 
                 query.push(
-                    "
-                    SELECT C.*, distance_score 
-                    FROM collections c 
-                    INNER JOIN matched_translations m ON c.id = m.collection_id 
-                    ORDER BY m.distance_score ASC, c.id DESC
-                ",
+                    "SELECT c.*, distance_score \
+                    FROM collections c \
+                    INNER JOIN matched_translations m ON c.id = m.collection_id ",
                 );
+                if let Some(vis) = &search.visibility {
+                    query.push("WHERE c.visibility = ").push_bind(vis.clone());
+                }
+                query.push(" ORDER BY m.distance_score ASC, c.id DESC");
 
                 debug!("collections query: {}", query.sql());
 
@@ -117,8 +119,18 @@ impl<'a> CollectionRepo<'a> {
                 debug!("querying collections normally");
 
                 let mut query = sqlx::QueryBuilder::new("SELECT * FROM collections ");
+                let mut has_where = false;
+
                 if let Some(cursor) = cursor {
                     query.push(" WHERE id < ").push_bind(cursor.id);
+                    has_where = true;
+                }
+                if let Some(vis) = search.visibility {
+                    if has_where {
+                        query.push(" AND visibility = ").push_bind(vis);
+                    } else {
+                        query.push(" WHERE visibility = ").push_bind(vis);
+                    }
                 }
                 query.push(" ORDER BY id DESC LIMIT ").push_bind(limit);
 
@@ -217,9 +229,10 @@ impl<'a> CollectionRepo<'a> {
         translations: Vec<CollectionTranslationData>,
     ) -> Result<CollectionWithTranslations, DatabaseError> {
         let collection = sqlx::query_as::<_, Collection>(
-            "INSERT INTO collections (slug) VALUES ($1) RETURNING *",
+            "INSERT INTO collections (slug, visibility) VALUES ($1, $2) RETURNING *",
         )
         .bind(data.slug)
+        .bind(data.visibility)
         .fetch_one(self.db)
         .await?;
 
@@ -240,10 +253,11 @@ impl<'a> CollectionRepo<'a> {
         translations: Vec<CollectionTranslationData>,
     ) -> Result<Option<CollectionWithTranslations>, DatabaseError> {
         let Some(collection) = sqlx::query_as::<_, Collection>(
-            "UPDATE collections SET slug = $2, updated_at = NOW() WHERE id = $1 RETURNING *",
+            "UPDATE collections SET slug = $2, visibility = $3, updated_at = NOW() WHERE id = $1 RETURNING *",
         )
         .bind(id)
         .bind(data.slug)
+        .bind(data.visibility)
         .fetch_optional(self.db)
         .await?
         else {
@@ -271,6 +285,65 @@ impl<'a> CollectionRepo<'a> {
         }
 
         Ok(Some(()))
+    }
+
+    pub async fn for_production(
+        &self,
+        production_id: Uuid,
+        visibility: Option<CollectionVisibility>,
+    ) -> Result<Vec<CollectionWithTranslations>, DatabaseError> {
+        let collections: Vec<Collection> = match visibility {
+            Some(vis) => {
+                sqlx::query_as::<_, Collection>(
+                    "SELECT c.* FROM collections c
+                     INNER JOIN collection_items ci ON ci.collection_id = c.id
+                     WHERE ci.content_id = $1 AND ci.content_type = 'production'
+                     AND c.visibility = $2",
+                )
+                .bind(production_id)
+                .bind(vis)
+                .fetch_all(self.db)
+                .await?
+            }
+            None => {
+                sqlx::query_as::<_, Collection>(
+                    "SELECT c.* FROM collections c
+                     INNER JOIN collection_items ci ON ci.collection_id = c.id
+                     WHERE ci.content_id = $1 AND ci.content_type = 'production'",
+                )
+                .bind(production_id)
+                .fetch_all(self.db)
+                .await?
+            }
+        };
+
+        if collections.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let ids: Vec<Uuid> = collections.iter().map(|c| c.id).collect();
+        let all_translations = sqlx::query_as::<_, CollectionTranslation>(
+            "SELECT * FROM collection_translations WHERE collection_id = ANY($1)",
+        )
+        .bind(&ids[..])
+        .fetch_all(self.db)
+        .await?;
+
+        let mut translation_map: HashMap<Uuid, Vec<CollectionTranslation>> = HashMap::new();
+        for t in all_translations {
+            translation_map.entry(t.collection_id).or_default().push(t);
+        }
+
+        Ok(collections
+            .into_iter()
+            .map(|c| {
+                let translations = translation_map.remove(&c.id).unwrap_or_default();
+                CollectionWithTranslations {
+                    collection: c,
+                    translations,
+                }
+            })
+            .collect())
     }
 
     pub async fn items_for(
@@ -447,7 +520,6 @@ impl<'a> CollectionRepo<'a> {
         .await?)
     }
 
-    /// Insert or update translations for a collection. Clears all translations when the list is empty.
     async fn upsert_translations(
         &self,
         collection_id: Uuid,
@@ -536,7 +608,6 @@ impl<'a> CollectionRepo<'a> {
         .await?)
     }
 
-    /// Insert or update translations for a collection item. Clears all translations when the list is empty.
     async fn upsert_item_translations(
         &self,
         item_id: Uuid,

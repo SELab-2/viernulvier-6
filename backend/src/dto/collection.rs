@@ -3,13 +3,17 @@ use chrono::{DateTime, Utc};
 use database::{
     Database,
     models::{
-        collection::{CollectionCreate, CollectionTranslationData, CollectionWithTranslations},
+        collection::{
+            CollectionCreate, CollectionTranslationData, CollectionVisibility,
+            CollectionWithTranslations,
+        },
         collection_item::{
             CollectionContentType, CollectionItemBulkUpdate, CollectionItemCreate,
             CollectionItemTranslationData, CollectionItemWithTranslations,
         },
         entity_type::EntityType,
         filtering::cursor::CursorData,
+        tag::EntityTagSlim,
     },
 };
 use serde::{Deserialize, Serialize};
@@ -43,6 +47,8 @@ pub struct CollectionPayload {
     pub id: Uuid,
     /// URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections.
     pub slug: String,
+    /// Whether this collection appears on entity detail pages (public) or is only accessible via its URL (unlisted).
+    pub visibility: CollectionVisibility,
     /// Per-language title and description.
     pub translations: Vec<CollectionTranslationPayload>,
     /// Ordered list of items in this collection.
@@ -55,12 +61,19 @@ pub struct CollectionPayload {
     #[serde(default)]
     #[schema(read_only, nullable)]
     pub cover_image_url: Option<String>,
+    /// Slim tag list attached to this collection (output-only).
+    #[serde(default)]
+    #[schema(read_only)]
+    pub tags: Vec<EntityTagSlim>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct CollectionPostPayload {
     /// URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections.
     pub slug: String,
+    /// Whether this collection appears on entity detail pages (public) or is only accessible via its URL (unlisted).
+    #[serde(default)]
+    pub visibility: CollectionVisibility,
     /// Per-language title and description.
     pub translations: Vec<CollectionTranslationPayload>,
 }
@@ -121,6 +134,7 @@ fn build_payload(
     CollectionPayload {
         id: cwt.collection.id,
         slug: cwt.collection.slug,
+        visibility: cwt.collection.visibility,
         translations: cwt
             .translations
             .into_iter()
@@ -134,6 +148,7 @@ fn build_payload(
         created_at: cwt.collection.created_at,
         updated_at: cwt.collection.updated_at,
         cover_image_url: None,
+        tags: vec![],
     }
 }
 
@@ -208,6 +223,14 @@ impl CollectionPayload {
             }
         }
 
+        let mut tags_by_id = db
+            .tags()
+            .slim_tags_for_entities(EntityType::Collection, &ids)
+            .await?;
+        for c in &mut result {
+            c.tags = tags_by_id.remove(&c.id).unwrap_or_default();
+        }
+
         let next_cursor_data = next_cursor.and_then(|c| {
             let data = serde_json::to_vec(&c).ok()?;
             Some(BASE64_URL_SAFE.encode(data))
@@ -243,6 +266,12 @@ impl CollectionPayload {
             }
         }
 
+        let mut tags_by_id = db
+            .tags()
+            .slim_tags_for_entities(EntityType::Collection, &[id])
+            .await?;
+        payload.tags = tags_by_id.remove(&id).unwrap_or_default();
+
         Ok(payload)
     }
 
@@ -270,14 +299,76 @@ impl CollectionPayload {
             }
         }
 
+        let mut tags_by_id = db
+            .tags()
+            .slim_tags_for_entities(EntityType::Collection, &[collection_id])
+            .await?;
+        payload.tags = tags_by_id.remove(&collection_id).unwrap_or_default();
+
         Ok(payload)
+    }
+
+    pub async fn for_production(
+        db: &Database,
+        production_id: Uuid,
+        visibility: Option<CollectionVisibility>,
+        public_url: Option<&str>,
+    ) -> Result<Vec<Self>, AppError> {
+        let collections = db
+            .collections()
+            .for_production(production_id, visibility)
+            .await?;
+
+        if collections.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let ids: Vec<Uuid> = collections.iter().map(|c| c.collection.id).collect();
+        let all_items = db.collections().items_for_collections(&ids).await?;
+
+        let mut items_map: HashMap<Uuid, Vec<CollectionItemWithTranslations>> = HashMap::new();
+        for item in all_items {
+            items_map
+                .entry(item.item.collection_id)
+                .or_default()
+                .push(item);
+        }
+
+        let mut result: Vec<Self> = collections
+            .into_iter()
+            .map(|cwt| {
+                let items = items_map.remove(&cwt.collection.id).unwrap_or_default();
+                build_payload(cwt, items)
+            })
+            .collect();
+
+        if let Some(base) = public_url {
+            let cover_keys = db
+                .media()
+                .cover_s3_keys_for_entities(EntityType::Collection, &ids)
+                .await?;
+            for c in &mut result {
+                if let Some(key) = cover_keys.get(&c.id) {
+                    c.cover_image_url = Some(build_cover_url(base, key));
+                }
+            }
+        }
+
+        Ok(result)
     }
 
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {
         let translations = collection_translations_to_data(&self.translations);
         let cwt = db
             .collections()
-            .update(self.id, CollectionCreate { slug: self.slug }, translations)
+            .update(
+                self.id,
+                CollectionCreate {
+                    slug: self.slug,
+                    visibility: self.visibility,
+                },
+                translations,
+            )
             .await?
             .ok_or(AppError::NotFound)?;
         let items = db.collections().items_for(cwt.collection.id).await?;
@@ -294,7 +385,13 @@ impl CollectionPostPayload {
         let translations = collection_translations_to_data(&self.translations);
         let cwt = db
             .collections()
-            .insert(CollectionCreate { slug: self.slug }, translations)
+            .insert(
+                CollectionCreate {
+                    slug: self.slug,
+                    visibility: self.visibility,
+                },
+                translations,
+            )
             .await?;
         Ok(build_payload(cwt, vec![]))
     }

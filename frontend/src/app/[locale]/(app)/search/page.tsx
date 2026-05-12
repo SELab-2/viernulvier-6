@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useRouter } from "@/i18n/routing";
+import { useRouter, usePathname } from "@/i18n/routing";
 
 import { useGetProductions } from "@/hooks/api/useProductions";
 import { useGetLocations } from "@/hooks/api/useLocations";
@@ -14,7 +14,7 @@ import { useGetInfiniteArticles } from "@/hooks/api/useArticles";
 import { useGetFacets } from "@/hooks/api/useTaxonomy";
 import { queryKeys } from "@/hooks/api/query-keys";
 import type { Production, ProductionSortOption } from "@/types/models/production.types";
-import type { PaginatedResult } from "@/types/api/api.types";
+import type { PaginatedResult, SearchPaginationParams } from "@/types/api/api.types";
 
 import { UnifiedHeader } from "@/components/layout/header";
 import { SearchHero } from "@/components/searchpage/search-hero";
@@ -27,56 +27,117 @@ import { LocationList } from "@/components/searchpage/location-list";
 import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
 
 const ARCHIVE_MIN_YEAR = 1980;
+const SORT_VALUES: ProductionSortOption[] = ["recent", "oldest", "relevance"];
 
 export default function SearchPage() {
     const locale = useLocale();
     const t = useTranslations("Search");
     const loadMoreRef = useRef<HTMLDivElement>(null);
     const heroObserverRef = useRef<IntersectionObserver | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const queryClient = useQueryClient();
     const searchParams = useSearchParams();
     const router = useRouter();
+    const pathname = usePathname();
 
     const [cursorHistory, setCursorHistory] = useState<(string | null)[]>([null]);
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
-    const query = searchParams.get("q")?.trim() ?? "";
-    const [draftQuery, setDraftQuery] = useState(query);
-    const [prevQuery, setPrevQuery] = useState(query);
     const [isHeroVisible, setIsHeroVisible] = useState(true);
-    const [activeSort, setActiveSort] = useState<ProductionSortOption>("recent");
-    const [activeCategories, setActiveCategories] = useState<Set<string>>(new Set(["productions"]));
 
-    if (query !== prevQuery) {
-        setPrevQuery(query);
-        setDraftQuery(query);
-        setCursorHistory([null]);
-        setCurrentPageIndex(0);
-    }
+    const query = searchParams.get("q")?.trim() ?? "";
+    const dateFrom = searchParams.get("date_from") ?? undefined;
+    const dateTo = searchParams.get("date_to") ?? undefined;
+    const rawSort = searchParams.get("sort");
+    const sort =
+        rawSort !== null && SORT_VALUES.includes(rawSort as ProductionSortOption)
+            ? (rawSort as ProductionSortOption)
+            : undefined;
+    const locationFilter = searchParams.get("location") ?? undefined;
+
+    const { data: facets } = useGetFacets({ entityType: "production" });
+
+    const facetParams = useMemo(
+        () =>
+            Object.fromEntries(
+                (facets ?? []).flatMap(({ slug }) => {
+                    const val = searchParams.get(slug);
+                    return val ? [[slug, val]] : [];
+                })
+            ),
+        [facets, searchParams]
+    );
+
+    const [draftQuery, setDraftQuery] = useState(query);
+
+    // Reset cursor when any filter changes (including q)
+    const filterKey = [
+        query,
+        ...(facets ?? []).map(({ slug }) => searchParams.get(slug) ?? ""),
+        locationFilter,
+        dateFrom,
+        dateTo,
+        sort,
+    ].join("|");
+    const prevFilterKeyRef = useRef(filterKey);
+    useEffect(() => {
+        if (filterKey !== prevFilterKeyRef.current) {
+            prevFilterKeyRef.current = filterKey;
+            setDraftQuery(query);
+            setCursorHistory([null]);
+            setCurrentPageIndex(0);
+        }
+    }, [filterKey, query]);
 
     const currentCursor = cursorHistory[currentPageIndex];
+
+    const filterParams: SearchPaginationParams = useMemo(
+        () => ({
+            ...(query ? { q: query } : {}),
+            ...facetParams,
+            ...(locationFilter ? { location: locationFilter } : {}),
+            ...(dateFrom ? { date_from: dateFrom } : {}),
+            ...(dateTo ? { date_to: dateTo } : {}),
+            ...(sort ? { sort } : {}),
+        }),
+        [query, facetParams, locationFilter, dateFrom, dateTo, sort]
+    );
 
     const handleSearch = useCallback(
         (value: string) => {
             const trimmed = value.trim();
+            const params = new URLSearchParams(searchParams.toString());
             if (trimmed) {
-                router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+                params.set("q", trimmed);
             } else {
-                router.push("/search");
+                params.delete("q");
             }
+            const qs = params.toString();
+            router.push((qs ? `${pathname}?${qs}` : pathname) as Parameters<typeof router.push>[0]);
         },
-        [router]
+        [router, searchParams, pathname]
     );
 
-    const handleSortChange = useCallback((sort: ProductionSortOption) => {
-        setActiveSort(sort);
-        setCursorHistory([null]);
-        setCurrentPageIndex(0);
-    }, []);
+    const handleSortChange = useCallback(
+        (newSort: ProductionSortOption) => {
+            const params = new URLSearchParams(searchParams.toString());
+            if (newSort === "relevance") {
+                params.delete("sort");
+            } else {
+                params.set("sort", newSort);
+            }
+            const qs = params.toString();
+            router.replace(
+                (qs ? `${pathname}?${qs}` : pathname) as Parameters<typeof router.replace>[0]
+            );
+        },
+        [router, searchParams, pathname]
+    );
 
-    const showProductions = activeCategories.has("productions");
-    const showArtists = activeCategories.has("artists");
-    const showLocations = activeCategories.has("locations");
-    const showArticles = activeCategories.has("articles");
+    // Category state is owned by ArchiveSidebar; all sections always active here.
+    const showProductions = true;
+    const showArtists = true;
+    const showLocations = true;
+    const showArticles = true;
 
     const {
         data: productionsResult,
@@ -84,16 +145,10 @@ export default function SearchPage() {
         isFetching,
     } = useGetProductions({
         params: {
-            ...(query ? { q: query } : {}),
+            ...filterParams,
             ...(currentCursor ? { cursor: currentCursor } : {}),
-            sort: activeSort,
         },
         enabled: showProductions,
-    });
-
-    const { data: locationsResult } = useGetLocations();
-    const { data: facets } = useGetFacets({
-        entityType: "production",
     });
 
     const { data: artistsResult, isLoading: artistsLoading } = useGetArtists({
@@ -112,7 +167,6 @@ export default function SearchPage() {
     });
 
     const nextCursor = productionsResult?.nextCursor;
-    const locationsData = useMemo(() => locationsResult?.data ?? [], [locationsResult?.data]);
     const artistsData = useMemo(() => artistsResult ?? [], [artistsResult]);
     const locationSearchData = useMemo(
         () => locationSearchResult?.data ?? [],
@@ -123,23 +177,20 @@ export default function SearchPage() {
         [articlesPages]
     );
 
-    // Derive accumulated productions from React Query cache for each fetched cursor.
-    // Including productionsResult in deps triggers recalculation when the current page arrives.
+    // Accumulate all fetched pages from TanStack Query cache
     const allProductions = useMemo(
         () =>
             cursorHistory.slice(0, currentPageIndex + 1).flatMap((cursor) => {
-                const pagination = cursor ? { cursor } : undefined;
                 const cached = queryClient.getQueryData<PaginatedResult<Production>>(
                     queryKeys.productions.all({
-                        ...(query ? { q: query } : {}),
-                        ...(pagination ?? {}),
-                        sort: activeSort,
+                        ...filterParams,
+                        ...(cursor ? { cursor } : {}),
                     })
                 );
                 return cached?.data ?? [];
             }),
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [cursorHistory, currentPageIndex, queryClient, productionsResult, query, activeSort]
+        [cursorHistory, currentPageIndex, queryClient, productionsResult, filterParams]
     );
 
     const loadMore = useCallback(() => {
@@ -163,6 +214,28 @@ export default function SearchPage() {
         };
     }, [loadMore]);
 
+    // The sidebar is sticky: without a max-height it would extend below the viewport with no
+    // way to reach the bottom. max-h: calc(100vh - --container-top) caps it to the visible
+    // portion at all times — before sticky (hero on screen) and after. CSS can't express
+    // "100vh minus this element's current top offset", so we track it here.
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el) return;
+        const update = () => {
+            el.style.setProperty(
+                "--container-top",
+                `${Math.max(0, el.getBoundingClientRect().top)}px`
+            );
+        };
+        update();
+        window.addEventListener("scroll", update, { passive: true });
+        window.addEventListener("resize", update, { passive: true });
+        return () => {
+            window.removeEventListener("scroll", update);
+            window.removeEventListener("resize", update);
+        };
+    }, []);
+
     const heroRef = useCallback((node: HTMLDivElement | null) => {
         heroObserverRef.current?.disconnect();
         if (!node) return;
@@ -173,19 +246,14 @@ export default function SearchPage() {
         heroObserverRef.current.observe(node);
     }, []);
 
-    const maxYear = useMemo(() => new Date().getFullYear(), []);
-
     const isAnyLoading =
-        (showProductions && productionsLoading) ||
-        (showArtists && artistsLoading) ||
-        (showLocations && locationSearchLoading) ||
-        (showArticles && articlesLoading);
+        productionsLoading || artistsLoading || locationSearchLoading || articlesLoading;
 
     const hasAnyResults =
-        (showProductions && allProductions.length > 0) ||
-        (showArtists && artistsData.length > 0) ||
-        (showLocations && locationSearchData.length > 0) ||
-        (showArticles && articlesData.length > 0);
+        allProductions.length > 0 ||
+        artistsData.length > 0 ||
+        locationSearchData.length > 0 ||
+        articlesData.length > 0;
 
     return (
         <>
@@ -204,15 +272,13 @@ export default function SearchPage() {
             />
 
             <div
+                ref={containerRef}
                 className="flex min-h-[calc(100vh-300px)] items-start"
                 style={{ ["--results-bar-height" as string]: "0px" }}
             >
                 <ArchiveSidebar
-                    locations={locationsData}
-                    facets={facets ?? []}
                     minYear={ARCHIVE_MIN_YEAR}
-                    maxYear={maxYear}
-                    onFilterChange={(filters) => setActiveCategories(new Set(filters.categories))}
+                    initialTag={searchParams.get("tag") ?? undefined}
                 />
                 <main className="flex min-w-0 flex-1 flex-col">
                     <ResultsBar
@@ -220,7 +286,7 @@ export default function SearchPage() {
                         onQueryChange={setDraftQuery}
                         onSearch={handleSearch}
                         showSearch={!isHeroVisible}
-                        sort={activeSort}
+                        sort={sort ?? "relevance"}
                         onSortChange={handleSortChange}
                     />
 

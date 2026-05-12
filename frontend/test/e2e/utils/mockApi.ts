@@ -35,6 +35,7 @@ export async function mockApi(page: Page) {
                 description: `Description ${i + 1}`,
             },
         ],
+        tags: i === 0 ? [{ slug: "concert", facet: "discipline" }] : [],
     }));
 
     const paginatedProductions: PaginatedProductionResponse = {
@@ -89,9 +90,27 @@ export async function mockApi(page: Page) {
     });
 
     // Mock facets
-    const emptyFacets: FacetResponse[] = [];
+    const facets: FacetResponse[] = [
+        {
+            slug: "discipline",
+            translations: [
+                { language_code: "nl", label: "Discipline" },
+                { language_code: "en", label: "Discipline" },
+            ],
+            tags: [
+                {
+                    slug: "concert",
+                    sort_order: 1,
+                    translations: [
+                        { language_code: "nl", label: "Concert", description: null },
+                        { language_code: "en", label: "Concert", description: null },
+                    ],
+                },
+            ],
+        },
+    ];
     await page.route("**/api/taxonomy/facets**", async (route) => {
-        await route.fulfill({ json: emptyFacets });
+        await route.fulfill({ json: facets });
     });
 
     // Mock articles
@@ -104,6 +123,7 @@ export async function mockApi(page: Page) {
             updated_at: "2026-03-20T14:00:00Z",
             subject_period_start: "1960-01-01",
             subject_period_end: "1970-12-31",
+            tags: [{ slug: "concert", facet: "discipline" }],
         },
         {
             id: "bbbbbbbb-cccc-4ddd-eeee-ffffffffffff",
@@ -113,6 +133,7 @@ export async function mockApi(page: Page) {
             updated_at: "2026-02-10T09:00:00Z",
             subject_period_start: "1960-01-01",
             subject_period_end: "1980-12-31",
+            tags: [],
         },
     ];
 

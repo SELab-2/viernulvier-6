@@ -31,6 +31,7 @@ const makeItem = (id: string): CollectionItem => ({
 const makeCollection = (overrides: Partial<Collection> = {}): Collection => ({
     id: "col-1",
     slug: "test-collection",
+    visibility: "public",
     translations: [
         { languageCode: "en", title: "Test Collection", description: "A test description." },
         { languageCode: "nl", title: "Testcollectie", description: "Een testbeschrijving." },
@@ -39,6 +40,7 @@ const makeCollection = (overrides: Partial<Collection> = {}): Collection => ({
     createdAt: "2026-01-01T00:00:00Z",
     updatedAt: "2026-04-01T00:00:00Z",
     coverImageUrl: null,
+    tags: [],
     ...overrides,
 });
 

@@ -136,13 +136,50 @@ async fn get_search_filter_audience(db: PgPool) {
 async fn get_search_filter_location(db: PgPool) {
     let app = TestRouter::new(db);
 
+    // non-UUID values should not silently disable filtering
     let response = app.get("/productions?location=de-vooruit&limit=10").await;
     assert_eq!(response.status(), StatusCode::OK);
 
     let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert!(data.data.is_empty(), "invalid location should not return unfiltered data");
+}
+
+#[sqlx::test(fixtures("productions", "events", "locations", "spaces", "halls", "event_halls"))]
+#[test_log::test]
+async fn get_filter_location_by_uuid(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    // location UUID 10000000-...-0001 → space → hall → event 33333333 → production 11111111
+    let loc_id = "10000000-0000-0000-0000-000000000001";
+    let response = app
+        .get(&format!("/productions?location={loc_id}&limit=10"))
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 1, "expected exactly 1 production at this location");
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "11111111-1111-1111-1111-111111111111"
+    );
+}
+
+#[sqlx::test(fixtures("productions", "events", "locations", "spaces", "halls", "event_halls"))]
+#[test_log::test]
+async fn get_filter_location_by_uuid_no_match(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    // valid UUID that has no associated events
+    let unrelated_loc = "10000000-0000-0000-0000-000000000005";
+    let response = app
+        .get(&format!("/productions?location={unrelated_loc}&limit=10"))
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
     assert!(
-        !data.data.is_empty(),
-        "Expected at least one production for this location"
+        data.data.is_empty(),
+        "expected no productions for a location with no events"
     );
 }
 
@@ -685,6 +722,42 @@ async fn delete_not_found(db: PgPool) {
 
     let response = app.delete(&format!("/productions/{}", Uuid::nil())).await;
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test(fixtures("productions", "production_taggings"))]
+#[test_log::test]
+async fn list_includes_slim_tags(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/productions?limit=10").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body: serde_json::Value = response.into_struct().await;
+    let data = body["data"].as_array().expect("data is an array");
+
+    let prod_1 = data
+        .iter()
+        .find(|p| p["id"] == "11111111-1111-1111-1111-111111111111")
+        .expect("production 1 present");
+    let tags = prod_1["tags"].as_array().expect("tags is an array");
+    let slugs: Vec<&str> = tags.iter().map(|t| t["slug"].as_str().unwrap()).collect();
+    assert!(slugs.contains(&"concert"));
+    assert!(slugs.contains(&"workshop"));
+    let facets: Vec<&str> = tags.iter().map(|t| t["facet"].as_str().unwrap()).collect();
+    assert!(facets.contains(&"discipline"));
+    assert!(facets.contains(&"format"));
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn list_untagged_production_has_empty_tags(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/productions?limit=10").await;
+    let body: serde_json::Value = response.into_struct().await;
+    let data = body["data"].as_array().unwrap();
+    for prod in data {
+        let tags = prod["tags"].as_array().expect("every row has a tags array");
+        assert!(tags.is_empty(), "expected empty tags for {prod}");
+    }
 }
 
 #[sqlx::test(fixtures("productions", "artists", "production_artists"))]

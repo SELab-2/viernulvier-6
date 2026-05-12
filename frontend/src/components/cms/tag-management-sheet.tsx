@@ -1,0 +1,197 @@
+"use client";
+
+import * as React from "react";
+import { isAxiosError } from "axios";
+import { useLocale, useTranslations } from "next-intl";
+import { Pencil, Trash2, Plus } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { TagFormSheet } from "./tag-form-sheet";
+import { DeleteTagDialog } from "./delete-tag-dialog";
+import { useCreateTag, useDeleteTag, useUpdateTag } from "@/hooks/api/useTaxonomy";
+import { Facet as FacetSlugType, Tag } from "@/types/models/taxonomy.types";
+import { Facet as ApiFacetEnum } from "@/types/api/taxonomy.api.types";
+
+interface TagManagementSheetProps {
+    open: boolean;
+    facet: FacetSlugType;
+    onOpenChange: (open: boolean) => void;
+    openWithCreate?: string;
+}
+
+type FormMode = { type: "create"; prefill?: string } | { type: "edit"; tag: Tag };
+
+export function TagManagementSheet({
+    open,
+    facet,
+    onOpenChange,
+    openWithCreate,
+}: TagManagementSheetProps) {
+    const t = useTranslations("Cms.Tags");
+    const locale = useLocale();
+    const [formMode, setFormMode] = React.useState<FormMode | null>(() =>
+        openWithCreate !== undefined ? { type: "create", prefill: openWithCreate } : null
+    );
+    const [deleteTarget, setDeleteTarget] = React.useState<{
+        tag: Tag;
+        usageCount: number;
+    } | null>(null);
+    const [formError, setFormError] = React.useState<string | undefined>();
+
+    const createTag = useCreateTag();
+    const updateTag = useUpdateTag();
+    const deleteTag = useDeleteTag();
+
+    const getLabel = (tag: Tag) =>
+        tag.translations.find((t) => t.languageCode === locale)?.label ??
+        tag.translations[0]?.label ??
+        tag.slug;
+
+    const getFacetLabel = () =>
+        facet.translations.find((t) => t.languageCode === locale)?.label ?? facet.slug;
+
+    const handleFormSubmit = async ({ nl, en }: { nl: string; en: string }) => {
+        setFormError(undefined);
+        const translations = [
+            { language_code: "nl", label: nl },
+            { language_code: "en", label: en },
+        ];
+        try {
+            if (formMode?.type === "create") {
+                await createTag.mutateAsync({
+                    facet: facet.slug as ApiFacetEnum,
+                    translations,
+                });
+            } else if (formMode?.type === "edit") {
+                await updateTag.mutateAsync({
+                    slug: formMode.tag.slug,
+                    translations,
+                });
+            }
+            setFormMode(null);
+        } catch (err) {
+            setFormError(
+                isAxiosError(err) && err.response?.status === 409
+                    ? t("conflictError")
+                    : t("saveError")
+            );
+        }
+    };
+
+    const handleDeleteClick = async (tag: Tag) => {
+        try {
+            const result = await deleteTag.mutateAsync({ slug: tag.slug, force: false });
+            if (result?.usage_count && result.usage_count > 0) {
+                setDeleteTarget({ tag, usageCount: result.usage_count });
+            } else {
+                toast.success(t("deleteSuccess"));
+            }
+        } catch {
+            toast.error(t("deleteError"));
+        }
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteTarget) return;
+        try {
+            await deleteTag.mutateAsync({ slug: deleteTarget.tag.slug, force: true });
+            toast.success(t("deleteSuccess"));
+            setDeleteTarget(null);
+        } catch {
+            toast.error(t("deleteError"));
+        }
+    };
+
+    return (
+        <>
+            <Sheet open={open} onOpenChange={onOpenChange}>
+                <SheetContent side="right" className="w-96 overflow-y-auto p-0">
+                    <SheetHeader className="border-foreground/10 border-b px-6 pt-6 pb-4">
+                        <SheetTitle>{t("manageTitle", { facet: getFacetLabel() })}</SheetTitle>
+                    </SheetHeader>
+                    <div className="px-6 py-6">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="mb-4 w-full"
+                            onClick={() => setFormMode({ type: "create" })}
+                        >
+                            <Plus className="mr-2 h-4 w-4" />
+                            {t("newTag")}
+                        </Button>
+                        <div className="space-y-1">
+                            {facet.tags.map((tag) => (
+                                <div
+                                    key={tag.slug}
+                                    className="hover:bg-muted flex items-center justify-between rounded-md px-2 py-1.5"
+                                >
+                                    <span className="text-sm">{getLabel(tag)}</span>
+                                    <div className="flex gap-1">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7"
+                                            aria-label={t("editAriaLabel", {
+                                                label: getLabel(tag),
+                                            })}
+                                            onClick={() => setFormMode({ type: "edit", tag })}
+                                        >
+                                            <Pencil className="h-3.5 w-3.5" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="text-destructive hover:text-destructive h-7 w-7"
+                                            aria-label={t("deleteAriaLabel", {
+                                                label: getLabel(tag),
+                                            })}
+                                            onClick={() => handleDeleteClick(tag)}
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </SheetContent>
+            </Sheet>
+
+            <TagFormSheet
+                key={formMode?.type === "edit" ? formMode.tag.slug : "create"}
+                open={formMode !== null}
+                facetLabel={getFacetLabel()}
+                onOpenChange={(o) => !o && setFormMode(null)}
+                onSubmit={handleFormSubmit}
+                isSubmitting={createTag.isPending || updateTag.isPending}
+                initialValues={
+                    formMode?.type === "edit"
+                        ? {
+                              nl:
+                                  formMode.tag.translations.find((t) => t.languageCode === "nl")
+                                      ?.label ?? "",
+                              en:
+                                  formMode.tag.translations.find((t) => t.languageCode === "en")
+                                      ?.label ?? "",
+                          }
+                        : formMode?.type === "create" && formMode.prefill
+                          ? { nl: formMode.prefill, en: "" }
+                          : undefined
+                }
+                errorMessage={formError}
+            />
+
+            {deleteTarget && (
+                <DeleteTagDialog
+                    open={true}
+                    tagLabel={getLabel(deleteTarget.tag)}
+                    usageCount={deleteTarget.usageCount}
+                    isDeleting={deleteTag.isPending}
+                    onConfirm={handleDeleteConfirm}
+                    onCancel={() => setDeleteTarget(null)}
+                />
+            )}
+        </>
+    );
+}

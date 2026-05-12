@@ -2,8 +2,10 @@
 
 import { type ReactNode } from "react";
 import Image from "next/image";
+import { LayoutGrid, List } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Collection } from "@/types/models/collection.types";
+import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
 
 function getLocalized(
     translations: { languageCode: string; title: string; description: string }[],
@@ -29,9 +31,16 @@ function formatDate(dateStr: string, locale: string): string {
 interface CollectionHeaderProps {
     collection: Collection;
     previewNode?: ReactNode;
+    view?: "grid" | "list";
+    onViewChange?: (view: "grid" | "list") => void;
 }
 
-export function CollectionHeader({ collection, previewNode }: CollectionHeaderProps) {
+export function CollectionHeader({
+    collection,
+    previewNode,
+    view = "grid",
+    onViewChange,
+}: CollectionHeaderProps) {
     const locale = useLocale();
     const t = useTranslations("Collections");
 
@@ -75,11 +84,44 @@ export function CollectionHeader({ collection, previewNode }: CollectionHeaderPr
                             count: collection.items.filter((i) => i.contentType !== "event").length,
                         })}
                     </span>
+                    {collection.tags.length > 0 && (
+                        <EntityTagStrip tags={collection.tags} locale={locale} variant="compact" />
+                    )}
                     {previewNode}
                 </div>
-                <time dateTime={collection.updatedAt}>
-                    {formatDate(collection.updatedAt, locale)}
-                </time>
+                <div className="flex items-center gap-3">
+                    {onViewChange && (
+                        <div className="flex items-center gap-1">
+                            <button
+                                type="button"
+                                onClick={() => onViewChange("grid")}
+                                className={
+                                    view === "grid"
+                                        ? "text-foreground"
+                                        : "text-muted-foreground hover:text-foreground"
+                                }
+                                aria-label="Grid view"
+                            >
+                                <LayoutGrid className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => onViewChange("list")}
+                                className={
+                                    view === "list"
+                                        ? "text-foreground"
+                                        : "text-muted-foreground hover:text-foreground"
+                                }
+                                aria-label="List view"
+                            >
+                                <List className="h-3.5 w-3.5" />
+                            </button>
+                        </div>
+                    )}
+                    <time dateTime={collection.updatedAt}>
+                        {formatDate(collection.updatedAt, locale)}
+                    </time>
+                </div>
             </div>
 
             {/* Description */}

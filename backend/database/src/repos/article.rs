@@ -24,6 +24,20 @@ impl<'a> ArticleRepo<'a> {
         Self { db }
     }
 
+    pub async fn bounds(&self) -> Result<(Option<NaiveDate>, Option<NaiveDate>), DatabaseError> {
+        let (oldest, newest) = sqlx::query_as::<_, (Option<NaiveDate>, Option<NaiveDate>)>(
+            "SELECT MIN(d), MAX(d) FROM (
+                 SELECT subject_period_start AS d FROM articles WHERE status = 'published' AND subject_period_start IS NOT NULL
+                 UNION ALL
+                 SELECT subject_period_end AS d FROM articles WHERE status = 'published' AND subject_period_end IS NOT NULL
+             ) AS all_dates",
+        )
+        .fetch_one(self.db)
+        .await?;
+
+        Ok((oldest, newest))
+    }
+
     pub async fn count_published(&self) -> Result<i64, DatabaseError> {
         let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM articles WHERE status = $1")
             .bind(ArticleStatus::Published)
