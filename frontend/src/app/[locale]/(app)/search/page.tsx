@@ -133,12 +133,6 @@ export default function SearchPage() {
         [router, searchParams, pathname]
     );
 
-    // Category state is owned by ArchiveSidebar; all sections always active here.
-    const showProductions = true;
-    const showArtists = true;
-    const showLocations = true;
-    const showArticles = true;
-
     const {
         data: productionsResult,
         isLoading: productionsLoading,
@@ -148,21 +142,17 @@ export default function SearchPage() {
             ...filterParams,
             ...(currentCursor ? { cursor: currentCursor } : {}),
         },
-        enabled: showProductions,
     });
 
     const { data: artistsResult, isLoading: artistsLoading } = useGetArtists({
         q: query || undefined,
-        enabled: showArtists,
     });
 
     const { data: locationSearchResult, isLoading: locationSearchLoading } = useGetLocations({
         pagination: query ? { q: query } : undefined,
-        enabled: showLocations,
     });
 
     const { data: articlesPages, isLoading: articlesLoading } = useGetInfiniteArticles({
-        enabled: showArticles,
         pagination: query ? { q: query } : undefined,
     });
 
@@ -299,36 +289,28 @@ export default function SearchPage() {
                         />
                     ) : (
                         <>
-                            {showProductions && (
-                                <ProductionList
-                                    productions={allProductions}
-                                    locale={locale}
-                                    isLoading={productionsLoading}
-                                />
-                            )}
+                            <ProductionList
+                                productions={allProductions}
+                                locale={locale}
+                                isLoading={productionsLoading}
+                            />
 
-                            {showArtists && (
-                                <ArtistList artists={artistsData} isLoading={artistsLoading} />
-                            )}
+                            <ArtistList artists={artistsData} isLoading={artistsLoading} />
 
-                            {showLocations && (
-                                <LocationList
-                                    locations={locationSearchData}
-                                    isLoading={locationSearchLoading}
-                                />
-                            )}
+                            <LocationList
+                                locations={locationSearchData}
+                                isLoading={locationSearchLoading}
+                            />
 
-                            {showArticles && (
-                                <ArticleList
-                                    articles={articlesData}
-                                    locale={locale}
-                                    isLoading={articlesLoading}
-                                />
-                            )}
+                            <ArticleList
+                                articles={articlesData}
+                                locale={locale}
+                                isLoading={articlesLoading}
+                            />
                         </>
                     )}
 
-                    {showProductions && allProductions.length > 0 && nextCursor !== null && (
+                    {allProductions.length > 0 && nextCursor !== null && (
                         <div ref={loadMoreRef} className="flex justify-center py-8">
                             {isFetching && (
                                 <div className="text-muted-foreground flex items-center gap-2">
