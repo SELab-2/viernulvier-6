@@ -47,7 +47,12 @@ export function ArchiveSidebar({ minYear: minYearProp, initialTag }: ArchiveSide
     const searchParams = useSearchParams();
 
     const { data: stats, isPending: statsLoading } = useGetStats();
-    const { data: locationsPages, fetchNextPage, hasNextPage } = useGetInfiniteLocations();
+    const {
+        data: locationsPages,
+        fetchNextPage,
+        hasNextPage,
+        isPending: locationsLoading,
+    } = useGetInfiniteLocations();
     const { data: facetsData, isPending: facetsLoading } = useGetFacets({
         entityType: "production",
     });
@@ -57,6 +62,8 @@ export function ArchiveSidebar({ minYear: minYearProp, initialTag }: ArchiveSide
         [locationsPages]
     );
     const facetList = useMemo<Facet[]>(() => facetsData ?? [], [facetsData]);
+
+    const sidebarLoading = statsLoading || facetsLoading || locationsLoading;
 
     const bounds = useMemo(
         () => yearBoundsFromStats(stats, { minYear: minYearProp }),
@@ -357,7 +364,7 @@ export function ArchiveSidebar({ minYear: minYearProp, initialTag }: ArchiveSide
                 {dateMode === "year" && (
                     <>
                         <div className="text-foreground mb-3.5 flex justify-between font-mono text-[13px] select-text">
-                            {statsLoading ? (
+                            {sidebarLoading ? (
                                 <>
                                     <Skeleton className="bg-muted/20 h-4 w-10" />
                                     <Skeleton className="bg-muted/20 h-4 w-10" />
@@ -370,7 +377,7 @@ export function ArchiveSidebar({ minYear: minYearProp, initialTag }: ArchiveSide
                                 </>
                             )}
                         </div>
-                        {statsLoading ? (
+                        {sidebarLoading ? (
                             <Skeleton className="bg-muted/20 h-2 w-full" />
                         ) : (
                             <YearRangeSlider
@@ -398,7 +405,7 @@ export function ArchiveSidebar({ minYear: minYearProp, initialTag }: ArchiveSide
                 )}
             </div>
 
-            {facetsLoading ? (
+            {sidebarLoading ? (
                 <FilterGroupSkeleton />
             ) : (
                 <FilterGroup label={t("categories.label")}>
@@ -422,7 +429,7 @@ export function ArchiveSidebar({ minYear: minYearProp, initialTag }: ArchiveSide
                 </FilterGroup>
             )}
 
-            {facetsLoading
+            {sidebarLoading
                 ? [0, 1, 2, 3, 4, 5].map((i) => <FilterGroupSkeleton key={i} />)
                 : facetList.map((facet) => (
                       <FacetFilterGroup
@@ -437,7 +444,7 @@ export function ArchiveSidebar({ minYear: minYearProp, initialTag }: ArchiveSide
                       />
                   ))}
 
-            {facetsLoading ? (
+            {sidebarLoading ? (
                 <FilterGroupSkeleton />
             ) : (
                 <LocationFilterGroup
