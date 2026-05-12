@@ -559,6 +559,8 @@ describe("ArchiveSidebar component", () => {
             artist_count: 0,
             collection_count: 0,
             media_count: 0,
+            oldest_article: "2018-01-01",
+            newest_article: "2024-06-01",
         };
 
         useGetStatsMock.mockReturnValue({
@@ -577,9 +579,40 @@ describe("ArchiveSidebar component", () => {
         await waitFor(() => {
             expect(screen.getByText("2016")).toBeInTheDocument();
         });
-        expect(screen.getByText("2023")).toBeInTheDocument();
+        // maxYear comes from newest_article (2024) which exceeds newest_event (2023)
+        expect(screen.getByText("2024")).toBeInTheDocument();
         expect(screen.queryByText("1980")).not.toBeInTheDocument();
     });
+
+    it("uses oldest_article when it predates oldest_event", async () => {
+        const statsPayload: StatsPayload = {
+            oldest_event: "2016-06-15T12:00:00.000Z",
+            newest_event: "2023-08-01T12:00:00.000Z",
+            event_count: 10,
+            production_count: 5,
+            location_count: 3,
+            article_count: 2,
+            artist_count: 0,
+            collection_count: 0,
+            media_count: 0,
+            oldest_article: "2005-01-01",
+            newest_article: "2023-01-01",
+        };
+
+        useGetStatsMock.mockReturnValue({
+            data: statsPayload,
+            isPending: false,
+            isLoading: false,
+            isError: false,
+        });
+
+        renderWithIntl(<ArchiveSidebar />);
+
+        await waitFor(() => expect(screen.getByText("2005")).toBeInTheDocument());
+        expect(screen.queryByText("2016")).not.toBeInTheDocument();
+    });
+
+    // ── Mobile open/close ─────────────────────────────────────────────────────
 
     it("opens mobile sidebar when clicking the FAB button", async () => {
         const user = userEvent.setup();

@@ -50,7 +50,7 @@ async fn get_stats_matches_fixture(db: PgPool) {
     let expected = StatsBody {
         oldest_event: Some(utc("2026-04-10T18:00:00Z")),
         newest_event: Some(utc("2026-07-15T17:00:00Z")),
-        // stats-published: start=2020-01-01, end=2020-12-31
+        // stats-published: start=2000-01-01, end=2030-12-31
         // kleurenstudies migration: start=2025-11-04, no end
         oldest_article: Some(NaiveDate::from_ymd_opt(2000, 1, 1).unwrap()),
         newest_article: Some(NaiveDate::from_ymd_opt(2030, 12, 31).unwrap()),
@@ -85,12 +85,13 @@ async fn get_stats_empty_database(db: PgPool) {
     let expected = StatsBody {
         oldest_event: None,
         newest_event: None,
-        oldest_article: body.oldest_article,
-        newest_article: body.newest_article,
+        // seed_articles (7) + seed_article_kleurenstudies (1) migrations run unconditionally.
+        oldest_article: Some(NaiveDate::from_ymd_opt(2025, 6, 15).unwrap()),
+        newest_article: Some(NaiveDate::from_ymd_opt(2026, 5, 27).unwrap()),
         event_count: 0,
         production_count: 0,
         location_count: 0,
-        article_count: body.article_count,
+        article_count: 8,
         artist_count: 0,
         collection_count: 0,
     };
