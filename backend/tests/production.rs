@@ -136,13 +136,50 @@ async fn get_search_filter_audience(db: PgPool) {
 async fn get_search_filter_location(db: PgPool) {
     let app = TestRouter::new(db);
 
+    // non-UUID values should not silently disable filtering
     let response = app.get("/productions?location=de-vooruit&limit=10").await;
     assert_eq!(response.status(), StatusCode::OK);
 
     let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert!(data.data.is_empty(), "invalid location should not return unfiltered data");
+}
+
+#[sqlx::test(fixtures("productions", "events", "locations", "spaces", "halls", "event_halls"))]
+#[test_log::test]
+async fn get_filter_location_by_uuid(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    // location UUID 10000000-...-0001 → space → hall → event 33333333 → production 11111111
+    let loc_id = "10000000-0000-0000-0000-000000000001";
+    let response = app
+        .get(&format!("/productions?location={loc_id}&limit=10"))
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 1, "expected exactly 1 production at this location");
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "11111111-1111-1111-1111-111111111111"
+    );
+}
+
+#[sqlx::test(fixtures("productions", "events", "locations", "spaces", "halls", "event_halls"))]
+#[test_log::test]
+async fn get_filter_location_by_uuid_no_match(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    // valid UUID that has no associated events
+    let unrelated_loc = "10000000-0000-0000-0000-000000000005";
+    let response = app
+        .get(&format!("/productions?location={unrelated_loc}&limit=10"))
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
     assert!(
-        !data.data.is_empty(),
-        "Expected at least one production for this location"
+        data.data.is_empty(),
+        "expected no productions for a location with no events"
     );
 }
 
