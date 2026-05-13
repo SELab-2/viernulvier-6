@@ -13,6 +13,7 @@ import { useGetInfiniteLocations } from "@/hooks/api/useLocations";
 import { useGetFacets } from "@/hooks/api/useTaxonomy";
 import { useRouter, usePathname } from "@/i18n/routing";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { YearRangeSlider } from "./YearRangeSlider";
 import { DateRangePicker } from "./DateRangePicker";
 import { yearBoundsFromStats } from "./statsYearBounds";
@@ -45,15 +46,24 @@ export function ArchiveSidebar({ minYear: minYearProp, initialTag }: ArchiveSide
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    const { data: stats } = useGetStats();
-    const { data: locationsPages, fetchNextPage, hasNextPage } = useGetInfiniteLocations();
-    const { data: facets } = useGetFacets({ entityType: "production" });
+    const { data: stats, isPending: statsLoading } = useGetStats();
+    const {
+        data: locationsPages,
+        fetchNextPage,
+        hasNextPage,
+        isPending: locationsLoading,
+    } = useGetInfiniteLocations();
+    const { data: facetsData, isPending: facetsLoading } = useGetFacets({
+        entityType: "production",
+    });
 
     const locations = useMemo(
         () => locationsPages?.pages.flatMap((p) => p.data) ?? [],
         [locationsPages]
     );
-    const facetList = useMemo<Facet[]>(() => facets ?? [], [facets]);
+    const facetList = useMemo<Facet[]>(() => facetsData ?? [], [facetsData]);
+
+    const sidebarLoading = statsLoading || facetsLoading || locationsLoading;
 
     const bounds = useMemo(
         () => yearBoundsFromStats(stats, { minYear: minYearProp }),
@@ -354,18 +364,31 @@ export function ArchiveSidebar({ minYear: minYearProp, initialTag }: ArchiveSide
                 {dateMode === "year" && (
                     <>
                         <div className="text-foreground mb-3.5 flex justify-between font-mono text-[13px] select-text">
-                            <span>{displayedYearRange[0]}</span>
-                            <span className="text-muted-foreground text-[11px]">—</span>
-                            <span>{displayedYearRange[1]}</span>
+                            {sidebarLoading ? (
+                                <>
+                                    <Skeleton className="bg-muted/20 h-4 w-10" />
+                                    <Skeleton className="bg-muted/20 h-4 w-10" />
+                                </>
+                            ) : (
+                                <>
+                                    <span>{displayedYearRange[0]}</span>
+                                    <span className="text-muted-foreground text-[11px]">—</span>
+                                    <span>{displayedYearRange[1]}</span>
+                                </>
+                            )}
                         </div>
-                        <YearRangeSlider
-                            min={bounds.minYear}
-                            max={bounds.maxYear}
-                            value={displayedYearRange}
-                            onChange={handleYearRangeChange}
-                            ariaLabelStart={t("year.rangeFrom")}
-                            ariaLabelEnd={t("year.rangeTo")}
-                        />
+                        {sidebarLoading ? (
+                            <Skeleton className="bg-muted/20 h-2 w-full" />
+                        ) : (
+                            <YearRangeSlider
+                                min={bounds.minYear}
+                                max={bounds.maxYear}
+                                value={displayedYearRange}
+                                onChange={handleYearRangeChange}
+                                ariaLabelStart={t("year.rangeFrom")}
+                                ariaLabelEnd={t("year.rangeTo")}
+                            />
+                        )}
                     </>
                 )}
 
@@ -382,49 +405,59 @@ export function ArchiveSidebar({ minYear: minYearProp, initialTag }: ArchiveSide
                 )}
             </div>
 
-            <FilterGroup label={t("categories.label")}>
-                <div className="flex flex-wrap gap-2 pb-2.5">
-                    {CATEGORIES.map((cat) => (
-                        <button
-                            key={cat}
-                            type="button"
-                            aria-pressed={checkedCategories.has(cat)}
-                            onClick={() => toggleCategory(cat)}
-                            className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
-                                checkedCategories.has(cat)
-                                    ? "bg-foreground text-background border-foreground"
-                                    : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
-                            }`}
-                        >
-                            {t(`categories.${cat}`)}
-                        </button>
-                    ))}
-                </div>
-            </FilterGroup>
+            {sidebarLoading ? (
+                <FilterGroupSkeleton />
+            ) : (
+                <FilterGroup label={t("categories.label")}>
+                    <div className="flex flex-wrap gap-2 pb-2.5">
+                        {CATEGORIES.map((cat) => (
+                            <button
+                                key={cat}
+                                type="button"
+                                aria-pressed={checkedCategories.has(cat)}
+                                onClick={() => toggleCategory(cat)}
+                                className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
+                                    checkedCategories.has(cat)
+                                        ? "bg-foreground text-background border-foreground"
+                                        : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                                }`}
+                            >
+                                {t(`categories.${cat}`)}
+                            </button>
+                        ))}
+                    </div>
+                </FilterGroup>
+            )}
 
-            {facetList.map((facet) => (
-                <FacetFilterGroup
-                    key={facet.slug}
-                    label={getLabel(facet.translations, locale)}
-                    facet={facet}
-                    activeTags={activeFacets[facet.slug] ?? new Set()}
-                    toggleTag={(tagSlug) => toggleTag(facet.slug, tagSlug)}
-                    locale={locale}
+            {sidebarLoading
+                ? [0, 1, 2, 3, 4, 5].map((i) => <FilterGroupSkeleton key={i} />)
+                : facetList.map((facet) => (
+                      <FacetFilterGroup
+                          key={facet.slug}
+                          label={getLabel(facet.translations, locale)}
+                          facet={facet}
+                          activeTags={activeFacets[facet.slug] ?? new Set()}
+                          toggleTag={(tagSlug) => toggleTag(facet.slug, tagSlug)}
+                          locale={locale}
+                          showMoreLabel={t("showMore")}
+                          showLessLabel={t("showLess")}
+                      />
+                  ))}
+
+            {sidebarLoading ? (
+                <FilterGroupSkeleton />
+            ) : (
+                <LocationFilterGroup
+                    label={t("locations.label")}
+                    locations={locations}
+                    checkedLocations={checkedLocations}
+                    toggleLocation={toggleLocation}
                     showMoreLabel={t("showMore")}
                     showLessLabel={t("showLess")}
+                    fetchNextPage={fetchNextPage}
+                    hasNextPage={!!hasNextPage}
                 />
-            ))}
-
-            <LocationFilterGroup
-                label={t("locations.label")}
-                locations={locations}
-                checkedLocations={checkedLocations}
-                toggleLocation={toggleLocation}
-                showMoreLabel={t("showMore")}
-                showLessLabel={t("showLess")}
-                fetchNextPage={fetchNextPage}
-                hasNextPage={!!hasNextPage}
-            />
+            )}
         </>
     );
 
@@ -482,6 +515,19 @@ function ModeTab({
 }
 
 const TAGS_INITIAL_COUNT = 4;
+
+function FilterGroupSkeleton() {
+    return (
+        <div className="border-border border-t px-4 py-2.5">
+            <Skeleton className="bg-muted/20 mb-3 h-3 w-20" />
+            <div className="flex flex-wrap gap-2 pb-1">
+                {[0, 1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="bg-muted/20 h-6 w-28" />
+                ))}
+            </div>
+        </div>
+    );
+}
 
 function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
     return (
