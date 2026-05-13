@@ -19,13 +19,15 @@ export const queryKeys = {
             buildQueryKey(["import-errors"], { ...pagination, resolved: resolved ?? false }),
     },
     locations: {
-        all: (pagination?: SearchPaginationParams) => buildQueryKey(["locations"], pagination),
+        all: (pagination?: SearchPaginationParams) =>
+            buildQueryKey(queryKeys.locations.root, pagination),
+        root: ["locations"] as const,
         infinite: (params?: Omit<PaginationParams, "cursor">) =>
             params
-                ? (["locations", "infinite", params] as const)
-                : (["locations", "infinite"] as const),
-        detail: (id: string) => ["locations", id] as const,
-        bySlug: (slug: string) => ["locations", "slug", slug] as const,
+                ? ([...queryKeys.locations.root, "infinite", params] as const)
+                : ([...queryKeys.locations.root, "infinite"] as const),
+        detail: (id: string) => [...queryKeys.locations.root, id] as const,
+        bySlug: (slug: string) => [...queryKeys.locations.root, "slug", slug] as const,
     },
     productions: {
         all: (params?: ProductionSearchParams) => buildQueryKey(["productions"], params),
