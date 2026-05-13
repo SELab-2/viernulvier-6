@@ -148,6 +148,10 @@ export function useTableSelection<TData>({
     const toggleRowRef = useRef(toggleRow);
     const selectOnlyRef = useRef(selectOnly);
     const focusRowRef = useRef(focusRow);
+    const focusedRowIndexRef = useRef(focusedRowIndex);
+    const clearSelectionRef = useRef(clearSelection);
+    const onRowSelectionChangeRef = useRef(onRowSelectionChange);
+    const onJumpToEndRef = useRef(onJumpToEnd);
 
     useEffect(() => {
         anchorRowIdRef.current = anchorRowId;
@@ -156,7 +160,22 @@ export function useTableSelection<TData>({
         toggleRowRef.current = toggleRow;
         selectOnlyRef.current = selectOnly;
         focusRowRef.current = focusRow;
-    }, [anchorRowId, rows, selectRange, toggleRow, selectOnly, focusRow]);
+        focusedRowIndexRef.current = focusedRowIndex;
+        clearSelectionRef.current = clearSelection;
+        onRowSelectionChangeRef.current = onRowSelectionChange;
+        onJumpToEndRef.current = onJumpToEnd;
+    }, [
+        anchorRowId,
+        rows,
+        selectRange,
+        toggleRow,
+        selectOnly,
+        focusRow,
+        focusedRowIndex,
+        clearSelection,
+        onRowSelectionChange,
+        onJumpToEnd,
+    ]);
 
     const handleRowClick = useCallback(
         (row: Row<TData>, event: React.MouseEvent) => {
@@ -202,7 +221,13 @@ export function useTableSelection<TData>({
 
     const processKeyEvent = useCallback(
         (event: KeyboardEvent) => {
-            if (!enableSelection || rows.length === 0) return;
+            if (!enableSelection) return;
+
+            const rows = rowsRef.current;
+            const focusedIdx = focusedRowIndexRef.current;
+            const anchorId = anchorRowIdRef.current;
+
+            if (rows.length === 0) return;
 
             const target = event.target as HTMLElement;
             const isTyping =
@@ -214,86 +239,74 @@ export function useTableSelection<TData>({
 
             if (event.key === "ArrowDown" || event.key === "j") {
                 event.preventDefault();
-                const next =
-                    focusedRowIndex === -1 ? 0 : Math.min(focusedRowIndex + 1, rows.length - 1);
-                if (event.shiftKey && anchorRowId) {
-                    selectRange(anchorRowId, rows[next].id);
+                const next = focusedIdx === -1 ? 0 : Math.min(focusedIdx + 1, rows.length - 1);
+                if (event.shiftKey && anchorId) {
+                    selectRangeRef.current(anchorId, rows[next].id);
                 }
-                focusRow(next);
+                focusRowRef.current(next);
             } else if (event.key === "ArrowUp" || event.key === "k") {
                 event.preventDefault();
-                const next = focusedRowIndex === -1 ? -1 : Math.max(focusedRowIndex - 1, 0);
-                if (next >= 0 && event.shiftKey && anchorRowId) {
-                    selectRange(anchorRowId, rows[next].id);
+                const next = focusedIdx === -1 ? -1 : Math.max(focusedIdx - 1, 0);
+                if (next >= 0 && event.shiftKey && anchorId) {
+                    selectRangeRef.current(anchorId, rows[next].id);
                 }
-                if (next >= 0) focusRow(next);
+                if (next >= 0) focusRowRef.current(next);
             } else if (event.key === "g") {
                 const now = Date.now();
                 if (lastKeyRef.current?.key === "g" && now - lastKeyRef.current.time < 500) {
                     event.preventDefault();
-                    focusRow(0);
+                    focusRowRef.current(0);
                     lastKeyRef.current = null;
                 } else {
                     lastKeyRef.current = { key: "g", time: now };
                 }
             } else if (event.key === "G") {
                 event.preventDefault();
-                if (onJumpToEnd) {
-                    onJumpToEnd().then(() => {
-                        focusRow(rows.length - 1);
+                if (onJumpToEndRef.current) {
+                    onJumpToEndRef.current().then(() => {
+                        focusRowRef.current(rowsRef.current.length - 1);
                     });
                 } else {
-                    focusRow(rows.length - 1);
+                    focusRowRef.current(rows.length - 1);
                 }
             } else if (event.key === "v") {
                 event.preventDefault();
-                if (focusedRowIndex >= 0 && focusedRowIndex < rows.length) {
-                    const row = rows[focusedRowIndex];
-                    toggleRow(row.id);
+                if (focusedIdx >= 0 && focusedIdx < rows.length) {
+                    const row = rows[focusedIdx];
+                    toggleRowRef.current(row.id);
                     setAnchorRowId(row.id);
                 }
             } else if (event.key === " ") {
                 event.preventDefault();
-                if (focusedRowIndex === -1 && rows.length > 0) {
-                    focusRow(0);
+                if (focusedIdx === -1 && rows.length > 0) {
+                    focusRowRef.current(0);
                     const row = rows[0];
-                    toggleRow(row.id);
+                    toggleRowRef.current(row.id);
                     setAnchorRowId(row.id);
-                } else if (focusedRowIndex >= 0 && focusedRowIndex < rows.length) {
-                    const row = rows[focusedRowIndex];
-                    if (event.shiftKey && anchorRowId) {
-                        selectRange(anchorRowId, row.id);
+                } else if (focusedIdx >= 0 && focusedIdx < rows.length) {
+                    const row = rows[focusedIdx];
+                    if (event.shiftKey && anchorId) {
+                        selectRangeRef.current(anchorId, row.id);
                     } else {
-                        toggleRow(row.id);
+                        toggleRowRef.current(row.id);
                         setAnchorRowId(row.id);
                     }
                 }
             } else if (event.key === "Escape") {
                 event.preventDefault();
-                clearSelection();
+                clearSelectionRef.current();
             } else if (event.key === "a" && (event.metaKey || event.ctrlKey)) {
                 event.preventDefault();
                 const next: RowSelectionState = {};
                 for (const r of rows) {
                     next[r.id] = true;
                 }
-                onRowSelectionChange?.(next);
+                onRowSelectionChangeRef.current?.(next);
                 setAnchorRowId(rows[0]?.id ?? null);
-                focusRow(0);
+                focusRowRef.current(0);
             }
         },
-        [
-            enableSelection,
-            rows,
-            focusedRowIndex,
-            anchorRowId,
-            selectRange,
-            toggleRow,
-            clearSelection,
-            onRowSelectionChange,
-            focusRow,
-            onJumpToEnd,
-        ]
+        [enableSelection]
     );
 
     useEffect(() => {

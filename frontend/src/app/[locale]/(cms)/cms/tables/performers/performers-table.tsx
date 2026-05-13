@@ -32,7 +32,7 @@ export function PerformersTable() {
         fetchNextPage,
         hasNextPage,
         isLoading,
-    } = useGetInfiniteArtists({ q });
+    } = useGetInfiniteArtists({ limit: 50, q });
 
     const artists = useMemo(
         () => infiniteData?.pages.flatMap((page) => page.data) ?? [],

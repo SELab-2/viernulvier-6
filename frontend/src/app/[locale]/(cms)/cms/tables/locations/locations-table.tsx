@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Archive, ChevronsUp } from "lucide-react";
@@ -46,7 +46,7 @@ export function LocationsTable() {
         data: infiniteData,
         fetchNextPage,
         hasNextPage,
-    } = useGetInfiniteLocations(q ? { q } : undefined);
+    } = useGetInfiniteLocations({ limit: 50, ...(q ? { q } : {}) });
 
     const { data: hallsResult, isLoading: hallsLoading } = useGetHalls({
         pagination: { limit: 1000 },
@@ -107,6 +107,12 @@ export function LocationsTable() {
         selectedChildCount: selectedHallCount,
         clearSelection,
     } = useParentChildSelection<Location>(hallsByLocation);
+
+    // Stable ref for childSelection so renderHalls doesn't recreate on child toggle
+    const childSelectionRef = useRef(childSelection);
+    useEffect(() => {
+        childSelectionRef.current = childSelection;
+    }, [childSelection]);
 
     const spotlightItems: SpotlightItem[] = spotlight
         ? [{ kind: "plain", src: spotlight.src, alt: spotlight.alt }]
@@ -208,13 +214,13 @@ export function LocationsTable() {
                 <MemoSubTable
                     items={halls}
                     columns={hallCols}
-                    rowSelection={childSelection.get(locationId)}
+                    rowSelection={childSelectionRef.current.get(locationId)}
                     onRowSelectionChange={getChildHandler(locationId)}
                     getRowId={getHallRowId}
                 />
             );
         },
-        [childSelection, getChildHandler, getHallRowId, hallCols, hallsByLocation, hallsLoading]
+        [getChildHandler, getHallRowId, hallCols, hallsByLocation, hallsLoading]
     );
 
     const hasExpanded = Object.keys(expanded).length > 0;

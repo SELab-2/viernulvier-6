@@ -80,10 +80,13 @@ export const useGetCollectionBySlug = (slug: string, options?: { enabled?: boole
     });
 };
 
-export const useGetInfiniteCollections = (options?: { enabled?: boolean }) => {
+export const useGetInfiniteCollections = (
+    params?: Omit<PaginationParams, "cursor">,
+    options?: { enabled?: boolean }
+) => {
     return useInfiniteQuery({
-        queryKey: queryKeys.collections.cmsInfinite(),
-        queryFn: async ({ pageParam }) => fetchCollectionsPage({ cursor: pageParam }),
+        queryKey: queryKeys.collections.cmsInfinite(params),
+        queryFn: async ({ pageParam }) => fetchCollectionsPage({ ...params, cursor: pageParam }),
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
         initialPageParam: null as string | null,
         ...options,

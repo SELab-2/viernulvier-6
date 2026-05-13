@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Archive, ChevronsUp } from "lucide-react";
@@ -39,7 +39,7 @@ export function ProductionsTable() {
         data: infiniteData,
         fetchNextPage,
         hasNextPage,
-    } = useGetInfiniteProductions(q ? { q } : undefined);
+    } = useGetInfiniteProductions({ limit: 50, ...(q ? { q } : {}) });
     const deleteProduction = useDeleteProduction();
 
     const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
@@ -82,6 +82,12 @@ export function ProductionsTable() {
         selectedChildCount: selectedEventCount,
         clearSelection,
     } = useParentChildSelection<Production>(eventsByProduction);
+
+    // Stable ref for childSelection so renderEvents doesn't recreate on child toggle
+    const childSelectionRef = useRef(childSelection);
+    useEffect(() => {
+        childSelectionRef.current = childSelection;
+    }, [childSelection]);
 
     const handleEditProduction = useCallback(
         (production: Production) => {
@@ -226,20 +232,13 @@ export function ProductionsTable() {
                 <MemoSubTable
                     items={events}
                     columns={eventCols}
-                    rowSelection={childSelection.get(productionId)}
+                    rowSelection={childSelectionRef.current.get(productionId)}
                     onRowSelectionChange={getChildHandler(productionId)}
                     getRowId={getEventRowId}
                 />
             );
         },
-        [
-            childSelection,
-            eventCols,
-            eventsByProduction,
-            eventsLoading,
-            getChildHandler,
-            getEventRowId,
-        ]
+        [eventCols, eventsByProduction, eventsLoading, getChildHandler, getEventRowId]
     );
 
     const hasExpanded = Object.keys(expanded).length > 0;

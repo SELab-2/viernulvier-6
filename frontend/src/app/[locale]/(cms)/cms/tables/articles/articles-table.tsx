@@ -34,7 +34,7 @@ export function ArticlesTable() {
         fetchNextPage,
         hasNextPage,
         isLoading,
-    } = useGetInfiniteArticlesCms(q ? { q } : undefined);
+    } = useGetInfiniteArticlesCms({ limit: 50, ...(q ? { q } : {}) });
 
     const articles = useMemo(
         () => infiniteData?.pages.flatMap((page) => page.data) ?? [],
