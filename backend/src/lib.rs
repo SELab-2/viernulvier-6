@@ -1,4 +1,7 @@
-use crate::extractors::auth::{AdminUser, EditorUser};
+use crate::{
+    extractors::auth::{AdminUser, EditorUser},
+    vnv_import_taks::start_importer,
+};
 use api::ApiImporter;
 use argon2::{
     Argon2,
@@ -37,6 +40,7 @@ pub mod dto;
 mod error;
 mod extractors;
 mod handlers;
+mod vnv_import_taks;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -129,8 +133,12 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
             .endpoint_url(&s3_config.endpoint)
             .credentials_provider(creds)
             .force_path_style(true)
-            .request_checksum_calculation(aws_sdk_s3::config::RequestChecksumCalculation::WhenRequired)
-            .response_checksum_validation(aws_sdk_s3::config::ResponseChecksumValidation::WhenRequired)
+            .request_checksum_calculation(
+                aws_sdk_s3::config::RequestChecksumCalculation::WhenRequired,
+            )
+            .response_checksum_validation(
+                aws_sdk_s3::config::ResponseChecksumValidation::WhenRequired,
+            )
             .build();
 
         aws_sdk_s3::Client::from_conf(s3_conf)
@@ -152,12 +160,7 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
             importer_s3_bucket,
         );
 
-        tokio::spawn(async move {
-            match api_importer.update_since_last().await {
-                Ok(()) => info!("API importer finished successfully"),
-                Err(e) => error!("API imported ended with error: {e:?}"),
-            }
-        });
+        start_importer(api_importer);
     } else {
         warn!("API importer is disabled");
     }
