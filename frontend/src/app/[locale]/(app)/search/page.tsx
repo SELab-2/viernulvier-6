@@ -8,6 +8,9 @@ import { useSearchParams } from "next/navigation";
 import { useRouter, usePathname } from "@/i18n/routing";
 
 import { useGetProductions } from "@/hooks/api/useProductions";
+import { useGetLocations } from "@/hooks/api/useLocations";
+import { useGetArtists } from "@/hooks/api/useArtists";
+import { useGetInfiniteArticles } from "@/hooks/api/useArticles";
 import { useGetFacets } from "@/hooks/api/useTaxonomy";
 import { queryKeys } from "@/hooks/api/query-keys";
 import type { Production, ProductionSortOption } from "@/types/models/production.types";
@@ -18,6 +21,9 @@ import { SearchHero } from "@/components/searchpage/search-hero";
 import { ResultsBar } from "@/components/searchpage/results-bar";
 import { ArchiveSidebar } from "@/components/searchpage/archive-sidebar";
 import { ProductionList } from "@/components/searchpage/production-list";
+import { ArticleList } from "@/components/searchpage/article-list";
+import { ArtistList } from "@/components/searchpage/artist-list";
+import { LocationList } from "@/components/searchpage/location-list";
 import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
 
 const ARCHIVE_MIN_YEAR = 1980;
@@ -137,7 +143,29 @@ export default function SearchPage() {
             ...(currentCursor ? { cursor: currentCursor } : {}),
         },
     });
+
+    const { data: artistsResult, isLoading: artistsLoading } = useGetArtists({
+        q: query || undefined,
+    });
+
+    const { data: locationSearchResult, isLoading: locationSearchLoading } = useGetLocations({
+        pagination: query ? { q: query } : undefined,
+    });
+
+    const { data: articlesPages, isLoading: articlesLoading } = useGetInfiniteArticles({
+        pagination: query ? { q: query } : undefined,
+    });
+
     const nextCursor = productionsResult?.nextCursor;
+    const artistsData = useMemo(() => artistsResult ?? [], [artistsResult]);
+    const locationSearchData = useMemo(
+        () => locationSearchResult?.data ?? [],
+        [locationSearchResult?.data]
+    );
+    const articlesData = useMemo(
+        () => articlesPages?.pages.flatMap((p) => p.data) ?? [],
+        [articlesPages]
+    );
 
     // Accumulate all fetched pages from TanStack Query cache
     const allProductions = useMemo(
@@ -208,6 +236,15 @@ export default function SearchPage() {
         heroObserverRef.current.observe(node);
     }, []);
 
+    const isAnyLoading =
+        productionsLoading || artistsLoading || locationSearchLoading || articlesLoading;
+
+    const hasAnyResults =
+        allProductions.length > 0 ||
+        artistsData.length > 0 ||
+        locationSearchData.length > 0 ||
+        articlesData.length > 0;
+
     return (
         <>
             <UnifiedHeader
@@ -242,7 +279,8 @@ export default function SearchPage() {
                         sort={sort ?? "relevance"}
                         onSortChange={handleSortChange}
                     />
-                    {allProductions.length === 0 && !productionsLoading ? (
+
+                    {!hasAnyResults && !isAnyLoading ? (
                         <VintageEmptyState
                             title={t("noResultsTitle")}
                             description={t("noResultsText", { query })}
@@ -250,11 +288,26 @@ export default function SearchPage() {
                             caption={t("articleImageCaption")}
                         />
                     ) : (
-                        <ProductionList
-                            productions={allProductions}
-                            locale={locale}
-                            isLoading={productionsLoading}
-                        />
+                        <>
+                            <ProductionList
+                                productions={allProductions}
+                                locale={locale}
+                                isLoading={productionsLoading}
+                            />
+
+                            <ArtistList artists={artistsData} isLoading={artistsLoading} />
+
+                            <LocationList
+                                locations={locationSearchData}
+                                isLoading={locationSearchLoading}
+                            />
+
+                            <ArticleList
+                                articles={articlesData}
+                                locale={locale}
+                                isLoading={articlesLoading}
+                            />
+                        </>
                     )}
 
                     {allProductions.length > 0 && nextCursor !== null && (

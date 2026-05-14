@@ -49,11 +49,12 @@ const fetchProductionsByArtistId = async (id: string): Promise<Production[]> => 
     return mapProductions(data);
 };
 
-export const useGetArtists = (options?: { q?: string }) => {
+export const useGetArtists = (options?: { q?: string; enabled?: boolean }) => {
     const q = options?.q || undefined;
     return useQuery({
         queryKey: queryKeys.artists.list({ q }),
         queryFn: () => fetchArtists(q),
+        enabled: options?.enabled ?? true,
     });
 };
 

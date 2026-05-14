@@ -1,4 +1,4 @@
-import { PaginationParams } from "@/types/api/api.types";
+import { PaginationParams, SearchPaginationParams } from "@/types/api/api.types";
 import { EntityMediaParams, MediaSearchParams } from "@/types/models/media.types";
 import { ProductionSearchParams } from "@/types/models/production.types";
 import { CollectionVisibility } from "@/types/models/collection.types";
@@ -19,13 +19,15 @@ export const queryKeys = {
             buildQueryKey(["import-errors"], { ...pagination, resolved: resolved ?? false }),
     },
     locations: {
-        all: (pagination?: PaginationParams) => buildQueryKey(["locations"], pagination),
+        all: (pagination?: SearchPaginationParams) =>
+            buildQueryKey(queryKeys.locations.root, pagination),
+        root: ["locations"] as const,
         infinite: (params?: Omit<PaginationParams, "cursor">) =>
             params
-                ? (["locations", "infinite", params] as const)
-                : (["locations", "infinite"] as const),
-        detail: (id: string) => ["locations", id] as const,
-        bySlug: (slug: string) => ["locations", "slug", slug] as const,
+                ? ([...queryKeys.locations.root, "infinite", params] as const)
+                : ([...queryKeys.locations.root, "infinite"] as const),
+        detail: (id: string) => [...queryKeys.locations.root, id] as const,
+        bySlug: (slug: string) => [...queryKeys.locations.root, "slug", slug] as const,
     },
     productions: {
         all: (params?: ProductionSearchParams) => buildQueryKey(["productions"], params),
@@ -77,7 +79,7 @@ export const queryKeys = {
         all: ["articles"] as const,
         list: (pagination?: PaginationParams) =>
             buildQueryKey([...queryKeys.articles.all, "list"], pagination),
-        infinite: (pagination?: PaginationParams) =>
+        infinite: (pagination?: Omit<SearchPaginationParams, "cursor">) =>
             buildQueryKey([...queryKeys.articles.all, "infinite"], pagination),
         detail: (id: string) => [...queryKeys.articles.all, id] as const,
         relations: (id: string) => [...queryKeys.articles.all, id, "relations"] as const,

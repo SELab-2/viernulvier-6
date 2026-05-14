@@ -18,7 +18,7 @@ import { YearRangeSlider } from "./YearRangeSlider";
 import { DateRangePicker } from "./DateRangePicker";
 import { yearBoundsFromStats } from "./statsYearBounds";
 
-const CATEGORIES = ["artists", "productions", "articles", "posters"] as const;
+const CATEGORIES = ["productions", "artists", "locations", "articles"] as const;
 
 function parseLocalDate(s: string): Date {
     const [y, m, d] = s.split("-").map(Number);
