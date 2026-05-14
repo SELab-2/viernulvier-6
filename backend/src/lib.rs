@@ -1,6 +1,6 @@
 use crate::{
     extractors::auth::{AdminUser, EditorUser},
-    vnv_import_taks::start_importer,
+    vnv_import_tasks::start_importer,
 };
 use api::ApiImporter;
 use argon2::{
@@ -40,7 +40,7 @@ pub mod dto;
 mod error;
 mod extractors;
 mod handlers;
-mod vnv_import_taks;
+mod vnv_import_tasks;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -185,7 +185,13 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
         .layer(
             CorsLayer::new()
                 .allow_origin(allowed_origins)
-                .allow_methods([Method::GET, Method::POST, Method::PUT, Method::PATCH, Method::DELETE])
+                .allow_methods([
+                    Method::GET,
+                    Method::POST,
+                    Method::PUT,
+                    Method::PATCH,
+                    Method::DELETE,
+                ])
                 .allow_headers([axum::http::header::CONTENT_TYPE])
                 .allow_credentials(true),
         )

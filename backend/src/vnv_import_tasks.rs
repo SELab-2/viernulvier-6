@@ -32,9 +32,11 @@ pub fn start_importer(api_importer: ApiImporter) {
     });
 }
 
-fn calculate_next_run() -> DateTime<Local> {
-    let now = Local::now();
+pub fn calculate_next_run() -> DateTime<Local> {
+    calculate_next_run_from(Local::now())
+}
 
+fn calculate_next_run_from(now: DateTime<Local>) -> DateTime<Local> {
     let mut target_date = now.date_naive();
 
     // if we are past 5AM today, target tomorrow
@@ -58,5 +60,59 @@ fn calculate_next_run() -> DateTime<Local> {
                 // worst case fallback, just target tomorrow
                 .unwrap_or_else(|| now + Duration::days(1))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{NaiveDate, TimeZone};
+
+    /// helper function
+    fn create_local_datetime(
+        year: i32,
+        month: u32,
+        day: u32,
+        hour: u32,
+        min: u32,
+    ) -> DateTime<Local> {
+        let naive_date = NaiveDate::from_ymd_opt(year, month, day).unwrap();
+        let naive_time = NaiveTime::from_hms_opt(hour, min, 0).unwrap();
+        let naive_dt = naive_date.and_time(naive_time);
+
+        Local.from_local_datetime(&naive_dt).unwrap()
+    }
+
+    #[test]
+    fn test_before_target_time_schedules_for_today() {
+        // May 14, 2026 3:00 AM
+        let mock_now = create_local_datetime(2026, 5, 14, 3, 0);
+        let next_run = calculate_next_run_from(mock_now);
+
+        // should be 5:00 AM on the same day
+        let expected_run = create_local_datetime(2026, 5, 14, 5, 0);
+        assert_eq!(next_run, expected_run);
+    }
+
+    #[test]
+    fn test_after_target_time_schedules_for_tomorrow() {
+        // May 14, 2026 10:00 AM
+        let mock_now = create_local_datetime(2026, 5, 14, 10, 0);
+        let next_run = calculate_next_run_from(mock_now);
+
+        // should be 5:00 AM on the next day
+        let expected_run = create_local_datetime(2026, 5, 15, 5, 0);
+        assert_eq!(next_run, expected_run);
+    }
+
+    #[test]
+    fn test_exactly_at_target_time_schedules_for_tomorrow() {
+        // May 14, 2026 5:00 AM
+        let mock_now = create_local_datetime(2026, 5, 14, 6, 0);
+        let next_run = calculate_next_run_from(mock_now);
+
+        // should schedule on next day because 5am is already passed
+        let expected_run = create_local_datetime(2026, 5, 15, 5, 0);
+        assert_eq!(next_run, expected_run);
     }
 }
