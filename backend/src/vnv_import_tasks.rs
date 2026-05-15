@@ -107,7 +107,7 @@ mod tests {
 
     #[test]
     fn test_exactly_at_target_time_schedules_for_tomorrow() {
-        // May 14, 2026 5:00 AM
+        // May 14, 2026 6:00 AM
         let mock_now = create_local_datetime(2026, 5, 14, 6, 0);
         let next_run = calculate_next_run_from(mock_now);
 
