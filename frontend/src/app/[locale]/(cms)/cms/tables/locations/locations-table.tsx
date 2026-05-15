@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Archive, ChevronsUp } from "lucide-react";
@@ -100,19 +100,13 @@ export function LocationsTable() {
     const {
         parentSelection,
         setParentSelection,
-        childSelection,
+        childSelectionRef,
         getChildHandler,
         selectColumn,
         selectedParentCount: selectedLocationCount,
         selectedChildCount: selectedHallCount,
         clearSelection,
     } = useParentChildSelection<Location>(hallsByLocation);
-
-    // Stable ref for childSelection so renderHalls doesn't recreate on child toggle
-    const childSelectionRef = useRef(childSelection);
-    useEffect(() => {
-        childSelectionRef.current = childSelection;
-    }, [childSelection]);
 
     const spotlightItems: SpotlightItem[] = spotlight
         ? [{ kind: "plain", src: spotlight.src, alt: spotlight.alt }]
@@ -220,7 +214,7 @@ export function LocationsTable() {
                 />
             );
         },
-        [getChildHandler, getHallRowId, hallCols, hallsByLocation, hallsLoading]
+        [childSelectionRef, getChildHandler, getHallRowId, hallCols, hallsByLocation, hallsLoading]
     );
 
     const hasExpanded = Object.keys(expanded).length > 0;

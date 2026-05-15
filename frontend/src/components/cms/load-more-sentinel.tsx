@@ -34,7 +34,7 @@ export function LoadMoreSentinel({ hasNextPage, onLoadMore }: LoadMoreSentinelPr
 
         const check = () => {
             const { scrollTop, scrollHeight, clientHeight } = container;
-            // Prefetch when within 3 viewport heights of the bottom so fast
+            // Prefetch when within 5 viewport heights of the bottom so fast
             // scrolling never outruns the data pipeline.
             if (scrollHeight - scrollTop - clientHeight < clientHeight * 5) {
                 onLoadMoreRef.current();

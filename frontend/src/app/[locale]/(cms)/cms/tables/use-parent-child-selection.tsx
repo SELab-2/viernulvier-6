@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { MutableRefObject } from "react";
 import type { ColumnDef, OnChangeFn, Row, RowSelectionState } from "@tanstack/react-table";
 
 import type { Dispatch, SetStateAction } from "react";
@@ -9,6 +10,7 @@ export function useParentChildSelection<TParent extends { id: string }>(
     parentSelection: RowSelectionState;
     setParentSelection: Dispatch<SetStateAction<RowSelectionState>>;
     childSelection: Map<string, RowSelectionState>;
+    childSelectionRef: MutableRefObject<Map<string, RowSelectionState>>;
     getChildHandler: (parentId: string) => OnChangeFn<RowSelectionState>;
     selectColumn: ColumnDef<TParent>;
     selectedParentCount: number;
@@ -131,6 +133,7 @@ export function useParentChildSelection<TParent extends { id: string }>(
         parentSelection,
         setParentSelection,
         childSelection,
+        childSelectionRef,
         getChildHandler,
         selectColumn,
         selectedParentCount,

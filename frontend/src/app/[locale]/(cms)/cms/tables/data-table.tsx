@@ -236,7 +236,8 @@ const MemoTableRow = memo(
         prev.onRowClick === next.onRowClick &&
         prev.rowRefCallback === next.rowRefCallback &&
         prev.renderSubComponent === next.renderSubComponent &&
-        prev.focusRowAt === next.focusRowAt
+        prev.focusRowAt === next.focusRowAt &&
+        prev.rowIndex === next.rowIndex
 ) as <TData>(props: MemoTableRowProps<TData>) => ReactNode;
 
 export interface ExpanderLabels {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Archive, ChevronsUp } from "lucide-react";
@@ -76,18 +76,13 @@ export function ProductionsTable() {
         parentSelection,
         setParentSelection,
         childSelection,
+        childSelectionRef,
         getChildHandler,
         selectColumn,
         selectedParentCount: selectedProductionCount,
         selectedChildCount: selectedEventCount,
         clearSelection,
     } = useParentChildSelection<Production>(eventsByProduction);
-
-    // Stable ref for childSelection so renderEvents doesn't recreate on child toggle
-    const childSelectionRef = useRef(childSelection);
-    useEffect(() => {
-        childSelectionRef.current = childSelection;
-    }, [childSelection]);
 
     const handleEditProduction = useCallback(
         (production: Production) => {
@@ -238,7 +233,14 @@ export function ProductionsTable() {
                 />
             );
         },
-        [eventCols, eventsByProduction, eventsLoading, getChildHandler, getEventRowId]
+        [
+            childSelectionRef,
+            eventCols,
+            eventsByProduction,
+            eventsLoading,
+            getChildHandler,
+            getEventRowId,
+        ]
     );
 
     const hasExpanded = Object.keys(expanded).length > 0;
