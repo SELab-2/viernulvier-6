@@ -39,7 +39,7 @@ export function ProductionsTable() {
         data: infiniteData,
         fetchNextPage,
         hasNextPage,
-    } = useGetInfiniteProductions(q ? { q } : undefined);
+    } = useGetInfiniteProductions({ limit: 50, ...(q ? { q } : {}) });
     const deleteProduction = useDeleteProduction();
 
     const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
@@ -76,6 +76,7 @@ export function ProductionsTable() {
         parentSelection,
         setParentSelection,
         childSelection,
+        childSelectionRef,
         getChildHandler,
         selectColumn,
         selectedParentCount: selectedProductionCount,
@@ -226,14 +227,14 @@ export function ProductionsTable() {
                 <MemoSubTable
                     items={events}
                     columns={eventCols}
-                    rowSelection={childSelection.get(productionId)}
+                    rowSelection={childSelectionRef.current.get(productionId)}
                     onRowSelectionChange={getChildHandler(productionId)}
                     getRowId={getEventRowId}
                 />
             );
         },
         [
-            childSelection,
+            childSelectionRef,
             eventCols,
             eventsByProduction,
             eventsLoading,

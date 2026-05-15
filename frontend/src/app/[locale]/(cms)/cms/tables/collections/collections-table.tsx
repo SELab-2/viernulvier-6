@@ -29,7 +29,7 @@ export function CollectionsTable() {
         hasNextPage,
         isFetchingNextPage,
         isLoading,
-    } = useGetInfiniteCollections();
+    } = useGetInfiniteCollections({ limit: 50 });
 
     const collections = useMemo(
         () => infiniteData?.pages.flatMap((page) => page.data) ?? [],

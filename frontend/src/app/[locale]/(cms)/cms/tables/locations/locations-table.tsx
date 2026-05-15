@@ -46,7 +46,7 @@ export function LocationsTable() {
         data: infiniteData,
         fetchNextPage,
         hasNextPage,
-    } = useGetInfiniteLocations(q ? { q } : undefined);
+    } = useGetInfiniteLocations({ limit: 50, ...(q ? { q } : {}) });
 
     const { data: hallsResult, isLoading: hallsLoading } = useGetHalls({
         pagination: { limit: 1000 },
@@ -100,7 +100,7 @@ export function LocationsTable() {
     const {
         parentSelection,
         setParentSelection,
-        childSelection,
+        childSelectionRef,
         getChildHandler,
         selectColumn,
         selectedParentCount: selectedLocationCount,
@@ -208,13 +208,13 @@ export function LocationsTable() {
                 <MemoSubTable
                     items={halls}
                     columns={hallCols}
-                    rowSelection={childSelection.get(locationId)}
+                    rowSelection={childSelectionRef.current.get(locationId)}
                     onRowSelectionChange={getChildHandler(locationId)}
                     getRowId={getHallRowId}
                 />
             );
         },
-        [childSelection, getChildHandler, getHallRowId, hallCols, hallsByLocation, hallsLoading]
+        [childSelectionRef, getChildHandler, getHallRowId, hallCols, hallsByLocation, hallsLoading]
     );
 
     const hasExpanded = Object.keys(expanded).length > 0;

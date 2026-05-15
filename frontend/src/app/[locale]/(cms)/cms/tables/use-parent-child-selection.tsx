@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ColumnDef, OnChangeFn, RowSelectionState } from "@tanstack/react-table";
+import type { MutableRefObject } from "react";
+import type { ColumnDef, OnChangeFn, Row, RowSelectionState } from "@tanstack/react-table";
 
 import type { Dispatch, SetStateAction } from "react";
 
@@ -9,6 +10,7 @@ export function useParentChildSelection<TParent extends { id: string }>(
     parentSelection: RowSelectionState;
     setParentSelection: Dispatch<SetStateAction<RowSelectionState>>;
     childSelection: Map<string, RowSelectionState>;
+    childSelectionRef: MutableRefObject<Map<string, RowSelectionState>>;
     getChildHandler: (parentId: string) => OnChangeFn<RowSelectionState>;
     selectColumn: ColumnDef<TParent>;
     selectedParentCount: number;
@@ -17,9 +19,6 @@ export function useParentChildSelection<TParent extends { id: string }>(
 } {
     const [parentSelection, setParentSelection] = useState<RowSelectionState>({});
     const [childSelection, setChildSelection] = useState<Map<string, RowSelectionState>>(new Map());
-    // Force re-render counter used to give select cells a changing key so React
-    // never skips re-rendering them after a selection toggle.
-    const [toggleRev, setToggleRev] = useState(0);
 
     // Use refs to access latest state without triggering re-renders of the column definition
     const childSelectionRef = useRef(childSelection);
@@ -60,26 +59,25 @@ export function useParentChildSelection<TParent extends { id: string }>(
     }, [getChildHandler]);
 
     // Stable select column - never recreate the column definition.
-    // toggleRev is read inside the cell renderer via closure; we deliberately
-    // keep the deps empty so TanStack Table does not re-initialise the table.
+    // We deliberately keep the deps empty so TanStack Table does not re-initialise the table.
 
     const selectColumn = useMemo<ColumnDef<TParent>>(
         () => ({
             id: "select",
             header: () => null,
-            cell: ({ row }) => {
+            cell: ({ row, _sel }: { row: Row<TParent>; _sel?: boolean }) => {
                 const parentId = row.original.id;
                 // Read from refs to get latest state without re-rendering
                 const childSel = childSelectionRef.current.get(parentId) ?? {};
                 const selectedChildCount = Object.values(childSel).filter(Boolean).length;
-                const isChecked = row.getIsSelected();
+                const isChecked = _sel ?? row.getIsSelected();
                 const isIndeterminate = !isChecked && selectedChildCount > 0;
+                const isActive = isChecked || isIndeterminate;
 
                 return (
                     <div
-                        key={`sel-${toggleRev}`}
                         className={`flex size-4 items-center justify-center border ${
-                            isChecked || isIndeterminate
+                            isActive
                                 ? "border-foreground bg-foreground text-background"
                                 : "border-foreground/30"
                         }`}
@@ -94,11 +92,9 @@ export function useParentChildSelection<TParent extends { id: string }>(
                                 ? Object.fromEntries(children.map((c) => [c.id, true]))
                                 : {};
                             handleChildSelect(parentId)(nextChildSel);
-                            // Bump rev so the cell key changes and React repaints the checkbox immediately
-                            setToggleRev((r) => r + 1);
                         }}
                     >
-                        {(isChecked || isIndeterminate) && (
+                        {isActive && (
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 width="14"
@@ -119,7 +115,6 @@ export function useParentChildSelection<TParent extends { id: string }>(
             enableSorting: false,
             enableHiding: false,
         }),
-        // eslint-disable-next-line react-hooks/exhaustive-deps
         [] // Never recreate - use refs for all dynamic values
     );
 
@@ -138,6 +133,7 @@ export function useParentChildSelection<TParent extends { id: string }>(
         parentSelection,
         setParentSelection,
         childSelection,
+        childSelectionRef,
         getChildHandler,
         selectColumn,
         selectedParentCount,

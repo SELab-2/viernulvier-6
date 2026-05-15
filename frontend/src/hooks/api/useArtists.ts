@@ -22,10 +22,12 @@ type ArtistUpdateInput = { id: string; name: string; slug: string };
 const fetchArtistsPage = async (params: {
     q?: string;
     cursor?: string;
+    limit?: number;
 }): Promise<PaginatedResult<Artist>> => {
     const search = new URLSearchParams();
     if (params.q) search.set("q", params.q);
     if (params.cursor) search.set("cursor", params.cursor);
+    if (params.limit) search.set("limit", String(params.limit));
     const url = `/artists${search.toString() ? `?${search}` : ""}`;
     const { data } = await api.get<GetAllArtistsResponse>(url);
     return {
@@ -58,12 +60,13 @@ export const useGetArtists = (options?: { q?: string; enabled?: boolean }) => {
     });
 };
 
-export const useGetInfiniteArtists = (params?: { q?: string }) => {
+export const useGetInfiniteArtists = (params?: { q?: string; limit?: number }) => {
     const q = params?.q || undefined;
+    const limit = params?.limit;
     return useInfiniteQuery({
-        queryKey: queryKeys.artists.infinite({ q }),
+        queryKey: queryKeys.artists.infinite({ q, limit }),
         queryFn: ({ pageParam }) =>
-            fetchArtistsPage({ q, cursor: pageParam as string | undefined }),
+            fetchArtistsPage({ q, limit, cursor: pageParam as string | undefined }),
         initialPageParam: undefined as string | undefined,
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     });
