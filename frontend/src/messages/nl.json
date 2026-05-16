@@ -66,7 +66,8 @@
         "relevance": "Meest relevant",
         "recent": "Meest recent",
         "oldest": "Oudste eerst",
-        "relevance": "Meest relevant"
+        "viewList": "Lijstweergave",
+        "viewGrid": "Rasterweergave"
     },
     "Featured": {
         "label": "Uitgelicht uit het archief"

@@ -66,7 +66,8 @@
         "relevance": "Most relevant",
         "recent": "Most recent",
         "oldest": "Oldest first",
-        "relevance": "Most relevant"
+        "viewList": "List view",
+        "viewGrid": "Grid view"
     },
     "Featured": {
         "label": "Featured from the archive"

@@ -15,6 +15,7 @@ import { useGetFacets } from "@/hooks/api/useTaxonomy";
 import { queryKeys } from "@/hooks/api/query-keys";
 import type { Production, ProductionSortOption } from "@/types/models/production.types";
 import type { PaginatedResult, SearchPaginationParams } from "@/types/api/api.types";
+import { getLocalizedField } from "@/lib/locale";
 
 import { UnifiedHeader } from "@/components/layout/header";
 import { SearchHero } from "@/components/searchpage/search-hero";
@@ -24,6 +25,7 @@ import { ProductionList } from "@/components/searchpage/production-list";
 import { ArticleList } from "@/components/searchpage/article-list";
 import { ArtistList } from "@/components/searchpage/artist-list";
 import { LocationList } from "@/components/searchpage/location-list";
+import { SearchGrid, type SearchGridItem } from "@/components/searchpage/search-grid";
 import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
 
 const ARCHIVE_MIN_YEAR = 1980;
@@ -33,6 +35,7 @@ const DEFAULT_CATEGORY_SET = new Set(["productions", "artists", "locations", "ar
 export default function SearchPage() {
     const locale = useLocale();
     const t = useTranslations("Search");
+    const tCategories = useTranslations("Sidebar.categories");
     const loadMoreRef = useRef<HTMLDivElement>(null);
     const heroObserverRef = useRef<IntersectionObserver | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -64,6 +67,7 @@ export default function SearchPage() {
     const showArtists = selectedCategories.has("artists");
     const showLocations = selectedCategories.has("locations");
     const showArticles = selectedCategories.has("articles");
+    const view = searchParams.get("view") === "grid" ? "grid" : "list";
 
     const { data: facets } = useGetFacets({ entityType: "production" });
 
@@ -135,6 +139,22 @@ export default function SearchPage() {
                 params.delete("sort");
             } else {
                 params.set("sort", newSort);
+            }
+            const qs = params.toString();
+            router.replace(
+                (qs ? `${pathname}?${qs}` : pathname) as Parameters<typeof router.replace>[0]
+            );
+        },
+        [router, searchParams, pathname]
+    );
+
+    const handleViewChange = useCallback(
+        (nextView: "list" | "grid") => {
+            const params = new URLSearchParams(searchParams.toString());
+            if (nextView === "grid") {
+                params.set("view", "grid");
+            } else {
+                params.delete("view");
             }
             const qs = params.toString();
             router.replace(
@@ -256,6 +276,60 @@ export default function SearchPage() {
         (showLocations && locationSearchData.length > 0) ||
         (showArticles && articlesData.length > 0);
 
+    const gridItems = useMemo<SearchGridItem[]>(
+        () => [
+            ...(showProductions
+                ? allProductions.map((production) => ({
+                      id: `production-${production.id}`,
+                      title:
+                          getLocalizedField(production, "title", locale) ?? production.slug ?? null,
+                      imageUrl: production.coverImageUrl,
+                      href: `/productions/${production.id}`,
+                      typeLabel: tCategories("productions"),
+                  }))
+                : []),
+            ...(showArtists
+                ? artistsData.map((artist) => ({
+                      id: `artist-${artist.id}`,
+                      title: artist.name,
+                      imageUrl: artist.coverImageUrl,
+                      href: `/artists/${artist.id}`,
+                      typeLabel: tCategories("artists"),
+                  }))
+                : []),
+            ...(showLocations
+                ? locationSearchData.map((location) => ({
+                      id: `location-${location.id}`,
+                      title: location.name ?? location.address ?? null,
+                      imageUrl: location.coverImageUrl,
+                      href: location.slug ? `/locations/${location.slug}` : null,
+                      typeLabel: tCategories("locations"),
+                  }))
+                : []),
+            ...(showArticles
+                ? articlesData.map((article) => ({
+                      id: `article-${article.id}`,
+                      title: article.title,
+                      imageUrl: article.coverImageUrl,
+                      href: `/articles/${article.slug}`,
+                      typeLabel: tCategories("articles"),
+                  }))
+                : []),
+        ],
+        [
+            showProductions,
+            allProductions,
+            locale,
+            tCategories,
+            showArtists,
+            artistsData,
+            showLocations,
+            locationSearchData,
+            showArticles,
+            articlesData,
+        ]
+    );
+
     return (
         <>
             <UnifiedHeader
@@ -289,6 +363,8 @@ export default function SearchPage() {
                         showSearch={!isHeroVisible}
                         sort={sort ?? "relevance"}
                         onSortChange={handleSortChange}
+                        view={view}
+                        onViewChange={handleViewChange}
                     />
 
                     {!hasAnyResults && !isAnyLoading ? (
@@ -298,6 +374,8 @@ export default function SearchPage() {
                             imagePath="/images/de_vooruit_decaying.png"
                             caption={t("articleImageCaption")}
                         />
+                    ) : view === "grid" ? (
+                        <SearchGrid items={gridItems} />
                     ) : (
                         <>
                             {showProductions && (
