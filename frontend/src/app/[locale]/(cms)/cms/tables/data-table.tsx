@@ -129,6 +129,7 @@ interface MemoTableRowProps<TData> {
     onRowClick?: (row: TData) => void;
     rowRefCallback: (index: number) => (el: HTMLTableRowElement | null) => void;
     allColumnsLength: number;
+    rowRenderVersion?: number;
     renderSubComponent?: (row: Row<TData>) => ReactNode;
     focusRowAt: (index: number) => void;
 }
@@ -231,6 +232,7 @@ const MemoTableRow = memo(
         prev.tabIndex === next.tabIndex &&
         prev.hasSelection === next.hasSelection &&
         prev.allColumnsLength === next.allColumnsLength &&
+        prev.rowRenderVersion === next.rowRenderVersion &&
         prev.handleRowClick === next.handleRowClick &&
         prev.handleRowMouseDown === next.handleRowMouseDown &&
         prev.onRowClick === next.onRowClick &&
@@ -262,6 +264,7 @@ interface DataTableProps<TData, TValue> {
     getRowId?: (row: TData) => string;
     onRowClick?: (row: TData) => void;
     onJumpToEnd?: () => Promise<void>;
+    rowRenderVersion?: number;
 }
 
 export function DataTable<TData, TValue>({
@@ -280,6 +283,7 @@ export function DataTable<TData, TValue>({
     getRowId,
     onRowClick,
     onJumpToEnd,
+    rowRenderVersion,
 }: DataTableProps<TData, TValue>) {
     const t = useTranslations("Cms.DataTable");
     const [expandedInternal, setExpandedInternal] = useState<ExpandedState>({});
@@ -479,6 +483,7 @@ export function DataTable<TData, TValue>({
                                     onRowClick={onRowClick}
                                     rowRefCallback={rowRefCallback}
                                     allColumnsLength={allColumns.length}
+                                    rowRenderVersion={rowRenderVersion}
                                     renderSubComponent={renderSubComponent}
                                     focusRowAt={focusRowAt}
                                 />

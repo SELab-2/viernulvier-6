@@ -106,6 +106,7 @@ export function LocationsTable() {
         selectColumn,
         selectedParentCount: selectedLocationCount,
         selectedChildCount: selectedHallCount,
+        selectionVersion,
         clearSelection,
     } = useParentChildSelection<Location>(hallsByLocation);
 
@@ -276,6 +277,7 @@ export function LocationsTable() {
                     expanded={expanded}
                     onExpandedChange={setExpanded}
                     getRowId={getLocationRowId}
+                    rowRenderVersion={selectionVersion}
                 />
 
                 <LoadMoreSentinel hasNextPage={hasNextPage ?? false} onLoadMore={fetchNextPage} />

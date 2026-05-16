@@ -15,10 +15,12 @@ export function useParentChildSelection<TParent extends { id: string }>(
     selectColumn: ColumnDef<TParent>;
     selectedParentCount: number;
     selectedChildCount: number;
+    selectionVersion: number;
     clearSelection: () => void;
 } {
     const [parentSelection, setParentSelection] = useState<RowSelectionState>({});
     const [childSelection, setChildSelection] = useState<Map<string, RowSelectionState>>(new Map());
+    const [selectionVersion, setSelectionVersion] = useState(0);
 
     // Use refs to access latest state without triggering re-renders of the column definition
     const childSelectionRef = useRef(childSelection);
@@ -44,6 +46,7 @@ export function useParentChildSelection<TParent extends { id: string }>(
                     const next = typeof updater === "function" ? updater(current) : updater;
                     const newMap = new Map(prev).set(parentId, next);
                     childSelectionRef.current = newMap;
+                    setSelectionVersion((version) => version + 1);
                     return newMap;
                 });
             };
@@ -126,7 +129,10 @@ export function useParentChildSelection<TParent extends { id: string }>(
 
     const clearSelection = useCallback(() => {
         setParentSelection({});
-        setChildSelection(new Map());
+        const empty = new Map();
+        setChildSelection(empty);
+        childSelectionRef.current = empty;
+        setSelectionVersion((version) => version + 1);
     }, []);
 
     return {
@@ -138,6 +144,7 @@ export function useParentChildSelection<TParent extends { id: string }>(
         selectColumn,
         selectedParentCount,
         selectedChildCount,
+        selectionVersion,
         clearSelection,
     };
 }

@@ -81,6 +81,7 @@ export function ProductionsTable() {
         selectColumn,
         selectedParentCount: selectedProductionCount,
         selectedChildCount: selectedEventCount,
+        selectionVersion,
         clearSelection,
     } = useParentChildSelection<Production>(eventsByProduction);
 
@@ -301,6 +302,7 @@ export function ProductionsTable() {
                     expanded={expanded}
                     onExpandedChange={setExpanded}
                     getRowId={getProductionRowId}
+                    rowRenderVersion={selectionVersion}
                     onJumpToEnd={handleJumpToEnd}
                 />
 
