@@ -2,7 +2,7 @@ import { HttpResponse, http } from "msw";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { queryKeys } from "@/hooks/api";
-import { api } from "@/lib/api-client";
+import { api, refreshAuthSession } from "@/lib/api-client";
 import { queryClient } from "@/lib/query-client";
 import { server } from "../../msw/server";
 import { apiUrl } from "../../utils/env";
@@ -110,6 +110,22 @@ describe("api response interceptor", () => {
 
         expect(first.data).toEqual({ ok: true });
         expect(second.data).toEqual({ ok: true });
+        expect(refreshCalls).toBe(1);
+    });
+
+    it("shares one refresh request across direct refresh callers", async () => {
+        let refreshCalls = 0;
+
+        server.use(
+            http.post(apiUrl("/auth/refresh"), async () => {
+                refreshCalls += 1;
+                await new Promise((resolve) => setTimeout(resolve, 30));
+                return HttpResponse.json({ success: true, message: "refreshed" }, { status: 200 });
+            })
+        );
+
+        await Promise.all([refreshAuthSession(), refreshAuthSession()]);
+
         expect(refreshCalls).toBe(1);
     });
 });

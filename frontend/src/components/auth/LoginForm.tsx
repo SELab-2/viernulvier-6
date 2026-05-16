@@ -1,13 +1,23 @@
 "use client";
 
+import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { AxiosError } from "axios";
 
-import { useLogin } from "@/hooks/useAuth";
+import { useLogin, useUser } from "@/hooks/useAuth";
+import { useRouter } from "@/i18n/routing";
 
 export function LoginForm() {
     const loginTranslations = useTranslations("Login");
+    const router = useRouter();
     const { mutate, isPending, error, isError } = useLogin();
+    const { data: user, isLoading: isCheckingSession } = useUser();
+
+    useEffect(() => {
+        if (user) {
+            router.replace("/cms");
+        }
+    }, [router, user]);
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -74,10 +84,10 @@ export function LoginForm() {
 
                 <button
                     type="submit"
-                    disabled={isPending}
+                    disabled={isPending || isCheckingSession}
                     className="border-foreground text-foreground hover:bg-foreground hover:text-background mt-2 w-full cursor-pointer border bg-transparent px-4 py-3 font-mono text-[10px] font-medium tracking-[1.4px] uppercase transition-all disabled:opacity-50"
                 >
-                    {isPending
+                    {isPending || isCheckingSession
                         ? loginTranslations("submitButtonLoading")
                         : loginTranslations("submitButton")}
                 </button>

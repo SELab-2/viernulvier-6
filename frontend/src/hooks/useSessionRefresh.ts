@@ -3,7 +3,8 @@
 import { useEffect, useRef } from "react";
 
 import { queryKeys } from "@/hooks/api";
-import { api } from "@/lib/api-client";
+import { fetchCurrentUser } from "@/hooks/useAuth";
+import { refreshAuthSession } from "@/lib/api-client";
 import { queryClient } from "@/lib/query-client";
 
 export const SESSION_REFRESH_INTERVAL_MS = 4 * 60_000;
@@ -20,11 +21,17 @@ export function useSessionRefresh() {
 
             refreshInFlight.current = true;
             try {
-                await api.post("/auth/refresh");
+                await refreshAuthSession();
                 refreshEnabled.current = true;
+                if (!queryClient.getQueryData(queryKeys.user)) {
+                    await queryClient.fetchQuery({
+                        queryKey: queryKeys.user,
+                        queryFn: fetchCurrentUser,
+                        staleTime: 2.5 * 60_000,
+                    });
+                }
             } catch {
                 refreshEnabled.current = false;
-                queryClient.removeQueries({ queryKey: queryKeys.user });
             } finally {
                 if (mounted) {
                     refreshInFlight.current = false;

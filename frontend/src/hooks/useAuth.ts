@@ -10,13 +10,15 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { queryKeys } from "@/hooks/api";
 
+export const fetchCurrentUser = async (): Promise<User> => {
+    const { data } = await api.get<GetEditorInfoResponse>("/editor/me");
+    return mapUser(data);
+};
+
 export const useUser = (options?: { enabled?: boolean }) => {
     return useQuery<User>({
         queryKey: queryKeys.user,
-        queryFn: async () => {
-            const { data } = await api.get<GetEditorInfoResponse>("/editor/me");
-            return mapUser(data);
-        },
+        queryFn: fetchCurrentUser,
         retry: false,
         staleTime: 2.5 * 60_000,
         refetchOnMount: true,

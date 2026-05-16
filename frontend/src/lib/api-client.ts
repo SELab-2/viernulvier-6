@@ -14,6 +14,20 @@ export const api = axios.create({
 
 let isRefreshing = false;
 let failedQueue: FailedRequest[] = [];
+let refreshPromise: Promise<RefreshTokenResponse> | null = null;
+
+export function refreshAuthSession(): Promise<RefreshTokenResponse> {
+    if (!refreshPromise) {
+        refreshPromise = api
+            .post<RefreshTokenResponse>("/auth/refresh")
+            .then((response) => response.data)
+            .finally(() => {
+                refreshPromise = null;
+            });
+    }
+
+    return refreshPromise;
+}
 
 const processQueue = (error: AxiosError | null, token: string | null = null) => {
     failedQueue.forEach((prom) => {
@@ -50,7 +64,7 @@ api.interceptors.response.use(
             isRefreshing = true;
 
             try {
-                await api.post<RefreshTokenResponse>("/auth/refresh");
+                await refreshAuthSession();
                 processQueue(null);
                 return api(originalRequest);
             } catch (refreshError) {
