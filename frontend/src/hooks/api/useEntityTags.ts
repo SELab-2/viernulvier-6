@@ -7,6 +7,14 @@ import { EntityFacet, EntityType } from "@/types/models/taxonomy.types";
 
 import { queryKeys } from "./query-keys";
 
+const TAGGABLE_ENTITY_ROOT_KEYS: Record<EntityType, readonly string[]> = {
+    production: ["productions"],
+    artist: ["artists"],
+    article: ["articles"],
+    media: ["media"],
+    collection: ["collections"],
+};
+
 const fetchEntityTags = async (
     entityType: EntityType,
     entityId: string
@@ -85,6 +93,7 @@ export const useBulkAddEntityTags = () => {
                     queryKey: queryKeys.taxonomy.entityTags(entityType, entityId),
                 });
             });
+            queryClient.invalidateQueries({ queryKey: TAGGABLE_ENTITY_ROOT_KEYS[entityType] });
         },
     });
 };

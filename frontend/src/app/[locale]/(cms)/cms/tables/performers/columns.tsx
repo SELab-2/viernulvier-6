@@ -8,9 +8,21 @@ import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
 import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
 import { CmsThumbnail } from "@/components/cms/cms-thumbnail";
+import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
+import { useGetEntityTags } from "@/hooks/api/useEntityTags";
 import { Action, ActionDisplay, ActionVariant } from "@/types/cms/actions";
 import { Artist } from "@/types/models/artist.types";
 import { FieldDef } from "../edit-sheet";
+
+function ArtistTagsCell({ artistId, locale }: { artistId: string; locale: string }) {
+    const { data: facets } = useGetEntityTags("artist", artistId);
+    const tags =
+        facets?.flatMap((facet) =>
+            facet.tags.map((tag) => ({ slug: tag.slug, facet: facet.slug }))
+        ) ?? [];
+
+    return <EntityTagStrip tags={tags} locale={locale} cap={3} variant="compact" />;
+}
 
 export function makeArtistColumns(
     onEdit: (artist: Artist) => void,
@@ -93,6 +105,12 @@ export function makeArtistColumns(
             cell: ({ row }) => (
                 <span className="text-muted-foreground font-mono text-xs">{row.original.slug}</span>
             ),
+        },
+        {
+            id: "tags",
+            header: "Tags",
+            enableSorting: false,
+            cell: ({ row }) => <ArtistTagsCell artistId={row.original.id} locale={locale} />,
         },
         makeActionsColumn({ actions }),
     ];

@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Archive, ChevronsUp } from "lucide-react";
+import { Archive, ChevronsUp, Tags, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { ExpandedState, Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
@@ -20,9 +20,11 @@ import { LoadMoreSentinel } from "@/components/cms/load-more-sentinel";
 import { useDeleteProduction, useGetInfiniteProductions } from "@/hooks/api/useProductions";
 import { useGetEvents, useUpdateEvent } from "@/hooks/api/useEvents";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
+import { BulkTagDialog } from "@/components/cms/bulk-tag-dialog";
 import { ProductionMediaSheet } from "@/components/cms/production-media-sheet";
 import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
 import type { PickerItem } from "@/lib/collection-picker-utils";
+import { ActionVariant } from "@/types/cms/actions";
 import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
 
@@ -31,6 +33,7 @@ export function ProductionsTable() {
     const tCommon = useTranslations("Cms.common");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
+    const tActionBar = useTranslations("Cms.ActionBar");
     const locale = useLocale();
     const searchParams = useSearchParams();
     const q = searchParams.get("q") ?? undefined;
@@ -54,6 +57,7 @@ export function ProductionsTable() {
 
     const [editEvent, setEditEvent] = useState<Event | null>(null);
     const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
+    const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
     const [mediaProduction, setMediaProduction] = useState<Production | null>(null);
     const [spotlight, setSpotlight] = useState<{ src: string; alt: string } | null>(null);
     const [expanded, setExpanded] = useState<ExpandedState>({});
@@ -260,10 +264,18 @@ export function ProductionsTable() {
             {
                 key: "delete",
                 label: tCommon("delete"),
+                icon: <Trash2 className="h-3.5 w-3.5" />,
+                variant: ActionVariant.Destructive,
                 onClick: handleBulkDelete,
             },
+            {
+                key: "bulk-tags",
+                label: tActionBar("bulkEdit"),
+                icon: <Tags className="h-3.5 w-3.5" />,
+                onClick: () => setBulkTagDialogOpen(true),
+            },
         ],
-        [tCollections, tCommon, handleBulkDelete]
+        [tCollections, tCommon, tActionBar, handleBulkDelete]
     );
 
     return (
@@ -329,6 +341,13 @@ export function ProductionsTable() {
                 open={collectionDialogOpen}
                 onOpenChange={setCollectionDialogOpen}
                 items={collectionPickerItems}
+            />
+            <BulkTagDialog
+                open={bulkTagDialogOpen}
+                onOpenChange={setBulkTagDialogOpen}
+                entityType="production"
+                entityIds={selectedProductions.map((production) => production.id)}
+                onApplied={clearSelection}
             />
 
             {mediaProduction && (

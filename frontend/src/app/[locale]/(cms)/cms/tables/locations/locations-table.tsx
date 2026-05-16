@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Archive, ChevronsUp } from "lucide-react";
+import { Archive, ChevronsUp, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { ExpandedState, Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
@@ -33,6 +33,7 @@ import { useGetHalls, useUpdateHall } from "@/hooks/api/useHalls";
 import { useGetSpaces } from "@/hooks/api/useSpaces";
 import type { Location, LocationRow } from "@/types/models/location.types";
 import type { Hall } from "@/types/models/hall.types";
+import { ActionVariant } from "@/types/cms/actions";
 
 export function LocationsTable() {
     const t = useTranslations("Cms.Locations");
@@ -243,6 +244,8 @@ export function LocationsTable() {
             {
                 key: "delete",
                 label: tCommon("delete"),
+                icon: <Trash2 className="h-3.5 w-3.5" />,
+                variant: ActionVariant.Destructive,
                 onClick: handleBulkDelete,
             },
         ],

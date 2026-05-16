@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Archive, Plus, Tags } from "lucide-react";
+import { Archive, Plus, Tags, Trash2 } from "lucide-react";
 import { RowSelectionState } from "@tanstack/react-table";
 
 import { DataTable } from "../data-table";
@@ -19,6 +19,7 @@ import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialo
 import { BulkTagDialog } from "@/components/cms/bulk-tag-dialog";
 import type { PickerItem } from "@/lib/collection-picker-utils";
 import { ArticleListItem } from "@/types/models/article.types";
+import { ActionVariant } from "@/types/cms/actions";
 import { CreateArticleDialog } from "./create-article-dialog";
 
 export function ArticlesTable() {
@@ -79,6 +80,16 @@ export function ArticlesTable() {
         [articles, rowSelection]
     );
 
+    const handleBulkDelete = useCallback(() => {
+        if (selectedArticles.length === 0) return;
+        const ok = window.confirm(tActionBar("delete") + ` ${selectedArticles.length} article(s)?`);
+        if (!ok) return;
+        for (const article of selectedArticles) {
+            deleteArticle.mutate(article.id);
+        }
+        setRowSelection({});
+    }, [selectedArticles, deleteArticle, tActionBar]);
+
     const pickerItems = useMemo<PickerItem[]>(
         () =>
             selectedArticles.map((a) => ({
@@ -103,8 +114,15 @@ export function ArticlesTable() {
                 icon: <Tags className="h-3.5 w-3.5" />,
                 onClick: () => setBulkTagDialogOpen(true),
             },
+            {
+                key: "bulk-delete",
+                label: tActionBar("delete"),
+                icon: <Trash2 className="h-3.5 w-3.5" />,
+                variant: ActionVariant.Destructive,
+                onClick: handleBulkDelete,
+            },
         ],
-        [tCollections, tActionBar]
+        [tCollections, tActionBar, handleBulkDelete]
     );
 
     return (
