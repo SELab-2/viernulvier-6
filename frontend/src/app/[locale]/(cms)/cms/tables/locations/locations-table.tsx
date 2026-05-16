@@ -214,10 +214,19 @@ export function LocationsTable() {
                     rowSelection={childSelectionRef.current.get(locationId)}
                     onRowSelectionChange={getChildHandler(locationId)}
                     getRowId={getHallRowId}
+                    rowRenderVersion={selectionVersion}
                 />
             );
         },
-        [childSelectionRef, getChildHandler, getHallRowId, hallCols, hallsByLocation, hallsLoading]
+        [
+            childSelectionRef,
+            getChildHandler,
+            getHallRowId,
+            hallCols,
+            hallsByLocation,
+            hallsLoading,
+            selectionVersion,
+        ]
     );
 
     const hasExpanded = Object.keys(expanded).length > 0;

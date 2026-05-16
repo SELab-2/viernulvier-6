@@ -231,6 +231,7 @@ export function ProductionsTable() {
                     rowSelection={childSelectionRef.current.get(productionId)}
                     onRowSelectionChange={getChildHandler(productionId)}
                     getRowId={getEventRowId}
+                    rowRenderVersion={selectionVersion}
                 />
             );
         },
@@ -241,6 +242,7 @@ export function ProductionsTable() {
             eventsLoading,
             getChildHandler,
             getEventRowId,
+            selectionVersion,
         ]
     );
 

@@ -23,8 +23,12 @@ export function useParentChildSelection<TParent extends { id: string }>(
     const [selectionVersion, setSelectionVersion] = useState(0);
 
     // Use refs to access latest state without triggering re-renders of the column definition
+    const parentSelectionRef = useRef(parentSelection);
     const childSelectionRef = useRef(childSelection);
     const childrenByParentIdRef = useRef(childrenByParentId);
+    useEffect(() => {
+        parentSelectionRef.current = parentSelection;
+    }, [parentSelection]);
     useEffect(() => {
         childSelectionRef.current = childSelection;
     }, [childSelection]);
@@ -73,28 +77,39 @@ export function useParentChildSelection<TParent extends { id: string }>(
                 // Read from refs to get latest state without re-rendering
                 const childSel = childSelectionRef.current.get(parentId) ?? {};
                 const selectedChildCount = Object.values(childSel).filter(Boolean).length;
-                const isChecked = _sel ?? row.getIsSelected();
+                const isChecked = _sel ?? Boolean(parentSelectionRef.current[parentId]);
                 const isIndeterminate = !isChecked && selectedChildCount > 0;
                 const isActive = isChecked || isIndeterminate;
 
                 return (
                     <div
+                        role="checkbox"
+                        aria-checked={isIndeterminate ? "mixed" : isChecked}
                         className={`flex size-4 items-center justify-center border ${
                             isActive
                                 ? "border-foreground bg-foreground text-background"
                                 : "border-foreground/30"
                         }`}
-                        aria-hidden="true"
                         onClick={(e) => {
                             e.stopPropagation();
-                            const nextChecked = !row.getIsSelected();
-                            row.toggleSelected(nextChecked);
+                            const nextChecked = !Boolean(parentSelectionRef.current[parentId]);
+                            const nextParentSelection = {
+                                ...parentSelectionRef.current,
+                                [parentId]: nextChecked,
+                            };
+                            if (!nextChecked) {
+                                delete nextParentSelection[parentId];
+                            }
+                            parentSelectionRef.current = nextParentSelection;
+                            setParentSelection(nextParentSelection);
+
                             const children = childrenByParentIdRef.current.get(parentId) ?? [];
                             const handleChildSelect = getChildHandlerRef.current;
                             const nextChildSel = nextChecked
                                 ? Object.fromEntries(children.map((c) => [c.id, true]))
                                 : {};
                             handleChildSelect(parentId)(nextChildSel);
+                            setSelectionVersion((version) => version + 1);
                         }}
                     >
                         {isActive && (

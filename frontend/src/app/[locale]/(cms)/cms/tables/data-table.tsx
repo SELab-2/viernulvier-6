@@ -34,12 +34,14 @@ function MemoSubTableInner<T>({
     rowSelection,
     onRowSelectionChange,
     getRowId,
+    rowRenderVersion,
 }: {
     items: T[];
     columns: ColumnDef<T>[];
     rowSelection?: RowSelectionState;
     onRowSelectionChange?: OnChangeFn<RowSelectionState>;
     getRowId?: (row: T) => string;
+    rowRenderVersion?: number;
 }) {
     return (
         <div className="border-border/80 bg-foreground/[0.02] py-1 pr-6 pl-14">
@@ -50,6 +52,7 @@ function MemoSubTableInner<T>({
                 rowSelection={rowSelection}
                 onRowSelectionChange={onRowSelectionChange}
                 getRowId={getRowId}
+                rowRenderVersion={rowRenderVersion}
             />
         </div>
     );
@@ -91,6 +94,7 @@ export const MemoSubTable = memo(
             rowSelection?: RowSelectionState;
             onRowSelectionChange?: OnChangeFn<RowSelectionState>;
             getRowId?: (row: T) => string;
+            rowRenderVersion?: number;
         },
         next: {
             items: T[];
@@ -98,6 +102,7 @@ export const MemoSubTable = memo(
             rowSelection?: RowSelectionState;
             onRowSelectionChange?: OnChangeFn<RowSelectionState>;
             getRowId?: (row: T) => string;
+            rowRenderVersion?: number;
         }
     ) =>
         prev.columns === next.columns &&
@@ -105,13 +110,15 @@ export const MemoSubTable = memo(
         prev.items.every((item, i) => item === next.items[i]) &&
         shallowEqual(prev.rowSelection, next.rowSelection) &&
         prev.onRowSelectionChange === next.onRowSelectionChange &&
-        prev.getRowId === next.getRowId
+        prev.getRowId === next.getRowId &&
+        prev.rowRenderVersion === next.rowRenderVersion
 ) as <T>(props: {
     items: T[];
     columns: ColumnDef<T>[];
     rowSelection?: RowSelectionState;
     onRowSelectionChange?: OnChangeFn<RowSelectionState>;
     getRowId?: (row: T) => string;
+    rowRenderVersion?: number;
 }) => ReactNode;
 
 // Memoized table row that only re-renders when its selection, focus, or data changes.
