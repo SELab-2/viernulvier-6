@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Tags, Trash2 } from "lucide-react";
+import { Archive, Tags, Trash2 } from "lucide-react";
 import { RowSelectionState } from "@tanstack/react-table";
 
 import { DataTable } from "../data-table";
@@ -19,11 +19,14 @@ import { ActionVariant } from "@/types/cms/actions";
 import { useEntityTagEditor } from "@/hooks/useEntityTagEditor";
 import { TagPickerSection } from "@/components/cms/tag-picker-section";
 import { BulkTagDialog } from "@/components/cms/bulk-tag-dialog";
+import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
+import type { PickerItem } from "@/lib/collection-picker-utils";
 
 export function PerformersTable() {
     const t = useTranslations("Cms.Performers");
     const tActions = useTranslations("Cms.ActionsColumn");
     const tActionBar = useTranslations("Cms.ActionBar");
+    const tCollections = useTranslations("Cms.Collections");
     const locale = useLocale();
 
     const searchParams = useSearchParams();
@@ -47,6 +50,7 @@ export function PerformersTable() {
     const [editArtist, setEditArtist] = useState<Artist | null>(null);
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
     const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
+    const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
 
     const selectedArtists = useMemo(
         () => artists.filter((a) => rowSelection[a.id]),
@@ -95,8 +99,24 @@ export function PerformersTable() {
         [openEdit, handleDelete, tActions, t, locale]
     );
 
+    const pickerItems = useMemo<PickerItem[]>(
+        () =>
+            selectedArtists.map((artist) => ({
+                contentId: artist.id,
+                contentType: "artist",
+                label: artist.name || artist.slug || artist.id,
+            })),
+        [selectedArtists]
+    );
+
     const bulkActions = useMemo(
         () => [
+            {
+                key: "add-to-collection",
+                label: tCollections("addToCollection"),
+                icon: <Archive className="h-3.5 w-3.5" />,
+                onClick: () => setCollectionDialogOpen(true),
+            },
             {
                 key: "bulk-delete",
                 label: tActionBar("delete"),
@@ -111,7 +131,7 @@ export function PerformersTable() {
                 onClick: () => setBulkTagDialogOpen(true),
             },
         ],
-        [tActionBar, handleBulkDelete]
+        [tCollections, tActionBar, handleBulkDelete]
     );
 
     return (
@@ -180,6 +200,11 @@ export function PerformersTable() {
                 entityType="artist"
                 entityIds={selectedArtists.map((artist) => artist.id)}
                 onApplied={() => setRowSelection({})}
+            />
+            <CollectionPickerDialog
+                open={collectionDialogOpen}
+                onOpenChange={setCollectionDialogOpen}
+                items={pickerItems}
             />
         </div>
     );

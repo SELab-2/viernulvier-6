@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
 import { makeActionsColumn } from "../actions-column";
+import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
 import { CmsThumbnail } from "@/components/cms/cms-thumbnail";
 import { Action, ActionDisplay, ActionVariant } from "@/types/cms/actions";
 import { Artist } from "@/types/models/artist.types";
@@ -45,6 +46,19 @@ export function makeArtistColumns(
             onClick: (artist) => {
                 window.location.assign(`/${locale}/artists/${artist.id}`);
             },
+        },
+        {
+            key: "add-to-collection",
+            render: (artist, closeMenu) => (
+                <CollectionPickerSubmenu
+                    item={{
+                        contentId: artist.id,
+                        contentType: "artist",
+                        label: artist.name || artist.slug || artist.id,
+                    }}
+                    onComplete={closeMenu}
+                />
+            ),
         },
         {
             key: "delete",
