@@ -6,6 +6,7 @@ import { Link } from "@/i18n/routing";
 
 import type { ArticleListItem } from "@/types/models/article.types";
 import { LoadingState } from "@/components/shared/loading-state";
+import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
 
 interface ArticleItemProps {
     article: ArticleListItem;
@@ -67,6 +68,15 @@ function ArticleItem({ article, locale }: ArticleItemProps) {
                     <span className="text-muted-foreground mt-1 block font-mono text-[11px] tracking-[0.08em]">
                         {publishedAt}
                     </span>
+                )}
+                {article.tags.length > 0 && (
+                    <EntityTagStrip
+                        tags={article.tags}
+                        locale={locale}
+                        cap={3}
+                        variant="compact"
+                        className="mt-2"
+                    />
                 )}
             </div>
 

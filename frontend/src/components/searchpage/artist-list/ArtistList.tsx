@@ -37,6 +37,9 @@ function ArtistItem({ artist }: ArtistItemProps) {
                 <span className="font-display text-foreground block text-[19px] leading-[1.1] font-bold tracking-[-0.02em] hover:underline sm:text-[22px]">
                     {artist.name}
                 </span>
+                <span className="text-muted-foreground mt-1 block font-mono text-[11px] tracking-[0.08em]">
+                    {artist.slug}
+                </span>
             </div>
 
             <span className="border-foreground text-foreground shrink-0 border px-2 py-1 font-mono text-[8px] font-medium tracking-[1.3px] uppercase">

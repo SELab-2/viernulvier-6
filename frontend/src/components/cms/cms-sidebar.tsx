@@ -14,8 +14,6 @@ import {
     FolderArchive,
     TriangleAlert,
 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useGetFacets } from "@/hooks/api/useTaxonomy";
 import { getLabel } from "@/lib/utils";
@@ -75,24 +73,23 @@ function FacetFilters({ facets, activeFacets, onToggle, onClear }: FacetFiltersP
                     <p className="text-foreground font-display mb-2 text-xs font-bold tracking-tight">
                         {getLabel(facet.translations, locale)}
                     </p>
-                    <ul className="space-y-1.5">
+                    <div className="flex flex-wrap gap-1.5">
                         {facet.tags.map((tag) => (
-                            <li key={tag.slug} className="flex items-center gap-2">
-                                <Checkbox
-                                    id={`tag-${tag.slug}`}
-                                    checked={activeFacets[facet.slug]?.has(tag.slug) ?? false}
-                                    onCheckedChange={() => onToggle(facet.slug, tag.slug)}
-                                    className="border-foreground/30 data-[state=checked]:bg-foreground data-[state=checked]:border-foreground"
-                                />
-                                <Label
-                                    htmlFor={`tag-${tag.slug}`}
-                                    className="font-body cursor-pointer text-xs font-normal"
-                                >
-                                    {getLabel(tag.translations, locale)}
-                                </Label>
-                            </li>
+                            <button
+                                key={tag.slug}
+                                type="button"
+                                aria-pressed={activeFacets[facet.slug]?.has(tag.slug) ?? false}
+                                onClick={() => onToggle(facet.slug, tag.slug)}
+                                className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
+                                    activeFacets[facet.slug]?.has(tag.slug)
+                                        ? "bg-foreground text-background border-foreground"
+                                        : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                                }`}
+                            >
+                                {getLabel(tag.translations, locale)}
+                            </button>
                         ))}
-                    </ul>
+                    </div>
                 </div>
             ))}
 

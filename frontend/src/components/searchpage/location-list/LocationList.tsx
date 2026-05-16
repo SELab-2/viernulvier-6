@@ -35,6 +35,11 @@ function LocationItem({ location }: LocationItemProps) {
                 <span className="font-display text-foreground block text-[19px] leading-[1.1] font-bold tracking-[-0.02em] hover:underline sm:text-[22px]">
                     {displayName}
                 </span>
+                {location.address && location.address !== displayName && (
+                    <span className="text-muted-foreground mt-1 block text-sm">
+                        {location.address}
+                    </span>
+                )}
                 {location.city && (
                     <span className="text-muted-foreground mt-0.5 block font-mono text-[11px] tracking-[0.08em]">
                         {location.city}

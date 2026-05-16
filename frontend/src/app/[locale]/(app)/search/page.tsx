@@ -28,6 +28,7 @@ import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
 
 const ARCHIVE_MIN_YEAR = 1980;
 const SORT_VALUES: ProductionSortOption[] = ["recent", "oldest", "relevance"];
+const DEFAULT_CATEGORY_SET = new Set(["productions", "artists", "locations", "articles"]);
 
 export default function SearchPage() {
     const locale = useLocale();
@@ -53,6 +54,16 @@ export default function SearchPage() {
             ? (rawSort as ProductionSortOption)
             : undefined;
     const locationFilter = searchParams.get("location") ?? undefined;
+    const selectedCategories = useMemo(() => {
+        const raw = searchParams.get("category");
+        if (!raw) return new Set(DEFAULT_CATEGORY_SET);
+        const parsed = raw.split(",").filter(Boolean);
+        return parsed.length > 0 ? new Set(parsed) : new Set(DEFAULT_CATEGORY_SET);
+    }, [searchParams]);
+    const showProductions = selectedCategories.has("productions");
+    const showArtists = selectedCategories.has("artists");
+    const showLocations = selectedCategories.has("locations");
+    const showArticles = selectedCategories.has("articles");
 
     const { data: facets } = useGetFacets({ entityType: "production" });
 
@@ -240,10 +251,10 @@ export default function SearchPage() {
         productionsLoading || artistsLoading || locationSearchLoading || articlesLoading;
 
     const hasAnyResults =
-        allProductions.length > 0 ||
-        artistsData.length > 0 ||
-        locationSearchData.length > 0 ||
-        articlesData.length > 0;
+        (showProductions && allProductions.length > 0) ||
+        (showArtists && artistsData.length > 0) ||
+        (showLocations && locationSearchData.length > 0) ||
+        (showArticles && articlesData.length > 0);
 
     return (
         <>
@@ -289,28 +300,36 @@ export default function SearchPage() {
                         />
                     ) : (
                         <>
-                            <ProductionList
-                                productions={allProductions}
-                                locale={locale}
-                                isLoading={productionsLoading}
-                            />
+                            {showProductions && (
+                                <ProductionList
+                                    productions={allProductions}
+                                    locale={locale}
+                                    isLoading={productionsLoading}
+                                />
+                            )}
 
-                            <ArtistList artists={artistsData} isLoading={artistsLoading} />
+                            {showArtists && (
+                                <ArtistList artists={artistsData} isLoading={artistsLoading} />
+                            )}
 
-                            <LocationList
-                                locations={locationSearchData}
-                                isLoading={locationSearchLoading}
-                            />
+                            {showLocations && (
+                                <LocationList
+                                    locations={locationSearchData}
+                                    isLoading={locationSearchLoading}
+                                />
+                            )}
 
-                            <ArticleList
-                                articles={articlesData}
-                                locale={locale}
-                                isLoading={articlesLoading}
-                            />
+                            {showArticles && (
+                                <ArticleList
+                                    articles={articlesData}
+                                    locale={locale}
+                                    isLoading={articlesLoading}
+                                />
+                            )}
                         </>
                     )}
 
-                    {allProductions.length > 0 && nextCursor !== null && (
+                    {showProductions && allProductions.length > 0 && nextCursor !== null && (
                         <div ref={loadMoreRef} className="flex justify-center py-8">
                             {isFetching && (
                                 <div className="text-muted-foreground flex items-center gap-2">

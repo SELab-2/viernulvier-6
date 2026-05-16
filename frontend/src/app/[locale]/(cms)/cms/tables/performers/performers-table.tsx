@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import { RowSelectionState } from "@tanstack/react-table";
@@ -23,6 +23,7 @@ export function PerformersTable() {
     const t = useTranslations("Cms.Performers");
     const tActions = useTranslations("Cms.ActionsColumn");
     const tActionBar = useTranslations("Cms.ActionBar");
+    const locale = useLocale();
 
     const searchParams = useSearchParams();
     const q = searchParams.get("q") ?? undefined;
@@ -88,8 +89,8 @@ export function PerformersTable() {
     );
 
     const columns = useMemo(
-        () => makeArtistColumns(openEdit, handleDelete, tActions, t),
-        [openEdit, handleDelete, tActions, t]
+        () => makeArtistColumns(openEdit, handleDelete, tActions, t, locale),
+        [openEdit, handleDelete, tActions, t, locale]
     );
 
     const bulkActions = useMemo(

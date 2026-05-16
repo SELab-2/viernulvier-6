@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import type { Production } from "@/types/models/production.types";
 import { getLocalizedField } from "@/lib/locale";
 import { Link } from "@/i18n/routing";
+import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
 
 interface FeaturedSectionProps {
     productions: Production[];
@@ -53,7 +54,6 @@ function FeaturedCard({
     const title = getLocalizedField(production, "title", locale) ?? production.slug;
     const artist = getLocalizedField(production, "artist", locale);
     const tagline = getLocalizedField(production, "tagline", locale);
-    const displayType = production.uitdatabankType ?? production.uitdatabankTheme;
 
     return (
         <Link
@@ -80,10 +80,14 @@ function FeaturedCard({
                 )}
             </div>
 
-            {displayType && (
-                <div className="text-muted-foreground group-hover:text-foreground mb-1.5 font-mono text-[9px] tracking-[1.4px] uppercase transition-colors">
-                    {displayType}
-                </div>
+            {production.tags.length > 0 && (
+                <EntityTagStrip
+                    tags={production.tags}
+                    locale={locale}
+                    cap={isFirst ? 3 : 2}
+                    variant="compact"
+                    className="mb-2"
+                />
             )}
 
             <div

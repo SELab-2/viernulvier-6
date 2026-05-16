@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Archive, ChevronsUp } from "lucide-react";
 import { toast } from "sonner";
 import type { ExpandedState, Row } from "@tanstack/react-table";
@@ -39,6 +39,7 @@ export function LocationsTable() {
     const tCommon = useTranslations("Cms.common");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
+    const locale = useLocale();
     const searchParams = useSearchParams();
     const q = searchParams.get("q") ?? undefined;
 
@@ -132,10 +133,11 @@ export function LocationsTable() {
                 onEdit: (row) => setEditLocationId(row.id),
                 onDelete: handleDeleteLocation,
                 t: tActions,
+                locale,
                 onOpenSpotlight: openSpotlight,
             }),
         ],
-        [selectColumn, tActions, handleDeleteLocation, openSpotlight]
+        [selectColumn, tActions, handleDeleteLocation, locale, openSpotlight]
     );
 
     const hallCols = useMemo(

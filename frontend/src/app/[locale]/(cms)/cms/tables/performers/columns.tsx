@@ -1,12 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import { ColumnDef } from "@tanstack/react-table";
-import { ImageIcon, SquarePen, Trash2 } from "lucide-react";
+import { ArrowUpRight, SquarePen, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
 import { makeActionsColumn } from "../actions-column";
+import { CmsThumbnail } from "@/components/cms/cms-thumbnail";
 import { Action, ActionDisplay, ActionVariant } from "@/types/cms/actions";
 import { Artist } from "@/types/models/artist.types";
 import { FieldDef } from "../edit-sheet";
@@ -15,7 +15,8 @@ export function makeArtistColumns(
     onEdit: (artist: Artist) => void,
     onDelete: (artist: Artist) => void,
     t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>,
-    tPerformers: ReturnType<typeof useTranslations<"Cms.Performers">>
+    tPerformers: ReturnType<typeof useTranslations<"Cms.Performers">>,
+    locale: string
 ): ColumnDef<Artist>[] {
     const actions: Action<Artist>[] = [
         {
@@ -38,6 +39,14 @@ export function makeArtistColumns(
             },
         },
         {
+            key: "open-public",
+            label: t("open", { label: "performer" }),
+            icon: ArrowUpRight,
+            onClick: (artist) => {
+                window.location.assign(`/${locale}/artists/${artist.id}`);
+            },
+        },
+        {
             key: "delete",
             label: tPerformers("deletePerformer"),
             icon: Trash2,
@@ -52,12 +61,8 @@ export function makeArtistColumns(
             header: "",
             cell: ({ row }) => {
                 const url = row.original.coverImageUrl;
-                if (!url) return <ImageIcon className="text-muted-foreground size-4" />;
-                return (
-                    <div className="relative size-10 overflow-hidden rounded">
-                        <Image src={url} alt="" fill className="object-cover" sizes="40px" />
-                    </div>
-                );
+                if (!url) return <CmsThumbnail src={null} alt="" />;
+                return <CmsThumbnail src={url} alt={row.original.name} />;
             },
             size: 52,
         },
