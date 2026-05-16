@@ -5,6 +5,7 @@ import { FailedRequest, CustomAxiosRequestConfig } from "@/types/api/api.types";
 import { queryKeys } from "@/hooks/api";
 import { RefreshTokenResponse } from "@/types/api/auth.api.types";
 import { getBasePath } from "@/lib/base-path";
+import { isProtectedApiRequest, isProtectedRoute } from "@/lib/auth-routing";
 
 export const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -30,14 +31,13 @@ api.interceptors.response.use(
     async (error: AxiosError) => {
         const originalRequest = error.config as CustomAxiosRequestConfig;
 
-        // Skip refresh for login/logout and if it's already a retry
-        if (
-            error.response?.status === 401 &&
-            !originalRequest._retry &&
-            !originalRequest.url?.includes("/auth/login") &&
-            !originalRequest.url?.includes("/auth/logout") &&
-            !originalRequest.url?.includes("/auth/refresh")
-        ) {
+        const shouldRefreshAuth = isProtectedApiRequest(
+            originalRequest.url,
+            originalRequest.method
+        );
+
+        // Only protected API requests should attempt session refresh.
+        if (error.response?.status === 401 && !originalRequest._retry && shouldRefreshAuth) {
             if (isRefreshing) {
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject });
@@ -59,7 +59,7 @@ api.interceptors.response.use(
 
                 if (typeof window !== "undefined") {
                     const { pathname } = window.location;
-                    if (pathname.includes("/cms") && !pathname.includes("/login")) {
+                    if (isProtectedRoute(pathname)) {
                         window.location.assign(`${getBasePath()}/login`);
                     }
                 }

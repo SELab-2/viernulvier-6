@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Menu, X, ChevronDown, LogOut, User } from "lucide-react";
+import { Search, Menu, X, ChevronDown, LogOut, User as UserIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 
@@ -9,7 +9,8 @@ import { Link as I18nLink, usePathname } from "@/i18n/routing";
 import { ThemeSwitcher } from "@/components/shared/theme-switcher";
 import { LocaleSwitcherLinks } from "@/components/shared/locale-switcher-links";
 import { useUser, useLogout } from "@/hooks/useAuth";
-import { UserRole } from "@/types/models/user.types";
+import { User, UserRole } from "@/types/models/user.types";
+import { isProtectedRoute } from "@/lib/auth-routing";
 
 interface UnifiedHeaderProps {
     query?: string;
@@ -19,13 +20,10 @@ interface UnifiedHeaderProps {
     searchHint?: string;
 }
 
-function UserMenu() {
-    const { data: user } = useUser();
+function UserMenu({ user }: { user: User }) {
     const logout = useLogout();
     const [open, setOpen] = useState(false);
     const t = useTranslations("Header");
-
-    if (!user) return null;
 
     return (
         <div className="relative">
@@ -37,7 +35,7 @@ function UserMenu() {
                     {user.email}
                 </span>
                 <span className="text-foreground flex h-6 w-6 items-center justify-center">
-                    <User className="h-4 w-4" />
+                    <UserIcon className="h-4 w-4" />
                 </span>
                 <ChevronDown
                     className={`text-muted-foreground h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`}
@@ -75,11 +73,11 @@ export function UnifiedHeader({
     const [menuOpen, setMenuOpen] = useState(false);
     const pathname = usePathname();
     const t = useTranslations("Header.nav");
-    const { data: user } = useUser();
+    const isCms = isProtectedRoute(pathname);
+    const { data: user } = useUser({ enabled: isCms });
     const isHome = pathname === "/" || pathname === "";
     const isSearch = pathname.startsWith("/search");
     const isArticles = pathname.startsWith("/articles");
-    const isCms = pathname.startsWith("/cms") || pathname.startsWith("/admin");
 
     const navLinkClass = (active: boolean) =>
         `font-mono text-[9px] tracking-[1.4px] uppercase transition-colors ${
@@ -154,7 +152,7 @@ export function UnifiedHeader({
                     {user && (
                         <>
                             <span className="bg-border h-3 w-px" />
-                            <UserMenu />
+                            <UserMenu user={user} />
                         </>
                     )}
                 </div>

@@ -16,7 +16,7 @@ describe("api response interceptor", () => {
         let protectedRequestCount = 0;
 
         server.use(
-            http.get(apiUrl("/protected-test"), () => {
+            http.get(apiUrl("/editor/me"), () => {
                 protectedRequestCount += 1;
                 if (protectedRequestCount === 1) {
                     return HttpResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -29,10 +29,27 @@ describe("api response interceptor", () => {
             })
         );
 
-        const response = await api.get<{ ok: boolean }>("/protected-test");
+        const response = await api.get<{ ok: boolean }>("/editor/me");
 
         expect(response.data).toEqual({ ok: true });
         expect(protectedRequestCount).toBe(2);
+    });
+
+    it("does not refresh auth for public request failures", async () => {
+        let refreshCalls = 0;
+
+        server.use(
+            http.get(apiUrl("/productions/not-found"), () => {
+                return HttpResponse.json({ message: "Unauthorized" }, { status: 401 });
+            }),
+            http.post(apiUrl("/auth/refresh"), () => {
+                refreshCalls += 1;
+                return HttpResponse.json({ success: true, message: "refreshed" }, { status: 200 });
+            })
+        );
+
+        await expect(api.get("/productions/not-found")).rejects.toBeDefined();
+        expect(refreshCalls).toBe(0);
     });
 
     it("clears user cache and rejects when refresh fails", async () => {
@@ -42,7 +59,7 @@ describe("api response interceptor", () => {
         });
 
         server.use(
-            http.get(apiUrl("/protected-test-fail"), () => {
+            http.get(apiUrl("/editor/me"), () => {
                 return HttpResponse.json({ message: "Unauthorized" }, { status: 401 });
             }),
             http.post(apiUrl("/auth/refresh"), () => {
@@ -53,7 +70,7 @@ describe("api response interceptor", () => {
             })
         );
 
-        await expect(api.get("/protected-test-fail")).rejects.toBeDefined();
+        await expect(api.get("/editor/me")).rejects.toBeDefined();
         expect(queryClient.getQueryData(queryKeys.user)).toBeUndefined();
     });
 
@@ -62,7 +79,7 @@ describe("api response interceptor", () => {
         let protectedCalls = 0;
 
         server.use(
-            http.get(apiUrl("/protected-queue"), () => {
+            http.get(apiUrl("/articles/cms/queue"), () => {
                 protectedCalls += 1;
                 if (protectedCalls <= 2) {
                     return HttpResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -78,8 +95,8 @@ describe("api response interceptor", () => {
         );
 
         const [first, second] = await Promise.all([
-            api.get<{ ok: boolean }>("/protected-queue"),
-            api.get<{ ok: boolean }>("/protected-queue"),
+            api.get<{ ok: boolean }>("/articles/cms/queue"),
+            api.get<{ ok: boolean }>("/articles/cms/queue"),
         ]);
 
         expect(first.data).toEqual({ ok: true });
