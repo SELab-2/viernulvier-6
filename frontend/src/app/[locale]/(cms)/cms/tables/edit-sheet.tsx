@@ -105,7 +105,7 @@ function HallMultiSelectField({
                         variant="outline"
                         role="combobox"
                         aria-expanded={open}
-                        className="border-foreground/20 focus:ring-foreground/30 h-auto min-h-9 w-full justify-between px-3 py-2 text-sm font-normal"
+                        className="border-border/80 focus:ring-foreground/30 bg-background h-auto min-h-9 w-full justify-between px-3 py-2 text-sm font-normal"
                     >
                         <div className="flex flex-wrap gap-1">
                             {selectedHalls.length === 0 ? (
@@ -114,8 +114,8 @@ function HallMultiSelectField({
                                 selectedHalls.map((h) => (
                                     <Badge
                                         key={h.id}
-                                        variant="secondary"
-                                        className="gap-1 pr-1 text-xs"
+                                        variant="outline"
+                                        className="border-border/80 gap-1 rounded-none pr-1 font-mono text-[10px]"
                                     >
                                         {h.name}
                                         <span
@@ -142,7 +142,7 @@ function HallMultiSelectField({
                         <ChevronsUpDown className="text-muted-foreground ml-2 h-4 w-4 shrink-0" />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="border-foreground/20 w-[320px] p-0" align="start">
+                <PopoverContent className="border-border/80 bg-popover w-[320px] p-0" align="start">
                     <Command>
                         <CommandInput placeholder="Search halls..." />
                         <CommandList>
@@ -191,7 +191,7 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
                 <span className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
                     {field.label}
                 </span>
-                <div className="border-foreground/10 bg-foreground/[0.02] rounded-sm border px-3 py-2">
+                <div className="border-border/80 bg-muted/30 rounded-none border px-3 py-2">
                     <code className="text-muted-foreground font-mono text-xs">
                         {stringValue || "—"}
                     </code>
@@ -213,7 +213,7 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
                     id={fieldId}
                     value={stringValue}
                     onChange={(e) => onChange(e.target.value)}
-                    className="border-foreground/20 focus-visible:ring-foreground/30 h-9 text-sm"
+                    className="border-border/80 focus-visible:ring-foreground/30 h-9 text-sm"
                 />
             </div>
         );
@@ -246,11 +246,11 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
                 >
                     <SelectTrigger
                         id={fieldId}
-                        className="border-foreground/20 focus:ring-foreground/30 h-9 w-full text-sm"
+                        className="border-border/80 focus:ring-foreground/30 h-9 w-full text-sm"
                     >
                         <SelectValue placeholder={t("selectPlaceholder")} />
                     </SelectTrigger>
-                    <SelectContent className="border-foreground/20">
+                    <SelectContent className="border-border/80 bg-popover">
                         <SelectItem value={NULL_SENTINEL}>—</SelectItem>
                         {booleanOptions.map((opt) => (
                             <SelectItem key={opt.value} value={opt.value}>
@@ -288,11 +288,11 @@ function FieldRow<TData>({ field, value, onChange }: FieldRowProps<TData>) {
             <Select value={stringValue} onValueChange={onChange}>
                 <SelectTrigger
                     id={fieldId}
-                    className="border-foreground/20 focus:ring-foreground/30 h-9 w-full text-sm"
+                    className="border-border/80 focus:ring-foreground/30 h-9 w-full text-sm"
                 >
                     <SelectValue placeholder={t("selectPlaceholder")} />
                 </SelectTrigger>
-                <SelectContent className="border-foreground/20">
+                <SelectContent className="border-border/80 bg-popover">
                     {options.map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>
                             {opt.label}
@@ -343,15 +343,15 @@ function SheetFormBody<TData extends { id: string } & Record<string, unknown>>({
                     />
                 ))}
                 {extraContent && (
-                    <div className="border-foreground/10 border-t pt-5">{extraContent(entity)}</div>
+                    <div className="border-border/70 border-t pt-5">{extraContent(entity)}</div>
                 )}
             </div>
-            <div className="border-foreground/10 border-t px-6 py-4">
+            <div className="border-border/70 border-t px-6 py-4">
                 <SheetFooter className="flex-row justify-end gap-3 sm:justify-end">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="border-foreground/20 hover:bg-foreground/5 px-4 py-2 font-mono text-[10px] tracking-[1px] uppercase transition-colors"
+                        className="border-border/80 hover:bg-muted/40 px-4 py-2 font-mono text-[10px] tracking-[1px] uppercase transition-colors"
                     >
                         {t("cancel")}
                     </button>
@@ -394,8 +394,8 @@ export function EditSheet<TData extends { id: string } & Record<string, unknown>
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="border-foreground/20 flex flex-col gap-0 border-l p-0 sm:max-w-md">
-                <SheetHeader className="border-foreground/10 border-b px-6 pt-6 pb-4">
+            <SheetContent className="border-border/80 flex flex-col gap-0 border-l p-0 sm:max-w-md">
+                <SheetHeader className="border-border/70 border-b px-6 pt-6 pb-4">
                     <div className="flex items-center justify-between">
                         <div className="text-muted-foreground mb-2 font-mono text-[9px] tracking-[2px] uppercase">
                             {t("editMode")}

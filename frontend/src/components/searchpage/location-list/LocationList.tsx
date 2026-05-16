@@ -6,6 +6,7 @@ import { Link } from "@/i18n/routing";
 
 import type { Location } from "@/types/models/location.types";
 import { LoadingState } from "@/components/shared/loading-state";
+import { ResultImagePlaceholder } from "@/components/searchpage/result-image-placeholder";
 
 interface LocationItemProps {
     location: Location;
@@ -27,7 +28,7 @@ function LocationItem({ location }: LocationItemProps) {
                         sizes="180px"
                     />
                 ) : (
-                    <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                    <ResultImagePlaceholder id={location.id} />
                 )}
             </div>
 
@@ -56,7 +57,7 @@ function LocationItem({ location }: LocationItemProps) {
     if (!location.slug) {
         return (
             <div
-                className="border-muted/35 flex items-center gap-3 border-b px-4 py-3.5 sm:gap-[18px] sm:px-7"
+                className="border-border/70 flex items-center gap-3 border-b px-4 py-3.5 sm:gap-[18px] sm:px-7"
                 style={{ animation: "fadein 0.3s ease both" }}
             >
                 {inner}
@@ -67,7 +68,7 @@ function LocationItem({ location }: LocationItemProps) {
     return (
         <Link
             href={`/locations/${location.slug}`}
-            className="border-muted/35 hover:bg-muted/5 flex cursor-pointer items-center gap-3 border-b px-4 py-3.5 transition-all sm:gap-[18px] sm:px-7"
+            className="border-border/70 hover:bg-muted/40 flex cursor-pointer items-center gap-3 border-b px-4 py-3.5 transition-all sm:gap-[18px] sm:px-7"
             style={{ animation: "fadein 0.3s ease both" }}
         >
             {inner}

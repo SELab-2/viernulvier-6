@@ -93,7 +93,7 @@ export default function HomePage() {
                             {t("latest.viewAll")}
                         </Link>
                     </div>
-                    <div className="border-muted/35 border">
+                    <div className="border-border/80 border">
                         {latestProductions.map((production) => (
                             <ProductionItem
                                 key={production.id}
@@ -105,7 +105,7 @@ export default function HomePage() {
                 </section>
             )}
 
-            <section className="border-foreground/10 flex flex-col items-center gap-5 border-t px-4 py-14 text-center sm:px-10 sm:py-20">
+            <section className="border-border/80 flex flex-col items-center gap-5 border-t px-4 py-14 text-center sm:px-10 sm:py-20">
                 <h3 className="font-display text-foreground text-[24px] leading-tight font-bold tracking-[-0.02em] sm:text-[32px]">
                     {t("about.title")}
                 </h3>

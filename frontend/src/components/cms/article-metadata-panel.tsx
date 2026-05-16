@@ -223,7 +223,7 @@ export function ArticleMetadataPanel({
                             </div>
                         </div>
                     ) : (
-                        <div className="border-foreground/10 flex flex-col gap-2 rounded border border-dashed p-3">
+                        <div className="border-border/80 flex flex-col gap-2 rounded border border-dashed p-3">
                             <p className="text-muted-foreground text-center text-xs">
                                 {t("coverEmpty")}
                             </p>

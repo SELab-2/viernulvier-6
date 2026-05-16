@@ -299,7 +299,7 @@ export default function IngestPage() {
                         <Spinner className="text-muted-foreground h-6 w-6" />
                     </div>
                 ) : mediaItems.length === 0 ? (
-                    <div className="border-foreground/10 bg-foreground/[0.02] flex flex-col items-center justify-center border py-16">
+                    <div className="border-border/80 bg-foreground/[0.02] flex flex-col items-center justify-center border py-16">
                         <Upload className="text-muted-foreground mb-4 h-8 w-8" />
                         <p className="text-muted-foreground font-mono text-[10px] tracking-wider uppercase">
                             {t("noMedia")}

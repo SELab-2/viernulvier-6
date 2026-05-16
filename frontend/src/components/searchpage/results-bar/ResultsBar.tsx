@@ -28,7 +28,7 @@ export function ResultsBar({
     const tSearch = useTranslations("Search");
 
     return (
-        <div className="border-muted/30 bg-background sticky top-0 z-10 flex items-center gap-4 border-b px-4 py-4 sm:px-7">
+        <div className="border-border/80 bg-background sticky top-0 z-10 flex items-center gap-4 border-b px-4 py-4 sm:px-7">
             <div
                 className={`flex min-w-0 flex-1 transition-all duration-300 ease-out ${
                     showSearch

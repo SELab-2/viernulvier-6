@@ -69,7 +69,7 @@ function FacetFilters({ facets, activeFacets, onToggle, onClear }: FacetFiltersP
             )}
 
             {facets.map((facet) => (
-                <div key={facet.slug} className="border-foreground/10 mb-4 border p-2.5">
+                <div key={facet.slug} className="border-border/70 mb-4 border p-2.5">
                     <p className="text-foreground font-display mb-2 text-xs font-bold tracking-tight">
                         {getLabel(facet.translations, locale)}
                     </p>
@@ -200,7 +200,7 @@ function SidebarContent({ onNavigate, showHeader = true }: SidebarContentProps) 
                                     className={`group relative flex flex-col border p-2.5 transition-all ${
                                         active
                                             ? "border-foreground bg-foreground/5"
-                                            : "border-foreground/10 hover:border-foreground/30"
+                                            : "border-border/70 hover:border-foreground/60"
                                     }`}
                                 >
                                     <div className="flex items-start justify-between">
@@ -211,7 +211,7 @@ function SidebarContent({ onNavigate, showHeader = true }: SidebarContentProps) 
                                             className={`h-3.5 w-3.5 transition-colors ${
                                                 active
                                                     ? "text-foreground"
-                                                    : "text-muted-foreground/40 group-hover:text-foreground"
+                                                    : "text-muted-foreground/70 group-hover:text-foreground"
                                             }`}
                                         />
                                     </div>
@@ -251,14 +251,14 @@ function SidebarContent({ onNavigate, showHeader = true }: SidebarContentProps) 
                                     className={`group relative flex items-center gap-3 border p-2.5 transition-all ${
                                         active
                                             ? "border-foreground bg-foreground/5"
-                                            : "border-foreground/10 hover:border-foreground/30"
+                                            : "border-border/70 hover:border-foreground/60"
                                     }`}
                                 >
                                     <Icon
                                         className={`h-3.5 w-3.5 transition-colors ${
                                             active
                                                 ? "text-foreground"
-                                                : "text-muted-foreground/40 group-hover:text-foreground"
+                                                : "text-muted-foreground/70 group-hover:text-foreground"
                                         }`}
                                     />
                                     <div className="flex-1">
@@ -305,7 +305,7 @@ export function CmsMobileMenu({ className = "" }: { className?: string }) {
             <SheetTrigger asChild>
                 <button
                     type="button"
-                    className={`text-muted-foreground hover:text-foreground hover:border-foreground/40 border-foreground/20 flex items-center gap-2 border px-3 py-2 font-mono text-[10px] tracking-[1.5px] uppercase transition-colors ${className}`}
+                    className={`text-muted-foreground hover:text-foreground hover:border-foreground/60 border-border/70 flex items-center gap-2 border px-3 py-2 font-mono text-[10px] tracking-[1.5px] uppercase transition-colors ${className}`}
                     aria-label="Open menu"
                 >
                     <span>Menu</span>
@@ -315,7 +315,7 @@ export function CmsMobileMenu({ className = "" }: { className?: string }) {
             <SheetContent side="left" className="w-72 p-0">
                 <SheetTitle className="sr-only">Menu</SheetTitle>
                 <div className="flex h-full flex-col">
-                    <div className="border-foreground/20 grid grid-cols-3 items-center border-b p-3">
+                    <div className="border-border/80 grid grid-cols-3 items-center border-b p-3">
                         <span className="text-muted-foreground font-mono text-[10px] tracking-[1.5px] uppercase">
                             Menu
                         </span>
@@ -340,7 +340,7 @@ export function CmsSidebar() {
     return (
         <>
             {/* Desktop Sidebar - Always visible */}
-            <aside className="border-foreground/20 bg-background flex hidden h-full w-56 flex-col overflow-hidden border-r lg:flex">
+            <aside className="border-border/80 bg-background flex hidden h-full w-56 flex-col overflow-hidden border-r lg:flex">
                 <SidebarContent />
             </aside>
         </>

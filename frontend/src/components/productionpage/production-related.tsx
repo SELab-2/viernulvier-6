@@ -50,7 +50,7 @@ function RelatedProductionCard({ production, locale }: { production: Production;
                 {title}
             </div>
             {artist && (
-                <div className="font-display text-foreground/40 mb-2 line-clamp-1 text-[16px] leading-[1.2] font-bold italic">
+                <div className="text-muted-foreground font-display mb-2 line-clamp-1 text-[16px] leading-[1.2] font-bold italic">
                     {artist}
                 </div>
             )}
@@ -81,7 +81,7 @@ export function ProductionRelated({
                 </Link>
             </div>
 
-            <div className="bg-muted/30 border-muted/30 grid grid-cols-1 gap-[1px] border sm:grid-cols-2 lg:grid-cols-4">
+            <div className="bg-border/70 border-border/80 grid grid-cols-1 gap-[1px] border sm:grid-cols-2 lg:grid-cols-4">
                 {productions.map((p) => (
                     <RelatedProductionCard key={p.id} production={p} locale={locale} />
                 ))}

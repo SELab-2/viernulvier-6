@@ -47,7 +47,7 @@ function UserMenu() {
             {open && (
                 <>
                     <div className="fixed inset-0" onClick={() => setOpen(false)} />
-                    <div className="bg-background border-foreground/10 absolute right-0 mt-2 w-40 border shadow-sm">
+                    <div className="bg-background border-border/80 absolute right-0 mt-2 w-40 border shadow-sm">
                         <button
                             onClick={() => {
                                 setOpen(false);
@@ -95,7 +95,7 @@ export function UnifiedHeader({
             {/* Desktop */}
             <div className="mx-auto hidden h-[52px] max-w-7xl items-stretch px-6 sm:flex sm:px-10">
                 {/* Logo */}
-                <div className="border-muted/30 mr-6 flex shrink-0 items-center border-r pr-6 sm:mr-7 sm:pr-7">
+                <div className="border-border/70 mr-6 flex shrink-0 items-center border-r pr-6 sm:mr-7 sm:pr-7">
                     <Link
                         href="/"
                         className="font-display text-foreground text-[20px] font-bold tracking-[-0.03em] whitespace-nowrap sm:text-[22px]"
@@ -130,7 +130,7 @@ export function UnifiedHeader({
                 </div>
 
                 {/* Nav + utilities */}
-                <div className="border-muted/30 ml-6 flex shrink-0 items-center gap-4 border-l pl-6 sm:ml-7 sm:gap-5 sm:pl-7">
+                <div className="border-border/70 ml-6 flex shrink-0 items-center gap-4 border-l pl-6 sm:ml-7 sm:gap-5 sm:pl-7">
                     <I18nLink href="/" className={navLinkClass(isHome)}>
                         {t("home")}
                     </I18nLink>
@@ -181,7 +181,7 @@ export function UnifiedHeader({
             </div>
 
             {menuOpen && (
-                <nav className="border-muted/30 flex flex-col gap-4 border-t px-4 py-4 sm:hidden">
+                <nav className="border-border/70 flex flex-col gap-4 border-t px-4 py-4 sm:hidden">
                     <I18nLink
                         href="/"
                         onClick={() => setMenuOpen(false)}

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
@@ -64,11 +65,11 @@ export function BulkTagDialog({
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>{tActionBar("bulkEdit")}</DialogTitle>
+                    <DialogDescription>
+                        {entityIds.length} {tTags("sectionLabel").toLowerCase()}
+                    </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
-                    <p className="text-muted-foreground text-sm">
-                        {entityIds.length} {tTags("sectionLabel").toLowerCase()}
-                    </p>
                     <TagPickerSection
                         entityType={entityType}
                         selectedSlugs={tagSlugs}

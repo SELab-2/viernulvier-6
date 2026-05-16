@@ -34,7 +34,7 @@ function EventRow({ event, locale }: { event: Event; locale: string }) {
     const isPast = new Date(event.startsAt) < new Date();
 
     return (
-        <div className="border-muted/25 flex items-center justify-between border-b px-4 py-2 last:border-b-0 sm:px-0">
+        <div className="border-border/70 flex items-center justify-between border-b px-4 py-2 last:border-b-0 sm:px-0">
             <div className="flex items-center gap-3">
                 <span className="font-body text-foreground text-xs">
                     {formatDate(event.startsAt, locale)}
@@ -60,8 +60,8 @@ function EventList({ productionId, locale }: { productionId: string; locale: str
 
     if (isLoading) {
         return (
-            <div className="border-muted/35 border-t">
-                <div className="border-muted/25 flex items-center border-b px-4 py-2 sm:px-0">
+            <div className="border-border/80 border-t">
+                <div className="border-border/70 flex items-center border-b px-4 py-2 sm:px-0">
                     <Skeleton className="bg-muted/20 h-3 w-28" />
                     <Skeleton className="bg-muted/20 ml-4 h-3 w-10" />
                     <Skeleton className="bg-muted/20 mr-2 ml-auto h-4 w-16" />
@@ -72,7 +72,7 @@ function EventList({ productionId, locale }: { productionId: string; locale: str
 
     if (!events || events.length === 0) {
         return (
-            <div className="border-muted/35 font-body text-muted-foreground border-t px-4 py-2.5 text-xs tracking-[0.06em] sm:px-0">
+            <div className="border-border/80 font-body text-muted-foreground border-t px-4 py-2.5 text-xs tracking-[0.06em] sm:px-0">
                 {t("eventsAvailableSoon")}
             </div>
         );
@@ -102,7 +102,7 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
         <>
             <div
                 onClick={toggle}
-                className={`border-muted/35 hover:bg-muted/5 flex cursor-pointer items-start gap-3 border-b px-4 py-3.5 transition-all sm:gap-[18px] sm:px-7 ${
+                className={`border-border/70 hover:bg-muted/40 flex cursor-pointer items-start gap-3 border-b px-4 py-3.5 transition-all sm:gap-[18px] sm:px-7 ${
                     expanded
                         ? "bg-muted/10 border-l-primary border-l-[3px]"
                         : "border-l-[3px] border-l-transparent"
@@ -133,7 +133,7 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
                     </Link>
 
                     {artist && (
-                        <div className="font-display text-foreground/40 mb-1.5 text-[19px] leading-[1.1] font-bold tracking-[-0.02em] italic sm:text-[22px]">
+                        <div className="text-muted-foreground font-display mb-1.5 text-[19px] leading-[1.1] font-bold tracking-[-0.02em] italic sm:text-[22px]">
                             {artist}
                         </div>
                     )}
@@ -157,7 +157,7 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
             </div>
 
             {expanded && (
-                <div className="border-muted/35 bg-muted/4 flex flex-col border-b pl-4 sm:pl-[calc(28px+180px+18px)]">
+                <div className="border-border/70 bg-muted/40 flex flex-col border-b pl-4 sm:pl-[calc(28px+180px+18px)]">
                     <EventList productionId={production.id} locale={locale} />
                 </div>
             )}
@@ -178,7 +178,7 @@ export function ProductionList({ productions, locale, isLoading }: ProductionLis
                 ? [0, 1, 2, 3, 4, 5, 6].map((i) => (
                       <div
                           key={i}
-                          className="border-muted/35 flex items-start gap-3 border-b px-4 py-3.5 sm:gap-[18px] sm:px-7"
+                          className="border-border/70 flex items-start gap-3 border-b px-4 py-3.5 sm:gap-[18px] sm:px-7"
                       >
                           <Skeleton className="bg-muted/20 h-[108px] w-[144px] shrink-0 sm:h-[136px] sm:w-[180px]" />
                           <div className="min-w-0 flex-1 space-y-2 pt-1">

@@ -279,6 +279,7 @@
         "ActionsColumn": {
             "openMenu": "Menu openen",
             "actions": "Acties",
+            "open": "{label} openen",
             "copy": "{key} kopiëren",
             "copied": "{key} gekopieerd",
             "copyFailed": "Kopiëren naar klembord mislukt",

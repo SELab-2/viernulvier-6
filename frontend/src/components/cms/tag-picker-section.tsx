@@ -130,7 +130,7 @@ export function TagPickerSection({
 
     return (
         <section className="space-y-4">
-            <h2 className="border-foreground/10 border-b pb-2 text-sm font-semibold">
+            <h2 className="border-border/80 border-b pb-2 text-sm font-semibold">
                 {t("sectionLabel")}
             </h2>
             <div className="space-y-5">{facets.map(renderFacetRow)}</div>

@@ -20,13 +20,13 @@ export function ArticlesSection({ articles }: ArticlesSectionProps) {
         <div>
             <div className="text-muted-foreground mb-3 flex items-center gap-2.5 font-mono text-[9px] font-medium tracking-[2px] uppercase">
                 {t("articles.label")}
-                <span className="bg-muted/40 h-px flex-1" />
+                <span className="bg-border/80 h-px flex-1" />
                 <Link href="/articles" className="hover:text-foreground transition-colors">
                     {t("articles.viewAll")} →
                 </Link>
             </div>
 
-            <div className="bg-muted -mx-4 grid grid-cols-1 gap-px sm:-mx-[30px] sm:grid-cols-3">
+            <div className="bg-border/80 border-border/80 -mx-4 grid grid-cols-1 gap-px border-y sm:-mx-[30px] sm:grid-cols-3">
                 {items.map((article) => (
                     <ArticleCard key={article.id} article={article} locale={locale} />
                 ))}
@@ -50,9 +50,9 @@ function ArticleCard({ article, locale }: { article: ArticleListItem; locale: st
     return (
         <Link
             href={`/articles/${article.slug}`}
-            className="group bg-background hover:bg-muted/5 block p-4 pb-5 transition-colors sm:p-5"
+            className="group bg-background hover:bg-muted/40 block p-4 pb-5 transition-colors sm:p-5"
         >
-            <div className="relative mb-3 h-[120px] w-full overflow-hidden bg-[#CCC6BC]">
+            <div className="bg-muted border-border/70 relative mb-3 h-[120px] w-full overflow-hidden border">
                 {article.coverImageUrl ? (
                     <Image
                         src={article.coverImageUrl}

@@ -7,6 +7,7 @@ import { Link } from "@/i18n/routing";
 import type { ArticleListItem } from "@/types/models/article.types";
 import { LoadingState } from "@/components/shared/loading-state";
 import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
+import { ResultImagePlaceholder } from "@/components/searchpage/result-image-placeholder";
 
 interface ArticleItemProps {
     article: ArticleListItem;
@@ -30,7 +31,7 @@ function ArticleItem({ article, locale }: ArticleItemProps) {
     return (
         <Link
             href={`/articles/${article.slug}`}
-            className="border-muted/35 hover:bg-muted/5 flex cursor-pointer items-start gap-3 border-b px-4 py-3.5 transition-all sm:gap-[18px] sm:px-7"
+            className="border-border/70 hover:bg-muted/40 flex cursor-pointer items-start gap-3 border-b px-4 py-3.5 transition-all sm:gap-[18px] sm:px-7"
             style={{ animation: "fadein 0.3s ease both" }}
         >
             <div className="bg-muted relative h-[108px] w-[144px] shrink-0 overflow-hidden sm:h-[136px] sm:w-[180px]">
@@ -43,20 +44,7 @@ function ArticleItem({ article, locale }: ArticleItemProps) {
                         sizes="180px"
                     />
                 ) : (
-                    <>
-                        <div
-                            className="absolute inset-0 opacity-[0.08]"
-                            style={{
-                                backgroundImage:
-                                    "repeating-linear-gradient(45deg, currentColor 0 1px, transparent 1px 8px)",
-                            }}
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-muted-foreground/50 font-mono text-[9px] tracking-[2px] uppercase">
-                                N°{article.id.slice(-3)}
-                            </span>
-                        </div>
-                    </>
+                    <ResultImagePlaceholder id={article.id} />
                 )}
             </div>
 

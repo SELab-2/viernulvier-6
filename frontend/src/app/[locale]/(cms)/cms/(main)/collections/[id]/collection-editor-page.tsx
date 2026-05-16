@@ -928,7 +928,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
                         <div className="space-y-8">
                             {/* Metadata section */}
                             <section className="space-y-4">
-                                <div className="border-foreground/10 flex items-center justify-between border-b pb-2">
+                                <div className="border-border/80 flex items-center justify-between border-b pb-2">
                                     <h2 className="text-sm font-semibold">
                                         {t("metadataSection")}
                                     </h2>
@@ -1013,7 +1013,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
 
                             {/* Items section */}
                             <section className="space-y-4">
-                                <h2 className="border-foreground/10 border-b pb-2 text-sm font-semibold">
+                                <h2 className="border-border/80 border-b pb-2 text-sm font-semibold">
                                     {t("itemsTitle", { count: localItems.length })}
                                 </h2>
                                 {localItems.length === 0 ? (
@@ -1057,9 +1057,9 @@ export function CollectionEditorPage({ id }: { id: string }) {
 
                 {/* Preview Panel - right side */}
                 {isPreviewOpen && (
-                    <div className="border-muted flex min-h-[70vh] w-full flex-1 flex-col overflow-hidden border-t lg:min-h-0 lg:w-[55%] lg:min-w-[400px] lg:border-t-0 lg:border-l">
-                        <div className="bg-muted flex items-center justify-between px-4 py-3 shadow-[0_1px_0_0_hsl(var(--border))]">
-                            <span className="text-background font-mono text-[10px] font-medium tracking-[1.2px] uppercase">
+                    <div className="border-border/80 flex min-h-[70vh] w-full flex-1 flex-col overflow-hidden border-t lg:min-h-0 lg:w-[55%] lg:min-w-[400px] lg:border-t-0 lg:border-l">
+                        <div className="bg-muted/70 flex items-center justify-between px-4 py-3 shadow-[0_1px_0_0_hsl(var(--border))]">
+                            <span className="text-muted-foreground font-mono text-[10px] font-medium tracking-[1.2px] uppercase">
                                 {t("previewLabel")}
                             </span>
                         </div>

@@ -12,6 +12,7 @@ export type EntityTagStripProps = {
     cap?: number;
     variant?: "default" | "compact";
     className?: string;
+    interactive?: boolean;
 };
 
 const CHIP_BASE =
@@ -25,6 +26,7 @@ export function EntityTagStrip({
     cap = 4,
     variant = "default",
     className,
+    interactive = true,
 }: EntityTagStripProps) {
     const lookup = useTaxonomyLookup(locale);
 
@@ -54,16 +56,26 @@ export function EntityTagStrip({
 
     return (
         <div className={`flex flex-wrap gap-1 ${className ?? ""}`}>
-            {visible.map((tag) => (
-                <Link
-                    key={tag.slug}
-                    href={`/search?facet=${tag.facet}&tag=${tag.slug}`}
-                    data-testid="entity-tag-chip"
-                    className={`${CHIP_BASE} ${padding} hover:border-foreground hover:text-foreground`}
-                >
-                    {tag.label}
-                </Link>
-            ))}
+            {visible.map((tag) =>
+                interactive ? (
+                    <Link
+                        key={tag.slug}
+                        href={`/search?facet=${tag.facet}&tag=${tag.slug}`}
+                        data-testid="entity-tag-chip"
+                        className={`${CHIP_BASE} ${padding} hover:border-foreground hover:text-foreground`}
+                    >
+                        {tag.label}
+                    </Link>
+                ) : (
+                    <span
+                        key={tag.slug}
+                        data-testid="entity-tag-chip"
+                        className={`${CHIP_BASE} ${padding}`}
+                    >
+                        {tag.label}
+                    </span>
+                )
+            )}
             {hidden.length > 0 && (
                 <TooltipProvider delayDuration={100}>
                     <Tooltip>

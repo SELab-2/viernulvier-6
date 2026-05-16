@@ -42,7 +42,7 @@ function MemoSubTableInner<T>({
     getRowId?: (row: T) => string;
 }) {
     return (
-        <div className="border-foreground/10 bg-foreground/[0.02] py-1 pr-6 pl-14">
+        <div className="border-border/80 bg-foreground/[0.02] py-1 pr-6 pl-14">
             <DataTable
                 columns={columns}
                 data={items}
@@ -431,21 +431,24 @@ export function DataTable<TData, TValue>({
                 aria-multiselectable={hasSelection ? true : undefined}
             >
                 <Table className={compact ? "text-xs [&_tbody_tr]:border-0 [&_td]:py-1" : ""}>
-                    <TableHeader className="bg-muted">
+                    <TableHeader className="bg-muted/70">
                         {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id} className="bg-muted hover:bg-muted">
+                            <TableRow
+                                key={headerGroup.id}
+                                className="bg-muted/70 hover:bg-muted/70"
+                            >
                                 {headerGroup.headers.map((header) => (
                                     <TableHead
                                         key={header.id}
                                         className={cn(
-                                            "bg-muted relative z-10 shadow-[0_1px_0_0_hsl(var(--border))]",
+                                            "bg-muted/70 text-muted-foreground relative z-10 shadow-[0_1px_0_0_hsl(var(--border))]",
                                             compact ? "" : "sticky top-0",
                                             header.column.id === "select" ||
                                                 header.column.id === "expander"
                                                 ? "w-px px-2 py-2 whitespace-nowrap"
                                                 : header.column.id === "actions"
-                                                  ? "text-background px-3 py-2 text-right font-mono text-[10px] tracking-[1.2px] uppercase"
-                                                  : "text-background max-w-[300px] px-3 py-2 font-mono text-[10px] tracking-[1.2px] break-words whitespace-normal uppercase"
+                                                  ? "px-3 py-2 text-right font-mono text-[10px] tracking-[1.2px] uppercase"
+                                                  : "max-w-[300px] px-3 py-2 font-mono text-[10px] tracking-[1.2px] break-words whitespace-normal uppercase"
                                         )}
                                     >
                                         {header.isPlaceholder

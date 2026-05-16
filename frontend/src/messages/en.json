@@ -279,6 +279,7 @@
         "ActionsColumn": {
             "openMenu": "Open menu",
             "actions": "Actions",
+            "open": "Open {label}",
             "copy": "Copy {key}",
             "copied": "Copied {key}",
             "copyFailed": "Failed to copy to clipboard",

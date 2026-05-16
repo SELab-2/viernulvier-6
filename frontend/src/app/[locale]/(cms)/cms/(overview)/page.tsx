@@ -134,7 +134,7 @@ export default function CmsOverviewPage() {
             {/* Header */}
             <header
                 ref={headerRef}
-                className="border-foreground/10 mx-auto mb-6 w-full max-w-7xl border-b-2 pb-6 text-center opacity-0 sm:mb-8"
+                className="border-border/80 mx-auto mb-6 w-full max-w-7xl border-b-2 pb-6 text-center opacity-0 sm:mb-8"
             >
                 <h1 className="font-display text-foreground mb-2 text-[36px] font-black tracking-tight uppercase sm:text-[42px] lg:text-[56px]">
                     {t("title")}
@@ -150,7 +150,7 @@ export default function CmsOverviewPage() {
                         <SectionCard
                             key={section.key}
                             href={section.href}
-                            className={`border-foreground/10 hover:border-foreground/30 group relative flex flex-col overflow-hidden border p-4 transition-colors duration-250 sm:p-5 ${section.span}`}
+                            className={`border-border/70 hover:border-foreground/60 group relative flex flex-col overflow-hidden border p-4 transition-colors duration-250 sm:p-5 ${section.span}`}
                         >
                             <div data-card>
                                 <SectionCardContent
@@ -178,12 +178,12 @@ export default function CmsOverviewPage() {
                 </div>
 
                 {/* Utility Sections - Ingest & Import */}
-                <div className="border-foreground/10 mx-auto mt-6 grid w-full max-w-7xl grid-cols-1 gap-4 border-t p-4 pt-6 sm:mt-8 sm:grid-cols-2 sm:gap-6">
+                <div className="border-border/80 mx-auto mt-6 grid w-full max-w-7xl grid-cols-1 gap-4 border-t p-4 pt-6 sm:mt-8 sm:grid-cols-2 sm:gap-6">
                     {UTILITY_SECTIONS.map((util) => (
                         <SectionCard
                             key={util.key}
                             href={util.href}
-                            className="border-foreground/10 hover:border-foreground/30 group relative flex flex-col overflow-hidden border p-4 transition-colors duration-250 sm:p-5"
+                            className="border-border/70 hover:border-foreground/60 group relative flex flex-col overflow-hidden border p-4 transition-colors duration-250 sm:p-5"
                         >
                             <div data-card>
                                 <SectionCardContent
