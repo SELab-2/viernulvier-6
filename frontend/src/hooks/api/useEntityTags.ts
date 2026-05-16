@@ -57,3 +57,34 @@ export const useReplaceEntityTags = () => {
         },
     });
 };
+
+export const useBulkAddEntityTags = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({
+            entityType,
+            entityIds,
+            tagSlugs,
+        }: {
+            entityType: EntityType;
+            entityIds: string[];
+            tagSlugs: string[];
+        }) => {
+            return Promise.all(
+                entityIds.map(async (entityId) => {
+                    const current = await fetchEntityTags(entityType, entityId);
+                    const existing = current.flatMap((facet) => facet.tags.map((tag) => tag.slug));
+                    const merged = [...new Set([...existing, ...tagSlugs])];
+                    return replaceEntityTagsFn(entityType, entityId, merged);
+                })
+            );
+        },
+        onSuccess: (_data, { entityType, entityIds }) => {
+            entityIds.forEach((entityId) => {
+                queryClient.invalidateQueries({
+                    queryKey: queryKeys.taxonomy.entityTags(entityType, entityId),
+                });
+            });
+        },
+    });
+};

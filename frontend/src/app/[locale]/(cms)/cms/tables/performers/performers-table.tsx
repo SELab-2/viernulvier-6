@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { Tags, Trash2 } from "lucide-react";
 import { RowSelectionState } from "@tanstack/react-table";
 
 import { DataTable } from "../data-table";
@@ -18,6 +18,7 @@ import { Artist } from "@/types/models/artist.types";
 import { ActionVariant } from "@/types/cms/actions";
 import { useEntityTagEditor } from "@/hooks/useEntityTagEditor";
 import { TagPickerSection } from "@/components/cms/tag-picker-section";
+import { BulkTagDialog } from "@/components/cms/bulk-tag-dialog";
 
 export function PerformersTable() {
     const t = useTranslations("Cms.Performers");
@@ -45,6 +46,7 @@ export function PerformersTable() {
 
     const [editArtist, setEditArtist] = useState<Artist | null>(null);
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+    const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
 
     const selectedArtists = useMemo(
         () => artists.filter((a) => rowSelection[a.id]),
@@ -101,6 +103,12 @@ export function PerformersTable() {
                 icon: <Trash2 className="h-3.5 w-3.5" />,
                 variant: ActionVariant.Destructive,
                 onClick: handleBulkDelete,
+            },
+            {
+                key: "bulk-tags",
+                label: tActionBar("bulkEdit"),
+                icon: <Tags className="h-3.5 w-3.5" />,
+                onClick: () => setBulkTagDialogOpen(true),
             },
         ],
         [tActionBar, handleBulkDelete]
@@ -165,6 +173,13 @@ export function PerformersTable() {
                         compact
                     />
                 )}
+            />
+            <BulkTagDialog
+                open={bulkTagDialogOpen}
+                onOpenChange={setBulkTagDialogOpen}
+                entityType="artist"
+                entityIds={selectedArtists.map((artist) => artist.id)}
+                onApplied={() => setRowSelection({})}
             />
         </div>
     );

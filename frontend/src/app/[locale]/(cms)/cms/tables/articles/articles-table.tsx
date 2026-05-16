@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Archive, Plus } from "lucide-react";
+import { Archive, Plus, Tags } from "lucide-react";
 import { RowSelectionState } from "@tanstack/react-table";
 
 import { DataTable } from "../data-table";
@@ -16,6 +16,7 @@ import { SearchInput } from "@/components/cms/search-input";
 import { useRouter } from "@/i18n/routing";
 import { useDeleteArticle, useGetInfiniteArticlesCms } from "@/hooks/api/useArticles";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
+import { BulkTagDialog } from "@/components/cms/bulk-tag-dialog";
 import type { PickerItem } from "@/lib/collection-picker-utils";
 import { ArticleListItem } from "@/types/models/article.types";
 import { CreateArticleDialog } from "./create-article-dialog";
@@ -24,6 +25,7 @@ export function ArticlesTable() {
     const t = useTranslations("Cms.Articles");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
+    const tActionBar = useTranslations("Cms.ActionBar");
     const locale = useLocale();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -46,6 +48,7 @@ export function ArticlesTable() {
 
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
     const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
+    const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
 
     const handleDelete = useCallback(
         (article: ArticleListItem) => {
@@ -94,8 +97,14 @@ export function ArticlesTable() {
                 icon: <Archive className="h-3.5 w-3.5" />,
                 onClick: () => setCollectionDialogOpen(true),
             },
+            {
+                key: "bulk-tags",
+                label: tActionBar("bulkEdit"),
+                icon: <Tags className="h-3.5 w-3.5" />,
+                onClick: () => setBulkTagDialogOpen(true),
+            },
         ],
-        [tCollections]
+        [tCollections, tActionBar]
     );
 
     return (
@@ -130,6 +139,13 @@ export function ArticlesTable() {
                 open={collectionDialogOpen}
                 onOpenChange={setCollectionDialogOpen}
                 items={pickerItems}
+            />
+            <BulkTagDialog
+                open={bulkTagDialogOpen}
+                onOpenChange={setBulkTagDialogOpen}
+                entityType="article"
+                entityIds={selectedArticles.map((article) => article.id)}
+                onApplied={() => setRowSelection({})}
             />
             <CreateArticleDialog open={dialogOpen} onOpenChange={setDialogOpen} />
         </div>
