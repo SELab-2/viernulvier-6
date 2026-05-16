@@ -10,35 +10,24 @@ vi.mock("@/lib/api-client", () => ({
     },
 }));
 
-function setCookieString(value: string) {
-    Object.defineProperty(document, "cookie", {
-        configurable: true,
-        value,
-    });
-}
-
 describe("useSessionRefresh", () => {
     beforeEach(() => {
         vi.useFakeTimers();
         vi.mocked(api.post).mockResolvedValue({ data: { success: true } });
-        setCookieString("");
     });
 
     afterEach(() => {
         vi.useRealTimers();
         vi.clearAllMocks();
-        setCookieString("");
     });
 
-    it("does not refresh when no session marker cookie exists", () => {
+    it("refreshes immediately without relying on a JS-readable session marker", () => {
         renderHook(() => useSessionRefresh());
 
-        expect(api.post).not.toHaveBeenCalled();
+        expect(api.post).toHaveBeenCalledWith("/auth/refresh");
     });
 
-    it("refreshes immediately and on the keepalive interval when a session marker exists", async () => {
-        setCookieString("session_present=1");
-
+    it("refreshes on the keepalive interval after a successful refresh", async () => {
         renderHook(() => useSessionRefresh());
 
         expect(api.post).toHaveBeenCalledWith("/auth/refresh");
@@ -51,9 +40,29 @@ describe("useSessionRefresh", () => {
         expect(api.post).toHaveBeenCalledWith("/auth/refresh");
     });
 
-    it("refreshes when returning to a visible tab with a session marker", async () => {
-        setCookieString("session_present=1");
+    it("pauses interval refreshes after a failed refresh and retries on focus", async () => {
+        vi.mocked(api.post).mockRejectedValueOnce(new Error("no refresh cookie"));
+        renderHook(() => useSessionRefresh());
 
+        await act(async () => {
+            await Promise.resolve();
+        });
+
+        vi.mocked(api.post).mockClear();
+        await act(async () => {
+            await vi.advanceTimersByTimeAsync(SESSION_REFRESH_INTERVAL_MS);
+        });
+        expect(api.post).not.toHaveBeenCalled();
+
+        vi.mocked(api.post).mockResolvedValue({ data: { success: true } });
+        await act(async () => {
+            window.dispatchEvent(new Event("focus"));
+        });
+
+        expect(api.post).toHaveBeenCalledWith("/auth/refresh");
+    });
+
+    it("refreshes when returning to a visible tab", async () => {
         renderHook(() => useSessionRefresh());
         expect(api.post).toHaveBeenCalledWith("/auth/refresh");
         vi.mocked(api.post).mockClear();

@@ -8,28 +8,22 @@ import { queryClient } from "@/lib/query-client";
 
 export const SESSION_REFRESH_INTERVAL_MS = 4 * 60_000;
 
-function hasSessionMarker(): boolean {
-    if (typeof document === "undefined") return false;
-
-    return document.cookie
-        .split(";")
-        .map((cookie) => cookie.trim())
-        .some((cookie) => cookie.startsWith("session_present="));
-}
-
 export function useSessionRefresh() {
     const refreshInFlight = useRef(false);
+    const refreshEnabled = useRef(true);
 
     useEffect(() => {
         let mounted = true;
 
         const refreshSession = async () => {
-            if (!hasSessionMarker() || refreshInFlight.current) return;
+            if (!refreshEnabled.current || refreshInFlight.current) return;
 
             refreshInFlight.current = true;
             try {
                 await api.post("/auth/refresh");
+                refreshEnabled.current = true;
             } catch {
+                refreshEnabled.current = false;
                 queryClient.removeQueries({ queryKey: queryKeys.user });
             } finally {
                 if (mounted) {
@@ -40,6 +34,7 @@ export function useSessionRefresh() {
 
         const refreshWhenVisible = () => {
             if (document.visibilityState === "visible") {
+                refreshEnabled.current = true;
                 void refreshSession();
             }
         };
@@ -47,13 +42,18 @@ export function useSessionRefresh() {
         void refreshSession();
 
         const interval = window.setInterval(refreshSession, SESSION_REFRESH_INTERVAL_MS);
-        window.addEventListener("focus", refreshSession);
+        const refreshOnFocus = () => {
+            refreshEnabled.current = true;
+            void refreshSession();
+        };
+
+        window.addEventListener("focus", refreshOnFocus);
         document.addEventListener("visibilitychange", refreshWhenVisible);
 
         return () => {
             mounted = false;
             window.clearInterval(interval);
-            window.removeEventListener("focus", refreshSession);
+            window.removeEventListener("focus", refreshOnFocus);
             document.removeEventListener("visibilitychange", refreshWhenVisible);
         };
     }, []);
