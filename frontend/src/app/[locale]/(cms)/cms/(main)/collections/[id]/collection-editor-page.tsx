@@ -1013,9 +1013,14 @@ export function CollectionEditorPage({ id }: { id: string }) {
 
                             {/* Items section */}
                             <section className="space-y-4">
-                                <h2 className="border-border/80 border-b pb-2 text-sm font-semibold">
-                                    {t("itemsTitle", { count: localItems.length })}
-                                </h2>
+                                <div className="border-border/80 border-b pb-2">
+                                    <h2 className="text-sm font-semibold">
+                                        {t("itemsTitle", { count: localItems.length })}
+                                    </h2>
+                                    <p className="text-muted-foreground mt-1 text-xs">
+                                        {t("itemsHelp")}
+                                    </p>
+                                </div>
                                 {localItems.length === 0 ? (
                                     <div className="text-muted-foreground space-y-2 text-sm">
                                         <p>{t("noItems")}</p>

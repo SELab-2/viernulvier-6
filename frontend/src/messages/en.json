@@ -578,12 +578,14 @@
             "addedToCollectionMultiple": "Added {count} items to \"{collection}\"",
             "removeItem": "Remove item",
             "comment": "Comment",
+            "itemsHelp": "Add more items from the CMS entity tables or media ingest page, then return here to order items and add collection comments.",
             "contentTypes": {
                 "production": "Production",
                 "event": "Event",
                 "blogpost": "Article",
                 "artist": "Artist",
-                "location": "Location"
+                "location": "Location",
+                "media": "Media"
             }
         },
         "Media": {

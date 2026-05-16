@@ -578,12 +578,14 @@
             "addedToCollectionMultiple": "{count} items toegevoegd aan \"{collection}\"",
             "removeItem": "Item verwijderen",
             "comment": "Commentaar",
+            "itemsHelp": "Voeg meer items toe vanuit de CMS-tabellen of media-ingestpagina en keer daarna terug om items te ordenen en commentaar toe te voegen.",
             "contentTypes": {
                 "production": "Productie",
                 "event": "Voorstelling",
                 "blogpost": "Artikel",
                 "artist": "Artiest",
-                "location": "Locatie"
+                "location": "Locatie",
+                "media": "Media"
             }
         },
         "Media": {
