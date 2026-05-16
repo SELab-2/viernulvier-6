@@ -5,7 +5,7 @@ import { FailedRequest, CustomAxiosRequestConfig } from "@/types/api/api.types";
 import { queryKeys } from "@/hooks/api";
 import { RefreshTokenResponse } from "@/types/api/auth.api.types";
 import { getBasePath } from "@/lib/base-path";
-import { isProtectedApiRequest, isProtectedRoute } from "@/lib/auth-routing";
+import { isProtectedRoute } from "@/lib/auth-routing";
 
 export const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -31,13 +31,13 @@ api.interceptors.response.use(
     async (error: AxiosError) => {
         const originalRequest = error.config as CustomAxiosRequestConfig;
 
-        const shouldRefreshAuth = isProtectedApiRequest(
-            originalRequest.url,
-            originalRequest.method
-        );
+        const isAuthRequest =
+            originalRequest.url?.includes("/auth/login") ||
+            originalRequest.url?.includes("/auth/logout") ||
+            originalRequest.url?.includes("/auth/refresh");
 
-        // Only protected API requests should attempt session refresh.
-        if (error.response?.status === 401 && !originalRequest._retry && shouldRefreshAuth) {
+        // Any non-auth request may be seeing an expired access token. Only redirect on protected UI routes.
+        if (error.response?.status === 401 && !originalRequest._retry && !isAuthRequest) {
             if (isRefreshing) {
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject });

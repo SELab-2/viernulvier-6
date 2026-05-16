@@ -35,12 +35,18 @@ describe("api response interceptor", () => {
         expect(protectedRequestCount).toBe(2);
     });
 
-    it("does not refresh auth for public request failures", async () => {
+    it("refreshes public request failures without treating public pages as protected", async () => {
         let refreshCalls = 0;
+        let publicRequestCount = 0;
 
         server.use(
             http.get(apiUrl("/productions/not-found"), () => {
-                return HttpResponse.json({ message: "Unauthorized" }, { status: 401 });
+                publicRequestCount += 1;
+                if (publicRequestCount === 1) {
+                    return HttpResponse.json({ message: "Unauthorized" }, { status: 401 });
+                }
+
+                return HttpResponse.json({ ok: true }, { status: 200 });
             }),
             http.post(apiUrl("/auth/refresh"), () => {
                 refreshCalls += 1;
@@ -48,8 +54,11 @@ describe("api response interceptor", () => {
             })
         );
 
-        await expect(api.get("/productions/not-found")).rejects.toBeDefined();
-        expect(refreshCalls).toBe(0);
+        const response = await api.get<{ ok: boolean }>("/productions/not-found");
+
+        expect(response.data).toEqual({ ok: true });
+        expect(publicRequestCount).toBe(2);
+        expect(refreshCalls).toBe(1);
     });
 
     it("clears user cache and rejects when refresh fails", async () => {
