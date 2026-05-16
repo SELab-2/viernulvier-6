@@ -181,7 +181,9 @@
         "past": "Past",
         "date": "Date",
         "status": "Status",
-        "noEvents": "No events available"
+        "noEvents": "No events available",
+        "showAllDates": "Show all {count} dates",
+        "showFewerDates": "Show fewer dates"
     },
     "Login": {
         "title": "Welcome back",

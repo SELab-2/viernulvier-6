@@ -181,7 +181,9 @@
         "past": "Voorbij",
         "date": "Datum",
         "status": "Status",
-        "noEvents": "Geen evenementen beschikbaar"
+        "noEvents": "Geen evenementen beschikbaar",
+        "showAllDates": "Toon alle {count} datums",
+        "showFewerDates": "Minder datums tonen"
     },
     "Login": {
         "title": "Welkom terug",
