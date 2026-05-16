@@ -579,6 +579,9 @@
             "removeItem": "Remove item",
             "comment": "Comment",
             "itemsHelp": "Add more items from the CMS entity tables or media ingest page, then return here to order items and add collection comments.",
+            "searchItems": "Search items…",
+            "addItem": "Add",
+            "alreadyAdded": "Added",
             "contentTypes": {
                 "production": "Production",
                 "event": "Event",

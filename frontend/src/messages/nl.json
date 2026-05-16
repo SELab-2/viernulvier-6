@@ -579,6 +579,9 @@
             "removeItem": "Item verwijderen",
             "comment": "Commentaar",
             "itemsHelp": "Voeg meer items toe vanuit de CMS-tabellen of media-ingestpagina en keer daarna terug om items te ordenen en commentaar toe te voegen.",
+            "searchItems": "Items zoeken…",
+            "addItem": "Toevoegen",
+            "alreadyAdded": "Toegevoegd",
             "contentTypes": {
                 "production": "Productie",
                 "event": "Voorstelling",
