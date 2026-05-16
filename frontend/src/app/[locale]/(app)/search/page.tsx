@@ -283,36 +283,64 @@ export default function SearchPage() {
                       id: `production-${production.id}`,
                       title:
                           getLocalizedField(production, "title", locale) ?? production.slug ?? null,
+                      subtitle: getLocalizedField(production, "artist", locale),
+                      description:
+                          getLocalizedField(production, "descriptionShort", locale) ??
+                          getLocalizedField(production, "tagline", locale) ??
+                          getLocalizedField(production, "teaser", locale),
                       imageUrl: production.coverImageUrl,
                       href: `/productions/${production.id}`,
                       typeLabel: tCategories("productions"),
+                      tags: production.tags,
                   }))
                 : []),
             ...(showArtists
                 ? artistsData.map((artist) => ({
                       id: `artist-${artist.id}`,
                       title: artist.name,
+                      subtitle: artist.slug,
+                      description: null,
                       imageUrl: artist.coverImageUrl,
                       href: `/artists/${artist.id}`,
                       typeLabel: tCategories("artists"),
+                      tags: [],
                   }))
                 : []),
             ...(showLocations
                 ? locationSearchData.map((location) => ({
                       id: `location-${location.id}`,
                       title: location.name ?? location.address ?? null,
+                      subtitle: [location.city, location.country].filter(Boolean).join(", "),
+                      description:
+                          location.translations.find((tr) => tr.languageCode === locale)
+                              ?.description ??
+                          location.translations.find((tr) => tr.description)?.description ??
+                          null,
                       imageUrl: location.coverImageUrl,
                       href: location.slug ? `/locations/${location.slug}` : null,
                       typeLabel: tCategories("locations"),
+                      tags: [],
                   }))
                 : []),
             ...(showArticles
                 ? articlesData.map((article) => ({
                       id: `article-${article.id}`,
                       title: article.title,
+                      subtitle: article.publishedAt
+                          ? new Date(article.publishedAt).toLocaleDateString(
+                                locale === "en" ? "en-GB" : "nl-BE",
+                                {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                }
+                            )
+                          : null,
+                      description: null,
                       imageUrl: article.coverImageUrl,
                       href: `/articles/${article.slug}`,
                       typeLabel: tCategories("articles"),
+                      tags: article.tags,
                   }))
                 : []),
         ],
@@ -375,7 +403,7 @@ export default function SearchPage() {
                             caption={t("articleImageCaption")}
                         />
                     ) : view === "grid" ? (
-                        <SearchGrid items={gridItems} />
+                        <SearchGrid items={gridItems} locale={locale} />
                     ) : (
                         <>
                             {showProductions && (

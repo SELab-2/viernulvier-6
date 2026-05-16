@@ -50,7 +50,7 @@ function ArticleCard({ article, locale }: { article: ArticleListItem; locale: st
     return (
         <Link
             href={`/articles/${article.slug}`}
-            className="group bg-background hover:bg-muted/5 block p-4 pb-5 transition-colors sm:p-5"
+            className="group bg-background hover:bg-muted/40 block p-4 pb-5 transition-colors sm:p-5"
         >
             <div className="bg-muted border-border/70 relative mb-3 h-[120px] w-full overflow-hidden border">
                 {article.coverImageUrl ? (

@@ -2,6 +2,7 @@
 
 import { CardShell } from "@/components/masonry/card-shell";
 import { MasonryGrid } from "@/components/masonry/masonry-grid";
+import type { EntityTagSlim } from "@/types/models/taxonomy.types";
 
 export type SearchGridItem = {
     id: string;
@@ -9,9 +10,12 @@ export type SearchGridItem = {
     imageUrl: string | null;
     href: string | null;
     typeLabel: string;
+    subtitle?: string | null;
+    description?: string | null;
+    tags?: EntityTagSlim[];
 };
 
-export function SearchGrid({ items }: { items: SearchGridItem[] }) {
+export function SearchGrid({ items, locale }: { items: SearchGridItem[]; locale: string }) {
     return (
         <div className="px-4 py-4 sm:px-7">
             <MasonryGrid
@@ -24,6 +28,10 @@ export function SearchGrid({ items }: { items: SearchGridItem[] }) {
                         imageUrl={item.imageUrl}
                         href={item.href}
                         typeLabel={item.typeLabel}
+                        subtitle={item.subtitle}
+                        description={item.description}
+                        tags={item.tags}
+                        locale={locale}
                     />
                 )}
             />
