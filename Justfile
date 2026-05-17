@@ -24,7 +24,7 @@ infra-logs:
 
 # Start the backend server
 be-dev:
-    cd backend && cargo run
+    cd backend && cargo run -p api
 
 # Run backend tests
 be-test:

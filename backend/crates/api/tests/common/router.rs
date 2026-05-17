@@ -1,0 +1,142 @@
+use api::{AppState, config::AppConfig, router};
+use axum::{
+    Json,
+    body::Body,
+    http::{Method, Request, header},
+    response::{IntoResponse, Response},
+};
+use db::{Database, models::user::UserRole};
+use dotenvy::dotenv;
+use serde::Serialize;
+use sqlx::PgPool;
+use std::sync::Once;
+use tower::ServiceExt;
+
+use crate::common::user::{create_test_user, login_user};
+
+static TEST_ENV: Once = Once::new();
+
+fn ensure_test_env() {
+    TEST_ENV.call_once(|| {
+        // Cover URL resolution only needs a stable public base URL in tests.
+        unsafe {
+            std::env::set_var("S3_ENDPOINT", "http://localhost:9000");
+            std::env::set_var("S3_ACCESS_KEY", "test-access-key");
+            std::env::set_var("S3_SECRET_KEY", "test-secret-key");
+            std::env::set_var("S3_BUCKET", "test-bucket");
+            std::env::set_var("S3_PUBLIC_URL", "http://localhost:3900");
+        }
+    });
+}
+
+pub struct TestRouter {
+    router: axum::Router,
+    db: PgPool,
+    cookie: Option<String>,
+}
+
+impl TestRouter {
+    pub fn new(db: PgPool) -> Self {
+        ensure_test_env();
+        let _ = dotenv();
+
+        let config = AppConfig::load().unwrap();
+
+        let state = AppState {
+            db: Database::new(db.clone()),
+            config,
+            s3_client: None,
+        };
+
+        Self {
+            router: router(&state).with_state(state),
+            db,
+            cookie: None,
+        }
+    }
+
+    pub async fn login(mut self, email: &str, role: UserRole) -> Self {
+        let database = Database::new(self.db.clone());
+        let config = AppConfig::load().unwrap();
+        let user = create_test_user(&database, email, role).await;
+        let cookie = login_user(&database, &config, &user).await;
+        self.cookie = Some(cookie);
+        self
+    }
+
+    pub async fn as_editor(db: PgPool) -> Self {
+        Self::new(db)
+            .login("editor@test.com", UserRole::Editor)
+            .await
+    }
+
+    pub async fn as_admin(db: PgPool) -> Self {
+        Self::new(db).login("admin@test.com", UserRole::Admin).await
+    }
+
+    pub async fn as_user(db: PgPool) -> Self {
+        Self::new(db).login("user@test.com", UserRole::User).await
+    }
+
+    /// send a request to an endpoint on this router
+    ///
+    /// must have a leading "/"
+    pub async fn get(&self, path: &str) -> Response<Body> {
+        self.request(Method::GET, path, None::<()>).await
+    }
+
+    /// send a patch request to an endpoint on this router
+    ///
+    /// must have a leading "/"
+    pub async fn patch<T: Serialize>(&self, path: &str, body: T) -> Response<Body> {
+        self.request(Method::PATCH, path, Some(body)).await
+    }
+
+    /// send a post request to an endpoint on this router
+    ///
+    /// must have a leading "/"
+    pub async fn post<T: Serialize>(&self, path: &str, body: T) -> Response<Body> {
+        self.request(Method::POST, path, Some(body)).await
+    }
+
+    /// send a put request to an endpoint on this router
+    ///
+    /// must have a leading "/"
+    pub async fn put<T: Serialize>(&self, path: &str, body: T) -> Response<Body> {
+        self.request(Method::PUT, path, Some(body)).await
+    }
+
+    /// send a delete request to an endpoint on this router
+    ///
+    /// must have a leading "/"
+    pub async fn delete(&self, path: &str) -> Response<Body> {
+        self.request(Method::DELETE, path, None::<()>).await
+    }
+
+    /// send a request to an endpoint on this router
+    ///
+    /// must have a leading "/"
+    async fn request<T: Serialize>(
+        &self,
+        method: Method,
+        path: &str,
+        body: Option<T>,
+    ) -> Response<Body> {
+        let path = path.trim_start_matches('/');
+        let uri = format!("/api/{path}");
+        let mut request_builder = Request::builder().method(method).uri(uri);
+
+        if let Some(cookie) = &self.cookie {
+            request_builder = request_builder.header(header::COOKIE, cookie);
+        }
+
+        let request = match body {
+            Some(body) => request_builder
+                .header(header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+                .body(Json(body).into_response().into_body()),
+            None => request_builder.body(Body::empty()),
+        };
+
+        self.router.clone().oneshot(request.unwrap()).await.unwrap()
+    }
+}

@@ -1,0 +1,811 @@
+#![allow(clippy::indexing_slicing)]
+use std::str::FromStr;
+
+use api::dto::{
+    artist::ArtistPayload,
+    paginated::PaginatedResponse,
+    production::{ProductionPayload, ProductionPostPayload},
+};
+use axum::http::StatusCode;
+use serde_json::json;
+use sqlx::PgPool;
+use uuid::Uuid;
+
+use crate::common::{into_struct::IntoStruct, router::TestRouter};
+
+mod common;
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn get_all(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/productions").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 5);
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn get_paginated(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/productions?limit=2").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // page 1
+    let page1: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+
+    assert_eq!(page1.data.len(), 2, "page 1 should respect the limit of 2");
+    assert!(page1.next_cursor.is_some(), "there should be a next cursor");
+
+    let cursor = page1.next_cursor.unwrap();
+    let url = format!("/productions?limit=2&cursor={cursor}");
+
+    let response = app.get(&url).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // page 2
+    let page2: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+
+    assert_eq!(page2.data.len(), 2, "page 1 should respect the limit of 2");
+    assert_ne!(page1.data[0].id, page2.data[0].id);
+
+    let cursor = page2.next_cursor.unwrap();
+    let url = format!("/productions?limit=2&cursor={cursor}");
+
+    // page 3 (last)
+    let page3: PaginatedResponse<ProductionPayload> = app.get(&url).await.into_struct().await;
+
+    assert_eq!(page3.data.len(), 1, "page 3 should have only the last item");
+    assert!(page3.next_cursor.is_none(), "last page has no cursor");
+}
+
+#[sqlx::test(fixtures("productions", "production_taggings"))]
+#[test_log::test]
+async fn get_search_filter_discipline(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/productions?discipline=concert&limit=10").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(
+        data.data.len(),
+        2,
+        "Expected 2 productions with discipline='concert'"
+    );
+
+    let ids: Vec<String> = data.data.iter().map(|p| p.id.to_string()).collect();
+    assert!(ids.contains(&"11111111-1111-1111-1111-111111111111".to_string()));
+    assert!(ids.contains(&"44444444-4444-4444-4444-444444444444".to_string()));
+}
+
+#[sqlx::test(fixtures("productions", "production_taggings"))]
+#[test_log::test]
+async fn get_search_filter_format(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/productions?format=workshop&limit=10").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 1);
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "11111111-1111-1111-1111-111111111111"
+    );
+}
+
+#[sqlx::test(fixtures("productions", "production_taggings"))]
+#[test_log::test]
+async fn get_search_filter_theme(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/productions?theme=politics&limit=10").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 1);
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "22222222-2222-2222-2222-222222222222"
+    );
+}
+
+#[sqlx::test(fixtures("productions", "production_taggings"))]
+#[test_log::test]
+async fn get_search_filter_audience(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/productions?audience=all-ages&limit=10").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 1);
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "55555555-5555-5555-5555-555555555555"
+    );
+}
+
+#[sqlx::test(fixtures("productions", "events"))]
+#[test_log::test]
+async fn get_search_filter_location(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    // non-UUID values should not silently disable filtering
+    let response = app.get("/productions?location=de-vooruit&limit=10").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert!(
+        data.data.is_empty(),
+        "invalid location should not return unfiltered data"
+    );
+}
+
+#[sqlx::test(fixtures("productions", "events", "locations", "spaces", "halls", "event_halls"))]
+#[test_log::test]
+async fn get_filter_location_by_uuid(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    // location UUID 10000000-...-0001 → space → hall → event 33333333 → production 11111111
+    let loc_id = "10000000-0000-0000-0000-000000000001";
+    let response = app
+        .get(&format!("/productions?location={loc_id}&limit=10"))
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(
+        data.data.len(),
+        1,
+        "expected exactly 1 production at this location"
+    );
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "11111111-1111-1111-1111-111111111111"
+    );
+}
+
+#[sqlx::test(fixtures("productions", "events", "locations", "spaces", "halls", "event_halls"))]
+#[test_log::test]
+async fn get_filter_location_by_uuid_no_match(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    // valid UUID that has no associated events
+    let unrelated_loc = "10000000-0000-0000-0000-000000000005";
+    let response = app
+        .get(&format!("/productions?location={unrelated_loc}&limit=10"))
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert!(
+        data.data.is_empty(),
+        "expected no productions for a location with no events"
+    );
+}
+
+#[sqlx::test(fixtures("productions", "events"))]
+#[test_log::test]
+async fn get_search_filter_date_from(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/productions?date_from=2026-05-02&limit=10").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 2);
+
+    let ids: Vec<String> = data.data.iter().map(|p| p.id.to_string()).collect();
+    assert!(ids.contains(&"11111111-1111-1111-1111-111111111111".to_string()));
+    assert!(ids.contains(&"22222222-2222-2222-2222-222222222222".to_string()));
+}
+
+#[sqlx::test(fixtures("productions", "events"))]
+#[test_log::test]
+async fn get_search_filter_date_to(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/productions?date_to=2026-05-2&limit=10").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 1);
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "11111111-1111-1111-1111-111111111111"
+    );
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn get_search_sort_recent(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/productions?sort=recent&limit=10").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert!(!data.data.is_empty(), "Expected results to test sorting");
+
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "55555555-5555-5555-5555-555555555555"
+    );
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn get_search_sort_oldest(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/productions?sort=oldest&limit=10").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert!(!data.data.is_empty(), "Expected results to test sorting");
+
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "11111111-1111-1111-1111-111111111111"
+    );
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn get_search_and_sort(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response_recent = app
+        .get("/productions?q=TITLE_SEARCH_TEST&sort=recent&limit=10")
+        .await;
+    assert_eq!(response_recent.status(), StatusCode::OK);
+
+    let data_recent: PaginatedResponse<ProductionPayload> = response_recent.into_struct().await;
+    assert_eq!(data_recent.data.len(), 3);
+    assert_eq!(
+        data_recent.data.first().unwrap().id.to_string(),
+        "33333333-3333-3333-3333-333333333333",
+        "recent sort should put 3333 first"
+    );
+
+    // inverse sort
+    let response_oldest = app
+        .get("/productions?q=TITLE_SEARCH_TEST&sort=oldest&limit=10")
+        .await;
+    assert_eq!(response_oldest.status(), StatusCode::OK);
+
+    let data_oldest: PaginatedResponse<ProductionPayload> = response_oldest.into_struct().await;
+    assert_eq!(data_oldest.data.len(), 3);
+    assert_eq!(
+        data_oldest.data.first().unwrap().id.to_string(),
+        "11111111-1111-1111-1111-111111111111",
+        "oldest sort should put 1111 first"
+    );
+    assert_eq!(data_oldest.data[0], data_recent.data[2]);
+    assert_eq!(data_oldest.data[1], data_recent.data[1]);
+    assert_eq!(data_oldest.data[2], data_recent.data[0]);
+}
+
+#[sqlx::test(fixtures("productions", "production_taggings"))]
+#[test_log::test]
+async fn get_filter_and_sort(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app
+        .get("/productions?discipline=concert&sort=oldest&limit=10")
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 2);
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "11111111-1111-1111-1111-111111111111",
+        "1111 should appear before 4444 when filtered by concert and sorted by oldest"
+    );
+    assert_eq!(
+        data.data[1].id.to_string(),
+        "44444444-4444-4444-4444-444444444444",
+    );
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn get_sort_paginated(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    // Start with oldest, limit to 2 to force pagination
+    let response = app.get("/productions?sort=oldest&limit=2").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let page1: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(page1.data.len(), 2);
+    assert_eq!(
+        page1.data[0].id.to_string(),
+        "11111111-1111-1111-1111-111111111111",
+        "First item of page 1 should be the absolute oldest"
+    );
+    assert!(page1.next_cursor.is_some(), "Expected a cursor for page 2");
+
+    let cursor = page1.next_cursor.unwrap();
+
+    // Fetch page 2 using the cursor AND maintaining the sort parameter
+    let url = format!("/productions?sort=oldest&limit=2&cursor={cursor}");
+    let response = app.get(&url).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let page2: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert!(!page2.data.is_empty(), "Page 2 should contain data");
+
+    // Ensure the cursor correctly advanced the set and didn't reset to the default sort
+    assert_ne!(
+        page1.data[0].id, page2.data[0].id,
+        "Page 2 should contain distinct items from Page 1 under custom sort"
+    );
+
+    // Verify all IDs across both pages are unique
+    let mut all_ids = vec![page1.data[0].id, page1.data[1].id, page2.data[0].id];
+    if page2.data.len() > 1 {
+        all_ids.push(page2.data[1].id);
+    }
+
+    let original_length = all_ids.len();
+    all_ids.sort();
+    all_ids.dedup();
+    assert_eq!(
+        all_ids.len(),
+        original_length,
+        "Cursor pagination with custom sort yielded duplicate records"
+    );
+}
+
+#[sqlx::test(fixtures("productions", "production_taggings"))]
+#[test_log::test]
+async fn get_search_filter_paginated(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    // Filter by concert (yields 2 results), but set limit to 1
+    let response = app.get("/productions?discipline=concert&limit=1").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // Page 1
+    let page1: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(page1.data.len(), 1, "Page 1 should respect the limit of 1");
+    assert!(
+        page1.next_cursor.is_some(),
+        "There should be a next cursor for the remaining concert production"
+    );
+
+    let cursor = page1.next_cursor.unwrap();
+
+    // Page 2
+    let url = format!("/productions?discipline=concert&limit=1&cursor={cursor}");
+    let response = app.get(&url).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let page2: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(
+        page2.data.len(),
+        1,
+        "Page 2 should have the 1 remaining item"
+    );
+    assert!(
+        page2.next_cursor.is_none(),
+        "Last page should have no cursor"
+    );
+
+    // Ensure the results were different
+    assert_ne!(
+        page1.data[0].id, page2.data[0].id,
+        "Pagination should yield distinct items"
+    );
+}
+
+#[sqlx::test(fixtures("productions", "events", "production_taggings"))]
+#[test_log::test]
+async fn get_search_discipline_and_date(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app
+        .get("/productions?discipline=concert&date_from=2026-05-10&limit=10")
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(
+        data.data.len(),
+        1,
+        "Expected exactly 1 production matching both concert and the date range"
+    );
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "11111111-1111-1111-1111-111111111111"
+    );
+}
+
+#[sqlx::test(fixtures("productions", "production_taggings"))]
+#[test_log::test]
+async fn get_search_text_and_format(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app
+        .get("/productions?q=metal&format=workshop&limit=10")
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(
+        data.data.len(),
+        1,
+        "Expected Heavy Metal Knitting to match both search and format"
+    );
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "11111111-1111-1111-1111-111111111111"
+    );
+}
+
+#[sqlx::test(fixtures("productions", "events", "production_taggings"))]
+#[test_log::test]
+async fn get_search_mutually_exclusive_tags(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app
+        .get("/productions?discipline=concert&theme=politics&limit=10")
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert!(
+        data.data.is_empty(),
+        "Expected no results when filtering by mutually exclusive tag combinations"
+    );
+}
+
+#[sqlx::test(fixtures("productions", "events"))]
+#[test_log::test]
+async fn get_search_date_range(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app
+        .get("/productions?date_from=2026-05-10&date_to=2026-06-10&limit=10")
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(
+        data.data.len(),
+        2,
+        "Expected 2 productions within the specific date range"
+    );
+
+    let ids: Vec<String> = data.data.iter().map(|p| p.id.to_string()).collect();
+    assert!(ids.contains(&"11111111-1111-1111-1111-111111111111".to_string()));
+    assert!(ids.contains(&"22222222-2222-2222-2222-222222222222".to_string()));
+}
+
+#[sqlx::test(fixtures("productions", "events", "production_taggings"))]
+#[test_log::test]
+async fn get_search_everything(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let query = "/productions\
+        ?q=heavy\
+        &discipline=concert\
+        &format=workshop\
+        &date_from=2026-04-01\
+        &date_to=2026-05-31\
+        &limit=10";
+
+    let response = app.get(query).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(
+        data.data.len(),
+        1,
+        "Expected exactly 1 result for the highly specific combination filter"
+    );
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "11111111-1111-1111-1111-111111111111"
+    );
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn get_search_single_result(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/productions?q=jazz").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 1);
+    assert_eq!(
+        data.data[0].id.to_string(),
+        "44444444-4444-4444-4444-444444444444"
+    );
+    assert!(data.next_cursor.is_none());
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn get_search_no_results(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/productions?q=rustlang").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert!(
+        data.data.is_empty(),
+        "expected no results for unmatched search term"
+    );
+    assert!(data.next_cursor.is_none());
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn get_search_paginated(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/productions?q=TITLE_SEARCH_TEST&limit=2").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // page 1
+    let page1: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(page1.data.len(), 2, "page 1 should respect the limit of 2");
+    assert!(page1.next_cursor.is_some(), "there should be a next cursor");
+
+    let cursor = page1.next_cursor.unwrap();
+
+    // page 2
+    let response = app
+        .get(&format!(
+            "/productions?q=TITLE_SEARCH_TEST&limit=2&cursor={cursor}"
+        ))
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let page2: PaginatedResponse<ProductionPayload> = response.into_struct().await;
+    assert_eq!(
+        page2.data.len(),
+        1,
+        "page 2 should have the 1 remaining item"
+    );
+    assert!(
+        page2.next_cursor.is_none(),
+        "last page should have no cursor"
+    );
+
+    let mut all_ids = vec![page1.data[0].id, page1.data[1].id, page2.data[0].id];
+    let original_length = all_ids.len();
+    all_ids.sort();
+    all_ids.dedup();
+    assert_eq!(
+        all_ids.len(),
+        original_length,
+        "all paginated search results must be unique"
+    );
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn get_one_success(db: PgPool) {
+    let app = TestRouter::new(db);
+    let target_id = Uuid::from_str("11111111-1111-1111-1111-111111111111").unwrap();
+
+    let response = app.get(&format!("/productions/{target_id}")).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: ProductionPayload = response.into_struct().await;
+    assert_eq!(data.id, target_id);
+    assert_eq!(data.slug, "heavy-metal-knitting-2026");
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn get_one_not_found(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get(&format!("/productions/{}", Uuid::nil())).await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn post_success(db: PgPool) {
+    let payload = mock_post_payload();
+
+    let unauth_app = TestRouter::new(db.clone());
+    let unauth_response = unauth_app.post("/productions", &payload).await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
+
+    let app = TestRouter::as_editor(db).await;
+
+    let response = app.post("/productions", &payload).await;
+    assert_eq!(response.status(), StatusCode::CREATED);
+
+    let data: ProductionPayload = response.into_struct().await;
+    assert_eq!(data.slug, "test-post-production");
+    let nl = data
+        .translations
+        .iter()
+        .find(|t| t.language_code == "nl")
+        .unwrap();
+    assert_eq!(nl.title.as_deref(), Some("Nieuwe Test Productie"));
+    assert!(!data.id.is_nil());
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn put_success(db: PgPool) {
+    let target_id = Uuid::from_str("33333333-3333-3333-3333-333333333333").unwrap();
+    let unauth_app = TestRouter::new(db.clone());
+    let app = TestRouter::as_editor(db).await;
+
+    let update_payload: ProductionPayload = serde_json::from_value(json!({
+        "id": target_id,
+        "slug": "minimal-event-test",
+        "translations": [
+            { "language_code": "nl", "title": "Aangepaste Titel" }
+        ]
+    }))
+    .expect("Failed to deserialize mock ProductionPayload");
+
+    let unauth_response = unauth_app.put("/productions", &update_payload).await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
+
+    let response = app.put("/productions", &update_payload).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: ProductionPayload = response.into_struct().await;
+    assert_eq!(data.id, target_id);
+    let nl = data
+        .translations
+        .iter()
+        .find(|t| t.language_code == "nl")
+        .unwrap();
+    assert_eq!(nl.title.as_deref(), Some("Aangepaste Titel"));
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn put_not_found(db: PgPool) {
+    let unauth_app = TestRouter::new(db.clone());
+    let app = TestRouter::as_editor(db).await;
+
+    let missing_production: ProductionPayload = serde_json::from_value(json!({
+        "id": Uuid::nil(),
+        "slug": "ghost-production",
+        "translations": []
+    }))
+    .expect("Failed to deserialize mock ProductionPayload");
+
+    let unauth_response = unauth_app.put("/productions", &missing_production).await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
+
+    let response = app.put("/productions", &missing_production).await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn delete_success(db: PgPool) {
+    let target_id = Uuid::from_str("22222222-2222-2222-2222-222222222222").unwrap();
+
+    let unauth_app = TestRouter::new(db.clone());
+    let unauth_response = unauth_app
+        .delete(&format!("/productions/{target_id}"))
+        .await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
+
+    let app = TestRouter::as_editor(db).await;
+
+    let response = app.delete(&format!("/productions/{target_id}")).await;
+    assert_eq!(response.status(), StatusCode::NO_CONTENT);
+
+    let verify_res = app.get(&format!("/productions/{target_id}")).await;
+    assert_eq!(verify_res.status(), StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn delete_not_found(db: PgPool) {
+    let unauth_app = TestRouter::new(db.clone());
+    let unauth_response = unauth_app
+        .delete(&format!("/productions/{}", Uuid::nil()))
+        .await;
+    assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
+
+    let app = TestRouter::as_editor(db).await;
+
+    let response = app.delete(&format!("/productions/{}", Uuid::nil())).await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test(fixtures("productions", "production_taggings"))]
+#[test_log::test]
+async fn list_includes_slim_tags(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/productions?limit=10").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body: serde_json::Value = response.into_struct().await;
+    let data = body["data"].as_array().expect("data is an array");
+
+    let prod_1 = data
+        .iter()
+        .find(|p| p["id"] == "11111111-1111-1111-1111-111111111111")
+        .expect("production 1 present");
+    let tags = prod_1["tags"].as_array().expect("tags is an array");
+    let slugs: Vec<&str> = tags.iter().map(|t| t["slug"].as_str().unwrap()).collect();
+    assert!(slugs.contains(&"concert"));
+    assert!(slugs.contains(&"workshop"));
+    let facets: Vec<&str> = tags.iter().map(|t| t["facet"].as_str().unwrap()).collect();
+    assert!(facets.contains(&"discipline"));
+    assert!(facets.contains(&"format"));
+}
+
+#[sqlx::test(fixtures("productions"))]
+#[test_log::test]
+async fn list_untagged_production_has_empty_tags(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/productions?limit=10").await;
+    let body: serde_json::Value = response.into_struct().await;
+    let data = body["data"].as_array().unwrap();
+    for prod in data {
+        let tags = prod["tags"].as_array().expect("every row has a tags array");
+        assert!(tags.is_empty(), "expected empty tags for {prod}");
+    }
+}
+
+#[sqlx::test(fixtures("productions", "artists", "production_artists"))]
+#[test_log::test]
+async fn get_artists_by_production_success(db: PgPool) {
+    let app = TestRouter::new(db);
+    let target_id = Uuid::from_str("11111111-1111-1111-1111-111111111111").unwrap();
+
+    let response = app.get(&format!("/productions/{target_id}/artists")).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: Vec<ArtistPayload> = response.into_struct().await;
+    assert_eq!(data.len(), 1);
+    assert_eq!(
+        data[0].id.to_string(),
+        "a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1"
+    );
+}
+
+#[sqlx::test(fixtures("productions", "artists"))]
+#[test_log::test]
+async fn get_artists_by_production_empty(db: PgPool) {
+    let app = TestRouter::new(db);
+    let target_id = Uuid::from_str("33333333-3333-3333-3333-333333333333").unwrap();
+
+    let response = app.get(&format!("/productions/{target_id}/artists")).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: Vec<ArtistPayload> = response.into_struct().await;
+    assert!(data.is_empty());
+}
+
+/// return a test payload for `ProductionPostPayload`
+fn mock_post_payload() -> ProductionPostPayload {
+    serde_json::from_value(json!({
+        "source_id": 9999,
+        "slug": "test-post-production",
+        "translations": [
+            { "language_code": "nl", "title": "Nieuwe Test Productie" },
+            { "language_code": "en", "title": "New Test Production" }
+        ]
+    }))
+    .expect("Failed to deserialize mock ProductionPostPayload")
+}
