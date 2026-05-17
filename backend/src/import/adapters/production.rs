@@ -258,12 +258,13 @@ impl ImportableEntity for ProductionImport {
 
         match existing_id {
             None => {
-                // Create path: generate slug from title.
+                // Create path: generate a slug from title, deduplicating if needed.
                 let raw_title = title_nl.as_deref().unwrap_or("untitled");
-                let mut slug = slugify(raw_title);
-                if slug.is_empty() {
-                    slug = "untitled".to_string();
-                }
+                let base_slug = {
+                    let s = slugify(raw_title);
+                    if s.is_empty() { "untitled".to_string() } else { s }
+                };
+                let slug = db.productions().find_unique_slug(&base_slug).await?;
 
                 let mut translations = vec![nl_data(None)];
                 if let Some(desc_en) = description_en.clone() {

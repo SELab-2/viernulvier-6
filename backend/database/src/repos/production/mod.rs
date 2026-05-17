@@ -177,6 +177,39 @@ impl<'a> ProductionRepo<'a> {
         })
     }
 
+    /// Return the first slug not already present in the productions table.
+    ///
+    /// Tries `base_slug`, then `base_slug-2`, `base_slug-3`, … up to 999.
+    pub async fn find_unique_slug(&self, base_slug: &str) -> Result<String, DatabaseError> {
+        let taken: bool =
+            sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM productions WHERE slug = $1)")
+                .bind(base_slug)
+                .fetch_one(self.db)
+                .await?;
+
+        if !taken {
+            return Ok(base_slug.to_string());
+        }
+
+        for i in 2u32..=999 {
+            let candidate = format!("{}-{}", base_slug, i);
+            let taken: bool =
+                sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM productions WHERE slug = $1)")
+                    .bind(&candidate)
+                    .fetch_one(self.db)
+                    .await?;
+
+            if !taken {
+                return Ok(candidate);
+            }
+        }
+
+        Err(DatabaseError::BadRequest(format!(
+            "could not find unique slug for '{}' after 999 attempts",
+            base_slug
+        )))
+    }
+
     pub async fn update(
         &self,
         production: Production,
