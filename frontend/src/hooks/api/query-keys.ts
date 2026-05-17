@@ -112,4 +112,7 @@ export const queryKeys = {
         entityTags: (entityType: string, entityId: string) =>
             ["taxonomy", "entity-tags", entityType, entityId] as const,
     },
+    users: {
+        all: () => ["users"] as const,
+    },
 };

@@ -2,6 +2,7 @@ use argon2::{
     Argon2,
     password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
 };
+use base64::Engine;
 use chrono::Utc;
 use database::{
     Database,
@@ -11,6 +12,7 @@ use database::{
     },
 };
 use jsonwebtoken::{EncodingKey, Header, encode};
+use rand::Rng;
 use serde::Serialize;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
@@ -45,11 +47,15 @@ pub async fn create_test_user(db: &Database, email: &str, role: UserRole) -> Use
 }
 
 pub async fn login_user(db: &Database, config: &AppConfig, user: &User) -> String {
+    let mut random_bytes = [0u8; 32];
+    rand::rng().fill_bytes(&mut random_bytes);
+    let token_hash = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(random_bytes);
+
     let session = db
         .sessions()
         .create(SessionCreate {
             user_id: user.id,
-            token_hash: "test_hash".to_string(),
+            token_hash,
             expires_at: Utc::now() + chrono::Duration::days(1),
         })
         .await

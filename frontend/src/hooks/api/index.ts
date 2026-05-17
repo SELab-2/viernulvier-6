@@ -11,4 +11,5 @@ export * from "./useProductions";
 export * from "./useSpaces";
 export * from "./useStats";
 export * from "./useTaxonomy";
+export * from "./useUsers";
 export * from "./useVersion";
