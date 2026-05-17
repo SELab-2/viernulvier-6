@@ -71,13 +71,6 @@ export function useTableSelection<TData>({
         }
     }, [focusedRowIndex]);
 
-    const selectOnly = useCallback(
-        (rowId: string) => {
-            onRowSelectionChange?.({ [rowId]: true });
-        },
-        [onRowSelectionChange]
-    );
-
     const toggleRow = useCallback(
         (rowId: string) => {
             onRowSelectionChange?.((prev) => {
@@ -146,7 +139,6 @@ export function useTableSelection<TData>({
     const rowsRef = useRef(rows);
     const selectRangeRef = useRef(selectRange);
     const toggleRowRef = useRef(toggleRow);
-    const selectOnlyRef = useRef(selectOnly);
     const focusRowRef = useRef(focusRow);
     const focusedRowIndexRef = useRef(focusedRowIndex);
     const clearSelectionRef = useRef(clearSelection);
@@ -158,7 +150,6 @@ export function useTableSelection<TData>({
         rowsRef.current = rows;
         selectRangeRef.current = selectRange;
         toggleRowRef.current = toggleRow;
-        selectOnlyRef.current = selectOnly;
         focusRowRef.current = focusRow;
         focusedRowIndexRef.current = focusedRowIndex;
         clearSelectionRef.current = clearSelection;
@@ -169,7 +160,6 @@ export function useTableSelection<TData>({
         rows,
         selectRange,
         toggleRow,
-        selectOnly,
         focusRow,
         focusedRowIndex,
         clearSelection,
@@ -205,13 +195,8 @@ export function useTableSelection<TData>({
                 toggleRowRef.current(rowId);
                 setAnchorRowId(rowId);
                 focusRowRef.current(rowIndex);
-            } else if (isCheckbox) {
-                // Plain click on the checkbox cell toggles just this row
-                toggleRowRef.current(rowId);
-                setAnchorRowId(rowId);
-                focusRowRef.current(rowIndex);
             } else {
-                selectOnlyRef.current(rowId);
+                toggleRowRef.current(rowId);
                 setAnchorRowId(rowId);
                 focusRowRef.current(rowIndex);
             }

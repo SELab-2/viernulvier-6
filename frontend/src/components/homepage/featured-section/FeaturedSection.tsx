@@ -58,7 +58,7 @@ function FeaturedCard({
     return (
         <Link
             href={`/productions/${production.id}`}
-            className="group bg-background hover:bg-muted/40 relative block cursor-pointer p-4 pb-5 transition-all sm:p-5"
+            className="group bg-background hover:bg-muted/5 relative block cursor-pointer p-4 pb-5 transition-all sm:p-5"
         >
             <div
                 className={`bg-muted border-border/70 relative mb-3 w-full overflow-hidden border ${isFirst ? "h-[180px] sm:h-[260px]" : "h-[140px] sm:h-[170px]"}`}
