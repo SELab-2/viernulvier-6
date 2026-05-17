@@ -233,7 +233,7 @@ describe("DryRunStage", () => {
             isError: false,
         });
         (mockUseImportRowStats as Mock).mockReturnValue({
-            data: { ...defaultStats, willCreate: 0, error: 1 },
+            data: { ...defaultStats, willCreate: 0, willUpdate: 0, error: 1 },
             isPending: false,
             isError: false,
         });

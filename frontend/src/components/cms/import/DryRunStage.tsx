@@ -150,7 +150,8 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
 
     const selectedRow = selectedId ? (resolvedRows.find((r) => r.id === selectedId) ?? null) : null;
     const canRerun = session.status === "dry_run_ready" || session.status === "failed";
-    const canCommit = session.status === "dry_run_ready" && !rowStatsLoading && !hasErrors;
+    const hasActionableRows = !rowStats || rowStats.willCreate > 0 || rowStats.willUpdate > 0;
+    const canCommit = session.status === "dry_run_ready" && !rowStatsLoading && hasActionableRows;
     const firstVisibleRow = resolvedRows.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
     const lastVisibleRow =
         resolvedRows.length === 0 ? 0 : firstVisibleRow + resolvedRows.length - 1;
