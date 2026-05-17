@@ -636,13 +636,22 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
         }
     }
 
-    // ── Step 5: finalize skipped rows ────────────────────────────────────────
+    // ── Step 5: finalize any rows still stuck in a planning status ───────────
+    // Rows can remain in will_create/will_update/pending if the per-row
+    // save_dry_run_result(Error) call failed silently. Bulk-flip them to error
+    // so session stats are accurate.
+
+    if let Err(e) = db.imports().finalize_uncommitted_rows(id).await {
+        warn!("failed to finalize uncommitted rows for session {id}: {e}");
+    }
+
+    // ── Step 6: finalize skipped rows ────────────────────────────────────────
 
     if let Err(e) = db.imports().finalize_skipped_rows(id).await {
         warn!("failed to finalize skipped rows for session {id}: {e}");
     }
 
-    // ── Step 6: mark session as committed ────────────────────────────────────
+    // ── Step 7: mark session as committed ────────────────────────────────────
     if commit_error_count > 0 {
         db.imports()
             .mark_session_failed_after_commit(

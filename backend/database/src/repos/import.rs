@@ -441,6 +441,25 @@ impl<'a> ImportRepo<'a> {
         Ok(result.rows_affected())
     }
 
+    /// After a commit loop, bulk-finalize any rows still in a planning status to `error`.
+    ///
+    /// Handles the case where a per-row `save_dry_run_result(Error)` call failed
+    /// silently (called with `let _`), leaving rows stuck in will_create/will_update/pending.
+    /// This ensures those rows show up correctly in session stats instead of being invisible.
+    pub async fn finalize_uncommitted_rows(&self, session_id: Uuid) -> Result<u64, DatabaseError> {
+        let result = sqlx::query!(
+            r#"UPDATE import_rows
+               SET status = 'error',
+                   warnings = '[{"field": null, "code": "commit_failed", "message": "Row was not committed — status could not be saved during the commit loop."}]'::jsonb
+               WHERE session_id = $1 AND status IN ('will_create', 'will_update', 'pending')"#,
+            session_id,
+        )
+        .execute(self.db)
+        .await?;
+
+        Ok(result.rows_affected())
+    }
+
     /// Persist dry-run results: status, diff, and warnings.
     pub async fn save_dry_run_result(
         &self,
