@@ -1,4 +1,7 @@
+pub mod article;
+pub mod artist;
 pub mod event;
+pub mod location;
 pub mod production;
 pub mod stub;
 

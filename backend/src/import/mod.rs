@@ -15,9 +15,9 @@ pub fn default_registry() -> registry::ImportRegistry {
     registry::ImportRegistry::new(vec![
         Arc::new(adapters::production::ProductionImport) as Arc<dyn trait_def::ImportableEntity>,
         Arc::new(adapters::event::EventImport),
-        Arc::new(adapters::stub::StubAdapter::new("article")),
-        Arc::new(adapters::stub::StubAdapter::new("location")),
-        Arc::new(adapters::stub::StubAdapter::new("artist")),
+        Arc::new(adapters::artist::ArtistImport),
+        Arc::new(adapters::location::LocationImport),
+        Arc::new(adapters::article::ArticleImport),
         Arc::new(adapters::stub::StubAdapter::new("media")),
         Arc::new(adapters::stub::StubAdapter::new("series")),
         Arc::new(adapters::stub::StubAdapter::new("collection")),

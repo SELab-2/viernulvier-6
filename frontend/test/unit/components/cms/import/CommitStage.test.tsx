@@ -22,9 +22,11 @@ vi.mock("@/i18n/routing", () => ({
 // ── Hook mocks (hoisted) ──────────────────────────────────────────────────────
 
 const mockUseImportSession = vi.fn();
+const mockUseImportRowStats = vi.fn().mockReturnValue({ data: undefined });
 
 vi.mock("@/hooks/api/useImport", () => ({
     useImportSession: (id: string, options?: unknown) => mockUseImportSession(id, options),
+    useImportRowStats: (id: string, options?: unknown) => mockUseImportRowStats(id, options),
 }));
 
 // Import component after mocks
@@ -95,6 +97,7 @@ describe("CommitStage", () => {
                 id: SESSION_ID,
                 status: "failed",
                 error: "Something went wrong",
+                committedAt: null,
             },
             isPending: false,
             isError: false,

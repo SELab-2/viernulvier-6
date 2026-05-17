@@ -40,14 +40,7 @@ fn default_registry_returns_event_adapter() {
 #[test]
 fn default_registry_returns_stub_for_unsupported_entities() {
     let reg = default_registry();
-    for name in [
-        "article",
-        "location",
-        "artist",
-        "media",
-        "series",
-        "collection",
-    ] {
+    for name in ["media", "series", "collection"] {
         let adapter = reg.get(name).expect("stub registered");
         assert_eq!(adapter.entity_type(), name);
         assert!(adapter.target_fields().is_empty());
@@ -55,9 +48,19 @@ fn default_registry_returns_stub_for_unsupported_entities() {
 }
 
 #[test]
+fn real_adapters_have_non_empty_fields() {
+    let reg = default_registry();
+    for name in ["article", "artist", "location"] {
+        let adapter = reg.get(name).expect("adapter registered");
+        assert_eq!(adapter.entity_type(), name);
+        assert!(!adapter.target_fields().is_empty(), "{name} adapter has no fields");
+    }
+}
+
+#[test]
 fn stub_validate_row_returns_not_supported_warning() {
     let reg = default_registry();
-    let adapter = reg.get("article").expect("article stub");
+    let adapter = reg.get("media").expect("media stub");
     let warnings = adapter.validate_row(&std::collections::BTreeMap::new());
     assert_eq!(warnings.len(), 1);
     assert_eq!(warnings[0].code, "not_supported");

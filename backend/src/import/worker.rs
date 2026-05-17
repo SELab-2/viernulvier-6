@@ -636,7 +636,13 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
         }
     }
 
-    // ── Step 5: mark session as committed ────────────────────────────────────
+    // ── Step 5: finalize skipped rows ────────────────────────────────────────
+
+    if let Err(e) = db.imports().finalize_skipped_rows(id).await {
+        warn!("failed to finalize skipped rows for session {id}: {e}");
+    }
+
+    // ── Step 6: mark session as committed ────────────────────────────────────
     if commit_error_count > 0 {
         db.imports()
             .mark_session_failed_after_commit(

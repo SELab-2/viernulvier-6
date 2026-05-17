@@ -33,12 +33,16 @@ vi.mock("sonner", () => ({
 
 const mockUseImportSession = vi.fn();
 const mockUseImportRows = vi.fn();
+const mockUseImportRowStats = vi
+    .fn()
+    .mockReturnValue({ data: undefined, isPending: false, isError: false });
 const mockRevertRowMutate = vi.fn();
 const mockRollbackSessionMutate = vi.fn();
 
 vi.mock("@/hooks/api/useImport", () => ({
     useImportSession: (id: string) => mockUseImportSession(id),
     useImportRows: (sessionId: string) => mockUseImportRows(sessionId),
+    useImportRowStats: (sessionId: string) => mockUseImportRowStats(sessionId),
     useRevertRow: () => ({
         mutate: mockRevertRowMutate,
         isPending: false,
@@ -46,6 +50,11 @@ vi.mock("@/hooks/api/useImport", () => ({
     }),
     useRollbackSession: () => ({
         mutate: mockRollbackSessionMutate,
+        isPending: false,
+        isError: false,
+    }),
+    useDeleteImportSession: () => ({
+        mutate: vi.fn(),
         isPending: false,
         isError: false,
     }),

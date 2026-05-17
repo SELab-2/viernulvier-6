@@ -22,6 +22,11 @@ const mockUseImportSessions = vi.fn();
 
 vi.mock("@/hooks/api/useImport", () => ({
     useImportSessions: (params?: unknown) => mockUseImportSessions(params),
+    useDeleteImportSession: () => ({
+        mutate: vi.fn(),
+        isPending: false,
+        isError: false,
+    }),
 }));
 
 // Import component after mocks

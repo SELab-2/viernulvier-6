@@ -115,7 +115,6 @@ async fn seed_event(pool: &PgPool, production_id: Uuid, source_id: Option<i32>) 
             max_tickets_per_order: None,
             production_id,
             status: "scheduled".to_string(),
-            hall_id: None,
         })
         .await
         .expect("seed event insert failed");
@@ -413,8 +412,9 @@ async fn apply_row_creates_event_with_all_fields(pool: PgPool) {
     tx.commit().await.expect("commit tx");
 
     let event = db.events().by_id(id).await.expect("by_id failed");
+    let hall_ids = db.events().hall_ids_for_event(id).await.expect("hall_ids_for_event failed");
     assert_eq!(event.production_id, prod_id);
-    assert_eq!(event.hall_id, Some(hall_id));
+    assert_eq!(hall_ids, vec![hall_id]);
     assert_eq!(event.source_id, Some(42));
     assert_eq!(event.status, "scheduled");
     assert!(event.ends_at.is_some(), "ends_at should be set");
@@ -439,8 +439,9 @@ async fn apply_row_creates_event_with_only_required_fields(pool: PgPool) {
     tx.commit().await.expect("commit tx");
 
     let event = db.events().by_id(id).await.expect("by_id failed");
+    let hall_ids = db.events().hall_ids_for_event(id).await.expect("hall_ids_for_event failed");
     assert_eq!(event.production_id, prod_id);
-    assert_eq!(event.hall_id, None);
+    assert!(hall_ids.is_empty(), "expected no halls");
     assert_eq!(event.source_id, None);
     assert_eq!(event.ends_at, None);
 }
@@ -595,7 +596,7 @@ async fn build_diff_unchanged_hall_id_excluded(pool: PgPool) {
     let hall_id = seed_hall(&pool, "Studio").await;
     let db = Database::new(pool.clone());
 
-    // Create event directly with the hall_id already set.
+    // Create event and link the hall via the join table.
     let now = chrono::Utc::now();
     let event = db
         .events()
@@ -613,10 +614,13 @@ async fn build_diff_unchanged_hall_id_excluded(pool: PgPool) {
             max_tickets_per_order: None,
             production_id: prod_id,
             status: "scheduled".to_string(),
-            hall_id: Some(hall_id),
         })
         .await
         .expect("insert failed");
+    db.events()
+        .link_halls(event.id, &[hall_id])
+        .await
+        .expect("link_halls failed");
 
     let adapter = EventImport;
     let row = make_row(&[

@@ -68,7 +68,7 @@ export function CommitStage({ sessionId }: CommitStageProps) {
                             {t("commit.partialFailedSummary", {
                                 created: rowStats.created,
                                 updated: rowStats.updated,
-                                skipped: rowStats.skipped + rowStats.willSkip,
+                                skipped: rowStats.skipped,
                                 failed: rowStats.error,
                             })}
                         </p>

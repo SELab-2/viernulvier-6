@@ -427,6 +427,20 @@ impl<'a> ImportRepo<'a> {
         Ok(result.rows_affected())
     }
 
+    /// Set all `will_skip` rows in a session to `skipped` after a successful commit.
+    pub async fn finalize_skipped_rows(&self, session_id: Uuid) -> Result<u64, DatabaseError> {
+        let result = sqlx::query!(
+            r#"UPDATE import_rows
+               SET status = 'skipped'
+               WHERE session_id = $1 AND status = 'will_skip'"#,
+            session_id,
+        )
+        .execute(self.db)
+        .await?;
+
+        Ok(result.rows_affected())
+    }
+
     /// Persist dry-run results: status, diff, and warnings.
     pub async fn save_dry_run_result(
         &self,

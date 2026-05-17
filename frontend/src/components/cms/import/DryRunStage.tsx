@@ -89,13 +89,10 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
 
     const counts = {
         all: rowStats?.total ?? session?.rowCount ?? resolvedRows.length,
-        will_create:
-            rowStats?.willCreate ?? resolvedRows.filter((r) => r.status === "will_create").length,
-        will_update:
-            rowStats?.willUpdate ?? resolvedRows.filter((r) => r.status === "will_update").length,
-        will_skip:
-            rowStats?.willSkip ?? resolvedRows.filter((r) => r.status === "will_skip").length,
-        error: rowStats?.error ?? resolvedRows.filter((r) => r.status === "error").length,
+        will_create: rowStats?.willCreate ?? 0,
+        will_update: rowStats?.willUpdate ?? 0,
+        will_skip: rowStats?.willSkip ?? 0,
+        error: rowStats?.error ?? 0,
     };
 
     if (sessionLoading || rowsLoading || fieldsLoading) {
@@ -153,7 +150,7 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
 
     const selectedRow = selectedId ? (resolvedRows.find((r) => r.id === selectedId) ?? null) : null;
     const canRerun = session.status === "dry_run_ready" || session.status === "failed";
-    const canCommit = session.status === "dry_run_ready" && !rowStatsLoading;
+    const canCommit = session.status === "dry_run_ready" && !rowStatsLoading && !hasErrors;
     const firstVisibleRow = resolvedRows.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
     const lastVisibleRow =
         resolvedRows.length === 0 ? 0 : firstVisibleRow + resolvedRows.length - 1;

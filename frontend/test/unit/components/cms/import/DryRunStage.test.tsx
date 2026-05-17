@@ -39,6 +39,11 @@ vi.mock("@/hooks/api/useImport", () => ({
         isPending: false,
         isError: false,
     }),
+    useSkipUpdateRows: () => ({
+        mutate: vi.fn(),
+        isPending: false,
+        isError: false,
+    }),
 }));
 
 // ── Radix Sheet mock — avoids portal/animation issues in JSDOM ──────────
