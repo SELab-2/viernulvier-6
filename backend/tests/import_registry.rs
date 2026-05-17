@@ -8,7 +8,16 @@ fn default_registry_exposes_all_entity_types() {
     supported.sort();
     assert_eq!(
         supported,
-        vec!["article", "artist", "event", "location", "production"]
+        vec![
+            "article",
+            "artist",
+            "collection",
+            "event",
+            "location",
+            "media",
+            "production",
+            "series"
+        ]
     );
 }
 
@@ -31,7 +40,14 @@ fn default_registry_returns_event_adapter() {
 #[test]
 fn default_registry_returns_stub_for_unsupported_entities() {
     let reg = default_registry();
-    for name in ["article", "location", "artist"] {
+    for name in [
+        "article",
+        "location",
+        "artist",
+        "media",
+        "series",
+        "collection",
+    ] {
         let adapter = reg.get(name).expect("stub registered");
         assert_eq!(adapter.entity_type(), name);
         assert!(adapter.target_fields().is_empty());

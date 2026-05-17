@@ -18,5 +18,8 @@ pub fn default_registry() -> registry::ImportRegistry {
         Arc::new(adapters::stub::StubAdapter::new("article")),
         Arc::new(adapters::stub::StubAdapter::new("location")),
         Arc::new(adapters::stub::StubAdapter::new("artist")),
+        Arc::new(adapters::stub::StubAdapter::new("media")),
+        Arc::new(adapters::stub::StubAdapter::new("series")),
+        Arc::new(adapters::stub::StubAdapter::new("collection")),
     ])
 }

@@ -1,46 +1,34 @@
 "use client";
 
-import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Search } from "lucide-react";
 
+import type { ProductionSortOption } from "@/types/models/production.types";
+
 interface ResultsBarProps {
-    shownCount: number;
-    totalCount: number;
     query: string;
     onQueryChange: (query: string) => void;
+    onSearch: (query: string) => void;
     showSearch: boolean;
+    sort: ProductionSortOption;
+    onSortChange: (sort: ProductionSortOption) => void;
 }
 
-const SORT_OPTIONS = ["recent", "oldest", "az"] as const;
+const SORT_OPTIONS: ProductionSortOption[] = ["recent", "oldest", "relevance"];
 
 export function ResultsBar({
-    shownCount,
-    totalCount,
     query,
     onQueryChange,
+    onSearch,
     showSearch,
+    sort,
+    onSortChange,
 }: ResultsBarProps) {
     const t = useTranslations("ResultsBar");
     const tSearch = useTranslations("Search");
-    const [activeSort, setActiveSort] = useState<string>("recent");
-
-    const handleSort = useCallback((option: string) => {
-        setActiveSort(option);
-        // TODO: wire up actual sort logic when API supports it
-    }, []);
 
     return (
         <div className="border-muted/30 bg-background sticky top-0 z-10 flex items-center gap-4 border-b px-4 py-4 sm:px-7">
-            <span
-                className={`text-muted-foreground font-mono text-[12px] tracking-[1.2px] uppercase transition-opacity ${
-                    showSearch ? "hidden sm:inline" : "inline"
-                }`}
-            >
-                <strong className="text-foreground">{shownCount}</strong> /{" "}
-                <strong className="text-foreground">{totalCount.toLocaleString()}</strong>
-            </span>
-
             <div
                 className={`flex min-w-0 flex-1 transition-all duration-300 ease-out ${
                     showSearch
@@ -55,6 +43,7 @@ export function ResultsBar({
                         type="text"
                         value={query}
                         onChange={(e) => onQueryChange(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && onSearch(query)}
                         placeholder={tSearch("heroPlaceholder")}
                         autoComplete="off"
                         tabIndex={showSearch ? 0 : -1}
@@ -70,9 +59,9 @@ export function ResultsBar({
                 {SORT_OPTIONS.map((option) => (
                     <button
                         key={option}
-                        onClick={() => handleSort(option)}
+                        onClick={() => onSortChange(option)}
                         className={`cursor-pointer border-b pb-0.5 font-mono text-[11px] tracking-[1.2px] uppercase transition-all ${
-                            activeSort === option
+                            sort === option
                                 ? "border-foreground text-foreground"
                                 : "text-muted-foreground hover:text-foreground border-transparent"
                         }`}

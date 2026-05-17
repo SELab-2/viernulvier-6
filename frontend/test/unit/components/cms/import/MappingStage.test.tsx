@@ -32,6 +32,12 @@ vi.mock("@/hooks/api/useImport", () => ({
     }),
 }));
 
+vi.mock("@/i18n/routing", () => ({
+    useRouter: () => ({
+        replace: vi.fn(),
+    }),
+}));
+
 // ── Radix Select mock — replaces with a plain <select> for JSDOM compatibility ──
 
 vi.mock("@/components/ui/select", () => ({

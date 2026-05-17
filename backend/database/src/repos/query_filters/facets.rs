@@ -31,6 +31,8 @@ impl<'args> AddFacetFilters<'args, Postgres> for QueryBuilder<'args, Postgres> {
             (Facet::Format, &filters.formats),
             (Facet::Theme, &filters.themes),
             (Facet::Audience, &filters.audiences),
+            (Facet::Accessibility, &filters.accessibilities),
+            (Facet::Language, &filters.languages),
         ];
 
         for (facet, tags) in filter_facets {

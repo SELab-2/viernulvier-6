@@ -1,6 +1,12 @@
-export type EntityType = "production" | "artist" | "article" | "media";
+export type EntityType = "production" | "artist" | "article" | "media" | "collection";
 
-export type FacetSlug = "discipline" | "format" | "theme" | "audience";
+export type FacetSlug =
+    | "discipline"
+    | "format"
+    | "theme"
+    | "audience"
+    | "accessibility"
+    | "language";
 
 export type TagTranslation = {
     languageCode: string;
@@ -23,4 +29,17 @@ export type Facet = {
     slug: FacetSlug;
     translations: FacetTranslation[];
     tags: Tag[];
+};
+
+export type EntityTagSlim = {
+    slug: string;
+    facet: string;
+};
+
+export type EntityTag = Tag & { inherited: boolean };
+
+export type EntityFacet = {
+    slug: FacetSlug;
+    translations: FacetTranslation[];
+    tags: EntityTag[];
 };

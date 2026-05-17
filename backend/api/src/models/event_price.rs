@@ -72,3 +72,64 @@ impl ApiEventPrice {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_event_price(id: &str) -> ApiEventPrice {
+        let now = Utc::now();
+        ApiEventPrice {
+            id: id.into(),
+            jsonld_type: "EventPrice".into(),
+            created_at: now,
+            updated_at: now,
+            available: 12,
+            amount: "42.50".into(),
+            box_office_id: Some("box-office".into()),
+            contingent_id: Some(7),
+            expires_at: Some(now),
+            event: "/api/v1/events/1".into(),
+            price: "/api/v1/prices/2".into(),
+            rank: "/api/v1/prices/ranks/3".into(),
+        }
+    }
+
+    #[test]
+    fn to_create_maps_api_event_price_fields() {
+        let event_id = Uuid::now_v7();
+        let price_id = Uuid::now_v7();
+        let rank_id = Uuid::now_v7();
+
+        let create = make_event_price("/api/v1/events/prices/88")
+            .to_create(event_id, price_id, rank_id, 4250);
+
+        assert_eq!(create.source_id, Some(88));
+        assert_eq!(create.event_id, event_id);
+        assert_eq!(create.price_id, price_id);
+        assert_eq!(create.rank_id, rank_id);
+        assert_eq!(create.available, 12);
+        assert_eq!(create.amount_cents, 4250);
+        assert_eq!(create.box_office_id.as_deref(), Some("box-office"));
+        assert_eq!(create.contingent_id, Some(7));
+        assert!(create.expires_at.is_some());
+    }
+
+    #[test]
+    fn to_model_preserves_existing_id_and_create_fields() {
+        let id = Uuid::now_v7();
+        let event_id = Uuid::now_v7();
+        let price_id = Uuid::now_v7();
+        let rank_id = Uuid::now_v7();
+
+        let model = make_event_price("/api/v1/events/prices/not-an-id")
+            .to_model(id, event_id, price_id, rank_id, 4250);
+
+        assert_eq!(model.id, id);
+        assert_eq!(model.source_id, None);
+        assert_eq!(model.event_id, event_id);
+        assert_eq!(model.price_id, price_id);
+        assert_eq!(model.rank_id, rank_id);
+        assert_eq!(model.amount_cents, 4250);
+    }
+}

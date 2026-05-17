@@ -1,3 +1,4 @@
+#![allow(clippy::indexing_slicing)]
 use std::str::FromStr;
 
 use axum::http::StatusCode;
@@ -81,44 +82,42 @@ async fn get_all_paginates(db: PgPool) {
 
     let app = TestRouter::new(db);
 
-    let page1: PaginatedResponse<ArticleListPayload> =
-        app.get("/articles?limit=2").await.into_struct().await;
-    assert_eq!(page1.data.len(), 2);
-    assert!(page1.next_cursor.is_some());
-
-    let page2: PaginatedResponse<ArticleListPayload> = app
-        .get(&format!(
-            "/articles?limit=2&cursor={}",
-            page1.next_cursor.clone().unwrap()
-        ))
-        .await
-        .into_struct()
-        .await;
-    assert_eq!(page2.data.len(), 2);
-    assert!(page2.next_cursor.is_some());
-
-    let page3: PaginatedResponse<ArticleListPayload> = app
-        .get(&format!(
-            "/articles?limit=2&cursor={}",
-            page2.next_cursor.clone().unwrap()
-        ))
-        .await
-        .into_struct()
-        .await;
-    assert_eq!(page3.data.len(), 1);
-    assert!(page3.next_cursor.is_none());
-
-    let mut all_ids = vec![
-        page1.data[0].id,
-        page1.data[1].id,
-        page2.data[0].id,
-        page2.data[1].id,
-        page3.data[0].id,
+    let target_ids = [
+        Uuid::from_str("dddddddd-dddd-dddd-dddd-dddddddddddd").unwrap(),
+        Uuid::from_str("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee").unwrap(),
+        Uuid::from_str("ffffffff-ffff-ffff-ffff-ffffffffffff").unwrap(),
     ];
+
+    let mut all_ids: Vec<Uuid> = Vec::new();
+    let mut cursor: Option<String> = None;
+
+    loop {
+        let url = match &cursor {
+            Some(c) => format!("/articles?limit=2&cursor={c}"),
+            None => "/articles?limit=2".to_string(),
+        };
+        let page: PaginatedResponse<ArticleListPayload> = app.get(&url).await.into_struct().await;
+        assert!(
+            !page.data.is_empty(),
+            "page should not be empty mid-iteration"
+        );
+        all_ids.extend(page.data.iter().map(|a| a.id));
+        cursor = page.next_cursor;
+        if cursor.is_none() {
+            break;
+        }
+    }
+
+    // No duplicates across pages
     let original_length = all_ids.len();
     all_ids.sort();
     all_ids.dedup();
-    assert_eq!(all_ids.len(), original_length);
+    assert_eq!(all_ids.len(), original_length, "duplicate IDs across pages");
+
+    // All 3 inserted articles are present
+    for id in &target_ids {
+        assert!(all_ids.contains(id), "missing inserted article {id}");
+    }
 }
 
 #[sqlx::test(fixtures("articles"))]
@@ -463,7 +462,11 @@ async fn relations_crud(db: PgPool) {
     assert_eq!(response.status(), StatusCode::OK);
     let data: ArticleRelationsPayload = response.into_struct().await;
     assert_eq!(data.production_ids.len(), 1);
-    assert_eq!(data.production_ids[0], production_id);
+    let related_production = data
+        .production_ids
+        .first()
+        .expect("expected one related production");
+    assert_eq!(*related_production, production_id);
 
     let response = app
         .get(&format!("/articles/cms/{article_id}/relations"))
@@ -785,4 +788,171 @@ async fn get_one_published_returns_all_fields(db: PgPool) {
         Some(NaiveDate::from_ymd_opt(2026, 6, 30).unwrap())
     );
     assert!(!data.id.is_nil());
+}
+
+#[sqlx::test(fixtures("articles", "media", "entity_media_article_cover"))]
+#[test_log::test]
+async fn get_all_articles_returns_cover_image_urls(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/articles").await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    let with_cover = data.data.iter().find(|a| a.cover_image_url.is_some());
+    assert!(
+        with_cover.is_some(),
+        "at least one article should have a resolved cover URL"
+    );
+}
+
+#[sqlx::test(fixtures("articles"))]
+#[test_log::test]
+async fn get_all_articles_without_cover_returns_null(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/articles").await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    for a in &data.data {
+        assert!(a.cover_image_url.is_none());
+    }
+}
+
+#[sqlx::test(fixtures("articles", "media", "entity_media_article_cover"))]
+#[test_log::test]
+async fn get_one_article_by_slug_returns_cover_image_url(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/articles/published-article").await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: ArticlePayload = response.into_struct().await;
+    assert!(
+        data.cover_image_url.is_some(),
+        "cover_image_url should be resolved for article with a cover"
+    );
+}
+
+#[sqlx::test(fixtures("articles"))]
+#[test_log::test]
+async fn get_one_article_by_slug_without_cover_returns_null(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/articles/published-article").await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: ArticlePayload = response.into_struct().await;
+    assert!(data.cover_image_url.is_none());
+}
+
+#[sqlx::test(fixtures("articles", "media", "entity_media_article_cover"))]
+#[test_log::test]
+async fn get_all_cms_returns_cover_image_urls(db: PgPool) {
+    let app = TestRouter::as_editor(db).await;
+    let response = app.get("/articles/cms").await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: Vec<ArticleListPayload> = response.into_struct().await;
+    let with_cover = data.iter().find(|a| a.cover_image_url.is_some());
+    assert!(
+        with_cover.is_some(),
+        "at least one article should have a resolved cover URL in CMS list"
+    );
+}
+
+#[sqlx::test(fixtures("articles", "media", "entity_media_article_cover"))]
+#[test_log::test]
+async fn get_one_cms_returns_cover_image_url(db: PgPool) {
+    let id = Uuid::from_str("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa").unwrap();
+    let app = TestRouter::as_editor(db).await;
+    let response = app.get(&format!("/articles/cms/{id}")).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: ArticlePayload = response.into_struct().await;
+    assert!(
+        data.cover_image_url.is_some(),
+        "cover_image_url should be resolved for article with a cover in CMS view"
+    );
+}
+
+#[sqlx::test(fixtures("articles"))]
+#[test_log::test]
+async fn search_cms_requires_auth(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/articles/cms/search").await;
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[sqlx::test(fixtures("articles"))]
+#[test_log::test]
+async fn search_cms_returns_all_statuses(db: PgPool) {
+    let app = TestRouter::as_editor(db).await;
+    let response = app.get("/articles/cms/search").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    let slugs: Vec<&str> = data.data.iter().map(|a| a.slug.as_str()).collect();
+    assert!(slugs.contains(&"published-article"));
+    assert!(slugs.contains(&"draft-article"));
+    assert!(slugs.contains(&"archived-article"));
+}
+
+#[sqlx::test(fixtures("articles"))]
+#[test_log::test]
+async fn search_cms_filters_by_query(db: PgPool) {
+    let app = TestRouter::as_editor(db).await;
+    let response = app.get("/articles/cms/search?q=Draft").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 1);
+    assert_eq!(data.data[0].slug, "draft-article");
+}
+
+#[sqlx::test(fixtures("articles"))]
+#[test_log::test]
+async fn search_cms_paginates(db: PgPool) {
+    let app = TestRouter::as_editor(db).await;
+
+    let response = app.get("/articles/cms/search?limit=1").await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let page1: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    assert_eq!(page1.data.len(), 1);
+    assert!(
+        page1.next_cursor.is_some(),
+        "first page should have a next_cursor"
+    );
+
+    let cursor = page1.next_cursor.unwrap();
+    let response = app
+        .get(&format!("/articles/cms/search?limit=1&cursor={cursor}"))
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let page2: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
+    assert_eq!(page2.data.len(), 1);
+    assert_ne!(page2.data[0].slug, page1.data[0].slug);
+}
+
+#[sqlx::test(fixtures("articles", "article_taggings"))]
+#[test_log::test]
+async fn published_list_includes_slim_tags(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/articles?limit=10").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body: serde_json::Value = response.into_struct().await;
+    let data = body["data"].as_array().expect("data array present");
+
+    let article = data
+        .iter()
+        .find(|a| a["id"] == "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+        .expect("seeded article present");
+    let tags = article["tags"].as_array().expect("tags array");
+    assert_eq!(tags.len(), 1);
+    assert_eq!(tags[0]["slug"], "theatre");
+    assert_eq!(tags[0]["facet"], "discipline");
+}
+
+#[sqlx::test(fixtures("articles"))]
+#[test_log::test]
+async fn cms_list_includes_empty_tags_when_untagged(db: PgPool) {
+    let app = TestRouter::as_editor(db).await;
+    let response = app.get("/articles/cms").await;
+    let body: serde_json::Value = response.into_struct().await;
+    let data = body.as_array().expect("articles array");
+    for article in data {
+        assert!(article["tags"].as_array().expect("tags").is_empty());
+    }
 }

@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::io::Cursor;
 
 use thiserror::Error;
 
@@ -29,6 +30,39 @@ fn strip_bom(bytes: &[u8]) -> &[u8] {
     } else {
         bytes
     }
+}
+
+/// Normalize legacy MySQL-ish CSV escapes seen in old VierNulVier exports.
+///
+/// Some rows contain `\"` immediately before a delimiter or line ending inside
+/// a quoted field. In those files the backslash is an escape marker for the
+/// field's closing quote, not data. The `csv` crate correctly treats that as
+/// non-standard CSV, so we remove only that narrow backslash pattern before
+/// parsing.
+fn normalize_legacy_escapes(bytes: &[u8], delimiter: u8) -> Vec<u8> {
+    let mut out = Vec::with_capacity(bytes.len());
+    let mut i = 0;
+
+    while i < bytes.len() {
+        let is_backslash_before_closing_quote = bytes.get(i) == Some(&b'\\')
+            && bytes.get(i + 1) == Some(&b'"')
+            && matches!(
+                bytes.get(i + 2),
+                Some(next) if *next == delimiter || *next == b'\n' || *next == b'\r'
+            );
+
+        if is_backslash_before_closing_quote {
+            out.push(b'"');
+            i += 2;
+        } else if let Some(byte) = bytes.get(i) {
+            out.push(*byte);
+            i += 1;
+        } else {
+            break;
+        }
+    }
+
+    out
 }
 
 /// Sniff the most likely delimiter by counting occurrences in the first two
@@ -103,7 +137,7 @@ fn record_to_map(
         .iter()
         .zip(record.iter())
         .map(|(header, cell)| {
-            let value = if cell.is_empty() {
+            let value = if cell.is_empty() || cell == r"\N" {
                 None
             } else {
                 Some(cell.to_owned())
@@ -120,14 +154,15 @@ fn record_to_map(
 /// to this helper so the setup logic is not duplicated.
 fn build_reader_and_headers(
     bytes: &[u8],
-) -> Result<(csv::Reader<&[u8]>, Vec<String>), CsvParseError> {
+) -> Result<(csv::Reader<Cursor<Vec<u8>>>, Vec<String>), CsvParseError> {
     let bytes = strip_bom(bytes);
     let delimiter = sniff_delimiter(bytes);
+    let bytes = normalize_legacy_escapes(bytes, delimiter);
 
     let mut rdr = csv::ReaderBuilder::new()
         .delimiter(delimiter)
         .flexible(true)
-        .from_reader(bytes);
+        .from_reader(Cursor::new(bytes));
 
     let raw_headers = rdr
         .headers()
@@ -187,4 +222,68 @@ pub fn parse_all(bytes: &[u8]) -> Result<Vec<BTreeMap<String, Option<String>>>, 
     }
 
     Ok(rows)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_all;
+    use std::path::Path;
+
+    #[test]
+    fn parse_all_accepts_legacy_backslash_before_closing_quote() {
+        let csv = br#"title,description,planning
+Uberdope,"Paar jaar weg, geen vakantie,
+\",wo 06.03
+"#;
+
+        let rows = parse_all(csv).expect("legacy CSV should parse");
+
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0]["title"], Some("Uberdope".to_owned()));
+        assert_eq!(
+            rows[0]["description"],
+            Some("Paar jaar weg, geen vakantie,\n".to_owned())
+        );
+        assert_eq!(rows[0]["planning"], Some("wo 06.03".to_owned()));
+    }
+
+    #[test]
+    fn parse_all_treats_legacy_null_marker_as_empty_cell() {
+        let csv = br#"title,genre
+Waiting For Giraffes,\N
+"#;
+
+        let rows = parse_all(csv).expect("legacy CSV should parse");
+
+        assert_eq!(rows[0]["title"], Some("Waiting For Giraffes".to_owned()));
+        assert_eq!(rows[0]["genre"], None);
+    }
+
+    #[test]
+    fn parse_all_accepts_local_legacy_csvs_when_present() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+        let files = [
+            ("Productions - output.csv", 6_000),
+            ("Events - voorstellingen.csv", 10_000),
+        ];
+
+        for (filename, minimum_rows) in files {
+            let path = root.join(filename);
+            if !path.exists() {
+                continue;
+            }
+
+            let bytes = std::fs::read(&path).expect("read local legacy CSV fixture");
+            let rows = parse_all(&bytes).expect("local legacy CSV should parse");
+            assert!(
+                rows.len() >= minimum_rows,
+                "{filename} parsed too few rows: {}",
+                rows.len()
+            );
+            assert!(
+                rows.iter().all(|row| !row.is_empty()),
+                "{filename} produced an empty row map"
+            );
+        }
+    }
 }

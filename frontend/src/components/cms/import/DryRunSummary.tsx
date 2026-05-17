@@ -57,33 +57,35 @@ export function DryRunSummary({ rows, sessionStatus }: DryRunSummaryProps) {
                     </p>
                 </div>
             )}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <div className="bg-card text-card-foreground rounded-lg border p-4 shadow-sm">
-                    <p className="text-muted-foreground text-xs font-medium">
+            <div className="grid grid-cols-2 border border-r-0 border-b-0 sm:grid-cols-4">
+                <div className="bg-background text-foreground border-r border-b p-4">
+                    <p className="text-muted-foreground font-mono text-[10px] font-medium tracking-[1.5px] uppercase">
                         {t("summary.willCreate")}
                     </p>
                     <p className="mt-1 text-2xl font-semibold tabular-nums">{counts.willCreate}</p>
                 </div>
-                <div className="bg-card text-card-foreground rounded-lg border p-4 shadow-sm">
-                    <p className="text-muted-foreground text-xs font-medium">
+                <div className="bg-background text-foreground border-r border-b p-4">
+                    <p className="text-muted-foreground font-mono text-[10px] font-medium tracking-[1.5px] uppercase">
                         {t("summary.willUpdate")}
                     </p>
                     <p className="mt-1 text-2xl font-semibold tabular-nums">{counts.willUpdate}</p>
                 </div>
-                <div className="bg-card text-card-foreground rounded-lg border p-4 shadow-sm">
-                    <p className="text-muted-foreground text-xs font-medium">
+                <div className="bg-background text-foreground border-r border-b p-4">
+                    <p className="text-muted-foreground font-mono text-[10px] font-medium tracking-[1.5px] uppercase">
                         {t("summary.willSkip")}
                     </p>
                     <p className="mt-1 text-2xl font-semibold tabular-nums">{counts.willSkip}</p>
                 </div>
                 <div
-                    className={`rounded-lg border p-4 shadow-sm ${
+                    className={`border-r border-b p-4 ${
                         counts.errors > 0
                             ? "border-destructive/40 bg-destructive/10 text-destructive"
-                            : "bg-card text-card-foreground"
+                            : "bg-background text-foreground"
                     }`}
                 >
-                    <p className="text-xs font-medium opacity-70">{t("summary.errors")}</p>
+                    <p className="font-mono text-[10px] font-medium tracking-[1.5px] uppercase opacity-70">
+                        {t("summary.errors")}
+                    </p>
                     <p className="mt-1 text-2xl font-semibold tabular-nums">{counts.errors}</p>
                 </div>
             </div>

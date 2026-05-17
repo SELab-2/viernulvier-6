@@ -1,18 +1,34 @@
 "use client";
 
-import { useCallback, useMemo, useState, useRef, useEffect } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Archive } from "lucide-react";
-import type { Row } from "@tanstack/react-table";
+import { Archive, ChevronsUp } from "lucide-react";
+import { toast } from "sonner";
+import type { ExpandedState, Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
 import { ActionBar } from "../action-bar";
 import { useParentChildSelection } from "../use-parent-child-selection";
-import { makeLocationColumns, locationFields, toLocationUpdateInput } from "./columns";
+import {
+    makeLocationColumns,
+    locationFields,
+    toLocationRow,
+    toLocationUpdateInput,
+} from "./columns";
 import { makeHallColumns, hallFields, toHallUpdateInput } from "./hall-columns";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
+import { SearchInput } from "@/components/cms/search-input";
+import { LocationCoverField } from "@/components/cms/location-cover-field";
+import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
+import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { useGetInfiniteLocations, useUpdateLocation } from "@/hooks/api/useLocations";
+import { LoadMoreSentinel } from "@/components/cms/load-more-sentinel";
+import {
+    useDeleteLocation,
+    useGetInfiniteLocations,
+    useUpdateLocation,
+} from "@/hooks/api/useLocations";
 import { useGetHalls, useUpdateHall } from "@/hooks/api/useHalls";
 import { useGetSpaces } from "@/hooks/api/useSpaces";
 import type { Location, LocationRow } from "@/types/models/location.types";
@@ -20,19 +36,22 @@ import type { Hall } from "@/types/models/hall.types";
 
 export function LocationsTable() {
     const t = useTranslations("Cms.Locations");
+    const tCommon = useTranslations("Cms.common");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
-    const loadMoreRef = useRef<HTMLDivElement>(null);
+    const searchParams = useSearchParams();
+    const q = searchParams.get("q") ?? undefined;
 
     const {
         data: infiniteData,
         fetchNextPage,
         hasNextPage,
-        isFetchingNextPage,
-    } = useGetInfiniteLocations();
+    } = useGetInfiniteLocations({ limit: 50, ...(q ? { q } : {}) });
 
-    const { data: hallsResult, isLoading: hallsLoading } = useGetHalls();
-    const { data: spacesResult } = useGetSpaces();
+    const { data: hallsResult, isLoading: hallsLoading } = useGetHalls({
+        pagination: { limit: 1000 },
+    });
+    const { data: spacesResult } = useGetSpaces({ pagination: { limit: 1000 } });
 
     const locations = useMemo(
         () => infiniteData?.pages.flatMap((page) => page.data) ?? [],
@@ -43,30 +62,22 @@ export function LocationsTable() {
     const allSpaces = useMemo(() => spacesResult?.data ?? [], [spacesResult]);
     const updateLocation = useUpdateLocation();
     const updateHall = useUpdateHall();
+    const deleteLocation = useDeleteLocation();
 
-    const loadMore = useCallback(() => {
-        if (hasNextPage && !isFetchingNextPage) {
-            fetchNextPage();
-        }
-    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting) loadMore();
-            },
-            { threshold: 0.1, rootMargin: "100px" }
-        );
-        const currentRef = loadMoreRef.current;
-        if (currentRef) observer.observe(currentRef);
-        return () => {
-            if (currentRef) observer.unobserve(currentRef);
-        };
-    }, [loadMore]);
-
-    const [editLocation, setEditLocation] = useState<LocationRow | null>(null);
+    const [editLocationId, setEditLocationId] = useState<string | null>(null);
     const [editHall, setEditHall] = useState<Hall | null>(null);
     const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
+    const [expanded, setExpanded] = useState<ExpandedState>({});
+    const [spotlight, setSpotlight] = useState<{ src: string; alt: string } | null>(null);
+    const openSpotlight = useCallback((src: string, alt: string) => setSpotlight({ src, alt }), []);
+
+    // Derive the current LocationRow from live query data so cover image url stays fresh
+    // after linkMedia / clearCover mutations without closing and re-opening the sheet.
+    const editLocation: LocationRow | null = useMemo(() => {
+        if (!editLocationId) return null;
+        const found = locations.find((l) => l.id === editLocationId);
+        return found ? toLocationRow(found) : null;
+    }, [editLocationId, locations]);
 
     const hallsByLocation = useMemo(() => {
         const spaceToLocation = new Map<string, string>();
@@ -89,7 +100,7 @@ export function LocationsTable() {
     const {
         parentSelection,
         setParentSelection,
-        childSelection,
+        childSelectionRef,
         getChildHandler,
         selectColumn,
         selectedParentCount: selectedLocationCount,
@@ -97,9 +108,34 @@ export function LocationsTable() {
         clearSelection,
     } = useParentChildSelection<Location>(hallsByLocation);
 
+    const spotlightItems: SpotlightItem[] = spotlight
+        ? [{ kind: "plain", src: spotlight.src, alt: spotlight.alt }]
+        : [];
+
+    const handleDeleteLocation = useCallback(
+        (location: Location) => {
+            const title = location.name || location.slug || location.id;
+            const ok = window.confirm(t("deleteConfirm", { title }));
+            if (!ok) return;
+            deleteLocation.mutate(location.id, {
+                onSuccess: () => toast.success(t("deleteSuccess")),
+                onError: () => toast.error(t("deleteError")),
+            });
+        },
+        [deleteLocation, t]
+    );
+
     const locationCols = useMemo(
-        () => [selectColumn, ...makeLocationColumns({ onEdit: setEditLocation, t: tActions })],
-        [selectColumn, tActions]
+        () => [
+            selectColumn,
+            ...makeLocationColumns({
+                onEdit: (row) => setEditLocationId(row.id),
+                onDelete: handleDeleteLocation,
+                t: tActions,
+                onOpenSpotlight: openSpotlight,
+            }),
+        ],
+        [selectColumn, tActions, handleDeleteLocation, openSpotlight]
     );
 
     const hallCols = useMemo(
@@ -121,6 +157,31 @@ export function LocationsTable() {
         () => locations.filter((location) => parentSelection[location.id]),
         [locations, parentSelection]
     );
+
+    const handleBulkDelete = useCallback(() => {
+        const ok = window.confirm(t("deleteConfirmMultiple", { count: selectedLocationCount }));
+        if (!ok) return;
+        let success = 0;
+        let failed = 0;
+        selectedLocations.forEach((location) => {
+            deleteLocation.mutate(location.id, {
+                onSuccess: () => {
+                    success++;
+                    if (success + failed === selectedLocations.length) {
+                        toast.success(t("deleteSuccess"));
+                        clearSelection();
+                    }
+                },
+                onError: () => {
+                    failed++;
+                    if (success + failed === selectedLocations.length) {
+                        if (failed > 0) toast.error(t("deleteError"));
+                        clearSelection();
+                    }
+                },
+            });
+        });
+    }, [selectedLocations, selectedLocationCount, deleteLocation, t, clearSelection]);
 
     const collectionPickerItems = useMemo(
         () =>
@@ -147,14 +208,17 @@ export function LocationsTable() {
                 <MemoSubTable
                     items={halls}
                     columns={hallCols}
-                    rowSelection={childSelection.get(locationId)}
+                    rowSelection={childSelectionRef.current.get(locationId)}
                     onRowSelectionChange={getChildHandler(locationId)}
                     getRowId={getHallRowId}
                 />
             );
         },
-        [childSelection, getChildHandler, getHallRowId, hallCols, hallsByLocation, hallsLoading]
+        [childSelectionRef, getChildHandler, getHallRowId, hallCols, hallsByLocation, hallsLoading]
     );
+
+    const hasExpanded = Object.keys(expanded).length > 0;
+    const collapseAll = useCallback(() => setExpanded({}), []);
 
     const actions = useMemo(
         () => [
@@ -166,15 +230,16 @@ export function LocationsTable() {
             },
             {
                 key: "delete",
-                label: "Delete",
+                label: tCommon("delete"),
+                onClick: handleBulkDelete,
             },
         ],
-        [tCollections]
+        [tCollections, tCommon, handleBulkDelete]
     );
 
     return (
         <div className="flex h-full flex-col">
-            <div className="bg-background sticky top-0 z-10">
+            <div className="bg-background sticky top-0 z-10 flex items-center gap-2">
                 <ActionBar
                     entityCounts={[
                         { countKey: "locationsSelected", count: selectedLocationCount },
@@ -182,7 +247,20 @@ export function LocationsTable() {
                     ]}
                     actions={actions}
                     onClear={clearSelection}
+                    search={<SearchInput placeholder={t("search")} />}
+                    className="flex-1"
                 />
+                {hasExpanded && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={collapseAll}
+                        className="text-muted-foreground hover:text-foreground shrink-0 cursor-pointer rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                    >
+                        <ChevronsUp className="mr-1 h-3.5 w-3.5" />
+                        {tCommon("collapseAll")}
+                    </Button>
+                )}
             </div>
             <div className="flex-1 overflow-auto">
                 <DataTable
@@ -193,14 +271,12 @@ export function LocationsTable() {
                     expanderLabels={expanderLabels}
                     rowSelection={parentSelection}
                     onRowSelectionChange={setParentSelection}
+                    expanded={expanded}
+                    onExpandedChange={setExpanded}
                     getRowId={getLocationRowId}
                 />
 
-                {hasNextPage && (
-                    <div ref={loadMoreRef} className="flex justify-center py-4">
-                        <Spinner className="text-muted-foreground h-5 w-5" />
-                    </div>
-                )}
+                <LoadMoreSentinel hasNextPage={hasNextPage ?? false} onLoadMore={fetchNextPage} />
             </div>
             <CollectionPickerDialog
                 open={collectionDialogOpen}
@@ -208,12 +284,13 @@ export function LocationsTable() {
                 items={collectionPickerItems}
             />
             <EditSheet
-                open={!!editLocation}
-                onOpenChange={(open) => !open && setEditLocation(null)}
+                open={!!editLocationId}
+                onOpenChange={(open) => !open && setEditLocationId(null)}
                 entity={editLocation}
                 fields={locationFields}
                 title={t("editLocation")}
                 onSave={(data) => updateLocation.mutateAsync(toLocationUpdateInput(data))}
+                extraContent={(row) => <LocationCoverField location={row} />}
             />
             <EditSheet
                 open={!!editHall}
@@ -222,6 +299,15 @@ export function LocationsTable() {
                 fields={hallFields}
                 title={t("editHall")}
                 onSave={(data) => updateHall.mutateAsync(toHallUpdateInput(data))}
+            />
+            <ImageSpotlight
+                items={spotlightItems}
+                index={0}
+                open={spotlight !== null}
+                onOpenChange={(open) => {
+                    if (!open) setSpotlight(null);
+                }}
+                eyebrow={t("eyebrow")}
             />
         </div>
     );

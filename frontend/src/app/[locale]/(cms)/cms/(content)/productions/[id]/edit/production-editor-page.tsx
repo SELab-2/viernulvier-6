@@ -19,6 +19,10 @@ import { ProductionRow } from "@/types/models/production.types";
 import { ProductionPreviewData } from "@/types/production-preview.types";
 import { toProductionRow, toProductionUpdateInput } from "../../../../tables/productions/columns";
 import { convertProductionRowToProduction } from "@/lib/production-converter";
+import { useGetFacets } from "@/hooks/api/useTaxonomy";
+import type { EntityTagSlim } from "@/types/models/taxonomy.types";
+import { useEntityTagEditor } from "@/hooks/useEntityTagEditor";
+import { TagPickerSection } from "@/components/cms/tag-picker-section";
 
 interface ProductionEditorPageProps {
     id: string;
@@ -112,12 +116,17 @@ function getGeneralFields(t: ReturnType<typeof useTranslations<"Cms.Productions"
 
 export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
     const t = useTranslations("Cms.Productions");
+    const tCommon = useTranslations("Cms.common");
     const locale = useLocale();
     const { setPreview, clearPreviewFor } = usePreviewContext();
 
     const { data: fetchedProduction, isLoading: productionLoading } = useGetProduction(id);
     const { data: eventsResult } = useGetEvents();
     const updateProduction = useUpdateProduction();
+
+    const { tagSlugs, inheritedTagSlugs, setTagEdits, resetTagEdits, replaceEntityTags } =
+        useEntityTagEditor("production", id);
+    const { data: allFacets } = useGetFacets();
 
     const [edits, setEdits] = useState<Partial<ProductionRow>>({});
     const [isPreviewOpen, setIsPreviewOpen] = useState(() => {
@@ -145,6 +154,21 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
         if (!fetchedProduction) return null;
         return toProductionRow(fetchedProduction);
     }, [fetchedProduction]);
+
+    const tagToFacetMap = useMemo(() => {
+        const map = new Map<string, string>();
+        allFacets?.forEach((facet) => facet.tags.forEach((tag) => map.set(tag.slug, facet.slug)));
+        return map;
+    }, [allFacets]);
+
+    const resolvedTagsForPreview = useMemo((): EntityTagSlim[] => {
+        return tagSlugs
+            .map((slug) => {
+                const facet = tagToFacetMap.get(slug);
+                return facet ? { slug, facet } : null;
+            })
+            .filter((t): t is EntityTagSlim => t !== null);
+    }, [tagSlugs, tagToFacetMap]);
 
     // Merge base with edits
     const production = useMemo(() => {
@@ -211,18 +235,26 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
     useEffect(() => {
         if (!production || !isPreviewOpen) return;
 
-        // Create a hash of the current production to check if it changed
-        const productionHash = JSON.stringify(production);
+        // Create a hash of the current production + tags to check if it changed
+        const productionHash = JSON.stringify({ production, tags: resolvedTagsForPreview });
         if (productionHash === lastSyncedProductionRef.current) return;
 
         lastSyncedProductionRef.current = productionHash;
         const productionForPreview = convertProductionRowToProduction(production);
         const previewData: ProductionPreviewData = {
-            production: productionForPreview,
+            production: { ...productionForPreview, tags: resolvedTagsForPreview },
             events: productionEvents,
         };
         setPreview("production", production.id, previewData, locale, previewSessionId);
-    }, [production, productionEvents, isPreviewOpen, setPreview, locale, previewSessionId]);
+    }, [
+        production,
+        productionEvents,
+        isPreviewOpen,
+        setPreview,
+        locale,
+        previewSessionId,
+        resolvedTagsForPreview,
+    ]);
 
     // Clean up preview data when the editor unmounts
     useEffect(() => {
@@ -236,9 +268,17 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
 
         try {
             const updateInput = toProductionUpdateInput(production);
-            await updateProduction.mutateAsync(updateInput);
+            await Promise.all([
+                updateProduction.mutateAsync(updateInput),
+                replaceEntityTags.mutateAsync({
+                    entityType: "production",
+                    entityId: production.id,
+                    tagSlugs,
+                }),
+            ]);
             clearPreviewFor("production", production.id);
             setEdits({});
+            resetTagEdits();
             toast.success(t("saveSuccess"));
         } catch {
             toast.error(t("saveFailed"));
@@ -251,13 +291,21 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
         if (!isPreviewOpen) {
             const productionForPreview = convertProductionRowToProduction(production);
             const previewData: ProductionPreviewData = {
-                production: productionForPreview,
+                production: { ...productionForPreview, tags: resolvedTagsForPreview },
                 events: productionEvents,
             };
             setPreview("production", production.id, previewData, locale, previewSessionId);
         }
         setIsPreviewOpen((prev) => !prev);
-    }, [production, productionEvents, isPreviewOpen, setPreview, locale, previewSessionId]);
+    }, [
+        production,
+        productionEvents,
+        isPreviewOpen,
+        setPreview,
+        locale,
+        previewSessionId,
+        resolvedTagsForPreview,
+    ]);
 
     const handleChange = (key: keyof ProductionRow, value: string | null) => {
         setEdits((prev) => ({ ...prev, [key]: value }));
@@ -273,7 +321,6 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
     }
 
     const isSaving = updateProduction.isPending;
-    const hasChanges = Object.keys(edits).length > 0;
 
     return (
         <div className="flex h-full flex-col overflow-hidden">
@@ -290,12 +337,7 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                     <span className="hidden sm:inline">{t("backToList")}</span>
                 </Link>
                 <div className="flex-1" />
-                <Button
-                    variant={isPreviewOpen ? "secondary" : "outline"}
-                    size="sm"
-                    onClick={togglePreview}
-                    className="gap-2"
-                >
+                <Button variant="outline" size="sm" onClick={togglePreview} className="gap-2">
                     {isPreviewOpen ? (
                         <>
                             <EyeOff className="h-4 w-4" />
@@ -307,13 +349,12 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                             <span className="hidden sm:inline">{t("preview")}</span>
                         </>
                     )}
-                    {!isPreviewOpen && hasChanges && (
-                        <span className="bg-primary h-2 w-2 rounded-full" />
-                    )}
                 </Button>
                 <Button onClick={handleSave} disabled={isSaving} size="sm">
                     <Save className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">{isSaving ? t("saving") : t("save")}</span>
+                    <span className="hidden sm:inline">
+                        {isSaving ? tCommon("saving") : tCommon("save")}
+                    </span>
                 </Button>
             </div>
 
@@ -411,6 +452,13 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                                     })}
                                 </div>
                             </section>
+
+                            <TagPickerSection
+                                entityType="production"
+                                selectedSlugs={tagSlugs}
+                                inheritedSlugs={inheritedTagSlugs}
+                                onChange={(next) => setTagEdits(next)}
+                            />
                         </div>
                     </div>
                 </div>

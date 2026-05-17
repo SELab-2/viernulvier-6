@@ -9,3 +9,9 @@ export type FacetResponse = components["schemas"]["FacetResponse"];
 export type TagResponse = components["schemas"]["TagResponse"];
 export type EntityType = components["schemas"]["EntityType"];
 export type Facet = components["schemas"]["Facet"];
+
+// Tag mutation types
+export type CreateTagRequest = components["schemas"]["CreateTagRequest"];
+export type UpdateTagRequest = components["schemas"]["UpdateTagRequest"];
+export type TagUsageResponse = components["schemas"]["TagUsageResponse"];
+export type CreateTagResponse = SuccessResponse<"create_tag">;

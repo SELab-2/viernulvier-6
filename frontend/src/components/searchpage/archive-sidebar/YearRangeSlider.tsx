@@ -74,12 +74,12 @@ export function YearRangeSlider({
     const overlayActive = merged || isDragging;
 
     const thumbCls =
-        "absolute w-full -top-[6px] h-[14px] appearance-none bg-transparent pointer-events-none " +
+        "absolute w-full -top-[9px] h-[18px] appearance-none bg-transparent pointer-events-none " +
         "[&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none " +
-        "[&::-webkit-slider-thumb]:w-[14px] [&::-webkit-slider-thumb]:h-[14px] " +
+        "[&::-webkit-slider-thumb]:w-[18px] [&::-webkit-slider-thumb]:h-[18px] " +
         "[&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-2 " +
         "[&::-webkit-slider-thumb]:border-background [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:[border-radius:0px] " +
-        "[&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-[13px] [&::-moz-range-thumb]:h-[13px] " +
+        "[&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-[17px] [&::-moz-range-thumb]:h-[17px] " +
         "[&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-2 " +
         "[&::-moz-range-thumb]:border-background [&::-moz-range-thumb]:cursor-pointer " +
         "[&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:[border-radius:0px] [&::-moz-range-thumb]:[box-sizing:border-box]";
@@ -89,10 +89,7 @@ export function YearRangeSlider({
             <div className="bg-border relative h-0.5">
                 <div
                     className="bg-foreground absolute h-full"
-                    style={{
-                        left: `${frac(value[0])}%`,
-                        right: `${100 - frac(value[1])}%`,
-                    }}
+                    style={{ left: `${frac(value[0])}%`, right: `${100 - frac(value[1])}%` }}
                 />
             </div>
             <input
@@ -120,7 +117,7 @@ export function YearRangeSlider({
                 className={thumbCls}
             />
             <div
-                className={`absolute inset-x-0 -top-[6px] h-[14px] cursor-pointer ${overlayActive ? "" : "pointer-events-none"}`}
+                className={`absolute inset-x-0 -top-[9px] h-[18px] cursor-pointer ${overlayActive ? "" : "pointer-events-none"}`}
                 onPointerDown={onOverlayPointerDown}
                 onPointerMove={onOverlayPointerMove}
                 onPointerUp={onOverlayPointerUp}

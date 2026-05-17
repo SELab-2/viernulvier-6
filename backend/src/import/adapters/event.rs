@@ -103,6 +103,8 @@ async fn fuzzy_match_productions(
                     formats: None,
                     themes: None,
                     audiences: None,
+                    languages: None,
+                    accessibilities: None,
                 },
                 locations: None,
                 date_from: None,
@@ -321,6 +323,7 @@ impl ImportableEntity for EventImport {
         db: &Database,
     ) -> anyhow::Result<BTreeMap<String, DiffEntry>> {
         let current = db.events().by_id(entity_id).await?;
+        let current_hall_ids = db.events().hall_ids_for(entity_id).await?;
         let mut diff = BTreeMap::new();
 
         // Helper: emit DiffEntry only when incoming is present and differs from current.
@@ -389,9 +392,19 @@ impl ImportableEntity for EventImport {
         );
 
         // hall_id — optional.
+        let current_hall = match current_hall_ids.as_slice() {
+            [] => None,
+            [hall_id] => Some(Value::String(hall_id.to_string())),
+            hall_ids => Some(Value::Array(
+                hall_ids
+                    .iter()
+                    .map(|hall_id| Value::String(hall_id.to_string()))
+                    .collect(),
+            )),
+        };
         maybe_diff(
             "hall_id",
-            current.hall_id.map(|u| Value::String(u.to_string())),
+            current_hall,
             row.get("hall_id").and_then(|v| {
                 if let Value::String(s) = v {
                     Uuid::parse_str(s)
@@ -457,9 +470,11 @@ impl ImportableEntity for EventImport {
                     max_tickets_per_order: None,
                     production_id,
                     status: "scheduled".into(),
-                    hall_id,
                 };
                 let event = db.events().insert(event_create).await?;
+                if let Some(hall_id) = hall_id {
+                    db.events().sync_halls(event.id, vec![hall_id]).await?;
+                }
                 Ok(event.id)
             }
             Some(id) => {
@@ -469,11 +484,13 @@ impl ImportableEntity for EventImport {
                     starts_at,
                     ends_at,
                     production_id,
-                    hall_id,
                     updated_at: chrono::Utc::now(),
                     ..existing
                 };
                 let event = db.events().update(updated).await?;
+                db.events()
+                    .sync_halls(event.id, hall_id.into_iter().collect())
+                    .await?;
                 Ok(event.id)
             }
         }

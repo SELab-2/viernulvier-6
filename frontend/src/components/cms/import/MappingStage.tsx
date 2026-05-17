@@ -114,7 +114,7 @@ function MappingStageInner({ session, fields, previewRows, savedMapping }: Mappi
     const dryRunDisabled = isSaving || isStartingDryRun || isDirty || missingRequired.length > 0;
 
     return (
-        <div className="mx-auto max-w-3xl space-y-6 pt-4">
+        <div className="mx-auto max-w-4xl space-y-5 pt-2">
             <div>
                 <h2 className="font-display text-foreground text-lg font-bold tracking-tight">
                     {t("mapping.title")}
@@ -127,7 +127,7 @@ function MappingStageInner({ session, fields, previewRows, savedMapping }: Mappi
             {missingRequired.length > 0 && (
                 <div
                     role="alert"
-                    className="animate-in fade-in slide-in-from-top-1 border-destructive/40 bg-destructive/10 text-destructive rounded-md border px-4 py-3 text-sm duration-200"
+                    className="animate-in fade-in slide-in-from-top-1 border-destructive/40 bg-destructive/10 text-destructive border px-4 py-3 text-sm duration-200"
                 >
                     <p className="font-medium">{t("mapping.requiredMissing")}</p>
                     <ul className="mt-1.5 list-disc space-y-0.5 pl-4">
@@ -150,7 +150,7 @@ function MappingStageInner({ session, fields, previewRows, savedMapping }: Mappi
                 </p>
             )}
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto border">
                 <table className="w-full min-w-[500px] text-sm">
                     <thead>
                         <tr className="border-foreground/10 border-b text-left">
@@ -177,12 +177,21 @@ function MappingStageInner({ session, fields, previewRows, savedMapping }: Mappi
                 </table>
             </div>
 
-            <div className="flex items-center gap-3 pt-2">
-                <Button onClick={handleSave} disabled={isSaving} variant="outline">
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+                <Button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    variant="outline"
+                    className="rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                >
                     {isSaving ? t("mapping.saving") : t("mapping.save")}
                 </Button>
 
-                <Button onClick={handleStartDryRun} disabled={dryRunDisabled}>
+                <Button
+                    onClick={handleStartDryRun}
+                    disabled={dryRunDisabled}
+                    className="rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                >
                     {isStartingDryRun ? t("mapping.startingDryRun") : t("mapping.startDryRun")}
                 </Button>
 
@@ -225,7 +234,7 @@ export function MappingStage({ sessionId }: MappingStageProps) {
 
     if (sessionLoading || fieldsLoading) {
         return (
-            <div className="mx-auto max-w-3xl space-y-6 pt-4">
+            <div className="mx-auto max-w-4xl space-y-6 pt-4">
                 <Skeleton className="h-5 w-48" />
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-10 w-full" />

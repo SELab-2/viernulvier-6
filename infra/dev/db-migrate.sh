@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Run database migrations
 set -a
 source "$(dirname "$0")/.env"

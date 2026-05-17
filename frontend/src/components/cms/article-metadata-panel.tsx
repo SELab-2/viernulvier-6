@@ -25,13 +25,23 @@ import { Article, ArticleStatus } from "@/types/models/article.types";
 import { statusStyles } from "@/components/cms/status-badge";
 import { cn } from "@/lib/utils";
 import { MediaPickerDialog } from "./media-picker-dialog";
+import { TagPickerSection } from "@/components/cms/tag-picker-section";
 
 interface ArticleMetadataPanelProps {
     article: Article;
     onArticleChange: (patch: Partial<Article>) => void;
+    tagSlugs: string[];
+    inheritedTagSlugs: string[];
+    onTagsChange: (slugs: string[]) => void;
 }
 
-export function ArticleMetadataPanel({ article, onArticleChange }: ArticleMetadataPanelProps) {
+export function ArticleMetadataPanel({
+    article,
+    onArticleChange,
+    tagSlugs,
+    inheritedTagSlugs,
+    onTagsChange,
+}: ArticleMetadataPanelProps) {
     const t = useTranslations("Cms.Articles");
 
     const [pickerOpen, setPickerOpen] = useState(false);
@@ -129,8 +139,8 @@ export function ArticleMetadataPanel({ article, onArticleChange }: ArticleMetada
                     <Input
                         id="slug"
                         value={article.slug}
-                        onChange={(e) => onArticleChange({ slug: e.target.value })}
-                        className="h-8 font-mono text-xs"
+                        readOnly
+                        className="text-muted-foreground h-8 cursor-default font-mono text-xs"
                     />
                 </div>
 
@@ -257,6 +267,16 @@ export function ArticleMetadataPanel({ article, onArticleChange }: ArticleMetada
                         </div>
                     )}
                 </div>
+            </div>
+
+            <div className="space-y-1 px-4 pb-4">
+                <TagPickerSection
+                    entityType="article"
+                    selectedSlugs={tagSlugs}
+                    inheritedSlugs={inheritedTagSlugs}
+                    onChange={onTagsChange}
+                    compact
+                />
             </div>
 
             {pickerOpen && (

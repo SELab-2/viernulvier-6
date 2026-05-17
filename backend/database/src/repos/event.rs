@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use ormlite::{Insert, Model};
 use sqlx::PgPool;
@@ -66,8 +68,26 @@ impl<'a> EventRepo<'a> {
         Ok(event.insert(self.db).await?)
     }
 
-    pub async fn update(&self, event: Event) -> Result<Event, DatabaseError> {
-        Ok(event.update_all_fields(self.db).await?)
+    pub async fn link_halls(&self, event_id: Uuid, hall_ids: &[Uuid]) -> Result<(), DatabaseError> {
+        for hall_id in hall_ids {
+            sqlx::query(
+                "INSERT INTO event_halls (event_id, hall_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+            )
+            .bind(event_id)
+            .bind(hall_id)
+            .execute(self.db)
+            .await?;
+        }
+        Ok(())
+    }
+
+    pub async fn hall_ids_for_event(&self, event_id: Uuid) -> Result<Vec<Uuid>, DatabaseError> {
+        Ok(
+            sqlx::query_scalar::<_, Uuid>("SELECT hall_id FROM event_halls WHERE event_id = $1")
+                .bind(event_id)
+                .fetch_all(self.db)
+                .await?,
+        )
     }
 
     pub async fn by_source_id(&self, source_id: i32) -> Result<Option<Event>, DatabaseError> {
@@ -76,6 +96,38 @@ impl<'a> EventRepo<'a> {
             .bind(source_id)
             .fetch_optional(self.db)
             .await?)
+    }
+
+    pub async fn upsert_by_source_id(&self, event: EventCreate) -> Result<Event, DatabaseError> {
+        let Some(source_id) = event.source_id else {
+            return self.insert(event).await;
+        };
+
+        match self.by_source_id(source_id).await? {
+            Some(existing) => Ok(Event {
+                id: existing.id,
+                source_id: event.source_id,
+                created_at: event.created_at,
+                updated_at: event.updated_at,
+                starts_at: event.starts_at,
+                ends_at: event.ends_at,
+                intermission_at: event.intermission_at,
+                doors_at: event.doors_at,
+                vendor_id: event.vendor_id,
+                box_office_id: event.box_office_id,
+                uitdatabank_id: event.uitdatabank_id,
+                max_tickets_per_order: event.max_tickets_per_order,
+                production_id: event.production_id,
+                status: event.status,
+            }
+            .update_all_fields(self.db)
+            .await?),
+            None => self.insert(event).await,
+        }
+    }
+
+    pub async fn update(&self, event: Event) -> Result<Event, DatabaseError> {
+        Ok(event.update_all_fields(self.db).await?)
     }
 
     pub async fn delete(&self, id: Uuid) -> Result<(), DatabaseError> {
@@ -97,5 +149,62 @@ impl<'a> EventRepo<'a> {
             .bind(production_id)
             .fetch_all(self.db)
             .await?)
+    }
+
+    pub async fn hall_ids_for(&self, event_id: Uuid) -> Result<Vec<Uuid>, DatabaseError> {
+        Ok(
+            sqlx::query_scalar::<_, Uuid>("SELECT hall_id FROM event_halls WHERE event_id = $1")
+                .bind(event_id)
+                .fetch_all(self.db)
+                .await?,
+        )
+    }
+
+    pub async fn hall_ids_for_many(
+        &self,
+        event_ids: &[Uuid],
+    ) -> Result<HashMap<Uuid, Vec<Uuid>>, DatabaseError> {
+        let rows = sqlx::query_as::<_, (Uuid, Uuid)>(
+            "SELECT event_id, hall_id FROM event_halls WHERE event_id = ANY($1)",
+        )
+        .bind(event_ids)
+        .fetch_all(self.db)
+        .await?;
+
+        let mut map: HashMap<Uuid, Vec<Uuid>> = HashMap::new();
+        for (event_id, hall_id) in rows {
+            map.entry(event_id).or_default().push(hall_id);
+        }
+
+        Ok(map)
+    }
+
+    pub async fn sync_halls(
+        &self,
+        event_id: Uuid,
+        hall_ids: Vec<Uuid>,
+    ) -> Result<(), DatabaseError> {
+        sqlx::query("DELETE FROM event_halls WHERE event_id = $1")
+            .bind(event_id)
+            .execute(self.db)
+            .await?;
+
+        if hall_ids.is_empty() {
+            return Ok(());
+        }
+
+        let event_ids_repeated: Vec<Uuid> = vec![event_id; hall_ids.len()];
+
+        sqlx::query(
+            "INSERT INTO event_halls (event_id, hall_id)
+             SELECT * FROM UNNEST($1::uuid[], $2::uuid[])
+             ON CONFLICT DO NOTHING",
+        )
+        .bind(&event_ids_repeated[..])
+        .bind(&hall_ids[..])
+        .execute(self.db)
+        .await?;
+
+        Ok(())
     }
 }

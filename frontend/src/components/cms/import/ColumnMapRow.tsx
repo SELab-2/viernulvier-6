@@ -43,8 +43,8 @@ export function ColumnMapRow({
     }
 
     return (
-        <tr>
-            <td className="w-1/2 py-2 pr-4 align-top">
+        <tr className="border-border border-b last:border-b-0">
+            <td className="w-1/2 px-3 py-3 align-top">
                 <p
                     className={cn(
                         "text-sm font-medium",
@@ -60,7 +60,7 @@ export function ColumnMapRow({
                             <span
                                 key={`${i}-${v}`}
                                 title={v}
-                                className="bg-muted text-foreground max-w-[100px] truncate rounded px-1.5 py-0.5 font-mono text-[10px]"
+                                className="bg-muted text-foreground max-w-[120px] truncate px-1.5 py-0.5 font-mono text-[10px]"
                             >
                                 {v}
                             </span>
@@ -68,9 +68,9 @@ export function ColumnMapRow({
                     </div>
                 )}
             </td>
-            <td className="w-1/2 py-2 align-top">
+            <td className="w-1/2 px-3 py-3 align-top">
                 <Select value={selectValue} onValueChange={handleValueChange}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full rounded-none font-mono text-xs">
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

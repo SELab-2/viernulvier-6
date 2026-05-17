@@ -1,4 +1,4 @@
-import { describe, expect, it, afterEach } from "vitest";
+import { describe, expect, it, afterEach, vi } from "vitest";
 import { render, screen, cleanup } from "../../../../test/utils/test-utils";
 import userEvent from "@testing-library/user-event";
 import { ResultsBar } from "@/components/searchpage/results-bar/ResultsBar";
@@ -9,7 +9,7 @@ const messages = {
         sortBy: "Sort by",
         recent: "Most Recent",
         oldest: "Oldest First",
-        az: "A-Z",
+        relevance: "Most Relevant",
     },
     Search: {
         heroPlaceholder: "Search the archive",
@@ -29,62 +29,56 @@ describe("ResultsBar component", () => {
         cleanup();
     });
 
-    it("displays the correct shown and total counts", () => {
-        renderWithIntl(
-            <ResultsBar
-                shownCount={20}
-                totalCount={1000}
-                query=""
-                onQueryChange={() => {}}
-                showSearch={false}
-            />
-        );
-
-        expect(screen.getByText("20")).toBeInTheDocument();
-        expect(screen.getByText(/1.000/)).toBeInTheDocument();
-    });
-
     it("renders sort options based on translations", () => {
         renderWithIntl(
             <ResultsBar
-                shownCount={20}
-                totalCount={100}
                 query=""
                 onQueryChange={() => {}}
+                onSearch={() => {}}
                 showSearch={false}
+                sort="recent"
+                onSortChange={() => {}}
             />
         );
 
         expect(screen.getByText("Sort by")).toBeInTheDocument();
         expect(screen.getByText("Most Recent")).toBeInTheDocument();
         expect(screen.getByText("Oldest First")).toBeInTheDocument();
-        expect(screen.getByText("A-Z")).toBeInTheDocument();
+        expect(screen.getByText("Most Relevant")).toBeInTheDocument();
     });
 
-    it("updates active sort option on click", async () => {
-        const user = userEvent.setup();
+    it("highlights the active sort option from the sort prop", () => {
         renderWithIntl(
             <ResultsBar
-                shownCount={20}
-                totalCount={100}
                 query=""
                 onQueryChange={() => {}}
+                onSearch={() => {}}
                 showSearch={false}
+                sort="oldest"
+                onSortChange={() => {}}
             />
         );
 
-        const recentBtn = screen.getByText("Most Recent");
-        const azBtn = screen.getByText("A-Z");
+        expect(screen.getByText("Oldest First")).toHaveClass("border-foreground");
+        expect(screen.getByText("Most Recent")).not.toHaveClass("border-foreground");
+    });
 
-        // Initial state
-        expect(recentBtn).toHaveClass("border-foreground");
-        expect(azBtn).not.toHaveClass("border-foreground");
+    it("calls onSortChange with the clicked option", async () => {
+        const user = userEvent.setup();
+        const onSortChange = vi.fn();
 
-        // Click A-Z
-        await user.click(azBtn);
+        renderWithIntl(
+            <ResultsBar
+                query=""
+                onQueryChange={() => {}}
+                onSearch={() => {}}
+                showSearch={false}
+                sort="recent"
+                onSortChange={onSortChange}
+            />
+        );
 
-        // Updated state
-        expect(recentBtn).not.toHaveClass("border-foreground");
-        expect(azBtn).toHaveClass("border-foreground");
+        await user.click(screen.getByText("Oldest First"));
+        expect(onSortChange).toHaveBeenCalledWith("oldest");
     });
 });

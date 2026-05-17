@@ -27,7 +27,7 @@ function StatusBadge({ status }: { status: ImportRowStatus }) {
     const t = useTranslations("Cms.Import");
     return (
         <span
-            className={`inline-flex items-center rounded-md border border-transparent px-2 py-0.5 text-xs font-medium ${statusBadgeClasses[status]}`}
+            className={`inline-flex items-center border border-transparent px-2 py-0.5 text-xs font-medium ${statusBadgeClasses[status]}`}
         >
             {t(statusLabelKey[status])}
         </span>
@@ -40,15 +40,25 @@ export function DryRunTable({ rows, mapping, onSelectRow }: DryRunTableProps) {
     const t = useTranslations("Cms.Import");
 
     return (
-        <div className="rounded-md border">
+        <div className="border">
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="w-12">{t("table.rowNumber")}</TableHead>
-                        <TableHead className="w-36">{t("table.status")}</TableHead>
-                        <TableHead>{t("table.label")}</TableHead>
-                        <TableHead className="w-24">{t("table.warnings")}</TableHead>
-                        <TableHead className="w-20">{t("table.action")}</TableHead>
+                        <TableHead className="w-12 font-mono text-[10px] tracking-[1.5px] uppercase">
+                            {t("table.rowNumber")}
+                        </TableHead>
+                        <TableHead className="w-36 font-mono text-[10px] tracking-[1.5px] uppercase">
+                            {t("table.status")}
+                        </TableHead>
+                        <TableHead className="font-mono text-[10px] tracking-[1.5px] uppercase">
+                            {t("table.label")}
+                        </TableHead>
+                        <TableHead className="w-24 font-mono text-[10px] tracking-[1.5px] uppercase">
+                            {t("table.warnings")}
+                        </TableHead>
+                        <TableHead className="w-20 font-mono text-[10px] tracking-[1.5px] uppercase">
+                            {t("table.action")}
+                        </TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -104,6 +114,7 @@ export function DryRunTable({ rows, mapping, onSelectRow }: DryRunTableProps) {
                                 <Button
                                     variant="ghost"
                                     size="sm"
+                                    className="rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         onSelectRow(row);

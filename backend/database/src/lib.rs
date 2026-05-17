@@ -6,9 +6,9 @@ use crate::{
     repos::{
         article::ArticleRepo, artist::ArtistRepo, collection::CollectionRepo, event::EventRepo,
         event_price::EventPriceRepo, hall::HallRepo, import::ImportRepo,
-        internal_state::InternalStateRepo, location::LocationRepo, media::MediaRepo,
-        media_variant::MediaVariantRepo, normalization_log::NormalizationLogRepo, price::PriceRepo,
-        price_rank::PriceRankRepo, production::ProductionRepo, series::SeriesRepo,
+        import_error::ImportErrorRepo, internal_state::InternalStateRepo, location::LocationRepo,
+        media::MediaRepo, media_variant::MediaVariantRepo, normalization_log::NormalizationLogRepo,
+        price::PriceRepo, price_rank::PriceRankRepo, production::ProductionRepo,
         sessions::SessionRepo, space::SpaceRepo, tag::TagRepo, user::UserRepo,
     },
 };
@@ -19,12 +19,14 @@ pub mod models {
     pub mod collection;
     pub mod collection_item;
     pub mod entity_media;
+    pub mod entity_media_link;
     pub mod entity_type;
     pub mod event;
     pub mod event_price;
     pub mod facet;
     pub mod filtering;
     pub mod hall;
+    pub mod import_error;
     pub mod import_row;
     pub mod import_session;
     pub mod internal_state;
@@ -35,7 +37,6 @@ pub mod models {
     pub mod price;
     pub mod price_rank;
     pub mod production;
-    pub mod series;
     pub mod session;
     pub mod space;
     pub mod tag;
@@ -51,6 +52,7 @@ pub mod repos {
     pub mod event_price;
     pub mod hall;
     pub mod import;
+    pub mod import_error;
     pub mod internal_state;
     pub mod location;
     pub mod media;
@@ -59,7 +61,6 @@ pub mod repos {
     pub mod price;
     pub mod price_rank;
     pub mod production;
-    pub mod series;
     pub mod sessions;
     pub mod space;
     pub mod tag;
@@ -144,10 +145,6 @@ impl Database {
         CollectionRepo::new(&self.db)
     }
 
-    pub fn series<'a>(&'a self) -> SeriesRepo<'a> {
-        SeriesRepo::new(&self.db)
-    }
-
     pub fn media<'a>(&'a self) -> MediaRepo<'a> {
         MediaRepo::new(&self.db)
     }
@@ -174,6 +171,14 @@ impl Database {
 
     pub fn imports<'a>(&'a self) -> ImportRepo<'a> {
         ImportRepo::new(&self.db)
+    }
+
+    pub fn pool(&self) -> &PgPool {
+        &self.db
+    }
+
+    pub fn import_errors<'a>(&'a self) -> ImportErrorRepo<'a> {
+        ImportErrorRepo::new(&self.db)
     }
 
     /// Begin a database transaction.  The caller is responsible for calling

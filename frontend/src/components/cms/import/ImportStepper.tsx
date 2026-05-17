@@ -39,7 +39,7 @@ export function ImportStepper({ currentStage }: ImportStepperProps) {
     const t = useTranslations("Cms.Import");
 
     return (
-        <nav aria-label={t("stepper.progressLabel")} className="mb-6">
+        <nav aria-label={t("stepper.progressLabel")} className="mb-5 border-y py-3">
             <ol className="flex items-center gap-0">
                 {STAGE_LABEL_KEYS.map(({ stage, labelKey }, index) => {
                     const state = getStepState(stage, currentStage);
@@ -47,10 +47,10 @@ export function ImportStepper({ currentStage }: ImportStepperProps) {
 
                     return (
                         <li key={stage} className="flex flex-1 items-center last:flex-none">
-                            <div className="flex flex-col items-center gap-1.5">
+                            <div className="flex flex-col items-center gap-1">
                                 <div
                                     className={[
-                                        "flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-semibold transition-colors",
+                                        "flex h-7 w-7 items-center justify-center border text-xs font-semibold transition-colors",
                                         state === "completed"
                                             ? "border-foreground bg-foreground text-background"
                                             : state === "active"
@@ -90,7 +90,7 @@ export function ImportStepper({ currentStage }: ImportStepperProps) {
                             {!isLast && (
                                 <div
                                     className={[
-                                        "mx-2 mb-5 h-px flex-1",
+                                        "mx-2 mb-4 h-px flex-1",
                                         state === "completed"
                                             ? "bg-foreground"
                                             : "bg-foreground/15",

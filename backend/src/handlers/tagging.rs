@@ -8,11 +8,12 @@ use crate::{
     handlers::JsonResponse,
 };
 
-const TAGGABLE: [EntityType; 4] = [
+const TAGGABLE: [EntityType; 5] = [
     EntityType::Production,
     EntityType::Artist,
     EntityType::Article,
     EntityType::Media,
+    EntityType::Collection,
 ];
 
 fn require_taggable(et: EntityType) -> Result<(), AppError> {

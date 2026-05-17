@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ColumnDef, OnChangeFn, RowSelectionState } from "@tanstack/react-table";
-import { Checkbox } from "@/components/ui/checkbox";
+import type { MutableRefObject } from "react";
+import type { ColumnDef, OnChangeFn, Row, RowSelectionState } from "@tanstack/react-table";
+
 import type { Dispatch, SetStateAction } from "react";
 
 export function useParentChildSelection<TParent extends { id: string }>(
@@ -9,6 +10,7 @@ export function useParentChildSelection<TParent extends { id: string }>(
     parentSelection: RowSelectionState;
     setParentSelection: Dispatch<SetStateAction<RowSelectionState>>;
     childSelection: Map<string, RowSelectionState>;
+    childSelectionRef: MutableRefObject<Map<string, RowSelectionState>>;
     getChildHandler: (parentId: string) => OnChangeFn<RowSelectionState>;
     selectColumn: ColumnDef<TParent>;
     selectedParentCount: number;
@@ -29,7 +31,9 @@ export function useParentChildSelection<TParent extends { id: string }>(
     }, [childrenByParentId]);
 
     // Stable per-parent child selection handlers. Created once per parentId and cached
-    // in a ref.
+    // in a ref. We also eagerly update the childSelectionRef so the selectColumn cell
+    // renderer sees the latest childSelection during the same render cycle (useEffect
+    // runs after render, which is too late for the indeterminate check).
     const childHandlersRef = useRef<Map<string, OnChangeFn<RowSelectionState>>>(new Map());
     const getChildHandler = useCallback((parentId: string): OnChangeFn<RowSelectionState> => {
         let handler = childHandlersRef.current.get(parentId);
@@ -38,7 +42,9 @@ export function useParentChildSelection<TParent extends { id: string }>(
                 setChildSelection((prev) => {
                     const current = prev.get(parentId) ?? {};
                     const next = typeof updater === "function" ? updater(current) : updater;
-                    return new Map(prev).set(parentId, next);
+                    const newMap = new Map(prev).set(parentId, next);
+                    childSelectionRef.current = newMap;
+                    return newMap;
                 });
             };
             childHandlersRef.current.set(parentId, handler);
@@ -52,32 +58,58 @@ export function useParentChildSelection<TParent extends { id: string }>(
         getChildHandlerRef.current = getChildHandler;
     }, [getChildHandler]);
 
-    // Stable select column - never recreate the column definition
+    // Stable select column - never recreate the column definition.
+    // We deliberately keep the deps empty so TanStack Table does not re-initialise the table.
+
     const selectColumn = useMemo<ColumnDef<TParent>>(
         () => ({
             id: "select",
             header: () => null,
-            cell: ({ row }) => {
+            cell: ({ row, _sel }: { row: Row<TParent>; _sel?: boolean }) => {
                 const parentId = row.original.id;
                 // Read from refs to get latest state without re-rendering
                 const childSel = childSelectionRef.current.get(parentId) ?? {};
                 const selectedChildCount = Object.values(childSel).filter(Boolean).length;
-                const isChecked = row.getIsSelected();
+                const isChecked = _sel ?? row.getIsSelected();
                 const isIndeterminate = !isChecked && selectedChildCount > 0;
-                const children = childrenByParentIdRef.current.get(parentId) ?? [];
-                const handleChildSelect = getChildHandlerRef.current;
+                const isActive = isChecked || isIndeterminate;
 
                 return (
-                    <Checkbox
-                        checked={isChecked ? true : isIndeterminate ? "indeterminate" : false}
-                        onCheckedChange={(value) => {
-                            row.toggleSelected(!!value);
-                            handleChildSelect(parentId)(
-                                value ? Object.fromEntries(children.map((c) => [c.id, true])) : {}
-                            );
+                    <div
+                        className={`flex size-4 items-center justify-center border ${
+                            isActive
+                                ? "border-foreground bg-foreground text-background"
+                                : "border-foreground/30"
+                        }`}
+                        aria-hidden="true"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            const nextChecked = !row.getIsSelected();
+                            row.toggleSelected(nextChecked);
+                            const children = childrenByParentIdRef.current.get(parentId) ?? [];
+                            const handleChildSelect = getChildHandlerRef.current;
+                            const nextChildSel = nextChecked
+                                ? Object.fromEntries(children.map((c) => [c.id, true]))
+                                : {};
+                            handleChildSelect(parentId)(nextChildSel);
                         }}
-                        aria-label="Select row"
-                    />
+                    >
+                        {isActive && (
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                        )}
+                    </div>
                 );
             },
             enableSorting: false,
@@ -101,6 +133,7 @@ export function useParentChildSelection<TParent extends { id: string }>(
         parentSelection,
         setParentSelection,
         childSelection,
+        childSelectionRef,
         getChildHandler,
         selectColumn,
         selectedParentCount,

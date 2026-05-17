@@ -46,10 +46,13 @@ const mapItem = (item: CollectionResponse["items"][number]): CollectionItem => (
 export const mapCollection = (response: CollectionResponse): Collection => ({
     id: response.id,
     slug: response.slug,
+    visibility: response.visibility,
     translations: (response.translations ?? []).map(mapTranslation),
     items: (response.items ?? []).map(mapItem),
     createdAt: response.created_at,
     updatedAt: response.updated_at,
+    coverImageUrl: toNullable(response.cover_image_url),
+    tags: (response.tags ?? []).map((t) => ({ slug: t.slug, facet: t.facet })),
 });
 
 export const mapCollections = (response: CollectionResponse[]): Collection[] =>
@@ -61,12 +64,15 @@ export const toCollectionRow = (collection: Collection): CollectionRow => {
     return {
         id: collection.id,
         slug: collection.slug,
+        visibility: collection.visibility,
         titleNl: nl?.title ?? "",
         titleEn: en?.title ?? "",
         descriptionNl: nl?.description ?? "",
         descriptionEn: en?.description ?? "",
         itemCount: collection.items.length,
         updatedAt: collection.updatedAt,
+        coverImageUrl: collection.coverImageUrl,
+        tags: collection.tags,
     };
 };
 
@@ -83,12 +89,14 @@ const toApiItemTranslation = (t: CollectionItemTranslation) => ({
 
 export const mapCreateInput = (input: CollectionCreateInput): CollectionCreateRequest => ({
     slug: input.slug,
+    visibility: input.visibility,
     translations: input.translations.map(toApiTranslation),
 });
 
 export const mapUpdateInput = (collection: Collection): CollectionUpdateRequest => ({
     id: collection.id,
     slug: collection.slug,
+    visibility: collection.visibility,
     created_at: collection.createdAt,
     updated_at: collection.updatedAt,
     items: collection.items.map((item) => ({

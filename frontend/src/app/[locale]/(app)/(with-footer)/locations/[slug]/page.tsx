@@ -9,8 +9,7 @@ import { toast } from "sonner";
 import { UnifiedHeader } from "@/components/layout/header";
 import { LoadingState } from "@/components/shared/loading-state";
 import { useGetLocationBySlug } from "@/hooks/api/useLocations";
-import { useGetSpaces } from "@/hooks/api/useSpaces";
-import { useGetHalls } from "@/hooks/api/useHalls";
+import { useGetHallsForLocation } from "@/hooks/api/useHalls";
 
 export default function LocationPage() {
     const { slug } = useParams<{ slug: string }>();
@@ -21,18 +20,9 @@ export default function LocationPage() {
     const [headerQuery, setHeaderQuery] = useState("");
 
     const { data: location, isLoading: locationLoading, isError } = useGetLocationBySlug(slug);
-    const { data: spacesResult } = useGetSpaces();
-    const { data: hallsResult } = useGetHalls();
-    const spaces = useMemo(() => spacesResult?.data ?? [], [spacesResult]);
-    const halls = useMemo(() => hallsResult?.data ?? [], [hallsResult]);
-
-    const locationHalls = useMemo(() => {
-        if (!location) return [];
-        const spaceIds = new Set(
-            spaces.filter((s) => s.locationId === location.id).map((s) => s.id)
-        );
-        return halls.filter((h) => h.spaceId && spaceIds.has(h.spaceId));
-    }, [location, spaces, halls]);
+    const { data: locationHalls = [] } = useGetHallsForLocation(location?.id ?? "", {
+        enabled: Boolean(location?.id),
+    });
 
     const translation = useMemo(
         () => location?.translations.find((t) => t.languageCode === locale),

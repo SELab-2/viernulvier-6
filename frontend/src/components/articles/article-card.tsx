@@ -4,28 +4,16 @@ import Image from "next/image";
 import { Link } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 
-import { useGetEntityMedia } from "@/hooks/api";
 import type { ArticleListItem } from "@/types/models/article.types";
+import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
 
 interface ArticleCardProps {
     article: ArticleListItem;
     locale: string;
 }
 
-function formatPeriod(start: string | null, end: string | null, locale: string): string | null {
-    const loc = locale === "en" ? "en-GB" : "nl-BE";
-    const opts: Intl.DateTimeFormatOptions = { month: "short", year: "numeric" };
-
-    if (start && end) {
-        return `${new Date(start).toLocaleDateString(loc, opts)} — ${new Date(end).toLocaleDateString(loc, opts)}`;
-    }
-    if (start) {
-        return new Date(start).toLocaleDateString(loc, opts);
-    }
-    return null;
-}
-
-function formatDate(dateStr: string, locale: string): string {
+function formatDate(dateStr: string | null, locale: string): string | null {
+    if (!dateStr) return null;
     const loc = locale === "en" ? "en-GB" : "nl-BE";
     return new Date(dateStr).toLocaleDateString(loc, {
         day: "numeric",
@@ -34,50 +22,78 @@ function formatDate(dateStr: string, locale: string): string {
     });
 }
 
+function formatPeriodDate(dateStr: string | null, locale: string): string | null {
+    if (!dateStr) return null;
+    const loc = locale === "en" ? "en-GB" : "nl-BE";
+    return new Date(dateStr).toLocaleDateString(loc, {
+        month: "short",
+        year: "numeric",
+    });
+}
+
 export function ArticleCard({ article, locale }: ArticleCardProps) {
     const t = useTranslations("Articles");
-    const period = formatPeriod(article.subjectPeriodStart, article.subjectPeriodEnd, locale);
+    const publishedAt = formatDate(article.publishedAt ?? null, locale);
+    const periodStart = formatPeriodDate(article.subjectPeriodStart ?? null, locale);
+    const periodEnd = formatPeriodDate(article.subjectPeriodEnd ?? null, locale);
 
-    const { data: coverMedia = [] } = useGetEntityMedia("article", article.id, {
-        params: { role: "cover" },
-    });
-    const coverUrl =
-        coverMedia[0]?.crops.find((c) => c.variantKind === "thumbnail")?.url ??
-        coverMedia[0]?.url ??
-        null;
+    const coverUrl = article.coverImageUrl;
 
     return (
-        <Link href={`/articles/${article.slug}`}>
+        <Link href={`/articles/${article.slug}`} className="group block w-full">
             <article
-                className="group border-muted/35 hover:bg-muted/5 flex cursor-pointer flex-col border-b transition-colors"
+                className="border-muted/25 hover:bg-muted/5 grid w-full cursor-pointer grid-cols-[110px_1fr] items-start gap-5 border-b px-1 py-5 transition-colors duration-200 sm:grid-cols-[160px_1fr] sm:gap-8 sm:py-6"
                 style={{ animation: "fadein 0.3s ease both" }}
             >
-                {coverUrl ? (
-                    <div className="relative aspect-[16/9] overflow-hidden">
+                <div className="bg-muted/15 border-muted/30 relative aspect-[4/3] w-full overflow-hidden border">
+                    {coverUrl ? (
                         <Image
                             src={coverUrl}
-                            alt={coverMedia[0]?.altTextNl ?? article.title ?? ""}
+                            alt={article.title ?? ""}
                             fill
-                            className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            className="object-cover"
+                            sizes="(max-width: 640px) 110px, 160px"
                         />
-                    </div>
-                ) : null}
-
-                <div className="flex flex-col p-4 sm:p-5">
-                    {period && (
-                        <span className="text-muted-foreground group-hover:text-foreground mb-2 font-mono text-[9px] tracking-[2px] uppercase transition-colors">
-                            {period}
-                        </span>
+                    ) : (
+                        <>
+                            <div
+                                className="absolute inset-0 opacity-[0.08]"
+                                style={{
+                                    backgroundImage:
+                                        "repeating-linear-gradient(45deg, currentColor 0 1px, transparent 1px 8px)",
+                                }}
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-muted-foreground/50 font-mono text-[9px] tracking-[2px] uppercase">
+                                    N°{article.id.slice(-3)}
+                                </span>
+                            </div>
+                        </>
                     )}
+                </div>
 
-                    <h3 className="font-display text-foreground mb-1 text-[20px] leading-[1.15] font-bold tracking-[-0.02em] sm:text-[24px]">
+                <div className="flex min-w-0 flex-col">
+                    <h3 className="font-display text-foreground mb-2 min-w-0 text-[20px] leading-[1.15] font-bold tracking-[-0.02em] break-words sm:text-[26px]">
                         {article.title ?? t("untitled")}
                     </h3>
 
-                    <span className="text-muted-foreground mt-auto pt-3 font-mono text-[9px] tracking-[1.4px] uppercase">
-                        {formatDate(article.updatedAt, locale)}
-                    </span>
+                    {article.tags.length > 0 && (
+                        <div className="mt-2">
+                            <EntityTagStrip tags={article.tags} locale={locale} cap={4} />
+                        </div>
+                    )}
+
+                    {periodStart && periodEnd && (
+                        <span className="text-muted-foreground mt-1 font-mono text-[11px] tracking-[1px]">
+                            {periodStart} — {periodEnd}
+                        </span>
+                    )}
+
+                    {publishedAt && (
+                        <span className="text-muted-foreground mt-1 font-mono text-[11px] tracking-[1px]">
+                            {publishedAt}
+                        </span>
+                    )}
                 </div>
             </article>
         </Link>

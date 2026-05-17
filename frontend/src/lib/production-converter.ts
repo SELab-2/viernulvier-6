@@ -58,6 +58,8 @@ export function convertProductionRowToProduction(row: ProductionRow): Production
         uitdatabankType: row.uitdatabankType,
         translations: [nlTranslation, enTranslation],
         coverImageUrl: null, // ProductionRow doesn't have this field
+        locations: [],
+        tags: [],
     };
 }
 

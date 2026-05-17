@@ -2,7 +2,7 @@
 
 import { useRef, useState, type DragEvent, type ChangeEvent } from "react";
 import { useTranslations } from "next-intl";
-import { UploadCloud } from "lucide-react";
+import { FileSpreadsheet, UploadCloud } from "lucide-react";
 
 import { useRouter } from "@/i18n/routing";
 import { useCreateImportSession, useEntityTypes } from "@/hooks/api/useImport";
@@ -88,7 +88,7 @@ export function UploadStage() {
         !file || !entityType || isSubmitting || entityTypesError || entityTypesLoading;
 
     return (
-        <div className="mx-auto max-w-lg space-y-6 pt-4">
+        <div className="mx-auto max-w-3xl space-y-5 pt-2">
             <div>
                 <h2 className="font-display text-foreground text-lg font-bold tracking-tight">
                     {t("upload.title")}
@@ -99,87 +99,104 @@ export function UploadStage() {
             </div>
 
             {/* Drop zone */}
-            <div>
-                <p className="mb-2 text-sm font-medium">{t("upload.fileLabel")}</p>
-                <div
-                    role="button"
-                    tabIndex={0}
-                    aria-label={t("upload.fileLabel")}
-                    className={[
-                        "group flex cursor-pointer flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed px-6 py-12 text-center transition-colors",
-                        isDragging
-                            ? "border-foreground bg-accent"
-                            : file
-                              ? "border-green-500/60 bg-green-50/50 dark:bg-green-950/20"
-                              : "border-border hover:border-foreground/40",
-                    ].join(" ")}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    onClick={() => fileInputRef.current?.click()}
-                    onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                            fileInputRef.current?.click();
-                        }
-                    }}
-                >
-                    {file ? (
-                        <>
-                            <UploadCloud
-                                className="h-6 w-6 text-green-600 dark:text-green-400"
-                                strokeWidth={1.5}
-                            />
-                            <span className="text-sm font-medium">{file.name}</span>
-                            <span className="text-muted-foreground text-xs">
-                                {(file.size / 1024).toFixed(0)} KB
-                            </span>
-                        </>
-                    ) : (
-                        <>
-                            <UploadCloud
-                                className="text-muted-foreground h-6 w-6 transition-transform group-hover:scale-110"
-                                strokeWidth={1.5}
-                            />
-                            <span className="text-muted-foreground text-sm">
-                                {t("upload.description")}
-                            </span>
-                        </>
-                    )}
-                </div>
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".csv,text/csv"
-                    className="sr-only"
-                    onChange={handleInputChange}
-                    data-testid="csv-file-input"
-                />
-                <p className="text-muted-foreground mt-2 text-xs">{t("upload.formatHint")}</p>
-            </div>
-
-            {/* Entity type select */}
-            <div>
-                <p className="mb-2 text-sm font-medium">{t("upload.entityTypeLabel")}</p>
-                {entityTypesLoading ? (
-                    <Skeleton className="h-9 w-full" />
-                ) : (
-                    <Select
-                        value={entityType}
-                        onValueChange={setEntityType}
-                        disabled={entityTypesError}
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
+                <div>
+                    <p className="text-muted-foreground mb-2 font-mono text-[10px] font-medium tracking-[1.5px] uppercase">
+                        {t("upload.fileLabel")}
+                    </p>
+                    <div
+                        role="button"
+                        tabIndex={0}
+                        aria-label={t("upload.fileLabel")}
+                        className={[
+                            "group flex min-h-[210px] cursor-pointer flex-col items-center justify-center gap-3 border border-dashed px-6 py-10 text-center transition-colors",
+                            isDragging
+                                ? "border-foreground bg-muted"
+                                : file
+                                  ? "border-foreground bg-muted/50"
+                                  : "border-border hover:border-foreground/40",
+                        ].join(" ")}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        onClick={() => fileInputRef.current?.click()}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                                fileInputRef.current?.click();
+                            }
+                        }}
                     >
-                        <SelectTrigger className="w-full">
-                            <SelectValue placeholder={t("upload.entityTypePlaceholder")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {(entityTypes ?? []).map((type) => (
-                                <SelectItem key={type} value={type}>
-                                    {type}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                )}
+                        {file ? (
+                            <>
+                                <FileSpreadsheet
+                                    className="text-foreground h-6 w-6"
+                                    strokeWidth={1.5}
+                                />
+                                <span className="max-w-full truncate text-sm font-medium">
+                                    {file.name}
+                                </span>
+                                <span className="text-muted-foreground font-mono text-[10px] tracking-wide uppercase">
+                                    {(file.size / 1024).toFixed(0)} KB
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                <UploadCloud
+                                    className="text-muted-foreground h-6 w-6 transition-transform group-hover:scale-110"
+                                    strokeWidth={1.5}
+                                />
+                                <span className="text-muted-foreground max-w-xs text-sm leading-relaxed">
+                                    {t("upload.description")}
+                                </span>
+                            </>
+                        )}
+                    </div>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".csv,text/csv"
+                        className="sr-only"
+                        onChange={handleInputChange}
+                        data-testid="csv-file-input"
+                    />
+                    <p className="text-muted-foreground mt-2 text-xs">{t("upload.formatHint")}</p>
+                </div>
+
+                {/* Entity type select */}
+                <div className="space-y-4">
+                    <div>
+                        <p className="text-muted-foreground mb-2 font-mono text-[10px] font-medium tracking-[1.5px] uppercase">
+                            {t("upload.entityTypeLabel")}
+                        </p>
+                        {entityTypesLoading ? (
+                            <Skeleton className="h-9 w-full" />
+                        ) : (
+                            <Select
+                                value={entityType}
+                                onValueChange={setEntityType}
+                                disabled={entityTypesError}
+                            >
+                                <SelectTrigger className="w-full rounded-none font-mono text-xs">
+                                    <SelectValue placeholder={t("upload.entityTypePlaceholder")} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {(entityTypes ?? []).map((type) => (
+                                        <SelectItem key={type} value={type}>
+                                            {type}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                    </div>
+                    <Button
+                        onClick={handleSubmit}
+                        disabled={submitDisabled}
+                        className="w-full rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                    >
+                        {isSubmitting ? t("upload.submitting") : t("upload.submit")}
+                    </Button>
+                </div>
             </div>
 
             {/* Error panels */}
@@ -201,11 +218,6 @@ export function UploadStage() {
                     <p>{t(uploadErrorKey(mutationError))}</p>
                 </div>
             )}
-
-            {/* Submit */}
-            <Button onClick={handleSubmit} disabled={submitDisabled} className="w-full">
-                {isSubmitting ? t("upload.submitting") : t("upload.submit")}
-            </Button>
         </div>
     );
 }

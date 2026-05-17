@@ -2,12 +2,15 @@
 
 import { useState, useMemo } from "react";
 import Image from "next/image";
+import { ArrowUpRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { Link } from "@/i18n/routing";
 import { getLocalizedField } from "@/lib/locale";
 import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
 import type { Production } from "@/types/models/production.types";
 import type { Media } from "@/types/models/media.types";
+import type { Artist } from "@/types/models/artist.types";
 
 function stripHtmlAndDecode(html: string | null | undefined): string {
     if (!html) return "";
@@ -70,6 +73,21 @@ function parseInfo(info: string | null | undefined) {
     };
 }
 
+function getYouTubeId(url: string): string | null {
+    try {
+        const u = new URL(url);
+        if (u.hostname === "youtu.be") return u.pathname.slice(1).split("?")[0].split("/")[0];
+        if (u.hostname.includes("youtube.com")) {
+            if (u.pathname === "/watch") return u.searchParams.get("v");
+            const embedMatch = u.pathname.match(/^\/embed\/([^/?]+)/);
+            if (embedMatch) return embedMatch[1];
+        }
+    } catch {
+        // ignore invalid URLs
+    }
+    return null;
+}
+
 // Helper to render text with double newlines as paragraphs
 // We use dangerouslySetInnerHTML so that HTML entities like &eacute; or &euro; are naturally decoded by the browser
 function TextBlocks({ text, className }: { text: string; className?: string }) {
@@ -96,10 +114,12 @@ export function ProductionArticle({
     production,
     locale,
     media = [],
+    artists = [],
 }: {
     production: Production;
     locale: string;
     media?: Media[];
+    artists?: Artist[];
 }) {
     const t = useTranslations("ProductionPage");
 
@@ -254,22 +274,36 @@ export function ProductionArticle({
                         <div className="bg-muted/25 h-px flex-1" />
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
-                        {videos.map((v, i) => (
-                            <a
-                                key={i}
-                                href={v}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="group border-border hover:border-foreground flex flex-col border p-4 transition-colors"
-                            >
-                                <span className="text-muted-foreground group-hover:text-foreground mb-2 font-mono text-[10px] uppercase">
-                                    {t("externalVideoLink")}
-                                </span>
-                                <span className="font-body text-foreground truncate text-[13px]">
-                                    {v}
-                                </span>
-                            </a>
-                        ))}
+                        {videos.map((v, i) => {
+                            const ytId = getYouTubeId(v);
+                            return ytId ? (
+                                <div key={i} className="aspect-video w-full overflow-hidden">
+                                    <iframe
+                                        src={`https://www.youtube.com/embed/${ytId}`}
+                                        title={`Video ${i + 1}`}
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen
+                                        loading="lazy"
+                                        className="h-full w-full"
+                                    />
+                                </div>
+                            ) : (
+                                <a
+                                    key={i}
+                                    href={v}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="group border-border hover:border-foreground flex flex-col border p-4 transition-colors"
+                                >
+                                    <span className="text-muted-foreground group-hover:text-foreground mb-2 font-mono text-[10px] uppercase">
+                                        {t("externalVideoLink")}
+                                    </span>
+                                    <span className="font-body text-foreground truncate text-[13px]">
+                                        {v}
+                                    </span>
+                                </a>
+                            );
+                        })}
                     </div>
                 </div>
             )}
@@ -298,12 +332,31 @@ export function ProductionArticle({
                     <div className="text-muted-foreground mb-0.5 font-mono text-[8px] tracking-[1.6px] uppercase">
                         {t("creditArtist")}
                     </div>
-                    <div
-                        className="font-body text-foreground text-[13px] font-medium"
-                        dangerouslySetInnerHTML={{
-                            __html: getLocalizedField(production, "artist", locale) ?? "-",
-                        }}
-                    />
+                    {artists.length > 0 ? (
+                        <div className="flex flex-col gap-0.5">
+                            {artists.map((a) => (
+                                <Link
+                                    key={a.id}
+                                    href={`/artists/${a.id}`}
+                                    className="font-body text-foreground inline-flex items-center gap-1 text-[13px] font-medium transition-opacity hover:opacity-70"
+                                >
+                                    {a.name}
+                                    <ArrowUpRight
+                                        size={11}
+                                        strokeWidth={2}
+                                        className="text-muted-foreground"
+                                    />
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                        <div
+                            className="font-body text-foreground text-[13px] font-medium"
+                            dangerouslySetInnerHTML={{
+                                __html: getLocalizedField(production, "artist", locale) ?? "-",
+                            }}
+                        />
+                    )}
                 </div>
 
                 {parsedCredits.map((credit, idx) => (

@@ -4,7 +4,10 @@ import {
     ArticleRelationsResponse,
     ArticleResponse,
     ArticleUpdateRequest,
+    ArticlesCmsSearchResponse,
+    PaginatedArticleResponse,
 } from "@/types/api/article.api.types";
+import { PaginatedResult } from "@/types/api/api.types";
 import {
     Article,
     ArticleCreateInput,
@@ -31,6 +34,8 @@ export const mapArticle = (response: ArticleResponse): Article => ({
     publishedAt: toNullable(response.published_at),
     subjectPeriodStart: toNullable(response.subject_period_start),
     subjectPeriodEnd: toNullable(response.subject_period_end),
+    coverImageUrl: toNullable(response.cover_image_url),
+    tags: (response.tags ?? []).map((t) => ({ slug: t.slug, facet: t.facet })),
 });
 
 export const mapArticleListItem = (response: ArticleListResponse): ArticleListItem => ({
@@ -42,10 +47,26 @@ export const mapArticleListItem = (response: ArticleListResponse): ArticleListIt
     publishedAt: toNullable(response.published_at),
     subjectPeriodStart: toNullable(response.subject_period_start),
     subjectPeriodEnd: toNullable(response.subject_period_end),
+    coverImageUrl: toNullable(response.cover_image_url),
+    tags: (response.tags ?? []).map((t) => ({ slug: t.slug, facet: t.facet })),
 });
 
 export const mapArticleListItems = (responses: ArticleListResponse[]): ArticleListItem[] =>
     responses.map(mapArticleListItem);
+
+export const mapPaginatedArticlesResult = (
+    response: PaginatedArticleResponse
+): PaginatedResult<ArticleListItem> => ({
+    data: mapArticleListItems(response.data),
+    nextCursor: response.next_cursor ?? null,
+});
+
+export const mapPaginatedArticleListItemsResult = (
+    response: ArticlesCmsSearchResponse
+): PaginatedResult<ArticleListItem> => ({
+    data: mapArticleListItems(response.data),
+    nextCursor: response.next_cursor ?? null,
+});
 
 export const mapArticleRelations = (response: ArticleRelationsResponse): ArticleRelations => ({
     productionIds: response.production_ids,

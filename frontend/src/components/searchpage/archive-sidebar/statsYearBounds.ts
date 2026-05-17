@@ -7,8 +7,10 @@ function currentYear(): number {
 }
 
 /**
- * Inclusive calendar years for the archive filter, from GET /stats event bounds
- * (optional prop overrides for tests).
+ * Inclusive calendar years for the archive filter, derived from the min of
+ * oldest_event/oldest_article and max of newest_event/newest_article in GET /stats.
+ * Props are used as fallback when stats haven't loaded yet or when loaded stats
+ * do not provide any usable min/max year candidates.
  */
 export function yearBoundsFromStats(
     stats: StatsPayload | undefined,
@@ -16,29 +18,36 @@ export function yearBoundsFromStats(
 ): { minYear: number; maxYear: number } {
     const fallbackMax = currentYear();
 
-    let minY =
-        opts?.minYear !== undefined
-            ? opts.minYear
-            : stats?.oldest_event
-              ? new Date(stats.oldest_event).getFullYear()
-              : FALLBACK_MIN_YEAR;
+    let minY: number;
+    let maxY: number;
 
-    let maxY =
-        opts?.maxYear !== undefined
-            ? opts.maxYear
-            : stats?.newest_event
-              ? new Date(stats.newest_event).getFullYear()
-              : fallbackMax;
+    if (stats) {
+        const minCandidates = [
+            stats.oldest_event ? new Date(stats.oldest_event).getFullYear() : null,
+            stats.oldest_article ? new Date(stats.oldest_article).getFullYear() : null,
+        ].filter((y): y is number => Number.isFinite(y));
+
+        const maxCandidates = [
+            stats.newest_event ? new Date(stats.newest_event).getFullYear() : null,
+            stats.newest_article ? new Date(stats.newest_article).getFullYear() : null,
+        ].filter((y): y is number => Number.isFinite(y));
+
+        minY =
+            minCandidates.length > 0
+                ? Math.min(...minCandidates)
+                : (opts?.minYear ?? FALLBACK_MIN_YEAR);
+        maxY =
+            maxCandidates.length > 0 ? Math.max(...maxCandidates) : (opts?.maxYear ?? fallbackMax);
+    } else {
+        minY = opts?.minYear ?? FALLBACK_MIN_YEAR;
+        maxY = opts?.maxYear ?? fallbackMax;
+    }
 
     if (!Number.isFinite(minY)) minY = FALLBACK_MIN_YEAR;
     if (!Number.isFinite(maxY)) maxY = fallbackMax;
 
-    if (minY > maxY) {
-        [minY, maxY] = [maxY, minY];
-    }
-    if (minY === maxY) {
-        maxY = minY + 1;
-    }
+    if (minY > maxY) [minY, maxY] = [maxY, minY];
+    if (minY === maxY) maxY = minY + 1;
 
     return { minYear: minY, maxYear: maxY };
 }

@@ -135,7 +135,7 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
     const canCommit = session.status === "dry_run_ready" && !hasErrors;
 
     return (
-        <div className="mx-auto max-w-4xl space-y-6 pt-4">
+        <div className="mx-auto max-w-5xl space-y-5 pt-2">
             <div>
                 <h2 className="font-display text-foreground text-lg font-bold tracking-tight">
                     {t("stepper.dryRun")}
@@ -166,7 +166,7 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
                             setStatusFilter(key);
                         }}
                         className={[
-                            "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                            "border px-3 py-1 font-mono text-[10px] font-medium tracking-[1.5px] uppercase transition-colors",
                             effectiveFilter === key
                                 ? "bg-foreground text-background border-foreground"
                                 : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground",
@@ -178,7 +178,7 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
             </div>
 
             {filteredRows.length === 0 && effectiveFilter !== "all" ? (
-                <div className="border-border rounded-md border px-6 py-12 text-center">
+                <div className="border-border border px-6 py-12 text-center">
                     <p className="text-muted-foreground text-sm">
                         {effectiveFilter === "error" ? t("filter.noErrors") : t("filter.noResults")}
                     </p>
@@ -193,7 +193,12 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
 
             <div className="flex flex-col gap-3 pt-2">
                 <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="sm" asChild>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        asChild
+                        className="rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                    >
                         <Link href={`/cms/import?session=${sessionId}&stage=mapping`}>
                             {t("actions.backToMapping")}
                         </Link>
@@ -202,12 +207,14 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
                         variant="outline"
                         disabled={!canRerun || startDryRun.isPending}
                         onClick={() => startDryRun.mutate(sessionId)}
+                        className="rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
                     >
                         {t("actions.rerunDryRun")}
                     </Button>
                     <Button
                         disabled={!canCommit || commitImport.isPending}
                         onClick={() => setCommitConfirmOpen(true)}
+                        className="rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
                     >
                         {t("actions.commit")}
                     </Button>
@@ -246,7 +253,11 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setCommitConfirmOpen(false)}>
+                        <Button
+                            variant="outline"
+                            onClick={() => setCommitConfirmOpen(false)}
+                            className="rounded-none"
+                        >
                             {t("dryRun.commitConfirmCancel")}
                         </Button>
                         <Button
@@ -254,6 +265,7 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
                                 setCommitConfirmOpen(false);
                                 commitImport.mutate(sessionId);
                             }}
+                            className="rounded-none"
                         >
                             {t("dryRun.commitConfirmCta")}
                         </Button>

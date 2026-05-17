@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use sqlx::{Postgres, QueryBuilder};
 use tracing::debug;
 use uuid::Uuid;
@@ -10,8 +8,7 @@ use crate::{
         entity_type::EntityType,
         filtering::{cursor::CursorData, sort::Sort},
         production::{
-            Production, ProductionFilters, ProductionTranslation, ProductionWithScore,
-            ProductionWithTranslations,
+            Production, ProductionFilters, ProductionWithScore, ProductionWithTranslations,
         },
     },
     repos::{production::ProductionRepo, query_filters::facets::AddFacetFilters},
@@ -44,20 +41,8 @@ impl<'a> ProductionRepo<'a> {
             return Ok((vec![], None));
         }
 
-        // get all translations
         let ids: Vec<Uuid> = productions.iter().map(|p| p.id).collect();
-        let all_translations = sqlx::query_as::<_, ProductionTranslation>(
-            "SELECT * FROM production_translations WHERE production_id = ANY($1)",
-        )
-        .bind(&ids[..])
-        .fetch_all(self.db)
-        .await?;
-
-        // map translations to it's production
-        let mut translation_map: HashMap<Uuid, Vec<ProductionTranslation>> = HashMap::new();
-        for t in all_translations {
-            translation_map.entry(t.production_id).or_default().push(t);
-        }
+        let mut translation_map = self.fetch_translations_for_many(&ids).await?;
 
         let productions_with_translations = productions
             .into_iter()
@@ -95,7 +80,7 @@ impl<'a> ProductionRepo<'a> {
             .push(" <% full_search_text ") // only keep items that matched a minimum amount
             .apply_facet_filters(EntityType::Production, "pt.production_id", &filters.facets);
 
-        apply_date_filters(&mut query, "pt.production_id", filters);
+        apply_event_filters(&mut query, "pt.production_id", filters);
 
         if let Some(ref cursor) = cursor {
             match filters.sort {
@@ -203,8 +188,8 @@ impl<'a> ProductionRepo<'a> {
         // facet filters
         query.apply_facet_filters(EntityType::Production, "p.id", &filters.facets);
 
-        // date filters
-        apply_date_filters(&mut query, "p.id", filters);
+        // event filters (date + location combined into one EXISTS)
+        apply_event_filters(&mut query, "p.id", filters);
 
         query
             .push(format_args!(" ORDER BY p.id {order_direction} LIMIT "))
@@ -229,24 +214,59 @@ impl<'a> ProductionRepo<'a> {
     }
 }
 
-fn apply_date_filters(
+fn apply_event_filters(
     query: &mut QueryBuilder<Postgres>,
     id_column: &str,
     filters: &ProductionFilters,
 ) {
-    if filters.date_from.is_some() || filters.date_to.is_some() {
-        query
-            .push(" AND EXISTS (SELECT 1 FROM events ")
-            .push(format_args!(" WHERE events.production_id = {id_column} "));
+    let has_date = filters.date_from.is_some() || filters.date_to.is_some();
 
-        if let Some(date_from) = filters.date_from {
-            query.push(" AND events.starts_at >= ").push_bind(date_from);
-        }
+    let location_uuids: Option<Vec<Uuid>> = filters.locations.as_ref().map(|loc_ids| {
+        loc_ids
+            .iter()
+            .filter_map(|s| Uuid::parse_str(s).ok())
+            .collect()
+    });
 
-        if let Some(date_to) = filters.date_to {
-            query.push(" AND events.starts_at <= ").push_bind(date_to);
-        }
-
-        query.push(" ) ");
+    // Location param present but no valid UUIDs — match nothing
+    if matches!(&location_uuids, Some(v) if v.is_empty()) {
+        query.push(" AND FALSE ");
+        return;
     }
+
+    let has_location = location_uuids.is_some();
+
+    if !has_date && !has_location {
+        return;
+    }
+
+    // Single EXISTS so date and location constraints apply to the same event
+    if has_location {
+        query.push(format_args!(
+            " AND EXISTS (SELECT 1 FROM events e \
+             JOIN event_halls eh ON eh.event_id = e.id \
+             JOIN halls h ON h.id = eh.hall_id \
+             JOIN spaces s ON s.id = h.space_id \
+             WHERE e.production_id = {id_column} "
+        ));
+    } else {
+        query
+            .push(" AND EXISTS (SELECT 1 FROM events e ")
+            .push(format_args!(" WHERE e.production_id = {id_column} "));
+    }
+
+    if let Some(date_from) = filters.date_from {
+        query.push(" AND e.starts_at >= ").push_bind(date_from);
+    }
+    if let Some(date_to) = filters.date_to {
+        query.push(" AND e.starts_at <= ").push_bind(date_to);
+    }
+    if let Some(uuids) = location_uuids {
+        query
+            .push(" AND s.location_id = ANY( ")
+            .push_bind(uuids)
+            .push(" )");
+    }
+
+    query.push(" ) ");
 }
