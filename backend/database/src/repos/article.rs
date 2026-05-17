@@ -124,14 +124,47 @@ impl<'a> ArticleRepo<'a> {
         Ok(article.insert(self.db).await?)
     }
 
+    pub async fn insert_on(
+        &self,
+        conn: &mut sqlx::PgConnection,
+        article: ArticleCreate,
+    ) -> Result<Article, DatabaseError> {
+        Ok(article.insert(conn).await?)
+    }
+
     pub async fn update(&self, article: Article) -> Result<Article, DatabaseError> {
         Ok(article.update_all_fields(self.db).await?)
+    }
+
+    pub async fn update_on(
+        &self,
+        conn: &mut sqlx::PgConnection,
+        article: Article,
+    ) -> Result<Article, DatabaseError> {
+        Ok(article.update_all_fields(conn).await?)
     }
 
     pub async fn delete(&self, id: Uuid) -> Result<(), DatabaseError> {
         let res = sqlx::query("DELETE FROM articles WHERE id = $1")
             .bind(id)
             .execute(self.db)
+            .await?;
+
+        if res.rows_affected() == 0 {
+            return Err(DatabaseError::NotFound);
+        }
+
+        Ok(())
+    }
+
+    pub async fn delete_on(
+        &self,
+        conn: &mut sqlx::PgConnection,
+        id: Uuid,
+    ) -> Result<(), DatabaseError> {
+        let res = sqlx::query("DELETE FROM articles WHERE id = $1")
+            .bind(id)
+            .execute(conn)
             .await?;
 
         if res.rows_affected() == 0 {

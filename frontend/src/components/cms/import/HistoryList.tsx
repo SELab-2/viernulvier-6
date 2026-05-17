@@ -28,6 +28,7 @@ const DELETABLE_STATUSES = new Set([
     "dry_run_pending",
     "dry_run_ready",
     "failed",
+    "committed",
 ]);
 
 function canContinueSession(session: ImportSession): boolean {
@@ -43,6 +44,9 @@ function getDeleteConfirmMessage(
     t: ReturnType<typeof useTranslations>,
     session: ImportSession
 ): string {
+    if (session.status === "committed") {
+        return t("deleteConfirmCommitted", { filename: session.filename });
+    }
     if (session.status === "failed" && session.committedAt !== null) {
         return t("deleteConfirmRollback", { filename: session.filename });
     }

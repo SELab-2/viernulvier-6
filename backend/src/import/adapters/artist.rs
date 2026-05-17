@@ -132,7 +132,7 @@ impl ImportableEntity for ArtistImport {
         existing_id: Option<Uuid>,
         row: &ResolvedRow,
         db: &Database,
-        _tx: &mut Transaction<'_, Postgres>,
+        tx: &mut Transaction<'_, Postgres>,
     ) -> anyhow::Result<Uuid> {
         let name = json_string(row, "name").unwrap_or_else(|| "untitled".to_string());
 
@@ -140,12 +140,15 @@ impl ImportableEntity for ArtistImport {
             None => {
                 let base_slug = slugify(&name);
                 let slug = unique_slug(db, &base_slug).await?;
-                let artist = db.artists().insert(&name, &slug).await?;
+                let artist = db.artists().insert_on(&mut *tx, &name, &slug).await?;
                 Ok(artist.id)
             }
             Some(id) => {
                 let current = db.artists().by_id(id).await?;
-                let artist = db.artists().update(id, &name, &current.slug).await?;
+                let artist = db
+                    .artists()
+                    .update_on(&mut *tx, id, &name, &current.slug)
+                    .await?;
                 Ok(artist.id)
             }
         }
@@ -155,9 +158,9 @@ impl ImportableEntity for ArtistImport {
         &self,
         entity_id: Uuid,
         db: &Database,
-        _tx: &mut Transaction<'_, Postgres>,
+        tx: &mut Transaction<'_, Postgres>,
     ) -> anyhow::Result<()> {
-        db.artists().delete(entity_id).await?;
+        db.artists().delete_on(&mut *tx, entity_id).await?;
         Ok(())
     }
 }

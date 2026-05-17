@@ -22,6 +22,10 @@ impl ImportRegistry {
     }
 
     pub fn supported(&self) -> Vec<&'static str> {
-        self.entries.keys().copied().collect()
+        self.entries
+            .values()
+            .filter(|a| a.importable())
+            .map(|a| a.entity_type())
+            .collect()
     }
 }

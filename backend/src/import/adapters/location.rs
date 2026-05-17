@@ -222,13 +222,13 @@ impl ImportableEntity for LocationImport {
         existing_id: Option<Uuid>,
         row: &ResolvedRow,
         db: &Database,
-        _tx: &mut Transaction<'_, Postgres>,
+        tx: &mut Transaction<'_, Postgres>,
     ) -> anyhow::Result<Uuid> {
         match existing_id {
             None => {
                 let create = row_to_create(row);
-                let result = db.locations().insert(create, vec![]).await?;
-                Ok(result.location.id)
+                let location = db.locations().insert_on(&mut *tx, create).await?;
+                Ok(location.id)
             }
             Some(id) => {
                 let current = db.locations().by_id(id).await?.location;
@@ -249,8 +249,8 @@ impl ImportableEntity for LocationImport {
                     uitdatabank_id: current.uitdatabank_id,
                     slug: current.slug,
                 };
-                let result = db.locations().update(updated, vec![]).await?;
-                Ok(result.location.id)
+                let location = db.locations().update_on(&mut *tx, updated).await?;
+                Ok(location.id)
             }
         }
     }
@@ -259,9 +259,9 @@ impl ImportableEntity for LocationImport {
         &self,
         entity_id: Uuid,
         db: &Database,
-        _tx: &mut Transaction<'_, Postgres>,
+        tx: &mut Transaction<'_, Postgres>,
     ) -> anyhow::Result<()> {
-        db.locations().delete(entity_id).await?;
+        db.locations().delete_on(&mut *tx, entity_id).await?;
         Ok(())
     }
 }

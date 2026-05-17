@@ -3,7 +3,7 @@ import { mockApi } from "./utils/mockApi";
 
 test.describe("CMS Import page", () => {
     test.beforeEach(async ({ page }) => {
-        await mockApi(page);
+        await mockApi(page, { withAuth: true });
     });
 
     test("shows the stepper and upload heading on the import page", async ({ page }) => {

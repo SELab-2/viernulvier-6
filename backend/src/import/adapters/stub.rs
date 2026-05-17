@@ -29,6 +29,10 @@ impl ImportableEntity for StubAdapter {
         vec![]
     }
 
+    fn importable(&self) -> bool {
+        false
+    }
+
     async fn lookup_existing(
         &self,
         _row: &ResolvedRow,

@@ -201,7 +201,7 @@ impl ImportableEntity for ArticleImport {
         existing_id: Option<Uuid>,
         row: &ResolvedRow,
         db: &Database,
-        _tx: &mut Transaction<'_, Postgres>,
+        tx: &mut Transaction<'_, Postgres>,
     ) -> anyhow::Result<Uuid> {
         let title = json_string(row, "title");
         let status = json_string(row, "status")
@@ -218,7 +218,7 @@ impl ImportableEntity for ArticleImport {
                     .or_else(|| title.as_deref().map(slugify))
                     .unwrap_or_else(|| "untitled".to_string());
 
-                // Ensure slug is unique by appending a suffix if needed.
+                // Slug uniqueness reads stay on db (commits are serial per-row).
                 let slug = if db.articles().slug_exists(&raw_slug).await? {
                     let mut n = 2u32;
                     loop {
@@ -237,21 +237,24 @@ impl ImportableEntity for ArticleImport {
 
                 let article = db
                     .articles()
-                    .insert(ArticleCreate {
-                        slug,
-                        status: status.clone(),
-                        title,
-                        content: None,
-                        subject_period_start,
-                        subject_period_end,
-                        created_at: Utc::now(),
-                        updated_at: Utc::now(),
-                        published_at: if matches!(status, ArticleStatus::Published) {
-                            Some(Utc::now())
-                        } else {
-                            None
+                    .insert_on(
+                        &mut *tx,
+                        ArticleCreate {
+                            slug,
+                            status: status.clone(),
+                            title,
+                            content: None,
+                            subject_period_start,
+                            subject_period_end,
+                            created_at: Utc::now(),
+                            updated_at: Utc::now(),
+                            published_at: if matches!(status, ArticleStatus::Published) {
+                                Some(Utc::now())
+                            } else {
+                                None
+                            },
                         },
-                    })
+                    )
                     .await?;
                 Ok(article.id)
             }
@@ -269,7 +272,7 @@ impl ImportableEntity for ArticleImport {
                     subject_period_start: subject_period_start.or(current.subject_period_start),
                     subject_period_end: subject_period_end.or(current.subject_period_end),
                 };
-                let article = db.articles().update(updated).await?;
+                let article = db.articles().update_on(&mut *tx, updated).await?;
                 Ok(article.id)
             }
         }
@@ -279,9 +282,9 @@ impl ImportableEntity for ArticleImport {
         &self,
         entity_id: Uuid,
         db: &Database,
-        _tx: &mut Transaction<'_, Postgres>,
+        tx: &mut Transaction<'_, Postgres>,
     ) -> anyhow::Result<()> {
-        db.articles().delete(entity_id).await?;
+        db.articles().delete_on(&mut *tx, entity_id).await?;
         Ok(())
     }
 }

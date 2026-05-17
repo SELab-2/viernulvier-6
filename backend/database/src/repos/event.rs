@@ -68,6 +68,14 @@ impl<'a> EventRepo<'a> {
         Ok(event.insert(self.db).await?)
     }
 
+    pub async fn insert_on(
+        &self,
+        conn: &mut sqlx::PgConnection,
+        event: EventCreate,
+    ) -> Result<Event, DatabaseError> {
+        Ok(event.insert(conn).await?)
+    }
+
     pub async fn link_halls(&self, event_id: Uuid, hall_ids: &[Uuid]) -> Result<(), DatabaseError> {
         for hall_id in hall_ids {
             sqlx::query(
@@ -130,10 +138,35 @@ impl<'a> EventRepo<'a> {
         Ok(event.update_all_fields(self.db).await?)
     }
 
+    pub async fn update_on(
+        &self,
+        conn: &mut sqlx::PgConnection,
+        event: Event,
+    ) -> Result<Event, DatabaseError> {
+        Ok(event.update_all_fields(conn).await?)
+    }
+
     pub async fn delete(&self, id: Uuid) -> Result<(), DatabaseError> {
         let res = sqlx::query("DELETE FROM events WHERE id = $1")
             .bind(id)
             .execute(self.db)
+            .await?;
+
+        if res.rows_affected() == 0 {
+            return Err(DatabaseError::NotFound);
+        }
+
+        Ok(())
+    }
+
+    pub async fn delete_on(
+        &self,
+        conn: &mut sqlx::PgConnection,
+        id: Uuid,
+    ) -> Result<(), DatabaseError> {
+        let res = sqlx::query("DELETE FROM events WHERE id = $1")
+            .bind(id)
+            .execute(conn)
             .await?;
 
         if res.rows_affected() == 0 {
@@ -203,6 +236,36 @@ impl<'a> EventRepo<'a> {
         .bind(&event_ids_repeated[..])
         .bind(&hall_ids[..])
         .execute(self.db)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn sync_halls_on(
+        &self,
+        conn: &mut sqlx::PgConnection,
+        event_id: Uuid,
+        hall_ids: Vec<Uuid>,
+    ) -> Result<(), DatabaseError> {
+        sqlx::query("DELETE FROM event_halls WHERE event_id = $1")
+            .bind(event_id)
+            .execute(&mut *conn)
+            .await?;
+
+        if hall_ids.is_empty() {
+            return Ok(());
+        }
+
+        let event_ids_repeated: Vec<Uuid> = vec![event_id; hall_ids.len()];
+
+        sqlx::query(
+            "INSERT INTO event_halls (event_id, hall_id)
+             SELECT * FROM UNNEST($1::uuid[], $2::uuid[])
+             ON CONFLICT DO NOTHING",
+        )
+        .bind(&event_ids_repeated[..])
+        .bind(&hall_ids[..])
+        .execute(conn)
         .await?;
 
         Ok(())

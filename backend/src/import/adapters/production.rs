@@ -211,13 +211,12 @@ impl ImportableEntity for ProductionImport {
         Ok(diff)
     }
 
-    /// v1: writes committed directly; transactional adapters are future work.
     async fn apply_row(
         &self,
         existing_id: Option<Uuid>,
         row: &ResolvedRow,
         db: &Database,
-        _tx: &mut Transaction<'_, Postgres>,
+        tx: &mut Transaction<'_, Postgres>,
     ) -> anyhow::Result<Uuid> {
         let title_nl = json_string(row, "title_nl");
         let supertitle_nl = json_string(row, "supertitle_nl");
@@ -264,6 +263,7 @@ impl ImportableEntity for ProductionImport {
                     let s = slugify(raw_title);
                     if s.is_empty() { "untitled".to_string() } else { s }
                 };
+                // Slug reads stay on db (commits are serial per-row).
                 let slug = db.productions().find_unique_slug(&base_slug).await?;
 
                 let mut translations = vec![nl_data(None)];
@@ -288,9 +288,10 @@ impl ImportableEntity for ProductionImport {
                     });
                 }
 
-                let result = db
+                let production = db
                     .productions()
-                    .insert(
+                    .insert_on(
+                        &mut *tx,
                         ProductionCreate {
                             source_id,
                             slug,
@@ -304,7 +305,7 @@ impl ImportableEntity for ProductionImport {
                     )
                     .await?;
 
-                Ok(result.production.id)
+                Ok(production.id)
             }
             Some(id) => {
                 // Update path: load current, preserve slug and unrelated fields.
@@ -357,24 +358,23 @@ impl ImportableEntity for ProductionImport {
                     });
                 }
 
-                let result = db
+                let production = db
                     .productions()
-                    .update(updated_production, translations)
+                    .update_on(&mut *tx, updated_production, translations)
                     .await?;
 
-                Ok(result.production.id)
+                Ok(production.id)
             }
         }
     }
 
-    /// v1: writes committed directly; transactional adapters are future work.
     async fn revert_row(
         &self,
         entity_id: Uuid,
         db: &Database,
-        _tx: &mut Transaction<'_, Postgres>,
+        tx: &mut Transaction<'_, Postgres>,
     ) -> anyhow::Result<()> {
-        db.productions().delete(entity_id).await?;
+        db.productions().delete_on(&mut *tx, entity_id).await?;
         Ok(())
     }
 }

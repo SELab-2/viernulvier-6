@@ -1020,6 +1020,7 @@ pub async fn delete_session(
             | ImportSessionStatus::DryRunPending
             | ImportSessionStatus::DryRunReady
             | ImportSessionStatus::Failed
+            | ImportSessionStatus::Committed
     );
     if !deletable {
         let label = status_label(session.status);
@@ -1028,7 +1029,12 @@ pub async fn delete_session(
         )));
     }
 
-    if session.status == ImportSessionStatus::Failed && session.committed_at.is_some() {
+    let needs_rollback = matches!(
+        session.status,
+        ImportSessionStatus::Committed
+    ) || (session.status == ImportSessionStatus::Failed && session.committed_at.is_some());
+
+    if needs_rollback {
         rollback_committed_rows(&state, &session, true).await?;
     }
 

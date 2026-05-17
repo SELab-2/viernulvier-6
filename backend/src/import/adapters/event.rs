@@ -435,13 +435,12 @@ impl ImportableEntity for EventImport {
         Ok(diff)
     }
 
-    /// v1: writes committed directly; transactional adapters are future work.
     async fn apply_row(
         &self,
         existing_id: Option<Uuid>,
         row: &ResolvedRow,
         db: &Database,
-        _tx: &mut Transaction<'_, Postgres>,
+        tx: &mut Transaction<'_, Postgres>,
     ) -> anyhow::Result<Uuid> {
         // Parse required fields.
         let starts_at = match row.get("start_time") {
@@ -487,9 +486,11 @@ impl ImportableEntity for EventImport {
                     production_id,
                     status: "scheduled".into(),
                 };
-                let event = db.events().insert(event_create).await?;
+                let event = db.events().insert_on(&mut *tx, event_create).await?;
                 if let Some(hall_id) = hall_id {
-                    db.events().sync_halls(event.id, vec![hall_id]).await?;
+                    db.events()
+                        .sync_halls_on(&mut *tx, event.id, vec![hall_id])
+                        .await?;
                 }
                 Ok(event.id)
             }
@@ -503,23 +504,22 @@ impl ImportableEntity for EventImport {
                     updated_at: chrono::Utc::now(),
                     ..existing
                 };
-                let event = db.events().update(updated).await?;
+                let event = db.events().update_on(&mut *tx, updated).await?;
                 db.events()
-                    .sync_halls(event.id, hall_id.into_iter().collect())
+                    .sync_halls_on(&mut *tx, event.id, hall_id.into_iter().collect())
                     .await?;
                 Ok(event.id)
             }
         }
     }
 
-    /// v1: writes committed directly; transactional adapters are future work.
     async fn revert_row(
         &self,
         entity_id: Uuid,
         db: &Database,
-        _tx: &mut Transaction<'_, Postgres>,
+        tx: &mut Transaction<'_, Postgres>,
     ) -> anyhow::Result<()> {
-        db.events().delete(entity_id).await?;
+        db.events().delete_on(&mut *tx, entity_id).await?;
         Ok(())
     }
 }

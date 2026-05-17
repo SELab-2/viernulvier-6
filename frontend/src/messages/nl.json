@@ -708,6 +708,7 @@
                 "delete": "Verwijderen",
                 "deleteConfirm": "Weet je zeker dat je \"{filename}\" uit de importgeschiedenis wilt verwijderen?",
                 "deleteConfirmRollback": "Weet je zeker dat je \"{filename}\" wilt verwijderen? Geïmporteerde records uit deze mislukte run worden eerst teruggedraaid, daarna wordt de geschiedenis verwijderd.",
+                "deleteConfirmCommitted": "Weet je zeker dat je \"{filename}\" wilt verwijderen? Alle geïmporteerde entiteiten worden permanent verwijderd — bijgewerkte entiteiten kunnen niet hersteld worden naar hun vorige waarden.",
                 "deleteSuccess": "Importsessie verwijderd.",
                 "empty": "Nog geen importsessies.",
                 "previous": "Vorige",
@@ -736,7 +737,7 @@
                 "revert": "Terugdraaien",
                 "rollback": "Volledige import terugdraaien",
                 "rollbackConfirmTitle": "Volledige import terugdraaien?",
-                "rollbackConfirmBody": "Alle aangemaakte rijen worden verwijderd en bijgewerkte rijen hersteld. Deze actie kan niet ongedaan worden gemaakt.",
+                "rollbackConfirmBody": "Alle aangemaakte rijen worden verwijderd. Bijgewerkte rijen worden ook permanent verwijderd — hun vorige waarden kunnen niet hersteld worden. Deze actie kan niet ongedaan worden gemaakt.",
                 "rollbackConfirmCta": "Terugdraaien",
                 "rollbackCancel": "Annuleren",
                 "reverting": "Bezig...",
@@ -774,7 +775,14 @@
                 "deleteConfirmRollback": "Weet je zeker dat je \"{filename}\" wilt verwijderen? Geïmporteerde records uit deze mislukte run worden eerst teruggedraaid, daarna wordt de geschiedenis verwijderd.",
                 "deleteSuccess": "Importsessie verwijderd.",
                 "dangerZoneTitle": "Gevaarzone",
-                "dangerZoneDescription": "Dit verwijdert alle geïmporteerde wijzigingen permanent."
+                "dangerZoneDescription": "Dit verwijdert alle geïmporteerde wijzigingen permanent.",
+                "deleteCommittedTitle": "Import verwijderen uit geschiedenis?",
+                "deleteCommittedCreated": "{count, plural, one {# nieuw aangemaakte entiteit wordt permanent verwijderd.} other {# nieuw aangemaakte entiteiten worden permanent verwijderd.}}",
+                "deleteCommittedUpdated": "{count, plural, one {# bijgewerkte entiteit wordt ook permanent verwijderd — de vorige waarden kunnen niet hersteld worden.} other {# bijgewerkte entiteiten worden ook permanent verwijderd — hun vorige waarden kunnen niet hersteld worden.}}",
+                "deleteCommittedNoImpact": "Er zijn geen entiteiten aangemaakt of bijgewerkt in deze import. Alleen het historierecord wordt verwijderd.",
+                "deleteCommittedCta": "Verwijderen en terugdraaien",
+                "deleteCommittedCancel": "Annuleren",
+                "revertUpdatedConfirm": "Deze entiteit werd bijgewerkt, niet aangemaakt. Terugdraaien verwijdert hem permanent — de vorige waarden kunnen niet hersteld worden. Doorgaan?"
             }
         },
         "Collections": {

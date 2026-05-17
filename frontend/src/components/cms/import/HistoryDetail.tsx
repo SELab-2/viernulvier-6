@@ -171,7 +171,7 @@ function HistoryRow({ row, entityType, mapping, revertingId, onRevert }: History
             </span>
         );
     } else {
-        entityCell = <span className="text-muted-foreground text-xs">—</span>;
+        entityCell = <span className="text-muted-foreground text-sm">{rowLabel || "—"}</span>;
     }
 
     return (
@@ -186,7 +186,22 @@ function HistoryRow({ row, entityType, mapping, revertingId, onRevert }: History
                 <StatusBadge status={row.status} />
             </TableCell>
             <TableCell>{entityCell}</TableCell>
-            <TableCell className="text-xs">{row.warnings.length}</TableCell>
+            <TableCell className="text-xs">
+                {row.warnings.length === 0 ? (
+                    <span className="text-muted-foreground">—</span>
+                ) : (
+                    <ul className="space-y-1">
+                        {row.warnings.map((w, i) => (
+                            <li key={i} className="text-muted-foreground">
+                                {w.field && (
+                                    <span className="text-foreground font-medium">{w.field}: </span>
+                                )}
+                                {w.message}
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </TableCell>
             <TableCell>
                 <Button
                     variant="outline"
@@ -259,6 +274,7 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
     const router = useRouter();
 
     const [rollbackOpen, setRollbackOpen] = useState(false);
+    const [deleteOpen, setDeleteOpen] = useState(false);
     const [revertingId, setRevertingId] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState<ImportRowStatus | "all">("all");
     const [page, setPage] = useState(1);
@@ -310,6 +326,14 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
         : "—";
 
     function handleRevert(rowId: string) {
+        const row = rows.find((r) => r.id === rowId);
+        if (
+            row?.status === "updated" &&
+            typeof window !== "undefined" &&
+            !window.confirm(t("revertUpdatedConfirm"))
+        ) {
+            return;
+        }
         setRevertingId(rowId);
         revertRow.mutate(
             { id: rowId, sessionId },
@@ -326,6 +350,17 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
         rollbackSession.mutate(sessionId, {
             onSuccess: () => toast.success(t("rollbackSuccess")),
             onError: () => toast.error(tErrors("rollbackFailed")),
+        });
+    }
+
+    function handleDeleteConfirm() {
+        setDeleteOpen(false);
+        deleteSession.mutate(sessionId, {
+            onSuccess: () => {
+                toast.success(t("deleteSuccess"));
+                router.push("/cms/import/history");
+            },
+            onError: () => toast.error(tErrors("deleteSessionFailed")),
         });
     }
 
@@ -496,7 +531,7 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
                             <TableHead className="w-12">#</TableHead>
                             <TableHead>{t("status")}</TableHead>
                             <TableHead>{t("entityColumn")}</TableHead>
-                            <TableHead className="w-24">{t("warningsColumn")}</TableHead>
+                            <TableHead>{t("warningsColumn")}</TableHead>
                             <TableHead className="w-32">{t("revert")}</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -553,13 +588,18 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
                     <p className="text-muted-foreground mt-1 text-xs">
                         {t("dangerZoneDescription")}
                     </p>
-                    <Button
-                        variant="destructive"
-                        className="mt-3"
-                        onClick={() => setRollbackOpen(true)}
-                    >
-                        {t("rollback")}
-                    </Button>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                        <Button variant="destructive" onClick={() => setRollbackOpen(true)}>
+                            {t("rollback")}
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => setDeleteOpen(true)}
+                            disabled={deleteSession.isPending}
+                        >
+                            {t("delete")}
+                        </Button>
+                    </div>
                 </div>
             )}
 
@@ -576,6 +616,51 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
                         </Button>
                         <Button variant="destructive" onClick={handleRollbackConfirm}>
                             {t("rollbackConfirmCta")}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete committed session dialog */}
+            <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t("deleteCommittedTitle")}</DialogTitle>
+                        <DialogDescription asChild>
+                            <div className="space-y-2 text-sm">
+                                {counts.created === 0 && counts.updated === 0 ? (
+                                    <p>{t("deleteCommittedNoImpact")}</p>
+                                ) : (
+                                    <>
+                                        {counts.created > 0 && (
+                                            <p>
+                                                {t("deleteCommittedCreated", {
+                                                    count: counts.created,
+                                                })}
+                                            </p>
+                                        )}
+                                        {counts.updated > 0 && (
+                                            <p>
+                                                {t("deleteCommittedUpdated", {
+                                                    count: counts.updated,
+                                                })}
+                                            </p>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+                            {t("deleteCommittedCancel")}
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDeleteConfirm}
+                            disabled={deleteSession.isPending}
+                        >
+                            {t("deleteCommittedCta")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

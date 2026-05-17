@@ -14,6 +14,12 @@ pub trait ImportableEntity: Send + Sync {
     fn entity_type(&self) -> &'static str;
     fn target_fields(&self) -> Vec<FieldSpec>;
 
+    /// Whether this entity type is fully supported for import.
+    /// Stub adapters return `false` so they are excluded from the entity-type dropdown.
+    fn importable(&self) -> bool {
+        true
+    }
+
     async fn lookup_existing(
         &self,
         row: &ResolvedRow,
