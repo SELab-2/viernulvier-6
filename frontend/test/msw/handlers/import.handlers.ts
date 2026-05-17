@@ -60,6 +60,11 @@ export const importHandlers = [
         () => new HttpResponse(null, { status: 204 })
     ),
 
+    http.delete(
+        apiUrl(`/import/sessions/${session.id}/delete`),
+        () => new HttpResponse(null, { status: 204 })
+    ),
+
     http.get(apiUrl(`/import/sessions/${session.id}/rows`), () => HttpResponse.json([row])),
 
     http.patch(apiUrl(`/import/sessions/${session.id}/mapping`), async ({ request }) => {
@@ -88,6 +93,13 @@ export const importHandlers = [
         HttpResponse.json({
             ...session,
             status: "uploaded",
+        } satisfies components["schemas"]["ImportSessionResponse"])
+    ),
+
+    http.post(apiUrl(`/import/sessions/${session.id}/skip-updates`), () =>
+        HttpResponse.json({
+            ...session,
+            status: "dry_run_ready",
         } satisfies components["schemas"]["ImportSessionResponse"])
     ),
 

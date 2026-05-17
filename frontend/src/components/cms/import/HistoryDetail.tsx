@@ -6,14 +6,21 @@ import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 
-import { Link } from "@/i18n/routing";
+import { Link, useRouter } from "@/i18n/routing";
 import {
+    useDeleteImportSession,
+    useImportRowStats,
     useImportSession,
     useImportRows,
     useRevertRow,
     useRollbackSession,
 } from "@/hooks/api/useImport";
-import type { ImportRow, ImportSession, ImportMapping } from "@/types/models/import.types";
+import type {
+    ImportRow,
+    ImportMapping,
+    ImportRowStatus,
+    ImportSession,
+} from "@/types/models/import.types";
 import { resolveRowLabel } from "@/lib/import/resolveRowLabel";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,7 +47,14 @@ import { cmsEditUrl, publicSiteUrl } from "@/lib/import/entityLinks";
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const REVERTABLE_STATUSES = new Set(["created", "updated"]);
-const CONTINUABLE_STATUSES = new Set(["mapping", "dry_run_pending", "dry_run_ready", "failed"]);
+const DELETABLE_STATUSES = new Set([
+    "uploaded",
+    "mapping",
+    "dry_run_pending",
+    "dry_run_ready",
+    "failed",
+]);
+const PAGE_SIZE = 50;
 
 const STATUS_BORDER_CLASS: Partial<Record<ImportSession["status"], string>> = {
     committed: "border-t-green-500",
@@ -53,6 +67,25 @@ function readSlugFromDiff(diff: Record<string, unknown> | null): string | null {
     if (typeof entry !== "object" || entry === null) return null;
     const current = (entry as Record<string, unknown>).current;
     return typeof current === "string" ? current : null;
+}
+
+function canContinueSession(session: ImportSession): boolean {
+    return (
+        session.status === "mapping" ||
+        session.status === "dry_run_pending" ||
+        session.status === "dry_run_ready" ||
+        (session.status === "failed" && session.committedAt === null)
+    );
+}
+
+function getDeleteConfirmMessage(
+    t: ReturnType<typeof useTranslations>,
+    session: ImportSession
+): string {
+    if (session.status === "failed" && session.committedAt !== null) {
+        return t("deleteConfirmRollback", { filename: session.filename });
+    }
+    return t("deleteConfirm", { filename: session.filename });
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -223,16 +256,25 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
     const t = useTranslations("Cms.Import.historyDetail");
     const tErrors = useTranslations("Cms.Import.errors");
     const fmt = useFormatter();
+    const router = useRouter();
 
     const [rollbackOpen, setRollbackOpen] = useState(false);
     const [revertingId, setRevertingId] = useState<string | null>(null);
+    const [statusFilter, setStatusFilter] = useState<ImportRowStatus | "all">("all");
+    const [page, setPage] = useState(1);
 
     const sessionQuery = useImportSession(sessionId);
-    const rowsQuery = useImportRows(sessionId);
+    const rowStatsQuery = useImportRowStats(sessionId);
+    const rowsQuery = useImportRows(sessionId, {
+        page,
+        limit: PAGE_SIZE,
+        status: statusFilter === "all" ? null : statusFilter,
+    });
     const revertRow = useRevertRow();
     const rollbackSession = useRollbackSession();
+    const deleteSession = useDeleteImportSession();
 
-    if (sessionQuery.isPending || rowsQuery.isPending) {
+    if (sessionQuery.isPending || rowsQuery.isPending || rowStatsQuery.isPending) {
         return <LoadingSkeleton />;
     }
 
@@ -254,6 +296,7 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
 
     const session = sessionQuery.data;
     const rows = rowsQuery.data ?? [];
+    const rowStats = rowStatsQuery.data;
 
     if (!session) {
         return null;
@@ -285,6 +328,32 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
             onError: () => toast.error(tErrors("rollbackFailed")),
         });
     }
+
+    function handleDeleteSession() {
+        if (typeof window !== "undefined" && window.confirm(getDeleteConfirmMessage(t, session))) {
+            deleteSession.mutate(sessionId, {
+                onSuccess: () => {
+                    toast.success(t("deleteSuccess"));
+                    router.push("/cms/import/history");
+                },
+                onError: () => toast.error(tErrors("deleteSessionFailed")),
+            });
+        }
+    }
+
+    const counts = {
+        all: rowStats?.total ?? rows.length,
+        created: rowStats?.created ?? 0,
+        updated: rowStats?.updated ?? 0,
+        skipped: rowStats?.skipped ?? 0,
+        error: rowStats?.error ?? 0,
+        reverted: rowStats?.reverted ?? 0,
+    };
+    const firstVisibleRow = rows.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+    const lastVisibleRow = rows.length === 0 ? 0 : firstVisibleRow + rows.length - 1;
+    const canGoPrevious = page > 1;
+    const canGoNext =
+        statusFilter === "all" ? lastVisibleRow < counts.all : rows.length === PAGE_SIZE;
 
     return (
         <div className="space-y-6">
@@ -339,15 +408,85 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
                 )}
             </div>
 
-            {CONTINUABLE_STATUSES.has(session.status) && (
+            {(canContinueSession(session) || DELETABLE_STATUSES.has(session.status)) && (
                 <div className="flex items-center gap-3">
-                    <Button asChild>
-                        <Link href={`/cms/import?session=${session.id}`}>
-                            {t("continueSession")}
-                        </Link>
-                    </Button>
+                    {canContinueSession(session) && (
+                        <Button asChild>
+                            <Link href={`/cms/import?session=${session.id}`}>
+                                {t("continueSession")}
+                            </Link>
+                        </Button>
+                    )}
+                    {DELETABLE_STATUSES.has(session.status) && (
+                        <Button
+                            variant="outline"
+                            onClick={handleDeleteSession}
+                            disabled={deleteSession.isPending}
+                        >
+                            {t("delete")}
+                        </Button>
+                    )}
                 </div>
             )}
+
+            <div className="grid grid-cols-2 border border-r-0 border-b-0 sm:grid-cols-5">
+                {(
+                    [
+                        ["created", counts.created],
+                        ["updated", counts.updated],
+                        ["skipped", counts.skipped],
+                        ["error", counts.error],
+                        ["reverted", counts.reverted],
+                    ] as const
+                ).map(([key, count]) => (
+                    <div key={key} className="bg-background text-foreground border-r border-b p-4">
+                        <p className="text-muted-foreground font-mono text-[10px] font-medium tracking-[1.5px] uppercase">
+                            {t(`summary.${key}`)}
+                        </p>
+                        <p className="mt-1 text-2xl font-semibold tabular-nums">{count}</p>
+                    </div>
+                ))}
+            </div>
+
+            <div className="border-border flex flex-col gap-4 border px-4 py-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <p className="text-foreground font-mono text-[10px] font-medium tracking-[1.5px] uppercase">
+                        {t("totalRows", { total: counts.all })}
+                    </p>
+                    <p className="text-muted-foreground mt-1 text-sm">
+                        {t("rowRange", { start: firstVisibleRow, end: lastVisibleRow })}
+                    </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    {(
+                        [
+                            ["all", t("filters.all"), counts.all],
+                            ["created", t("filters.created"), counts.created],
+                            ["updated", t("filters.updated"), counts.updated],
+                            ["skipped", t("filters.skipped"), counts.skipped],
+                            ["error", t("filters.error"), counts.error],
+                            ["reverted", t("filters.reverted"), counts.reverted],
+                        ] as [ImportRowStatus | "all", string, number][]
+                    ).map(([key, label, count]) => (
+                        <button
+                            key={key}
+                            type="button"
+                            onClick={() => {
+                                setStatusFilter(key);
+                                setPage(1);
+                            }}
+                            className={[
+                                "border px-3 py-1 font-mono text-[10px] font-medium tracking-[1.5px] uppercase transition-colors",
+                                statusFilter === key
+                                    ? "bg-foreground text-background border-foreground"
+                                    : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground",
+                            ].join(" ")}
+                        >
+                            {label} <span className="tabular-nums">{count}</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
 
             {/* Rows table */}
             <div className="rounded-md border">
@@ -362,6 +501,16 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
+                        {rows.length === 0 && (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={5}
+                                    className="text-muted-foreground py-10 text-center text-sm"
+                                >
+                                    {t("emptyRows")}
+                                </TableCell>
+                            </TableRow>
+                        )}
                         {rows.map((row) => (
                             <HistoryRow
                                 key={row.id}
@@ -374,6 +523,28 @@ export function HistoryDetail({ sessionId }: HistoryDetailProps) {
                         ))}
                     </TableBody>
                 </Table>
+            </div>
+
+            <div className="flex items-center justify-between gap-3">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!canGoPrevious}
+                    onClick={() => setPage((current) => Math.max(1, current - 1))}
+                >
+                    {t("previous")}
+                </Button>
+                <span className="text-muted-foreground font-mono text-[10px] tracking-[1.5px] uppercase">
+                    {t("pageLabel", { page })}
+                </span>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!canGoNext}
+                    onClick={() => setPage((current) => current + 1)}
+                >
+                    {t("next")}
+                </Button>
             </div>
 
             {session.status === "committed" && (

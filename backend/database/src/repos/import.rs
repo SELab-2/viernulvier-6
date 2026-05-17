@@ -413,6 +413,20 @@ impl<'a> ImportRepo<'a> {
         Ok(())
     }
 
+    /// Set all `will_update` rows in a session to `will_skip`.
+    pub async fn skip_update_rows(&self, session_id: Uuid) -> Result<u64, DatabaseError> {
+        let result = sqlx::query!(
+            r#"UPDATE import_rows
+               SET status = 'will_skip'
+               WHERE session_id = $1 AND status = 'will_update'"#,
+            session_id,
+        )
+        .execute(self.db)
+        .await?;
+
+        Ok(result.rows_affected())
+    }
+
     /// Persist dry-run results: status, diff, and warnings.
     pub async fn save_dry_run_result(
         &self,
@@ -490,6 +504,15 @@ impl<'a> ImportRepo<'a> {
         )
         .execute(self.db)
         .await?;
+
+        Ok(())
+    }
+
+    /// Delete a session and all dependent data via FK cascades.
+    pub async fn delete_session(&self, session_id: Uuid) -> Result<(), DatabaseError> {
+        sqlx::query!(r#"DELETE FROM import_sessions WHERE id = $1"#, session_id)
+            .execute(self.db)
+            .await?;
 
         Ok(())
     }
@@ -573,6 +596,26 @@ impl<'a> ImportRepo<'a> {
                    error = NULL
                WHERE id = $1"#,
             session_id,
+        )
+        .execute(self.db)
+        .await?;
+        Ok(())
+    }
+
+    /// Mark a session as failed after a partial commit while preserving that work was applied.
+    pub async fn mark_session_failed_after_commit(
+        &self,
+        session_id: Uuid,
+        error: String,
+    ) -> Result<(), DatabaseError> {
+        sqlx::query!(
+            r#"UPDATE import_sessions
+               SET status = 'failed',
+                   committed_at = COALESCE(committed_at, NOW()),
+                   error = $2
+               WHERE id = $1"#,
+            session_id,
+            error,
         )
         .execute(self.db)
         .await?;

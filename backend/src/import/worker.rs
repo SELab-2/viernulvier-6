@@ -499,6 +499,7 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
         .collect();
 
     let mapping = &session.mapping.0;
+    let mut commit_error_count = 0usize;
 
     // ── Step 4: process each row ─────────────────────────────────────────────
 
@@ -535,6 +536,7 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
                                     Json(warnings),
                                 )
                                 .await;
+                            commit_error_count += 1;
                             continue;
                         }
                     }
@@ -552,6 +554,7 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
                         .imports()
                         .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
                         .await;
+                    commit_error_count += 1;
                     continue;
                 }
             },
@@ -572,6 +575,7 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
                     .imports()
                     .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
                     .await;
+                commit_error_count += 1;
                 continue;
             }
         };
@@ -590,6 +594,7 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
                     .imports()
                     .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
                     .await;
+                commit_error_count += 1;
                 continue;
             }
         };
@@ -611,6 +616,7 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
                 .imports()
                 .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
                 .await;
+            commit_error_count += 1;
             continue;
         }
 
@@ -625,13 +631,22 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
                 .imports()
                 .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
                 .await;
+            commit_error_count += 1;
             continue;
         }
     }
 
     // ── Step 5: mark session as committed ────────────────────────────────────
-
-    db.imports().mark_session_committed(id).await?;
+    if commit_error_count > 0 {
+        db.imports()
+            .mark_session_failed_after_commit(
+                id,
+                format!("{commit_error_count} row(s) failed during commit"),
+            )
+            .await?;
+    } else {
+        db.imports().mark_session_committed(id).await?;
+    }
 
     Ok(())
 }

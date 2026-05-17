@@ -577,6 +577,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/import/sessions/{id}/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** DELETE /import/sessions/{id}/delete — delete an incomplete session from history. */
+        delete: operations["delete_session"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/import/sessions/{id}/dry-run": {
         parameters: {
             query?: never;
@@ -650,6 +667,40 @@ export interface paths {
         };
         /** GET /import/sessions/{id}/rows — list rows for a session, paginated, with optional status filter. */
         get: operations["get_rows"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/import/sessions/{id}/skip-updates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** POST /import/sessions/{id}/skip-updates — convert all `will_update` rows to `will_skip`. */
+        post: operations["skip_update_rows"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/import/sessions/{id}/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /import/sessions/{id}/stats — count all rows for a session by status. */
+        get: operations["get_row_stats"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1718,6 +1769,28 @@ export interface components {
             /** Format: uuid */
             target_entity_id?: string | null;
             warnings: Record<string, never>[];
+        };
+        ImportRowStatsResponse: {
+            /** Format: int64 */
+            created: number;
+            /** Format: int64 */
+            error: number;
+            /** Format: int64 */
+            pending: number;
+            /** Format: int64 */
+            reverted: number;
+            /** Format: int64 */
+            skipped: number;
+            /** Format: int64 */
+            total: number;
+            /** Format: int64 */
+            updated: number;
+            /** Format: int64 */
+            will_create: number;
+            /** Format: int64 */
+            will_skip: number;
+            /** Format: int64 */
+            will_update: number;
         };
         /** @enum {string} */
         ImportRowStatus: "pending" | "will_create" | "will_update" | "will_skip" | "error" | "created" | "updated" | "skipped" | "reverted";
@@ -4032,6 +4105,50 @@ export interface operations {
             };
         };
     };
+    delete_session: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Session id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Session deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Session is not deletable */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Session not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     enqueue_dry_run: {
         parameters: {
             query?: never;
@@ -4195,6 +4312,82 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ImportRowResponse"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    skip_update_rows: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Session id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportSessionResponse"];
+                };
+            };
+            /** @description Session is not editable */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Session not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_row_stats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Session id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportRowStatsResponse"];
                 };
             };
             /** @description Unauthorized */

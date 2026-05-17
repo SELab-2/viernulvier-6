@@ -315,3 +315,38 @@ export const useCancelSession = () => {
         },
     });
 };
+
+export const useDeleteImportSession = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (id: string): Promise<void> => {
+            await api.delete(`/import/sessions/${id}/delete`);
+        },
+        onSuccess: (_result, id) => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.imports.sessions() });
+            queryClient.removeQueries({ queryKey: queryKeys.imports.session(id) });
+        },
+    });
+};
+
+export const useSkipUpdateRows = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (id: string): Promise<ImportSession> => {
+            const { data } = await api.post<ImportSessionResponse>(
+                `/import/sessions/${id}/skip-updates`
+            );
+            return mapImportSession(data);
+        },
+        onSuccess: (session) => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.imports.session(session.id) });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.imports.rows(session.id),
+            });
+            queryClient.invalidateQueries({ queryKey: queryKeys.imports.rowStats(session.id) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.imports.sessions() });
+        },
+    });
+};

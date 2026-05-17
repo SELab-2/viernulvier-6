@@ -43,6 +43,25 @@ function findRawValue(
     return v == null ? "" : String(v);
 }
 
+function formatDisplayValue(value: unknown): string {
+    if (value == null || value === "") return "—";
+    if (typeof value === "string") return value;
+    return JSON.stringify(value, null, 2);
+}
+
+function DiffValueBlock({ label, value }: { label: string; value: unknown }) {
+    return (
+        <div className="space-y-1">
+            <p className="text-muted-foreground font-mono text-[10px] tracking-[1.5px] uppercase">
+                {label}
+            </p>
+            <pre className="bg-muted/40 overflow-x-auto border px-3 py-2 text-xs whitespace-pre-wrap">
+                {formatDisplayValue(value)}
+            </pre>
+        </div>
+    );
+}
+
 function RawCsvPanel({ row }: { row: ImportRow }) {
     const t = useTranslations("Cms.Import");
     const entries = Object.entries(row.rawData);
@@ -94,23 +113,28 @@ type FieldOverrideRowProps = {
 function FieldOverrideRow({ field, value, currentDbValue, onChange }: FieldOverrideRowProps) {
     const t = useTranslations("Cms.Import");
     return (
-        <div className="space-y-1">
+        <div className="space-y-2">
             <Label htmlFor={`field-${field.name}`} className="text-xs font-medium">
                 {field.label}
             </Label>
             {currentDbValue !== undefined && (
-                <p className="text-muted-foreground text-[10px]">
-                    {t("drawer.fieldCurrentValue")}:{" "}
-                    {currentDbValue == null ? "—" : String(currentDbValue)}
-                </p>
+                <div className="grid gap-2 md:grid-cols-2">
+                    <DiffValueBlock label={t("drawer.fieldCurrentValue")} value={currentDbValue} />
+                    <DiffValueBlock label={t("drawer.fieldIncomingValue")} value={value} />
+                </div>
             )}
-            <Input
-                id={`field-${field.name}`}
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                aria-label={field.label}
-                className="h-8 text-sm"
-            />
+            <div className="space-y-1">
+                <p className="text-muted-foreground font-mono text-[10px] tracking-[1.5px] uppercase">
+                    {t("drawer.fieldOverrideValue")}
+                </p>
+                <Input
+                    id={`field-${field.name}`}
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    aria-label={field.label}
+                    className="h-8 text-sm"
+                />
+            </div>
         </div>
     );
 }

@@ -4,9 +4,11 @@ import { describe, expect, it } from "vitest";
 import { queryKeys } from "@/hooks/api/query-keys";
 import {
     useCancelSession,
+    useDeleteImportSession,
     useImportSession,
     useImportSessions,
     useImportRows,
+    useSkipUpdateRows,
     useStartDryRun,
     useUpdateMapping,
 } from "@/hooks/api/useImport";
@@ -188,5 +190,68 @@ describe("useCancelSession", () => {
         // Session query should be removed from cache
         const cached = queryClient.getQueryData(queryKeys.imports.session(SESSION_ID));
         expect(cached).toBeUndefined();
+    });
+});
+
+describe("useDeleteImportSession", () => {
+    it("deletes an import session and removes it from cache", async () => {
+        const { wrapper, queryClient } = createQueryClientWrapper();
+
+        queryClient.setQueryData(queryKeys.imports.session(SESSION_ID), {
+            id: SESSION_ID,
+            status: "failed",
+        });
+
+        const { result } = renderHook(() => useDeleteImportSession(), { wrapper });
+
+        await act(async () => {
+            await result.current.mutateAsync(SESSION_ID);
+        });
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        expect(queryClient.getQueryData(queryKeys.imports.session(SESSION_ID))).toBeUndefined();
+    });
+});
+
+describe("useSkipUpdateRows", () => {
+    it("posts to skip-updates and invalidates related import queries", async () => {
+        const { wrapper, queryClient } = createQueryClientWrapper();
+
+        queryClient.setQueryData(queryKeys.imports.session(SESSION_ID), {
+            id: SESSION_ID,
+            status: "dry_run_ready",
+        });
+        queryClient.setQueryData(queryKeys.imports.rowStats(SESSION_ID), {
+            total: 2,
+            pending: 0,
+            willCreate: 0,
+            willUpdate: 1,
+            willSkip: 0,
+            error: 0,
+            created: 0,
+            updated: 0,
+            skipped: 0,
+            reverted: 0,
+        });
+
+        const { result } = renderHook(() => useSkipUpdateRows(), { wrapper });
+
+        await act(async () => {
+            await result.current.mutateAsync(SESSION_ID);
+        });
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        expect(
+            queryClient.getQueryState(queryKeys.imports.session(SESSION_ID))?.isInvalidated
+        ).toBe(true);
+        expect(
+            queryClient.getQueryState(queryKeys.imports.rowStats(SESSION_ID))?.isInvalidated
+        ).toBe(true);
     });
 });

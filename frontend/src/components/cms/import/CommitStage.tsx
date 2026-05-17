@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 
-import { useImportSession } from "@/hooks/api/useImport";
+import { useImportRowStats, useImportSession } from "@/hooks/api/useImport";
 import { Link, useRouter } from "@/i18n/routing";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,9 @@ export function CommitStage({ sessionId }: CommitStageProps) {
         isPending: sessionLoading,
         isError: sessionError,
     } = useImportSession(sessionId);
+    const { data: rowStats } = useImportRowStats(sessionId, {
+        enabled: Boolean(session?.status === "failed"),
+    });
 
     useEffect(() => {
         if (session?.status === "committed") {
@@ -49,19 +52,43 @@ export function CommitStage({ sessionId }: CommitStageProps) {
     }
 
     if (session?.status === "failed") {
+        const isPartialImport = session.committedAt !== null;
         return (
             <div className="mx-auto max-w-3xl space-y-4 pt-4">
                 <div
                     role="alert"
                     className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border px-4 py-3 text-sm"
                 >
-                    <p className="font-medium">{t("commit.failed")}</p>
+                    <p className="font-medium">
+                        {isPartialImport ? t("commit.partialFailed") : t("commit.failed")}
+                    </p>
+                    {session.error !== null && <p className="mt-2">{session.error}</p>}
+                    {isPartialImport && rowStats && (
+                        <p className="mt-2">
+                            {t("commit.partialFailedSummary", {
+                                created: rowStats.created,
+                                updated: rowStats.updated,
+                                skipped: rowStats.skipped + rowStats.willSkip,
+                                failed: rowStats.error,
+                            })}
+                        </p>
+                    )}
                 </div>
-                <Button variant="outline" asChild>
-                    <Link href={`/cms/import?session=${sessionId}`}>
-                        {t("commit.backToDryRun")}
-                    </Link>
-                </Button>
+                <div className="flex gap-3">
+                    {isPartialImport ? (
+                        <Button variant="outline" asChild>
+                            <Link href={`/cms/import/history/${sessionId}`}>
+                                {t("commit.openHistory")}
+                            </Link>
+                        </Button>
+                    ) : (
+                        <Button variant="outline" asChild>
+                            <Link href={`/cms/import?session=${sessionId}`}>
+                                {t("commit.backToDryRun")}
+                            </Link>
+                        </Button>
+                    )}
+                </div>
             </div>
         );
     }

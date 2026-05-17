@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useTranslations, useFormatter } from "next-intl";
+import { toast } from "sonner";
 
 import { Link } from "@/i18n/routing";
-import { useImportSessions } from "@/hooks/api/useImport";
+import { useDeleteImportSession, useImportSessions } from "@/hooks/api/useImport";
 import type { ImportSession } from "@/types/models/import.types";
 import {
     Table,
@@ -21,7 +22,32 @@ import { SESSION_STATUS_CLASSES } from "./sessionStatusBadge";
 const LIMIT = 20;
 const SKELETON_ROW_COUNT = 7;
 const COLUMNS = 6;
-const CONTINUABLE_STATUSES = new Set(["mapping", "dry_run_pending", "dry_run_ready", "failed"]);
+const DELETABLE_STATUSES = new Set([
+    "uploaded",
+    "mapping",
+    "dry_run_pending",
+    "dry_run_ready",
+    "failed",
+]);
+
+function canContinueSession(session: ImportSession): boolean {
+    return (
+        session.status === "mapping" ||
+        session.status === "dry_run_pending" ||
+        session.status === "dry_run_ready" ||
+        (session.status === "failed" && session.committedAt === null)
+    );
+}
+
+function getDeleteConfirmMessage(
+    t: ReturnType<typeof useTranslations>,
+    session: ImportSession
+): string {
+    if (session.status === "failed" && session.committedAt !== null) {
+        return t("deleteConfirmRollback", { filename: session.filename });
+    }
+    return t("deleteConfirm", { filename: session.filename });
+}
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 
@@ -45,10 +71,19 @@ type SessionRowProps = {
     session: ImportSession;
     openLabel: string;
     continueLabel: string;
+    deleteLabel: string;
     statusLabel: string;
+    onDelete: (session: ImportSession) => void;
 };
 
-function SessionRow({ session, openLabel, continueLabel, statusLabel }: SessionRowProps) {
+function SessionRow({
+    session,
+    openLabel,
+    continueLabel,
+    deleteLabel,
+    statusLabel,
+    onDelete,
+}: SessionRowProps) {
     const fmt = useFormatter();
     const formattedDate = fmt.dateTime(new Date(session.createdAt), {
         dateStyle: "short",
@@ -78,13 +113,22 @@ function SessionRow({ session, openLabel, continueLabel, statusLabel }: SessionR
                     >
                         {openLabel}
                     </Link>
-                    {CONTINUABLE_STATUSES.has(session.status) && (
+                    {canContinueSession(session) && (
                         <Link
                             href={`/cms/import?session=${session.id}`}
                             className="text-primary text-xs font-medium underline-offset-2 hover:underline"
                         >
                             {continueLabel}
                         </Link>
+                    )}
+                    {DELETABLE_STATUSES.has(session.status) && (
+                        <button
+                            type="button"
+                            onClick={() => onDelete(session)}
+                            className="text-left text-xs font-medium underline-offset-2 hover:underline"
+                        >
+                            {deleteLabel}
+                        </button>
                     )}
                 </div>
             </TableCell>
@@ -112,6 +156,7 @@ export function HistoryList() {
     const t = useTranslations("Cms.Import.history");
     const tErrors = useTranslations("Cms.Import.errors");
     const [page, setPage] = useState(1);
+    const deleteSession = useDeleteImportSession();
 
     const { data, isPending, isError } = useImportSessions({ page, limit: LIMIT });
 
@@ -156,7 +201,22 @@ export function HistoryList() {
                                     session={session}
                                     openLabel={t("open")}
                                     continueLabel={t("continue")}
+                                    deleteLabel={t("delete")}
                                     statusLabel={t(`sessionStatus.${session.status}`)}
+                                    onDelete={(sessionToDelete) => {
+                                        if (
+                                            typeof window !== "undefined" &&
+                                            window.confirm(
+                                                getDeleteConfirmMessage(t, sessionToDelete)
+                                            )
+                                        ) {
+                                            deleteSession.mutate(sessionToDelete.id, {
+                                                onSuccess: () => toast.success(t("deleteSuccess")),
+                                                onError: () =>
+                                                    toast.error(tErrors("deleteSessionFailed")),
+                                            });
+                                        }
+                                    }}
                                 />
                             ))}
                     </TableBody>

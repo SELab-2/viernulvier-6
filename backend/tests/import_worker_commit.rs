@@ -8,6 +8,8 @@
 //! 3. commit_is_idempotent_after_partial_completion — verifies that running
 //!    process_commit a second time on an already-committed session does NOT
 //!    create duplicate entities; validates the atomic row-status-flip fix.
+//! 4. commit_marks_session_failed_when_one_row_errors — partial commit keeps
+//!    successful rows and marks the session failed.
 
 mod common;
 
@@ -19,6 +21,7 @@ use database::{
     repos::import::{CreateSession, NewImportRow},
 };
 use sqlx::{PgPool, types::Json};
+use uuid::Uuid;
 use viernulvier_archive::import::{
     default_registry,
     worker::{WorkerContext, process_commit, process_dry_run_bytes},
@@ -60,6 +63,15 @@ fn make_worker_ctx(db: Database) -> WorkerContext {
         registry: default_registry(),
         s3_client: None,
         s3_bucket: None,
+    }
+}
+
+fn minimal_title_source_mapping() -> ImportMapping {
+    ImportMapping {
+        columns: BTreeMap::from([
+            ("Titel".to_string(), Some("title_nl".to_string())),
+            ("ID".to_string(), Some("source_id".to_string())),
+        ]),
     }
 }
 
@@ -348,6 +360,122 @@ async fn commit_handles_pending_rows_without_dry_run(pool: PgPool) {
             );
         }
     }
+}
+
+#[sqlx::test(migrations = "./migrations")]
+async fn commit_marks_session_failed_when_one_row_errors(pool: PgPool) {
+    let db = Database::new(pool);
+    let user = create_test_user(&db, "commit_test4@test.com", UserRole::Editor).await;
+
+    let session_id = db
+        .imports()
+        .create_session(CreateSession {
+            entity_type: "production".to_string(),
+            filename: "partial.csv".to_string(),
+            original_headers: vec!["Titel".to_string(), "ID".to_string()],
+            created_by: user.id,
+        })
+        .await
+        .expect("create_session failed");
+
+    db.imports()
+        .save_mapping(session_id, minimal_title_source_mapping())
+        .await
+        .expect("save_mapping failed");
+
+    let rows = [
+        NewImportRow {
+            row_number: 1,
+            raw_data: Json(BTreeMap::from([
+                ("Titel".to_string(), Some("Valid Row".to_string())),
+                ("ID".to_string(), Some("501".to_string())),
+            ])),
+        },
+        NewImportRow {
+            row_number: 2,
+            raw_data: Json(BTreeMap::from([
+                ("Titel".to_string(), None),
+                ("ID".to_string(), Some("502".to_string())),
+            ])),
+        },
+    ];
+    db.imports()
+        .insert_rows(session_id, &rows)
+        .await
+        .expect("insert_rows failed");
+
+    let inserted = db
+        .imports()
+        .get_rows(session_id, 10, 0, None)
+        .await
+        .expect("get_rows failed");
+    db.imports()
+        .save_dry_run_result(
+            inserted[0].id,
+            ImportRowStatus::WillCreate,
+            None,
+            Json(vec![]),
+        )
+        .await
+        .expect("save_dry_run_result row 1 failed");
+    db.imports()
+        .save_dry_run_result(
+            inserted[1].id,
+            ImportRowStatus::WillUpdate,
+            None,
+            Json(vec![]),
+        )
+        .await
+        .expect("save_dry_run_result row 2 failed");
+    sqlx::query!(
+        r#"UPDATE import_rows SET target_entity_id = $2 WHERE id = $1"#,
+        inserted[1].id,
+        Uuid::now_v7(),
+    )
+    .execute(db.pool())
+    .await
+    .expect("set target_entity_id failed");
+
+    db.imports()
+        .update_status(
+            session_id,
+            database::models::import_session::ImportSessionStatus::Committing,
+            None,
+        )
+        .await
+        .expect("update_status to committing failed");
+
+    let ctx = make_worker_ctx(db.clone());
+    process_commit(session_id, &ctx)
+        .await
+        .expect("process_commit failed");
+
+    let session = db
+        .imports()
+        .get_session(session_id)
+        .await
+        .expect("get_session failed")
+        .expect("session missing");
+    assert_eq!(
+        session.status,
+        database::models::import_session::ImportSessionStatus::Failed
+    );
+    assert!(
+        session.committed_at.is_some(),
+        "partial commit failure should still record committed_at"
+    );
+    assert_eq!(
+        session.error.as_deref(),
+        Some("1 row(s) failed during commit")
+    );
+
+    let final_rows = db
+        .imports()
+        .get_rows(session_id, 10, 0, None)
+        .await
+        .expect("get_rows after commit failed");
+    assert_eq!(final_rows[0].status, ImportRowStatus::Created);
+    assert_eq!(final_rows[1].status, ImportRowStatus::Error);
 }
 
 // ─── Test 3: commit idempotency — no duplicate entities on second pass ─────────

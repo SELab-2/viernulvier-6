@@ -9,6 +9,7 @@ import {
     useImportRowStats,
     useImportRows,
     useImportSession,
+    useSkipUpdateRows,
     useStartDryRun,
 } from "@/hooks/api/useImport";
 import { Link } from "@/i18n/routing";
@@ -81,6 +82,7 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
 
     const startDryRun = useStartDryRun();
     const commitImport = useCommitImport();
+    const skipUpdateRows = useSkipUpdateRows();
 
     const resolvedRows = rows ?? [];
     const resolvedFields = fields ?? [];
@@ -151,7 +153,7 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
 
     const selectedRow = selectedId ? (resolvedRows.find((r) => r.id === selectedId) ?? null) : null;
     const canRerun = session.status === "dry_run_ready" || session.status === "failed";
-    const canCommit = session.status === "dry_run_ready" && !rowStatsLoading && !hasErrors;
+    const canCommit = session.status === "dry_run_ready" && !rowStatsLoading;
     const firstVisibleRow = resolvedRows.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
     const lastVisibleRow =
         resolvedRows.length === 0 ? 0 : firstVisibleRow + resolvedRows.length - 1;
@@ -204,6 +206,18 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
                         {t("actions.rerunDryRun")}
                     </Button>
                     <Button
+                        variant="outline"
+                        disabled={
+                            session.status !== "dry_run_ready" ||
+                            counts.will_update === 0 ||
+                            skipUpdateRows.isPending
+                        }
+                        onClick={() => skipUpdateRows.mutate(sessionId)}
+                        className="rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                    >
+                        {t("actions.importWithoutOverriding")}
+                    </Button>
+                    <Button
                         disabled={!canCommit || commitImport.isPending}
                         onClick={() => setCommitConfirmOpen(true)}
                         className="rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
@@ -221,6 +235,11 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
             {commitImport.isError && (
                 <p role="alert" className="text-destructive text-sm">
                     {t("errors.commitFailed")}
+                </p>
+            )}
+            {skipUpdateRows.isError && (
+                <p role="alert" className="text-destructive text-sm">
+                    {t("errors.skipUpdatesFailed")}
                 </p>
             )}
 

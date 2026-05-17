@@ -25,6 +25,8 @@ use crate::{
     import::{csv_parser, storage, types::FieldSpec, types::ResolvedRow},
 };
 
+type RollbackMode = bool;
+
 // ── Query param structs ───────────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -774,70 +776,8 @@ pub async fn rollback_session(
         )));
     }
 
-    // 3. Load adapter from registry → 500 if missing
-    let adapter = state
-        .import_registry
-        .get(&session.entity_type)
-        .ok_or_else(|| {
-            AppError::Internal(format!(
-                "no adapter registered for entity_type '{}'",
-                session.entity_type
-            ))
-        })?;
-
-    // 4. Fetch all rows and filter to those that were committed (created/updated), reversed
-    let all_rows = state.db.imports().get_rows(id, 10_000, 0, None).await?;
-
-    let mut committed_rows: Vec<_> = all_rows
-        .into_iter()
-        .filter(|r| {
-            matches!(
-                r.status,
-                database::models::import_row::ImportRowStatus::Created
-                    | database::models::import_row::ImportRowStatus::Updated
-            )
-        })
-        .collect();
-
-    // reverse order so last-applied rows are reverted first
-    committed_rows.reverse();
-
-    // 5. Revert each row
     let repo = state.db.imports();
-    for row in committed_rows {
-        if let Some(entity_id) = row.target_entity_id {
-            let mut tx = state
-                .db
-                .begin_transaction()
-                .await
-                .map_err(|e| AppError::Internal(e.to_string()))?;
-            match adapter.revert_row(entity_id, &state.db, &mut tx).await {
-                Ok(()) => {
-                    tx.commit()
-                        .await
-                        .map_err(|e| AppError::Internal(e.to_string()))?;
-                    repo.record_reverted_row(row.id).await?;
-                }
-                Err(e) => {
-                    let _ = tx.rollback().await;
-                    // Append warning to the row; keep its status
-                    let mut warnings = row.warnings.0.clone();
-                    warnings.push(database::models::import_row::ImportWarning {
-                        field: None,
-                        code: "revert_failed".to_string(),
-                        message: e.to_string(),
-                    });
-                    repo.save_dry_run_result(
-                        row.id,
-                        row.status,
-                        row.diff.clone(),
-                        DbJson(warnings),
-                    )
-                    .await?;
-                }
-            }
-        }
-    }
+    rollback_committed_rows(&state, &session, false).await?;
 
     // 6. Mark session as cancelled
     repo.update_status(id, ImportSessionStatus::Cancelled, None)
@@ -996,6 +936,181 @@ pub async fn cancel_session(
 
     // 4. 204 No Content
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// POST /import/sessions/{id}/skip-updates — convert all `will_update` rows to `will_skip`.
+#[utoipa::path(
+    post,
+    path = "/import/sessions/{id}/skip-updates",
+    params(("id" = Uuid, Path, description = "Session id")),
+    responses(
+        (status = 200, body = ImportSessionResponse),
+        (status = 400, description = "Session is not editable"),
+        (status = 404, description = "Session not found"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
+    ),
+    tag = "import",
+    security(("cookie_auth" = [])),
+)]
+pub async fn skip_update_rows(
+    State(state): State<AppState>,
+    _: EditorUser,
+    Path(id): Path<Uuid>,
+) -> Result<Json<ImportSessionResponse>, AppError> {
+    let session = state
+        .db
+        .imports()
+        .get_session(id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    let editable = matches!(
+        session.status,
+        ImportSessionStatus::Mapping | ImportSessionStatus::DryRunReady
+    );
+    if !editable {
+        let label = status_label(session.status);
+        return Err(AppError::PayloadError(format!(
+            "cannot skip updates for session in status {label}"
+        )));
+    }
+
+    state.db.imports().skip_update_rows(id).await?;
+
+    let updated = state
+        .db
+        .imports()
+        .get_session(id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    Ok(Json(updated.into()))
+}
+
+/// DELETE /import/sessions/{id}/delete — delete an incomplete session from history.
+#[utoipa::path(
+    delete,
+    path = "/import/sessions/{id}/delete",
+    params(("id" = Uuid, Path, description = "Session id")),
+    responses(
+        (status = 204, description = "Session deleted"),
+        (status = 400, description = "Session is not deletable"),
+        (status = 404, description = "Session not found"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
+    ),
+    tag = "import",
+    security(("cookie_auth" = [])),
+)]
+pub async fn delete_session(
+    State(state): State<AppState>,
+    _: EditorUser,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, AppError> {
+    let session = state
+        .db
+        .imports()
+        .get_session(id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    let deletable = matches!(
+        session.status,
+        ImportSessionStatus::Uploaded
+            | ImportSessionStatus::Mapping
+            | ImportSessionStatus::DryRunPending
+            | ImportSessionStatus::DryRunReady
+            | ImportSessionStatus::Failed
+    );
+    if !deletable {
+        let label = status_label(session.status);
+        return Err(AppError::PayloadError(format!(
+            "cannot delete session in status {label}"
+        )));
+    }
+
+    if session.status == ImportSessionStatus::Failed && session.committed_at.is_some() {
+        rollback_committed_rows(&state, &session, true).await?;
+    }
+
+    state.db.imports().delete_session(id).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+async fn rollback_committed_rows(
+    state: &AppState,
+    session: &database::models::import_session::ImportSession,
+    strict: RollbackMode,
+) -> Result<(), AppError> {
+    let adapter = state
+        .import_registry
+        .get(&session.entity_type)
+        .ok_or_else(|| {
+            AppError::Internal(format!(
+                "no adapter registered for entity_type '{}'",
+                session.entity_type
+            ))
+        })?;
+
+    let all_rows = state
+        .db
+        .imports()
+        .get_rows(session.id, 10_000, 0, None)
+        .await?;
+
+    let mut committed_rows: Vec<_> = all_rows
+        .into_iter()
+        .filter(|r| {
+            matches!(
+                r.status,
+                database::models::import_row::ImportRowStatus::Created
+                    | database::models::import_row::ImportRowStatus::Updated
+            )
+        })
+        .collect();
+    committed_rows.reverse();
+
+    let repo = state.db.imports();
+    for row in committed_rows {
+        if let Some(entity_id) = row.target_entity_id {
+            let mut tx = state
+                .db
+                .begin_transaction()
+                .await
+                .map_err(|e| AppError::Internal(e.to_string()))?;
+            match adapter.revert_row(entity_id, &state.db, &mut tx).await {
+                Ok(()) => {
+                    tx.commit()
+                        .await
+                        .map_err(|e| AppError::Internal(e.to_string()))?;
+                    repo.record_reverted_row(row.id).await?;
+                }
+                Err(e) => {
+                    let _ = tx.rollback().await;
+                    if strict {
+                        return Err(AppError::Internal(format!(
+                            "cannot delete session because rollback failed: {e}"
+                        )));
+                    }
+
+                    let mut warnings = row.warnings.0.clone();
+                    warnings.push(database::models::import_row::ImportWarning {
+                        field: None,
+                        code: "revert_failed".to_string(),
+                        message: e.to_string(),
+                    });
+                    repo.save_dry_run_result(
+                        row.id,
+                        row.status,
+                        row.diff.clone(),
+                        DbJson(warnings),
+                    )
+                    .await?;
+                }
+            }
+        }
+    }
+
+    Ok(())
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

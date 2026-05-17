@@ -6,6 +6,8 @@
 //! 2. update_row_skip_true_marks_will_skip
 //! 3. update_row_applies_overrides_and_sets_will_create
 //! 4. update_row_rejects_committed_session
+//! 5. update_row_unskip_triggers_revalidation
+//! 6. skip_updates_marks_only_will_update_rows
 
 mod common;
 
@@ -195,4 +197,79 @@ async fn update_row_unskip_triggers_revalidation(pool: PgPool) {
     let body = body_json(resp).await;
     // Re-validated: no source_id → will_create
     assert_eq!(body["status"], "will_create");
+}
+
+/// 6. Session-level skip-updates converts only will_update rows to will_skip.
+#[sqlx::test]
+async fn skip_updates_marks_only_will_update_rows(pool: PgPool) {
+    let db = Database::new(pool.clone());
+    let user = create_test_user(&db, "editor_ur6@test.com", UserRole::Editor).await;
+    let session_id = seed_session(&db, user.id).await;
+
+    db.imports()
+        .save_mapping(
+            session_id,
+            ImportMapping {
+                columns: BTreeMap::from([("Titel".to_string(), Some("title_nl".to_string()))]),
+            },
+        )
+        .await
+        .unwrap();
+    db.imports()
+        .update_status(session_id, ImportSessionStatus::DryRunReady, None)
+        .await
+        .unwrap();
+
+    let mut raw_a: BTreeMap<String, Option<String>> = BTreeMap::new();
+    raw_a.insert("Titel".to_string(), Some("Update Row".to_string()));
+    let mut raw_b: BTreeMap<String, Option<String>> = BTreeMap::new();
+    raw_b.insert("Titel".to_string(), Some("Create Row".to_string()));
+
+    db.imports()
+        .insert_rows(
+            session_id,
+            &[
+                NewImportRow {
+                    row_number: 1,
+                    raw_data: Json(raw_a),
+                },
+                NewImportRow {
+                    row_number: 2,
+                    raw_data: Json(raw_b),
+                },
+            ],
+        )
+        .await
+        .unwrap();
+
+    let rows = db
+        .imports()
+        .get_rows(session_id, 10, 0, None)
+        .await
+        .unwrap();
+    db.imports()
+        .save_dry_run_result(rows[0].id, ImportRowStatus::WillUpdate, None, Json(vec![]))
+        .await
+        .unwrap();
+    db.imports()
+        .save_dry_run_result(rows[1].id, ImportRowStatus::WillCreate, None, Json(vec![]))
+        .await
+        .unwrap();
+
+    let r = TestRouter::as_editor(pool.clone()).await;
+    let resp = r
+        .post(
+            &format!("/import/sessions/{session_id}/skip-updates"),
+            serde_json::Value::Null,
+        )
+        .await;
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let updated_rows = Database::new(pool)
+        .imports()
+        .get_rows(session_id, 10, 0, None)
+        .await
+        .unwrap();
+    assert_eq!(updated_rows[0].status, ImportRowStatus::WillSkip);
+    assert_eq!(updated_rows[1].status, ImportRowStatus::WillCreate);
 }
