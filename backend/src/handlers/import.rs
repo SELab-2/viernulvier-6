@@ -17,8 +17,8 @@ use uuid::Uuid;
 use crate::{
     AppState,
     dto::import::{
-        ImportRowResponse, ImportSessionResponse, UpdateMappingRequest, UpdateRowRequest,
-        UploadResponse,
+        ImportRowResponse, ImportRowStatsResponse, ImportSessionResponse, UpdateMappingRequest,
+        UpdateRowRequest, UploadResponse,
     },
     error::AppError,
     extractors::auth::EditorUser,
@@ -354,6 +354,46 @@ pub async fn get_rows(
         .get_rows(session_id, limit, offset, q.status)
         .await?;
     Ok(Json(rows.into_iter().map(Into::into).collect()))
+}
+
+/// GET /import/sessions/{id}/stats — count all rows for a session by status.
+#[utoipa::path(
+    get,
+    path = "/import/sessions/{id}/stats",
+    params(("id" = Uuid, Path, description = "Session id")),
+    responses(
+        (status = 200, body = ImportRowStatsResponse),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse),
+    ),
+    tag = "import",
+    security(("cookie_auth" = [])),
+)]
+pub async fn get_row_stats(
+    State(state): State<AppState>,
+    _: EditorUser,
+    Path(session_id): Path<Uuid>,
+) -> Result<Json<ImportRowStatsResponse>, AppError> {
+    let counts = state.db.imports().get_row_status_counts(session_id).await?;
+    Ok(Json(ImportRowStatsResponse {
+        total: counts.pending
+            + counts.will_create
+            + counts.will_update
+            + counts.will_skip
+            + counts.error
+            + counts.created
+            + counts.updated
+            + counts.skipped
+            + counts.reverted,
+        pending: counts.pending,
+        will_create: counts.will_create,
+        will_update: counts.will_update,
+        will_skip: counts.will_skip,
+        error: counts.error,
+        created: counts.created,
+        updated: counts.updated,
+        skipped: counts.skipped,
+        reverted: counts.reverted,
+    }))
 }
 
 /// PATCH /import/sessions/{id}/mapping — persist a column mapping and advance status to `mapping`.

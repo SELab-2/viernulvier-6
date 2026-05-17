@@ -11,3 +11,16 @@ export type UpdateRowRequest = components["schemas"]["UpdateRowRequest"];
 export type UploadResponse = components["schemas"]["UploadResponse"];
 export type FieldSpecResponse = components["schemas"]["FieldSpec"];
 export type FieldTypeResponse = components["schemas"]["FieldType"];
+
+export type ImportRowStatsResponse = {
+    total: number;
+    pending: number;
+    will_create: number;
+    will_update: number;
+    will_skip: number;
+    error: number;
+    created: number;
+    updated: number;
+    skipped: number;
+    reverted: number;
+};

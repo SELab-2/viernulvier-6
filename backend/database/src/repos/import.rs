@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use sqlx::{PgPool, types::Json};
+use sqlx::{PgPool, Row, types::Json};
 use uuid::Uuid;
 
 use crate::{
@@ -27,6 +27,19 @@ pub struct CreateSession {
 pub struct NewImportRow {
     pub row_number: i32,
     pub raw_data: Json<BTreeMap<String, RawCell>>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ImportRowStatusCounts {
+    pub pending: i64,
+    pub will_create: i64,
+    pub will_update: i64,
+    pub will_skip: i64,
+    pub error: i64,
+    pub created: i64,
+    pub updated: i64,
+    pub skipped: i64,
+    pub reverted: i64,
 }
 
 impl<'a> ImportRepo<'a> {
@@ -310,6 +323,42 @@ impl<'a> ImportRepo<'a> {
         };
 
         Ok(rows)
+    }
+
+    /// Count every row in a session grouped by row status.
+    pub async fn get_row_status_counts(
+        &self,
+        session_id: Uuid,
+    ) -> Result<ImportRowStatusCounts, DatabaseError> {
+        let rows = sqlx::query(
+            r#"SELECT status, COUNT(*) AS count
+               FROM import_rows
+               WHERE session_id = $1
+               GROUP BY status"#,
+        )
+        .bind(session_id)
+        .fetch_all(self.db)
+        .await?;
+
+        let mut counts = ImportRowStatusCounts::default();
+        for row in rows {
+            let status: String = row.try_get("status")?;
+            let count: i64 = row.try_get("count")?;
+            match status.as_str() {
+                "pending" => counts.pending = count,
+                "will_create" => counts.will_create = count,
+                "will_update" => counts.will_update = count,
+                "will_skip" => counts.will_skip = count,
+                "error" => counts.error = count,
+                "created" => counts.created = count,
+                "updated" => counts.updated = count,
+                "skipped" => counts.skipped = count,
+                "reverted" => counts.reverted = count,
+                _ => {}
+            }
+        }
+
+        Ok(counts)
     }
 
     /// Persist an overrides map on a row.

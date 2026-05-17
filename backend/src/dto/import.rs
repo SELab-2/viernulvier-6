@@ -83,6 +83,20 @@ impl From<ImportRow> for ImportRowResponse {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct ImportRowStatsResponse {
+    pub total: i64,
+    pub pending: i64,
+    pub will_create: i64,
+    pub will_update: i64,
+    pub will_skip: i64,
+    pub error: i64,
+    pub created: i64,
+    pub updated: i64,
+    pub skipped: i64,
+    pub reverted: i64,
+}
+
 /// Response returned after a CSV file is uploaded (POST /import/sessions).
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct UploadResponse {

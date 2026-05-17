@@ -2,10 +2,11 @@
 
 import { useTranslations } from "next-intl";
 
-import type { ImportRow, ImportSessionStatus } from "@/types/models/import.types";
+import type { ImportRow, ImportRowStats, ImportSessionStatus } from "@/types/models/import.types";
 
 type DryRunSummaryProps = {
     rows: ImportRow[];
+    stats?: ImportRowStats;
     sessionStatus: ImportSessionStatus;
 };
 
@@ -36,9 +37,17 @@ function countStatuses(rows: ImportRow[]): StatusCounts {
     );
 }
 
-export function DryRunSummary({ rows, sessionStatus }: DryRunSummaryProps) {
+export function DryRunSummary({ rows, stats, sessionStatus }: DryRunSummaryProps) {
     const t = useTranslations("Cms.Import");
-    const counts = countStatuses(rows);
+    const pageCounts = countStatuses(rows);
+    const counts = stats
+        ? {
+              willCreate: stats.willCreate,
+              willUpdate: stats.willUpdate,
+              willSkip: stats.willSkip,
+              errors: stats.error,
+          }
+        : pageCounts;
     const isPending = sessionStatus === "dry_run_pending";
 
     return (

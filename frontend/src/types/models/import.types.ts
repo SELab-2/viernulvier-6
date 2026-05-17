@@ -40,6 +40,19 @@ export type ImportRow = {
     targetEntityId: string | null;
 };
 
+export type ImportRowStats = {
+    total: number;
+    pending: number;
+    willCreate: number;
+    willUpdate: number;
+    willSkip: number;
+    error: number;
+    created: number;
+    updated: number;
+    skipped: number;
+    reverted: number;
+};
+
 export type FieldType =
     | { kind: "string" }
     | { kind: "text" }

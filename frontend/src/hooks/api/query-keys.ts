@@ -124,6 +124,7 @@ export const queryKeys = {
             params
                 ? (["imports", "sessions", sessionId, "rows", params] as const)
                 : (["imports", "sessions", sessionId, "rows"] as const),
+        rowStats: (sessionId: string) => ["imports", "sessions", sessionId, "stats"] as const,
         fieldSpec: (entityType: string) => ["imports", "fields", entityType] as const,
         entityTypes: ["imports", "entity-types"] as const,
     },

@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import {
     useCommitImport,
     useFieldSpec,
+    useImportRowStats,
     useImportRows,
     useImportSession,
     useStartDryRun,
@@ -52,13 +53,11 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
         isError: fieldsError,
     } = useFieldSpec(session?.entityType ?? "", { enabled: Boolean(session?.entityType) });
 
-    const { data: errorProbeRows, isPending: errorProbeLoading } = useImportRows(
-        sessionId,
-        { page: 1, limit: 1, status: "error" },
-        { enabled: Boolean(session) && session?.status === "dry_run_ready" }
-    );
+    const { data: rowStats, isPending: rowStatsLoading } = useImportRowStats(sessionId, {
+        enabled: Boolean(session),
+    });
 
-    const hasErrors = (errorProbeRows?.length ?? 0) > 0;
+    const hasErrors = (rowStats?.error ?? 0) > 0;
 
     // Auto-show error rows when dry run finishes with errors, unless the user has manually chosen a filter
     const effectiveFilter: ImportRowStatus | "all" =
@@ -87,11 +86,14 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
     const resolvedFields = fields ?? [];
 
     const counts = {
-        all: session?.rowCount ?? resolvedRows.length,
-        will_create: resolvedRows.filter((r) => r.status === "will_create").length,
-        will_update: resolvedRows.filter((r) => r.status === "will_update").length,
-        will_skip: resolvedRows.filter((r) => r.status === "will_skip").length,
-        error: resolvedRows.filter((r) => r.status === "error").length,
+        all: rowStats?.total ?? session?.rowCount ?? resolvedRows.length,
+        will_create:
+            rowStats?.willCreate ?? resolvedRows.filter((r) => r.status === "will_create").length,
+        will_update:
+            rowStats?.willUpdate ?? resolvedRows.filter((r) => r.status === "will_update").length,
+        will_skip:
+            rowStats?.willSkip ?? resolvedRows.filter((r) => r.status === "will_skip").length,
+        error: rowStats?.error ?? resolvedRows.filter((r) => r.status === "error").length,
     };
 
     if (sessionLoading || rowsLoading || fieldsLoading) {
@@ -149,15 +151,13 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
 
     const selectedRow = selectedId ? (resolvedRows.find((r) => r.id === selectedId) ?? null) : null;
     const canRerun = session.status === "dry_run_ready" || session.status === "failed";
-    const canCommit = session.status === "dry_run_ready" && !errorProbeLoading && !hasErrors;
+    const canCommit = session.status === "dry_run_ready" && !rowStatsLoading && !hasErrors;
     const firstVisibleRow = resolvedRows.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
     const lastVisibleRow =
         resolvedRows.length === 0 ? 0 : firstVisibleRow + resolvedRows.length - 1;
     const canGoPrevious = page > 1;
     const canGoNext =
-        effectiveFilter === "all"
-            ? lastVisibleRow < session.rowCount
-            : resolvedRows.length === PAGE_SIZE;
+        effectiveFilter === "all" ? lastVisibleRow < counts.all : resolvedRows.length === PAGE_SIZE;
 
     return (
         <div className="mx-auto max-w-5xl space-y-5 pt-2">
@@ -170,12 +170,12 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
                 </p>
             </div>
 
-            <DryRunSummary rows={resolvedRows} sessionStatus={session.status} />
+            <DryRunSummary rows={resolvedRows} stats={rowStats} sessionStatus={session.status} />
 
             <div className="border-border flex flex-col gap-4 border px-4 py-3 md:flex-row md:items-center md:justify-between">
                 <div>
                     <p className="text-foreground font-mono text-[10px] font-medium tracking-[1.5px] uppercase">
-                        {t("dryRun.totalRows", { total: session.rowCount })}
+                        {t("dryRun.totalRows", { total: counts.all })}
                     </p>
                     <p className="text-muted-foreground mt-1 text-sm">
                         {t("dryRun.rowRange", {

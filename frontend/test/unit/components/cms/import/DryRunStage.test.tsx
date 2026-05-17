@@ -15,11 +15,14 @@ const mockUpdateRowMutate = vi.fn();
 
 const mockUseImportSession = vi.fn();
 const mockUseImportRows = vi.fn();
+const mockUseImportRowStats = vi.fn();
 const mockUseFieldSpec = vi.fn();
 
 vi.mock("@/hooks/api/useImport", () => ({
     useImportSession: (id: string) => mockUseImportSession(id),
     useImportRows: (sessionId: string, params?: unknown) => mockUseImportRows(sessionId, params),
+    useImportRowStats: (sessionId: string, options?: unknown) =>
+        mockUseImportRowStats(sessionId, options),
     useFieldSpec: (entityType: string, options?: unknown) => mockUseFieldSpec(entityType, options),
     useStartDryRun: () => ({
         mutate: mockStartDryRunMutate,
@@ -115,6 +118,19 @@ const defaultFields = [
     },
 ];
 
+const defaultStats = {
+    total: 2,
+    pending: 0,
+    willCreate: 1,
+    willUpdate: 1,
+    willSkip: 0,
+    error: 0,
+    created: 0,
+    updated: 0,
+    skipped: 0,
+    reverted: 0,
+};
+
 function setupDefaultMocks() {
     (mockUseImportSession as Mock).mockReturnValue({
         data: defaultSession,
@@ -128,6 +144,11 @@ function setupDefaultMocks() {
             isError: false,
         })
     );
+    (mockUseImportRowStats as Mock).mockReturnValue({
+        data: defaultStats,
+        isPending: false,
+        isError: false,
+    });
     (mockUseFieldSpec as Mock).mockReturnValue({
         data: defaultFields,
         isPending: false,
@@ -201,16 +222,16 @@ describe("DryRunStage", () => {
             isPending: false,
             isError: false,
         });
-        (mockUseImportRows as Mock).mockImplementation(
-            (_sessionId: string, params?: { status?: string | null }) => ({
-                data:
-                    params?.status === "error"
-                        ? [{ ...defaultRows[0], status: "error" as const }]
-                        : [{ ...defaultRows[0], status: "error" as const }, defaultRows[1]],
-                isPending: false,
-                isError: false,
-            })
-        );
+        (mockUseImportRows as Mock).mockReturnValue({
+            data: [{ ...defaultRows[0], status: "error" as const }, defaultRows[1]],
+            isPending: false,
+            isError: false,
+        });
+        (mockUseImportRowStats as Mock).mockReturnValue({
+            data: { ...defaultStats, willCreate: 0, error: 1 },
+            isPending: false,
+            isError: false,
+        });
         (mockUseFieldSpec as Mock).mockReturnValue({
             data: defaultFields,
             isPending: false,
@@ -225,6 +246,11 @@ describe("DryRunStage", () => {
 
     it("requests a 25-row page and displays the session total", () => {
         setupDefaultMocks();
+        (mockUseImportRowStats as Mock).mockReturnValue({
+            data: { ...defaultStats, total: 6129, willCreate: 6100, willUpdate: 4 },
+            isPending: false,
+            isError: false,
+        });
         renderDryRunStage();
 
         expect(mockUseImportRows).toHaveBeenCalledWith(SESSION_ID, {
@@ -232,8 +258,9 @@ describe("DryRunStage", () => {
             limit: 25,
             status: null,
         });
-        expect(screen.getByText("2 rows total")).toBeInTheDocument();
+        expect(screen.getByText("6129 rows total")).toBeInTheDocument();
         expect(screen.getByText("Showing rows 1-2")).toBeInTheDocument();
+        expect(screen.getAllByText("6100").length).toBeGreaterThanOrEqual(1);
     });
 
     it("re-run button fires useStartDryRun.mutate", async () => {

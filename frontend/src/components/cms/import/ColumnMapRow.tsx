@@ -13,9 +13,17 @@ import {
 import { cn } from "@/lib/utils";
 
 const IGNORE_SENTINEL = "__ignore__";
+const PREVIEW_VALUE_LIMIT = 48;
 
 function fieldTypeKey(kind: FieldType["kind"]): string {
     return `mapping.fieldType.${kind}`;
+}
+
+function formatPreviewValue(value: string): string {
+    const trimmed = value.replace(/\s+/g, " ").trim();
+    return trimmed.length > PREVIEW_VALUE_LIMIT
+        ? `${trimmed.slice(0, PREVIEW_VALUE_LIMIT)}…`
+        : trimmed;
 }
 
 type ColumnMapRowProps = {
@@ -51,6 +59,9 @@ export function ColumnMapRow({
     return (
         <tr className="border-border border-b last:border-b-0">
             <td className="w-1/2 px-5 py-4 align-top">
+                <p className="text-muted-foreground mb-1 font-mono text-[10px] tracking-[1.5px] uppercase">
+                    {t("mapping.csvColumnLabel")}
+                </p>
                 <p
                     className={cn(
                         "text-sm font-medium",
@@ -60,21 +71,28 @@ export function ColumnMapRow({
                     {header}
                 </p>
                 {visibleSamples.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                        <span className="sr-only">{t("mapping.sampleValuesLabel")}</span>
-                        {visibleSamples.map((v, i) => (
-                            <span
-                                key={`${i}-${v}`}
-                                title={v}
-                                className="bg-muted text-foreground max-w-[120px] truncate px-1.5 py-0.5 font-mono text-[10px]"
-                            >
-                                {v}
-                            </span>
-                        ))}
+                    <div className="mt-3">
+                        <p className="text-muted-foreground mb-1 font-mono text-[10px] tracking-[1.5px] uppercase">
+                            {t("mapping.csvPreviewLabel")}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                            {visibleSamples.map((v, i) => (
+                                <span
+                                    key={`${i}-${v}`}
+                                    title={v}
+                                    className="border-border bg-background text-muted-foreground inline-block max-w-[140px] truncate border px-1.5 py-0.5 font-mono text-[10px]"
+                                >
+                                    {formatPreviewValue(v)}
+                                </span>
+                            ))}
+                        </div>
                     </div>
                 )}
             </td>
             <td className="w-1/2 px-5 py-4 align-top">
+                <p className="text-muted-foreground mb-1 font-mono text-[10px] tracking-[1.5px] uppercase">
+                    {t("mapping.cmsFieldLabel")}
+                </p>
                 <Select value={selectValue} onValueChange={handleValueChange}>
                     <SelectTrigger className="w-full rounded-none font-mono text-xs">
                         <SelectValue />

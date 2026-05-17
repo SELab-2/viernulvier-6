@@ -385,6 +385,7 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
             import_handlers::cancel_session
         ))
         .routes(routes!(import_handlers::get_rows))
+        .routes(routes!(import_handlers::get_row_stats))
         .routes(routes!(import_handlers::update_mapping))
         .routes(routes!(import_handlers::enqueue_dry_run))
         .routes(routes!(import_handlers::enqueue_commit))

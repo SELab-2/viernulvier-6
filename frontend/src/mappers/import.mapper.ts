@@ -3,6 +3,7 @@ import {
     FieldTypeResponse,
     ImportMappingResponse,
     ImportRowResponse,
+    ImportRowStatsResponse,
     ImportSessionResponse,
     UpdateMappingRequest,
     UpdateRowRequest,
@@ -13,6 +14,7 @@ import {
     FieldType,
     ImportMapping,
     ImportRow,
+    ImportRowStats,
     ImportSession,
     ImportWarning,
     UploadResult,
@@ -57,6 +59,19 @@ export const mapImportRow = (response: ImportRowResponse): ImportRow => ({
 
 export const mapImportRows = (responses: ImportRowResponse[]): ImportRow[] =>
     responses.map(mapImportRow);
+
+export const mapImportRowStats = (response: ImportRowStatsResponse): ImportRowStats => ({
+    total: response.total,
+    pending: response.pending,
+    willCreate: response.will_create,
+    willUpdate: response.will_update,
+    willSkip: response.will_skip,
+    error: response.error,
+    created: response.created,
+    updated: response.updated,
+    skipped: response.skipped,
+    reverted: response.reverted,
+});
 
 const mapFieldType = (response: FieldTypeResponse): FieldType => {
     switch (response.kind) {

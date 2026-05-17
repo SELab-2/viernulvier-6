@@ -4,6 +4,7 @@ import { api } from "@/lib/api-client";
 import {
     mapFieldSpecs,
     mapImportRow,
+    mapImportRowStats,
     mapImportRows,
     mapImportSession,
     mapImportSessions,
@@ -14,6 +15,7 @@ import {
 import {
     FieldSpecResponse,
     ImportRowResponse,
+    ImportRowStatsResponse,
     ImportSessionResponse,
     UploadResponse,
 } from "@/types/api/import.api.types";
@@ -21,6 +23,7 @@ import {
     FieldSpec,
     ImportMapping,
     ImportRow,
+    ImportRowStats,
     ImportRowsParams,
     ImportSession,
     ImportSessionStatus,
@@ -56,6 +59,11 @@ const fetchImportRows = async (
         params,
     });
     return mapImportRows(data);
+};
+
+const fetchImportRowStats = async (sessionId: string): Promise<ImportRowStats> => {
+    const { data } = await api.get<ImportRowStatsResponse>(`/import/sessions/${sessionId}/stats`);
+    return mapImportRowStats(data);
 };
 
 const fetchFieldSpec = async (entityType: string): Promise<FieldSpec[]> => {
@@ -97,6 +105,22 @@ export const useImportRows = (
     return useQuery({
         queryKey: queryKeys.imports.rows(sessionId, params),
         queryFn: () => fetchImportRows(sessionId, params),
+        enabled: Boolean(sessionId) && (options?.enabled ?? true),
+        refetchInterval: () => {
+            const session = queryClient.getQueryData<ImportSession>(
+                queryKeys.imports.session(sessionId)
+            );
+            return isActiveSessionStatus(session?.status) ? ACTIVE_SESSION_POLL_MS : false;
+        },
+    });
+};
+
+export const useImportRowStats = (sessionId: string, options?: { enabled?: boolean }) => {
+    const queryClient = useQueryClient();
+
+    return useQuery({
+        queryKey: queryKeys.imports.rowStats(sessionId),
+        queryFn: () => fetchImportRowStats(sessionId),
         enabled: Boolean(sessionId) && (options?.enabled ?? true),
         refetchInterval: () => {
             const session = queryClient.getQueryData<ImportSession>(
@@ -178,6 +202,7 @@ export const useStartDryRun = () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.imports.rows(session.id),
             });
+            queryClient.invalidateQueries({ queryKey: queryKeys.imports.rowStats(session.id) });
             queryClient.invalidateQueries({ queryKey: queryKeys.imports.sessions() });
         },
     });
@@ -208,6 +233,9 @@ export const useUpdateRow = () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.imports.rows(variables.sessionId),
             });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.imports.rowStats(variables.sessionId),
+            });
         },
     });
 };
@@ -225,6 +253,7 @@ export const useCommitImport = () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.imports.rows(session.id),
             });
+            queryClient.invalidateQueries({ queryKey: queryKeys.imports.rowStats(session.id) });
             queryClient.invalidateQueries({ queryKey: queryKeys.imports.sessions() });
         },
     });
@@ -245,6 +274,9 @@ export const useRevertRow = () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.imports.session(variables.sessionId),
             });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.imports.rowStats(variables.sessionId),
+            });
         },
     });
 };
@@ -264,6 +296,7 @@ export const useRollbackSession = () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.imports.rows(session.id),
             });
+            queryClient.invalidateQueries({ queryKey: queryKeys.imports.rowStats(session.id) });
             queryClient.invalidateQueries({ queryKey: queryKeys.imports.sessions() });
         },
     });
