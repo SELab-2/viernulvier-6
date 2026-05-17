@@ -761,6 +761,8 @@
                 },
                 "totalRows": "{total} rows total",
                 "rowRange": "Showing rows {start}-{end}",
+                "previous": "Previous",
+                "next": "Next",
                 "pageLabel": "Page {page}",
                 "emptyRows": "No rows in this section.",
                 "revertedLabel": "Reverted",

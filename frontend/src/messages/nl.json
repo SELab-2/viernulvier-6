@@ -761,6 +761,8 @@
                 },
                 "totalRows": "{total} rijen totaal",
                 "rowRange": "Rijen {start}-{end} worden getoond",
+                "previous": "Vorige",
+                "next": "Volgende",
                 "pageLabel": "Pagina {page}",
                 "emptyRows": "Geen rijen in deze sectie.",
                 "revertedLabel": "Teruggedraaid",
