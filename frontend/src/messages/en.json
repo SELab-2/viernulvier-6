@@ -564,6 +564,10 @@
                 "startingDryRun": "Starting…",
                 "requiredMissing": "Required fields not yet mapped",
                 "saveSuccess": "Mapping saved.",
+                "expectedType": "Expected: {type}",
+                "typeMismatch": "{count} mismatched sample(s): {examples}",
+                "typeMismatchTitle": "Some mapped columns do not match the expected type",
+                "typeMismatchColumn": "{column}: {count} mismatch(es) ({examples})",
                 "fieldType": {
                     "string": "text",
                     "text": "text area",
@@ -614,6 +618,9 @@
             "dryRun": {
                 "helperText": "Review what will happen. Fix errors and adjust rows before committing.",
                 "pendingLabel": "Dry-run is running…",
+                "totalRows": "{total} rows total",
+                "rowRange": "Showing rows {start}-{end}",
+                "pageLabel": "Page {page}",
                 "commitConfirmTitle": "Confirm import?",
                 "commitConfirmBody": "{create} records will be created · {update} will be updated · {skip} will be skipped.",
                 "commitConfirmCta": "Import",
@@ -629,7 +636,9 @@
             "actions": {
                 "commit": "Commit",
                 "rerunDryRun": "Re-run dry-run",
-                "backToMapping": "Back to mapping"
+                "backToMapping": "Back to mapping",
+                "previousRows": "Previous",
+                "nextRows": "Next"
             },
             "drawer": {
                 "title": "Row {n}",

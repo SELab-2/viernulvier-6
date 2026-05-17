@@ -5,6 +5,7 @@ use argon2::{
     password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
 };
 use aws_sdk_s3::config::{Builder as S3Builder, Credentials, Region};
+use axum::extract::DefaultBodyLimit;
 use axum::http::{HeaderValue, Method};
 use axum::middleware::from_extractor_with_state;
 use axum::{Router, routing::get};
@@ -24,6 +25,8 @@ use utoipa::{
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
 use utoipa_swagger_ui::{Config, SwaggerUi};
+
+const REQUEST_BODY_LIMIT_BYTES: usize = 12 * 1024 * 1024;
 
 use crate::config::AppConfig;
 use crate::error::AppError;
@@ -251,6 +254,7 @@ pub fn router(state: &AppState) -> Router<AppState> {
     Router::new()
         .nest(&base_path, api_router)
         .merge(swagger_ui)
+        .layer(DefaultBodyLimit::max(REQUEST_BODY_LIMIT_BYTES))
         .fallback(get(|| async { AppError::NotFound }))
 }
 

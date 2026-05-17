@@ -5,7 +5,7 @@ use axum::{
 };
 use database::models::import_row::{ImportRowStatus, RawCell};
 use database::models::import_session::{ImportMapping, ImportSessionStatus};
-use database::repos::import::CreateSession;
+use database::repos::import::{CreateSession, NewImportRow};
 use serde::Deserialize;
 use serde_json::Value;
 use sqlx::types::Json as DbJson;
@@ -174,6 +174,22 @@ pub async fn upload_session(
             original_headers: preview.headers.clone(),
             created_by: user.0.id,
         })
+        .await?;
+
+    let preview_rows: Vec<NewImportRow> = preview
+        .preview_rows
+        .iter()
+        .enumerate()
+        .map(|(idx, row)| NewImportRow {
+            row_number: (idx + 1) as i32,
+            raw_data: DbJson(row.clone()),
+        })
+        .collect();
+    let total_row_count = i32::try_from(preview.total_rows).unwrap_or(i32::MAX);
+    state
+        .db
+        .imports()
+        .insert_preview_rows(session_id, &preview_rows, total_row_count)
         .await?;
 
     // Step 7: upload CSV to S3
@@ -641,6 +657,13 @@ pub async fn update_row(
 
     // 10. Validate
     let warnings = adapter.validate_row(&resolved);
+
+    if !warnings.is_empty() {
+        repo.save_dry_run_result(row_id, ImportRowStatus::Error, None, DbJson(warnings))
+            .await?;
+        let final_row = repo.get_row(row_id).await?.ok_or(AppError::NotFound)?;
+        return Ok(Json(final_row.into()));
+    }
 
     // 11. Lookup existing entity
     let existing_id = adapter

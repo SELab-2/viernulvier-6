@@ -30,12 +30,15 @@ type DryRunStageProps = {
     sessionId: string;
 };
 
+const PAGE_SIZE = 25;
+
 export function DryRunStage({ sessionId }: DryRunStageProps) {
     const t = useTranslations("Cms.Import");
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState<ImportRowStatus | "all">("all");
     const [commitConfirmOpen, setCommitConfirmOpen] = useState(false);
     const [userHasFiltered, setUserHasFiltered] = useState(false);
+    const [page, setPage] = useState(1);
 
     const {
         data: session,
@@ -43,20 +46,19 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
         isError: sessionError,
     } = useImportSession(sessionId);
 
-    const { data: rows, isPending: rowsLoading, isError: rowsError } = useImportRows(sessionId);
-
     const {
         data: fields,
         isPending: fieldsLoading,
         isError: fieldsError,
     } = useFieldSpec(session?.entityType ?? "", { enabled: Boolean(session?.entityType) });
 
-    const startDryRun = useStartDryRun();
-    const commitImport = useCommitImport();
+    const { data: errorProbeRows, isPending: errorProbeLoading } = useImportRows(
+        sessionId,
+        { page: 1, limit: 1, status: "error" },
+        { enabled: Boolean(session) && session?.status === "dry_run_ready" }
+    );
 
-    const resolvedRows = rows ?? [];
-    const resolvedFields = fields ?? [];
-    const hasErrors = resolvedRows.some((r) => r.status === "error");
+    const hasErrors = (errorProbeRows?.length ?? 0) > 0;
 
     // Auto-show error rows when dry run finishes with errors, unless the user has manually chosen a filter
     const effectiveFilter: ImportRowStatus | "all" =
@@ -64,13 +66,28 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
             ? "error"
             : statusFilter;
 
-    const filteredRows =
-        effectiveFilter === "all"
-            ? resolvedRows
-            : resolvedRows.filter((r) => r.status === effectiveFilter);
+    const {
+        data: rows,
+        isPending: rowsLoading,
+        isError: rowsError,
+    } = useImportRows(
+        sessionId,
+        {
+            page,
+            limit: PAGE_SIZE,
+            status: effectiveFilter === "all" ? null : effectiveFilter,
+        },
+        { enabled: Boolean(session) }
+    );
+
+    const startDryRun = useStartDryRun();
+    const commitImport = useCommitImport();
+
+    const resolvedRows = rows ?? [];
+    const resolvedFields = fields ?? [];
 
     const counts = {
-        all: resolvedRows.length,
+        all: session?.rowCount ?? resolvedRows.length,
         will_create: resolvedRows.filter((r) => r.status === "will_create").length,
         will_update: resolvedRows.filter((r) => r.status === "will_update").length,
         will_skip: resolvedRows.filter((r) => r.status === "will_skip").length,
@@ -132,7 +149,15 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
 
     const selectedRow = selectedId ? (resolvedRows.find((r) => r.id === selectedId) ?? null) : null;
     const canRerun = session.status === "dry_run_ready" || session.status === "failed";
-    const canCommit = session.status === "dry_run_ready" && !hasErrors;
+    const canCommit = session.status === "dry_run_ready" && !errorProbeLoading && !hasErrors;
+    const firstVisibleRow = resolvedRows.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+    const lastVisibleRow =
+        resolvedRows.length === 0 ? 0 : firstVisibleRow + resolvedRows.length - 1;
+    const canGoPrevious = page > 1;
+    const canGoNext =
+        effectiveFilter === "all"
+            ? lastVisibleRow < session.rowCount
+            : resolvedRows.length === PAGE_SIZE;
 
     return (
         <div className="mx-auto max-w-5xl space-y-5 pt-2">
@@ -147,52 +172,19 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
 
             <DryRunSummary rows={resolvedRows} sessionStatus={session.status} />
 
-            {/* Status filter bar */}
-            <div className="flex flex-wrap gap-2">
-                {(
-                    [
-                        ["all", t("filter.all"), counts.all],
-                        ["will_create", t("filter.willCreate"), counts.will_create],
-                        ["will_update", t("filter.willUpdate"), counts.will_update],
-                        ["will_skip", t("filter.willSkip"), counts.will_skip],
-                        ["error", t("filter.errors"), counts.error],
-                    ] as [ImportRowStatus | "all", string, number][]
-                ).map(([key, label, count]) => (
-                    <button
-                        key={key}
-                        type="button"
-                        onClick={() => {
-                            setUserHasFiltered(true);
-                            setStatusFilter(key);
-                        }}
-                        className={[
-                            "border px-3 py-1 font-mono text-[10px] font-medium tracking-[1.5px] uppercase transition-colors",
-                            effectiveFilter === key
-                                ? "bg-foreground text-background border-foreground"
-                                : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground",
-                        ].join(" ")}
-                    >
-                        {label} <span className="tabular-nums">{count}</span>
-                    </button>
-                ))}
-            </div>
-
-            {filteredRows.length === 0 && effectiveFilter !== "all" ? (
-                <div className="border-border border px-6 py-12 text-center">
-                    <p className="text-muted-foreground text-sm">
-                        {effectiveFilter === "error" ? t("filter.noErrors") : t("filter.noResults")}
+            <div className="border-border flex flex-col gap-4 border px-4 py-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <p className="text-foreground font-mono text-[10px] font-medium tracking-[1.5px] uppercase">
+                        {t("dryRun.totalRows", { total: session.rowCount })}
+                    </p>
+                    <p className="text-muted-foreground mt-1 text-sm">
+                        {t("dryRun.rowRange", {
+                            start: firstVisibleRow,
+                            end: lastVisibleRow,
+                        })}
                     </p>
                 </div>
-            ) : (
-                <DryRunTable
-                    rows={filteredRows}
-                    mapping={session.mapping}
-                    onSelectRow={(row) => setSelectedId(row.id)}
-                />
-            )}
-
-            <div className="flex flex-col gap-3 pt-2">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2">
                     <Button
                         variant="ghost"
                         size="sm"
@@ -219,17 +211,86 @@ export function DryRunStage({ sessionId }: DryRunStageProps) {
                         {t("actions.commit")}
                     </Button>
                 </div>
+            </div>
 
-                {startDryRun.isError && (
-                    <p role="alert" className="text-destructive text-sm">
-                        {t("errors.rerunFailed")}
+            {startDryRun.isError && (
+                <p role="alert" className="text-destructive text-sm">
+                    {t("errors.rerunFailed")}
+                </p>
+            )}
+            {commitImport.isError && (
+                <p role="alert" className="text-destructive text-sm">
+                    {t("errors.commitFailed")}
+                </p>
+            )}
+
+            {/* Status filter bar */}
+            <div className="flex flex-wrap gap-2">
+                {(
+                    [
+                        ["all", t("filter.all"), counts.all],
+                        ["will_create", t("filter.willCreate"), counts.will_create],
+                        ["will_update", t("filter.willUpdate"), counts.will_update],
+                        ["will_skip", t("filter.willSkip"), counts.will_skip],
+                        ["error", t("filter.errors"), counts.error],
+                    ] as [ImportRowStatus | "all", string, number][]
+                ).map(([key, label, count]) => (
+                    <button
+                        key={key}
+                        type="button"
+                        onClick={() => {
+                            setUserHasFiltered(true);
+                            setStatusFilter(key);
+                            setPage(1);
+                        }}
+                        className={[
+                            "border px-3 py-1 font-mono text-[10px] font-medium tracking-[1.5px] uppercase transition-colors",
+                            effectiveFilter === key
+                                ? "bg-foreground text-background border-foreground"
+                                : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground",
+                        ].join(" ")}
+                    >
+                        {label} <span className="tabular-nums">{count}</span>
+                    </button>
+                ))}
+            </div>
+
+            {resolvedRows.length === 0 && effectiveFilter !== "all" ? (
+                <div className="border-border border px-6 py-12 text-center">
+                    <p className="text-muted-foreground text-sm">
+                        {effectiveFilter === "error" ? t("filter.noErrors") : t("filter.noResults")}
                     </p>
-                )}
-                {commitImport.isError && (
-                    <p role="alert" className="text-destructive text-sm">
-                        {t("errors.commitFailed")}
-                    </p>
-                )}
+                </div>
+            ) : (
+                <DryRunTable
+                    rows={resolvedRows}
+                    mapping={session.mapping}
+                    onSelectRow={(row) => setSelectedId(row.id)}
+                />
+            )}
+
+            <div className="flex items-center justify-between gap-3">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!canGoPrevious}
+                    onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    className="rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                >
+                    {t("actions.previousRows")}
+                </Button>
+                <span className="text-muted-foreground font-mono text-[10px] tracking-[1.5px] uppercase">
+                    {t("dryRun.pageLabel", { page })}
+                </span>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!canGoNext}
+                    onClick={() => setPage((current) => current + 1)}
+                    className="rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                >
+                    {t("actions.nextRows")}
+                </Button>
             </div>
 
             <RowDrawer

@@ -121,11 +121,13 @@ function setupDefaultMocks() {
         isPending: false,
         isError: false,
     });
-    (mockUseImportRows as Mock).mockReturnValue({
-        data: defaultRows,
-        isPending: false,
-        isError: false,
-    });
+    (mockUseImportRows as Mock).mockImplementation(
+        (_sessionId: string, params?: { status?: string | null }) => ({
+            data: params?.status === "error" ? [] : defaultRows,
+            isPending: false,
+            isError: false,
+        })
+    );
     (mockUseFieldSpec as Mock).mockReturnValue({
         data: defaultFields,
         isPending: false,
@@ -199,11 +201,16 @@ describe("DryRunStage", () => {
             isPending: false,
             isError: false,
         });
-        (mockUseImportRows as Mock).mockReturnValue({
-            data: [{ ...defaultRows[0], status: "error" as const }, defaultRows[1]],
-            isPending: false,
-            isError: false,
-        });
+        (mockUseImportRows as Mock).mockImplementation(
+            (_sessionId: string, params?: { status?: string | null }) => ({
+                data:
+                    params?.status === "error"
+                        ? [{ ...defaultRows[0], status: "error" as const }]
+                        : [{ ...defaultRows[0], status: "error" as const }, defaultRows[1]],
+                isPending: false,
+                isError: false,
+            })
+        );
         (mockUseFieldSpec as Mock).mockReturnValue({
             data: defaultFields,
             isPending: false,
@@ -214,6 +221,19 @@ describe("DryRunStage", () => {
 
         const commitButton = screen.getByRole("button", { name: "Commit" });
         expect(commitButton).toBeDisabled();
+    });
+
+    it("requests a 25-row page and displays the session total", () => {
+        setupDefaultMocks();
+        renderDryRunStage();
+
+        expect(mockUseImportRows).toHaveBeenCalledWith(SESSION_ID, {
+            page: 1,
+            limit: 25,
+            status: null,
+        });
+        expect(screen.getByText("2 rows total")).toBeInTheDocument();
+        expect(screen.getByText("Showing rows 1-2")).toBeInTheDocument();
     });
 
     it("re-run button fires useStartDryRun.mutate", async () => {

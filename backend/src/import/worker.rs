@@ -8,6 +8,7 @@ use std::collections::BTreeMap;
 
 use database::Database;
 use database::models::import_row::{ImportRowStatus, ImportWarning, RawCell};
+use database::models::import_session::ImportMapping;
 use database::models::import_session::ImportSessionStatus;
 use database::repos::import::{ImportRepo, NewImportRow};
 use sqlx::types::Json;
@@ -248,8 +249,11 @@ pub async fn process_dry_run_bytes(
     for row in &inserted_rows {
         let raw = &row.raw_data.0;
 
-        // (a) Resolve FK references.
-        let reference_resolution = match adapter.resolve_references(raw, db).await {
+        // (a) Resolve FK references against target field names, not raw CSV
+        // headers. Legacy files often have headers like "Production" mapped to
+        // `production_id`; adapters should not need to know every source header.
+        let reference_input = build_mapped_raw_row(raw, mapping);
+        let reference_resolution = match adapter.resolve_references(&reference_input, db).await {
             Ok(r) => r,
             Err(e) => {
                 let warnings = vec![ImportWarning {
@@ -300,6 +304,17 @@ pub async fn process_dry_run_bytes(
 
         // (e) Validate.
         let warnings = adapter.validate_row(&resolved_row);
+
+        if !warnings.is_empty() {
+            if let Err(e) = db
+                .imports()
+                .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
+                .await
+            {
+                warn!("failed to persist validation error for row {}: {e}", row.id);
+            }
+            continue;
+        }
 
         // (f) Look up existing entity.
         let existing_id = match adapter.lookup_existing(&resolved_row, db).await {
@@ -360,6 +375,56 @@ pub async fn process_dry_run_bytes(
         .await?;
 
     Ok(())
+}
+
+fn build_mapped_raw_row(
+    raw: &BTreeMap<String, RawCell>,
+    mapping: &ImportMapping,
+) -> BTreeMap<String, RawCell> {
+    mapping
+        .columns
+        .iter()
+        .filter_map(|(header, field_name)| {
+            field_name
+                .as_ref()
+                .map(|field| (field.clone(), raw.get(header).cloned().unwrap_or(None)))
+        })
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::build_mapped_raw_row;
+    use database::models::import_session::ImportMapping;
+    use std::collections::BTreeMap;
+
+    #[test]
+    fn mapped_raw_row_uses_target_field_names_for_reference_resolution() {
+        let raw = BTreeMap::from([
+            ("Production".to_string(), Some("5833".to_string())),
+            ("Hall".to_string(), Some("Balzaal".to_string())),
+            ("Ignored".to_string(), Some("x".to_string())),
+        ]);
+        let mapping = ImportMapping {
+            columns: BTreeMap::from([
+                ("Production".to_string(), Some("production_id".to_string())),
+                ("Hall".to_string(), Some("hall_id".to_string())),
+                ("Ignored".to_string(), None),
+            ]),
+        };
+
+        let mapped = build_mapped_raw_row(&raw, &mapping);
+
+        assert_eq!(
+            mapped.get("production_id").and_then(|v| v.as_deref()),
+            Some("5833")
+        );
+        assert_eq!(
+            mapped.get("hall_id").and_then(|v| v.as_deref()),
+            Some("Balzaal")
+        );
+        assert!(!mapped.contains_key("Ignored"));
+    }
 }
 
 /// Commit processor: applies each actionable row to the database.

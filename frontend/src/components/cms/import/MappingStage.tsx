@@ -35,6 +35,47 @@ function buildSampleValues(header: string, rows: ImportRow[]): string[] {
     });
 }
 
+function isValueCompatible(value: string, field: FieldSpec): boolean {
+    const trimmed = value.trim();
+    if (trimmed === "") return true;
+
+    switch (field.fieldType.kind) {
+        case "string":
+        case "text":
+        case "foreign_key":
+            return true;
+        case "integer":
+            return /^-?\d+$/.test(trimmed);
+        case "decimal":
+            return /^-?\d+([,.]\d+)?$/.test(trimmed);
+        case "boolean":
+            return /^(true|false|1|0|yes|no|ja|nee)$/i.test(trimmed);
+        case "date":
+            return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) && !Number.isNaN(Date.parse(trimmed));
+        case "date_time":
+            return (
+                !Number.isNaN(Date.parse(trimmed)) ||
+                /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(trimmed)
+            );
+    }
+}
+
+function typeMismatchForColumn(field: FieldSpec | null, sampleValues: string[]) {
+    if (!field) {
+        return { count: 0, examples: [] };
+    }
+
+    const mismatches = sampleValues
+        .filter((value) => !isValueCompatible(value, field))
+        .map((value) => value.trim())
+        .filter(Boolean);
+
+    return {
+        count: mismatches.length,
+        examples: [...new Set(mismatches)].slice(0, 2),
+    };
+}
+
 function columnsAreEqual(
     a: Record<string, string | null>,
     b: Record<string, string | null>,
@@ -89,6 +130,19 @@ function MappingStageInner({ session, fields, previewRows, savedMapping }: Mappi
     const requiredFields = fields.filter((f) => f.required);
     const mappedFieldNames = new Set(Object.values(columns).filter((s): s is string => s !== null));
     const missingRequired = requiredFields.filter((f) => !mappedFieldNames.has(f.name));
+    const fieldByName = new Map(fields.map((field) => [field.name, field]));
+    const typeMismatches = headers
+        .map((header) => {
+            const selectedField = columns[header]
+                ? fieldByName.get(columns[header] as string)
+                : null;
+            const mismatch = typeMismatchForColumn(
+                selectedField ?? null,
+                buildSampleValues(header, previewRows)
+            );
+            return { header, selectedField: selectedField ?? null, ...mismatch };
+        })
+        .filter((mismatch) => mismatch.count > 0);
 
     function handleColumnChange(header: string, fieldName: string | null) {
         setColumns((prev) => ({ ...prev, [header]: fieldName }));
@@ -111,7 +165,12 @@ function MappingStageInner({ session, fields, previewRows, savedMapping }: Mappi
 
     const isSaving = updateMapping.isPending;
     const isStartingDryRun = startDryRun.isPending;
-    const dryRunDisabled = isSaving || isStartingDryRun || isDirty || missingRequired.length > 0;
+    const dryRunDisabled =
+        isSaving ||
+        isStartingDryRun ||
+        isDirty ||
+        missingRequired.length > 0 ||
+        typeMismatches.length > 0;
 
     return (
         <div className="mx-auto max-w-4xl space-y-5 pt-2">
@@ -138,6 +197,26 @@ function MappingStageInner({ session, fields, previewRows, savedMapping }: Mappi
                 </div>
             )}
 
+            {typeMismatches.length > 0 && (
+                <div
+                    role="alert"
+                    className="border-destructive/40 bg-destructive/10 text-destructive border px-4 py-3 text-sm"
+                >
+                    <p className="font-medium">{t("mapping.typeMismatchTitle")}</p>
+                    <ul className="mt-1.5 list-disc space-y-0.5 pl-4">
+                        {typeMismatches.map((mismatch) => (
+                            <li key={mismatch.header}>
+                                {t("mapping.typeMismatchColumn", {
+                                    column: mismatch.header,
+                                    count: mismatch.count,
+                                    examples: mismatch.examples.join(", "),
+                                })}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
             {updateMapping.isError && (
                 <p role="alert" className="text-destructive text-sm">
                     {t("errors.saveMappingFailed")}
@@ -154,25 +233,38 @@ function MappingStageInner({ session, fields, previewRows, savedMapping }: Mappi
                 <table className="w-full min-w-[500px] text-sm">
                     <thead>
                         <tr className="border-foreground/10 border-b text-left">
-                            <th className="text-muted-foreground pr-4 pb-2 font-mono text-[10px] font-medium tracking-[1.5px] uppercase">
+                            <th className="text-muted-foreground px-5 py-3 font-mono text-[10px] font-medium tracking-[1.5px] uppercase">
                                 {t("mapping.headerColumn")}
                             </th>
-                            <th className="text-muted-foreground pb-2 font-mono text-[10px] font-medium tracking-[1.5px] uppercase">
+                            <th className="text-muted-foreground px-5 py-3 font-mono text-[10px] font-medium tracking-[1.5px] uppercase">
                                 {t("mapping.fieldColumn")}
                             </th>
                         </tr>
                     </thead>
                     <tbody>
-                        {headers.map((header) => (
-                            <ColumnMapRow
-                                key={header}
-                                header={header}
-                                sampleValues={buildSampleValues(header, previewRows)}
-                                fields={fields}
-                                currentMapping={columns[header] ?? null}
-                                onChange={(fieldName) => handleColumnChange(header, fieldName)}
-                            />
-                        ))}
+                        {headers.map((header) => {
+                            const selectedField = columns[header]
+                                ? (fieldByName.get(columns[header] as string) ?? null)
+                                : null;
+                            const mismatch = typeMismatchForColumn(
+                                selectedField,
+                                buildSampleValues(header, previewRows)
+                            );
+
+                            return (
+                                <ColumnMapRow
+                                    key={header}
+                                    header={header}
+                                    sampleValues={buildSampleValues(header, previewRows)}
+                                    fields={fields}
+                                    currentMapping={columns[header] ?? null}
+                                    selectedField={selectedField}
+                                    mismatchCount={mismatch.count}
+                                    mismatchExamples={mismatch.examples}
+                                    onChange={(fieldName) => handleColumnChange(header, fieldName)}
+                                />
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
@@ -230,7 +322,7 @@ export function MappingStage({ sessionId }: MappingStageProps) {
         enabled: Boolean(session?.entityType),
     });
 
-    const { data: previewRows } = useImportRows(sessionId, { limit: 3 });
+    const { data: previewRows } = useImportRows(sessionId, { limit: 20 });
 
     if (sessionLoading || fieldsLoading) {
         return (

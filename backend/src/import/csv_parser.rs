@@ -44,6 +44,17 @@ fn normalize_legacy_escapes(bytes: &[u8], delimiter: u8) -> Vec<u8> {
     let mut i = 0;
 
     while i < bytes.len() {
+        if let Some(line_end_offset) = backslash_only_line_len(bytes, i) {
+            if let Some(line_end) = bytes.get(i + line_end_offset) {
+                if *line_end == b'\r' && bytes.get(i + line_end_offset + 1) == Some(&b'\n') {
+                    i += line_end_offset + 2;
+                } else {
+                    i += line_end_offset + 1;
+                }
+                continue;
+            }
+        }
+
         let is_backslash_before_closing_quote = bytes.get(i) == Some(&b'\\')
             && bytes.get(i + 1) == Some(&b'"')
             && matches!(
@@ -63,6 +74,25 @@ fn normalize_legacy_escapes(bytes: &[u8], delimiter: u8) -> Vec<u8> {
     }
 
     out
+}
+
+fn backslash_only_line_len(bytes: &[u8], start: usize) -> Option<usize> {
+    let mut i = start;
+    while matches!(bytes.get(i), Some(b' ' | b'\t')) {
+        i += 1;
+    }
+    if bytes.get(i) != Some(&b'\\') {
+        return None;
+    }
+    i += 1;
+    while matches!(bytes.get(i), Some(b' ' | b'\t')) {
+        i += 1;
+    }
+    if matches!(bytes.get(i), Some(b'\n' | b'\r')) {
+        Some(i - start)
+    } else {
+        None
+    }
 }
 
 /// Sniff the most likely delimiter by counting occurrences in the first two
@@ -226,7 +256,7 @@ pub fn parse_all(bytes: &[u8]) -> Result<Vec<BTreeMap<String, Option<String>>>, 
 
 #[cfg(test)]
 mod tests {
-    use super::parse_all;
+    use super::{parse_all, parse_preview};
     use std::path::Path;
 
     #[test]
@@ -245,6 +275,15 @@ Uberdope,"Paar jaar weg, geen vakantie,
             Some("Paar jaar weg, geen vakantie,\n".to_owned())
         );
         assert_eq!(rows[0]["planning"], Some("wo 06.03".to_owned()));
+    }
+
+    #[test]
+    fn parse_all_removes_legacy_backslash_only_spacing_lines() {
+        let csv = b"title,description\nHamlet,\"first\n\\   \nsecond\"\n";
+
+        let rows = parse_all(csv).expect("legacy CSV should parse");
+
+        assert_eq!(rows[0]["description"], Some("first\nsecond".to_owned()));
     }
 
     #[test]
@@ -285,5 +324,32 @@ Waiting For Giraffes,\N
                 "{filename} produced an empty row map"
             );
         }
+    }
+
+    #[test]
+    fn parse_preview_accepts_local_legacy_productions_when_present() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+        let path = root.join("Productions - output.csv");
+        if !path.exists() {
+            return;
+        }
+
+        let bytes = std::fs::read(&path).expect("read local legacy productions CSV fixture");
+        let preview = parse_preview(&bytes).expect("local legacy productions CSV should preview");
+
+        assert_eq!(
+            preview.headers,
+            vec![
+                "Titel",
+                "Ondertitel",
+                "Description1",
+                "Description2",
+                "Genre",
+                "ID",
+                "Planning ID",
+            ]
+        );
+        assert_eq!(preview.preview_rows.len(), 20);
+        assert!(preview.total_rows >= 6_000);
     }
 }

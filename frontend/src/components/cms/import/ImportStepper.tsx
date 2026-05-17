@@ -39,7 +39,7 @@ export function ImportStepper({ currentStage }: ImportStepperProps) {
     const t = useTranslations("Cms.Import");
 
     return (
-        <nav aria-label={t("stepper.progressLabel")} className="mb-5 border-y py-3">
+        <nav aria-label={t("stepper.progressLabel")} className="mb-5 py-2">
             <ol className="flex items-center gap-0">
                 {STAGE_LABEL_KEYS.map(({ stage, labelKey }, index) => {
                     const state = getStepState(stage, currentStage);
@@ -50,7 +50,7 @@ export function ImportStepper({ currentStage }: ImportStepperProps) {
                             <div className="flex flex-col items-center gap-1">
                                 <div
                                     className={[
-                                        "flex h-7 w-7 items-center justify-center border text-xs font-semibold transition-colors",
+                                        "flex h-6 w-6 items-center justify-center border text-[11px] font-semibold transition-colors",
                                         state === "completed"
                                             ? "border-foreground bg-foreground text-background"
                                             : state === "active"
@@ -75,7 +75,7 @@ export function ImportStepper({ currentStage }: ImportStepperProps) {
                                 </div>
                                 <span
                                     className={[
-                                        "font-mono text-[9px] tracking-[1.5px] whitespace-nowrap uppercase",
+                                        "font-mono text-[9px] tracking-[1.2px] whitespace-nowrap uppercase",
                                         state === "active"
                                             ? "text-foreground font-semibold"
                                             : state === "completed"
@@ -90,7 +90,7 @@ export function ImportStepper({ currentStage }: ImportStepperProps) {
                             {!isLast && (
                                 <div
                                     className={[
-                                        "mx-2 mb-4 h-px flex-1",
+                                        "mx-3 mb-4 h-px flex-1",
                                         state === "completed"
                                             ? "bg-foreground"
                                             : "bg-foreground/15",

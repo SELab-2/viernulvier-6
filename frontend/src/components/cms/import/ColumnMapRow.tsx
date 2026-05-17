@@ -23,6 +23,9 @@ type ColumnMapRowProps = {
     sampleValues: string[];
     fields: FieldSpec[];
     currentMapping: string | null;
+    selectedField: FieldSpec | null;
+    mismatchCount: number;
+    mismatchExamples: string[];
     onChange: (fieldName: string | null) => void;
 };
 
@@ -31,6 +34,9 @@ export function ColumnMapRow({
     sampleValues,
     fields,
     currentMapping,
+    selectedField,
+    mismatchCount,
+    mismatchExamples,
     onChange,
 }: ColumnMapRowProps) {
     const t = useTranslations("Cms.Import");
@@ -44,7 +50,7 @@ export function ColumnMapRow({
 
     return (
         <tr className="border-border border-b last:border-b-0">
-            <td className="w-1/2 px-3 py-3 align-top">
+            <td className="w-1/2 px-5 py-4 align-top">
                 <p
                     className={cn(
                         "text-sm font-medium",
@@ -54,7 +60,7 @@ export function ColumnMapRow({
                     {header}
                 </p>
                 {visibleSamples.length > 0 && (
-                    <div className="mt-1 flex flex-wrap gap-1">
+                    <div className="mt-2 flex flex-wrap gap-1.5">
                         <span className="sr-only">{t("mapping.sampleValuesLabel")}</span>
                         {visibleSamples.map((v, i) => (
                             <span
@@ -68,7 +74,7 @@ export function ColumnMapRow({
                     </div>
                 )}
             </td>
-            <td className="w-1/2 px-3 py-3 align-top">
+            <td className="w-1/2 px-5 py-4 align-top">
                 <Select value={selectValue} onValueChange={handleValueChange}>
                     <SelectTrigger className="w-full rounded-none font-mono text-xs">
                         <SelectValue />
@@ -90,6 +96,23 @@ export function ColumnMapRow({
                         ))}
                     </SelectContent>
                 </Select>
+                {selectedField && (
+                    <div className="mt-2 space-y-1">
+                        <p className="text-muted-foreground font-mono text-[10px] tracking-wide uppercase">
+                            {t("mapping.expectedType", {
+                                type: t(fieldTypeKey(selectedField.fieldType.kind)),
+                            })}
+                        </p>
+                        {mismatchCount > 0 && (
+                            <p className="text-destructive text-xs leading-relaxed">
+                                {t("mapping.typeMismatch", {
+                                    count: mismatchCount,
+                                    examples: mismatchExamples.join(", "),
+                                })}
+                            </p>
+                        )}
+                    </div>
+                )}
             </td>
         </tr>
     );

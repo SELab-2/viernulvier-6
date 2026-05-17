@@ -200,6 +200,27 @@ impl<'a> ImportRepo<'a> {
         Ok(())
     }
 
+    /// Insert preview rows and set the session row_count to the full parsed CSV
+    /// count. Dry-run deletes these preview rows before inserting all records.
+    pub async fn insert_preview_rows(
+        &self,
+        session_id: Uuid,
+        rows: &[NewImportRow],
+        total_row_count: i32,
+    ) -> Result<(), DatabaseError> {
+        self.insert_rows(session_id, rows).await?;
+
+        sqlx::query!(
+            r#"UPDATE import_sessions SET row_count = $1 WHERE id = $2"#,
+            total_row_count,
+            session_id,
+        )
+        .execute(self.db)
+        .await?;
+
+        Ok(())
+    }
+
     /// Return a single import row by id, or `None` if it doesn't exist.
     pub async fn get_row(&self, row_id: Uuid) -> Result<Option<ImportRow>, DatabaseError> {
         let row = sqlx::query_as!(

@@ -89,6 +89,22 @@ async fn fuzzy_match_productions(
     input: &str,
     limit: usize,
 ) -> anyhow::Result<Vec<ReferenceSuggestion>> {
+    if let Ok(source_id) = input.trim().parse::<i32>()
+        && let Some(production) = db.productions().by_source_id(source_id).await?
+    {
+        let label = production
+            .translations
+            .iter()
+            .find(|t| t.language_code == "nl")
+            .and_then(|t| t.title.clone())
+            .unwrap_or_else(|| format!("Production {source_id}"));
+        return Ok(vec![ReferenceSuggestion {
+            id: production.production.id,
+            label,
+            score: 1.0,
+        }]);
+    }
+
     // Fetch all productions with translations, using a generous page size.
     // Productions is a larger table but we need title data which lives in translations.
     let (productions, next_cursor) = db

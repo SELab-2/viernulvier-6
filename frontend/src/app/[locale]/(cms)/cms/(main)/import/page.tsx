@@ -78,24 +78,20 @@ export default function ImportPage() {
             <PageHeader eyebrow={tEditions("edition6")} title={t("title")} />
 
             <div ref={contentRef} className="flex-1 overflow-auto">
-                <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                        <ImportStepper currentStage={currentStage} />
-                    </div>
-                    {sessionId === "" && (
-                        <div className="mt-1 ml-4 shrink-0">
-                            <Button variant="ghost" size="sm" asChild>
-                                <Link
-                                    href="/cms/import/history"
-                                    className="flex items-center gap-1.5 font-mono text-xs tracking-wide"
-                                >
-                                    <History className="h-3.5 w-3.5" />
-                                    {t("viewHistory")}
-                                </Link>
-                            </Button>
-                        </div>
-                    )}
+                <div className="mb-2 flex justify-end">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        asChild
+                        className="h-7 rounded-none px-2 font-mono text-[10px] tracking-[1.5px] uppercase"
+                    >
+                        <Link href="/cms/import/history" className="flex items-center gap-1.5">
+                            <History className="h-3.5 w-3.5" />
+                            {t("viewHistory")}
+                        </Link>
+                    </Button>
                 </div>
+                <ImportStepper currentStage={currentStage} />
 
                 {sessionId !== "" && sessionLoading && !sessionError && (
                     <div className="mx-auto max-w-3xl space-y-6 pt-4">

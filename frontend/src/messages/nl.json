@@ -564,6 +564,10 @@
                 "startingDryRun": "Starten…",
                 "requiredMissing": "Verplichte velden nog niet gemapt",
                 "saveSuccess": "Mapping opgeslagen.",
+                "expectedType": "Verwacht: {type}",
+                "typeMismatch": "{count} afwijkende voorbeelden: {examples}",
+                "typeMismatchTitle": "Sommige gekoppelde kolommen passen niet bij het verwachte type",
+                "typeMismatchColumn": "{column}: {count} afwijking(en) ({examples})",
                 "fieldType": {
                     "string": "tekst",
                     "text": "tekstveld",
@@ -614,6 +618,9 @@
             "dryRun": {
                 "helperText": "Controleer wat er zou gebeuren. Los fouten op en pas rijen aan voordat je definitief importeert.",
                 "pendingLabel": "Dry-run wordt uitgevoerd…",
+                "totalRows": "{total} rijen totaal",
+                "rowRange": "Rijen {start}-{end} worden getoond",
+                "pageLabel": "Pagina {page}",
                 "commitConfirmTitle": "Import bevestigen?",
                 "commitConfirmBody": "{create} records worden aangemaakt · {update} worden bijgewerkt · {skip} worden overgeslagen.",
                 "commitConfirmCta": "Importeren",
@@ -629,7 +636,9 @@
             "actions": {
                 "commit": "Importeren",
                 "rerunDryRun": "Dry-run opnieuw uitvoeren",
-                "backToMapping": "Terug naar mapping"
+                "backToMapping": "Terug naar mapping",
+                "previousRows": "Vorige",
+                "nextRows": "Volgende"
             },
             "drawer": {
                 "title": "Rij {n}",

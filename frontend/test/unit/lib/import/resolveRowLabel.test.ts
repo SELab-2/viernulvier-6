@@ -30,6 +30,23 @@ describe("resolveRowLabel", () => {
         expect(resolveRowLabel(row, mapping)).toBe("Hamlet");
     });
 
+    it("prefers identifying mapped fields over long descriptions", () => {
+        const row = makeRow({
+            Description1: "A long production description",
+            Titel: "Hamlet",
+            ID: "123",
+        });
+        const legacyMapping: ImportMapping = {
+            columns: {
+                Description1: "description_nl",
+                Titel: "title_nl",
+                ID: "source_id",
+            },
+        };
+
+        expect(resolveRowLabel(row, legacyMapping)).toBe("Hamlet");
+    });
+
     it("skips unmapped (null) columns", () => {
         const row = makeRow({ title: "", slug: "hamlet-slug", season: "2023" });
         expect(resolveRowLabel(row, mapping)).toBe("hamlet-slug");
