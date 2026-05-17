@@ -6,6 +6,7 @@ import {
     mapArticleListItems,
     mapArticleRelations,
     mapCreateArticleInput,
+    mapPaginatedArticlesResult,
     mapPaginatedArticleListItemsResult,
     mapUpdateArticleInput,
     mapUpdateArticleRelationsInput,
@@ -15,7 +16,9 @@ import {
     ArticleRelationsResponse,
     ArticleResponse,
     ArticlesCmsSearchResponse,
+    GetAllArticlesResponse,
 } from "@/types/api/article.api.types";
+import { PaginatedResult, SearchPaginationParams } from "@/types/api/api.types";
 import {
     Article,
     ArticleCreateInput,
@@ -23,13 +26,21 @@ import {
     ArticleRelations,
     ArticleUpdateInput,
 } from "@/types/models/article.types";
-import { PaginatedResult, SearchPaginationParams } from "@/types/api/api.types";
 
 import { queryKeys } from "./query-keys";
 
-const fetchArticlesPublished = async (): Promise<ArticleListItem[]> => {
-    const { data } = await api.get<ArticleListResponse[]>("/articles");
-    return mapArticleListItems(data);
+const fetchArticlesPublished = async (
+    params?: SearchPaginationParams
+): Promise<PaginatedResult<ArticleListItem>> => {
+    const { data } = await api.get<GetAllArticlesResponse>("/articles", { params });
+    return mapPaginatedArticlesResult(data);
+};
+
+const fetchArticlesPublishedList = async (): Promise<ArticleListItem[]> => {
+    const { data } = await api.get<GetAllArticlesResponse>("/articles", {
+        params: { limit: 1000 },
+    });
+    return mapArticleListItems(data.data);
 };
 
 const fetchArticleBySlug = async (slug: string): Promise<Article> => {
@@ -70,18 +81,33 @@ const fetchArticlesByProduction = async (productionId: string): Promise<ArticleL
     return mapArticleListItems(data.data);
 };
 
-export const useGetArticlesByProduction = (productionId: string) => {
-    return useQuery({
-        queryKey: queryKeys.articles.byProduction(productionId),
-        queryFn: () => fetchArticlesByProduction(productionId),
-        enabled: Boolean(productionId),
+export const useGetInfiniteArticles = (options?: {
+    enabled?: boolean;
+    pagination?: SearchPaginationParams;
+}) => {
+    const { pagination, ...queryOptions } = options ?? {};
+    return useInfiniteQuery({
+        queryKey: queryKeys.articles.infinite(pagination),
+        queryFn: async ({ pageParam }) =>
+            fetchArticlesPublished({ ...pagination, cursor: pageParam ?? undefined }),
+        getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+        initialPageParam: null as string | null,
+        ...queryOptions,
     });
 };
 
 export const useGetArticles = () => {
     return useQuery({
         queryKey: queryKeys.articles.published,
-        queryFn: fetchArticlesPublished,
+        queryFn: fetchArticlesPublishedList,
+    });
+};
+
+export const useGetArticlesByProduction = (productionId: string) => {
+    return useQuery({
+        queryKey: queryKeys.articles.byProduction(productionId),
+        queryFn: () => fetchArticlesByProduction(productionId),
+        enabled: Boolean(productionId),
     });
 };
 

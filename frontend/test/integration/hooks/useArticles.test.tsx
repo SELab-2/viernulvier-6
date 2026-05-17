@@ -45,6 +45,7 @@ describe("useGetArticles (public)", () => {
             subjectPeriodStart: articleListItems[0]!.subject_period_start,
             subjectPeriodEnd: articleListItems[0]!.subject_period_end,
             coverImageUrl: articleListItems[0]!.cover_image_url ?? null,
+            tags: articleListItems[0]!.tags ?? [],
         });
 
         // Verify query cache key
@@ -57,9 +58,10 @@ describe("useGetArticles (public)", () => {
             http.get(apiUrl("/articles"), ({ request }) => {
                 const url = new URL(request.url);
                 if (url.pathname.includes("/cms")) return;
-                return HttpResponse.json(
-                    [] satisfies components["schemas"]["ArticleListPayload"][]
-                );
+                return HttpResponse.json({
+                    data: [],
+                    next_cursor: null,
+                } satisfies components["schemas"]["PaginatedResponse_ArticleListPayload"]);
             })
         );
 

@@ -190,6 +190,7 @@ impl SeedImporter {
         self.apply_location_creations().await?;
         self.apply_space_location_patches().await?;
         self.apply_location_deletions().await?;
+        self.derive_location_slugs().await?;
         self.apply_hall_merges().await?;
         self.apply_hall_name_patches().await?;
         self.apply_hall_expansions().await?;
@@ -374,6 +375,59 @@ impl SeedImporter {
                 .await
                 .map_err(DatabaseError::from)?;
         }
+        Ok(())
+    }
+
+    async fn derive_location_slugs(&self) -> Result<(), SeedError> {
+        let rows: Vec<(uuid::Uuid, Option<String>)> = sqlx::query_as(
+            "SELECT id, name FROM locations WHERE slug IS NULL ORDER BY id",
+        )
+        .fetch_all(self.db.pool())
+        .await
+        .map_err(DatabaseError::from)?;
+
+        info!("Deriving slugs for {} locations without a slug", rows.len());
+
+        let mut used: std::collections::HashSet<String> = sqlx::query_scalar(
+            "SELECT slug FROM locations WHERE slug IS NOT NULL",
+        )
+        .fetch_all(self.db.pool())
+        .await
+        .map_err(DatabaseError::from)?
+        .into_iter()
+        .collect();
+
+        for (id, name) in rows {
+            let name = name.unwrap_or_default();
+            let base = slug::slugify(&name);
+            if base.is_empty() {
+                warn!(location_id = %id, "derive_location_slugs: could not derive slug from name {:?}, skipping", name);
+                continue;
+            }
+
+            let slug = if !used.contains(&base) {
+                base.clone()
+            } else {
+                let mut n = 2u32;
+                loop {
+                    let candidate = format!("{}-{}", base, n);
+                    if !used.contains(&candidate) {
+                        break candidate;
+                    }
+                    n += 1;
+                }
+            };
+
+            used.insert(slug.clone());
+
+            sqlx::query("UPDATE locations SET slug = $1 WHERE id = $2")
+                .bind(&slug)
+                .bind(id)
+                .execute(self.db.pool())
+                .await
+                .map_err(DatabaseError::from)?;
+        }
+
         Ok(())
     }
 
@@ -837,7 +891,7 @@ impl SeedImporter {
             else {
                 continue;
             };
-            for fragment in text.split('/') {
+            for fragment in split_artist_field(&text) {
                 let name = fragment.trim();
                 if name.is_empty() {
                     continue;
@@ -1033,4 +1087,30 @@ impl SeedImporter {
         }
         Ok(())
     }
+}
+
+/// Split an artist field on `/`, `&`, `|`, and `,`, but not when inside
+/// single or double quotes — so names like `'hi, paris'` stay intact.
+fn split_artist_field(text: &str) -> Vec<&str> {
+    let mut parts = Vec::new();
+    let mut start = 0;
+    let mut in_single = false;
+    let mut in_double = false;
+    let bytes = text.as_bytes();
+    let mut i = 0;
+
+    while i < bytes.len() {
+        match bytes[i] {
+            b'\'' if !in_double => in_single = !in_single,
+            b'"' if !in_single => in_double = !in_double,
+            b'/' | b'&' | b'|' | b',' if !in_single && !in_double => {
+                parts.push(&text[start..i]);
+                start = i + 1;
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    parts.push(&text[start..]);
+    parts
 }

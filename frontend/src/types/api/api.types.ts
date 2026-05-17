@@ -1,5 +1,5 @@
 import { InternalAxiosRequestConfig } from "axios";
-import { operations } from "@/types/api/generated";
+import { components, operations } from "@/types/api/generated";
 
 export type FailedRequest = {
     resolve: (value?: unknown) => void;
@@ -36,6 +36,16 @@ export interface PaginationParams {
 
 export interface SearchPaginationParams extends PaginationParams {
     q?: string;
+    discipline?: string;
+    format?: string;
+    theme?: string;
+    audience?: string;
+    accessibility?: string;
+    language?: string;
+    location?: string;
+    date_from?: string;
+    date_to?: string;
+    sort?: components["schemas"]["Sort"];
 }
 
 export interface PaginatedResult<T> {

@@ -9,7 +9,7 @@ use crate::{
         location::LocationRepo, media::MediaRepo, media_variant::MediaVariantRepo,
         normalization_log::NormalizationLogRepo, price::PriceRepo, price_rank::PriceRankRepo,
         import_error::ImportErrorRepo,
-        production::ProductionRepo, series::SeriesRepo, sessions::SessionRepo, space::SpaceRepo,
+        production::ProductionRepo, sessions::SessionRepo, space::SpaceRepo,
         tag::TagRepo, user::UserRepo,
     },
 };
@@ -20,6 +20,7 @@ pub mod models {
     pub mod collection;
     pub mod collection_item;
     pub mod entity_media;
+    pub mod entity_media_link;
     pub mod entity_type;
     pub mod event;
     pub mod event_price;
@@ -35,7 +36,6 @@ pub mod models {
     pub mod price;
     pub mod price_rank;
     pub mod production;
-    pub mod series;
     pub mod session;
     pub mod space;
     pub mod tag;
@@ -61,7 +61,6 @@ pub mod repos {
     pub mod price;
     pub mod price_rank;
     pub mod production;
-    pub mod series;
     pub mod sessions;
     pub mod space;
     pub mod tag;
@@ -144,10 +143,6 @@ impl Database {
 
     pub fn collections<'a>(&'a self) -> CollectionRepo<'a> {
         CollectionRepo::new(&self.db)
-    }
-
-    pub fn series<'a>(&'a self) -> SeriesRepo<'a> {
-        SeriesRepo::new(&self.db)
     }
 
     pub fn media<'a>(&'a self) -> MediaRepo<'a> {

@@ -16,8 +16,9 @@ use crate::{
     config::S3Config,
     dto::{
         media::{
-            AttachMediaRequest, LinkMediaRequest, MediaPayload, MediaVariantPayload,
-            ReconcileResponse, UploadUrlRequest, UploadUrlResponse,
+            AttachMediaRequest, CheckMediaRequest, CheckMediaResponse,
+            CreateMediaRequest, LinkMediaRequest, MediaEntityLink, MediaPayload, MediaVariantPayload,
+            ReconcileResponse, TitleTranslations, UploadUrlRequest, UploadUrlResponse,
         },
         paginated::PaginatedResponse,
     },
@@ -85,6 +86,42 @@ pub async fn get_one(
         .collect();
 
     Ok(Json(payload))
+}
+
+#[utoipa::path(
+    method(get),
+    path = "/media/{id}/entities",
+    tag = "Media",
+    operation_id = "get_media_entity_links",
+    description = "Get all entity links for a given media item.",
+    params(
+        ("id" = Uuid, Path, description = "Media UUID")
+    ),
+    responses(
+        (status = 200, description = "Success", body = [MediaEntityLink]),
+        (status = 404, description = "Not found")
+    )
+)]
+pub async fn get_media_entities(
+    db: Database,
+    Path(id): Path<Uuid>,
+) -> JsonResponse<Vec<MediaEntityLink>> {
+    let links = db.media().entity_links(id).await?;
+    let result: Vec<MediaEntityLink> = links
+        .into_iter()
+        .map(|l| MediaEntityLink {
+            entity_type: format!("{:?}", l.entity_type).to_lowercase(),
+            entity_id: l.entity_id,
+            role: l.role,
+            sort_order: l.sort_order,
+            is_cover_image: l.is_cover_image,
+            title: Some(TitleTranslations {
+                en: l.title_en.clone(),
+                nl: l.title_nl.clone(),
+            }).filter(|t| t.en.is_some() || t.nl.is_some()),
+        })
+        .collect();
+    Ok(Json(result))
 }
 
 const ALLOWED_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png", "gif", "webp", "svg", "mp4", "pdf"];
@@ -215,6 +252,124 @@ pub async fn generate_upload_url(
         expires_in,
         upload_token,
     }))
+}
+
+#[utoipa::path(
+    method(post),
+    path = "/media/check",
+    tag = "Media",
+    operation_id = "check_media",
+    description = "Check if a media item with the given checksum already exists. Used for content-based deduplication before upload.",
+    request_body = CheckMediaRequest,
+    responses(
+        (status = 200, description = "Success", body = CheckMediaResponse),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse)
+    ),
+    security(("cookie_auth" = []))
+)]
+pub async fn check(
+    State(state): State<AppState>,
+    db: Database,
+    Json(req): Json<CheckMediaRequest>,
+) -> Result<Json<CheckMediaResponse>, AppError> {
+    if let Some(media) = db.media().by_checksum(&req.checksum).await? {
+        let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+        let payload = MediaPayload::from_model(media, public_url);
+        Ok(Json(CheckMediaResponse {
+            exists: true,
+            media: Some(payload),
+        }))
+    } else {
+        Ok(Json(CheckMediaResponse {
+            exists: false,
+            media: None,
+        }))
+    }
+}
+
+#[utoipa::path(
+    method(post),
+    path = "/media",
+    tag = "Media",
+    operation_id = "create_media",
+    description = "Create a standalone media record. If a checksum is provided and a media with that checksum already exists, the existing media is returned instead (deduplication).",
+    request_body = CreateMediaRequest,
+    responses(
+        (status = 201, description = "Created", body = MediaPayload),
+        (status = 400, description = "Bad request"),
+        (status = 401, description = "Unauthorized", body = crate::error::ErrorResponse)
+    ),
+    security(("cookie_auth" = []))
+)]
+pub async fn create(
+    State(state): State<AppState>,
+    db: Database,
+    Json(req): Json<CreateMediaRequest>,
+) -> JsonStatusResponse<MediaPayload> {
+    if !verify_upload_token(&state.config.upload_secret, &req.s3_key, &req.upload_token)? {
+        return Err(AppError::PayloadError("invalid upload token".into()));
+    }
+
+    // Content-based deduplication — update metadata if provided
+    if let Some(ref checksum) = req.checksum {
+        if let Some(existing) = db.media().by_checksum(checksum).await? {
+            let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+            let payload = MediaPayload::from_model(existing.clone(), public_url);
+            let merged = MediaPayload {
+                alt_text_nl: req.alt_text_nl.or(payload.alt_text_nl),
+                alt_text_en: req.alt_text_en.or(payload.alt_text_en),
+                alt_text_fr: req.alt_text_fr.or(payload.alt_text_fr),
+                credit_nl: req.credit_nl.or(payload.credit_nl),
+                credit_en: req.credit_en.or(payload.credit_en),
+                credit_fr: req.credit_fr.or(payload.credit_fr),
+                width: req.width.or(payload.width),
+                height: req.height.or(payload.height),
+                file_size: req.file_size.or(payload.file_size),
+                checksum: req.checksum.clone().or(payload.checksum),
+                ..payload
+            };
+            let updated = db.media().update(merged.merge_into_existing(existing)).await?;
+            return MediaPayload::from_model(updated, public_url).json_created();
+        }
+    }
+
+    // Prevent duplicate s3_key (same upload token reused)
+    if db.media().by_s3_key(&req.s3_key).await?.is_some() {
+        return Err(AppError::Conflict(
+            "s3_key is already in use by another media item".into(),
+        ));
+    }
+
+    let media_create = database::models::media::MediaCreate {
+        s3_key: req.s3_key,
+        mime_type: req.mime_type,
+        file_size: req.file_size,
+        width: req.width,
+        height: req.height,
+        checksum: req.checksum,
+        alt_text_nl: req.alt_text_nl,
+        alt_text_en: req.alt_text_en,
+        alt_text_fr: req.alt_text_fr,
+        credit_nl: req.credit_nl,
+        credit_en: req.credit_en,
+        credit_fr: req.credit_fr,
+        description_nl: None,
+        description_en: None,
+        description_fr: None,
+        geo_latitude: None,
+        geo_longitude: None,
+        parent_id: None,
+        derivative_type: None,
+        gallery_type: None,
+        source_id: None,
+        source_system: "cms".to_string(),
+        source_uri: None,
+        source_updated_at: None,
+    };
+
+    let media = db.media().insert(media_create).await?;
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    MediaPayload::from_model(media, public_url).json_created()
 }
 
 #[utoipa::path(
@@ -676,6 +831,23 @@ pub async fn reconcile_storage(
         0
     };
 
+    let mut deleted_missing_in_db_count = 0u64;
+    if applied {
+        if let (Some(s3_config), Some(s3_client)) = (&state.config.s3, &state.s3_client) {
+            for key in &missing_in_db {
+                let result = s3_client
+                    .delete_object()
+                    .bucket(&s3_config.bucket)
+                    .key(key)
+                    .send()
+                    .await;
+                if result.is_ok() {
+                    deleted_missing_in_db_count += 1;
+                }
+            }
+        }
+    }
+
     Ok(Json(ReconcileResponse {
         applied,
         db_key_count: db_keys.len(),
@@ -683,6 +855,7 @@ pub async fn reconcile_storage(
         missing_in_s3,
         missing_in_db,
         deleted_missing_in_s3_count,
+        deleted_missing_in_db_count,
     }))
 }
 

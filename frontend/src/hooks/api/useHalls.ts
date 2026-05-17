@@ -11,6 +11,7 @@ import {
     CreateHallResponse,
     GetAllHallsResponse,
     GetHallByIdResponse,
+    HallResponse,
     UpdateHallResponse,
 } from "@/types/api/hall.api.types";
 import { PaginationParams, PaginatedResult } from "@/types/api/api.types";
@@ -33,6 +34,17 @@ export const useGetHalls = (options?: { enabled?: boolean; pagination?: Paginati
         queryKey: queryKeys.halls.all(options?.pagination),
         queryFn: () => fetchHalls(options?.pagination),
         ...options,
+    });
+};
+
+export const useGetHallsForLocation = (locationId: string, options?: { enabled?: boolean }) => {
+    return useQuery({
+        queryKey: [...queryKeys.halls.all(), "location", locationId],
+        queryFn: async () => {
+            const { data } = await api.get<HallResponse[]>(`/locations/${locationId}/halls`);
+            return data.map(mapHall);
+        },
+        enabled: Boolean(locationId) && (options?.enabled ?? true),
     });
 };
 

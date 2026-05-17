@@ -13,6 +13,8 @@ const baseProduction: Production = {
     uitdatabankTheme: null,
     uitdatabankType: null,
     coverImageUrl: null,
+    locations: [],
+    tags: [],
     translations: [
         {
             languageCode: "nl",

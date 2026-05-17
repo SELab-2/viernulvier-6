@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "@/lib/api-client";
 import { mapArtist, mapArtists } from "@/mappers/artist.mapper";
@@ -6,20 +6,39 @@ import {
     ArtistResponse,
     GetAllArtistsResponse,
     GetArtistByIdResponse,
+    GetArtistsByProductionIdResponse,
     GetProductionsByArtistIdResponse,
 } from "@/types/api/artist.api.types";
 import { mapProductions } from "@/mappers/production.mapper";
 import { Artist } from "@/types/models/artist.types";
 import { Production } from "@/types/models/production.types";
+import { PaginatedResult } from "@/types/api/api.types";
 
 import { queryKeys } from "./query-keys";
 
 type ArtistCreateInput = { name: string };
 type ArtistUpdateInput = { id: string; name: string; slug: string };
 
-const fetchArtists = async (): Promise<Artist[]> => {
-    const { data } = await api.get<GetAllArtistsResponse>("/artists");
-    return mapArtists(data);
+const fetchArtistsPage = async (params: {
+    q?: string;
+    cursor?: string;
+    limit?: number;
+}): Promise<PaginatedResult<Artist>> => {
+    const search = new URLSearchParams();
+    if (params.q) search.set("q", params.q);
+    if (params.cursor) search.set("cursor", params.cursor);
+    if (params.limit) search.set("limit", String(params.limit));
+    const url = `/artists${search.toString() ? `?${search}` : ""}`;
+    const { data } = await api.get<GetAllArtistsResponse>(url);
+    return {
+        data: mapArtists(data.data),
+        nextCursor: data.next_cursor ?? null,
+    };
+};
+
+const fetchArtists = async (q?: string): Promise<Artist[]> => {
+    const { data } = await fetchArtistsPage({ q });
+    return data;
 };
 
 const fetchArtistById = async (id: string): Promise<Artist> => {
@@ -32,10 +51,24 @@ const fetchProductionsByArtistId = async (id: string): Promise<Production[]> => 
     return mapProductions(data);
 };
 
-export const useGetArtists = () => {
+export const useGetArtists = (options?: { q?: string; enabled?: boolean }) => {
+    const q = options?.q || undefined;
     return useQuery({
-        queryKey: queryKeys.artists.all,
-        queryFn: fetchArtists,
+        queryKey: queryKeys.artists.list({ q }),
+        queryFn: () => fetchArtists(q),
+        enabled: options?.enabled ?? true,
+    });
+};
+
+export const useGetInfiniteArtists = (params?: { q?: string; limit?: number }) => {
+    const q = params?.q || undefined;
+    const limit = params?.limit;
+    return useInfiniteQuery({
+        queryKey: queryKeys.artists.infinite({ q, limit }),
+        queryFn: ({ pageParam }) =>
+            fetchArtistsPage({ q, limit, cursor: pageParam as string | undefined }),
+        initialPageParam: undefined as string | undefined,
+        getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     });
 };
 
@@ -43,6 +76,21 @@ export const useGetArtist = (id: string, options?: { enabled?: boolean }) => {
     return useQuery({
         queryKey: queryKeys.artists.detail(id),
         queryFn: () => fetchArtistById(id),
+        enabled: Boolean(id) && (options?.enabled ?? true),
+    });
+};
+
+const fetchArtistsByProductionId = async (productionId: string): Promise<Artist[]> => {
+    const { data } = await api.get<GetArtistsByProductionIdResponse>(
+        `/productions/${productionId}/artists`
+    );
+    return mapArtists(data);
+};
+
+export const useGetArtistsByProduction = (id: string, options?: { enabled?: boolean }) => {
+    return useQuery({
+        queryKey: queryKeys.artists.byProduction(id),
+        queryFn: () => fetchArtistsByProductionId(id),
         enabled: Boolean(id) && (options?.enabled ?? true),
     });
 };

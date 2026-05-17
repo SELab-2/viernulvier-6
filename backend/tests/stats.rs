@@ -1,7 +1,7 @@
 //! Integration tests for `GET /stats`.
 
 use axum::http::{StatusCode, header};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::Deserialize;
 use sqlx::PgPool;
 
@@ -15,6 +15,8 @@ const PUBLIC_CACHE_HEADER: &str = "public, max-age=3600, stale-while-revalidate=
 struct StatsBody {
     oldest_event: Option<DateTime<Utc>>,
     newest_event: Option<DateTime<Utc>>,
+    oldest_article: Option<NaiveDate>,
+    newest_article: Option<NaiveDate>,
     event_count: i64,
     production_count: i64,
     location_count: i64,
@@ -48,12 +50,16 @@ async fn get_stats_matches_fixture(db: PgPool) {
     let expected = StatsBody {
         oldest_event: Some(utc("2026-04-10T18:00:00Z")),
         newest_event: Some(utc("2026-07-15T17:00:00Z")),
+        // stats-published: start=2000-01-01, end=2030-12-31
+        // kleurenstudies migration: start=2025-11-04, no end
+        oldest_article: Some(NaiveDate::from_ymd_opt(2000, 1, 1).unwrap()),
+        newest_article: Some(NaiveDate::from_ymd_opt(2030, 12, 31).unwrap()),
         event_count: 3,
         production_count: 2,
         location_count: 4,
-        // One published article seeded in the stats fixture, plus one from the
-        // `seed_article_kleurenstudies` migration.
-        article_count: 2,
+        // One published article seeded in the stats fixture, plus articles from
+        // the `seed_article_kleurenstudies` and `seed_articles` migrations.
+        article_count: 9,
         artist_count: 2,
         collection_count: 3,
     };
@@ -79,11 +85,13 @@ async fn get_stats_empty_database(db: PgPool) {
     let expected = StatsBody {
         oldest_event: None,
         newest_event: None,
+        // seed_articles (7) + seed_article_kleurenstudies (1) migrations run unconditionally.
+        oldest_article: Some(NaiveDate::from_ymd_opt(2025, 6, 15).unwrap()),
+        newest_article: Some(NaiveDate::from_ymd_opt(2026, 5, 27).unwrap()),
         event_count: 0,
         production_count: 0,
         location_count: 0,
-        // Migrations seed one published article.
-        article_count: 1,
+        article_count: 8,
         artist_count: 0,
         collection_count: 0,
     };

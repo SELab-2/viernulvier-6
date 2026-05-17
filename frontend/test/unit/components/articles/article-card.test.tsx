@@ -41,6 +41,7 @@ const mockArticle: ArticleListItem = {
     subjectPeriodStart: "2026-01-01",
     subjectPeriodEnd: "2026-12-31",
     coverImageUrl: null,
+    tags: [],
 };
 
 describe("ArticleCard", () => {

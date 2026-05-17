@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Archive, Plus } from "lucide-react";
 import { RowSelectionState } from "@tanstack/react-table";
@@ -11,7 +11,7 @@ import { DataTable } from "../data-table";
 import { makeArticleColumns } from "./columns";
 import { ActionBar } from "../action-bar";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
+import { LoadMoreSentinel } from "@/components/cms/load-more-sentinel";
 import { SearchInput } from "@/components/cms/search-input";
 import { useRouter } from "@/i18n/routing";
 import { useDeleteArticle, useGetInfiniteArticlesCms } from "@/hooks/api/useArticles";
@@ -24,8 +24,8 @@ export function ArticlesTable() {
     const t = useTranslations("Cms.Articles");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
+    const locale = useLocale();
     const router = useRouter();
-    const loadMoreRef = useRef<HTMLDivElement>(null);
     const searchParams = useSearchParams();
     const q = searchParams.get("q") ?? undefined;
 
@@ -33,32 +33,13 @@ export function ArticlesTable() {
         data: infiniteData,
         fetchNextPage,
         hasNextPage,
-        isFetchingNextPage,
         isLoading,
-    } = useGetInfiniteArticlesCms(q ? { q } : undefined);
+    } = useGetInfiniteArticlesCms({ limit: 50, ...(q ? { q } : {}) });
 
     const articles = useMemo(
         () => infiniteData?.pages.flatMap((page) => page.data) ?? [],
         [infiniteData]
     );
-
-    const loadMore = useCallback(() => {
-        if (hasNextPage && !isFetchingNextPage) fetchNextPage();
-    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting) loadMore();
-            },
-            { threshold: 0.1, rootMargin: "100px" }
-        );
-        const currentRef = loadMoreRef.current;
-        if (currentRef) observer.observe(currentRef);
-        return () => {
-            if (currentRef) observer.unobserve(currentRef);
-        };
-    }, [loadMore]);
 
     const deleteArticle = useDeleteArticle();
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -84,9 +65,10 @@ export function ArticlesTable() {
                 (article) => router.push(`/cms/articles/${article.id}/edit`),
                 handleDelete,
                 tActions,
-                t
+                t,
+                locale
             ),
-        [router, handleDelete, tActions, t]
+        [router, handleDelete, tActions, t, locale]
     );
 
     const selectedArticles = useMemo(
@@ -118,15 +100,16 @@ export function ArticlesTable() {
 
     return (
         <div className="flex h-full flex-col">
-            <div className="bg-background sticky top-0 z-10 flex items-center justify-between gap-2 py-2">
+            <div className="bg-background sticky top-0 z-10 flex items-center gap-2">
                 <ActionBar
                     entityCounts={[
                         { countKey: "articlesSelected", count: selectedArticles.length },
                     ]}
                     actions={bulkActions}
                     onClear={() => setRowSelection({})}
+                    search={<SearchInput placeholder={t("search")} />}
+                    className="flex-1"
                 />
-                <SearchInput placeholder={t("search")} />
                 <Button onClick={() => setDialogOpen(true)} size="sm">
                     <Plus className="mr-2 h-4 w-4" />
                     {t("newArticle")}
@@ -141,11 +124,7 @@ export function ArticlesTable() {
                     onRowSelectionChange={setRowSelection}
                     getRowId={(row) => row.id}
                 />
-                {hasNextPage && (
-                    <div ref={loadMoreRef} className="flex justify-center py-4">
-                        <Spinner className="text-muted-foreground h-5 w-5" />
-                    </div>
-                )}
+                <LoadMoreSentinel hasNextPage={hasNextPage ?? false} onLoadMore={fetchNextPage} />
             </div>
             <CollectionPickerDialog
                 open={collectionDialogOpen}

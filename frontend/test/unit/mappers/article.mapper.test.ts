@@ -69,6 +69,7 @@ describe("article mapper", () => {
                 subjectPeriodStart: "1960-01-01",
                 subjectPeriodEnd: "1970-12-31",
                 coverImageUrl: null,
+                tags: [],
             });
         });
 
@@ -113,6 +114,7 @@ describe("article mapper", () => {
                 subjectPeriodStart: "1960-01-01",
                 subjectPeriodEnd: "1970-12-31",
                 coverImageUrl: null,
+                tags: [],
             });
         });
 
@@ -129,6 +131,20 @@ describe("article mapper", () => {
             expect(mapped).toHaveLength(2);
             expect(mapped[0]?.slug).toBe("kleurenstudies-van-de-vooruit");
             expect(mapped[1]?.slug).toBe("ander-artikel");
+        });
+
+        it("maps slim tags from the API response", () => {
+            const withTags: components["schemas"]["ArticleListPayload"] = {
+                ...articleListResponse,
+                tags: [{ slug: "theatre", facet: "discipline" }],
+            };
+            const mapped = mapArticleListItem(withTags);
+            expect(mapped.tags).toEqual([{ slug: "theatre", facet: "discipline" }]);
+        });
+
+        it("defaults tags to an empty array when missing", () => {
+            const mapped = mapArticleListItem(articleListResponse);
+            expect(mapped.tags).toEqual([]);
         });
     });
 

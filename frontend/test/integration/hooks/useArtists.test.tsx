@@ -42,7 +42,7 @@ describe("useGetArtists", () => {
             expect(result.current.isSuccess).toBe(true);
         });
 
-        expect(queryClient.getQueryData(queryKeys.artists.all)).toEqual(result.current.data);
+        expect(queryClient.getQueryData(queryKeys.artists.list())).toEqual(result.current.data);
     });
 });
 

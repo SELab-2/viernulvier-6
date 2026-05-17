@@ -63,10 +63,10 @@
     },
     "ResultsBar": {
         "sortBy": "Sorteren:",
-        "relevant": "Meest relevant",
+        "relevance": "Meest relevant",
         "recent": "Meest recent",
         "oldest": "Oudste eerst",
-        "az": "A–Z"
+        "relevance": "Meest relevant"
     },
     "Featured": {
         "label": "Uitgelicht uit het archief"
@@ -75,10 +75,10 @@
         "title": "Filters",
         "categories": {
             "label": "Categorie",
-            "artists": "Artiesten",
             "productions": "Producties",
-            "articles": "Artikels",
-            "posters": "Affiches"
+            "artists": "Artiesten",
+            "locations": "Locaties",
+            "articles": "Artikels"
         },
         "tags": {
             "label": "Tags",
@@ -198,7 +198,7 @@
         "overview": "Overzicht",
         "productions": "Producties",
         "locations": "Locaties",
-        "articles": "Artikelen",
+        "articles": "Artikels",
         "performers": "Uitvoerders",
         "collections": "Collecties",
         "ingest": "Ingest",
@@ -241,7 +241,7 @@
             "noFilters": "Geen filters beschikbaar.",
             "clearFilters": "Filters wissen",
             "productions": "Producties",
-            "articles": "Artikelen",
+            "articles": "Artikels",
             "locations": "Locaties",
             "performers": "Uitvoerders"
         },
@@ -263,6 +263,7 @@
             "locationsSelected": "{count, plural, one {# locatie} other {# locaties}} geselecteerd",
             "hallsSelected": "{count, plural, one {# zaal} other {# zalen}} geselecteerd",
             "articlesSelected": "{count, plural, one {# artikel} other {# artikelen}} geselecteerd",
+            "performersSelected": "{count, plural, one {# uitvoerder} other {# uitvoerders}} geselecteerd",
             "collectionsSelected": "{count, plural, one {# collectie} other {# collecties}} geselecteerd",
             "importErrorsSelected": "{count, plural, one {# fout} other {# fouten}} geselecteerd",
             "bulkEdit": "Bulk bewerken",
@@ -299,8 +300,8 @@
             "subtitle": "Beheer inhoud en instellingen",
             "productions": "Producties",
             "productionsDescription": "Beheer producties en evenementen",
-            "articles": "Artikelen",
-            "articlesDescription": "Beheer nieuwsartikelen",
+            "articles": "Artikels",
+            "articlesDescription": "Beheer nieuwsartikels",
             "locations": "Locaties",
             "locationsDescription": "Beheer locaties en zalen",
             "performers": "Uitvoerders",
@@ -413,10 +414,10 @@
             "eyebrow": "Locatie"
         },
         "Articles": {
-            "title": "Artikelen",
-            "subtitle": "Beheer nieuwsartikelen",
+            "title": "Artikels",
+            "subtitle": "Beheer nieuwsartikels",
             "comingSoon": "Binnenkort beschikbaar",
-            "notAvailable": "Artikelen-API is nog niet beschikbaar. Geen gegevens om weer te geven.",
+            "notAvailable": "Artikels-API is nog niet beschikbaar. Geen gegevens om weer te geven.",
             "newArticle": "Nieuw artikel",
             "createFailed": "Aanmaken van artikel mislukt.",
             "dialogTitle": "Nieuw artikel",
@@ -433,7 +434,7 @@
             "preview": "Voorbeeld",
             "hidePreview": "Verberg Voorbeeld",
             "previewLabel": "Voorbeeld",
-            "backToList": "Terug naar artikelen",
+            "backToList": "Terug naar artikels",
             "statusLabel": "Status",
             "slug": "Slug",
             "subjectPeriod": "Periode",
@@ -494,6 +495,7 @@
         "Performers": {
             "title": "Uitvoerders",
             "subtitle": "Beheer artiesten",
+            "search": "Zoek uitvoerders…",
             "nameColumn": "Naam",
             "slugColumn": "Slug",
             "nameField": "Naam",
@@ -511,7 +513,44 @@
             "subtitle": "Bulk import van mediabestanden en archiefmaterialen",
             "comingSoon": "Binnenkort beschikbaar",
             "notAvailable": "Ingest functionaliteit",
-            "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier mediabestanden uploaden en verwerken."
+            "description": "Deze functionaliteit is nog in ontwikkeling. Later kunt u hier mediabestanden uploaden en verwerken.",
+            "upload": "Uploaden",
+            "uploadMedia": "Media uploaden",
+            "uploadTitle": "Nieuwe media uploaden",
+            "selectFile": "Bestand selecteren",
+            "altText": "Alt-tekst",
+            "credit": "Credit",
+            "save": "Opslaan",
+            "cancel": "Annuleren",
+            "editMedia": "Media bewerken",
+            "noMedia": "Nog geen media geüpload.",
+            "items": "items",
+            "loading": "Laden",
+            "confirmDelete": "Weet u zeker dat u deze media wilt verwijderen? Dit kan niet ongedaan worden gemaakt.",
+            "confirmCleanup": "Alle mediabestanden verwijderen die niet aan inhoud zijn gekoppeld? Dit kan niet ongedaan worden gemaakt.",
+            "cleanupSuccess": "{count} ongekoppelde media items verwijderd.",
+            "cleanupError": "Cleanup mislukt.",
+            "reconcile": "Reconciliëren",
+            "reconcileTooltip": "Controleer of alle geüploade bestanden correct geregistreerd zijn en verwijder eventuele inconsistenties.",
+            "cleanup": "Cleanup",
+            "cleanupTooltip": "Verwijder geüploade bestanden die niet aan inhoud zijn gekoppeld.",
+            "reconcileClean": "Opslag is gesynchroniseerd — geen problemen gevonden.",
+            "reconcileMissingInS3": "{count} records hebben geen geüpload bestand.",
+            "reconcileMissingInDb": "{count} geüploade bestanden hebben geen record.",
+            "reconcileApply": "Fix toepassen",
+            "reconcileDeletedDb": "{count} records zonder bestanden verwijderd.",
+            "reconcileDeletedS3": "{count} bestanden zonder records verwijderd.",
+            "reconcileError": "Reconciliëren mislukt.",
+            "duplicateUpload": "Dit bestand bestaat al — metadata is bijgewerkt.",
+            "mediaPreview": "Media voorbeeld",
+            "search": "Zoeken",
+            "sort": "Sorteren",
+            "sortRecent": "Meest recent",
+            "sortOldest": "Oudste eerst",
+            "sortRelevance": "Relevantie",
+            "entityLinks": "Gebruikt in",
+            "noEntityLinks": "Niet gekoppeld aan een entity.",
+            "editSaveFailed": "Opslaan mislukt."
         },
         "Collections": {
             "title": "Collecties",
@@ -529,6 +568,9 @@
             "descriptionEn": "Beschrijving (EN)",
             "fieldTitle": "Titel",
             "fieldDescription": "Beschrijving",
+            "fieldVisibility": "Zichtbaarheid",
+            "visibilityPublic": "Openbaar",
+            "visibilityUnlisted": "Niet geïndexeerd (enkel via link)",
             "metadataSection": "Metadata",
             "shareableLink": "Deelbare link",
             "copyLink": "Kopieer link",
@@ -616,6 +658,35 @@
             "removeSuccess": "Omslagafbeelding verwijderd.",
             "removeError": "Omslagafbeelding verwijderen mislukt."
         },
+        "Tags": {
+            "sectionLabel": "Tags",
+            "inherited": "Overgenomen",
+            "loading": "Tags laden…",
+            "manage": "Beheren",
+            "addTag": "Tag toevoegen…",
+            "search": "Zoeken…",
+            "createTag": "Aanmaken \"{label}\"",
+            "newTag": "Nieuwe tag",
+            "editTag": "Tag bewerken",
+            "labelNl": "NL-label",
+            "labelEn": "EN-label",
+            "placeholderNl": "Nederlandse naam",
+            "placeholderEn": "Engelse naam",
+            "save": "Opslaan",
+            "saving": "Opslaan…",
+            "manageTitle": "Tags beheren — {facet}",
+            "deleteSuccess": "Tag verwijderd",
+            "deleteError": "Tag verwijderen mislukt",
+            "conflictError": "Er bestaat al een tag met deze naam",
+            "saveError": "Tag opslaan mislukt",
+            "editAriaLabel": "{label} bewerken",
+            "deleteAriaLabel": "{label} verwijderen",
+            "deleteTitle": "\"{label}\" verwijderen?",
+            "deleteDescription": "Deze tag wordt gebruikt door {count, plural, one {# item} other {# items}}. Door het te verwijderen wordt het van alle items verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+            "cancel": "Annuleren",
+            "delete": "Verwijderen",
+            "deleting": "Verwijderen…"
+        },
         "ProductionMedia": {
             "title": "Media productie",
             "editMode": "Mediabeheer",
@@ -640,6 +711,8 @@
             "attachError": "Koppelen van media mislukt",
             "save": "Opslaan",
             "cancel": "Annuleren",
+            "altText": "Alt-tekst",
+            "credit": "Credit",
             "altTextNl": "Alt-tekst (NL)",
             "altTextEn": "Alt-tekst (EN)",
             "altTextFr": "Alt-tekst (FR)",
@@ -711,7 +784,8 @@
         "shareEmail": "Delen via e-mail",
         "articlesTitle": "Artikels",
         "articlesLabel": "Artikel",
-        "articlesFallbackTitle": "Zonder titel"
+        "articlesFallbackTitle": "Zonder titel",
+        "partOfTitle": "Deel van"
     },
     "NewsArticleComponent": {
         "subTitle": "Vooruit Archief",
@@ -736,9 +810,10 @@
         "error": "Er ging iets mis bij het laden van deze locatie."
     },
     "Articles": {
+        "articles": "Artikels",
         "heroEyebrow": "Verhalen uit het archief",
         "heroTitle": "Artikels & Verhalen",
-        "heroSubtitle": "Verhalen achter de schermen van De Vooruit",
+        "heroSubtitle": "Een kijkje achter de schermen van De Vooruit",
         "datelineEdition": "Archief Editie",
         "datelineBrand": "Archiefdienst",
         "datelinePrice": "Prijs: Onschatbaar",
@@ -783,5 +858,13 @@
             "artist": "ARTIEST",
             "media": "MEDIA"
         }
+    },
+    "ArtistPage": {
+        "eyebrow": "Artiest",
+        "loading": "Laden…",
+        "breadcrumbArchive": "Archief",
+        "breadcrumbArtists": "Artiesten",
+        "descriptionPlaceholder": "Geen beschrijving",
+        "contentPlaceholder": "Geen gekpppelde producties"
     }
 }

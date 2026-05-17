@@ -17,6 +17,7 @@ import { TiptapRenderer } from "@/components/articles";
 import { LoadingState } from "@/components/shared/loading-state";
 import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
 import { PreviewBadge } from "@/components/preview";
+import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
 
 function formatDate(dateStr: string, locale: string): string {
     const loc = locale === "en" ? "en-GB" : "nl-BE";
@@ -161,6 +162,15 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
                         <h1 className="font-display text-foreground text-[32px] leading-[1.1] font-bold tracking-[-0.025em] sm:text-[44px] md:text-[56px]">
                             {article?.title ?? t("untitled")}
                         </h1>
+
+                        {article?.tags && article.tags.length > 0 && (
+                            <EntityTagStrip
+                                tags={article.tags}
+                                locale={locale}
+                                cap={8}
+                                className="mt-4"
+                            />
+                        )}
 
                         {/* Dateline bar */}
                         <div className="border-foreground text-foreground mt-6 flex items-center justify-between border-y py-1.5 font-mono text-[9px] tracking-widest uppercase sm:text-[10px]">

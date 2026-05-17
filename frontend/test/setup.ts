@@ -31,6 +31,14 @@ global.ResizeObserver = class ResizeObserver {
     disconnect() {}
 };
 
+// Mock scrollIntoView (not implemented in jsdom, needed by cmdk)
+window.HTMLElement.prototype.scrollIntoView = vi.fn();
+
+// Mock pointer capture methods (needed by Radix UI Popover in jsdom)
+window.HTMLElement.prototype.hasPointerCapture = vi.fn();
+window.HTMLElement.prototype.setPointerCapture = vi.fn();
+window.HTMLElement.prototype.releasePointerCapture = vi.fn();
+
 beforeAll(() => {
     server.listen({ onUnhandledRequest: "error" });
 });

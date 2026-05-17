@@ -24,6 +24,33 @@ impl<'a> ArticleRepo<'a> {
         Self { db }
     }
 
+    pub async fn bounds(&self) -> Result<(Option<NaiveDate>, Option<NaiveDate>), DatabaseError> {
+        let (min_start, min_end, max_start, max_end) = sqlx::query_as::<
+            _,
+            (
+                Option<NaiveDate>,
+                Option<NaiveDate>,
+                Option<NaiveDate>,
+                Option<NaiveDate>,
+            ),
+        >(
+            "SELECT
+                 MIN(subject_period_start),
+                 MIN(subject_period_end),
+                 MAX(subject_period_start),
+                 MAX(subject_period_end)
+             FROM articles
+             WHERE status = $1",
+        )
+        .bind(ArticleStatus::Published)
+        .fetch_one(self.db)
+        .await?;
+
+        let oldest = [min_start, min_end].into_iter().flatten().min();
+        let newest = [max_start, max_end].into_iter().flatten().max();
+        Ok((oldest, newest))
+    }
+
     pub async fn count_published(&self) -> Result<i64, DatabaseError> {
         let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM articles WHERE status = $1")
             .bind(ArticleStatus::Published)
@@ -157,7 +184,7 @@ impl<'a> ArticleRepo<'a> {
             builder.push(")");
         }
 
-        builder.push(" ORDER BY a.updated_at DESC");
+        builder.push(" ORDER BY a.published_at DESC NULLS LAST");
 
         Ok(builder
             .build_query_as::<Article>()

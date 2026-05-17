@@ -2,12 +2,15 @@
 
 import { useState, useMemo } from "react";
 import Image from "next/image";
+import { ArrowUpRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { Link } from "@/i18n/routing";
 import { getLocalizedField } from "@/lib/locale";
 import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
 import type { Production } from "@/types/models/production.types";
 import type { Media } from "@/types/models/media.types";
+import type { Artist } from "@/types/models/artist.types";
 
 function stripHtmlAndDecode(html: string | null | undefined): string {
     if (!html) return "";
@@ -111,10 +114,12 @@ export function ProductionArticle({
     production,
     locale,
     media = [],
+    artists = [],
 }: {
     production: Production;
     locale: string;
     media?: Media[];
+    artists?: Artist[];
 }) {
     const t = useTranslations("ProductionPage");
 
@@ -327,12 +332,31 @@ export function ProductionArticle({
                     <div className="text-muted-foreground mb-0.5 font-mono text-[8px] tracking-[1.6px] uppercase">
                         {t("creditArtist")}
                     </div>
-                    <div
-                        className="font-body text-foreground text-[13px] font-medium"
-                        dangerouslySetInnerHTML={{
-                            __html: getLocalizedField(production, "artist", locale) ?? "-",
-                        }}
-                    />
+                    {artists.length > 0 ? (
+                        <div className="flex flex-col gap-0.5">
+                            {artists.map((a) => (
+                                <Link
+                                    key={a.id}
+                                    href={`/artists/${a.id}`}
+                                    className="font-body text-foreground inline-flex items-center gap-1 text-[13px] font-medium transition-opacity hover:opacity-70"
+                                >
+                                    {a.name}
+                                    <ArrowUpRight
+                                        size={11}
+                                        strokeWidth={2}
+                                        className="text-muted-foreground"
+                                    />
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                        <div
+                            className="font-body text-foreground text-[13px] font-medium"
+                            dangerouslySetInnerHTML={{
+                                __html: getLocalizedField(production, "artist", locale) ?? "-",
+                            }}
+                        />
+                    )}
                 </div>
 
                 {parsedCredits.map((credit, idx) => (

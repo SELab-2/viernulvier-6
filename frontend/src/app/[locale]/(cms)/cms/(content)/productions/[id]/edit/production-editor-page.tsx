@@ -19,6 +19,10 @@ import { ProductionRow } from "@/types/models/production.types";
 import { ProductionPreviewData } from "@/types/production-preview.types";
 import { toProductionRow, toProductionUpdateInput } from "../../../../tables/productions/columns";
 import { convertProductionRowToProduction } from "@/lib/production-converter";
+import { useGetFacets } from "@/hooks/api/useTaxonomy";
+import type { EntityTagSlim } from "@/types/models/taxonomy.types";
+import { useEntityTagEditor } from "@/hooks/useEntityTagEditor";
+import { TagPickerSection } from "@/components/cms/tag-picker-section";
 
 interface ProductionEditorPageProps {
     id: string;
@@ -120,6 +124,10 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
     const { data: eventsResult } = useGetEvents();
     const updateProduction = useUpdateProduction();
 
+    const { tagSlugs, inheritedTagSlugs, setTagEdits, resetTagEdits, replaceEntityTags } =
+        useEntityTagEditor("production", id);
+    const { data: allFacets } = useGetFacets();
+
     const [edits, setEdits] = useState<Partial<ProductionRow>>({});
     const [isPreviewOpen, setIsPreviewOpen] = useState(() => {
         if (typeof window !== "undefined" && window.innerWidth >= 1024) {
@@ -146,6 +154,21 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
         if (!fetchedProduction) return null;
         return toProductionRow(fetchedProduction);
     }, [fetchedProduction]);
+
+    const tagToFacetMap = useMemo(() => {
+        const map = new Map<string, string>();
+        allFacets?.forEach((facet) => facet.tags.forEach((tag) => map.set(tag.slug, facet.slug)));
+        return map;
+    }, [allFacets]);
+
+    const resolvedTagsForPreview = useMemo((): EntityTagSlim[] => {
+        return tagSlugs
+            .map((slug) => {
+                const facet = tagToFacetMap.get(slug);
+                return facet ? { slug, facet } : null;
+            })
+            .filter((t): t is EntityTagSlim => t !== null);
+    }, [tagSlugs, tagToFacetMap]);
 
     // Merge base with edits
     const production = useMemo(() => {
@@ -212,18 +235,26 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
     useEffect(() => {
         if (!production || !isPreviewOpen) return;
 
-        // Create a hash of the current production to check if it changed
-        const productionHash = JSON.stringify(production);
+        // Create a hash of the current production + tags to check if it changed
+        const productionHash = JSON.stringify({ production, tags: resolvedTagsForPreview });
         if (productionHash === lastSyncedProductionRef.current) return;
 
         lastSyncedProductionRef.current = productionHash;
         const productionForPreview = convertProductionRowToProduction(production);
         const previewData: ProductionPreviewData = {
-            production: productionForPreview,
+            production: { ...productionForPreview, tags: resolvedTagsForPreview },
             events: productionEvents,
         };
         setPreview("production", production.id, previewData, locale, previewSessionId);
-    }, [production, productionEvents, isPreviewOpen, setPreview, locale, previewSessionId]);
+    }, [
+        production,
+        productionEvents,
+        isPreviewOpen,
+        setPreview,
+        locale,
+        previewSessionId,
+        resolvedTagsForPreview,
+    ]);
 
     // Clean up preview data when the editor unmounts
     useEffect(() => {
@@ -237,9 +268,17 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
 
         try {
             const updateInput = toProductionUpdateInput(production);
-            await updateProduction.mutateAsync(updateInput);
+            await Promise.all([
+                updateProduction.mutateAsync(updateInput),
+                replaceEntityTags.mutateAsync({
+                    entityType: "production",
+                    entityId: production.id,
+                    tagSlugs,
+                }),
+            ]);
             clearPreviewFor("production", production.id);
             setEdits({});
+            resetTagEdits();
             toast.success(t("saveSuccess"));
         } catch {
             toast.error(t("saveFailed"));
@@ -252,13 +291,21 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
         if (!isPreviewOpen) {
             const productionForPreview = convertProductionRowToProduction(production);
             const previewData: ProductionPreviewData = {
-                production: productionForPreview,
+                production: { ...productionForPreview, tags: resolvedTagsForPreview },
                 events: productionEvents,
             };
             setPreview("production", production.id, previewData, locale, previewSessionId);
         }
         setIsPreviewOpen((prev) => !prev);
-    }, [production, productionEvents, isPreviewOpen, setPreview, locale, previewSessionId]);
+    }, [
+        production,
+        productionEvents,
+        isPreviewOpen,
+        setPreview,
+        locale,
+        previewSessionId,
+        resolvedTagsForPreview,
+    ]);
 
     const handleChange = (key: keyof ProductionRow, value: string | null) => {
         setEdits((prev) => ({ ...prev, [key]: value }));
@@ -405,6 +452,13 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                                     })}
                                 </div>
                             </section>
+
+                            <TagPickerSection
+                                entityType="production"
+                                selectedSlugs={tagSlugs}
+                                inheritedSlugs={inheritedTagSlugs}
+                                onChange={(next) => setTagEdits(next)}
+                            />
                         </div>
                     </div>
                 </div>

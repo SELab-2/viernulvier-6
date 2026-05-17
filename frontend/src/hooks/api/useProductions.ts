@@ -19,17 +19,18 @@ import {
     GetProductionByIdResponse,
     UpdateProductionResponse,
 } from "@/types/api/production.api.types";
-import { PaginatedResult, SearchPaginationParams } from "@/types/api/api.types";
+import { PaginatedResult } from "@/types/api/api.types";
 import {
     Production,
     ProductionCreateInput,
     ProductionUpdateInput,
+    ProductionSearchParams,
 } from "@/types/models/production.types";
 
 import { queryKeys } from "./query-keys";
 
 const fetchProductions = async (
-    params?: SearchPaginationParams
+    params?: ProductionSearchParams
 ): Promise<PaginatedResult<Production>> => {
     const { data } = await api.get<GetAllProductionsResponse>("/productions", { params });
     return mapPaginatedProductionsResult(data);
@@ -42,7 +43,7 @@ const fetchProductionById = async (id: string): Promise<Production> => {
 
 export const useGetProductions = (options?: {
     enabled?: boolean;
-    params?: SearchPaginationParams;
+    params?: ProductionSearchParams;
 }) => {
     return useQuery({
         queryKey: queryKeys.productions.all(options?.params),
@@ -52,12 +53,13 @@ export const useGetProductions = (options?: {
 };
 
 export const useGetInfiniteProductions = (
-    params?: Omit<SearchPaginationParams, "cursor">,
+    params?: Omit<ProductionSearchParams, "cursor">,
     options?: { enabled?: boolean }
 ) => {
     return useInfiniteQuery({
         queryKey: queryKeys.productions.infinite(params),
-        queryFn: async ({ pageParam }) => fetchProductions({ ...params, cursor: pageParam }),
+        queryFn: async ({ pageParam }) =>
+            fetchProductions({ ...params, cursor: pageParam ?? undefined }),
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
         initialPageParam: null as string | null,
         ...options,

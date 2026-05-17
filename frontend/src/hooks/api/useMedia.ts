@@ -130,7 +130,8 @@ export const useGetInfiniteMedia = (
 ) => {
     return useInfiniteQuery({
         queryKey: queryKeys.media.infinite(params),
-        queryFn: async ({ pageParam }) => fetchAllMedia({ ...params, cursor: pageParam }),
+        queryFn: async ({ pageParam }) =>
+            fetchAllMedia(pageParam ? { ...params, cursor: pageParam } : params),
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
         initialPageParam: null as string | null,
         ...options,
@@ -357,6 +358,65 @@ export const useDeleteMedia = () => {
         onSuccess: (id) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.media.all() });
             queryClient.removeQueries({ queryKey: queryKeys.media.detail(id) });
+        },
+    });
+};
+
+export const useCleanupOrphanedMedia = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async () => {
+            const { data } = await api.post<{
+                deleted_count: number;
+                s3_keys: string[];
+            }>("/media/cleanup");
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.media.all() });
+        },
+    });
+};
+
+export type MediaEntityLink = {
+    entity_type: string;
+    entity_id: string;
+    role: string;
+    sort_order: number;
+    is_cover_image: boolean;
+    title: { en: string | null; nl: string | null } | null;
+};
+
+export const useGetMediaEntityLinks = (mediaId: string | null) => {
+    return useQuery({
+        queryKey: queryKeys.media.entityLinks(mediaId),
+        queryFn: async () => {
+            const { data } = await api.get<MediaEntityLink[]>(`/media/${mediaId}/entities`);
+            return data;
+        },
+        enabled: !!mediaId,
+    });
+};
+
+export const useReconcileMediaStorage = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (apply: boolean = false) => {
+            const { data } = await api.post<{
+                applied: boolean;
+                db_key_count: number;
+                deleted_missing_in_db_count: number;
+                deleted_missing_in_s3_count: number;
+                missing_in_db: string[];
+                missing_in_s3: string[];
+                s3_key_count: number;
+            }>(`/media/reconcile?apply=${apply}`);
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.media.all() });
         },
     });
 };

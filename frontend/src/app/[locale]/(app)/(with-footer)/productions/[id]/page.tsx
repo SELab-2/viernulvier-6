@@ -4,9 +4,13 @@ import { use, useMemo, useState, useCallback, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { notFound, useSearchParams } from "next/navigation";
 
+import { ArrowUpRight } from "lucide-react";
+
 import { useGetProduction, useGetProductions } from "@/hooks/api/useProductions";
+import { useGetArtistsByProduction } from "@/hooks/api/useArtists";
 import { useGetEventsByProduction } from "@/hooks/api/useEvents";
 import { useGetArticlesByProduction } from "@/hooks/api/useArticles";
+import { useProductionCollections } from "@/hooks/api/useCollections";
 import { useHasPreview } from "@/hooks/usePreviewData";
 import {
     useProductionWithPreview,
@@ -15,6 +19,8 @@ import {
 import { useGetEntityMedia } from "@/hooks/api/useMedia";
 import { getLocalizedField } from "@/lib/locale";
 import { Link, useRouter } from "@/i18n/routing";
+
+import Image from "next/image";
 
 import { UnifiedHeader } from "@/components/layout/header";
 import { LoadingState } from "@/components/shared/loading-state";
@@ -25,6 +31,7 @@ import { ProductionArticle } from "@/components/productionpage/production-articl
 import { ProductionSidebar } from "@/components/productionpage/production-sidebar";
 import { ProductionRelated } from "@/components/productionpage/production-related";
 import { ProductionArticles } from "@/components/productionpage/production-articles";
+import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
 import { Production, ProductionRow } from "@/types/models/production.types";
 
 // Helper to get title from Production or ProductionRow
@@ -78,10 +85,12 @@ export default function ProductionPage({
     }, [isPreviewMode, locale, sessionId]);
 
     const { data: apiProduction, isLoading: isProdLoading, isError } = useGetProduction(id);
+    const { data: structuredArtists = [] } = useGetArtistsByProduction(id);
     const { data: apiEvents = [], isLoading: isEventsLoading } = useGetEventsByProduction(id);
     const { data: productionsResult, isLoading: isAllProdLoading } = useGetProductions();
     const { data: linkedArticles = [] } = useGetArticlesByProduction(id);
     const { data: media = [] } = useGetEntityMedia("production", id);
+    const { data: publicCollections = [] } = useProductionCollections(id, "public");
 
     // Always call preview hooks (they handle preview mode internally)
     const previewProduction = useProductionWithPreview(id, apiProduction, sessionId);
@@ -157,25 +166,65 @@ export default function ProductionPage({
 
             {/* Main layout */}
             <div className="border-foreground animate-in fade-in slide-in-from-bottom-2 fill-mode-both flex flex-col border-b-2 duration-500 lg:flex-row">
+                {/* Hero — mobile only (desktop version lives inside the right column) */}
+                <div className="order-1 lg:hidden">
+                    <ProductionHero production={production} locale={locale} media={media} />
+                </div>
+
                 {/* Left: title + article */}
                 <div className="border-border order-2 flex-1 border-b p-6 pb-16 sm:p-10 lg:order-1 lg:border-r lg:border-b-0 lg:pr-[50px]">
                     <div className="mb-2 flex flex-col py-4">
-                        {artist && (
-                            <h1 className="font-display text-foreground mb-1 text-[clamp(32px,4.5vw,58px)] leading-[1.05] font-bold tracking-[-0.03em]">
-                                {artist}
-                            </h1>
-                        )}
-                        <p
-                            className={`font-display text-[clamp(32px,4.5vw,58px)] leading-[1.05] font-bold tracking-[-0.03em] italic ${artist ? "text-foreground/40" : "text-foreground"} mb-8`}
+                        <h1
+                            className={`font-display text-foreground text-[clamp(32px,4.5vw,58px)] leading-[1.05] font-bold tracking-[-0.03em] ${structuredArtists.length > 0 || artist ? "mb-2" : "mb-8"}`}
                         >
                             {title}
-                        </p>
+                        </h1>
+                        {structuredArtists.length > 0 ? (
+                            <p className="font-display text-foreground/40 mb-8 text-[clamp(22px,3vw,38px)] leading-[1.15] font-bold tracking-[-0.03em] italic">
+                                {structuredArtists.map((a, i) => (
+                                    <span key={a.id}>
+                                        {i > 0 &&
+                                            (i === structuredArtists.length - 1 ? " & " : ", ")}
+                                        <Link
+                                            href={`/artists/${a.id}`}
+                                            className="hover:decoration-foreground inline-flex items-center gap-1 no-underline underline-offset-4 transition-all hover:underline"
+                                        >
+                                            {a.name}
+                                            <ArrowUpRight
+                                                className="h-[0.6em] w-[0.6em] shrink-0"
+                                                strokeWidth={1.5}
+                                            />
+                                        </Link>
+                                    </span>
+                                ))}
+                            </p>
+                        ) : artist ? (
+                            <p className="font-display text-foreground/40 mb-8 text-[clamp(32px,4.5vw,58px)] leading-[1.05] font-bold tracking-[-0.03em] italic">
+                                {artist}
+                            </p>
+                        ) : null}
+                        {(production as Production).tags?.length > 0 && (
+                            <EntityTagStrip
+                                tags={(production as Production).tags}
+                                locale={locale}
+                                cap={8}
+                                className="mb-4"
+                            />
+                        )}
                     </div>
-                    <ProductionArticle production={production} locale={locale} media={media} />
+                    <ProductionArticle
+                        production={production}
+                        locale={locale}
+                        media={media}
+                        artists={structuredArtists}
+                    />
                 </div>
-                {/* Right: image + sidebar */}
-                <div className="order-1 flex w-full shrink-0 flex-col lg:order-2 lg:w-[380px] xl:w-[480px]">
-                    <ProductionHero production={production} locale={locale} media={media} />
+
+                {/* Right: image (desktop only) + sidebar */}
+                <div className="order-3 flex w-full shrink-0 flex-col lg:order-2 lg:w-[380px] xl:w-[480px]">
+                    <div className="hidden lg:block">
+                        <ProductionHero production={production} locale={locale} media={media} />
+                    </div>
                     <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both p-6 delay-200 duration-500 sm:p-[30px_24px]">
                         <ProductionSidebar
                             production={production as Production}
@@ -188,6 +237,55 @@ export default function ProductionPage({
 
             {/* Linked Articles */}
             <ProductionArticles articles={linkedArticles} locale={locale} />
+
+            {/* Part of Collections */}
+            {publicCollections.length > 0 && (
+                <section className="border-foreground/10 border-t px-6 py-10 sm:px-10">
+                    <h2 className="text-muted-foreground mb-6 font-mono text-[9px] tracking-[2px] uppercase">
+                        {tProd("partOfTitle")}
+                    </h2>
+                    <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {publicCollections.map((col) => {
+                            const translation =
+                                col.translations.find((tr) => tr.languageCode === locale) ??
+                                col.translations[0];
+                            const colTitle = translation?.title ?? col.slug;
+                            const colDescription = translation?.description;
+                            return (
+                                <li key={col.id}>
+                                    <Link
+                                        href={`/collections/${col.slug}`}
+                                        className="border-foreground/10 hover:border-foreground/30 hover:bg-muted/5 group flex gap-4 border p-4 transition-colors"
+                                    >
+                                        <div className="bg-muted relative h-20 w-20 shrink-0 overflow-hidden">
+                                            {col.coverImageUrl ? (
+                                                <Image
+                                                    src={col.coverImageUrl}
+                                                    alt={colTitle}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            ) : (
+                                                <div className="from-muted to-muted/40 h-full w-full bg-gradient-to-br" />
+                                            )}
+                                        </div>
+                                        <div className="flex min-w-0 flex-col justify-center gap-1">
+                                            <span className="font-display text-foreground line-clamp-2 text-sm leading-tight font-semibold">
+                                                {colTitle}
+                                            </span>
+                                            {colDescription && (
+                                                <p className="text-muted-foreground line-clamp-2 text-xs leading-relaxed">
+                                                    {colDescription}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </Link>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </section>
+            )}
 
             {/* Related Section */}
             {relatedProductions.length > 0 && (

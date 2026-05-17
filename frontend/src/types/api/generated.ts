@@ -483,6 +483,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/locations/{id}/halls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get all halls belonging to a location */
+        get: operations["get_halls_for_location"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/media": {
         parameters: {
             query?: never;
@@ -493,7 +510,25 @@ export interface paths {
         /** @description List and search media records with cursor-based pagination. */
         get: operations["get_all_media"];
         put?: never;
-        post?: never;
+        /** @description Create a standalone media record. If a checksum is provided and a media with that checksum already exists, the existing media is returned instead (deduplication). */
+        post: operations["create_media"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Check if a media item with the given checksum already exists. Used for content-based deduplication before upload. */
+        post: operations["check_media"];
         delete?: never;
         options?: never;
         head?: never;
@@ -672,6 +707,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/media/{id}/entities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get all entity links for a given media item. */
+        get: operations["get_media_entity_links"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/productions": {
         parameters: {
             query?: never;
@@ -709,6 +761,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/productions/{id}/artists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get all artists for a production */
+        get: operations["get_artists_by_production_id"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/productions/{id}/collections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return all collections that contain the given production. Defaults to visibility=public. Pass ?visibility=unlisted for series-type collections. */
+        get: operations["get_collections_for_production"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/productions/{id}/events": {
         parameters: {
             query?: never;
@@ -721,94 +807,6 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/productions/{id}/series": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Return all series that contain the given production. Public endpoint, no authentication required. */
-        get: operations["get_series_for_production"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/series": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Return all series with translations, production IDs, and derived period. Public endpoint, no authentication required. */
-        get: operations["get_all_series"];
-        /** @description Update the metadata (slug, translations) of an existing series. Requires editor authentication. Does not affect production membership. */
-        put: operations["update_series"];
-        /** @description Create a new series. Requires editor authentication. Supply a slug and per-language translations (name, subtitle, description). Productions are added separately via POST /series/{slug}/productions. */
-        post: operations["create_series"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/series/{slug}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Return a single series by its slug, including translations, production IDs, and derived period. Public endpoint, no authentication required. */
-        get: operations["get_one_series"];
-        put?: never;
-        post?: never;
-        /** @description Permanently delete a series. Requires editor authentication. Productions are not affected. */
-        delete: operations["delete_series"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/series/{slug}/productions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** @description Add one or more productions to a series. Requires editor authentication. Duplicates are silently ignored. */
-        post: operations["add_productions_to_series"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/series/{slug}/productions/{production_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** @description Remove a production from a series. Requires editor authentication. The production itself is not deleted. */
-        delete: operations["remove_production_from_series"];
         options?: never;
         head?: never;
         patch?: never;
@@ -939,6 +937,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/taxonomy/tags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Create a new tag. Slug is derived server-side from the NL label. */
+        post: operations["create_tag"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/taxonomy/tags/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Delete a tag. Returns 409 with usage_count if still in use and force is not set. */
+        delete: operations["delete_tag"];
+        options?: never;
+        head?: never;
+        /** @description Update NL/EN labels for a tag. Slug is read-only. */
+        patch: operations["update_tag"];
+        trace?: never;
+    };
+        trace?: never;
+    };
     "/version": {
         parameters: {
             query?: never;
@@ -973,6 +1008,8 @@ export interface components {
             subject_period_end?: string | null;
             /** Format: date */
             subject_period_start?: string | null;
+            /** @description Slim tag projection for list contexts. Empty if the article has no taggings. */
+            tags?: components["schemas"]["EntityTagSlim"][];
             title?: string | null;
             /** Format: date-time */
             updated_at: string;
@@ -993,6 +1030,7 @@ export interface components {
             subject_period_end?: string | null;
             /** Format: date */
             subject_period_start?: string | null;
+            tags?: components["schemas"]["EntityTagSlim"][];
             title?: string | null;
             /** Format: date-time */
             updated_at: string;
@@ -1069,6 +1107,13 @@ export interface components {
         AuthResponse: {
             message: string;
             success: boolean;
+        };
+        CheckMediaRequest: {
+            checksum: string;
+        };
+        CheckMediaResponse: {
+            exists: boolean;
+            media?: null | components["schemas"]["MediaPayload"];
         };
         CleanupResponse: {
             deleted_count: number;
@@ -1157,6 +1202,8 @@ export interface components {
             items: components["schemas"]["CollectionItemPayload"][];
             /** @description URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections. */
             slug: string;
+            /** @description Slim tag list attached to this collection (output-only). */
+            tags?: components["schemas"]["EntityTagSlim"][];
             /** @description Per-language title and description. */
             translations: components["schemas"]["CollectionTranslationPayload"][];
             /**
@@ -1164,18 +1211,24 @@ export interface components {
              * @description ISO 8601 last-updated timestamp.
              */
             updated_at: string;
+            /** @description Whether this collection appears on entity detail pages (public) or is only accessible via its URL (unlisted). */
+            visibility: components["schemas"]["CollectionVisibility"];
         };
         CollectionPostPayload: {
             /** @description URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections. */
             slug: string;
             /** @description Per-language title and description. */
             translations: components["schemas"]["CollectionTranslationPayload"][];
+            /** @description Whether this collection appears on entity detail pages (public) or is only accessible via its URL (unlisted). */
+            visibility?: components["schemas"]["CollectionVisibility"];
         };
         CollectionTranslationPayload: {
             description: string;
             language_code: string;
             title: string;
         };
+        /** @enum {string} */
+        CollectionVisibility: "public" | "unlisted";
         CreateEditorRequest: {
             email: string;
             password: string;
@@ -1186,6 +1239,29 @@ export interface components {
             password: string;
             role: components["schemas"]["UserRole"];
             username: string;
+        };
+        CreateMediaRequest: {
+            alt_text_en?: string | null;
+            alt_text_fr?: string | null;
+            alt_text_nl?: string | null;
+            checksum?: string | null;
+            credit_en?: string | null;
+            credit_fr?: string | null;
+            credit_nl?: string | null;
+            /** Format: int64 */
+            file_size?: number | null;
+            /** Format: int32 */
+            height?: number | null;
+            mime_type: string;
+            s3_key: string;
+            upload_token: string;
+            /** Format: int32 */
+            width?: number | null;
+        };
+        CreateTagRequest: {
+            facet: components["schemas"]["Facet"];
+            translations: components["schemas"]["TagTranslationInput"][];
+        };
         };
         EditorResponse: {
             email: string;
@@ -1203,6 +1279,14 @@ export interface components {
             /** Format: int32 */
             sort_order: number;
             translations: components["schemas"]["TagTranslationPayload"][];
+        };
+        /**
+         * @description Slim per-entity tag projection used by list endpoints. Just enough
+         *     for the frontend to look up the localized label in the taxonomy cache.
+         */
+        EntityTagSlim: {
+            facet: string;
+            slug: string;
         };
         /** @enum {string} */
         EntityType: "production" | "artist" | "article" | "media" | "location" | "event" | "series" | "collection";
@@ -1440,6 +1524,13 @@ export interface components {
             translations?: components["schemas"]["LocationTranslationPayload"][];
             uitdatabank_id?: string | null;
         };
+        /** @description Minimal location info embedded in a production response. */
+        LocationSummary: {
+            /** Format: uuid */
+            id: string;
+            name?: string | null;
+            slug?: string | null;
+        };
         /** @description The per-language content for a location. */
         LocationTranslationPayload: {
             description?: string | null;
@@ -1449,6 +1540,16 @@ export interface components {
         LoginRequest: {
             email: string;
             password: string;
+        };
+        MediaEntityLink: {
+            /** Format: uuid */
+            entity_id: string;
+            entity_type: string;
+            is_cover_image: boolean;
+            role: string;
+            /** Format: int32 */
+            sort_order: number;
+            title?: null | components["schemas"]["TitleTranslations"];
         };
         /**
          * @description Response payload for a media item. The `url` field is the direct public URL
@@ -1526,9 +1627,43 @@ export interface components {
                 subject_period_end?: string | null;
                 /** Format: date */
                 subject_period_start?: string | null;
+                /** @description Slim tag projection for list contexts. Empty if the article has no taggings. */
+                tags?: components["schemas"]["EntityTagSlim"][];
                 title?: string | null;
                 /** Format: date-time */
                 updated_at: string;
+            }[];
+            next_cursor?: string | null;
+        };
+        PaginatedResponse_CollectionPayload: {
+            data: {
+                /** @description Cover image URL resolved from the entity_media link (output-only). */
+                readonly cover_image_url?: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 creation timestamp.
+                 */
+                created_at: string;
+                /**
+                 * Format: uuid
+                 * @description Unique identifier for the collection (UUIDv7).
+                 */
+                id: string;
+                /** @description Ordered list of items in this collection. */
+                items: components["schemas"]["CollectionItemPayload"][];
+                /** @description URL-safe identifier used in the shareable link, e.g. `videodroom-candidates-2026`. Must be unique across all collections. */
+                slug: string;
+                /** @description Slim tag list attached to this collection (output-only). */
+                tags?: components["schemas"]["EntityTagSlim"][];
+                /** @description Per-language title and description. */
+                translations: components["schemas"]["CollectionTranslationPayload"][];
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 last-updated timestamp.
+                 */
+                updated_at: string;
+                /** @description Whether this collection appears on entity detail pages (public) or is only accessible via its URL (unlisted). */
+                visibility: components["schemas"]["CollectionVisibility"];
             }[];
             next_cursor?: string | null;
         };
@@ -1683,9 +1818,13 @@ export interface components {
                 eticket_info?: string | null;
                 /** Format: uuid */
                 id: string;
+                /** @description Locations associated with this production via production_locations (output-only). */
+                locations?: components["schemas"]["LocationSummary"][];
                 slug: string;
                 /** Format: int32 */
                 source_id?: number | null;
+                /** @description Slim tag projection for list contexts. Empty if the production has no taggings. */
+                tags?: components["schemas"]["EntityTagSlim"][];
                 translations?: components["schemas"]["ProductionTranslationPayload"][];
                 uitdatabank_theme?: string | null;
                 uitdatabank_type?: string | null;
@@ -1712,9 +1851,13 @@ export interface components {
             eticket_info?: string | null;
             /** Format: uuid */
             id: string;
+            /** @description Locations associated with this production via production_locations (output-only). */
+            locations?: components["schemas"]["LocationSummary"][];
             slug: string;
             /** Format: int32 */
             source_id?: number | null;
+            /** @description Slim tag projection for list contexts. Empty if the production has no taggings. */
+            tags?: components["schemas"]["EntityTagSlim"][];
             translations?: components["schemas"]["ProductionTranslationPayload"][];
             uitdatabank_theme?: string | null;
             uitdatabank_type?: string | null;
@@ -1755,6 +1898,8 @@ export interface components {
             applied: boolean;
             db_key_count: number;
             /** Format: int64 */
+            deleted_missing_in_db_count: number;
+            /** Format: int64 */
             deleted_missing_in_s3_count: number;
             missing_in_db: string[];
             missing_in_s3: string[];
@@ -1762,34 +1907,6 @@ export interface components {
         };
         ReplaceTagsRequest: {
             tag_slugs: string[];
-        };
-        SeriesPayload: {
-            /** Format: date-time */
-            created_at: string;
-            /** Format: uuid */
-            id: string;
-            /** Format: date-time */
-            period_end?: string | null;
-            /** Format: date-time */
-            period_start?: string | null;
-            production_ids: string[];
-            slug: string;
-            translations: components["schemas"]["SeriesTranslationPayload"][];
-            /** Format: date-time */
-            updated_at: string;
-        };
-        SeriesPostPayload: {
-            slug: string;
-            translations: components["schemas"]["SeriesTranslationPayload"][];
-        };
-        SeriesProductionsPayload: {
-            production_ids: string[];
-        };
-        SeriesTranslationPayload: {
-            description: string;
-            language_code: string;
-            name: string;
-            subtitle: string;
         };
         /** @enum {string} */
         Sort: "recent" | "oldest" | "relevance";
@@ -1820,8 +1937,14 @@ export interface components {
             event_count: number;
             /** Format: int64 */
             location_count: number;
+            /** Format: int64 */
+            media_count: number;
+            /** Format: date */
+            newest_article?: string | null;
             /** Format: date-time */
             newest_event?: string | null;
+            /** Format: date */
+            oldest_article?: string | null;
             /** Format: date-time */
             oldest_event?: string | null;
             /** Format: int64 */
@@ -1833,6 +1956,10 @@ export interface components {
             sort_order: number;
             translations: components["schemas"]["TagTranslationPayload"][];
         };
+        TagTranslationInput: {
+            label: string;
+            language_code: string;
+        };
         TagTranslationPayload: {
             description?: string | null;
             label: string;
@@ -1841,6 +1968,18 @@ export interface components {
         UpdateUserRequest: {
             role: components["schemas"]["UserRole"];
             username: string;
+        };
+        TagUsageResponse: {
+            /** Format: int64 */
+            usage_count: number;
+        };
+        TitleTranslations: {
+            en?: string | null;
+            nl?: string | null;
+        };
+        UpdateTagRequest: {
+            translations: components["schemas"]["TagTranslationInput"][];
+        };
         };
         UploadUrlRequest: {
             /**
@@ -2240,7 +2379,11 @@ export interface operations {
     };
     get_all_artists: {
         parameters: {
-            query?: never;
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+                q?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2253,7 +2396,17 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ArtistPayload"][];
+                    "application/json": {
+                        data: {
+                            /** @description Cover image URL resolved from the entity_media link (output-only). */
+                            readonly cover_image_url?: string | null;
+                            /** Format: uuid */
+                            id: string;
+                            name: string;
+                            slug: string;
+                        }[];
+                        next_cursor?: string | null;
+                    };
                 };
             };
         };
@@ -2524,7 +2677,12 @@ export interface operations {
     };
     get_all_collections: {
         parameters: {
-            query?: never;
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+                q?: string | null;
+                visibility?: null | components["schemas"]["CollectionVisibility"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2537,7 +2695,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CollectionPayload"][];
+                    "application/json": components["schemas"]["PaginatedResponse_CollectionPayload"];
                 };
             };
         };
@@ -3426,6 +3584,36 @@ export interface operations {
             };
         };
     };
+    get_halls_for_location: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Location UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HallPayload"][];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     get_all_media: {
         parameters: {
             query?: {
@@ -3450,6 +3638,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaginatedResponse_MediaPayload"];
+                };
+            };
+        };
+    };
+    create_media: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateMediaRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaPayload"];
+                };
+            };
+            /** @description Bad request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    check_media: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckMediaRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckMediaResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -3903,6 +4164,36 @@ export interface operations {
             };
         };
     };
+    get_media_entity_links: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaEntityLink"][];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     get_all_productions: {
         parameters: {
             query?: {
@@ -4078,6 +4369,54 @@ export interface operations {
             };
         };
     };
+    get_artists_by_production_id: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Production UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtistPayload"][];
+                };
+            };
+        };
+    };
+    get_collections_for_production: {
+        parameters: {
+            query?: {
+                visibility?: null | components["schemas"]["CollectionVisibility"];
+            };
+            header?: never;
+            path: {
+                /** @description Production UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionPayload"][];
+                };
+            };
+        };
+    };
     get_events_by_production_id: {
         parameters: {
             query?: never;
@@ -4098,278 +4437,6 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["EventPayload"][];
                 };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    get_series_for_production: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Production UUID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SeriesPayload"][];
-                };
-            };
-        };
-    };
-    get_all_series: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SeriesPayload"][];
-                };
-            };
-        };
-    };
-    update_series: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SeriesPayload"];
-            };
-        };
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SeriesPayload"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    create_series: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SeriesPostPayload"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SeriesPayload"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    get_one_series: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Series slug */
-                slug: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SeriesPayload"];
-                };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    delete_series: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Series slug */
-                slug: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    add_productions_to_series: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Series slug */
-                slug: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SeriesProductionsPayload"];
-            };
-        };
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SeriesPayload"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    remove_production_from_series: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Series slug */
-                slug: string;
-                /** @description Production UUID */
-                production_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };
@@ -4806,6 +4873,146 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
+            };
+        };
+    };
+    create_tag: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTagRequest"];
+            };
+        };
+        responses: {
+            /** @description Tag created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TagResponse"];
+                };
+            };
+            /** @description Missing NL translation */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Slug already exists in this facet */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_tag: {
+        parameters: {
+            query?: {
+                /** @description If true, remove all taggings and delete */
+                force?: boolean;
+            };
+            header?: never;
+            path: {
+                /** @description Tag slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tag deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Tag not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Tag still in use */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TagUsageResponse"];
+                };
+            };
+        };
+    };
+    update_tag: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tag slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTagRequest"];
+            };
+        };
+        responses: {
+            /** @description Labels updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Tag not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
             };
         };
     };

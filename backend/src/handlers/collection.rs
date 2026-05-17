@@ -1,19 +1,28 @@
 use axum::{
     Json,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
 };
-use database::Database;
+use database::{Database, models::collection::CollectionVisibility};
 use uuid::Uuid;
 
 use crate::{
     AppState,
-    dto::collection::{
-        CollectionItemPayload, CollectionItemPostPayload, CollectionItemsBulkPayload,
-        CollectionPayload, CollectionPostPayload,
+    dto::{
+        collection::{
+            CollectionItemPayload, CollectionItemPostPayload, CollectionItemsBulkPayload,
+            CollectionPayload, CollectionPostPayload,
+        },
+        paginated::PaginatedResponse,
     },
     error::{AppError, ErrorResponse},
-    handlers::{IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse},
+    handlers::{
+        IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse,
+        queries::{
+            collection::{CollectionSearchQuery, CollectionVisibilityQuery},
+            pagination::PaginationQuery,
+        },
+    },
 };
 
 #[utoipa::path(
@@ -22,16 +31,24 @@ use crate::{
     tag = "Collections",
     operation_id = "get_all_collections",
     description = "Return all collections with their items. Public endpoint, no authentication required. Each collection contains the full list of its items in position order.",
+    params(
+        PaginationQuery,
+        CollectionSearchQuery
+    ),
     responses(
-        (status = 200, description = "Success", body = [CollectionPayload])
+        (status = 200, description = "Success", body = PaginatedResponse<CollectionPayload>)
     )
 )]
 pub async fn get_all(
     State(state): State<AppState>,
     db: Database,
-) -> JsonResponse<Vec<CollectionPayload>> {
+    Query(pagination): Query<PaginationQuery>,
+    Query(search): Query<CollectionSearchQuery>,
+) -> JsonResponse<PaginatedResponse<CollectionPayload>> {
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
-    CollectionPayload::all(&db, public_url).await?.json()
+    CollectionPayload::all(&db, pagination.cursor, pagination.limit, search, public_url)
+        .await?
+        .json()
 }
 
 #[utoipa::path(
@@ -228,4 +245,31 @@ pub async fn delete_item(
         .await?
         .ok_or(AppError::NotFound)?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
+    method(get),
+    path = "/productions/{id}/collections",
+    tag = "Collections",
+    operation_id = "get_collections_for_production",
+    description = "Return all collections that contain the given production. Defaults to visibility=public. Pass ?visibility=unlisted for series-type collections.",
+    params(
+        ("id" = Uuid, Path, description = "Production UUID"),
+        CollectionVisibilityQuery,
+    ),
+    responses(
+        (status = 200, description = "Success", body = [CollectionPayload])
+    )
+)]
+pub async fn get_for_production(
+    State(state): State<AppState>,
+    db: Database,
+    Path(id): Path<Uuid>,
+    Query(filter): Query<CollectionVisibilityQuery>,
+) -> JsonResponse<Vec<CollectionPayload>> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    let visibility = Some(filter.visibility.unwrap_or(CollectionVisibility::Public));
+    CollectionPayload::for_production(&db, id, visibility, public_url)
+        .await?
+        .json()
 }
