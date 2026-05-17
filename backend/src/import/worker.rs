@@ -522,12 +522,13 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
                     match adapter.lookup_existing(&resolved, db).await {
                         Ok(opt) => opt,
                         Err(e) => {
+                            warn!("session {id} row {} lookup_existing failed: {e}", row.id);
                             let warnings = vec![ImportWarning {
                                 field: None,
                                 code: "adapter_error".to_string(),
                                 message: e.to_string(),
                             }];
-                            let _ = db
+                            if let Err(se) = db
                                 .imports()
                                 .save_dry_run_result(
                                     row.id,
@@ -535,7 +536,10 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
                                     None,
                                     Json(warnings),
                                 )
-                                .await;
+                                .await
+                            {
+                                warn!("session {id} row {} save_dry_run_result failed: {se}", row.id);
+                            }
                             commit_error_count += 1;
                             continue;
                         }
@@ -545,15 +549,19 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
             ImportRowStatus::Pending => match adapter.lookup_existing(&resolved, db).await {
                 Ok(opt) => opt,
                 Err(e) => {
+                    warn!("session {id} row {} lookup_existing failed: {e}", row.id);
                     let warnings = vec![ImportWarning {
                         field: None,
                         code: "adapter_error".to_string(),
                         message: e.to_string(),
                     }];
-                    let _ = db
+                    if let Err(se) = db
                         .imports()
                         .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
-                        .await;
+                        .await
+                    {
+                        warn!("session {id} row {} save_dry_run_result failed: {se}", row.id);
+                    }
                     commit_error_count += 1;
                     continue;
                 }
@@ -566,15 +574,19 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
         let mut tx = match db.begin_transaction().await {
             Ok(t) => t,
             Err(e) => {
+                warn!("session {id} row {} begin_transaction failed: {e}", row.id);
                 let warnings = vec![ImportWarning {
                     field: None,
                     code: "tx_error".to_string(),
                     message: e.to_string(),
                 }];
-                let _ = db
+                if let Err(se) = db
                     .imports()
                     .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
-                    .await;
+                    .await
+                {
+                    warn!("session {id} row {} save_dry_run_result failed: {se}", row.id);
+                }
                 commit_error_count += 1;
                 continue;
             }
@@ -584,53 +596,63 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
         let entity_id = match adapter.apply_row(existing_id, &resolved, db, &mut tx).await {
             Ok(eid) => eid,
             Err(e) => {
+                warn!("session {id} row {} apply_row failed: {e}", row.id);
                 let _ = tx.rollback().await;
                 let warnings = vec![ImportWarning {
                     field: None,
                     code: "apply_error".to_string(),
                     message: e.to_string(),
                 }];
-                let _ = db
+                if let Err(se) = db
                     .imports()
                     .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
-                    .await;
+                    .await
+                {
+                    warn!("session {id} row {} save_dry_run_result failed: {se}", row.id);
+                }
                 commit_error_count += 1;
                 continue;
             }
         };
 
-        // (e) Finalise row status INSIDE the transaction — atomic with the entity write.
-        //     If this fails we roll back both the entity and the status flip, so a
-        //     retry will cleanly recreate the entity without duplicates.
+        // (e) Finalise row status inside the transaction.
         if let Err(e) =
             ImportRepo::finalise_committed_row(&mut tx, row.id, entity_id, existing_id.is_none())
                 .await
         {
+            warn!("session {id} row {} finalise_committed_row failed: {e}", row.id);
             let _ = tx.rollback().await;
             let warnings = vec![ImportWarning {
                 field: None,
                 code: "finalise_error".to_string(),
                 message: e.to_string(),
             }];
-            let _ = db
+            if let Err(se) = db
                 .imports()
                 .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
-                .await;
+                .await
+            {
+                warn!("session {id} row {} save_dry_run_result failed: {se}", row.id);
+            }
             commit_error_count += 1;
             continue;
         }
 
-        // Commit the transaction — entity write and row status flip are now durable together.
+        // Commit the transaction.
         if let Err(e) = tx.commit().await {
+            warn!("session {id} row {} tx.commit failed: {e}", row.id);
             let warnings = vec![ImportWarning {
                 field: None,
                 code: "tx_commit_error".to_string(),
                 message: e.to_string(),
             }];
-            let _ = db
+            if let Err(se) = db
                 .imports()
                 .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
-                .await;
+                .await
+            {
+                warn!("session {id} row {} save_dry_run_result failed: {se}", row.id);
+            }
             commit_error_count += 1;
             continue;
         }
