@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { useRouter } from "@/i18n/routing";
-import type { RowSelectionState } from "@tanstack/react-table";
 import { PageHeader } from "@/components/cms/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +24,6 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { DataTable } from "../../tables/data-table";
-import { ActionBar } from "../../tables/action-bar";
 import { makeUserColumns } from "./columns";
 import {
     useGetUsers,
@@ -83,7 +81,6 @@ export default function UsersPage() {
 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
-    const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
     const [form, setForm] = useState({
         username: "",
         email: "",
@@ -178,8 +175,7 @@ export default function UsersPage() {
         <div className="flex h-full flex-col px-3 py-1 lg:px-4 lg:py-3">
             <PageHeader eyebrow={tEditions("edition7")} title={t("title")} />
 
-            <div className="bg-background sticky top-0 z-10 flex items-center justify-between gap-2 py-2">
-                <ActionBar entityCounts={[]} actions={[]} onClear={() => {}} />
+            <div className="bg-background sticky top-0 z-10 flex items-center justify-end gap-2 py-2">
                 <Button onClick={openCreate}>
                     <Plus className="mr-2 h-3.5 w-3.5" />
                     {t("newUser")}
@@ -191,8 +187,6 @@ export default function UsersPage() {
                     columns={columns}
                     data={users}
                     loading={isLoading}
-                    rowSelection={rowSelection}
-                    onRowSelectionChange={setRowSelection}
                     getRowId={(row) => row.id}
                 />
             </div>

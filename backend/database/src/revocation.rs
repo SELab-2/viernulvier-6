@@ -93,8 +93,23 @@ impl RevokedUsers {
         map.retain(|_, ts| ts.elapsed() < self.max_age);
     }
 
-    /// Fast in-memory check.
-    pub fn is_revoked(&self, user_id: Uuid) -> bool {
+    /// Clear a user from both the in-memory cache and the database.
+    /// Used when a user re-authenticates (login) and revocation should be lifted.
+    pub async fn undelete(&self, pool: &PgPool, user_id: Uuid) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM revoked_users WHERE user_id = $1")
+            .bind(user_id)
+            .execute(pool)
+            .await?;
+
+        let mut map = self.inner.write().expect("revoked lock poisoned");
+        map.remove(&user_id);
+        Ok(())
+    }
+
+    /// Fast in-memory check with DB fallback.
+    /// In normal operation (single server) the entry is always in the cache.
+    /// DB fallback handles cold starts and multi-instance test setups.
+    pub async fn is_revoked(&self, pool: &PgPool, user_id: Uuid) -> bool {
         let mut should_remove_current = false;
         {
             let map = self.inner.read().expect("revoked lock poisoned");
@@ -108,6 +123,18 @@ impl RevokedUsers {
         let should_cleanup_all =
             self.checks_since_cleanup.fetch_add(1, Ordering::Relaxed) % 256 == 0;
         if !should_remove_current && !should_cleanup_all {
+            // Cache miss — check the database as a fallback
+            if let Ok(Some(_)) = sqlx::query_as::<_, (Uuid,)>(
+                "SELECT user_id FROM revoked_users WHERE user_id = $1",
+            )
+            .bind(user_id)
+            .fetch_optional(pool)
+            .await
+            {
+                let mut map = self.inner.write().expect("revoked lock poisoned");
+                map.insert(user_id, Instant::now());
+                return true;
+            }
             return false;
         }
 
