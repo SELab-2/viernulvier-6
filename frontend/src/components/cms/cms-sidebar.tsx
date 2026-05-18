@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useGetFacets } from "@/hooks/api/useTaxonomy";
+import { useUser } from "@/hooks/useAuth";
+import { UserRole } from "@/types/models/user.types";
 import { getLabel } from "@/lib/utils";
 import type { EntityType, Facet } from "@/types/models/taxonomy.types";
 
@@ -27,7 +29,7 @@ const navItems = [
     { key: "collections", href: "/cms/collections", icon: FolderArchive, editionKey: "edition5" },
 ];
 
-const utilityItems = [
+const baseUtilityItems = [
     { key: "ingest", href: "/cms/ingest", icon: Database, editionKey: "edition5" },
     { key: "import", href: "/cms/import", icon: FileUp, editionKey: "edition6" },
     {
@@ -36,6 +38,10 @@ const utilityItems = [
         icon: TriangleAlert,
         editionKey: "edition6",
     },
+];
+
+const adminUtilityItems = [
+    { key: "users", href: "/cms/users", icon: Users, editionKey: "edition7" },
 ];
 
 const ENTITY_TYPE_MAP: Record<string, EntityType | null> = {
@@ -118,6 +124,13 @@ function SidebarContent({ onNavigate, showHeader = true }: SidebarContentProps) 
     const pathname = usePathname();
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { data: currentUser } = useUser();
+
+    const isAdmin = currentUser?.role === UserRole.ADMIN;
+    const utilityItems = useMemo(
+        () => (isAdmin ? [...baseUtilityItems, ...adminUtilityItems] : baseUtilityItems),
+        [isAdmin]
+    );
 
     const entityType = ENTITY_TYPE_MAP[pathname] ?? null;
     const { data: facets } = useGetFacets({ entityType: entityType ?? undefined });

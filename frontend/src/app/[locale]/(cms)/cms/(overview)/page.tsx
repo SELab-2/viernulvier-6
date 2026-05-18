@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { animate, stagger } from "animejs";
 import {
     FileUp,
@@ -12,10 +12,13 @@ import {
     Users,
     FolderArchive,
     TriangleAlert,
+    Shield,
 } from "lucide-react";
 
 import { SectionCard, SectionCardContent } from "@/components/cms/SectionCard";
 import { useGetStats } from "@/hooks/api/useStats";
+import { useUser } from "@/hooks/useAuth";
+import { UserRole } from "@/types/models/user.types";
 
 interface ContentSection {
     key: string;
@@ -90,6 +93,12 @@ const UTILITY_SECTIONS: UtilitySection[] = [
         icon: TriangleAlert,
         editionKey: "edition6",
     },
+    {
+        key: "users",
+        href: "/cms/users",
+        icon: Shield,
+        editionKey: "edition7",
+    },
 ];
 
 export default function CmsOverviewPage() {
@@ -98,6 +107,13 @@ export default function CmsOverviewPage() {
     const containerRef = useRef<HTMLDivElement>(null);
     const headerRef = useRef<HTMLElement>(null);
     const { data: stats } = useGetStats();
+    const { data: currentUser } = useUser();
+    const isAdmin = currentUser?.role === UserRole.ADMIN;
+
+    const utilitySections = useMemo(
+        () => (isAdmin ? UTILITY_SECTIONS : UTILITY_SECTIONS.filter((s) => s.key !== "users")),
+        [isAdmin]
+    );
 
     useEffect(() => {
         if (headerRef.current) {
@@ -178,8 +194,8 @@ export default function CmsOverviewPage() {
                 </div>
 
                 {/* Utility Sections - Ingest & Import */}
-                <div className="border-border/80 mx-auto mt-6 grid w-full max-w-7xl grid-cols-1 gap-4 border-t p-4 pt-6 sm:mt-8 sm:grid-cols-2 sm:gap-6">
-                    {UTILITY_SECTIONS.map((util) => (
+                <div className="border-foreground/10 mx-auto mt-6 grid w-full max-w-7xl grid-cols-1 gap-4 border-t p-4 pt-6 sm:mt-8 sm:grid-cols-2 sm:gap-6">
+                    {utilitySections.map((util) => (
                         <SectionCard
                             key={util.key}
                             href={util.href}

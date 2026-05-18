@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::{
     error::DatabaseError,
-    models::user::{User, UserCreate, UserPatch, UserRole},
+    models::user::{User, UserCreate, UserPatch, UserRole, UserSummary},
 };
 
 pub struct UserRepo<'a> {
@@ -46,9 +46,38 @@ impl<'a> UserRepo<'a> {
         Ok(count > 0)
     }
 
+    pub async fn list_summaries(&self) -> Result<Vec<UserSummary>, DatabaseError> {
+        Ok(sqlx::query_as::<_, UserSummary>(
+            "SELECT id, username, email, role FROM users ORDER BY username ASC",
+        )
+        .fetch_all(self.db)
+        .await?)
+    }
+
+    pub async fn admin_count(&self) -> Result<i64, DatabaseError> {
+        Ok(sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM users WHERE role = $1")
+            .bind(UserRole::Admin)
+            .fetch_one(self.db)
+            .await?)
+    }
+
+    pub async fn delete(&self, user_id: Uuid) -> Result<(), DatabaseError> {
+        let res = sqlx::query("DELETE FROM users WHERE id = $1")
+            .bind(user_id)
+            .execute(self.db)
+            .await?;
+        if res.rows_affected() == 0 {
+            return Err(DatabaseError::NotFound);
+        }
+        Ok(())
+    }
+
     pub async fn patch(&self, user_id: Uuid, patch_user: UserPatch) -> Result<User, DatabaseError> {
         let mut user = self.by_id(user_id).await?;
         user.username = patch_user.username;
+        if let Some(role) = patch_user.role {
+            user.role = role;
+        }
         Ok(user.update_all_fields(self.db).await?)
     }
 }

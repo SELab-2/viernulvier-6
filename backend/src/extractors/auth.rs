@@ -33,8 +33,15 @@ impl FromRequestParts<AppState> for AuthUser {
         )
         .map_err(|_| AppError::Unauthorized)?;
 
+        let user_id = token_data.claims.sub;
+
+        // Reject requests from users that have been deleted or had their role changed
+        if state.revoked.is_revoked(state.db.pool(), user_id).await {
+            return Err(AppError::Unauthorized);
+        }
+
         Ok(Self {
-            id: token_data.claims.sub,
+            id: user_id,
             email: token_data.claims.email,
             session_id: token_data.claims.sid,
             role: token_data.claims.role,
