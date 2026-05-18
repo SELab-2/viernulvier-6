@@ -68,3 +68,17 @@ pub async fn normalize_production(_db: &Database, production: &ApiProduction, so
         "normalization stub: production observed"
     );
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn normalize_disabled_without_api_key() {
+        std::env::remove_var("LLM_API_KEY");
+        // OnceLock is stateful — run in a subprocess would be ideal,
+        // but the fallback is that init() returns None without API key.
+        let ctx = init();
+        assert!(ctx.is_none(), "normalization must be disabled without LLM_API_KEY");
+    }
+}

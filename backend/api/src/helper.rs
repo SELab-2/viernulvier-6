@@ -90,4 +90,62 @@ mod tests {
         assert_eq!(parse_amount_cents("10.500"), None);
         assert_eq!(parse_amount_cents("abc"), None);
     }
+
+    #[test]
+    fn test_parse_amount_cents_overflow_returns_none() {
+        assert_eq!(parse_amount_cents("30000000.00"), None);
+        assert_eq!(parse_amount_cents("-30000000.00"), None);
+    }
+
+    #[test]
+    fn test_parse_amount_cents_leading_zeros() {
+        assert_eq!(parse_amount_cents("00.00"), Some(0));
+        assert_eq!(parse_amount_cents("00.50"), Some(50));
+    }
+
+    #[test]
+    fn test_flatten_single_fallback_to_en() {
+        let text = Some(ApiLocalizedText {
+            nl: None,
+            en: Some("hello".into()),
+            fr: None,
+        });
+        assert_eq!(flatten_single(text), Some("hello".into()));
+
+        let text = Some(ApiLocalizedText {
+            nl: Some("hallo".into()),
+            en: Some("hello".into()),
+            fr: None,
+        });
+        assert_eq!(flatten_single(text), Some("hallo".into()));
+    }
+
+    #[test]
+    fn test_flatten_single_both_none() {
+        let text = Some(ApiLocalizedText {
+            nl: None,
+            en: None,
+            fr: None,
+        });
+        assert_eq!(flatten_single(text), None);
+        assert_eq!(flatten_single(None), None);
+    }
+
+    #[test]
+    fn test_flatten_loc_both() {
+        let text = Some(ApiLocalizedText {
+            nl: Some("hallo".into()),
+            en: Some("hello".into()),
+            fr: None,
+        });
+        assert_eq!(
+            flatten_loc(text),
+            (Some("hallo".into()), Some("hello".into()))
+        );
+    }
+
+    #[test]
+    fn test_flatten_loc_none() {
+        assert_eq!(flatten_loc(None), (None, None));
+    }
 }

@@ -44,4 +44,9 @@ export const hallHandlers = [
         } satisfies components["schemas"]["HallPayload"]);
     }),
     http.delete(apiUrl(`/halls/${hall.id}`), () => new HttpResponse(null, { status: 204 })),
+
+    // Location halls
+    http.get(apiUrl("/locations/:locationId/halls"), () => {
+        return HttpResponse.json([hall] satisfies components["schemas"]["HallPayload"][]);
+    }),
 ];
