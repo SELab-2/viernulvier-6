@@ -141,6 +141,31 @@ impl TestRouter {
             .await
             .unwrap()
     }
+  
+    /// send a request to an endpoint on this router with explicit cookies
+    pub async fn request_with_cookies<T: Serialize>(
+        &self,
+        method: Method,
+        path: &str,
+        body: Option<T>,
+        cookies: &str,
+    ) -> Response<Body> {
+        let path = path.trim_start_matches('/');
+        let uri = format!("/api/{path}");
+        let request_builder = Request::builder()
+            .method(method)
+            .uri(uri)
+            .header(header::COOKIE, cookies);
+
+        let request = match body {
+            Some(body) => request_builder
+                .header(header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+                .body(Json(body).into_response().into_body()),
+            None => request_builder.body(Body::empty()),
+        };
+
+        self.router.clone().oneshot(request.unwrap()).await.unwrap()
+    }
 
     /// send a request to an endpoint on this router
     ///

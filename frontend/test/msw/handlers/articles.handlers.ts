@@ -58,10 +58,22 @@ export const articleListItems: components["schemas"]["ArticleListPayload"][] = [
 ];
 
 export const articleHandlers = [
+    // Public: articles by production (must come before generic /articles)
+    http.get(apiUrl("/articles"), ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get("related_entity_type") === "production") {
+            return HttpResponse.json({
+                data: articleListItems,
+                next_cursor: null,
+            });
+        }
+        // Fallthrough to next handler
+        return;
+    }),
+
     // Public: list published articles
     http.get(apiUrl("/articles"), ({ request }) => {
         const url = new URL(request.url);
-        // Don't match CMS paths
         if (url.pathname.includes("/cms")) return;
         return HttpResponse.json({
             data: articleListItems,
@@ -79,6 +91,14 @@ export const articleHandlers = [
         return HttpResponse.json({ message: "Not found" }, { status: 404 });
     }),
 
+    // CMS: search articles (must come before CMS list)
+    http.get(apiUrl("/articles/cms/search"), () => {
+        return HttpResponse.json({
+            data: articleListItems,
+            next_cursor: null,
+        } satisfies components["schemas"]["PaginatedResponse_ArticleListPayload"]);
+    }),
+
     // CMS: list all articles
     http.get(apiUrl("/articles/cms"), () => {
         return HttpResponse.json(
@@ -93,5 +113,48 @@ export const articleHandlers = [
             return HttpResponse.json(articleFull satisfies components["schemas"]["ArticlePayload"]);
         }
         return HttpResponse.json({ message: "Not found" }, { status: 404 });
+    }),
+
+    // CMS: create article
+    http.post(apiUrl("/articles"), async ({ request }) => {
+        const body = await request.json();
+        return HttpResponse.json(
+            {
+                ...articleFull,
+                ...(body as Record<string, unknown>),
+                id: "cccccccc-bbbb-4ccc-dddd-eeeeeeeeeeee",
+            } satisfies components["schemas"]["ArticlePayload"],
+            { status: 201 }
+        );
+    }),
+
+    // CMS: update article
+    http.put(apiUrl("/articles/cms/:id"), async ({ request }) => {
+        const body = await request.json();
+        return HttpResponse.json({
+            ...articleFull,
+            ...(body as Record<string, unknown>),
+        } satisfies components["schemas"]["ArticlePayload"]);
+    }),
+
+    // CMS: delete article
+    http.delete(apiUrl("/articles/cms/:id"), () => {
+        return new HttpResponse(null, { status: 204 });
+    }),
+
+    // CMS: article relations (GET)
+    http.get(apiUrl("/articles/cms/:id/relations"), () => {
+        return HttpResponse.json({
+            production_ids: ["4f327f95-3a64-4fc0-8f6a-a9dc44c01111"],
+            artist_ids: [],
+            location_ids: [],
+            event_ids: [],
+        } satisfies components["schemas"]["ArticleRelationsPayload"]);
+    }),
+
+    // CMS: article relations (PUT)
+    http.put(apiUrl("/articles/cms/:id/relations"), async ({ request }) => {
+        const body = await request.json();
+        return HttpResponse.json(body as Record<string, unknown>);
     }),
 ];

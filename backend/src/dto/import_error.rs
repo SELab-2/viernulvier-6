@@ -86,3 +86,46 @@ fn decode_cursor(cursor: &str) -> Option<(DateTime<Utc>, Uuid)> {
 fn encode_cursor(error: &ImportError) -> String {
     BASE64_URL_SAFE.encode(format!("{}|{}", error.last_seen_at.to_rfc3339(), error.id))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::TimeZone;
+
+    #[test]
+    fn test_cursor_roundtrip() {
+        let ts = Utc.with_ymd_and_hms(2025, 1, 15, 12, 30, 0).unwrap();
+        let id = Uuid::now_v7();
+        let error = ImportError {
+            id,
+            run_id: None,
+            created_at: ts,
+            updated_at: ts,
+            last_seen_at: ts,
+            resolved_at: None,
+            severity: "error".into(),
+            entity: "production".into(),
+            source_id: Some(42),
+            error_kind: "invalid_reference".into(),
+            field: None,
+            relation: Some("location".into()),
+            relation_source_id: Some(99),
+            message: "test".into(),
+            payload: None,
+        };
+
+        let cursor = encode_cursor(&error);
+        let decoded = decode_cursor(&cursor);
+        assert!(decoded.is_some());
+        let (decoded_ts, decoded_id) = decoded.unwrap();
+        assert_eq!(decoded_id, id);
+        assert_eq!(decoded_ts.timestamp(), ts.timestamp());
+    }
+
+    #[test]
+    fn test_decode_cursor_invalid() {
+        assert_eq!(decode_cursor("not-valid-base64!!!@@@"), None);
+        assert_eq!(decode_cursor(""), None);
+        assert_eq!(decode_cursor("dG90YWxseS13cm9uZw=="), None);
+    }
+}
