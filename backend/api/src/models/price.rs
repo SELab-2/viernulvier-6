@@ -83,3 +83,43 @@ impl From<ApiPrice> for PriceCreate {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn from_api_price_extracts_source_id_and_description() {
+        let api = ApiPrice {
+            id: "/api/v1/prices/42".into(),
+            jsonld_type: "Price".into(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            price_type: "base".into(),
+            visibility: "public".into(),
+            code: Some("STD".into()),
+            description: Some(ApiLocalizedText {
+                nl: Some("Standaard".into()),
+                en: Some("Standard".into()),
+                fr: None,
+            }),
+            minimum: 0,
+            maximum: Some(1000),
+            step: 0,
+            order: 1,
+            auto_select_combo: false,
+            include_in_price_range: true,
+            cineville_box: false,
+            membership: None,
+        };
+        let create: PriceCreate = api.into();
+        assert_eq!(create.source_id, Some(42));
+        assert_eq!(create.price_type, "base");
+        assert_eq!(create.description_nl, Some("Standaard".into()));
+        assert_eq!(create.description_en, Some("Standard".into()));
+        assert_eq!(create.minimum, 0);
+        assert_eq!(create.maximum, Some(1000));
+        assert_eq!(create.display_order, 1);
+        assert!(create.include_in_price_range);
+    }
+}
