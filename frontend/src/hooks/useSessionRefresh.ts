@@ -26,7 +26,7 @@ export function useSessionRefresh() {
                 if (!queryClient.getQueryData(queryKeys.user)) {
                     await queryClient.fetchQuery({
                         queryKey: queryKeys.user,
-                        queryFn: fetchCurrentUser,
+                        queryFn: ({ signal }) => fetchCurrentUser(signal),
                         staleTime: 2.5 * 60_000,
                     });
                 }

@@ -11,7 +11,7 @@ export function LoginForm() {
     const loginTranslations = useTranslations("Login");
     const router = useRouter();
     const { mutate, isPending, error, isError } = useLogin();
-    const { data: user, isLoading: isCheckingSession } = useUser();
+    const { data: user } = useUser();
 
     useEffect(() => {
         if (user) {
@@ -84,10 +84,10 @@ export function LoginForm() {
 
                 <button
                     type="submit"
-                    disabled={isPending || isCheckingSession}
+                    disabled={isPending}
                     className="border-foreground text-foreground hover:bg-foreground hover:text-background mt-2 w-full cursor-pointer border bg-transparent px-4 py-3 font-mono text-[10px] font-medium tracking-[1.4px] uppercase transition-all disabled:opacity-50"
                 >
-                    {isPending || isCheckingSession
+                    {isPending
                         ? loginTranslations("submitButtonLoading")
                         : loginTranslations("submitButton")}
                 </button>

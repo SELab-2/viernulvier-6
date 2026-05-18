@@ -1,5 +1,5 @@
-import { render, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LoginForm } from "@/components/auth/LoginForm";
 
@@ -41,6 +41,10 @@ describe("LoginForm", () => {
         });
     });
 
+    afterEach(() => {
+        cleanup();
+    });
+
     it("redirects authenticated users away from the login page", async () => {
         useUserMock.mockReturnValue({
             data: {
@@ -62,5 +66,16 @@ describe("LoginForm", () => {
         render(<LoginForm />);
 
         expect(replaceMock).not.toHaveBeenCalled();
+    });
+
+    it("keeps the submit button enabled while checking an existing session", () => {
+        useUserMock.mockReturnValue({
+            data: undefined,
+            isLoading: true,
+        });
+
+        render(<LoginForm />);
+
+        expect(screen.getByRole("button", { name: "submitButton" })).toBeEnabled();
     });
 });

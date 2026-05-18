@@ -10,15 +10,15 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { queryKeys } from "@/hooks/api";
 
-export const fetchCurrentUser = async (): Promise<User> => {
-    const { data } = await api.get<GetEditorInfoResponse>("/editor/me");
+export const fetchCurrentUser = async (signal?: AbortSignal): Promise<User> => {
+    const { data } = await api.get<GetEditorInfoResponse>("/editor/me", { signal });
     return mapUser(data);
 };
 
 export const useUser = (options?: { enabled?: boolean }) => {
     return useQuery<User>({
         queryKey: queryKeys.user,
-        queryFn: fetchCurrentUser,
+        queryFn: ({ signal }) => fetchCurrentUser(signal),
         retry: false,
         staleTime: 2.5 * 60_000,
         refetchOnMount: true,
@@ -32,6 +32,9 @@ export const useLogin = () => {
     const t = useTranslations("Login");
 
     return useMutation({
+        onMutate: async () => {
+            await queryClient.cancelQueries({ queryKey: queryKeys.user });
+        },
         mutationFn: async (credentials: LoginDTO) => {
             const { data } = await api.post<LoginResponse>("/auth/login", credentials);
             return data;
