@@ -92,7 +92,7 @@ describe("useLogin", () => {
     });
 
     it("aborts stale user checks before redirecting to the cms", async () => {
-        let userRequestSignal: AbortSignal | undefined;
+        let userRequestSignal: { aborted: boolean } | undefined;
         const apiGetSpy = vi.spyOn(api, "get");
 
         apiGetSpy.mockImplementation((url, config) => {
