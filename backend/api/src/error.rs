@@ -769,6 +769,55 @@ mod tests {
         assert!(record.field.is_none());
         assert!(record.payload.is_none());
     }
+
+    #[test]
+    #[should_panic(expected = "unknown import entity")]
+    fn import_entity_from_unknown_panics() {
+        let _ = ImportEntity::from("nonexistent_entity");
+    }
+
+    #[test]
+    fn import_entity_from_all_valid_strings() {
+        for s in [
+            "event", "event_price", "gallery", "hall", "location", "media", "media_variant",
+            "price", "price_rank", "production", "space",
+        ] {
+            let _ = ImportEntity::from(s);
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "unknown import field")]
+    fn import_field_from_unknown_panics() {
+        let _ = ImportField::from("nonexistent_field");
+    }
+
+    #[test]
+    fn import_field_from_all_valid_strings() {
+        for s in [
+            "amount", "cdn_url", "crop", "event", "format", "gallery_url", "location",
+            "max_tickets_per_order", "name", "open_seating", "price", "production", "rank",
+            "seat_selection", "source_id", "source_uri", "status",
+        ] {
+            let _ = ImportField::from(s);
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "unknown import relation")]
+    fn import_relation_from_unknown_panics() {
+        let _ = ImportRelation::from("nonexistent_relation");
+    }
+
+    #[test]
+    fn import_relation_from_all_valid_strings() {
+        for s in [
+            "event", "event_price", "gallery", "hall", "location", "media", "media_variant",
+            "price", "price_rank", "production", "space",
+        ] {
+            let _ = ImportRelation::from(s);
+        }
+    }
 }
 
 impl std::fmt::Display for ImportEntity {

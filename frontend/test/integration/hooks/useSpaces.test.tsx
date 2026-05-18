@@ -2,7 +2,13 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { queryKeys } from "@/hooks/api/query-keys";
-import { useGetSpaces, useGetSpace, useCreateSpace } from "@/hooks/api/useSpaces";
+import {
+    useCreateSpace,
+    useDeleteSpace,
+    useGetSpace,
+    useGetSpaces,
+    useUpdateSpace,
+} from "@/hooks/api/useSpaces";
 import { createQueryClientWrapper } from "../../utils/query-client";
 
 describe("useGetSpaces", () => {
@@ -93,5 +99,53 @@ describe("useCreateSpace", () => {
         await waitFor(() => {
             expect(result.current.isSuccess).toBe(true);
         });
+    });
+});
+
+describe("useUpdateSpace", () => {
+    it("updates a space and sets detail cache", async () => {
+        const { wrapper, queryClient } = createQueryClientWrapper();
+
+        queryClient.setQueryData(queryKeys.spaces.all(), {});
+
+        const { result } = renderHook(() => useUpdateSpace(), { wrapper });
+
+        await act(async () => {
+            await result.current.mutateAsync({
+                id: "cb74aa4f-6856-4a8b-9930-2a8c56ec3333",
+                nameNl: "Updated Space",
+                locationId: "67c95f6a-8bb8-43d6-a4bc-f7e18b86f404",
+            });
+        });
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+    });
+});
+
+describe("useDeleteSpace", () => {
+    it("deletes a space and removes detail from cache", async () => {
+        const { wrapper, queryClient } = createQueryClientWrapper();
+
+        const spaceId = "cb74aa4f-6856-4a8b-9930-2a8c56ec3333";
+
+        queryClient.setQueryData(queryKeys.spaces.detail(spaceId), {
+            id: spaceId,
+            nameNl: "Main Space",
+        });
+
+        const { result } = renderHook(() => useDeleteSpace(), { wrapper });
+
+        await act(async () => {
+            await result.current.mutateAsync(spaceId);
+        });
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        const cached = queryClient.getQueryData(queryKeys.spaces.detail(spaceId));
+        expect(cached).toBeUndefined();
     });
 });
