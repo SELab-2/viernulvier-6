@@ -114,6 +114,7 @@ describe("useUpdateSpace", () => {
             await result.current.mutateAsync({
                 id: "cb74aa4f-6856-4a8b-9930-2a8c56ec3333",
                 nameNl: "Updated Space",
+                locationId: "67c95f6a-8bb8-43d6-a4bc-f7e18b86f404",
             });
         });
 

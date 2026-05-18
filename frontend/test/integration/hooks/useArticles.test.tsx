@@ -303,6 +303,10 @@ describe("useUpdateArticle", () => {
                 id: articleFull.id,
                 slug: articleFull.slug,
                 title: "Updated Title",
+                content: { type: "doc", content: [] },
+                status: "published",
+                subjectPeriodStart: null,
+                subjectPeriodEnd: null,
             });
         });
 

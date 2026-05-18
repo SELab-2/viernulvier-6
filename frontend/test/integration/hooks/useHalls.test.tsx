@@ -140,6 +140,7 @@ describe("useUpdateHall", () => {
         await act(async () => {
             await result.current.mutateAsync({
                 id: "d30f5f95-3a64-4fc0-8f6a-a9dc44c02222",
+                slug: "big-hall",
                 name: "Updated Hall",
             });
         });
