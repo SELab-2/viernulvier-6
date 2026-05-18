@@ -64,3 +64,76 @@ impl From<ApiLocation> for LocationCreate {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn own_location_1_is_true() {
+        let loc = ApiLocation {
+            id: "https://www.viernulvier.gent/api/v1/locations/10".into(),
+            jsonld_type: "Location".into(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            name: None, code: None, street: None, number: None,
+            postal_code: None, city: None, phone_1: None, phone_2: None,
+            own_location: "1".into(), country: None, uitdatabank_id: None,
+        };
+        let create: LocationCreate = loc.into();
+        assert_eq!(create.is_owned_by_viernulvier, Some(true));
+    }
+
+    #[test]
+    fn own_location_empty_is_false() {
+        let loc = ApiLocation {
+            id: "https://www.viernulvier.gent/api/v1/locations/10".into(),
+            jsonld_type: "Location".into(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            name: None, code: None, street: None, number: None,
+            postal_code: None, city: None, phone_1: None, phone_2: None,
+            own_location: "".into(), country: None, uitdatabank_id: None,
+        };
+        let create: LocationCreate = loc.into();
+        assert_eq!(create.is_owned_by_viernulvier, Some(false));
+    }
+
+    #[test]
+    fn own_location_unexpected_defaults_to_false() {
+        let loc = ApiLocation {
+            id: "https://www.viernulvier.gent/api/v1/locations/10".into(),
+            jsonld_type: "Location".into(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            name: None, code: None, street: None, number: None,
+            postal_code: None, city: None, phone_1: None, phone_2: None,
+            own_location: "true".into(), country: None, uitdatabank_id: None,
+        };
+        let create: LocationCreate = loc.into();
+        assert_eq!(create.is_owned_by_viernulvier, Some(false));
+    }
+
+    #[test]
+    fn to_create_extracts_source_id() {
+        let loc = ApiLocation {
+            id: "https://www.viernulvier.gent/api/v1/locations/42".into(),
+            jsonld_type: "Location".into(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            name: Some("Test Location".into()), code: Some("TL".into()),
+            street: Some("Main St".into()), number: Some("1".into()),
+            postal_code: Some("9000".into()), city: Some("Gent".into()),
+            phone_1: None, phone_2: None,
+            own_location: "".into(), country: Some("BE".into()),
+            uitdatabank_id: Some("uid-123".into()),
+        };
+        let create: LocationCreate = loc.into();
+        assert_eq!(create.source_id, Some(42));
+        assert_eq!(create.name, Some("Test Location".into()));
+        assert_eq!(create.code, Some("TL".into()));
+        assert_eq!(create.street, Some("Main St".into()));
+        assert_eq!(create.uitdatabank_id, Some("uid-123".into()));
+        assert_eq!(create.slug, None);
+    }
+}

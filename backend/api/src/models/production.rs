@@ -155,3 +155,81 @@ impl From<ApiProduction> for ProductionImportData {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    fn base_production() -> ApiProduction {
+        serde_json::from_value(json!({
+            "@id": "https://www.viernulvier.gent/api/v1/productions/42",
+            "@type": "Event",
+            "created_at": "2025-01-01T00:00:00Z",
+            "updated_at": "2025-01-01T00:00:00Z",
+            "vendor_id": "test",
+            "box_office_id": null,
+            "performer_field": null,
+            "performer_type": null,
+            "attendance_mode": "mixed",
+            "supertitle": null,
+            "title": { "nl": "Test Productie", "en": "Test Production", "fr": null },
+            "artist": null,
+            "meta_title": null,
+            "meta_description": null,
+            "tagline": null,
+            "teaser": null,
+            "description": null,
+            "description_extra": null,
+            "description_2": null,
+            "video_1": null,
+            "video_2": null,
+            "quote": null,
+            "quote_source": null,
+            "programme": null,
+            "info": null,
+            "description_short": null,
+            "eticket_info": null,
+            "genres": [],
+            "events": [],
+            "media_gallery": null,
+            "review_gallery": null,
+            "poster_gallery": null,
+            "uitdatabank_keywords": [],
+            "uitdatabank_theme": null,
+            "uitdatabank_type": null
+        })).unwrap()
+    }
+
+    #[test]
+    fn to_create_extracts_source_id_and_slug() {
+        let data: ProductionImportData = base_production().into();
+        assert_eq!(data.production.source_id, Some(42));
+        assert!(data.production.slug.contains("test-productie"));
+        assert!(data.production.slug.contains("42"));
+    }
+
+    #[test]
+    fn to_create_video_2_zero_is_filtered() {
+        let mut prod = base_production();
+        prod.video_2 = Some(ApiLocalizedText {
+            nl: Some("0".into()),
+            en: None,
+            fr: None,
+        });
+        let data: ProductionImportData = prod.into();
+        assert_eq!(data.production.video_2, None);
+    }
+
+    #[test]
+    fn to_create_falls_back_to_en_title() {
+        let mut prod = base_production();
+        prod.title = Some(ApiLocalizedText {
+            nl: None,
+            en: Some("English Title".into()),
+            fr: None,
+        });
+        let data: ProductionImportData = prod.into();
+        assert!(data.production.slug.starts_with("english-title"));
+    }
+}
