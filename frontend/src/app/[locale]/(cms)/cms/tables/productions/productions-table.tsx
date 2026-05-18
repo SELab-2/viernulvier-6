@@ -9,7 +9,7 @@ import type { ExpandedState, Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
 import { makeProductionColumns } from "./columns";
-import { makeEventFields, toEventUpdateInput } from "./event-columns";
+import { EventPriceExtraContent, makeEventFields, toEventUpdateInput } from "./event-columns";
 import { ActionBar } from "../action-bar";
 import { SearchInput } from "@/components/cms/search-input";
 import { useParentChildSelection } from "../use-parent-child-selection";
@@ -318,6 +318,9 @@ export function ProductionsTable() {
                         await updateEvent.mutateAsync(toEventUpdateInput(values));
                         setEditEvent(null);
                     }}
+                    extraContent={(entity) => (
+                        <EventPriceExtraContent entity={entity as unknown as Event} />
+                    )}
                 />
             )}
 
