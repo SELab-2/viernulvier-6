@@ -1,5 +1,5 @@
 import { describe, expect, it, afterEach, vi } from "vitest";
-import { cleanup, render, screen } from "../../../../test/utils/test-utils";
+import { cleanup, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 
 import type { EntityGridItem } from "@/types/models/collection.types";
@@ -71,7 +71,7 @@ const messages = {
     },
 };
 
-const wrapper = ({ children }: { children: React.ReactNode }) => (
+const TestWrapper = ({ children }: { children: React.ReactNode }) => (
     <NextIntlClientProvider locale="en" messages={messages}>
         {children}
     </NextIntlClientProvider>
@@ -201,10 +201,10 @@ describe("EntityCard", () => {
         mockGetProduction.mockReturnValue({
             data: mockProduction,
             isLoading: false,
-        } as ReturnType<typeof useGetProduction>);
+        } as unknown as ReturnType<typeof useGetProduction>);
 
         render(<EntityCard item={makeItem({ contentType: "production" })} locale="en" />, {
-            wrapper,
+            wrapper: TestWrapper,
         });
 
         expect(screen.getByText("Production")).toBeInTheDocument();
@@ -215,10 +215,10 @@ describe("EntityCard", () => {
         mockGetProduction.mockReturnValue({
             data: undefined,
             isLoading: true,
-        } as ReturnType<typeof useGetProduction>);
+        } as unknown as ReturnType<typeof useGetProduction>);
 
         render(<EntityCard item={makeItem({ contentType: "production" })} locale="en" />, {
-            wrapper,
+            wrapper: TestWrapper,
         });
 
         expect(screen.getByText("Production")).toBeInTheDocument();
@@ -228,10 +228,10 @@ describe("EntityCard", () => {
         mockGetLocation.mockReturnValue({
             data: mockLocation,
             isLoading: false,
-        } as ReturnType<typeof useGetLocation>);
+        } as unknown as ReturnType<typeof useGetLocation>);
 
         render(<EntityCard item={makeItem({ contentType: "location" })} locale="en" />, {
-            wrapper,
+            wrapper: TestWrapper,
         });
 
         expect(screen.getByText("Location")).toBeInTheDocument();
@@ -242,10 +242,10 @@ describe("EntityCard", () => {
         mockGetArticle.mockReturnValue({
             data: mockArticle,
             isLoading: false,
-        } as ReturnType<typeof useGetArticle>);
+        } as unknown as ReturnType<typeof useGetArticle>);
 
         render(<EntityCard item={makeItem({ contentType: "blogpost" })} locale="en" />, {
-            wrapper,
+            wrapper: TestWrapper,
         });
 
         expect(screen.getByText("Blogpost")).toBeInTheDocument();
@@ -256,10 +256,10 @@ describe("EntityCard", () => {
         mockGetArtist.mockReturnValue({
             data: mockArtist,
             isLoading: false,
-        } as ReturnType<typeof useGetArtist>);
+        } as unknown as ReturnType<typeof useGetArtist>);
 
         render(<EntityCard item={makeItem({ contentType: "artist" })} locale="en" />, {
-            wrapper,
+            wrapper: TestWrapper,
         });
 
         expect(screen.getByText("Artist")).toBeInTheDocument();
@@ -270,10 +270,10 @@ describe("EntityCard", () => {
         mockGetMedia.mockReturnValue({
             data: mockMedia,
             isLoading: false,
-        } as ReturnType<typeof useGetMedia>);
+        } as unknown as ReturnType<typeof useGetMedia>);
 
         render(<EntityCard item={makeItem({ contentType: "media" })} locale="en" />, {
-            wrapper,
+            wrapper: TestWrapper,
         });
 
         expect(screen.getByText("Media")).toBeInTheDocument();
@@ -284,10 +284,10 @@ describe("EntityCard", () => {
         mockGetMedia.mockReturnValue({
             data: mockMedia,
             isLoading: false,
-        } as ReturnType<typeof useGetMedia>);
+        } as unknown as ReturnType<typeof useGetMedia>);
 
         render(<EntityCard item={makeItem({ contentType: "media" })} locale="nl" />, {
-            wrapper,
+            wrapper: TestWrapper,
         });
 
         expect(screen.getByText("Media")).toBeInTheDocument();
@@ -302,10 +302,10 @@ describe("EntityCard", () => {
                 altTextNl: "NL fallback",
             },
             isLoading: false,
-        } as ReturnType<typeof useGetMedia>);
+        } as unknown as ReturnType<typeof useGetMedia>);
 
         render(<EntityCard item={makeItem({ contentType: "media" })} locale="en" />, {
-            wrapper,
+            wrapper: TestWrapper,
         });
 
         expect(screen.getByText("NL fallback")).toBeInTheDocument();
@@ -315,14 +315,14 @@ describe("EntityCard", () => {
         mockGetProduction.mockReturnValue({
             data: mockProduction,
             isLoading: false,
-        } as ReturnType<typeof useGetProduction>);
+        } as unknown as ReturnType<typeof useGetProduction>);
 
         render(
             <EntityCard
                 item={makeItem({ contentType: "production", comment: "Curator note" })}
                 locale="en"
             />,
-            { wrapper }
+            { wrapper: TestWrapper }
         );
 
         expect(screen.getByText("Curator note")).toBeInTheDocument();
@@ -331,7 +331,7 @@ describe("EntityCard", () => {
     it("returns null for unsupported content type (event)", () => {
         const { container } = render(
             <EntityCard item={makeItem({ contentType: "event" })} locale="en" />,
-            { wrapper }
+            { wrapper: TestWrapper }
         );
 
         expect(container.firstChild).toBeNull();
@@ -341,10 +341,10 @@ describe("EntityCard", () => {
         mockGetProduction.mockReturnValue({
             data: { ...mockProduction, translations: [] },
             isLoading: false,
-        } as ReturnType<typeof useGetProduction>);
+        } as unknown as ReturnType<typeof useGetProduction>);
 
         render(<EntityCard item={makeItem({ contentType: "production" })} locale="en" />, {
-            wrapper,
+            wrapper: TestWrapper,
         });
 
         expect(screen.getByText("\u2014")).toBeInTheDocument();
