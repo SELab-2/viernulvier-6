@@ -1,4 +1,7 @@
-use crate::extractors::auth::{AdminUser, EditorUser};
+use crate::{
+    extractors::auth::{AdminUser, EditorUser},
+    vnv_import_tasks::start_importer,
+};
 use api::ApiImporter;
 use argon2::{
     Argon2,
@@ -37,6 +40,7 @@ pub mod dto;
 mod error;
 mod extractors;
 mod handlers;
+mod vnv_import_tasks;
 
 
 #[derive(Clone)]
@@ -131,8 +135,12 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
             .endpoint_url(&s3_config.endpoint)
             .credentials_provider(creds)
             .force_path_style(true)
-            .request_checksum_calculation(aws_sdk_s3::config::RequestChecksumCalculation::WhenRequired)
-            .response_checksum_validation(aws_sdk_s3::config::ResponseChecksumValidation::WhenRequired)
+            .request_checksum_calculation(
+                aws_sdk_s3::config::RequestChecksumCalculation::WhenRequired,
+            )
+            .response_checksum_validation(
+                aws_sdk_s3::config::ResponseChecksumValidation::WhenRequired,
+            )
             .build();
 
         aws_sdk_s3::Client::from_conf(s3_conf)
@@ -154,12 +162,7 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
             importer_s3_bucket,
         );
 
-        tokio::spawn(async move {
-            match api_importer.update_since_last().await {
-                Ok(()) => info!("API importer finished successfully"),
-                Err(e) => error!("API imported ended with error: {e:?}"),
-            }
-        });
+        start_importer(api_importer);
     } else {
         warn!("API importer is disabled");
     }
@@ -192,7 +195,13 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
         .layer(
             CorsLayer::new()
                 .allow_origin(allowed_origins)
-                .allow_methods([Method::GET, Method::POST, Method::PUT, Method::PATCH, Method::DELETE])
+                .allow_methods([
+                    Method::GET,
+                    Method::POST,
+                    Method::PUT,
+                    Method::PATCH,
+                    Method::DELETE,
+                ])
                 .allow_headers([axum::http::header::CONTENT_TYPE])
                 .allow_credentials(true),
         )
@@ -422,5 +431,42 @@ async fn shutdown_signal() {
     tokio::select! {
         () = ctrl_c => {},
         () = terminate => {},
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sqlx::PgPool;
+
+    #[sqlx::test]
+    async fn bootstrap_admin_creates_admin_when_none_exists(db: PgPool) {
+        let database = Database::new(db);
+
+        bootstrap_admin_if_missing(&database, "admin@viernulvier.be", "secure-password")
+            .await
+            .unwrap();
+
+        let user = database.users().by_email("admin@viernulvier.be").await.unwrap();
+        assert_eq!(user.email, "admin@viernulvier.be");
+        assert_eq!(user.role, database::models::user::UserRole::Admin);
+    }
+
+    #[sqlx::test]
+    async fn bootstrap_admin_skips_when_admin_exists(db: PgPool) {
+        let database = Database::new(db);
+
+        bootstrap_admin_if_missing(&database, "admin@viernulvier.be", "secure-password")
+            .await
+            .unwrap();
+
+        // Second call should be idempotent
+        bootstrap_admin_if_missing(&database, "admin@viernulvier.be", "different-password")
+            .await
+            .unwrap();
+
+        // Should still be able to authenticate with the first password
+        let user = database.users().by_email("admin@viernulvier.be").await.unwrap();
+        assert_eq!(user.email, "admin@viernulvier.be");
     }
 }

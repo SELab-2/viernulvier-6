@@ -57,3 +57,33 @@ impl From<ApiPriceRank> for PriceRankCreate {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn from_api_price_rank_extracts_source_id_and_description() {
+        let api = ApiPriceRank {
+            id: "/api/v1/prices/ranks/7".into(),
+            jsonld_type: "PriceRank".into(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            description: Some(ApiLocalizedText {
+                nl: Some("Rang 1".into()),
+                en: Some("Rank 1".into()),
+                fr: None,
+            }),
+            code: "A".into(),
+            position: 1,
+            sold_out_buffer: Some(5),
+        };
+        let create: PriceRankCreate = api.into();
+        assert_eq!(create.source_id, Some(7));
+        assert_eq!(create.code, "A");
+        assert_eq!(create.description_nl, Some("Rang 1".into()));
+        assert_eq!(create.description_en, Some("Rank 1".into()));
+        assert_eq!(create.position, 1);
+        assert_eq!(create.sold_out_buffer, Some(5));
+    }
+}
