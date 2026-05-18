@@ -87,6 +87,10 @@ jobs:
           retention-days: 30
 
       - name: Clean up workspace
+        if: always()
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace alpine sh -c "chown -R $(id -u):$(id -g) /workspace"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE" || true
+          chown -R "$(id -u):$(id -g)" "$GITHUB_WORKSPACE" || true
+          chmod -R a+w "$GITHUB_WORKSPACE" || true
+          rm -f "$GITHUB_WORKSPACE/.git/hooks/pre-push" || true
         continue-on-error: true

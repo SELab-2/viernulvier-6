@@ -62,10 +62,10 @@
         }
     },
     "ResultsBar": {
-        "sortBy": "Sort by:",
-        "relevance": "Most relevant",
-        "recent": "Most recent",
-        "oldest": "Oldest first",
+        "sortBy": "Sort by",
+        "relevance": "Most Relevant",
+        "recent": "Most Recent",
+        "oldest": "Oldest First",
         "viewList": "List view",
         "viewGrid": "Grid view"
     },

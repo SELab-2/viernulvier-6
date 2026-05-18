@@ -62,10 +62,10 @@
         }
     },
     "ResultsBar": {
-        "sortBy": "Sorteren:",
-        "relevance": "Meest relevant",
-        "recent": "Meest recent",
-        "oldest": "Oudste eerst",
+        "sortBy": "Sorteren",
+        "relevance": "Meest Relevant",
+        "recent": "Meest Recent",
+        "oldest": "Oudste Eerst",
         "viewList": "Lijstweergave",
         "viewGrid": "Rasterweergave"
     },
