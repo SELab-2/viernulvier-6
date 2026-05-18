@@ -150,6 +150,16 @@ afterEach(() => {
 });
 
 describe("useParentChildSelection", () => {
+    it("renders table headers with foreground text on the sticky background", () => {
+        render(
+            <NextIntlClientProvider locale="en" messages={messages}>
+                <PlainSelectionHarness />
+            </NextIntlClientProvider>
+        );
+
+        expect(screen.getByRole("columnheader", { name: "Label" })).toHaveClass("text-foreground");
+    });
+
     it("deselects the clicked row when multiple plain table rows are selected", () => {
         render(
             <NextIntlClientProvider locale="en" messages={messages}>

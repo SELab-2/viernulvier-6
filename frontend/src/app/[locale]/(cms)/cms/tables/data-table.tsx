@@ -442,25 +442,22 @@ export function DataTable<TData, TValue>({
                 aria-multiselectable={hasSelection ? true : undefined}
             >
                 <Table className={compact ? "text-xs [&_tbody_tr]:border-0 [&_td]:py-1" : ""}>
-                    <TableHeader className="bg-muted/70">
+                    <TableHeader className="bg-muted">
                         {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow
-                                key={headerGroup.id}
-                                className="bg-muted/70 hover:bg-muted/70"
-                            >
+                            <TableRow key={headerGroup.id} className="bg-muted hover:bg-muted">
                                 {headerGroup.headers.map((header) => (
                                     <TableHead
                                         key={header.id}
                                         className={cn(
-                                            "bg-muted/70 text-muted-foreground relative z-10 shadow-[0_1px_0_0_hsl(var(--border))]",
+                                            "bg-muted text-foreground relative z-20 shadow-[0_1px_0_0_hsl(var(--border))]",
                                             compact ? "" : "sticky top-0",
                                             header.column.id === "select"
                                                 ? "w-px px-4 py-2 whitespace-nowrap"
                                                 : header.column.id === "expander"
                                                   ? "w-px px-2 py-2 whitespace-nowrap"
                                                   : header.column.id === "actions"
-                                                    ? "text-muted-foreground px-3 py-2 text-right font-mono text-[10px] tracking-[1.2px] uppercase"
-                                                    : "text-muted-foreground max-w-[300px] px-3 py-2 font-mono text-[10px] tracking-[1.2px] break-words whitespace-normal uppercase"
+                                                    ? "px-3 py-2 text-right font-mono text-[10px] tracking-[1.2px] uppercase"
+                                                    : "max-w-[300px] px-3 py-2 font-mono text-[10px] tracking-[1.2px] break-words whitespace-normal uppercase"
                                         )}
                                     >
                                         {header.isPlaceholder

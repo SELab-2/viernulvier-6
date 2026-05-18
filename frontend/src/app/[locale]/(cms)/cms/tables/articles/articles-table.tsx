@@ -13,6 +13,7 @@ import { ActionBar } from "../action-bar";
 import { Button } from "@/components/ui/button";
 import { LoadMoreSentinel } from "@/components/cms/load-more-sentinel";
 import { SearchInput } from "@/components/cms/search-input";
+import { getCmsFacetParams } from "@/lib/cms-filter-params";
 import { useRouter } from "@/i18n/routing";
 import { useDeleteArticle, useGetInfiniteArticlesCms } from "@/hooks/api/useArticles";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
@@ -31,13 +32,17 @@ export function ArticlesTable() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const q = searchParams.get("q") ?? undefined;
+    const facetParams = useMemo(
+        () => getCmsFacetParams(new URLSearchParams(searchParams.toString())),
+        [searchParams]
+    );
 
     const {
         data: infiniteData,
         fetchNextPage,
         hasNextPage,
         isLoading,
-    } = useGetInfiniteArticlesCms({ limit: 50, ...(q ? { q } : {}) });
+    } = useGetInfiniteArticlesCms({ limit: 50, ...(q ? { q } : {}), ...facetParams });
 
     const articles = useMemo(
         () => infiniteData?.pages.flatMap((page) => page.data) ?? [],

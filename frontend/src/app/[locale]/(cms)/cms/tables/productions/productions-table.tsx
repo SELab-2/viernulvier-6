@@ -23,6 +23,7 @@ import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialo
 import { BulkTagDialog } from "@/components/cms/bulk-tag-dialog";
 import { ProductionMediaSheet } from "@/components/cms/production-media-sheet";
 import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
+import { getCmsFacetParams } from "@/lib/cms-filter-params";
 import type { PickerItem } from "@/lib/collection-picker-utils";
 import { ActionVariant } from "@/types/cms/actions";
 import type { Production } from "@/types/models/production.types";
@@ -37,12 +38,16 @@ export function ProductionsTable() {
     const locale = useLocale();
     const searchParams = useSearchParams();
     const q = searchParams.get("q") ?? undefined;
+    const facetParams = useMemo(
+        () => getCmsFacetParams(new URLSearchParams(searchParams.toString())),
+        [searchParams]
+    );
 
     const {
         data: infiniteData,
         fetchNextPage,
         hasNextPage,
-    } = useGetInfiniteProductions({ limit: 50, ...(q ? { q } : {}) });
+    } = useGetInfiniteProductions({ limit: 50, ...(q ? { q } : {}), ...facetParams });
     const deleteProduction = useDeleteProduction();
 
     const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();

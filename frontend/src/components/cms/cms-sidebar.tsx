@@ -2,8 +2,8 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Link, usePathname } from "@/i18n/routing";
+import { useSearchParams } from "next/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/routing";
 import {
     Clapperboard,
     MapPin,
@@ -159,6 +159,7 @@ function SidebarContent({ onNavigate, showHeader = true }: SidebarContentProps) 
             } else {
                 params.delete(facetSlug);
             }
+            params.delete("cursor");
             const qs = params.toString();
             router.replace(qs ? `${pathname}?${qs}` : pathname);
         },
@@ -168,6 +169,7 @@ function SidebarContent({ onNavigate, showHeader = true }: SidebarContentProps) 
     const clearFilters = useCallback(() => {
         const params = new URLSearchParams(window.location.search);
         for (const facet of facets ?? []) params.delete(facet.slug);
+        params.delete("cursor");
         const qs = params.toString();
         router.replace(qs ? `${pathname}?${qs}` : pathname);
     }, [facets, pathname, router]);

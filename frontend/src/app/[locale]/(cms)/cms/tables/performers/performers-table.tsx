@@ -20,6 +20,7 @@ import { useEntityTagEditor } from "@/hooks/useEntityTagEditor";
 import { TagPickerSection } from "@/components/cms/tag-picker-section";
 import { BulkTagDialog } from "@/components/cms/bulk-tag-dialog";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
+import { getCmsFacetParams } from "@/lib/cms-filter-params";
 import type { PickerItem } from "@/lib/collection-picker-utils";
 
 export function PerformersTable() {
@@ -31,13 +32,17 @@ export function PerformersTable() {
 
     const searchParams = useSearchParams();
     const q = searchParams.get("q") ?? undefined;
+    const facetParams = useMemo(
+        () => getCmsFacetParams(new URLSearchParams(searchParams.toString())),
+        [searchParams]
+    );
 
     const {
         data: infiniteData,
         fetchNextPage,
         hasNextPage,
         isLoading,
-    } = useGetInfiniteArtists({ limit: 50, q });
+    } = useGetInfiniteArtists({ limit: 50, q, ...facetParams });
 
     const artists = useMemo(
         () => infiniteData?.pages.flatMap((page) => page.data) ?? [],
