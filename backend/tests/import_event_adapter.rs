@@ -412,7 +412,11 @@ async fn apply_row_creates_event_with_all_fields(pool: PgPool) {
     tx.commit().await.expect("commit tx");
 
     let event = db.events().by_id(id).await.expect("by_id failed");
-    let hall_ids = db.events().hall_ids_for_event(id).await.expect("hall_ids_for_event failed");
+    let hall_ids = db
+        .events()
+        .hall_ids_for_event(id)
+        .await
+        .expect("hall_ids_for_event failed");
     assert_eq!(event.production_id, prod_id);
     assert_eq!(hall_ids, vec![hall_id]);
     assert_eq!(event.source_id, Some(42));
@@ -439,7 +443,11 @@ async fn apply_row_creates_event_with_only_required_fields(pool: PgPool) {
     tx.commit().await.expect("commit tx");
 
     let event = db.events().by_id(id).await.expect("by_id failed");
-    let hall_ids = db.events().hall_ids_for_event(id).await.expect("hall_ids_for_event failed");
+    let hall_ids = db
+        .events()
+        .hall_ids_for_event(id)
+        .await
+        .expect("hall_ids_for_event failed");
     assert_eq!(event.production_id, prod_id);
     assert!(hall_ids.is_empty(), "expected no halls");
     assert_eq!(event.source_id, None);

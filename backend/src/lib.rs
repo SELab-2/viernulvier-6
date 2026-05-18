@@ -47,7 +47,6 @@ mod handlers;
 pub mod import;
 mod vnv_import_tasks;
 
-
 #[derive(Clone)]
 pub struct AppState {
     pub db: Database,
@@ -177,9 +176,10 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
     let revoked = database::revocation::RevokedUsers::new(std::time::Duration::from_secs(
         (config.refresh_token_expiry_days as u64) * 24 * 60 * 60,
     ));
-    revoked.load_from_db(db.pool()).await.map_err(|e| {
-        AppError::Internal(format!("Failed to load revoked users: {e}"))
-    })?;
+    revoked
+        .load_from_db(db.pool())
+        .await
+        .map_err(|e| AppError::Internal(format!("Failed to load revoked users: {e}")))?;
 
     let state = AppState {
         db,
@@ -483,7 +483,11 @@ mod tests {
             .await
             .unwrap();
 
-        let user = database.users().by_email("admin@viernulvier.be").await.unwrap();
+        let user = database
+            .users()
+            .by_email("admin@viernulvier.be")
+            .await
+            .unwrap();
         assert_eq!(user.email, "admin@viernulvier.be");
         assert_eq!(user.role, database::models::user::UserRole::Admin);
     }
@@ -502,7 +506,11 @@ mod tests {
             .unwrap();
 
         // Should still be able to authenticate with the first password
-        let user = database.users().by_email("admin@viernulvier.be").await.unwrap();
+        let user = database
+            .users()
+            .by_email("admin@viernulvier.be")
+            .await
+            .unwrap();
         assert_eq!(user.email, "admin@viernulvier.be");
     }
 }

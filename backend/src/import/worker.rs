@@ -538,7 +538,10 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
                                 )
                                 .await
                             {
-                                warn!("session {id} row {} save_dry_run_result failed: {se}", row.id);
+                                warn!(
+                                    "session {id} row {} save_dry_run_result failed: {se}",
+                                    row.id
+                                );
                             }
                             commit_error_count += 1;
                             continue;
@@ -560,7 +563,10 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
                         .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
                         .await
                     {
-                        warn!("session {id} row {} save_dry_run_result failed: {se}", row.id);
+                        warn!(
+                            "session {id} row {} save_dry_run_result failed: {se}",
+                            row.id
+                        );
                     }
                     commit_error_count += 1;
                     continue;
@@ -585,7 +591,10 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
                     .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
                     .await
                 {
-                    warn!("session {id} row {} save_dry_run_result failed: {se}", row.id);
+                    warn!(
+                        "session {id} row {} save_dry_run_result failed: {se}",
+                        row.id
+                    );
                 }
                 commit_error_count += 1;
                 continue;
@@ -608,7 +617,10 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
                     .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
                     .await
                 {
-                    warn!("session {id} row {} save_dry_run_result failed: {se}", row.id);
+                    warn!(
+                        "session {id} row {} save_dry_run_result failed: {se}",
+                        row.id
+                    );
                 }
                 commit_error_count += 1;
                 continue;
@@ -620,7 +632,10 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
             ImportRepo::finalise_committed_row(&mut tx, row.id, entity_id, existing_id.is_none())
                 .await
         {
-            warn!("session {id} row {} finalise_committed_row failed: {e}", row.id);
+            warn!(
+                "session {id} row {} finalise_committed_row failed: {e}",
+                row.id
+            );
             let _ = tx.rollback().await;
             let warnings = vec![ImportWarning {
                 field: None,
@@ -632,7 +647,10 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
                 .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
                 .await
             {
-                warn!("session {id} row {} save_dry_run_result failed: {se}", row.id);
+                warn!(
+                    "session {id} row {} save_dry_run_result failed: {se}",
+                    row.id
+                );
             }
             commit_error_count += 1;
             continue;
@@ -651,7 +669,10 @@ pub async fn process_commit(id: Uuid, ctx: &WorkerContext) -> Result<(), AppErro
                 .save_dry_run_result(row.id, ImportRowStatus::Error, None, Json(warnings))
                 .await
             {
-                warn!("session {id} row {} save_dry_run_result failed: {se}", row.id);
+                warn!(
+                    "session {id} row {} save_dry_run_result failed: {se}",
+                    row.id
+                );
             }
             commit_error_count += 1;
             continue;

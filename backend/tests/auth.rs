@@ -3,11 +3,11 @@
 mod common;
 
 use axum::body::Body;
-use axum::http::header;
 use axum::http::Method;
+use axum::http::header;
 use axum::response::Response;
-use database::models::user::UserRole;
 use database::Database;
+use database::models::user::UserRole;
 use sqlx::PgPool;
 
 use crate::common::router::TestRouter;

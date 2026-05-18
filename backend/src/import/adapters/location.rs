@@ -147,8 +147,16 @@ impl ImportableEntity for LocationImport {
 
     fn validate_row(&self, row: &ResolvedRow) -> Vec<ImportWarning> {
         let scalar_fields = [
-            "source_id", "name", "city", "street", "number", "postal_code", "country", "code",
-            "phone_1", "phone_2",
+            "source_id",
+            "name",
+            "city",
+            "street",
+            "number",
+            "postal_code",
+            "country",
+            "code",
+            "phone_1",
+            "phone_2",
         ];
         let all_empty = scalar_fields.iter().all(|&f| match row.get(f) {
             None | Some(Value::Null) => true,

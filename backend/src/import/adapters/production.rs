@@ -261,7 +261,11 @@ impl ImportableEntity for ProductionImport {
                 let raw_title = title_nl.as_deref().unwrap_or("untitled");
                 let base_slug = {
                     let s = slugify(raw_title);
-                    if s.is_empty() { "untitled".to_string() } else { s }
+                    if s.is_empty() {
+                        "untitled".to_string()
+                    } else {
+                        s
+                    }
                 };
                 // Slug reads stay on db (commits are serial per-row).
                 let slug = db.productions().find_unique_slug(&base_slug).await?;

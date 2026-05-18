@@ -1029,10 +1029,8 @@ pub async fn delete_session(
         )));
     }
 
-    let needs_rollback = matches!(
-        session.status,
-        ImportSessionStatus::Committed
-    ) || (session.status == ImportSessionStatus::Failed && session.committed_at.is_some());
+    let needs_rollback = matches!(session.status, ImportSessionStatus::Committed)
+        || (session.status == ImportSessionStatus::Failed && session.committed_at.is_some());
 
     if needs_rollback {
         rollback_committed_rows(&state, &session, true).await?;

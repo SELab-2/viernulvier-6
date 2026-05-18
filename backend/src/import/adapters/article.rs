@@ -207,10 +207,10 @@ impl ImportableEntity for ArticleImport {
         let status = json_string(row, "status")
             .and_then(|s| parse_status(&s))
             .unwrap_or(ArticleStatus::Draft);
-        let subject_period_start = json_string(row, "subject_period_start")
-            .and_then(|s| parse_date(&s));
-        let subject_period_end = json_string(row, "subject_period_end")
-            .and_then(|s| parse_date(&s));
+        let subject_period_start =
+            json_string(row, "subject_period_start").and_then(|s| parse_date(&s));
+        let subject_period_end =
+            json_string(row, "subject_period_end").and_then(|s| parse_date(&s));
 
         match existing_id {
             None => {

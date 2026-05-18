@@ -9,8 +9,8 @@ use dotenvy::dotenv;
 use serde::Serialize;
 use sqlx::PgPool;
 use std::sync::Once;
-use tower::ServiceExt;
 use std::time::Duration;
+use tower::ServiceExt;
 use viernulvier_archive::{AppState, config::AppConfig, import::default_registry, router};
 
 use crate::common::user::{create_test_user, login_user};
@@ -141,7 +141,7 @@ impl TestRouter {
             .await
             .unwrap()
     }
-  
+
     /// send a request to an endpoint on this router with explicit cookies
     pub async fn request_with_cookies<T: Serialize>(
         &self,

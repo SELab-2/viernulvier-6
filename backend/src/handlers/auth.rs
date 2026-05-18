@@ -11,9 +11,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use time::Duration;
 use uuid::Uuid;
 
-use crate::{config::AppConfig, error::AppError, error::ErrorResponse, extractors::auth::AuthUser, AppState};
-use database::{Database, models::session::SessionCreate, models::user::UserRole};
+use crate::{
+    AppState, config::AppConfig, error::AppError, error::ErrorResponse, extractors::auth::AuthUser,
+};
 use axum::extract::State;
+use database::{Database, models::session::SessionCreate, models::user::UserRole};
 use utoipa::ToSchema;
 
 const ACCESS_TOKEN_COOKIE: &str = "access_token";

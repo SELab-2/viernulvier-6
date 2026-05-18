@@ -64,7 +64,10 @@ fn real_adapters_have_non_empty_fields() {
     for name in ["article", "artist", "location"] {
         let adapter = reg.get(name).expect("adapter registered");
         assert_eq!(adapter.entity_type(), name);
-        assert!(!adapter.target_fields().is_empty(), "{name} adapter has no fields");
+        assert!(
+            !adapter.target_fields().is_empty(),
+            "{name} adapter has no fields"
+        );
     }
 }
 

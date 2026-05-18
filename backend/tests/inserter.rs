@@ -4,11 +4,7 @@ use chrono::Utc;
 use database::Database;
 use sqlx::PgPool;
 
-use api::models::{
-    location::ApiLocation,
-    price::ApiPrice,
-    price_rank::ApiPriceRank,
-};
+use api::models::{location::ApiLocation, price::ApiPrice, price_rank::ApiPriceRank};
 
 #[sqlx::test]
 #[test_log::test]

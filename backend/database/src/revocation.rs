@@ -124,12 +124,11 @@ impl RevokedUsers {
             self.checks_since_cleanup.fetch_add(1, Ordering::Relaxed) % 256 == 0;
         if !should_remove_current && !should_cleanup_all {
             // Cache miss — check the database as a fallback
-            if let Ok(Some(_)) = sqlx::query_as::<_, (Uuid,)>(
-                "SELECT user_id FROM revoked_users WHERE user_id = $1",
-            )
-            .bind(user_id)
-            .fetch_optional(pool)
-            .await
+            if let Ok(Some(_)) =
+                sqlx::query_as::<_, (Uuid,)>("SELECT user_id FROM revoked_users WHERE user_id = $1")
+                    .bind(user_id)
+                    .fetch_optional(pool)
+                    .await
             {
                 let mut map = self.inner.write().expect("revoked lock poisoned");
                 map.insert(user_id, Instant::now());
