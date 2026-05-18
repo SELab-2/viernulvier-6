@@ -181,7 +181,8 @@
         "past": "Voorbij",
         "date": "Datum",
         "status": "Status",
-        "noEvents": "Geen evenementen beschikbaar"
+        "noEvents": "Geen evenementen beschikbaar",
+        "free": "Gratis"
     },
     "Login": {
         "title": "Welkom terug",
@@ -402,6 +403,7 @@
             "fieldEventPriceRank": "Rang",
             "fieldEventPriceAvailable": "Beschikbaar",
             "fieldEventPriceType": "Type",
+            "fieldEventPriceFree": "Gratis",
             "eyebrow": "Productie",
             "search": "Zoek producties…"
         },

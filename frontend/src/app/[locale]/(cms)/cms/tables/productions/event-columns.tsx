@@ -96,7 +96,9 @@ export function EventPriceExtraContent({ entity }: { entity: Event }) {
                                 )}
                             </div>
                             <span className="text-muted-foreground shrink-0 font-mono text-xs tabular-nums">
-                                &euro;{(price.amountCents / 100).toFixed(2)}
+                                {price.amountCents === 0
+                                    ? t("fieldEventPriceFree")
+                                    : `\u20ac${(price.amountCents / 100).toFixed(2)}`}
                             </span>
                         </div>
                         <div className="text-muted-foreground mt-1 flex gap-3 font-mono text-[10px]">
@@ -186,6 +188,7 @@ export function makeEventColumns(options: {
                 const amounts = prices.map((p) => p.amountCents / 100);
                 const min = Math.min(...amounts);
                 const max = Math.max(...amounts);
+                if (min === 0 && max === 0) return tProductions("fieldEventPriceFree");
                 const fmt = (n: number) => `\u20ac${n.toFixed(2)}`;
                 if (prices.length === 1 || min === max) return fmt(min);
                 return `${fmt(min)} \u2013 ${fmt(max)}`;

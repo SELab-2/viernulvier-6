@@ -181,7 +181,8 @@
         "past": "Past",
         "date": "Date",
         "status": "Status",
-        "noEvents": "No events available"
+        "noEvents": "No events available",
+        "free": "Free"
     },
     "Login": {
         "title": "Welcome back",
@@ -402,6 +403,7 @@
             "fieldEventPriceRank": "Rank",
             "fieldEventPriceAvailable": "Available",
             "fieldEventPriceType": "Type",
+            "fieldEventPriceFree": "Free",
             "eyebrow": "Production",
             "search": "Search productions…"
         },

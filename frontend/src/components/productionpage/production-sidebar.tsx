@@ -98,7 +98,9 @@ export function ProductionSidebar({
                                                     )}
                                                 </div>
                                                 <span className="text-foreground shrink-0 font-mono text-[11px] tabular-nums">
-                                                    €{(price.amountCents / 100).toFixed(2)}
+                                                    {price.amountCents === 0
+                                                        ? t("free")
+                                                        : `€${(price.amountCents / 100).toFixed(2)}`}
                                                 </span>
                                             </div>
                                         ))}

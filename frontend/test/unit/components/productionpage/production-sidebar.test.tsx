@@ -27,7 +27,7 @@ vi.mock("@/i18n/routing", () => ({
 }));
 
 const messages = {
-    Events: { title: "Events", noEvents: "No events available" },
+    Events: { title: "Events", noEvents: "No events available", free: "Gratis" },
     ProductionPage: {
         metaLanguage: "Language",
         languageNl: "NL",
@@ -288,6 +288,60 @@ describe("ProductionSidebar events", () => {
         });
 
         expect(screen.queryByText(/€/)).toBeNull();
+    });
+
+    it("shows Gratis for zero-cent price", () => {
+        const event = makeEvent({
+            prices: [
+                {
+                    id: "p-1",
+                    sourceId: null,
+                    createdAt: null,
+                    updatedAt: null,
+                    available: 100,
+                    amountCents: 0,
+                    boxOfficeId: null,
+                    contingentId: null,
+                    expiresAt: null,
+                    price: {
+                        id: null,
+                        sourceId: null,
+                        createdAt: null,
+                        updatedAt: null,
+                        type: "ticket",
+                        visibility: "public",
+                        code: null,
+                        descriptionNl: "Gratis ticket",
+                        descriptionEn: null,
+                        minimum: 0,
+                        maximum: null,
+                        step: 0,
+                        order: 1,
+                        autoSelectCombo: false,
+                        includeInPriceRange: false,
+                        cinevilleBox: false,
+                        membership: null,
+                    },
+                    rank: {
+                        id: null,
+                        sourceId: null,
+                        createdAt: null,
+                        updatedAt: null,
+                        descriptionNl: null,
+                        descriptionEn: null,
+                        code: "",
+                        position: 1,
+                        soldOutBuffer: null,
+                    },
+                },
+            ],
+        });
+
+        render(<ProductionSidebar production={mockProduction} events={[event]} locale="en" />, {
+            wrapper: TestWrapper,
+        });
+
+        expect(screen.getByText("Gratis")).toBeInTheDocument();
     });
 
     it("shows price type as fallback when description is null", () => {

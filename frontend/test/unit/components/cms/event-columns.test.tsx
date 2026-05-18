@@ -20,6 +20,7 @@ const messages = {
             fieldEventPrices: "Event Prices",
             fieldEventPriceType: "Type",
             fieldEventPriceAvailable: "Available",
+            fieldEventPriceFree: "Gratis",
         },
         ActionsColumn: {
             edit: "Edit {label}",
@@ -182,6 +183,16 @@ describe("EventPriceExtraContent", () => {
         expect(screen.getByText(/Type: ticket/)).toBeInTheDocument();
         expect(screen.getByText(/Available: 100/)).toBeInTheDocument();
     });
+
+    it("shows Gratis for zero-cent prices", () => {
+        const event = makeEvent({
+            prices: [makePrice({ amountCents: 0 })],
+        });
+
+        render(<EventPriceExtraContent entity={event} />, { wrapper: TestWrapper });
+
+        expect(screen.getByText("Gratis")).toBeInTheDocument();
+    });
 });
 
 describe("makeEventColumns", () => {
@@ -189,7 +200,10 @@ describe("makeEventColumns", () => {
         const columns = makeEventColumns({
             onEdit: () => {},
             t: (key: string, _values?: Record<string, unknown>) => key,
-            tProductions: (key: string) => key,
+            tProductions: (key: string) => {
+                if (key === "fieldEventPriceFree") return "Gratis";
+                return key;
+            },
         });
 
         const priceCol = columns.find((c) => c.accessorKey === "prices");
@@ -218,6 +232,19 @@ describe("makeEventColumns", () => {
                     getValue: () => [{ amountCents: 2000 }, { amountCents: 2000 }],
                 })
             ).toBe("\u20ac20.00");
+
+            // All free
+            expect(
+                cellFn({
+                    getValue: () => [{ amountCents: 0 }],
+                })
+            ).toBe("Gratis");
+
+            expect(
+                cellFn({
+                    getValue: () => [{ amountCents: 0 }, { amountCents: 0 }],
+                })
+            ).toBe("Gratis");
         }
     });
 
