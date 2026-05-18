@@ -1,6 +1,6 @@
 "use client";
 
-import { Link2, Mail } from "lucide-react";
+import { Link2, Mail, Ticket } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
@@ -27,16 +27,6 @@ function formatTime(dateStr: string, locale: string): string {
         minute: "2-digit",
         hour12: false,
     });
-}
-
-function formatPriceRange(prices: Event["prices"]): string | null {
-    if (!prices || prices.length === 0) return null;
-    const amounts = prices.map((p) => p.amountCents / 100);
-    const min = Math.min(...amounts);
-    const max = Math.max(...amounts);
-    const fmt = (n: number) => `\u20ac${n.toFixed(2)}`;
-    if (prices.length === 1 || min === max) return fmt(min);
-    return `${fmt(min)} – ${fmt(max)}`;
 }
 
 export function ProductionSidebar({
@@ -88,9 +78,30 @@ export function ProductionSidebar({
                                     {event.endsAt && ` – ${formatTime(event.endsAt, locale)}`}
                                     {" · De Vooruit"}
                                 </div>
-                                {formatPriceRange(event.prices) && (
-                                    <div className="text-muted-foreground mb-2 font-mono text-[11px]">
-                                        {formatPriceRange(event.prices)}
+                                {event.prices && event.prices.length > 0 && (
+                                    <div className="border-muted/25 divide-muted/[0.06] mb-2 divide-y rounded-sm border">
+                                        {event.prices.map((price, idx) => (
+                                            <div
+                                                key={price.id ?? idx}
+                                                className="flex items-center justify-between gap-2 px-2.5 py-1.5"
+                                            >
+                                                <div className="flex min-w-0 items-center gap-1.5">
+                                                    <Ticket className="text-muted-foreground h-3 w-3 shrink-0" />
+                                                    <span className="text-foreground truncate font-mono text-[11px]">
+                                                        {price.price.descriptionNl ??
+                                                            price.price.type}
+                                                    </span>
+                                                    {price.rank.code && (
+                                                        <span className="text-muted-foreground shrink-0 font-mono text-[9px] tabular-nums">
+                                                            {price.rank.code}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span className="text-foreground shrink-0 font-mono text-[11px] tabular-nums">
+                                                    €{(price.amountCents / 100).toFixed(2)}
+                                                </span>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
                             </div>

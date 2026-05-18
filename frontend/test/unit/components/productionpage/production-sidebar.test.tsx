@@ -125,7 +125,7 @@ describe("ProductionSidebar events", () => {
         expect(screen.getByText(/De Vooruit/)).toBeInTheDocument();
     });
 
-    it("displays price range when event has prices", () => {
+    it("displays individual price entries with ticket icon", () => {
         const event = makeEvent({
             prices: [
                 {
@@ -146,7 +146,7 @@ describe("ProductionSidebar events", () => {
                         type: "ticket",
                         visibility: "public",
                         code: null,
-                        descriptionNl: null,
+                        descriptionNl: "Standaard tarief",
                         descriptionEn: null,
                         minimum: 0,
                         maximum: null,
@@ -187,7 +187,7 @@ describe("ProductionSidebar events", () => {
                         type: "ticket",
                         visibility: "public",
                         code: null,
-                        descriptionNl: null,
+                        descriptionNl: "Premium",
                         descriptionEn: null,
                         minimum: 0,
                         maximum: null,
@@ -217,10 +217,80 @@ describe("ProductionSidebar events", () => {
             wrapper: TestWrapper,
         });
 
-        expect(screen.getByText("€15.00 – €50.00")).toBeInTheDocument();
+        expect(screen.getByText("Standaard tarief")).toBeInTheDocument();
+        expect(screen.getByText("R1")).toBeInTheDocument();
+        expect(screen.getByText("€15.00")).toBeInTheDocument();
+        expect(screen.getByText("Premium")).toBeInTheDocument();
+        expect(screen.getByText("R2")).toBeInTheDocument();
+        expect(screen.getByText("€50.00")).toBeInTheDocument();
     });
 
-    it("shows single price when all prices are the same", () => {
+    it("shows price type as fallback when description is null", () => {
+        const event = makeEvent({
+            prices: [
+                {
+                    id: "p-1",
+                    sourceId: null,
+                    createdAt: null,
+                    updatedAt: null,
+                    available: 100,
+                    amountCents: 2000,
+                    boxOfficeId: null,
+                    contingentId: null,
+                    expiresAt: null,
+                    price: {
+                        id: null,
+                        sourceId: null,
+                        createdAt: null,
+                        updatedAt: null,
+                        type: "abo",
+                        visibility: "public",
+                        code: null,
+                        descriptionNl: null,
+                        descriptionEn: null,
+                        minimum: 0,
+                        maximum: null,
+                        step: 100,
+                        order: 1,
+                        autoSelectCombo: false,
+                        includeInPriceRange: true,
+                        cinevilleBox: false,
+                        membership: null,
+                    },
+                    rank: {
+                        id: null,
+                        sourceId: null,
+                        createdAt: null,
+                        updatedAt: null,
+                        descriptionNl: null,
+                        descriptionEn: null,
+                        code: "",
+                        position: 1,
+                        soldOutBuffer: null,
+                    },
+                },
+            ],
+        });
+
+        render(<ProductionSidebar production={mockProduction} events={[event]} locale="en" />, {
+            wrapper: TestWrapper,
+        });
+
+        expect(screen.getByText("abo")).toBeInTheDocument();
+        expect(screen.getByText("€20.00")).toBeInTheDocument();
+    });
+
+    it("does not show price section when event has no prices", () => {
+        const event = makeEvent({ prices: [] });
+
+        render(<ProductionSidebar production={mockProduction} events={[event]} locale="en" />, {
+            wrapper: TestWrapper,
+        });
+
+        expect(screen.queryByText(/€/)).toBeNull();
+    });
+
+    it("shows price type as fallback when description is null", () => {
         const event = makeEvent({
             prices: [
                 {
@@ -272,15 +342,5 @@ describe("ProductionSidebar events", () => {
         });
 
         expect(screen.getByText("€20.00")).toBeInTheDocument();
-    });
-
-    it("does not show price when event has no prices", () => {
-        const event = makeEvent({ prices: [] });
-
-        render(<ProductionSidebar production={mockProduction} events={[event]} locale="en" />, {
-            wrapper: TestWrapper,
-        });
-
-        expect(screen.queryByText(/€/)).toBeNull();
     });
 });
