@@ -208,34 +208,31 @@ impl SeedImporter {
             return None;
         }
 
-        let (s3_client, s3_bucket) = match (
+        let (s3_client, s3_bucket) = if let (Ok(endpoint), Ok(access_key), Ok(secret_key), Ok(bucket)) = (
             std::env::var("S3_ENDPOINT"),
             std::env::var("S3_ACCESS_KEY"),
             std::env::var("S3_SECRET_KEY"),
             std::env::var("S3_BUCKET"),
         ) {
-            (Ok(endpoint), Ok(access_key), Ok(secret_key), Ok(bucket)) => {
-                let region = std::env::var("S3_REGION").unwrap_or_else(|_| "garage".to_string());
-                let creds = Credentials::new(&access_key, &secret_key, None, None, "seed");
-                let s3_conf = S3Builder::new()
-                    .region(Region::new(region))
-                    .endpoint_url(&endpoint)
-                    .credentials_provider(creds)
-                    .force_path_style(true)
-                    .request_checksum_calculation(
-                        aws_sdk_s3::config::RequestChecksumCalculation::WhenRequired,
-                    )
-                    .response_checksum_validation(
-                        aws_sdk_s3::config::ResponseChecksumValidation::WhenRequired,
-                    )
-                    .build();
-                info!("SeedImporter: S3 configured, image patches enabled");
-                (Some(aws_sdk_s3::Client::from_conf(s3_conf)), Some(bucket))
-            }
-            _ => {
-                info!("SeedImporter: S3 not configured, image patches will be skipped");
-                (None, None)
-            }
+            let region = std::env::var("S3_REGION").unwrap_or_else(|_| "garage".to_string());
+            let creds = Credentials::new(&access_key, &secret_key, None, None, "seed");
+            let s3_conf = S3Builder::new()
+                .region(Region::new(region))
+                .endpoint_url(&endpoint)
+                .credentials_provider(creds)
+                .force_path_style(true)
+                .request_checksum_calculation(
+                    aws_sdk_s3::config::RequestChecksumCalculation::WhenRequired,
+                )
+                .response_checksum_validation(
+                    aws_sdk_s3::config::ResponseChecksumValidation::WhenRequired,
+                )
+                .build();
+            info!("SeedImporter: S3 configured, image patches enabled");
+            (Some(aws_sdk_s3::Client::from_conf(s3_conf)), Some(bucket))
+        } else {
+            info!("SeedImporter: S3 not configured, image patches will be skipped");
+            (None, None)
         };
 
         Some(Self { db, seed_dir, s3_client, s3_bucket })
@@ -491,7 +488,7 @@ impl SeedImporter {
             } else {
                 let mut n = 2u32;
                 loop {
-                    let candidate = format!("{}-{}", base, n);
+                    let candidate = format!("{base}-{n}");
                     if !used.contains(&candidate) {
                         break candidate;
                     }
@@ -1248,6 +1245,7 @@ impl SeedImporter {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     async fn seed_entity_image(
         &self,
         entity_type: &str,
@@ -1485,11 +1483,8 @@ fn split_artist_field(text: &str) -> Vec<&str> {
     let mut start = 0;
     let mut in_single = false;
     let mut in_double = false;
-    let bytes = text.as_bytes();
-    let mut i = 0;
-
-    while i < bytes.len() {
-        match bytes[i] {
+    for (i, &b) in text.as_bytes().iter().enumerate() {
+        match b {
             b'\'' if !in_double => in_single = !in_single,
             b'"' if !in_single => in_double = !in_double,
             b'/' | b'&' | b'|' | b',' if !in_single && !in_double => {
@@ -1498,7 +1493,6 @@ fn split_artist_field(text: &str) -> Vec<&str> {
             }
             _ => {}
         }
-        i += 1;
     }
     parts.push(&text[start..]);
     parts

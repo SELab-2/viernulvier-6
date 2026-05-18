@@ -33,7 +33,7 @@ impl<'a> ArtistRepo<'a> {
         match q {
             None => self.all().await,
             Some(term) => {
-                let pattern = format!("%{}%", term);
+                let pattern = format!("%{term}%");
                 Ok(
                     sqlx::query_as::<_, Artist>(
                         "SELECT * FROM artists \
@@ -54,11 +54,11 @@ impl<'a> ArtistRepo<'a> {
         cursor: Option<(String, Uuid)>,
         q: Option<&str>,
     ) -> Result<(Vec<Artist>, Option<(String, Uuid)>), DatabaseError> {
-        let fetch_limit: i64 = (limit as i64) + 1;
+        let fetch_limit: i64 = i64::from(limit) + 1;
         let mut builder = sqlx::QueryBuilder::new("SELECT * FROM artists WHERE true");
 
         if let Some(term) = q {
-            let pattern = format!("%{}%", term);
+            let pattern = format!("%{term}%");
             builder
                 .push(" AND (name ILIKE ")
                 .push_bind(pattern.clone())
