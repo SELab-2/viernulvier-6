@@ -23,26 +23,6 @@ fn json_string(row: &ResolvedRow, key: &str) -> Option<String> {
     }
 }
 
-/// Generate a slug that does not collide with any existing artist slug.
-///
-/// Tries `base`, then `base-2`, `base-3`, … up to 99 before giving up.
-async fn unique_slug(db: &Database, base: &str) -> anyhow::Result<String> {
-    let artists = db.artists().search(None).await?;
-    let existing: std::collections::HashSet<String> =
-        artists.into_iter().map(|a| a.slug).collect();
-
-    if !existing.contains(base) {
-        return Ok(base.to_string());
-    }
-    for n in 2u32..=99 {
-        let candidate = format!("{base}-{n}");
-        if !existing.contains(&candidate) {
-            return Ok(candidate);
-        }
-    }
-    anyhow::bail!("could not generate a unique slug for artist '{base}'")
-}
-
 #[async_trait]
 impl ImportableEntity for ArtistImport {
     fn entity_type(&self) -> &'static str {
@@ -139,7 +119,7 @@ impl ImportableEntity for ArtistImport {
         match existing_id {
             None => {
                 let base_slug = slugify(&name);
-                let slug = unique_slug(db, &base_slug).await?;
+                let slug = db.artists().find_unique_slug(&base_slug).await?;
                 let artist = db.artists().insert_on(&mut *tx, &name, &slug).await?;
                 Ok(artist.id)
             }

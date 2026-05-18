@@ -10,6 +10,7 @@ use crate::{
         Production, ProductionCreate, ProductionTranslation, ProductionTranslationData,
         ProductionWithTranslations,
     },
+    repos::slug::{escape_like_pattern, next_unique_slug},
 };
 
 pub mod all;
@@ -177,37 +178,24 @@ impl<'a> ProductionRepo<'a> {
         })
     }
 
-    /// Return the first slug not already present in the productions table.
-    ///
-    /// Tries `base_slug`, then `base_slug-2`, `base_slug-3`, … up to 999.
+    /// Return a slug not already present in the productions table.
     pub async fn find_unique_slug(&self, base_slug: &str) -> Result<String, DatabaseError> {
-        let taken: bool =
-            sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM productions WHERE slug = $1)")
-                .bind(base_slug)
-                .fetch_one(self.db)
-                .await?;
+        let like_pattern = format!("{}-%", escape_like_pattern(base_slug));
 
-        if !taken {
-            return Ok(base_slug.to_string());
-        }
+        let existing_slugs: Vec<String> = sqlx::query_scalar(
+            "SELECT slug
+             FROM productions
+             WHERE slug = $1 OR slug LIKE $2 ESCAPE '\\'",
+        )
+        .bind(base_slug)
+        .bind(like_pattern)
+        .fetch_all(self.db)
+        .await?;
 
-        for i in 2u32..=999 {
-            let candidate = format!("{}-{}", base_slug, i);
-            let taken: bool =
-                sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM productions WHERE slug = $1)")
-                    .bind(&candidate)
-                    .fetch_one(self.db)
-                    .await?;
-
-            if !taken {
-                return Ok(candidate);
-            }
-        }
-
-        Err(DatabaseError::BadRequest(format!(
-            "could not find unique slug for '{}' after 999 attempts",
-            base_slug
-        )))
+        Ok(next_unique_slug(
+            base_slug,
+            existing_slugs.iter().map(String::as_str),
+        ))
     }
 
     pub async fn update(
@@ -313,22 +301,53 @@ impl<'a> ProductionRepo<'a> {
             return Ok(());
         }
 
-        let language_codes: Vec<&str> = translations.iter().map(|t| t.language_code.as_str()).collect();
-        let supertitles: Vec<Option<&str>> = translations.iter().map(|t| t.supertitle.as_deref()).collect();
+        let language_codes: Vec<&str> = translations
+            .iter()
+            .map(|t| t.language_code.as_str())
+            .collect();
+        let supertitles: Vec<Option<&str>> = translations
+            .iter()
+            .map(|t| t.supertitle.as_deref())
+            .collect();
         let titles: Vec<Option<&str>> = translations.iter().map(|t| t.title.as_deref()).collect();
         let artists: Vec<Option<&str>> = translations.iter().map(|t| t.artist.as_deref()).collect();
-        let meta_titles: Vec<Option<&str>> = translations.iter().map(|t| t.meta_title.as_deref()).collect();
-        let meta_descriptions: Vec<Option<&str>> = translations.iter().map(|t| t.meta_description.as_deref()).collect();
-        let taglines: Vec<Option<&str>> = translations.iter().map(|t| t.tagline.as_deref()).collect();
+        let meta_titles: Vec<Option<&str>> = translations
+            .iter()
+            .map(|t| t.meta_title.as_deref())
+            .collect();
+        let meta_descriptions: Vec<Option<&str>> = translations
+            .iter()
+            .map(|t| t.meta_description.as_deref())
+            .collect();
+        let taglines: Vec<Option<&str>> =
+            translations.iter().map(|t| t.tagline.as_deref()).collect();
         let teasers: Vec<Option<&str>> = translations.iter().map(|t| t.teaser.as_deref()).collect();
-        let descriptions: Vec<Option<&str>> = translations.iter().map(|t| t.description.as_deref()).collect();
-        let description_extras: Vec<Option<&str>> = translations.iter().map(|t| t.description_extra.as_deref()).collect();
-        let description_2s: Vec<Option<&str>> = translations.iter().map(|t| t.description_2.as_deref()).collect();
+        let descriptions: Vec<Option<&str>> = translations
+            .iter()
+            .map(|t| t.description.as_deref())
+            .collect();
+        let description_extras: Vec<Option<&str>> = translations
+            .iter()
+            .map(|t| t.description_extra.as_deref())
+            .collect();
+        let description_2s: Vec<Option<&str>> = translations
+            .iter()
+            .map(|t| t.description_2.as_deref())
+            .collect();
         let quotes: Vec<Option<&str>> = translations.iter().map(|t| t.quote.as_deref()).collect();
-        let quote_sources: Vec<Option<&str>> = translations.iter().map(|t| t.quote_source.as_deref()).collect();
-        let programmes: Vec<Option<&str>> = translations.iter().map(|t| t.programme.as_deref()).collect();
+        let quote_sources: Vec<Option<&str>> = translations
+            .iter()
+            .map(|t| t.quote_source.as_deref())
+            .collect();
+        let programmes: Vec<Option<&str>> = translations
+            .iter()
+            .map(|t| t.programme.as_deref())
+            .collect();
         let infos: Vec<Option<&str>> = translations.iter().map(|t| t.info.as_deref()).collect();
-        let description_shorts: Vec<Option<&str>> = translations.iter().map(|t| t.description_short.as_deref()).collect();
+        let description_shorts: Vec<Option<&str>> = translations
+            .iter()
+            .map(|t| t.description_short.as_deref())
+            .collect();
 
         sqlx::query(
             "INSERT INTO production_translations (

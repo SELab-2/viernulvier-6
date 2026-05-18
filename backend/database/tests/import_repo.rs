@@ -85,7 +85,7 @@ async fn get_session_returns_some_for_existing(pool: PgPool) {
 async fn get_session_returns_none_for_unknown_id(pool: PgPool) {
     let repo = make_repo(&pool);
     let result = repo
-        .get_session(Uuid::new_v4())
+        .get_session(Uuid::now_v7())
         .await
         .expect("get_session error");
     assert!(result.is_none());
@@ -383,7 +383,7 @@ async fn update_row_resolved_refs_persists(pool: PgPool) {
     .await
     .expect("row not found");
 
-    let ref_uuid = Uuid::new_v4();
+    let ref_uuid = Uuid::now_v7();
     let mut refs = BTreeMap::new();
     refs.insert("location".to_string(), Some(ref_uuid));
 
@@ -578,7 +578,7 @@ async fn record_committed_row_sets_created_and_target_entity_id(pool: PgPool) {
         .await
         .expect("save_dry_run_result failed");
 
-    let entity_id = Uuid::new_v4();
+    let entity_id = Uuid::now_v7();
 
     repo.record_committed_row(row_id, entity_id)
         .await
@@ -627,7 +627,7 @@ async fn record_committed_row_sets_updated_and_target_entity_id(pool: PgPool) {
         .await
         .expect("save_dry_run_result failed");
 
-    let entity_id = Uuid::new_v4();
+    let entity_id = Uuid::now_v7();
 
     repo.record_committed_row(row_id, entity_id)
         .await
@@ -672,7 +672,7 @@ async fn record_committed_row_rejects_non_committable_status(pool: PgPool) {
     .expect("row not found");
 
     // Row is still in `pending` state — calling record_committed_row should fail
-    let entity_id = Uuid::new_v4();
+    let entity_id = Uuid::now_v7();
     let result = repo.record_committed_row(row_id, entity_id).await;
     assert!(result.is_err(), "expected error for non-committable status");
 

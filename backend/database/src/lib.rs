@@ -64,6 +64,7 @@ pub mod repos {
     pub mod price_rank;
     pub mod production;
     pub mod sessions;
+    pub(crate) mod slug;
     pub mod space;
     pub mod tag;
     pub mod user;

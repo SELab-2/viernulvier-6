@@ -18,9 +18,7 @@ uuid = { workspace = true, features = ["serde"] }
 chrono = { workspace = true, features = ["serde"] }
 thiserror = { workspace = true }
 
-sqlx = { version = "0.8.6", default-features = false, features = [
-    "runtime-tokio",
-    "postgres",
+sqlx = { workspace = true, features = [
     "migrate",
     "macros",
     "json",
@@ -32,14 +30,12 @@ utoipa = { version = "5.4.0", features = ["uuid", "chrono"] }
 serde_json = "1.0"
 
 [dev-dependencies]
-sqlx = { version = "0.8.6", default-features = false, features = [
-    "runtime-tokio",
-    "postgres",
+sqlx = { workspace = true, features = [
     "migrate",
     "macros",
     "json",
     "chrono",
     "uuid",
 ] }
-tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
-uuid = { version = "1", features = ["v4"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+uuid = { workspace = true, features = ["serde"] }

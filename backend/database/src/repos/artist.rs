@@ -2,7 +2,11 @@ use uuid::Uuid;
 
 use sqlx::PgPool;
 
-use crate::{error::DatabaseError, models::artist::Artist};
+use crate::{
+    error::DatabaseError,
+    models::artist::Artist,
+    repos::slug::{escape_like_pattern, next_unique_slug},
+};
 
 pub struct ArtistRepo<'a> {
     db: &'a PgPool,
@@ -109,6 +113,25 @@ impl<'a> ArtistRepo<'a> {
         .fetch_optional(self.db)
         .await?
         .ok_or_else(|| DatabaseError::Conflict(format!("artist with slug '{slug}' already exists")))
+    }
+
+    pub async fn find_unique_slug(&self, base_slug: &str) -> Result<String, DatabaseError> {
+        let like_pattern = format!("{}-%", escape_like_pattern(base_slug));
+
+        let existing_slugs: Vec<String> = sqlx::query_scalar(
+            "SELECT slug
+             FROM artists
+             WHERE slug = $1 OR slug LIKE $2 ESCAPE '\\'",
+        )
+        .bind(base_slug)
+        .bind(like_pattern)
+        .fetch_all(self.db)
+        .await?;
+
+        Ok(next_unique_slug(
+            base_slug,
+            existing_slugs.iter().map(String::as_str),
+        ))
     }
 
     pub async fn insert_on(
