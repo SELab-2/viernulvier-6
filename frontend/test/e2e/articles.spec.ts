@@ -22,11 +22,13 @@ test.describe("Articles Page", () => {
         await page.goto("/nl/articles");
         await page.waitForLoadState("networkidle");
 
-        // Click the first article
-        await page.getByText("Kleurenstudies van De Vooruit").first().click();
-
-        // Should navigate to the detail page
-        await page.waitForURL("**/articles/kleurenstudies-van-de-vooruit");
+        // Click the article card overlay link. Use a stable point because the tag links sit above it.
+        await Promise.all([
+            page.waitForURL("**/articles/kleurenstudies-van-de-vooruit"),
+            page
+                .getByRole("link", { name: "Kleurenstudies van De Vooruit" })
+                .click({ position: { x: 8, y: 8 } }),
+        ]);
         await page.waitForLoadState("networkidle");
 
         // Article title should be visible in the detail header
