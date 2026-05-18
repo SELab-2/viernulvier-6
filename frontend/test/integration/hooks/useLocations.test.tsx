@@ -169,7 +169,7 @@ describe("useCreateLocation", () => {
 
 describe("useUpdateLocation", () => {
     it("updates a location and updates the detail cache", async () => {
-        const { wrapper, queryClient } = createQueryClientWrapper();
+        const { wrapper } = createQueryClientWrapper();
 
         const { result } = renderHook(() => useUpdateLocation(), { wrapper });
 

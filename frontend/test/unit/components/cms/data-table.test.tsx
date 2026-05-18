@@ -128,7 +128,7 @@ describe("DataTable", () => {
     it("renders compact variant without sticky headers", () => {
         const data: Item[] = [{ id: "1", name: "Test" }];
 
-        const { container } = render(<DataTable columns={columns} data={data} compact />, {
+        render(<DataTable columns={columns} data={data} compact />, {
             wrapper: TestWrapper,
         });
 
