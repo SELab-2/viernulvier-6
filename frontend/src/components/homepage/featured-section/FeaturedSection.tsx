@@ -28,7 +28,7 @@ export function FeaturedSection({ productions, locale }: FeaturedSectionProps) {
                 <span className="bg-border/80 h-px flex-1" />
             </div>
 
-            <div className="bg-border/80 border-border/80 -mx-4 grid grid-cols-1 gap-px border-y sm:-mx-[30px] sm:grid-cols-[1.6fr_1fr_1fr]">
+            <div className="-mx-4 grid grid-cols-1 sm:-mx-[30px] sm:grid-cols-[1.6fr_1fr_1fr]">
                 {featured.map((production, index) => (
                     <FeaturedCard
                         key={production.id}
@@ -58,7 +58,7 @@ function FeaturedCard({
     return (
         <Link
             href={`/productions/${production.id}`}
-            className="group bg-background hover:bg-muted/5 relative block cursor-pointer p-4 pb-5 transition-all sm:p-5"
+            className="group bg-background hover:bg-muted/40 relative block cursor-pointer p-4 pb-5 transition-all sm:p-5"
         >
             <div
                 className={`bg-muted border-border/70 relative mb-3 w-full overflow-hidden border ${isFirst ? "h-[180px] sm:h-[260px]" : "h-[140px] sm:h-[170px]"}`}

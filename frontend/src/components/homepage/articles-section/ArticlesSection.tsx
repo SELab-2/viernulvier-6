@@ -26,7 +26,7 @@ export function ArticlesSection({ articles }: ArticlesSectionProps) {
                 </Link>
             </div>
 
-            <div className="bg-border/80 border-border/80 -mx-4 grid grid-cols-1 gap-px border-y sm:-mx-[30px] sm:grid-cols-3">
+            <div className="-mx-4 grid grid-cols-1 sm:-mx-[30px] sm:grid-cols-3">
                 {items.map((article) => (
                     <ArticleCard key={article.id} article={article} locale={locale} />
                 ))}
@@ -50,7 +50,7 @@ function ArticleCard({ article, locale }: { article: ArticleListItem; locale: st
     return (
         <Link
             href={`/articles/${article.slug}`}
-            className="group bg-background hover:bg-muted/5 block cursor-pointer p-4 pb-5 transition-all sm:p-5"
+            className="group border-border/70 bg-background hover:bg-muted/40 block cursor-pointer p-4 pb-5 transition-all"
         >
             <div className="bg-muted border-border/70 relative mb-3 h-[120px] w-full overflow-hidden border">
                 {article.coverImageUrl ? (
