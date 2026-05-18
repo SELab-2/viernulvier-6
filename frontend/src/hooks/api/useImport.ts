@@ -250,10 +250,10 @@ export const useCommitImport = () => {
         },
         onSuccess: (session) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.imports.session(session.id) });
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.imports.rows(session.id),
-            });
-            queryClient.invalidateQueries({ queryKey: queryKeys.imports.rowStats(session.id) });
+            // Remove (not just invalidate) so HistoryDetail never renders stale
+            // dry-run rows/stats as a placeholder before committed data arrives.
+            queryClient.removeQueries({ queryKey: queryKeys.imports.rows(session.id) });
+            queryClient.removeQueries({ queryKey: queryKeys.imports.rowStats(session.id) });
             queryClient.invalidateQueries({ queryKey: queryKeys.imports.sessions() });
         },
     });
