@@ -29,6 +29,16 @@ function formatTime(dateStr: string, locale: string): string {
     });
 }
 
+function formatPriceRange(prices: Event["prices"]): string | null {
+    if (!prices || prices.length === 0) return null;
+    const amounts = prices.map((p) => p.amountCents / 100);
+    const min = Math.min(...amounts);
+    const max = Math.max(...amounts);
+    const fmt = (n: number) => `\u20ac${n.toFixed(2)}`;
+    if (prices.length === 1 || min === max) return fmt(min);
+    return `${fmt(min)} – ${fmt(max)}`;
+}
+
 export function ProductionSidebar({
     production,
     events,
@@ -78,6 +88,11 @@ export function ProductionSidebar({
                                     {event.endsAt && ` – ${formatTime(event.endsAt, locale)}`}
                                     {" · De Vooruit"}
                                 </div>
+                                {formatPriceRange(event.prices) && (
+                                    <div className="text-muted-foreground mb-2 font-mono text-[11px]">
+                                        {formatPriceRange(event.prices)}
+                                    </div>
+                                )}
                             </div>
                         );
                     })
