@@ -185,16 +185,11 @@ describe("EventPriceExtraContent", () => {
 });
 
 describe("makeEventColumns", () => {
-    it("renders price count in the prices column", () => {
+    it("renders price range in the prices column", () => {
         const columns = makeEventColumns({
             onEdit: () => {},
             t: (key: string, _values?: Record<string, unknown>) => key,
-            tProductions: (key: string, values?: Record<string, number>) => {
-                if (key === "eventPriceCount" && values) {
-                    return `${values.count} prices`;
-                }
-                return key;
-            },
+            tProductions: (key: string) => key,
         });
 
         const priceCol = columns.find((c) => c.accessorKey === "prices");
@@ -203,9 +198,26 @@ describe("makeEventColumns", () => {
 
         if (priceCol?.cell) {
             const cellFn = priceCol.cell as (info: { getValue: <T>() => T }) => string;
+
+            // Empty
             expect(cellFn({ getValue: () => [] })).toBe("\u2014");
-            expect(cellFn({ getValue: () => [{ id: "1" }] })).toBe("1 prices");
-            expect(cellFn({ getValue: () => [{ id: "1" }, { id: "2" }] })).toBe("2 prices");
+
+            // Single price
+            expect(cellFn({ getValue: () => [{ amountCents: 1500 }] })).toBe("\u20ac15.00");
+
+            // Multiple prices — range
+            expect(
+                cellFn({
+                    getValue: () => [{ amountCents: 1500 }, { amountCents: 5000 }],
+                })
+            ).toBe("\u20ac15.00 – \u20ac50.00");
+
+            // Same price — single display
+            expect(
+                cellFn({
+                    getValue: () => [{ amountCents: 2000 }, { amountCents: 2000 }],
+                })
+            ).toBe("\u20ac20.00");
         }
     });
 

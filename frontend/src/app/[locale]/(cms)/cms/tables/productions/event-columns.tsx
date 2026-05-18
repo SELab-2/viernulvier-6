@@ -182,8 +182,13 @@ export function makeEventColumns(options: {
             header: tProductions("eventPriceColumn"),
             cell: ({ getValue }) => {
                 const prices = getValue<Event["prices"]>();
-                if (!prices || prices.length === 0) return "—";
-                return tProductions("eventPriceCount", { count: prices.length });
+                if (!prices || prices.length === 0) return "\u2014";
+                const amounts = prices.map((p) => p.amountCents / 100);
+                const min = Math.min(...amounts);
+                const max = Math.max(...amounts);
+                const fmt = (n: number) => `\u20ac${n.toFixed(2)}`;
+                if (prices.length === 1 || min === max) return fmt(min);
+                return `${fmt(min)} \u2013 ${fmt(max)}`;
             },
         },
         makeActionsColumn<Event>({ actions }),
