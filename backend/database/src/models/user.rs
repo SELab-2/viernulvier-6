@@ -1,5 +1,6 @@
 use ormlite::Model;
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -20,6 +21,14 @@ pub struct User {
     pub username: String,
     pub email: String,
     pub password_hash: String,
+    pub role: UserRole,
+}
+
+#[derive(Debug, FromRow, PartialEq)]
+pub struct UserSummary {
+    pub id: Uuid,
+    pub username: String,
+    pub email: String,
     pub role: UserRole,
 }
 

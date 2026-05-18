@@ -11,8 +11,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use time::Duration;
 use uuid::Uuid;
 
-use crate::{config::AppConfig, error::AppError, error::ErrorResponse, extractors::auth::AuthUser};
+use crate::{config::AppConfig, error::AppError, error::ErrorResponse, extractors::auth::AuthUser, AppState};
 use database::{Database, models::session::SessionCreate, models::user::UserRole};
+use axum::extract::State;
 use utoipa::ToSchema;
 
 const ACCESS_TOKEN_COOKIE: &str = "access_token";
@@ -143,6 +144,7 @@ fn session_present_cookie(expiry_days: i8, secure: bool, same_site: SameSite) ->
     )
 )]
 pub async fn login(
+    State(state): State<AppState>,
     db: Database,
     config: AppConfig,
     jar: CookieJar,
@@ -160,6 +162,12 @@ pub async fn login(
     Argon2::default()
         .verify_password(payload.password.as_bytes(), &parsed_hash)
         .map_err(|_| AppError::Unauthorized)?;
+
+    state
+        .revoked
+        .undelete(db.pool(), user.id)
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?;
 
     let mut random_bytes = [0u8; 32];
     rand::rng().fill_bytes(&mut random_bytes);
@@ -234,6 +242,7 @@ pub async fn login(
     )
 )]
 pub async fn refresh(
+    State(state): State<AppState>,
     jar: CookieJar,
     db: Database,
     config: AppConfig,
@@ -260,6 +269,10 @@ pub async fn refresh(
         .by_id(session.user_id)
         .await
         .map_err(|_| AppError::Unauthorized)?;
+
+    if state.revoked.is_revoked(db.pool(), user.id).await {
+        return Err(AppError::Unauthorized);
+    }
 
     let new_access_token = generate_access_token(
         user.id,

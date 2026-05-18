@@ -43,12 +43,14 @@ mod extractors;
 mod handlers;
 pub mod import;
 
+
 #[derive(Clone)]
 pub struct AppState {
     pub db: Database,
     pub config: AppConfig,
     pub s3_client: Option<aws_sdk_s3::Client>,
     pub import_registry: ImportRegistry,
+    pub revoked: database::revocation::RevokedUsers,
 }
 
 #[derive(OpenApi)]
@@ -173,11 +175,19 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
         warn!("API importer is disabled");
     }
 
+    let revoked = database::revocation::RevokedUsers::new(std::time::Duration::from_secs(
+        (config.refresh_token_expiry_days as u64) * 24 * 60 * 60,
+    ));
+    revoked.load_from_db(db.pool()).await.map_err(|e| {
+        AppError::Internal(format!("Failed to load revoked users: {e}"))
+    })?;
+
     let state = AppState {
         db,
-        config,
+        config: config.clone(),
         s3_client,
         import_registry: crate::import::default_registry(),
+        revoked,
     };
 
     crate::import::worker::spawn(crate::import::worker::WorkerContext {
@@ -400,6 +410,10 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
 fn admin_routes(state: AppState) -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(admin::create_editor))
+        .routes(routes!(admin::create_user))
+        .routes(routes!(admin::list_users))
+        .routes(routes!(admin::update_user))
+        .routes(routes!(admin::delete_user))
         .layer(from_extractor_with_state::<AdminUser, AppState>(state))
 }
 

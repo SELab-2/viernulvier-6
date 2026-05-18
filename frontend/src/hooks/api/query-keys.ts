@@ -128,4 +128,7 @@ export const queryKeys = {
         fieldSpec: (entityType: string) => ["imports", "fields", entityType] as const,
         entityTypes: ["imports", "entity-types"] as const,
     },
+    users: {
+        all: () => ["users"] as const,
+    },
 };

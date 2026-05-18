@@ -96,15 +96,15 @@ aws-config = { version = "1", features = ["behavior-version-latest"] }
 slug = "0.1.6"
 strsim = "0.11"
 csv = "1"
-
-[dev-dependencies]
-http-body-util = "0.1.2"
-tower = { version = "0.5", default-features = false, features = ["util"] }
-mime = "0.3"
-test-log = {version = "0.2", default-features = false, features = ["trace"]}
 sqlx = { version = "0.8.6", default-features = false, features = [
     "runtime-tokio",
     "postgres",
     "migrate",
     "macros",
 ] }
+
+[dev-dependencies]
+http-body-util = "0.1.2"
+tower = { version = "0.5", default-features = false, features = ["util"] }
+mime = "0.3"
+test-log = {version = "0.2", default-features = false, features = ["trace"]}

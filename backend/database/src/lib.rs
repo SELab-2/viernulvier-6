@@ -44,6 +44,8 @@ pub mod models {
     pub mod user;
 }
 
+pub mod revocation;
+
 pub mod repos {
     pub mod article;
     pub mod artist;

@@ -10,6 +10,7 @@ use serde::Serialize;
 use sqlx::PgPool;
 use std::sync::Once;
 use tower::ServiceExt;
+use std::time::Duration;
 use viernulvier_archive::{AppState, config::AppConfig, import::default_registry, router};
 
 use crate::common::user::{create_test_user, login_user};
@@ -47,6 +48,7 @@ impl TestRouter {
             config,
             s3_client: None,
             import_registry: default_registry(),
+            revoked: database::revocation::RevokedUsers::new(Duration::from_secs(7 * 24 * 60 * 60)),
         };
 
         Self {

@@ -20,12 +20,12 @@ function isSimpleAction<T>(action: Action<T>): action is Extract<Action<T>, { on
 }
 
 interface ActionsColumnOptions<TData> {
-    actions: Action<TData>[];
+    actions: Action<TData>[] | ((entity: TData) => Action<TData>[]);
 }
 
 interface ActionsCellProps<TData> {
     entity: TData;
-    actions: Action<TData>[];
+    actions: Action<TData>[] | ((entity: TData) => Action<TData>[]);
 }
 
 function ActionsCellInner<TData extends Record<string, unknown>>({
@@ -36,11 +36,16 @@ function ActionsCellInner<TData extends Record<string, unknown>>({
     const [open, setOpen] = useState(false);
     const closeMenu = () => setOpen(false);
 
+    const resolvedActions = useMemo(
+        () => (typeof actions === "function" ? actions(entity) : actions),
+        [actions, entity]
+    );
+
     const { inlineActions, menuActions } = useMemo(() => {
         const inline: Extract<Action<TData>, { onClick: unknown }>[] = [];
         const menu: Action<TData>[] = [];
 
-        for (const action of actions) {
+        for (const action of resolvedActions) {
             if (isSimpleAction(action) && action.display === ActionDisplay.Inline) {
                 inline.push(action);
             } else {
@@ -49,7 +54,7 @@ function ActionsCellInner<TData extends Record<string, unknown>>({
         }
 
         return { inlineActions: inline, menuActions: menu };
-    }, [actions]);
+    }, [resolvedActions]);
 
     return (
         <div className="flex items-center gap-1">
