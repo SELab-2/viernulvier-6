@@ -10,6 +10,7 @@ const stats: components["schemas"]["StatsPayload"] = {
     event_count: 156,
     location_count: 8,
     media_count: 300,
+    production_count: 42,
     newest_article: "2026-05-01",
     newest_event: "2026-05-15T00:00:00Z",
     oldest_article: "2024-01-01",

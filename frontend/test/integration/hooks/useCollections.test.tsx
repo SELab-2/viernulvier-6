@@ -22,11 +22,11 @@ describe("useGetCollections", () => {
         });
 
         expect(result.current.data).toHaveLength(1);
-        expect(result.current.data[0]).toMatchObject({
+        expect(result.current.data![0]).toMatchObject({
             slug: "test-collectie",
             visibility: "public",
         });
-        expect(result.current.data[0].translations).toHaveLength(2);
+        expect(result.current.data![0].translations).toHaveLength(2);
     });
 
     it("respects the enabled option", async () => {

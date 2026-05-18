@@ -13,8 +13,8 @@ const collection: components["schemas"]["CollectionPayload"] = {
     visibility: "public",
     items: [],
     translations: [
-        { title: "Test Collectie", description: null, language_code: "nl" },
-        { title: "Test Collection", description: null, language_code: "en" },
+        { title: "Test Collectie", description: "", language_code: "nl" },
+        { title: "Test Collection", description: "", language_code: "en" },
     ],
     tags: [],
 };
@@ -32,24 +32,18 @@ export const collectionHandlers = [
     http.get(apiUrl(`/collections/slug/${collection.slug}`), () =>
         HttpResponse.json(collection satisfies components["schemas"]["CollectionPayload"])
     ),
-    http.post(apiUrl("/collections"), async ({ request }) => {
-        const body = await request.json();
-        return HttpResponse.json(
+    http.post(apiUrl("/collections"), async () =>
+        HttpResponse.json(
             {
                 ...collection,
-                ...(body as Record<string, unknown>),
                 id: "b0000000-0000-0000-0000-000000000002",
             } satisfies components["schemas"]["CollectionPayload"],
             { status: 200 }
-        );
-    }),
-    http.put(apiUrl("/collections"), async ({ request }) => {
-        const body = await request.json();
-        return HttpResponse.json({
-            ...collection,
-            ...(body as Record<string, unknown>),
-        } satisfies components["schemas"]["CollectionPayload"]);
-    }),
+        )
+    ),
+    http.put(apiUrl("/collections"), async () =>
+        HttpResponse.json(collection satisfies components["schemas"]["CollectionPayload"])
+    ),
     http.delete(
         apiUrl(`/collections/${collectionId}`),
         () => new HttpResponse(null, { status: 204 })

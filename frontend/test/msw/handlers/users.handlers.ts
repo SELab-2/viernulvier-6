@@ -22,20 +22,23 @@ export const userHandlers = [
         HttpResponse.json([adminUser, editorUser] satisfies components["schemas"]["UserResponse"][])
     ),
     http.post(apiUrl("/users"), async ({ request }) => {
-        const body = await request.json();
+        const body = (await request.json()) as { email?: string; username?: string; role?: string };
         return HttpResponse.json(
             {
                 id: "u0000000-0000-0000-0000-000000000003",
-                ...(body as Record<string, unknown>),
+                email: body.email ?? "new@test.com",
+                username: body.username ?? "newuser",
+                role: (body.role ?? "editor") as components["schemas"]["UserRole"],
             } satisfies components["schemas"]["UserResponse"],
             { status: 200 }
         );
     }),
     http.put(apiUrl(`/users/${adminUser.id}`), async ({ request }) => {
-        const body = await request.json();
+        const body = (await request.json()) as { username?: string; role?: string };
         return HttpResponse.json({
             ...adminUser,
-            ...(body as Record<string, unknown>),
+            username: body.username ?? adminUser.username,
+            role: (body.role ?? adminUser.role) as components["schemas"]["UserRole"],
         } satisfies components["schemas"]["UserResponse"]);
     }),
     http.delete(apiUrl(`/users/${editorUser.id}`), () => new HttpResponse(null, { status: 204 })),

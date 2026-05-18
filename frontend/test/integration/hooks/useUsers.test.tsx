@@ -15,13 +15,13 @@ describe("useGetUsers", () => {
         });
 
         expect(result.current.data).toHaveLength(2);
-        expect(result.current.data[0]).toMatchObject({
+        expect(result.current.data![0]).toMatchObject({
             id: expect.any(String),
             email: "admin@test.com",
             username: "admin",
             role: "admin",
         });
-        expect(result.current.data[1].role).toBe("editor");
+        expect(result.current.data![1].role).toBe("editor");
     });
 
     it("respects the enabled option", async () => {
