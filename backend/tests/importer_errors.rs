@@ -1,6 +1,15 @@
+use std::collections::HashMap;
 use api::{
-    error::{ImportEntity, ImportField, ImportItemError, ImportRelation},
-    models::{event_price::ApiEventPrice, localized_text::ApiLocalizedText, space::ApiSpace},
+    error::{ImportEntity, ImportField, ImportItemError, ImportRelation, ImportItemWarning},
+    models::{
+        event::ApiEvent,
+        event_price::ApiEventPrice,
+        hall::ApiHall,
+        localized_text::ApiLocalizedText,
+        location::ApiLocation,
+        production::ApiProduction,
+        space::ApiSpace,
+    },
 };
 use chrono::Utc;
 use database::Database;
@@ -167,4 +176,253 @@ async fn importer_event_price_missing_event_relation_is_item_error(db: PgPool) {
         }
         other => panic!("expected MissingRelation, got {other:?}"),
     }
+}
+
+fn hall_with_space(space: &str) -> ApiHall {
+    ApiHall {
+        id: "/api/v1/halls/10".into(),
+        jsonld_type: "Hall".into(),
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
+        vendor_id: None,
+        box_office_id: None,
+        seat_selection: "".into(),
+        open_seating: "".into(),
+        name: ApiLocalizedText { nl: Some("Zaal".into()), en: None, fr: None },
+        remark: None,
+        space: Some(space.into()),
+    }
+}
+
+fn event_with_status(status: &str) -> ApiEvent {
+    serde_json::from_value(serde_json::json!({
+        "@id": "/api/v1/events/99",
+        "@type": "Event",
+        "created_at": "2025-01-01T00:00:00Z",
+        "updated_at": "2025-01-01T00:00:00Z",
+        "starts_at": "2025-01-01T20:00:00Z",
+        "ends_at": null,
+        "intermission_at": null,
+        "doors_at": null,
+        "box_office_id": null,
+        "vendor_id": null,
+        "max_tickets_per_order": null,
+        "uitdatabank_id": null,
+        "secure": false,
+        "sms_verification": false,
+        "production": { "@id": "/api/v1/productions/1" },
+        "status": status,
+        "hall": "/api/v1/halls/1",
+        "info": null,
+        "eticket_info": null,
+        "external_order_url": null
+    })).unwrap()
+}
+
+fn location_with_name(name: &str) -> ApiLocation {
+    ApiLocation {
+        id: "/api/v1/locations/55".into(),
+        jsonld_type: "Location".into(),
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
+        name: Some(name.into()),
+        code: None, street: None, number: None,
+        postal_code: None, city: None, phone_1: None, phone_2: None,
+        own_location: "".into(), country: None, uitdatabank_id: None,
+    }
+}
+
+fn status_map() -> HashMap<String, String> {
+    [("available".into(), "available".into())].into()
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn importer_hall_missing_space_is_warning(db: PgPool) {
+    let database = Database::new(db);
+    let result = hall_with_space("/api/v1/spaces/404")
+        .upsert_import(&database)
+        .await
+        .unwrap();
+    assert_eq!(result.value, Some(10));
+    assert_eq!(result.warnings.len(), 1);
+    match &result.warnings[0] {
+        ImportItemWarning::MissingOptionalRelation { entity, relation, source_id } => {
+            assert_eq!(*entity, ImportEntity::Hall);
+            assert_eq!(*relation, ImportRelation::Space);
+            assert_eq!(*source_id, 404);
+        }
+        other => panic!("expected MissingOptionalRelation, got {other:?}"),
+    }
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn importer_event_invalid_status_is_error(db: PgPool) {
+    let database = Database::new(db);
+
+    let prod: ApiProduction = serde_json::from_value(serde_json::json!({
+        "@id": "/api/v1/productions/1",
+        "@type": "Event",
+        "created_at": "2025-01-01T00:00:00Z",
+        "updated_at": "2025-01-01T00:00:00Z",
+        "vendor_id": "test",
+        "box_office_id": null,
+        "performer_field": null,
+        "performer_type": null,
+        "attendance_mode": "mixed",
+        "supertitle": null,
+        "title": { "nl": "Test", "en": "Test", "fr": null },
+        "artist": null, "meta_title": null, "meta_description": null,
+        "tagline": null, "teaser": null, "description": null,
+        "description_extra": null, "description_2": null,
+        "video_1": null, "video_2": null,
+        "quote": null, "quote_source": null, "programme": null,
+        "info": null, "description_short": null, "eticket_info": null,
+        "genres": [], "events": [], "media_gallery": null,
+        "review_gallery": null, "poster_gallery": null,
+        "uitdatabank_keywords": [], "uitdatabank_theme": null, "uitdatabank_type": null
+    })).unwrap();
+    let data: api::models::production::ProductionImportData = prod.into();
+    database
+        .productions()
+        .insert(data.production, data.translations)
+        .await
+        .unwrap();
+
+    let err = event_with_status("bogus-status")
+        .upsert_import(&database, &status_map())
+        .await
+        .unwrap_err();
+
+    match err {
+        ImportItemError::InvalidReference { entity, field, value } => {
+            assert_eq!(entity, ImportEntity::Event);
+            assert_eq!(field, ImportField::Status);
+            assert_eq!(value, "bogus-status");
+        }
+        other => panic!("expected InvalidReference, got {other:?}"),
+    }
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn importer_event_missing_production_is_error(db: PgPool) {
+    let database = Database::new(db);
+    let mut event = event_with_status("available");
+    event.production.id = "/api/v1/productions/404".into();
+
+    let err = event
+        .upsert_import(&database, &status_map())
+        .await
+        .unwrap_err();
+
+    match err {
+        ImportItemError::MissingRelation { entity, relation, source_id } => {
+            assert_eq!(entity, ImportEntity::Event);
+            assert_eq!(relation, ImportRelation::Production);
+            assert_eq!(source_id, 404);
+        }
+        other => panic!("expected MissingRelation, got {other:?}"),
+    }
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn importer_event_missing_hall_is_warning(db: PgPool) {
+    let database = Database::new(db);
+
+    let prod: ApiProduction = serde_json::from_value(serde_json::json!({
+        "@id": "/api/v1/productions/1",
+        "@type": "Event",
+        "created_at": "2025-01-01T00:00:00Z",
+        "updated_at": "2025-01-01T00:00:00Z",
+        "vendor_id": "test",
+        "box_office_id": null,
+        "performer_field": null,
+        "performer_type": null,
+        "attendance_mode": "mixed",
+        "supertitle": null,
+        "title": { "nl": "Test", "en": "Test", "fr": null },
+        "artist": null, "meta_title": null, "meta_description": null,
+        "tagline": null, "teaser": null, "description": null,
+        "description_extra": null, "description_2": null,
+        "video_1": null, "video_2": null,
+        "quote": null, "quote_source": null, "programme": null,
+        "info": null, "description_short": null, "eticket_info": null,
+        "genres": [], "events": [], "media_gallery": null,
+        "review_gallery": null, "poster_gallery": null,
+        "uitdatabank_keywords": [], "uitdatabank_theme": null, "uitdatabank_type": null
+    })).unwrap();
+    let data: api::models::production::ProductionImportData = prod.into();
+    database
+        .productions()
+        .insert(data.production, data.translations)
+        .await
+        .unwrap();
+
+    let mut event = event_with_status("available");
+    event.hall = "/api/v1/halls/404".into();
+    let result = event
+        .upsert_import(&database, &status_map())
+        .await
+        .unwrap();
+
+    assert_eq!(result.value, Some(99));
+    assert!(
+        result.warnings.iter().any(|w| matches!(w, ImportItemWarning::MissingOptionalRelation {
+            entity: ImportEntity::Event,
+            relation: ImportRelation::Hall,
+            source_id: 404,
+        })),
+        "expected a missing_optional_relation warning for hall 404"
+    );
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn importer_location_inserts_and_returns_source_id(db: PgPool) {
+    let database = Database::new(db);
+    let result = location_with_name("Testlocatie")
+        .upsert_import(&database)
+        .await
+        .unwrap();
+    assert_eq!(result, Some(55));
+
+    let inserted = database.locations().by_source_id(55).await.unwrap().unwrap();
+    assert_eq!(inserted.name, Some("Testlocatie".into()));
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn importer_production_inserts_and_returns_source_id(db: PgPool) {
+    let database = Database::new(db);
+    let prod: ApiProduction = serde_json::from_value(serde_json::json!({
+        "@id": "/api/v1/productions/77",
+        "@type": "Event",
+        "created_at": "2025-01-01T00:00:00Z",
+        "updated_at": "2025-01-01T00:00:00Z",
+        "vendor_id": "test",
+        "box_office_id": null,
+        "performer_field": null,
+        "performer_type": null,
+        "attendance_mode": "mixed",
+        "supertitle": null,
+        "title": { "nl": "Import Test", "en": "Import Test", "fr": null },
+        "artist": null, "meta_title": null, "meta_description": null,
+        "tagline": null, "teaser": null, "description": null,
+        "description_extra": null, "description_2": null,
+        "video_1": null, "video_2": null,
+        "quote": null, "quote_source": null, "programme": null,
+        "info": null, "description_short": null, "eticket_info": null,
+        "genres": [], "events": [], "media_gallery": null,
+        "review_gallery": null, "poster_gallery": null,
+        "uitdatabank_keywords": [], "uitdatabank_theme": null, "uitdatabank_type": null
+    })).unwrap();
+    let result = prod.upsert_import(&database).await.unwrap();
+    assert_eq!(result, Some(77));
+
+    let inserted = database.productions().by_source_id(77).await.unwrap().unwrap();
+    assert!(inserted.production.slug.contains("import-test"));
+    assert!(inserted.production.slug.contains("77"));
 }
