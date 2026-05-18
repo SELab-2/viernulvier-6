@@ -11,7 +11,7 @@ test.describe("CMS Import page", () => {
         await page.waitForLoadState("networkidle");
 
         // The page title heading from PageHeader
-        await expect(page.getByText("Import")).toBeVisible();
+        await expect(page.getByRole("heading", { name: "Import" })).toBeVisible();
 
         // The upload stage heading (Dutch locale)
         await expect(page.getByText("CSV-bestand uploaden")).toBeVisible();

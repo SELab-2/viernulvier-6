@@ -15,7 +15,8 @@ pub trait ImportableEntity: Send + Sync {
     fn target_fields(&self) -> Vec<FieldSpec>;
 
     /// Whether this entity type is fully supported for import.
-    /// Stub adapters return `false` so they are excluded from the entity-type dropdown.
+    /// Stub adapters return `false` so `ImportRegistry::importable` can exclude them
+    /// from the entity-type dropdown.
     fn importable(&self) -> bool {
         true
     }

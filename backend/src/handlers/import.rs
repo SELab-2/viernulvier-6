@@ -248,7 +248,7 @@ pub async fn list_entity_types(
 ) -> Result<Json<Vec<String>>, AppError> {
     let mut types: Vec<String> = state
         .import_registry
-        .supported()
+        .importable()
         .into_iter()
         .map(str::to_owned)
         .collect();

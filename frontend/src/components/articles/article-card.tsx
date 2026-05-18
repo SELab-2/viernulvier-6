@@ -38,64 +38,69 @@ export function ArticleCard({ article, locale }: ArticleCardProps) {
     const periodEnd = formatPeriodDate(article.subjectPeriodEnd ?? null, locale);
 
     const coverUrl = article.coverImageUrl;
+    const title = article.title ?? t("untitled");
 
     return (
-        <Link href={`/articles/${article.slug}`} className="group block w-full">
-            <article
-                className="border-muted/25 hover:bg-muted/5 grid w-full cursor-pointer grid-cols-[110px_1fr] items-start gap-5 border-b px-1 py-5 transition-colors duration-200 sm:grid-cols-[160px_1fr] sm:gap-8 sm:py-6"
-                style={{ animation: "fadein 0.3s ease both" }}
-            >
-                <div className="bg-muted/15 border-muted/30 relative aspect-[4/3] w-full overflow-hidden border">
-                    {coverUrl ? (
-                        <Image
-                            src={coverUrl}
-                            alt={article.title ?? ""}
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 640px) 110px, 160px"
+        <article
+            className="group border-muted/25 hover:bg-muted/5 relative grid w-full cursor-pointer grid-cols-[110px_1fr] items-start gap-5 border-b px-1 py-5 transition-colors duration-200 sm:grid-cols-[160px_1fr] sm:gap-8 sm:py-6"
+            style={{ animation: "fadein 0.3s ease both" }}
+        >
+            <Link
+                href={`/articles/${article.slug}`}
+                aria-label={title}
+                className="absolute inset-0 z-10"
+            />
+
+            <div className="bg-muted/15 border-muted/30 relative aspect-[4/3] w-full overflow-hidden border">
+                {coverUrl ? (
+                    <Image
+                        src={coverUrl}
+                        alt={article.title ?? ""}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 110px, 160px"
+                    />
+                ) : (
+                    <>
+                        <div
+                            className="absolute inset-0 opacity-[0.08]"
+                            style={{
+                                backgroundImage:
+                                    "repeating-linear-gradient(45deg, currentColor 0 1px, transparent 1px 8px)",
+                            }}
                         />
-                    ) : (
-                        <>
-                            <div
-                                className="absolute inset-0 opacity-[0.08]"
-                                style={{
-                                    backgroundImage:
-                                        "repeating-linear-gradient(45deg, currentColor 0 1px, transparent 1px 8px)",
-                                }}
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <span className="text-muted-foreground/50 font-mono text-[9px] tracking-[2px] uppercase">
-                                    N°{article.id.slice(-3)}
-                                </span>
-                            </div>
-                        </>
-                    )}
-                </div>
-
-                <div className="flex min-w-0 flex-col">
-                    <h3 className="font-display text-foreground mb-2 min-w-0 text-[20px] leading-[1.15] font-bold tracking-[-0.02em] break-words sm:text-[26px]">
-                        {article.title ?? t("untitled")}
-                    </h3>
-
-                    {article.tags.length > 0 && (
-                        <div className="mt-2">
-                            <EntityTagStrip tags={article.tags} locale={locale} cap={4} />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-muted-foreground/50 font-mono text-[9px] tracking-[2px] uppercase">
+                                N°{article.id.slice(-3)}
+                            </span>
                         </div>
-                    )}
+                    </>
+                )}
+            </div>
 
-                    {periodStart && periodEnd && (
-                        <span className="text-muted-foreground mt-1 font-mono text-[11px] tracking-[1px]">
-                            {periodStart} — {periodEnd}
-                        </span>
-                    )}
+            <div className="flex min-w-0 flex-col">
+                <h3 className="font-display text-foreground mb-2 min-w-0 text-[20px] leading-[1.15] font-bold tracking-[-0.02em] break-words sm:text-[26px]">
+                    {title}
+                </h3>
 
-                    {publishedAt && (
-                        <span className="text-muted-foreground mt-1 font-mono text-[11px] tracking-[1px]">
-                            {publishedAt}
-                        </span>
-                    )}
-                </div>
-            </article>
-        </Link>
+                {article.tags.length > 0 && (
+                    <div className="relative z-20 mt-2">
+                        <EntityTagStrip tags={article.tags} locale={locale} cap={4} />
+                    </div>
+                )}
+
+                {periodStart && periodEnd && (
+                    <span className="text-muted-foreground mt-1 font-mono text-[11px] tracking-[1px]">
+                        {periodStart} — {periodEnd}
+                    </span>
+                )}
+
+                {publishedAt && (
+                    <span className="text-muted-foreground mt-1 font-mono text-[11px] tracking-[1px]">
+                        {publishedAt}
+                    </span>
+                )}
+            </div>
+        </article>
     );
 }

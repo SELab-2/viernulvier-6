@@ -22,6 +22,17 @@ fn default_registry_exposes_all_entity_types() {
 }
 
 #[test]
+fn default_registry_marks_only_real_adapters_importable() {
+    let reg = default_registry();
+    let mut importable = reg.importable();
+    importable.sort();
+    assert_eq!(
+        importable,
+        vec!["article", "artist", "event", "location", "production"]
+    );
+}
+
+#[test]
 fn default_registry_returns_production_adapter() {
     let reg = default_registry();
     let adapter = reg.get("production").expect("production registered");
