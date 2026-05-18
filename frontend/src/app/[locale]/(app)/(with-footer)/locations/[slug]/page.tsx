@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { MapPin, Phone, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import Image from "next/image";
 
 import { UnifiedHeader } from "@/components/layout/header";
 import { LoadingState } from "@/components/shared/loading-state";
@@ -85,7 +86,20 @@ export default function LocationPage() {
             />
 
             {/* Hero banner */}
-            <div className="h-[200px] w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4] sm:h-[300px] md:h-[360px]" />
+            <div className="relative h-[200px] w-full sm:h-[300px] md:h-[360px]">
+                {location.coverImageUrl ? (
+                    <Image
+                        src={location.coverImageUrl}
+                        alt={location.name ?? ""}
+                        fill
+                        className="object-cover"
+                        sizes="100vw"
+                        priority
+                    />
+                ) : (
+                    <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                )}
+            </div>
 
             <div className="mx-auto max-w-[960px] px-4 py-8 sm:px-10 sm:py-12">
                 <h1 className="font-display text-foreground text-[32px] leading-[1.1] font-bold tracking-[-0.03em] sm:text-[48px] md:text-[56px]">
