@@ -2,7 +2,7 @@ import { describe, expect, it, afterEach, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 
-import { ActionBar, type EntityCount } from "@/app/[locale]/(cms)/cms/tables/action-bar";
+import { ActionBar } from "@/app/[locale]/(cms)/cms/tables/action-bar";
 import { ActionVariant, type BulkAction } from "@/types/cms/actions";
 
 const messages = {

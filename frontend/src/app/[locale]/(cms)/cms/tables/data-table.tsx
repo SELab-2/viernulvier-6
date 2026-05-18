@@ -321,10 +321,6 @@ export function DataTable<TData, TValue>({
                                 ? "border-foreground bg-foreground text-background"
                                 : "border-foreground/30"
                         )}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            row.toggleSelected(!selected);
-                        }}
                     >
                         {selected && <Check className="size-3.5" />}
                     </div>

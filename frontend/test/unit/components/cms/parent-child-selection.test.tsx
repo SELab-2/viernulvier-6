@@ -248,6 +248,21 @@ describe("useParentChildSelection", () => {
         expect(checkboxes[4]).toHaveAttribute("aria-checked", "true");
     });
 
+    it("selects an inclusive parent and child range when shift-clicking parent checkboxes", () => {
+        renderSelectionHarness();
+
+        let checkboxes = screen.getAllByRole("checkbox");
+
+        fireEvent.click(checkboxes[4], { ctrlKey: true });
+        fireEvent.click(checkboxes[0], { shiftKey: true });
+
+        checkboxes = screen.getAllByRole("checkbox");
+        expect(screen.getByTestId("counts")).toHaveTextContent("3:3:3");
+        expect(checkboxes[0]).toHaveAttribute("aria-checked", "true");
+        expect(checkboxes[2]).toHaveAttribute("aria-checked", "true");
+        expect(checkboxes[4]).toHaveAttribute("aria-checked", "true");
+    });
+
     it("marks the parent selector as mixed when only a child row is selected", () => {
         renderSelectionHarness();
 

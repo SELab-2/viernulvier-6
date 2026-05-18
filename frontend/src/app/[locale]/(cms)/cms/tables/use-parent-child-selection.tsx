@@ -2,13 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MutableRefObject } from "react";
 import type { ColumnDef, OnChangeFn, Row, RowSelectionState } from "@tanstack/react-table";
 
-import type { Dispatch, SetStateAction } from "react";
+import type { SetStateAction } from "react";
 
 export function useParentChildSelection<TParent extends { id: string }>(
     childrenByParentId: Map<string, { id: string }[]>
 ): {
     parentSelection: RowSelectionState;
-    setParentSelection: Dispatch<SetStateAction<RowSelectionState>>;
+    setParentSelection: (updater: SetStateAction<RowSelectionState>) => void;
     childSelection: Map<string, RowSelectionState>;
     childSelectionRef: MutableRefObject<Map<string, RowSelectionState>>;
     getChildHandler: (parentId: string) => OnChangeFn<RowSelectionState>;
@@ -18,7 +18,7 @@ export function useParentChildSelection<TParent extends { id: string }>(
     selectionVersion: number;
     clearSelection: () => void;
 } {
-    const [parentSelection, setParentSelection] = useState<RowSelectionState>({});
+    const [parentSelection, setParentSelectionState] = useState<RowSelectionState>({});
     const [childSelection, setChildSelection] = useState<Map<string, RowSelectionState>>(new Map());
     const [selectionVersion, setSelectionVersion] = useState(0);
 
@@ -35,6 +35,46 @@ export function useParentChildSelection<TParent extends { id: string }>(
     useEffect(() => {
         childrenByParentIdRef.current = childrenByParentId;
     }, [childrenByParentId]);
+
+    const setParentSelection = useCallback((updater: SetStateAction<RowSelectionState>) => {
+        const previousParentSelection = parentSelectionRef.current;
+        const nextParentSelection =
+            typeof updater === "function" ? updater(previousParentSelection) : updater;
+
+        parentSelectionRef.current = nextParentSelection;
+        setParentSelectionState(nextParentSelection);
+
+        const changedParentIds = [
+            ...new Set([
+                ...Object.keys(previousParentSelection),
+                ...Object.keys(nextParentSelection),
+            ]),
+        ].filter(
+            (parentId) =>
+                Boolean(previousParentSelection[parentId]) !==
+                Boolean(nextParentSelection[parentId])
+        );
+
+        if (changedParentIds.length === 0) return;
+
+        setChildSelection((previousChildSelection) => {
+            const nextChildSelection = new Map(previousChildSelection);
+
+            for (const parentId of changedParentIds) {
+                const children = childrenByParentIdRef.current.get(parentId) ?? [];
+                nextChildSelection.set(
+                    parentId,
+                    nextParentSelection[parentId]
+                        ? Object.fromEntries(children.map((child) => [child.id, true]))
+                        : {}
+                );
+            }
+
+            childSelectionRef.current = nextChildSelection;
+            return nextChildSelection;
+        });
+        setSelectionVersion((version) => version + 1);
+    }, []);
 
     // Stable per-parent child selection handlers. Created once per parentId and cached
     // in a ref. We also eagerly update the childSelectionRef so the selectColumn cell
@@ -58,12 +98,6 @@ export function useParentChildSelection<TParent extends { id: string }>(
         }
         return handler;
     }, []);
-
-    // Stable reference to getChildHandler
-    const getChildHandlerRef = useRef(getChildHandler);
-    useEffect(() => {
-        getChildHandlerRef.current = getChildHandler;
-    }, [getChildHandler]);
 
     // Stable select column - never recreate the column definition.
     // We deliberately keep the deps empty so TanStack Table does not re-initialise the table.
@@ -90,27 +124,6 @@ export function useParentChildSelection<TParent extends { id: string }>(
                                 ? "border-foreground bg-foreground text-background"
                                 : "border-foreground/30"
                         }`}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            const nextChecked = !Boolean(parentSelectionRef.current[parentId]);
-                            const nextParentSelection = {
-                                ...parentSelectionRef.current,
-                                [parentId]: nextChecked,
-                            };
-                            if (!nextChecked) {
-                                delete nextParentSelection[parentId];
-                            }
-                            parentSelectionRef.current = nextParentSelection;
-                            setParentSelection(nextParentSelection);
-
-                            const children = childrenByParentIdRef.current.get(parentId) ?? [];
-                            const handleChildSelect = getChildHandlerRef.current;
-                            const nextChildSel = nextChecked
-                                ? Object.fromEntries(children.map((c) => [c.id, true]))
-                                : {};
-                            handleChildSelect(parentId)(nextChildSel);
-                            setSelectionVersion((version) => version + 1);
-                        }}
                     >
                         {isActive && (
                             <svg
@@ -148,7 +161,7 @@ export function useParentChildSelection<TParent extends { id: string }>(
         setChildSelection(empty);
         childSelectionRef.current = empty;
         setSelectionVersion((version) => version + 1);
-    }, []);
+    }, [setParentSelection]);
 
     return {
         parentSelection,
