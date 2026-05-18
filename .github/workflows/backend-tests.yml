@@ -37,11 +37,26 @@ jobs:
     steps:
       - name: Clean up workspace
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace alpine sh -c "chown -R $(id -u):$(id -g) /workspace"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE" || true
+          chown -R "$(id -u):$(id -g)" "$GITHUB_WORKSPACE" || true
+          chmod -R a+w "$GITHUB_WORKSPACE" || true
+          
+          rm -f "$GITHUB_WORKSPACE/.git/hooks/pre-push" || true
+          rm -f "$GITHUB_WORKSPACE/.git/hooks/post-checkout" || true
+          rm -f "$GITHUB_WORKSPACE/.git/hooks/post-commit" || true
+          rm -f "$GITHUB_WORKSPACE/.git/hooks/post-merge" || true
         continue-on-error: true
+
+      - name: Install git-lfs
+        run: |
+          apt-get update
+          apt-get install -y git-lfs
+          git lfs install --system --skip-repo
 
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Install dependencies
         run: apt-get update && apt-get install -y pkg-config libssl-dev postgresql-client
