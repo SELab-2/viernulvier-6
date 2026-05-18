@@ -7,6 +7,8 @@ use api::{
         hall::ApiHall,
         localized_text::ApiLocalizedText,
         location::ApiLocation,
+        price::ApiPrice,
+        price_rank::ApiPriceRank,
         production::ApiProduction,
         space::ApiSpace,
     },
@@ -425,4 +427,142 @@ async fn importer_production_inserts_and_returns_source_id(db: PgPool) {
     let inserted = database.productions().by_source_id(77).await.unwrap().unwrap();
     assert!(inserted.production.slug.contains("import-test"));
     assert!(inserted.production.slug.contains("77"));
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn importer_price_inserts_and_returns_source_id(db: PgPool) {
+    let database = Database::new(db);
+    let price = ApiPrice {
+        id: "/api/v1/prices/12".into(),
+        jsonld_type: "Price".into(),
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
+        price_type: "base".into(),
+        visibility: "public".into(),
+        code: Some("STD".into()),
+        description: Some(ApiLocalizedText {
+            nl: Some("Standaard".into()),
+            en: Some("Standard".into()),
+            fr: None,
+        }),
+        minimum: 0,
+        maximum: Some(1000),
+        step: 0,
+        order: 1,
+        auto_select_combo: false,
+        include_in_price_range: true,
+        cineville_box: false,
+        membership: None,
+    };
+    let result = price.upsert_import(&database).await.unwrap();
+    assert_eq!(result.value, Some(12));
+
+    let inserted = database.prices().by_source_id(12).await.unwrap().unwrap();
+    assert_eq!(inserted.price_type, "base");
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn importer_price_rank_inserts_and_returns_source_id(db: PgPool) {
+    let database = Database::new(db);
+    let rank = ApiPriceRank {
+        id: "/api/v1/prices/ranks/7".into(),
+        jsonld_type: "PriceRank".into(),
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
+        description: Some(ApiLocalizedText {
+            nl: Some("Rang 1".into()),
+            en: Some("Rank 1".into()),
+            fr: None,
+        }),
+        code: "A".into(),
+        position: 1,
+        sold_out_buffer: Some(5),
+    };
+    let result = rank.upsert_import(&database).await.unwrap();
+    assert_eq!(result.value, Some(7));
+
+    let inserted = database.price_ranks().by_source_id(7).await.unwrap().unwrap();
+    assert_eq!(inserted.code, "A");
+    assert_eq!(inserted.position, 1);
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn importer_event_price_happy_path(db: PgPool) {
+    let database = Database::new(db);
+
+    let prod: ApiProduction = serde_json::from_value(serde_json::json!({
+        "@id": "/api/v1/productions/1",
+        "@type": "Event",
+        "created_at": "2025-01-01T00:00:00Z",
+        "updated_at": "2025-01-01T00:00:00Z",
+        "vendor_id": "test",
+        "box_office_id": null,
+        "performer_field": null,
+        "performer_type": null,
+        "attendance_mode": "mixed",
+        "supertitle": null,
+        "title": { "nl": "Test", "en": "Test", "fr": null },
+        "artist": null, "meta_title": null, "meta_description": null,
+        "tagline": null, "teaser": null, "description": null,
+        "description_extra": null, "description_2": null,
+        "video_1": null, "video_2": null,
+        "quote": null, "quote_source": null, "programme": null,
+        "info": null, "description_short": null, "eticket_info": null,
+        "genres": [], "events": [], "media_gallery": null,
+        "review_gallery": null, "poster_gallery": null,
+        "uitdatabank_keywords": [], "uitdatabank_theme": null, "uitdatabank_type": null
+    })).unwrap();
+    let data: api::models::production::ProductionImportData = prod.into();
+    database
+        .productions()
+        .insert(data.production, data.translations)
+        .await
+        .unwrap();
+
+    let price = ApiPrice {
+        id: "/api/v1/prices/2".into(),
+        jsonld_type: "Price".into(),
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
+        price_type: "base".into(),
+        visibility: "public".into(),
+        code: None, description: None,
+        minimum: 0, maximum: None, step: 0, order: 0,
+        auto_select_combo: false, include_in_price_range: false,
+        cineville_box: false, membership: None,
+    };
+    price.upsert_import(&database).await.unwrap();
+
+    let rank = ApiPriceRank {
+        id: "/api/v1/prices/ranks/3".into(),
+        jsonld_type: "PriceRank".into(),
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
+        description: None, code: "A".into(), position: 1,
+        sold_out_buffer: None,
+    };
+    rank.upsert_import(&database).await.unwrap();
+
+    let event = event_with_status("available");
+    event.upsert_import(&database, &status_map()).await.unwrap();
+
+    let event_price = event_price_with_refs(
+        "12.34",
+        "/api/v1/events/99",
+        "/api/v1/prices/2",
+        "/api/v1/prices/ranks/3",
+    );
+    let result = event_price.upsert_import(&database).await.unwrap();
+    assert_eq!(result.value, Some(88));
+
+    let inserted = database
+        .event_prices()
+        .by_source_id(88)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(inserted.amount_cents, 1234);
 }
