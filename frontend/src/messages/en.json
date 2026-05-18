@@ -395,6 +395,13 @@
             "fieldEventVendorId": "Vendor ID",
             "fieldEventBoxOfficeId": "Box office ID",
             "fieldEventUitdatabankId": "UiTdatabank ID",
+            "eventPriceColumn": "Prices",
+            "eventPriceCount": "{count} {count, plural, one {price} other {prices}}",
+            "fieldEventPrices": "Event Prices",
+            "fieldEventPriceAmount": "Price",
+            "fieldEventPriceRank": "Rank",
+            "fieldEventPriceAvailable": "Available",
+            "fieldEventPriceType": "Type",
             "eyebrow": "Production",
             "search": "Search productions…"
         },

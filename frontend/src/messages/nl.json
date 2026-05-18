@@ -395,6 +395,13 @@
             "fieldEventVendorId": "Vendor-ID",
             "fieldEventBoxOfficeId": "Box office ID",
             "fieldEventUitdatabankId": "UiTdatabank ID",
+            "eventPriceColumn": "Prijzen",
+            "eventPriceCount": "{count} {count, plural, one {prijs} other {prijzen}}",
+            "fieldEventPrices": "Evenement Prijzen",
+            "fieldEventPriceAmount": "Prijs",
+            "fieldEventPriceRank": "Rang",
+            "fieldEventPriceAvailable": "Beschikbaar",
+            "fieldEventPriceType": "Type",
             "eyebrow": "Productie",
             "search": "Zoek producties…"
         },
