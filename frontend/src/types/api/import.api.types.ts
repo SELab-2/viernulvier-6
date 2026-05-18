@@ -1,6 +1,5 @@
 import { components } from "@/types/api/generated";
 
-// Schema aliases
 export type ImportSessionResponse = components["schemas"]["ImportSessionResponse"];
 export type ImportRowResponse = components["schemas"]["ImportRowResponse"];
 export type ImportMappingResponse = components["schemas"]["ImportMapping"];
@@ -11,16 +10,4 @@ export type UpdateRowRequest = components["schemas"]["UpdateRowRequest"];
 export type UploadResponse = components["schemas"]["UploadResponse"];
 export type FieldSpecResponse = components["schemas"]["FieldSpec"];
 export type FieldTypeResponse = components["schemas"]["FieldType"];
-
-export type ImportRowStatsResponse = {
-    total: number;
-    pending: number;
-    will_create: number;
-    will_update: number;
-    will_skip: number;
-    error: number;
-    created: number;
-    updated: number;
-    skipped: number;
-    reverted: number;
-};
+export type ImportRowStatsResponse = components["schemas"]["ImportRowStatsResponse"];
