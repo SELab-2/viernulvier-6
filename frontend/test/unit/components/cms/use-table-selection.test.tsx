@@ -41,11 +41,12 @@ describe("useTableSelection", () => {
         return renderHook(() =>
             useTableSelection({
                 rows,
+                rowSelection: {},
                 onRowSelectionChange,
                 enableSelection: true,
                 useGlobal: false,
                 ...overrides,
-            })
+            } as Parameters<typeof useTableSelection>[0])
         );
     }
 
@@ -315,6 +316,7 @@ describe("useTableSelection", () => {
             const { result } = renderHook(() =>
                 useTableSelection({
                     rows,
+                    rowSelection: {},
                     onRowSelectionChange,
                     enableSelection: true,
                     onJumpToEnd,
