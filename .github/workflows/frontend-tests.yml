@@ -17,6 +17,12 @@ jobs:
           docker run --rm -v ${{ github.workspace }}:/workspace alpine sh -c "chown -R $(id -u):$(id -g) /workspace"
         continue-on-error: true
 
+      - name: Install git-lfs
+        run: |
+          apt-get update
+          apt-get install -y git-lfs
+          git lfs install --system
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
