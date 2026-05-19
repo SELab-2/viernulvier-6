@@ -13,21 +13,34 @@ import { mapProductions } from "@/mappers/production.mapper";
 import { Artist } from "@/types/models/artist.types";
 import { Production } from "@/types/models/production.types";
 import { PaginatedResult } from "@/types/api/api.types";
+import type { CmsFacetParams } from "@/lib/cms-filter-params";
 
 import { queryKeys } from "./query-keys";
 
 type ArtistCreateInput = { name: string };
 type ArtistUpdateInput = { id: string; name: string; slug: string };
 
-const fetchArtistsPage = async (params: {
-    q?: string;
-    cursor?: string;
-    limit?: number;
-}): Promise<PaginatedResult<Artist>> => {
+const fetchArtistsPage = async (
+    params: {
+        q?: string;
+        cursor?: string;
+        limit?: number;
+    } & CmsFacetParams
+): Promise<PaginatedResult<Artist>> => {
     const search = new URLSearchParams();
     if (params.q) search.set("q", params.q);
     if (params.cursor) search.set("cursor", params.cursor);
     if (params.limit) search.set("limit", String(params.limit));
+    for (const key of [
+        "discipline",
+        "format",
+        "theme",
+        "audience",
+        "accessibility",
+        "language",
+    ] as const) {
+        if (params[key]) search.set(key, params[key]);
+    }
     const url = `/artists${search.toString() ? `?${search}` : ""}`;
     const { data } = await api.get<GetAllArtistsResponse>(url);
     return {
@@ -60,13 +73,21 @@ export const useGetArtists = (options?: { q?: string; enabled?: boolean }) => {
     });
 };
 
-export const useGetInfiniteArtists = (params?: { q?: string; limit?: number }) => {
+export const useGetInfiniteArtists = (params?: { q?: string; limit?: number } & CmsFacetParams) => {
     const q = params?.q || undefined;
     const limit = params?.limit;
+    const facetParams = {
+        discipline: params?.discipline,
+        format: params?.format,
+        theme: params?.theme,
+        audience: params?.audience,
+        accessibility: params?.accessibility,
+        language: params?.language,
+    };
     return useInfiniteQuery({
-        queryKey: queryKeys.artists.infinite({ q, limit }),
+        queryKey: queryKeys.artists.infinite({ q, limit, ...facetParams }),
         queryFn: ({ pageParam }) =>
-            fetchArtistsPage({ q, limit, cursor: pageParam as string | undefined }),
+            fetchArtistsPage({ q, limit, ...facetParams, cursor: pageParam as string | undefined }),
         initialPageParam: undefined as string | undefined,
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     });

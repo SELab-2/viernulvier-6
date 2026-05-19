@@ -7,9 +7,11 @@ import { NextIntlClientProvider } from "next-intl";
 const messages = {
     ResultsBar: {
         sortBy: "Sort by",
+        relevance: "Most Relevant",
         recent: "Most Recent",
         oldest: "Oldest First",
-        relevance: "Most Relevant",
+        viewList: "List view",
+        viewGrid: "Grid view",
     },
     Search: {
         heroPlaceholder: "Search the archive",

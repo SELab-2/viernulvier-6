@@ -28,7 +28,7 @@ export function PageHeader({ eyebrow, title }: PageHeaderProps) {
     return (
         <header
             ref={headerRef}
-            className="border-foreground/10 bg-background relative z-20 mb-0 shrink-0 border-b pb-1 opacity-0 lg:mb-2 lg:pb-2"
+            className="border-border/80 bg-background relative z-20 mb-0 shrink-0 border-b pb-1 opacity-0 lg:mb-2 lg:pb-2"
         >
             {/* Mobile: compact row with menu + title */}
             <div className="flex items-center gap-3 lg:hidden">

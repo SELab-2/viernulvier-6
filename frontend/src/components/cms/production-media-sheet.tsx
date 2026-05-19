@@ -222,8 +222,8 @@ export function ProductionMediaSheet({
     return (
         <>
             <Sheet open={open} onOpenChange={onOpenChange}>
-                <SheetContent className="border-foreground/20 flex flex-col gap-0 overflow-y-auto border-l p-0 sm:max-w-lg">
-                    <SheetHeader className="border-foreground/10 border-b px-6 pt-6 pb-4">
+                <SheetContent className="border-border/80 flex flex-col gap-0 overflow-y-auto border-l p-0 sm:max-w-lg">
+                    <SheetHeader className="border-border/80 border-b px-6 pt-6 pb-4">
                         <div className="text-muted-foreground mb-2 font-mono text-[9px] tracking-[2px] uppercase">
                             {t("editMode")}
                         </div>
@@ -385,7 +385,7 @@ function RoleSection({
             </div>
 
             {media.length === 0 ? (
-                <div className="border-foreground/10 bg-foreground/[0.02] flex items-center justify-center rounded border border-dashed py-6">
+                <div className="border-border/80 bg-foreground/[0.02] flex items-center justify-center rounded border border-dashed py-6">
                     <p className="text-muted-foreground text-xs">
                         {!canUpload ? t("emptyCover") : t("empty")}
                     </p>
@@ -581,7 +581,7 @@ function MediaMetadataForm({ media, onSave, onCancel, isSaving }: MediaMetadataF
     const creditKey = `credit${capitalize(activeLang)}` as keyof Media;
 
     return (
-        <div className="border-foreground/10 space-y-4 rounded border p-4">
+        <div className="border-border/80 space-y-4 rounded border p-4">
             <div className="flex items-center justify-between">
                 <h3 className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
                     {t("editMetadata")}
@@ -601,7 +601,7 @@ function MediaMetadataForm({ media, onSave, onCancel, isSaving }: MediaMetadataF
                 </div>
             )}
 
-            <div className="border-foreground/10 flex items-center justify-between border-b pb-2">
+            <div className="border-border/80 flex items-center justify-between border-b pb-2">
                 <LanguageSelector
                     activeLang={activeLang}
                     onChange={setActiveLang}

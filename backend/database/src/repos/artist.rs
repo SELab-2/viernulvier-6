@@ -4,8 +4,9 @@ use sqlx::PgPool;
 
 use crate::{
     error::DatabaseError,
-    models::artist::Artist,
     repos::slug::{escape_like_pattern, next_unique_slug},
+    models::{artist::Artist, entity_type::EntityType, filtering::facets::FacetFilters},
+    repos::query_filters::facets::AddFacetFilters,
 };
 
 pub struct ArtistRepo<'a> {
@@ -55,6 +56,7 @@ impl<'a> ArtistRepo<'a> {
         limit: u32,
         cursor: Option<(String, Uuid)>,
         q: Option<&str>,
+        facets: &FacetFilters,
     ) -> Result<(Vec<Artist>, Option<(String, Uuid)>), DatabaseError> {
         let fetch_limit: i64 = (limit as i64) + 1;
         let mut builder = sqlx::QueryBuilder::new("SELECT * FROM artists WHERE true");
@@ -68,6 +70,8 @@ impl<'a> ArtistRepo<'a> {
                 .push_bind(pattern)
                 .push(")");
         }
+
+        builder.apply_facet_filters(EntityType::Artist, "artists.id", facets);
 
         if let Some((last_name, last_id)) = &cursor {
             builder

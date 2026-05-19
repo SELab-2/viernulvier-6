@@ -1,11 +1,11 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import Image from "next/image";
-import { Link2, SquarePen, Trash2 } from "lucide-react";
+import { ArrowUpRight, Link2, SquarePen, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
+import { CmsThumbnail } from "@/components/cms/cms-thumbnail";
 import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
 import { VisibilityBadge } from "@/components/cms/visibility-badge";
 import { LocalizedText, resolveLocalized } from "@/components/ui/localized-text";
@@ -57,6 +57,14 @@ export function makeCollectionColumns(options: {
             },
         },
         {
+            key: "open-public",
+            label: t("open"),
+            icon: ArrowUpRight,
+            onClick: (row) => {
+                window.location.assign(`/${locale}/collections/${row.slug}`);
+            },
+        },
+        {
             key: "open",
             label: t("open"),
             icon: SquarePen,
@@ -79,40 +87,16 @@ export function makeCollectionColumns(options: {
             enableSorting: false,
             cell: ({ row }) => {
                 const src = row.original.coverImageUrl;
-                if (!src) {
-                    return <div className="bg-muted h-10 w-10" />;
-                }
                 const alt =
                     (isEn ? row.original.titleEn : row.original.titleNl) ?? row.original.slug;
-                if (!onOpenSpotlight) {
-                    return (
-                        <Image
-                            src={src}
-                            alt={alt}
-                            width={40}
-                            height={40}
-                            className="h-10 w-10 object-cover"
-                        />
-                    );
-                }
                 return (
-                    <button
-                        type="button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onOpenSpotlight(src, alt);
-                        }}
-                        className="block h-10 w-10 cursor-zoom-in"
-                        aria-label={alt}
-                    >
-                        <Image
-                            src={src}
-                            alt={alt}
-                            width={40}
-                            height={40}
-                            className="h-10 w-10 object-cover"
-                        />
-                    </button>
+                    <CmsThumbnail
+                        src={src}
+                        alt={alt}
+                        onClick={
+                            src && onOpenSpotlight ? () => onOpenSpotlight(src, alt) : undefined
+                        }
+                    />
                 );
             },
         },

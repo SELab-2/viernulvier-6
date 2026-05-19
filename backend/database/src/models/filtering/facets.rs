@@ -1,3 +1,4 @@
+#[derive(Default)]
 pub struct FacetFilters {
     pub disciplines: Option<Vec<String>>,
     pub formats: Option<Vec<String>>,

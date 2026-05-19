@@ -6,7 +6,7 @@ use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::entity_type::EntityType;
+use crate::models::{entity_type::EntityType, filtering::facets::FacetFilters};
 
 #[derive(Debug)]
 pub struct ArticleRelations {
@@ -53,6 +53,7 @@ pub struct ArticleSearch {
     pub subject_start: Option<NaiveDate>,
     pub subject_end: Option<NaiveDate>,
     pub tag_slug: Option<String>,
+    pub facets: FacetFilters,
     pub related_entity_id: Option<Uuid>,
     pub related_entity_type: Option<EntityType>,
 }

@@ -36,12 +36,15 @@ pub async fn get_all(
     Query(search): Query<ArtistSearchQuery>,
 ) -> JsonResponse<PaginatedResponse<ArtistPayload>> {
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    let facets = search.facets();
+  
     ArtistPayload::all(
         &db,
         pagination.cursor,
         pagination.limit,
         public_url,
         search.q.as_deref(),
+        &facets,
     )
     .await?
     .json()

@@ -2,8 +2,8 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Link, usePathname } from "@/i18n/routing";
+import { useSearchParams } from "next/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/routing";
 import {
     Clapperboard,
     MapPin,
@@ -14,8 +14,6 @@ import {
     FolderArchive,
     TriangleAlert,
 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useGetFacets } from "@/hooks/api/useTaxonomy";
 import { useUser } from "@/hooks/useAuth";
@@ -77,28 +75,27 @@ function FacetFilters({ facets, activeFacets, onToggle, onClear }: FacetFiltersP
             )}
 
             {facets.map((facet) => (
-                <div key={facet.slug} className="border-foreground/10 mb-4 border p-2.5">
+                <div key={facet.slug} className="border-border/70 mb-4 border p-2.5">
                     <p className="text-foreground font-display mb-2 text-xs font-bold tracking-tight">
                         {getLabel(facet.translations, locale)}
                     </p>
-                    <ul className="space-y-1.5">
+                    <div className="flex flex-wrap gap-1.5">
                         {facet.tags.map((tag) => (
-                            <li key={tag.slug} className="flex items-center gap-2">
-                                <Checkbox
-                                    id={`tag-${tag.slug}`}
-                                    checked={activeFacets[facet.slug]?.has(tag.slug) ?? false}
-                                    onCheckedChange={() => onToggle(facet.slug, tag.slug)}
-                                    className="border-foreground/30 data-[state=checked]:bg-foreground data-[state=checked]:border-foreground"
-                                />
-                                <Label
-                                    htmlFor={`tag-${tag.slug}`}
-                                    className="font-body cursor-pointer text-xs font-normal"
-                                >
-                                    {getLabel(tag.translations, locale)}
-                                </Label>
-                            </li>
+                            <button
+                                key={tag.slug}
+                                type="button"
+                                aria-pressed={activeFacets[facet.slug]?.has(tag.slug) ?? false}
+                                onClick={() => onToggle(facet.slug, tag.slug)}
+                                className={`cursor-pointer border px-2 py-1 font-mono text-[10px] tracking-[1.1px] uppercase transition-all ${
+                                    activeFacets[facet.slug]?.has(tag.slug)
+                                        ? "bg-foreground text-background border-foreground"
+                                        : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                                }`}
+                            >
+                                {getLabel(tag.translations, locale)}
+                            </button>
                         ))}
-                    </ul>
+                    </div>
                 </div>
             ))}
 
@@ -162,6 +159,7 @@ function SidebarContent({ onNavigate, showHeader = true }: SidebarContentProps) 
             } else {
                 params.delete(facetSlug);
             }
+            params.delete("cursor");
             const qs = params.toString();
             router.replace(qs ? `${pathname}?${qs}` : pathname);
         },
@@ -171,6 +169,7 @@ function SidebarContent({ onNavigate, showHeader = true }: SidebarContentProps) 
     const clearFilters = useCallback(() => {
         const params = new URLSearchParams(window.location.search);
         for (const facet of facets ?? []) params.delete(facet.slug);
+        params.delete("cursor");
         const qs = params.toString();
         router.replace(qs ? `${pathname}?${qs}` : pathname);
     }, [facets, pathname, router]);
@@ -216,7 +215,7 @@ function SidebarContent({ onNavigate, showHeader = true }: SidebarContentProps) 
                                     className={`group relative flex flex-col border p-2.5 transition-all ${
                                         active
                                             ? "border-foreground bg-foreground/5"
-                                            : "border-foreground/10 hover:border-foreground/30"
+                                            : "border-border/70 hover:border-foreground/60"
                                     }`}
                                 >
                                     <div className="flex items-start justify-between">
@@ -227,7 +226,7 @@ function SidebarContent({ onNavigate, showHeader = true }: SidebarContentProps) 
                                             className={`h-3.5 w-3.5 transition-colors ${
                                                 active
                                                     ? "text-foreground"
-                                                    : "text-muted-foreground/40 group-hover:text-foreground"
+                                                    : "text-muted-foreground/70 group-hover:text-foreground"
                                             }`}
                                         />
                                     </div>
@@ -267,14 +266,14 @@ function SidebarContent({ onNavigate, showHeader = true }: SidebarContentProps) 
                                     className={`group relative flex items-center gap-3 border p-2.5 transition-all ${
                                         active
                                             ? "border-foreground bg-foreground/5"
-                                            : "border-foreground/10 hover:border-foreground/30"
+                                            : "border-border/70 hover:border-foreground/60"
                                     }`}
                                 >
                                     <Icon
                                         className={`h-3.5 w-3.5 transition-colors ${
                                             active
                                                 ? "text-foreground"
-                                                : "text-muted-foreground/40 group-hover:text-foreground"
+                                                : "text-muted-foreground/70 group-hover:text-foreground"
                                         }`}
                                     />
                                     <div className="flex-1">
@@ -321,7 +320,7 @@ export function CmsMobileMenu({ className = "" }: { className?: string }) {
             <SheetTrigger asChild>
                 <button
                     type="button"
-                    className={`text-muted-foreground hover:text-foreground hover:border-foreground/40 border-foreground/20 flex items-center gap-2 border px-3 py-2 font-mono text-[10px] tracking-[1.5px] uppercase transition-colors ${className}`}
+                    className={`text-muted-foreground hover:text-foreground hover:border-foreground/60 border-border/70 flex items-center gap-2 border px-3 py-2 font-mono text-[10px] tracking-[1.5px] uppercase transition-colors ${className}`}
                     aria-label="Open menu"
                 >
                     <span>Menu</span>
@@ -331,7 +330,7 @@ export function CmsMobileMenu({ className = "" }: { className?: string }) {
             <SheetContent side="left" className="w-72 p-0">
                 <SheetTitle className="sr-only">Menu</SheetTitle>
                 <div className="flex h-full flex-col">
-                    <div className="border-foreground/20 grid grid-cols-3 items-center border-b p-3">
+                    <div className="border-border/80 grid grid-cols-3 items-center border-b p-3">
                         <span className="text-muted-foreground font-mono text-[10px] tracking-[1.5px] uppercase">
                             Menu
                         </span>
@@ -356,7 +355,7 @@ export function CmsSidebar() {
     return (
         <>
             {/* Desktop Sidebar - Always visible */}
-            <aside className="border-foreground/20 bg-background flex hidden h-full w-56 flex-col overflow-hidden border-r lg:flex">
+            <aside className="border-border/80 bg-background flex hidden h-full w-56 flex-col overflow-hidden border-r lg:flex">
                 <SidebarContent />
             </aside>
         </>

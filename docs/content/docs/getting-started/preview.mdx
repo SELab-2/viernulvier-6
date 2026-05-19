@@ -43,6 +43,7 @@ cp infra/preview/.env.preview.example infra/preview/.env
 | `PREVIEW_NAME` / `PROD_NAME`                     | `pr-123` or `production`                                          |
 | `PREVIEW_HOST` / `PROD_HOST`                     | Server IP/hostname                                                |
 | `NEXT_PUBLIC_SITE_URL`                           | Public URL                                                        |
+| `NEXT_SERVER_API_URL`                            | Internal API URL used by Next.js server-side auth checks          |
 | `PREVIEW_DB_USER` / `PROD_DB_USER`               | PostgreSQL username                                               |
 | `PREVIEW_DB_PASSWORD` / `PROD_DB_PASSWORD`       | PostgreSQL password                                               |
 | `PREVIEW_DB_NAME` / `PROD_DB_NAME`               | PostgreSQL database                                               |
@@ -61,6 +62,12 @@ cp infra/preview/.env.preview.example infra/preview/.env
 <Callout type="info">
   Replace `PREVIEW_` with `PROD_` for production deployments. For example: `PREVIEW_DB_USER` becomes
   `PROD_DB_USER`.
+</Callout>
+
+<Callout type="info">
+  `NEXT_SERVER_API_URL` is set by the Docker Compose files for preview and production. It should
+  point to the backend over the Docker network, for example `http://api:3001/pr-123/api` in previews
+  or `http://backend:3001/api` in production.
 </Callout>
 
 ### 2. Start Environment

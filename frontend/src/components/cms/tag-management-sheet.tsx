@@ -107,7 +107,7 @@ export function TagManagementSheet({
         <>
             <Sheet open={open} onOpenChange={onOpenChange}>
                 <SheetContent side="right" className="w-96 overflow-y-auto p-0">
-                    <SheetHeader className="border-foreground/10 border-b px-6 pt-6 pb-4">
+                    <SheetHeader className="border-border/80 border-b px-6 pt-6 pb-4">
                         <SheetTitle>{t("manageTitle", { facet: getFacetLabel() })}</SheetTitle>
                     </SheetHeader>
                     <div className="px-6 py-6">

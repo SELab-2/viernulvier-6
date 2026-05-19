@@ -298,9 +298,9 @@ export function ArticleEditorPage({ id }: ArticleEditorPageProps) {
 
                 {/* Preview Panel - right side */}
                 {isPreviewOpen && (
-                    <div className="border-muted flex h-full w-full flex-1 flex-col overflow-hidden border-t lg:min-h-0 lg:w-[calc(100%-35%-16rem)] lg:min-w-[400px] lg:border-t-0 lg:border-l">
-                        <div className="bg-muted flex items-center justify-between px-4 py-3 shadow-[0_1px_0_0_hsl(var(--border))]">
-                            <span className="text-background font-mono text-[10px] font-medium tracking-[1.2px] uppercase">
+                    <div className="border-border/80 flex h-full w-full flex-1 flex-col overflow-hidden border-t lg:min-h-0 lg:w-[calc(100%-35%-16rem)] lg:min-w-[400px] lg:border-t-0 lg:border-l">
+                        <div className="bg-muted/70 flex items-center justify-between px-4 py-3 shadow-[0_1px_0_0_hsl(var(--border))]">
+                            <span className="text-muted-foreground font-mono text-[10px] font-medium tracking-[1.2px] uppercase">
                                 {t("previewLabel")}
                             </span>
                         </div>

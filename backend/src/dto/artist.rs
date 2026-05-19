@@ -1,7 +1,7 @@
 use base64::{Engine, prelude::BASE64_URL_SAFE};
 use database::{
     Database,
-    models::{artist::Artist, entity_type::EntityType},
+    models::{artist::Artist, entity_type::EntityType, filtering::facets::FacetFilters},
 };
 use serde::{Deserialize, Serialize};
 use slug::slugify;
@@ -90,6 +90,7 @@ impl ArtistPayload {
         limit: u32,
         public_url: Option<&str>,
         q: Option<&str>,
+        facets: &FacetFilters,
     ) -> Result<PaginatedResponse<Self>, AppError> {
         let cursor: Option<(String, Uuid)> = cursor_str.and_then(|b64| {
             let bytes = BASE64_URL_SAFE.decode(b64).ok()?;
@@ -97,7 +98,7 @@ impl ArtistPayload {
             Some((c.name, c.id))
         });
 
-        let (artists, next) = db.artists().paginated(limit, cursor, q).await?;
+        let (artists, next) = db.artists().paginated(limit, cursor, q, facets).await?;
         let mut result: Vec<Self> = artists.into_iter().map(Self::from).collect();
 
         let next_cursor = next.and_then(|(name, id)| {

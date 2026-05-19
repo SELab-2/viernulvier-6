@@ -13,6 +13,7 @@ use crate::{
         },
         filtering::cursor::CursorData,
     },
+    repos::query_filters::facets::AddFacetFilters,
 };
 
 pub struct ArticleRepo<'a> {
@@ -257,6 +258,7 @@ impl<'a> ArticleRepo<'a> {
             subject_start,
             subject_end,
             tag_slug,
+            facets,
             related_entity_id,
             related_entity_type,
         } = search;
@@ -293,6 +295,8 @@ impl<'a> ArticleRepo<'a> {
             builder.push_bind(slug);
             builder.push(")");
         }
+
+        builder.apply_facet_filters(EntityType::Article, "a.id", &facets);
 
         if let (Some(entity_id), Some(entity_type)) = (related_entity_id, related_entity_type)
             && let (Some(table), Some(col)) = (

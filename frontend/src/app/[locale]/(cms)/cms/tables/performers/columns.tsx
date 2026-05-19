@@ -1,21 +1,35 @@
 "use client";
 
-import Image from "next/image";
 import { ColumnDef } from "@tanstack/react-table";
-import { ImageIcon, SquarePen, Trash2 } from "lucide-react";
+import { ArrowUpRight, SquarePen, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
 import { makeActionsColumn } from "../actions-column";
+import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
+import { CmsThumbnail } from "@/components/cms/cms-thumbnail";
+import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
+import { useGetEntityTags } from "@/hooks/api/useEntityTags";
 import { Action, ActionDisplay, ActionVariant } from "@/types/cms/actions";
 import { Artist } from "@/types/models/artist.types";
 import { FieldDef } from "../edit-sheet";
+
+function ArtistTagsCell({ artistId, locale }: { artistId: string; locale: string }) {
+    const { data: facets } = useGetEntityTags("artist", artistId);
+    const tags =
+        facets?.flatMap((facet) =>
+            facet.tags.map((tag) => ({ slug: tag.slug, facet: facet.slug }))
+        ) ?? [];
+
+    return <EntityTagStrip tags={tags} locale={locale} cap={3} variant="compact" />;
+}
 
 export function makeArtistColumns(
     onEdit: (artist: Artist) => void,
     onDelete: (artist: Artist) => void,
     t: ReturnType<typeof useTranslations<"Cms.ActionsColumn">>,
-    tPerformers: ReturnType<typeof useTranslations<"Cms.Performers">>
+    tPerformers: ReturnType<typeof useTranslations<"Cms.Performers">>,
+    locale: string
 ): ColumnDef<Artist>[] {
     const actions: Action<Artist>[] = [
         {
@@ -38,6 +52,27 @@ export function makeArtistColumns(
             },
         },
         {
+            key: "open-public",
+            label: t("open", { label: "performer" }),
+            icon: ArrowUpRight,
+            onClick: (artist) => {
+                window.location.assign(`/${locale}/artists/${artist.id}`);
+            },
+        },
+        {
+            key: "add-to-collection",
+            render: (artist, closeMenu) => (
+                <CollectionPickerSubmenu
+                    item={{
+                        contentId: artist.id,
+                        contentType: "artist",
+                        label: artist.name || artist.slug || artist.id,
+                    }}
+                    onComplete={closeMenu}
+                />
+            ),
+        },
+        {
             key: "delete",
             label: tPerformers("deletePerformer"),
             icon: Trash2,
@@ -52,12 +87,8 @@ export function makeArtistColumns(
             header: "",
             cell: ({ row }) => {
                 const url = row.original.coverImageUrl;
-                if (!url) return <ImageIcon className="text-muted-foreground size-4" />;
-                return (
-                    <div className="relative size-10 overflow-hidden rounded">
-                        <Image src={url} alt="" fill className="object-cover" sizes="40px" />
-                    </div>
-                );
+                if (!url) return <CmsThumbnail src={null} alt="" />;
+                return <CmsThumbnail src={url} alt={row.original.name} />;
             },
             size: 52,
         },
@@ -74,6 +105,12 @@ export function makeArtistColumns(
             cell: ({ row }) => (
                 <span className="text-muted-foreground font-mono text-xs">{row.original.slug}</span>
             ),
+        },
+        {
+            id: "tags",
+            header: "Tags",
+            enableSorting: false,
+            cell: ({ row }) => <ArtistTagsCell artistId={row.original.id} locale={locale} />,
         },
         makeActionsColumn({ actions }),
     ];

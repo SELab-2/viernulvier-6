@@ -2429,6 +2429,12 @@ export interface operations {
                 cursor?: string | null;
                 limit?: number;
                 q?: string | null;
+                discipline?: string;
+                format?: string;
+                theme?: string;
+                audience?: string;
+                accessibility?: string;
+                language?: string;
                 subject_start?: string;
                 subject_end?: string;
                 tag_slug?: string;
@@ -2520,6 +2526,12 @@ export interface operations {
                 cursor?: string | null;
                 limit?: number;
                 q?: string | null;
+                discipline?: string;
+                format?: string;
+                theme?: string;
+                audience?: string;
+                accessibility?: string;
+                language?: string;
             };
             header?: never;
             path?: never;
@@ -2784,6 +2796,12 @@ export interface operations {
                 cursor?: string | null;
                 limit?: number;
                 q?: string | null;
+                discipline?: string;
+                format?: string;
+                theme?: string;
+                audience?: string;
+                accessibility?: string;
+                language?: string;
             };
             header?: never;
             path?: never;

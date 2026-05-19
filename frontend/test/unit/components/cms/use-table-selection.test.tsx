@@ -88,7 +88,10 @@ describe("useTableSelection", () => {
                 } as unknown as React.MouseEvent);
             });
 
-            expect(onRowSelectionChange).toHaveBeenCalledWith({ "row-1": true });
+            expect(onRowSelectionChange).toHaveBeenCalled();
+            const updater = onRowSelectionChange.mock.calls[0][0];
+            expect(typeof updater).toBe("function");
+            expect(updater({})).toEqual({ "row-1": true });
         });
 
         it("toggles a row on ctrl+click", () => {
