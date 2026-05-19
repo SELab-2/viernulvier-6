@@ -295,7 +295,10 @@ export function ArchiveSidebar({
                 next.add(cat);
             }
 
-            if (next.size === 0 || next.size === categories.length) {
+            const matchesDefaults =
+                next.size === defaultCategories.size &&
+                [...next].every((entry) => defaultCategories.has(entry));
+            if (next.size === 0 || matchesDefaults) {
                 params.delete("category");
             } else {
                 params.set("category", categories.filter((entry) => next.has(entry)).join(","));
