@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE import_rows\n               SET status = 'error',\n                   warnings = '[{\"field\": null, \"code\": \"commit_failed\", \"message\": \"Row was not committed — status could not be saved during the commit loop.\"}]'::jsonb\n               WHERE session_id = $1 AND status IN ('will_create', 'will_update', 'pending')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "bdd3388dcf14dc8a92756488867acbd0026ff508225f6fa06af370d7e20f3064"
+}

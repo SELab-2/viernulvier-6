@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE import_sessions\n               SET status = 'failed',\n                   committed_at = COALESCE(committed_at, NOW()),\n                   error = $2\n               WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fa7e3c96ff3fcec06d2022f98d2156cace16111057409044d93f403c49461bed"
+}
