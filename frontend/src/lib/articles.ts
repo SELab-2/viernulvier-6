@@ -1,3 +1,15 @@
+export function formatYearRange(
+    start: string | null | undefined,
+    end: string | null | undefined
+): string | null {
+    const sy = start ? new Date(start).getFullYear() : null;
+    const ey = end ? new Date(end).getFullYear() : null;
+    if (sy && ey) return sy === ey ? String(sy) : `${sy} — ${ey}`;
+    if (sy) return String(sy);
+    if (ey) return String(ey);
+    return null;
+}
+
 export function groupArticlesByYearMonth<T extends { subjectPeriodStart: string | null }>(
     articles: T[],
     locale: string = "en"

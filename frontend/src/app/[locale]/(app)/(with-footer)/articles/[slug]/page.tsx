@@ -6,7 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Calendar, MapPin, Users, Ticket } from "lucide-react";
 
 import Image from "next/image";
-import { useGetArticleBySlug } from "@/hooks/api/useArticles";
+import { useGetArticleBySlug, useGetInfiniteArticles } from "@/hooks/api/useArticles";
+import { formatYearRange } from "@/lib/articles";
 import { useGetEntityMedia } from "@/hooks/api/useMedia";
 import { useHasPreview } from "@/hooks/usePreviewData";
 import { useArticleWithPreview, useArticleRelationsWithPreview } from "@/hooks/useArticlePreview";
@@ -27,13 +28,6 @@ function formatDate(dateStr: string, locale: string): string {
         year: "numeric",
     });
 }
-
-// Static related articles - TODO: replace with API
-const STATIC_RELATED_ARTICLES = [
-    { title: "De Balzaal door de jaren heen", period: "1960 — 1980", date: "12 mrt 2026" },
-    { title: "Achter de schermen van Fresh Juice", period: "Voorjaar 2026", date: "28 feb 2026" },
-    { title: "40 jaar Nightlife in De Vooruit", period: "1983 — 2023", date: "15 jan 2026" },
-];
 
 interface ConnectedEntityProps {
     type: "production" | "artist" | "location" | "event";
@@ -129,6 +123,14 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
         () => Object.fromEntries(inlineMedia.map((m) => [m.id, m.url ?? ""])),
         [inlineMedia]
     );
+
+    const { data: relatedPages } = useGetInfiniteArticles({
+        pagination: { limit: 4 },
+    });
+    const relatedArticles = useMemo(() => {
+        const firstPage = relatedPages?.pages[0]?.data ?? [];
+        return firstPage.filter((a) => a.slug !== slug).slice(0, 3);
+    }, [relatedPages, slug]);
 
     return (
         <>
@@ -289,22 +291,36 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
                             <span className="bg-muted/40 h-px flex-1" />
                         </div>
                         <div className="grid grid-cols-1 gap-px sm:grid-cols-3">
-                            {STATIC_RELATED_ARTICLES.map((related) => (
-                                <div
-                                    key={related.title}
-                                    className="border-muted/35 group hover:bg-muted/5 cursor-pointer border-b p-4 transition-colors sm:border-r sm:last:border-r-0"
-                                >
-                                    <span className="text-muted-foreground mb-2 block font-mono text-[9px] tracking-[2px] uppercase">
-                                        {related.period}
-                                    </span>
-                                    <h3 className="font-display text-foreground mb-1 text-[18px] leading-[1.15] font-bold tracking-[-0.02em]">
-                                        {related.title}
-                                    </h3>
-                                    <span className="text-muted-foreground font-mono text-[9px] tracking-[1.4px] uppercase">
-                                        {related.date}
-                                    </span>
-                                </div>
-                            ))}
+                            {relatedArticles.map((related) => {
+                                const period = formatYearRange(
+                                    related.subjectPeriodStart ?? null,
+                                    related.subjectPeriodEnd ?? null
+                                );
+                                const date = related.publishedAt
+                                    ? formatDate(related.publishedAt, locale)
+                                    : null;
+                                return (
+                                    <Link
+                                        key={related.id}
+                                        href={`/articles/${related.slug}`}
+                                        className="border-muted/35 group hover:bg-muted/5 block cursor-pointer border-b p-4 transition-colors sm:border-r sm:last:border-r-0"
+                                    >
+                                        {period && (
+                                            <span className="text-muted-foreground mb-2 block font-mono text-[9px] tracking-[2px] uppercase">
+                                                {period}
+                                            </span>
+                                        )}
+                                        <h3 className="font-display text-foreground mb-1 text-[18px] leading-[1.15] font-bold tracking-[-0.02em]">
+                                            {related.title ?? t("untitled")}
+                                        </h3>
+                                        {date && (
+                                            <span className="text-muted-foreground font-mono text-[9px] tracking-[1.4px] uppercase">
+                                                {date}
+                                            </span>
+                                        )}
+                                    </Link>
+                                );
+                            })}
                         </div>
                     </section>
                 </article>
