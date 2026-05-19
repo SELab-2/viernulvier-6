@@ -3,6 +3,7 @@ import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { Children, isValidElement, type ReactNode } from "react";
 
 import messages from "../../../../../src/messages/en.json";
 import { createTestQueryClient } from "../../../../utils/query-client";
@@ -38,6 +39,18 @@ vi.mock("@/i18n/routing", () => ({
     }),
 }));
 
+function optionText(children: ReactNode): string {
+    return Children.toArray(children)
+        .map((child) => {
+            if (typeof child === "string" || typeof child === "number") return String(child);
+            if (isValidElement<{ children?: ReactNode }>(child)) {
+                return optionText(child.props.children);
+            }
+            return "";
+        })
+        .join("");
+}
+
 // ── Radix Select mock — replaces with a plain <select> for JSDOM compatibility ──
 
 vi.mock("@/components/ui/select", () => ({
@@ -46,7 +59,7 @@ vi.mock("@/components/ui/select", () => ({
         onValueChange,
         value,
     }: {
-        children: React.ReactNode;
+        children: ReactNode;
         onValueChange?: (v: string) => void;
         value?: string;
     }) => (
@@ -54,11 +67,11 @@ vi.mock("@/components/ui/select", () => ({
             {children}
         </select>
     ),
-    SelectTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    SelectTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
     SelectValue: () => null,
-    SelectContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-    SelectItem: ({ value, children }: { value: string; children: React.ReactNode }) => (
-        <option value={value}>{children}</option>
+    SelectContent: ({ children }: { children: ReactNode }) => <>{children}</>,
+    SelectItem: ({ value, children }: { value: string; children: ReactNode }) => (
+        <option value={value}>{optionText(children)}</option>
     ),
 }));
 

@@ -40,6 +40,9 @@ export async function mockApi(page: Page, options?: { withAuth?: boolean }) {
         await page.route("**/api/editor/me**", async (route) => {
             await route.fulfill({ json: editorResponse });
         });
+        await page.route("**/api/auth/refresh**", async (route) => {
+            await route.fulfill({ json: { success: true, message: "refreshed" } });
+        });
     }
 
     const productionId = (i: number) => "00000000-0000-4000-8000-" + String(i).padStart(12, "0");
@@ -136,6 +139,10 @@ export async function mockApi(page: Page, options?: { withAuth?: boolean }) {
     ];
     await page.route("**/api/taxonomy/facets**", async (route) => {
         await route.fulfill({ json: facets });
+    });
+
+    await page.route("**/api/import/entity-types**", async (route) => {
+        await route.fulfill({ json: ["production", "artist", "location", "article"] });
     });
 
     // Mock articles

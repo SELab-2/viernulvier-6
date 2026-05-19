@@ -4,12 +4,18 @@ import { buildCookieHeader, hasValidCmsSession, type ServerAuthFetch } from "@/l
 
 describe("server-auth", () => {
     const originalServerApiUrl = process.env.NEXT_SERVER_API_URL;
+    const originalPlaywrightAuthBypass = process.env.PLAYWRIGHT_AUTH_BYPASS;
 
     afterEach(() => {
         if (originalServerApiUrl === undefined) {
             delete process.env.NEXT_SERVER_API_URL;
         } else {
             process.env.NEXT_SERVER_API_URL = originalServerApiUrl;
+        }
+        if (originalPlaywrightAuthBypass === undefined) {
+            delete process.env.PLAYWRIGHT_AUTH_BYPASS;
+        } else {
+            process.env.PLAYWRIGHT_AUTH_BYPASS = originalPlaywrightAuthBypass;
         }
     });
 
@@ -81,5 +87,25 @@ describe("server-auth", () => {
         await expect(hasValidCmsSession("", fetcher)).resolves.toBe(false);
 
         expect(fetcher).not.toHaveBeenCalled();
+    });
+
+    it("accepts the e2e session marker only when the Playwright bypass is enabled", async () => {
+        process.env.PLAYWRIGHT_AUTH_BYPASS = "1";
+        const fetcher = vi.fn<ServerAuthFetch>();
+
+        await expect(hasValidCmsSession("session_present=1", fetcher)).resolves.toBe(true);
+
+        expect(fetcher).not.toHaveBeenCalled();
+    });
+
+    it("does not accept the e2e session marker without the Playwright bypass", async () => {
+        const fetcher = vi
+            .fn<ServerAuthFetch>()
+            .mockResolvedValueOnce(new Response(null, { status: 401 }))
+            .mockResolvedValueOnce(new Response(null, { status: 401 }));
+
+        await expect(hasValidCmsSession("session_present=1", fetcher)).resolves.toBe(false);
+
+        expect(fetcher).toHaveBeenCalledTimes(2);
     });
 });

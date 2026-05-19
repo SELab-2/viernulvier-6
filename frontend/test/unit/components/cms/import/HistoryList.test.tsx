@@ -53,7 +53,7 @@ const defaultSessions = [makeSession("s1"), makeSession("s2"), makeSession("s3")
 
 function renderHistoryList() {
     return render(
-        <NextIntlClientProvider locale="en" messages={messages}>
+        <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
             <HistoryList />
         </NextIntlClientProvider>
     );
