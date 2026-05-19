@@ -197,14 +197,15 @@ describe("EventPriceExtraContent", () => {
 
 describe("makeEventColumns", () => {
     it("renders price range in the prices column", () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mockT = ((key: string) => key) as any;
         const columns = makeEventColumns({
             onEdit: () => {},
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            t: ((key: string, _values?: Record<string, unknown>) => key) as any,
-
+            t: mockT,
             tProductions: ((key: string) => {
                 if (key === "fieldEventPriceFree") return "Gratis";
                 return key;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             }) as any,
         });
 

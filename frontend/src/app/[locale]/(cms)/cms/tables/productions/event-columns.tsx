@@ -9,7 +9,7 @@ import { makeActionsColumn } from "../actions-column";
 import type { FieldDef } from "../edit-sheet";
 import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
 import { Action, ActionDisplay } from "@/types/cms/actions";
-import type { Event, EventUpdateInput, EventPrice } from "@/types/models/event.types";
+import type { Event, EventUpdateInput } from "@/types/models/event.types";
 
 function formatDateTime(iso: string | null): string {
     if (!iso) return "—";
