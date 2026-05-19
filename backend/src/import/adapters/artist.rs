@@ -92,17 +92,16 @@ impl ImportableEntity for ArtistImport {
         let current = db.artists().by_id(entity_id).await?;
         let mut diff = BTreeMap::new();
 
-        if let Some(incoming_name) = json_string(row, "name") {
-            if current.name != incoming_name {
+        if let Some(incoming_name) = json_string(row, "name")
+            && current.name != incoming_name {
                 diff.insert(
                     "name".to_string(),
                     DiffEntry {
-                        current: Some(Value::String(current.name.clone())),
+                        current: Some(Value::String(current.name)),
                         incoming: Some(Value::String(incoming_name)),
                     },
                 );
             }
-        }
 
         Ok(diff)
     }

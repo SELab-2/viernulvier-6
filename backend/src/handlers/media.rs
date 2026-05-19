@@ -117,7 +117,7 @@ pub async fn get_media_entities(
             is_cover_image: l.is_cover_image,
             title: Some(TitleTranslations {
                 en: l.title_en.clone(),
-                nl: l.title_nl.clone(),
+                nl: l.title_nl,
             })
             .filter(|t| t.en.is_some() || t.nl.is_some()),
         })

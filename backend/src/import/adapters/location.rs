@@ -218,7 +218,7 @@ impl ImportableEntity for LocationImport {
         );
         maybe_diff(
             "phone_2",
-            current.phone_2.clone(),
+            current.phone_2,
             json_string(row, "phone_2"),
         );
 

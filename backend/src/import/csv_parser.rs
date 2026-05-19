@@ -44,8 +44,8 @@ fn normalize_legacy_escapes(bytes: &[u8], delimiter: u8) -> Vec<u8> {
     let mut i = 0;
 
     while i < bytes.len() {
-        if let Some(line_end_offset) = backslash_only_line_len(bytes, i) {
-            if let Some(line_end) = bytes.get(i + line_end_offset) {
+        if let Some(line_end_offset) = backslash_only_line_len(bytes, i)
+            && let Some(line_end) = bytes.get(i + line_end_offset) {
                 if *line_end == b'\r' && bytes.get(i + line_end_offset + 1) == Some(&b'\n') {
                     i += line_end_offset + 2;
                 } else {
@@ -53,7 +53,6 @@ fn normalize_legacy_escapes(bytes: &[u8], delimiter: u8) -> Vec<u8> {
                 }
                 continue;
             }
-        }
 
         let is_backslash_before_closing_quote = bytes.get(i) == Some(&b'\\')
             && bytes.get(i + 1) == Some(&b'"')

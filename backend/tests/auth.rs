@@ -47,6 +47,7 @@ async fn extract_cookies(response: &Response<Body>) -> String {
 
 #[derive(serde::Deserialize)]
 struct AuthResponse {
+    #[allow(dead_code)]
     message: String,
     success: bool,
 }
