@@ -21,9 +21,10 @@ import {
     useDeleteCollection,
     useAddCollectionItem,
     useGetCollection,
-    useGetEvents,
     useGetInfiniteArticlesCms,
     useGetInfiniteArtists,
+    useGetInfiniteEvents,
+    useGetInfiniteLocations,
     useGetInfiniteMedia,
     useGetInfiniteProductions,
     useGetLocations,
@@ -408,14 +409,36 @@ export function CollectionEditorPage({ id }: { id: string }) {
     });
 
     const { data: collection, isLoading } = useGetCollection(id);
-    const { data: eventsResult, isLoading: eventsLoading } = useGetEvents({
-        pagination: { limit: 100 },
-    });
-    const { data: locationsResult, isLoading: locationsLoading } = useGetLocations({
-        pagination: { limit: 100 },
-    });
-    const events = useMemo(() => eventsResult?.data ?? [], [eventsResult?.data]);
-    const locations = useMemo(() => locationsResult?.data ?? [], [locationsResult?.data]);
+    const {
+        data: infiniteEvents,
+        fetchNextPage: fetchNextEvents,
+        hasNextPage: hasMoreEvents,
+        isFetchingNextPage: isFetchingMoreEvents,
+        isLoading: eventsLoading,
+    } = useGetInfiniteEvents(100);
+    const {
+        data: infiniteLocations,
+        fetchNextPage: fetchNextLocations,
+        hasNextPage: hasMoreLocations,
+        isFetchingNextPage: isFetchingMoreLocations,
+        isLoading: locationsLoading,
+    } = useGetInfiniteLocations({ limit: 100 });
+
+    useEffect(() => {
+        if (hasMoreEvents && !isFetchingMoreEvents) fetchNextEvents();
+    }, [hasMoreEvents, isFetchingMoreEvents, fetchNextEvents]);
+    useEffect(() => {
+        if (hasMoreLocations && !isFetchingMoreLocations) fetchNextLocations();
+    }, [hasMoreLocations, isFetchingMoreLocations, fetchNextLocations]);
+
+    const events = useMemo(
+        () => infiniteEvents?.pages.flatMap((page) => page.data) ?? [],
+        [infiniteEvents]
+    );
+    const locations = useMemo(
+        () => infiniteLocations?.pages.flatMap((page) => page.data) ?? [],
+        [infiniteLocations]
+    );
 
     const updateCollection = useUpdateCollection();
     const updateItems = useUpdateCollectionItems(id);
