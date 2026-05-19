@@ -3,6 +3,7 @@ use database::{
     Database,
     models::event::{Event, EventCreate},
 };
+use futures::future::try_join_all;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -55,6 +56,14 @@ impl EventPayload {
             payloads.push(Self::from_model(db, event).await?);
         }
         Ok(payloads)
+    }
+
+    pub async fn by_production_ids(
+        db: &Database,
+        ids: &[Uuid],
+    ) -> Result<Vec<Self>, AppError> {
+        let events = db.events().by_production_ids(ids).await?;
+        try_join_all(events.into_iter().map(|event| Self::from_model(db, event))).await
     }
 
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {
