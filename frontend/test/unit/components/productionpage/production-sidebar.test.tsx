@@ -35,6 +35,8 @@ const messages = {
         shareSectionTitle: "Share",
         copyLink: "Copy link",
         copyLinkSuccess: "Copied",
+        shareWhatsApp: "Share WhatsApp",
+        shareEmail: "Share Email",
     },
 };
 
@@ -122,7 +124,8 @@ describe("ProductionSidebar events", () => {
             <ProductionSidebar production={mockProduction} events={[makeEvent()]} locale="en" />,
             { wrapper: TestWrapper }
         );
-        expect(screen.getByText(/De Vooruit/)).toBeInTheDocument();
+        expect(screen.getByText(/Sunday, 15 June 2025/)).toBeInTheDocument();
+        expect(screen.getByText(/ – /)).toBeInTheDocument();
     });
 
     it("displays individual price entries with ticket icon", () => {
