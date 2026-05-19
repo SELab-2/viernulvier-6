@@ -345,7 +345,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Get all events */
+        /** @description Get all events, optionally filtered by production IDs */
         get: operations["get_all_events"];
         /** @description Update an event */
         put: operations["update_event"];
@@ -3058,6 +3058,8 @@ export interface operations {
             query?: {
                 cursor?: string | null;
                 limit?: number;
+                /** @description Comma-separated list of production UUIDs to filter by */
+                production_ids?: string | null;
             };
             header?: never;
             path?: never;
