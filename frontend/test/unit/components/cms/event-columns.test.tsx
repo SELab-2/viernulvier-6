@@ -199,19 +199,23 @@ describe("makeEventColumns", () => {
     it("renders price range in the prices column", () => {
         const columns = makeEventColumns({
             onEdit: () => {},
-            t: (key: string, _values?: Record<string, unknown>) => key,
-            tProductions: (key: string) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            t: ((key: string, _values?: Record<string, unknown>) => key) as any,
+
+            tProductions: ((key: string) => {
                 if (key === "fieldEventPriceFree") return "Gratis";
                 return key;
-            },
+            }) as any,
         });
 
-        const priceCol = columns.find((c) => c.accessorKey === "prices");
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const priceCol = columns.find((c: any) => c.accessorKey === "prices");
         expect(priceCol).toBeDefined();
         expect(priceCol?.header).toBe("eventPriceColumn");
 
         if (priceCol?.cell) {
-            const cellFn = priceCol.cell as (info: { getValue: <T>() => T }) => string;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const cellFn = priceCol.cell as (info: { getValue: () => unknown }) => any;
 
             // Empty
             expect(cellFn({ getValue: () => [] })).toBe("\u2014");
@@ -251,8 +255,10 @@ describe("makeEventColumns", () => {
     it("includes all expected columns", () => {
         const columns = makeEventColumns({
             onEdit: () => {},
-            t: (key: string) => key,
-            tProductions: (key: string) => key,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            t: ((key: string) => key) as any,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            tProductions: ((key: string) => key) as any,
         });
 
         expect(columns).toHaveLength(6); // startsAt, endsAt, status, hallIds, prices, actions
