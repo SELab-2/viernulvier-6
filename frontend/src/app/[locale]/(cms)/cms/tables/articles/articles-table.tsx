@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Archive, Plus } from "lucide-react";
+import { Archive, Plus, Tags, Trash2 } from "lucide-react";
 import { RowSelectionState } from "@tanstack/react-table";
 
 import { DataTable } from "../data-table";
@@ -13,28 +13,36 @@ import { ActionBar } from "../action-bar";
 import { Button } from "@/components/ui/button";
 import { LoadMoreSentinel } from "@/components/cms/load-more-sentinel";
 import { SearchInput } from "@/components/cms/search-input";
+import { getCmsFacetParams } from "@/lib/cms-filter-params";
 import { useRouter } from "@/i18n/routing";
 import { useDeleteArticle, useGetInfiniteArticlesCms } from "@/hooks/api/useArticles";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
+import { BulkTagDialog } from "@/components/cms/bulk-tag-dialog";
 import type { PickerItem } from "@/lib/collection-picker-utils";
 import { ArticleListItem } from "@/types/models/article.types";
+import { ActionVariant } from "@/types/cms/actions";
 import { CreateArticleDialog } from "./create-article-dialog";
 
 export function ArticlesTable() {
     const t = useTranslations("Cms.Articles");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
+    const tActionBar = useTranslations("Cms.ActionBar");
     const locale = useLocale();
     const router = useRouter();
     const searchParams = useSearchParams();
     const q = searchParams.get("q") ?? undefined;
+    const facetParams = useMemo(
+        () => getCmsFacetParams(new URLSearchParams(searchParams.toString())),
+        [searchParams]
+    );
 
     const {
         data: infiniteData,
         fetchNextPage,
         hasNextPage,
         isLoading,
-    } = useGetInfiniteArticlesCms({ limit: 50, ...(q ? { q } : {}) });
+    } = useGetInfiniteArticlesCms({ limit: 50, ...(q ? { q } : {}), ...facetParams });
 
     const articles = useMemo(
         () => infiniteData?.pages.flatMap((page) => page.data) ?? [],
@@ -46,6 +54,7 @@ export function ArticlesTable() {
 
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
     const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
+    const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
 
     const handleDelete = useCallback(
         (article: ArticleListItem) => {
@@ -76,6 +85,16 @@ export function ArticlesTable() {
         [articles, rowSelection]
     );
 
+    const handleBulkDelete = useCallback(() => {
+        if (selectedArticles.length === 0) return;
+        const ok = window.confirm(tActionBar("delete") + ` ${selectedArticles.length} article(s)?`);
+        if (!ok) return;
+        for (const article of selectedArticles) {
+            deleteArticle.mutate(article.id);
+        }
+        setRowSelection({});
+    }, [selectedArticles, deleteArticle, tActionBar]);
+
     const pickerItems = useMemo<PickerItem[]>(
         () =>
             selectedArticles.map((a) => ({
@@ -94,8 +113,21 @@ export function ArticlesTable() {
                 icon: <Archive className="h-3.5 w-3.5" />,
                 onClick: () => setCollectionDialogOpen(true),
             },
+            {
+                key: "bulk-tags",
+                label: tActionBar("bulkEdit"),
+                icon: <Tags className="h-3.5 w-3.5" />,
+                onClick: () => setBulkTagDialogOpen(true),
+            },
+            {
+                key: "bulk-delete",
+                label: tActionBar("delete"),
+                icon: <Trash2 className="h-3.5 w-3.5" />,
+                variant: ActionVariant.Destructive,
+                onClick: handleBulkDelete,
+            },
         ],
-        [tCollections]
+        [tCollections, tActionBar, handleBulkDelete]
     );
 
     return (
@@ -130,6 +162,13 @@ export function ArticlesTable() {
                 open={collectionDialogOpen}
                 onOpenChange={setCollectionDialogOpen}
                 items={pickerItems}
+            />
+            <BulkTagDialog
+                open={bulkTagDialogOpen}
+                onOpenChange={setBulkTagDialogOpen}
+                entityType="article"
+                entityIds={selectedArticles.map((article) => article.id)}
+                onApplied={() => setRowSelection({})}
             />
             <CreateArticleDialog open={dialogOpen} onOpenChange={setDialogOpen} />
         </div>

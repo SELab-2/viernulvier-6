@@ -1,7 +1,6 @@
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { queryKeys } from "@/hooks/api/query-keys";
 import { useGetUsers, useCreateUser, useUpdateUser, useDeleteUser } from "@/hooks/api/useUsers";
 import { createQueryClientWrapper } from "../../utils/query-client";
 
@@ -34,7 +33,7 @@ describe("useGetUsers", () => {
 
 describe("useCreateUser", () => {
     it("creates a user and invalidates the user list cache", async () => {
-        const { wrapper, queryClient } = createQueryClientWrapper();
+        const { wrapper } = createQueryClientWrapper();
 
         const { result } = renderHook(() => useCreateUser(), { wrapper });
 
@@ -59,7 +58,7 @@ describe("useCreateUser", () => {
 
 describe("useUpdateUser", () => {
     it("updates username and role and invalidates cache", async () => {
-        const { wrapper, queryClient } = createQueryClientWrapper();
+        const { wrapper } = createQueryClientWrapper();
 
         const { result } = renderHook(() => useUpdateUser(), { wrapper });
 
@@ -78,7 +77,7 @@ describe("useUpdateUser", () => {
 
 describe("useDeleteUser", () => {
     it("deletes a user and invalidates the user list cache", async () => {
-        const { wrapper, queryClient } = createQueryClientWrapper();
+        const { wrapper } = createQueryClientWrapper();
 
         const { result } = renderHook(() => useDeleteUser(), { wrapper });
 

@@ -1,9 +1,10 @@
-import { renderHook, waitFor, act } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { queryKeys } from "@/hooks/api";
 import { useLogin, useLogout, useUser } from "@/hooks/useAuth";
+import { api } from "@/lib/api-client";
 import { server } from "../../msw/server";
 import { apiUrl } from "../../utils/env";
 import { createQueryClientWrapper } from "../../utils/query-client";
@@ -88,6 +89,52 @@ describe("useLogin", () => {
         pushMock.mockReset();
         toastErrorMock.mockReset();
         toastSuccessMock.mockReset();
+    });
+
+    it("aborts stale user checks before redirecting to the cms", async () => {
+        let userRequestSignal: { aborted: boolean } | undefined;
+        const apiGetSpy = vi.spyOn(api, "get");
+
+        apiGetSpy.mockImplementation((url, config) => {
+            if (url === "/editor/me") {
+                userRequestSignal = config?.signal;
+                return new Promise(() => {});
+            }
+
+            throw new Error(`Unexpected GET request: ${url}`);
+        });
+
+        server.use(
+            http.post(apiUrl("/auth/login"), () => {
+                return HttpResponse.json({ success: true, message: "Logged in" });
+            })
+        );
+
+        const { wrapper } = createQueryClientWrapper();
+
+        renderHook(() => useUser(), { wrapper });
+        const login = renderHook(() => useLogin(), { wrapper });
+
+        await waitFor(() => {
+            expect(userRequestSignal).toBeDefined();
+        });
+
+        act(() => {
+            login.result.current.mutate({
+                email: "admin@viernulvier.be",
+                password: "change-this-admin-password",
+            });
+        });
+
+        await waitFor(() => {
+            expect(userRequestSignal?.aborted).toBe(true);
+        });
+
+        await waitFor(() => {
+            expect(pushMock).toHaveBeenCalledWith("/cms");
+        });
+
+        apiGetSpy.mockRestore();
     });
 
     it("calls login endpoint and redirects to /cms on success", async () => {

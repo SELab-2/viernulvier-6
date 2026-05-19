@@ -24,7 +24,7 @@ export function Masthead() {
     return (
         <header className="border-foreground">
             {/* Top bar */}
-            <div className="border-muted/60 flex items-baseline justify-between border-b px-4 pt-4 pb-3 sm:px-10 sm:pt-[18px] sm:pb-2.5">
+            <div className="border-border/80 flex items-baseline justify-between border-b px-4 pt-4 pb-3 sm:px-10 sm:pt-[18px] sm:pb-2.5">
                 <span className="text-muted-foreground hidden font-mono text-[10px] tracking-[1.4px] uppercase sm:inline">
                     {t("address")}
                 </span>
@@ -62,7 +62,7 @@ export function Masthead() {
 
             {/* Mobile dropdown nav */}
             {menuOpen && (
-                <nav className="border-muted/60 flex flex-col gap-4 border-b px-4 py-4 sm:hidden">
+                <nav className="border-border/80 flex flex-col gap-4 border-b px-4 py-4 sm:hidden">
                     {NAV_LINKS.map((link) => (
                         <Link
                             key={link.key}

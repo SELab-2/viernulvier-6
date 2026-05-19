@@ -32,7 +32,7 @@ export default function ImportPage() {
 
             <div ref={contentRef} className="flex-1 overflow-auto">
                 <div className="max-w-2xl">
-                    <div className="border-foreground/20 bg-foreground/[0.02] border p-8">
+                    <div className="border-border/80 bg-foreground/[0.02] border p-8">
                         <div className="flex items-start gap-4">
                             <div className="bg-foreground/5 flex h-12 w-12 shrink-0 items-center justify-center">
                                 <Construction

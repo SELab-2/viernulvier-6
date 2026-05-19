@@ -1,7 +1,6 @@
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { queryKeys } from "@/hooks/api/query-keys";
 import {
     useGetCollections,
     useGetCollection,
@@ -69,7 +68,7 @@ describe("useGetCollectionBySlug", () => {
 
 describe("useCreateCollection", () => {
     it("creates a collection and invalidates cache", async () => {
-        const { wrapper, queryClient } = createQueryClientWrapper();
+        const { wrapper } = createQueryClientWrapper();
 
         const { result } = renderHook(() => useCreateCollection(), { wrapper });
 
@@ -114,7 +113,7 @@ describe("useUpdateCollection", () => {
 
 describe("useDeleteCollection", () => {
     it("deletes a collection and invalidates cache", async () => {
-        const { wrapper, queryClient } = createQueryClientWrapper();
+        const { wrapper } = createQueryClientWrapper();
 
         const { result } = renderHook(() => useDeleteCollection(), { wrapper });
 

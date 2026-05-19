@@ -40,7 +40,7 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE" || true
           chown -R "$(id -u):$(id -g)" "$GITHUB_WORKSPACE" || true
           chmod -R a+w "$GITHUB_WORKSPACE" || true
-
+          
           rm -f "$GITHUB_WORKSPACE/.git/hooks/pre-push" || true
           rm -f "$GITHUB_WORKSPACE/.git/hooks/post-checkout" || true
           rm -f "$GITHUB_WORKSPACE/.git/hooks/post-commit" || true

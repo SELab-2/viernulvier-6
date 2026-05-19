@@ -1,13 +1,13 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import Image from "next/image";
-import { ImageIcon, SquarePen, Trash2 } from "lucide-react";
+import { ArrowUpRight, ImageIcon, SquarePen, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { makeActionsColumn } from "../actions-column";
 import { LocalizedText, resolveLocalized } from "@/components/ui/localized-text";
 import type { FieldDef } from "../edit-sheet";
+import { CmsThumbnail } from "@/components/cms/cms-thumbnail";
 import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
 import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
 import { Action, ActionDisplay, ActionVariant } from "@/types/cms/actions";
@@ -189,6 +189,14 @@ export function makeProductionColumns(options: {
             },
         },
         {
+            key: "open-public",
+            label: t("open", { label: "production" }),
+            icon: ArrowUpRight,
+            onClick: (production) => {
+                window.location.assign(`/${locale}/productions/${production.id}`);
+            },
+        },
+        {
             key: "add-to-collection",
             render: (production, closeMenu) => (
                 <CollectionPickerSubmenu
@@ -220,42 +228,18 @@ export function makeProductionColumns(options: {
             enableSorting: false,
             cell: ({ row }) => {
                 const src = row.original.coverImageUrl;
-                if (!src) {
-                    return <div className="bg-muted h-10 w-10" />;
-                }
                 const alt =
                     row.original.translations.find((t) => t.languageCode === locale)?.title ??
                     row.original.translations.find((t) => t.languageCode === otherLocale)?.title ??
                     row.original.slug;
-                if (!onOpenSpotlight) {
-                    return (
-                        <Image
-                            src={src}
-                            alt={alt}
-                            width={40}
-                            height={40}
-                            className="h-10 w-10 object-cover"
-                        />
-                    );
-                }
                 return (
-                    <button
-                        type="button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onOpenSpotlight(src, alt);
-                        }}
-                        className="block h-10 w-10 cursor-zoom-in"
-                        aria-label={alt}
-                    >
-                        <Image
-                            src={src}
-                            alt={alt}
-                            width={40}
-                            height={40}
-                            className="h-10 w-10 object-cover"
-                        />
-                    </button>
+                    <CmsThumbnail
+                        src={src}
+                        alt={alt}
+                        onClick={
+                            src && onOpenSpotlight ? () => onOpenSpotlight(src, alt) : undefined
+                        }
+                    />
                 );
             },
         },

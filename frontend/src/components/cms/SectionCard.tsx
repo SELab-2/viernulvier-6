@@ -82,16 +82,16 @@ export function SectionCardContent({
                     {count != null && (
                         <AnimatedNumber
                             value={count}
-                            className="font-display text-muted-foreground/40 group-hover:text-foreground text-[18px] font-bold tracking-tight transition-colors duration-200"
+                            className="text-muted-foreground font-display group-hover:text-foreground text-[18px] font-bold tracking-tight transition-colors duration-200"
                         />
                     )}
-                    <Icon className="text-muted-foreground/40 group-hover:text-foreground h-5 w-5 transition-colors duration-200" />
+                    <Icon className="text-muted-foreground group-hover:text-foreground h-5 w-5 transition-colors duration-200" />
                 </div>
             </div>
 
             {comingSoon && (
                 <div className="mb-2 inline-flex">
-                    <span className="bg-foreground/10 text-foreground/70 px-1.5 py-0.5 font-mono text-[9px] tracking-[1px]">
+                    <span className="bg-muted/60 text-foreground px-1.5 py-0.5 font-mono text-[9px] tracking-[1px]">
                         {t("comingSoon")}
                     </span>
                 </div>

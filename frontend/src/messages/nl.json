@@ -62,11 +62,12 @@
         }
     },
     "ResultsBar": {
-        "sortBy": "Sorteren:",
-        "relevance": "Meest relevant",
-        "recent": "Meest recent",
-        "oldest": "Oudste eerst",
-        "relevance": "Meest relevant"
+        "sortBy": "Sorteren",
+        "relevance": "Meest Relevant",
+        "recent": "Meest Recent",
+        "oldest": "Oudste Eerst",
+        "viewList": "Lijstweergave",
+        "viewGrid": "Rasterweergave"
     },
     "Featured": {
         "label": "Uitgelicht uit het archief"
@@ -182,6 +183,8 @@
         "date": "Datum",
         "status": "Status",
         "noEvents": "Geen evenementen beschikbaar",
+        "showAllDates": "Toon alle {count} datums",
+        "showFewerDates": "Minder datums tonen",
         "free": "Gratis"
     },
     "Login": {
@@ -281,6 +284,7 @@
         "ActionsColumn": {
             "openMenu": "Menu openen",
             "actions": "Acties",
+            "open": "{label} openen",
             "copy": "{key} kopiëren",
             "copied": "{key} gekopieerd",
             "copyFailed": "Kopiëren naar klembord mislukt",
@@ -613,12 +617,17 @@
             "addedToCollectionMultiple": "{count} items toegevoegd aan \"{collection}\"",
             "removeItem": "Item verwijderen",
             "comment": "Commentaar",
+            "itemsHelp": "Voeg meer items toe vanuit de CMS-tabellen of media-ingestpagina en keer daarna terug om items te ordenen en commentaar toe te voegen.",
+            "searchItems": "Items zoeken…",
+            "addItem": "Toevoegen",
+            "alreadyAdded": "Toegevoegd",
             "contentTypes": {
                 "production": "Productie",
                 "event": "Voorstelling",
                 "blogpost": "Artikel",
                 "artist": "Artiest",
-                "location": "Locatie"
+                "location": "Locatie",
+                "media": "Media"
             }
         },
         "Media": {
@@ -812,8 +821,6 @@
         "halls": "Zalen",
         "seated": "Zitplaatsen",
         "openSeating": "Vrije plaatskeuze",
-        "searchArchive": "Bekijk alle voorstellingen op deze locatie",
-        "searchNotImplemented": "Zoeken op locatie is nog niet beschikbaar.",
         "loading": "Locatie laden...",
         "notFound": "Locatie niet gevonden.",
         "error": "Er ging iets mis bij het laden van deze locatie."

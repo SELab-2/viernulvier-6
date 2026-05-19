@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Search } from "lucide-react";
+import { LayoutGrid, List, Search } from "lucide-react";
 
 import type { ProductionSortOption } from "@/types/models/production.types";
 
@@ -12,6 +12,8 @@ interface ResultsBarProps {
     showSearch: boolean;
     sort: ProductionSortOption;
     onSortChange: (sort: ProductionSortOption) => void;
+    view?: "list" | "grid";
+    onViewChange?: (view: "list" | "grid") => void;
 }
 
 const SORT_OPTIONS: ProductionSortOption[] = ["recent", "oldest", "relevance"];
@@ -23,12 +25,14 @@ export function ResultsBar({
     showSearch,
     sort,
     onSortChange,
+    view = "list",
+    onViewChange = () => {},
 }: ResultsBarProps) {
     const t = useTranslations("ResultsBar");
     const tSearch = useTranslations("Search");
 
     return (
-        <div className="border-muted/30 bg-background sticky top-0 z-10 flex items-center gap-4 border-b px-4 py-4 sm:px-7">
+        <div className="border-border/80 bg-background sticky top-0 z-10 flex items-center gap-4 border-b px-4 py-4 sm:px-7">
             <div
                 className={`flex min-w-0 flex-1 transition-all duration-300 ease-out ${
                     showSearch
@@ -52,23 +56,51 @@ export function ResultsBar({
                 </div>
             </div>
 
-            <div className="hidden items-center gap-4 sm:flex">
-                <span className="text-muted-foreground font-mono text-[11px] tracking-[1.2px] uppercase">
-                    {t("sortBy")}
-                </span>
-                {SORT_OPTIONS.map((option) => (
+            <div className="flex items-center gap-4">
+                <div className="border-border/80 flex items-center border">
                     <button
-                        key={option}
-                        onClick={() => onSortChange(option)}
-                        className={`cursor-pointer border-b pb-0.5 font-mono text-[11px] tracking-[1.2px] uppercase transition-all ${
-                            sort === option
-                                ? "border-foreground text-foreground"
-                                : "text-muted-foreground hover:text-foreground border-transparent"
+                        type="button"
+                        onClick={() => onViewChange("list")}
+                        aria-label={t("viewList")}
+                        className={`flex h-8 w-8 cursor-pointer items-center justify-center transition-colors ${
+                            view === "list"
+                                ? "bg-foreground text-background"
+                                : "text-muted-foreground hover:text-foreground"
                         }`}
                     >
-                        {t(option)}
+                        <List className="h-3.5 w-3.5" />
                     </button>
-                ))}
+                    <button
+                        type="button"
+                        onClick={() => onViewChange("grid")}
+                        aria-label={t("viewGrid")}
+                        className={`border-border/80 flex h-8 w-8 cursor-pointer items-center justify-center border-l transition-colors ${
+                            view === "grid"
+                                ? "bg-foreground text-background"
+                                : "text-muted-foreground hover:text-foreground"
+                        }`}
+                    >
+                        <LayoutGrid className="h-3.5 w-3.5" />
+                    </button>
+                </div>
+                <div className="hidden items-center gap-4 sm:flex">
+                    <span className="text-muted-foreground font-mono text-[11px] tracking-[1.2px] uppercase">
+                        {t("sortBy")}
+                    </span>
+                    {SORT_OPTIONS.map((option) => (
+                        <button
+                            key={option}
+                            onClick={() => onSortChange(option)}
+                            className={`cursor-pointer border-b pb-0.5 font-mono text-[11px] tracking-[1.2px] uppercase transition-all ${
+                                sort === option
+                                    ? "border-foreground text-foreground"
+                                    : "text-muted-foreground hover:text-foreground border-transparent"
+                            }`}
+                        >
+                            {t(option)}
+                        </button>
+                    ))}
+                </div>
             </div>
         </div>
     );

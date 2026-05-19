@@ -1,5 +1,5 @@
-use axum::extract::{Path, Query, State};
 use axum::Json;
+use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use database::Database;
 use uuid::Uuid;
@@ -14,8 +14,7 @@ use crate::{
     error::ErrorResponse,
     handlers::{
         IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse,
-        queries::artist::ArtistSearchQuery,
-        queries::pagination::PaginationQuery,
+        queries::artist::ArtistSearchQuery, queries::pagination::PaginationQuery,
     },
 };
 
@@ -37,9 +36,17 @@ pub async fn get_all(
     Query(search): Query<ArtistSearchQuery>,
 ) -> JsonResponse<PaginatedResponse<ArtistPayload>> {
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
-    ArtistPayload::all(&db, pagination.cursor, pagination.limit, public_url, search.q.as_deref())
-        .await?
-        .json()
+    let facets = search.facets();
+    ArtistPayload::all(
+        &db,
+        pagination.cursor,
+        pagination.limit,
+        public_url,
+        search.q.as_deref(),
+        &facets,
+    )
+    .await?
+    .json()
 }
 
 #[utoipa::path(

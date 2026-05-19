@@ -71,8 +71,8 @@ export const queryKeys = {
         all: ["artists"] as const,
         list: (params?: { q?: string }) =>
             params?.q ? (["artists", "list", params] as const) : (["artists", "list"] as const),
-        infinite: (params?: { q?: string; limit?: number }) =>
-            params?.q || params?.limit
+        infinite: (params?: Record<string, unknown>) =>
+            params && Object.values(params).some(Boolean)
                 ? (["artists", "infinite", params] as const)
                 : (["artists", "infinite"] as const),
         detail: (id: string) => ["artists", id] as const,
@@ -90,7 +90,7 @@ export const queryKeys = {
         published: ["articles", "published"] as const,
         bySlug: (slug: string) => [...queryKeys.articles.all, "bySlug", slug] as const,
         byProduction: (id: string) => ["articles", "byProduction", id] as const,
-        cmsInfinite: (params?: Omit<PaginationParams, "cursor">) =>
+        cmsInfinite: (params?: Omit<SearchPaginationParams, "cursor">) =>
             params
                 ? (["articles", "cms", "infinite", params] as const)
                 : (["articles", "cms", "infinite"] as const),
