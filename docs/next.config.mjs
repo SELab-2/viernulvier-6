@@ -6,13 +6,23 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const withMDX = createMDX();
 
+const isExport = process.env.NEXT_OUTPUT_MODE === 'export';
+
 /** @type {import('next').NextConfig} */
 const config = {
-  output: 'standalone',
+  output: isExport ? 'export' : 'standalone',
   serverExternalPackages: ['@takumi-rs/image-response'],
   reactStrictMode: true,
-  basePath: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}/docs` : '/docs',
-  assetPrefix: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}/docs` : '/docs',
+  ...(isExport
+    ? {
+        basePath: process.env.NEXT_BASE_PATH || '',
+        assetPrefix: process.env.NEXT_BASE_PATH || '',
+        images: { unoptimized: true },
+      }
+    : {
+        basePath: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}/docs` : '/docs',
+        assetPrefix: process.env.PREVIEW_NAME ? `/${process.env.PREVIEW_NAME}/docs` : '/docs',
+      }),
   turbopack: {
     root: __dirname,
   },
