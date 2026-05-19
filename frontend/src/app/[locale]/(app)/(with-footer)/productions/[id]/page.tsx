@@ -241,7 +241,7 @@ export default function ProductionPage({
             {/* Part of Collections */}
             {publicCollections.length > 0 && (
                 <section className="border-foreground/10 border-t px-6 py-10 sm:px-10">
-                    <h2 className="text-muted-foreground mb-6 font-mono text-[9px] tracking-[2px] uppercase">
+                    <h2 className="text-muted-foreground mb-6 font-mono text-[10px] font-medium tracking-[1.6px] uppercase">
                         {tProd("partOfTitle")}
                     </h2>
                     <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
