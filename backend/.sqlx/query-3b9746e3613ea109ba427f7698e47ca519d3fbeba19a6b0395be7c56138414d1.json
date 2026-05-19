@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE import_rows\n               SET status = 'will_skip'\n               WHERE session_id = $1 AND status = 'will_update'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3b9746e3613ea109ba427f7698e47ca519d3fbeba19a6b0395be7c56138414d1"
+}
