@@ -38,7 +38,7 @@ function RelatedProductionCard({ production, locale }: { production: Production;
     return (
         <Link
             href={`/productions/${production.id}`}
-            className="bg-background hover:bg-muted/5 group block cursor-pointer p-4 transition-colors"
+            className="bg-background group hover:bg-muted block cursor-pointer p-4 transition-colors"
         >
             <div className="relative mb-3 aspect-[4/3] w-full overflow-hidden bg-[#ccc6bc]">
                 {coverImage?.url ? (
@@ -91,7 +91,7 @@ export function ProductionRelated({
                 </Link>
             </div>
 
-            <div className="bg-border/70 border-border/80 grid grid-cols-1 gap-[1px] border sm:grid-cols-2 lg:grid-cols-4">
+            <div className="bg-border/70 border-border/80 grid grid-cols-1 gap-[1px] sm:grid-cols-2 lg:grid-cols-4">
                 {productions.map((p) => (
                     <RelatedProductionCard key={p.id} production={p} locale={locale} />
                 ))}

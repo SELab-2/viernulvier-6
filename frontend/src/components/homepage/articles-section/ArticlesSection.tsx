@@ -27,7 +27,7 @@ export function ArticlesSection({ articles }: ArticlesSectionProps) {
                 </Link>
             </div>
 
-            <div className="-mx-4 grid grid-cols-1 sm:-mx-[30px] sm:grid-cols-3">
+            <div className="sm:divide-border/70 -mx-4 grid grid-cols-1 sm:-mx-[30px] sm:grid-cols-3 sm:divide-x">
                 {items.map((article) => (
                     <ArticleCard key={article.id} article={article} locale={locale} />
                 ))}
