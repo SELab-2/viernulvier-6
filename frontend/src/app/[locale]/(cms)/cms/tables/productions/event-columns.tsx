@@ -1,9 +1,10 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { SquarePen } from "lucide-react";
+import { SquarePen, Ticket } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { Badge } from "@/components/ui/badge";
 import { makeActionsColumn } from "../actions-column";
 import type { FieldDef } from "../edit-sheet";
 import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
@@ -52,6 +53,67 @@ export function toEventUpdateInput(entity: Event): EventUpdateInput {
         createdAt: entity.createdAt,
         prices: entity.prices,
     };
+}
+
+export function EventPriceExtraContent({ entity }: { entity: Event }) {
+    const t = useTranslations("Cms.Productions");
+    const prices = entity.prices;
+
+    if (!prices || prices.length === 0) {
+        return (
+            <div>
+                <span className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
+                    {t("fieldEventPrices")}
+                </span>
+                <div className="border-foreground/10 bg-foreground/[0.02] mt-1.5 rounded-sm border px-3 py-2">
+                    <span className="text-muted-foreground font-mono text-xs">—</span>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div>
+            <span className="text-muted-foreground font-mono text-[9px] tracking-[1.2px] uppercase">
+                {t("fieldEventPrices")} ({prices.length})
+            </span>
+            <div className="border-foreground/10 divide-foreground/[0.06] mt-1.5 divide-y rounded-sm border">
+                {prices.map((price, idx) => (
+                    <div key={price.id ?? idx} className="px-3 py-2">
+                        <div className="flex items-center justify-between gap-2">
+                            <div className="flex min-w-0 items-center gap-2">
+                                <Ticket className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+                                <span className="text-foreground truncate font-mono text-xs">
+                                    {price.price.descriptionNl ?? price.price.type}
+                                </span>
+                                {price.rank.code && (
+                                    <Badge
+                                        variant="secondary"
+                                        className="h-4 shrink-0 px-1.5 py-0 text-[10px]"
+                                    >
+                                        {price.rank.code}
+                                    </Badge>
+                                )}
+                            </div>
+                            <span className="text-muted-foreground shrink-0 font-mono text-xs tabular-nums">
+                                {price.amountCents === 0
+                                    ? t("fieldEventPriceFree")
+                                    : `\u20ac${(price.amountCents / 100).toFixed(2)}`}
+                            </span>
+                        </div>
+                        <div className="text-muted-foreground mt-1 flex gap-3 font-mono text-[10px]">
+                            <span>
+                                {t("fieldEventPriceType")}: {price.price.type}
+                            </span>
+                            <span>
+                                {t("fieldEventPriceAvailable")}: {price.available}
+                            </span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
 }
 
 export function makeEventColumns(options: {
@@ -115,6 +177,21 @@ export function makeEventColumns(options: {
             cell: ({ getValue }) => {
                 const ids = getValue<string[]>();
                 return ids.length === 0 ? "—" : ids.length === 1 ? "1 hall" : `${ids.length} halls`;
+            },
+        },
+        {
+            accessorKey: "prices",
+            header: tProductions("eventPriceColumn"),
+            cell: ({ getValue }) => {
+                const prices = getValue<Event["prices"]>();
+                if (!prices || prices.length === 0) return "\u2014";
+                const amounts = prices.map((p) => p.amountCents / 100);
+                const min = Math.min(...amounts);
+                const max = Math.max(...amounts);
+                if (min === 0 && max === 0) return tProductions("fieldEventPriceFree");
+                const fmt = (n: number) => `\u20ac${n.toFixed(2)}`;
+                if (prices.length === 1 || min === max) return fmt(min);
+                return `${fmt(min)} \u2013 ${fmt(max)}`;
             },
         },
         makeActionsColumn<Event>({ actions }),

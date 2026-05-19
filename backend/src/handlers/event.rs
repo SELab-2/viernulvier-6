@@ -4,6 +4,8 @@ use axum::{
     http::StatusCode,
 };
 use database::Database;
+use serde::Deserialize;
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::{
@@ -17,14 +19,21 @@ use crate::{
     },
 };
 
+#[derive(Deserialize, IntoParams, ToSchema)]
+pub struct EventFilterQuery {
+    /// Comma-separated list of production UUIDs to filter by
+    pub production_ids: Option<String>,
+}
+
 #[utoipa::path(
     method(get),
     path = "/events",
     tag = "Events",
     operation_id = "get_all_events",
-    description = "Get all events",
+    description = "Get all events, optionally filtered by production IDs",
     params(
-        PaginationQuery
+        PaginationQuery,
+        EventFilterQuery
     ),
     responses(
         (status = 200, description = "Success", body = PaginatedResponse<EventPayload>)
@@ -33,7 +42,20 @@ use crate::{
 pub async fn get_all(
     db: Database,
     Query(pagination): Query<PaginationQuery>,
+    Query(filter): Query<EventFilterQuery>,
 ) -> JsonResponse<PaginatedResponse<EventPayload>> {
+    if let Some(ref ids_str) = filter.production_ids {
+        let ids: Vec<Uuid> = ids_str
+            .split(',')
+            .filter_map(|s| Uuid::parse_str(s.trim()).ok())
+            .collect();
+        let data = EventPayload::by_production_ids(&db, &ids).await?;
+        return Ok(Json(PaginatedResponse {
+            data,
+            next_cursor: None,
+        }));
+    }
+
     EventPayload::all(&db, pagination.cursor, pagination.limit)
         .await?
         .json()
