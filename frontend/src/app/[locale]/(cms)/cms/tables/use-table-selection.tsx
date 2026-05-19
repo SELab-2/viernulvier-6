@@ -227,6 +227,9 @@ export function useTableSelection<TData>({
                 const next = focusedIdx === -1 ? 0 : Math.min(focusedIdx + 1, rows.length - 1);
                 if (event.shiftKey && anchorId) {
                     selectRangeRef.current(anchorId, rows[next].id);
+                } else {
+                    onRowSelectionChangeRef.current?.({ [rows[next].id]: true });
+                    setAnchorRowId(rows[next].id);
                 }
                 focusRowRef.current(next);
             } else if (event.key === "ArrowUp" || event.key === "k") {
@@ -234,6 +237,9 @@ export function useTableSelection<TData>({
                 const next = focusedIdx === -1 ? -1 : Math.max(focusedIdx - 1, 0);
                 if (next >= 0 && event.shiftKey && anchorId) {
                     selectRangeRef.current(anchorId, rows[next].id);
+                } else if (next >= 0) {
+                    onRowSelectionChangeRef.current?.({ [rows[next].id]: true });
+                    setAnchorRowId(rows[next].id);
                 }
                 if (next >= 0) focusRowRef.current(next);
             } else if (event.key === "g") {
