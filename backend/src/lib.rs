@@ -8,6 +8,7 @@ use argon2::{
     password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
 };
 use aws_sdk_s3::config::{Builder as S3Builder, Credentials, Region};
+use axum::extract::DefaultBodyLimit;
 use axum::http::{HeaderValue, Method};
 use axum::middleware::from_extractor_with_state;
 use axum::{Router, routing::get};
@@ -28,26 +29,30 @@ use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
 use utoipa_swagger_ui::{Config, SwaggerUi};
 
+const REQUEST_BODY_LIMIT_BYTES: usize = 12 * 1024 * 1024;
+
 use crate::config::AppConfig;
 use crate::error::AppError;
 use crate::handlers::{
-    admin, article, artist, auth, collection, event, hall, import_error, location, media,
-    production, space, stats, tagging, taxonomy, version,
+    admin, article, artist, auth, collection, event, hall, import as import_handlers, import_error,
+    location, media, production, space, stats, tagging, taxonomy, version,
 };
+use crate::import::ImportRegistry;
 
 pub mod config;
 pub mod dto;
 mod error;
 mod extractors;
 mod handlers;
+pub mod import;
 mod vnv_import_tasks;
-
 
 #[derive(Clone)]
 pub struct AppState {
     pub db: Database,
     pub config: AppConfig,
     pub s3_client: Option<aws_sdk_s3::Client>,
+    pub import_registry: ImportRegistry,
     pub revoked: database::revocation::RevokedUsers,
 }
 
@@ -57,7 +62,8 @@ pub struct AppState {
     components(schemas(EntityType, Facet, Sort)),
     tags(
         (name = "Collections", description = "A saved, titled selection of archive items with a shareable URL. No login required to view."),
-        (name = "Stats", description = "Aggregate public site statistics.")
+        (name = "Stats", description = "Aggregate public site statistics."),
+        (name = "import", description = "CSV import sessions: upload, map columns, dry-run, commit, and rollback.")
     )
 )]
 pub struct ApiDoc;
@@ -170,16 +176,26 @@ pub async fn start_app(config: AppConfig) -> Result<(), AppError> {
     let revoked = database::revocation::RevokedUsers::new(std::time::Duration::from_secs(
         (config.refresh_token_expiry_days as u64) * 24 * 60 * 60,
     ));
-    revoked.load_from_db(db.pool()).await.map_err(|e| {
-        AppError::Internal(format!("Failed to load revoked users: {e}"))
-    })?;
+    revoked
+        .load_from_db(db.pool())
+        .await
+        .map_err(|e| AppError::Internal(format!("Failed to load revoked users: {e}")))?;
 
     let state = AppState {
         db,
         config: config.clone(),
         s3_client,
+        import_registry: crate::import::default_registry(),
         revoked,
     };
+
+    crate::import::worker::spawn(crate::import::worker::WorkerContext {
+        db: state.db.clone(),
+        registry: state.import_registry.clone(),
+        s3_client: state.s3_client.clone(),
+        s3_bucket: state.config.s3.as_ref().map(|s| s.bucket.clone()),
+    });
+    info!("Import worker spawned");
 
     let allowed_origins: Vec<HeaderValue> = state
         .config
@@ -247,6 +263,7 @@ pub fn router(state: &AppState) -> Router<AppState> {
     Router::new()
         .nest(&base_path, api_router)
         .merge(swagger_ui)
+        .layer(DefaultBodyLimit::max(REQUEST_BODY_LIMIT_BYTES))
         .fallback(get(|| async { AppError::NotFound }))
 }
 
@@ -367,6 +384,25 @@ fn editor_routes(state: AppState) -> OpenApiRouter<AppState> {
         .routes(routes!(artist::post))
         .routes(routes!(artist::put))
         .routes(routes!(artist::delete))
+        // Import
+        .routes(routes!(import_handlers::upload_session))
+        .routes(routes!(import_handlers::list_entity_types))
+        .routes(routes!(import_handlers::list_fields))
+        .routes(routes!(import_handlers::list_sessions))
+        .routes(routes!(
+            import_handlers::get_session,
+            import_handlers::cancel_session
+        ))
+        .routes(routes!(import_handlers::get_rows))
+        .routes(routes!(import_handlers::get_row_stats))
+        .routes(routes!(import_handlers::update_mapping))
+        .routes(routes!(import_handlers::enqueue_dry_run))
+        .routes(routes!(import_handlers::enqueue_commit))
+        .routes(routes!(import_handlers::skip_update_rows))
+        .routes(routes!(import_handlers::update_row))
+        .routes(routes!(import_handlers::rollback_session))
+        .routes(routes!(import_handlers::revert_row))
+        .routes(routes!(import_handlers::delete_session))
         .layer(from_extractor_with_state::<EditorUser, AppState>(state))
 }
 
@@ -447,7 +483,11 @@ mod tests {
             .await
             .unwrap();
 
-        let user = database.users().by_email("admin@viernulvier.be").await.unwrap();
+        let user = database
+            .users()
+            .by_email("admin@viernulvier.be")
+            .await
+            .unwrap();
         assert_eq!(user.email, "admin@viernulvier.be");
         assert_eq!(user.role, database::models::user::UserRole::Admin);
     }
@@ -466,7 +506,11 @@ mod tests {
             .unwrap();
 
         // Should still be able to authenticate with the first password
-        let user = database.users().by_email("admin@viernulvier.be").await.unwrap();
+        let user = database
+            .users()
+            .by_email("admin@viernulvier.be")
+            .await
+            .unwrap();
         assert_eq!(user.email, "admin@viernulvier.be");
     }
 }

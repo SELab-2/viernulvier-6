@@ -13,6 +13,7 @@ pub mod auth;
 pub mod collection;
 pub mod event;
 pub mod hall;
+pub mod import;
 pub mod import_error;
 pub mod location;
 pub mod media;

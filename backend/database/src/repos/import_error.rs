@@ -51,7 +51,10 @@ impl<'a> ImportErrorRepo<'a> {
             .push(" ORDER BY last_seen_at DESC, id DESC LIMIT ")
             .push_bind(limit as i64);
 
-        Ok(query.build_query_as::<ImportError>().fetch_all(self.db).await?)
+        Ok(query
+            .build_query_as::<ImportError>()
+            .fetch_all(self.db)
+            .await?)
     }
 
     pub async fn unresolved(&self, limit: i64) -> Result<Vec<ImportError>, DatabaseError> {

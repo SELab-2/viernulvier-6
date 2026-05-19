@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE import_sessions\n               SET mapping = $1, status = 'mapping'\n               WHERE id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Jsonb",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f8d2d634eaee4777aebdd8fbebdbe9072d577101e8333efb73159d3716b65427"
+}

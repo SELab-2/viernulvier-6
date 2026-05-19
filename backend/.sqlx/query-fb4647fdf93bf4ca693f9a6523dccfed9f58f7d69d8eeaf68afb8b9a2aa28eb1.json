@@ -1,0 +1,88 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT\n               id,\n               entity_type,\n               filename,\n               original_headers,\n               mapping        AS \"mapping: Json<ImportMapping>\",\n               status         AS \"status: ImportSessionStatus\",\n               row_count,\n               created_by,\n               created_at,\n               updated_at,\n               committed_at,\n               error\n             FROM import_sessions\n             WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "entity_type",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "filename",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "original_headers",
+        "type_info": "TextArray"
+      },
+      {
+        "ordinal": 4,
+        "name": "mapping: Json<ImportMapping>",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 5,
+        "name": "status: ImportSessionStatus",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "row_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 7,
+        "name": "created_by",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 8,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 9,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 10,
+        "name": "committed_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 11,
+        "name": "error",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "fb4647fdf93bf4ca693f9a6523dccfed9f58f7d69d8eeaf68afb8b9a2aa28eb1"
+}

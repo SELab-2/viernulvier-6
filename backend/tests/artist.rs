@@ -6,9 +6,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 use viernulvier_archive::dto::{
-    artist::ArtistPayload,
-    paginated::PaginatedResponse,
-    production::ProductionPayload,
+    artist::ArtistPayload, paginated::PaginatedResponse, production::ProductionPayload,
 };
 
 use crate::common::{into_struct::IntoStruct, router::TestRouter};
@@ -112,8 +110,14 @@ async fn get_productions_by_artist(db: PgPool) {
 
     let data: Vec<ProductionPayload> = response.into_struct().await;
     assert_eq!(data.len(), 2);
-    assert_eq!(data[0].id, Uuid::from_str("22222222-2222-2222-2222-222222222222").unwrap());
-    assert_eq!(data[1].id, Uuid::from_str("11111111-1111-1111-1111-111111111111").unwrap());
+    assert_eq!(
+        data[0].id,
+        Uuid::from_str("22222222-2222-2222-2222-222222222222").unwrap()
+    );
+    assert_eq!(
+        data[1].id,
+        Uuid::from_str("11111111-1111-1111-1111-111111111111").unwrap()
+    );
 }
 
 #[sqlx::test(fixtures("artists", "productions", "production_artists"))]
@@ -144,7 +148,9 @@ async fn get_productions_not_found(db: PgPool) {
 #[test_log::test]
 async fn post_success(db: PgPool) {
     let unauth_app = TestRouter::new(db.clone());
-    let unauth_response = unauth_app.post("/artists", &json!({ "name": "New Artist" })).await;
+    let unauth_response = unauth_app
+        .post("/artists", &json!({ "name": "New Artist" }))
+        .await;
     assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
 
     let app = TestRouter::as_editor(db).await;
@@ -164,13 +170,19 @@ async fn put_success(db: PgPool) {
 
     let unauth_app = TestRouter::new(db.clone());
     let unauth_response = unauth_app
-        .put(&format!("/artists/{target_id}"), &json!({ "name": "Updated Name", "slug": "updated-name" }))
+        .put(
+            &format!("/artists/{target_id}"),
+            &json!({ "name": "Updated Name", "slug": "updated-name" }),
+        )
         .await;
     assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
 
     let app = TestRouter::as_editor(db).await;
     let response = app
-        .put(&format!("/artists/{target_id}"), &json!({ "name": "Updated Name", "slug": "updated-name" }))
+        .put(
+            &format!("/artists/{target_id}"),
+            &json!({ "name": "Updated Name", "slug": "updated-name" }),
+        )
         .await;
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -185,13 +197,19 @@ async fn put_success(db: PgPool) {
 async fn put_not_found(db: PgPool) {
     let unauth_app = TestRouter::new(db.clone());
     let unauth_response = unauth_app
-        .put(&format!("/artists/{}", Uuid::nil()), &json!({ "name": "Ghost", "slug": "ghost" }))
+        .put(
+            &format!("/artists/{}", Uuid::nil()),
+            &json!({ "name": "Ghost", "slug": "ghost" }),
+        )
         .await;
     assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
 
     let app = TestRouter::as_editor(db).await;
     let response = app
-        .put(&format!("/artists/{}", Uuid::nil()), &json!({ "name": "Ghost", "slug": "ghost" }))
+        .put(
+            &format!("/artists/{}", Uuid::nil()),
+            &json!({ "name": "Ghost", "slug": "ghost" }),
+        )
         .await;
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
@@ -217,7 +235,9 @@ async fn delete_success(db: PgPool) {
 #[test_log::test]
 async fn delete_not_found(db: PgPool) {
     let unauth_app = TestRouter::new(db.clone());
-    let unauth_response = unauth_app.delete(&format!("/artists/{}", Uuid::nil())).await;
+    let unauth_response = unauth_app
+        .delete(&format!("/artists/{}", Uuid::nil()))
+        .await;
     assert_eq!(unauth_response.status(), StatusCode::UNAUTHORIZED);
 
     let app = TestRouter::as_editor(db).await;
@@ -230,6 +250,8 @@ async fn delete_not_found(db: PgPool) {
 async fn post_duplicate_slug_returns_conflict(db: PgPool) {
     let app = TestRouter::as_editor(db).await;
 
-    let response = app.post("/artists", &json!({ "name": "Test Artist" })).await;
+    let response = app
+        .post("/artists", &json!({ "name": "Test Artist" }))
+        .await;
     assert_eq!(response.status(), StatusCode::CONFLICT);
 }

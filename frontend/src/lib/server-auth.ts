@@ -22,6 +22,20 @@ export function buildCookieHeader(cookies: AuthCookie[]): string {
     return cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join("; ");
 }
 
+function hasCookie(cookieHeader: string, name: string, value: string): boolean {
+    return cookieHeader
+        .split(";")
+        .map((cookie) => cookie.trim())
+        .some((cookie) => cookie === `${name}=${value}`);
+}
+
+function shouldBypassAuthForE2e(cookieHeader: string): boolean {
+    return (
+        process.env.PLAYWRIGHT_AUTH_BYPASS === "1" &&
+        hasCookie(cookieHeader, "session_present", "1")
+    );
+}
+
 async function backendAuthRequest(
     path: string,
     cookieHeader: string,
@@ -42,6 +56,7 @@ export async function hasValidCmsSession(
     fetcher: ServerAuthFetch = fetch
 ): Promise<boolean> {
     if (!cookieHeader) return false;
+    if (shouldBypassAuthForE2e(cookieHeader)) return true;
 
     const userResponse = await backendAuthRequest("/editor/me", cookieHeader, fetcher);
     if (userResponse.ok) return true;

@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE import_rows\n               SET status = $1, diff = $2, warnings = $3\n               WHERE id = $4",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Jsonb",
+        "Jsonb",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e4f364d70e63fcc393e493e39aec9a619e0c3223b4819fdef1eaabcd36e65600"
+}

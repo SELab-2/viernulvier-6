@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE import_sessions\n               SET status = 'committed',\n                   committed_at = NOW(),\n                   error = NULL\n               WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6c4d162b3b7d15056a4f965adf4302b57c7673e52726bdf8d55a5710cbaa5242"
+}

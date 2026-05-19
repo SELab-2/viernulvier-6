@@ -1,0 +1,192 @@
+---
+title: CSV Import — User Guide
+description: Step-by-step guide for editors on how to upload a CSV, map columns, review a dry run, commit rows, and manage import history in the viernulvier-archief CMS.
+---
+
+# CSV Import — User Guide
+
+The CSV Import feature lets editors bring spreadsheet exports into the archive through one shared workflow. Every session goes through **Upload → Map → Dry Run → Commit**, and every run is stored in **History** so you can inspect what happened later.
+
+The page lives at **`/cms/import`** and is available to any user with the _Editor_ role.
+
+---
+
+## Before You Start
+
+A few practical constraints matter up front:
+
+- **File format**: CSV with a header row.
+- **Column names**: can be arbitrary; you map them in the next step.
+- **Server-side size limit**: **10 MiB** per file.
+- **Supported import targets today**: `article`, `artist`, `event`, `location`, `production`.
+- **Legacy files**: the old `Productions - output.csv` and `voorstellingen.csv` exports are still first-class inputs for productions and events.
+
+You also need to be signed in as an Editor. Sessions are persisted on the server, so if you leave and come back you can usually continue from history.
+
+---
+
+## The Four-Stage Flow
+
+Every import uses the same stepper:
+
+```text
+Upload  →  Map  →  Dry Run  →  Commit
+```
+
+The backend owns the session state. Closing the tab does not discard the import.
+
+### Stage 1 — Upload
+
+1. Open **`/cms/import`**. You'll see a drop zone and a pick-file button.
+2. Pick the **entity type** you are importing.
+3. Drag the CSV onto the drop zone, or click to browse.
+4. Click **Upload**.
+
+The API validates the file, stores the raw CSV, creates an import session, and moves you to the mapping step. The first preview rows are then reused as sample values while mapping.
+
+If upload fails, check the error banner first. The most common causes are an unsupported entity type, a file larger than the backend limit, or a CSV the parser cannot read.
+
+### Stage 2 — Map Columns to Fields
+
+This is where you tell the importer what each CSV column means.
+
+For each source column, the UI shows:
+
+- the CSV header,
+- a few sample values from the uploaded file,
+- the selected target field,
+- and any obvious type mismatch warnings.
+
+What to do:
+
+1. Review the suggested mappings.
+2. Change anything that is wrong.
+3. Leave a column unmapped if you want to ignore it.
+4. Click **Save** if you changed mappings.
+5. Click **Start Dry Run** once all required fields are mapped and the type checks look sane.
+
+The page will not start the dry run while you still have unsaved mapping changes, missing required fields, or detected type mismatches.
+
+### Stage 3 — Dry Run
+
+A dry run persists one result row per CSV row and classifies each row before anything is written to the target tables.
+
+The table is filterable by status. In practice you will mostly work with:
+
+| Column       | Meaning                                               |
+| ------------ | ----------------------------------------------------- |
+| `#`          | Row number in the source file                         |
+| **Status**   | `will_create`, `will_update`, `will_skip`, or `error` |
+| **Entity**   | The matched or proposed target record                 |
+| **Warnings** | Validation or adapter messages attached to that row   |
+
+Click a row to open the drawer. From there you can:
+
+- inspect the raw CSV values,
+- apply field overrides,
+- resolve foreign-key references,
+- and toggle **Skip row** for rows you do not want committed.
+
+Important behavior:
+
+- A row in `error` is not committable.
+- A row in `will_skip` is ignored during commit.
+- You can still commit a session that contains error rows, as long as at least one row is still actionable.
+- The **Import without overriding** action bulk-converts all `will_update` rows into `will_skip`.
+
+Use **Rerun dry run** after larger edits or after changing data in the source CSV. The dry run is intentionally repeatable.
+
+### Stage 4 — Commit
+
+Committing enqueues the session for the background worker. The worker then processes each actionable row in its own database transaction.
+
+That has two consequences:
+
+- successful rows can finish even if later rows fail,
+- and a failed commit can still be a **partial import**.
+
+On full success the CMS redirects to the session’s history detail page. On failure you will either:
+
+- return to the dry-run flow if nothing was committed yet, or
+- land in history if some rows were already committed.
+
+---
+
+## History, Rollback, and Delete
+
+The history views are where you inspect past runs and decide what to do with them.
+
+### The history list
+
+Open **`/cms/import/history`** from the button on the import page. Each row shows the created date, entity type, filename, session status, row count, and available actions.
+
+Depending on state, a session may show:
+
+- **Continue** for in-progress sessions,
+- **Open** for details,
+- **Delete** for deletable runs.
+
+Committed sessions are deletable from history too, but that delete action first tries to roll back imported entities.
+
+### The history detail
+
+The detail page shows session metadata plus the row table and row counts for each status.
+
+#### Reverting a single row
+
+Rows in `created` or `updated` state expose a **Revert** action.
+
+Current behavior is important here: **revert deletes the imported entity**. That is true for both created rows and updated rows in the current implementation. The UI warns about this for updated rows because the previous values are not restored.
+
+On success the row becomes `reverted`.
+
+#### Rolling back the whole session
+
+The **Rollback entire import** action walks the committed rows in reverse order and tries to revert them one by one.
+
+- The session stays in history.
+- Successful row reverts are marked as `reverted`.
+- Per-row failures are tolerated and stored as `revert_failed` warnings.
+- When rollback finishes, the session status becomes `cancelled`.
+
+Rollback is therefore the “keep the audit trail, attempt the cleanup” option.
+
+#### Deleting a run from history
+
+The **Delete** action removes the session record from history.
+
+For:
+
+- incomplete sessions, it just deletes the session,
+- committed sessions, it first performs a **strict** rollback,
+- failed sessions with a partial commit, it also performs a strict rollback first.
+
+If any revert fails during that strict rollback, the delete is aborted and the history entry stays in place.
+
+---
+
+## Tips & Common Pitfalls
+
+- **Legacy duplicate detection**: production imports still use the legacy `ID` / `source_id` path to match existing records instead of creating duplicates.
+- **Mapping first, fixing later**: if many rows are wrong for the same reason, fix the mapping or the CSV and rerun instead of editing row-by-row.
+- **Errors do not kill the whole session**: they only block those rows. That is why partial commits are possible.
+- **Use `will_skip` deliberately**: it is the cleanest way to import creates while ignoring updates you do not trust yet.
+- **Treat rollback as destructive**: today it deletes affected entities rather than restoring an earlier field snapshot.
+
+---
+
+## Troubleshooting
+
+- **"Unsupported entity_type"** — the entity type you picked has no adapter registered. See [Architecture → Adapters](./architecture#adapters) for how to add one.
+- **"file exceeds 10 MiB limit"** — reduce the file size; the API hard limit is lower than what the browser picker currently allows.
+- **Session stuck in `dry_run_pending` or `committing`** — the worker polls the sessions table; refresh after a short delay and check API logs if it never advances.
+- **Most rows show `error` immediately** — check required-field mapping and type mismatches first.
+- **Foreign-key picker does not help** — the referenced entity may not exist yet, or the row may need an explicit UUID override.
+
+For anything else, check the session's status and error fields in the history detail — most failures surface there with a concrete error message.
+
+---
+
+## What's Next
+
+If you want to understand _how_ any of this works under the hood — the database tables, the adapter trait, the background worker, or the four-stage React flow — continue to the **[Architecture](./architecture)** document.

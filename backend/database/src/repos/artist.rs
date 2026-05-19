@@ -4,6 +4,7 @@ use sqlx::PgPool;
 
 use crate::{
     error::DatabaseError,
+    repos::slug::{escape_like_pattern, next_unique_slug},
     models::{artist::Artist, entity_type::EntityType, filtering::facets::FacetFilters},
     repos::query_filters::facets::AddFacetFilters,
 };
@@ -119,6 +120,41 @@ impl<'a> ArtistRepo<'a> {
         .ok_or_else(|| DatabaseError::Conflict(format!("artist with slug '{slug}' already exists")))
     }
 
+    pub async fn find_unique_slug(&self, base_slug: &str) -> Result<String, DatabaseError> {
+        let like_pattern = format!("{}-%", escape_like_pattern(base_slug));
+
+        let existing_slugs: Vec<String> = sqlx::query_scalar(
+            "SELECT slug
+             FROM artists
+             WHERE slug = $1 OR slug LIKE $2 ESCAPE '\\'",
+        )
+        .bind(base_slug)
+        .bind(like_pattern)
+        .fetch_all(self.db)
+        .await?;
+
+        Ok(next_unique_slug(
+            base_slug,
+            existing_slugs.iter().map(String::as_str),
+        ))
+    }
+
+    pub async fn insert_on(
+        &self,
+        conn: &mut sqlx::PgConnection,
+        name: &str,
+        slug: &str,
+    ) -> Result<Artist, DatabaseError> {
+        sqlx::query_as::<_, Artist>(
+            "INSERT INTO artists (name, slug) VALUES ($1, $2) ON CONFLICT (slug) DO NOTHING RETURNING *",
+        )
+        .bind(name)
+        .bind(slug)
+        .fetch_optional(conn)
+        .await?
+        .ok_or_else(|| DatabaseError::Conflict(format!("artist with slug '{slug}' already exists")))
+    }
+
     pub async fn update(&self, id: Uuid, name: &str, slug: &str) -> Result<Artist, DatabaseError> {
         sqlx::query_as::<_, Artist>(
             "UPDATE artists SET name = $1, slug = $2, updated_at = NOW() WHERE id = $3 RETURNING *",
@@ -127,6 +163,24 @@ impl<'a> ArtistRepo<'a> {
         .bind(slug)
         .bind(id)
         .fetch_optional(self.db)
+        .await?
+        .ok_or(DatabaseError::NotFound)
+    }
+
+    pub async fn update_on(
+        &self,
+        conn: &mut sqlx::PgConnection,
+        id: Uuid,
+        name: &str,
+        slug: &str,
+    ) -> Result<Artist, DatabaseError> {
+        sqlx::query_as::<_, Artist>(
+            "UPDATE artists SET name = $1, slug = $2, updated_at = NOW() WHERE id = $3 RETURNING *",
+        )
+        .bind(name)
+        .bind(slug)
+        .bind(id)
+        .fetch_optional(conn)
         .await?
         .ok_or(DatabaseError::NotFound)
     }
@@ -150,6 +204,21 @@ impl<'a> ArtistRepo<'a> {
         let result = sqlx::query("DELETE FROM artists WHERE id = $1")
             .bind(id)
             .execute(self.db)
+            .await?;
+        if result.rows_affected() == 0 {
+            return Err(DatabaseError::NotFound);
+        }
+        Ok(())
+    }
+
+    pub async fn delete_on(
+        &self,
+        conn: &mut sqlx::PgConnection,
+        id: Uuid,
+    ) -> Result<(), DatabaseError> {
+        let result = sqlx::query("DELETE FROM artists WHERE id = $1")
+            .bind(id)
+            .execute(conn)
             .await?;
         if result.rows_affected() == 0 {
             return Err(DatabaseError::NotFound);

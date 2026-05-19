@@ -1228,7 +1228,10 @@ mod tests {
 
     #[test]
     fn test_decode_url_from_crop_invalid_base64() {
-        assert_eq!(decode_url_from_crop("https://cdn.example.com/crop/!!!@@@"), None);
+        assert_eq!(
+            decode_url_from_crop("https://cdn.example.com/crop/!!!@@@"),
+            None
+        );
     }
 
     #[test]

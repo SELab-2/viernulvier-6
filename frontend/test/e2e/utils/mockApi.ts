@@ -8,6 +8,7 @@ type PaginatedLocationResponse = components["schemas"]["PaginatedResponse_Locati
 type FacetResponse = components["schemas"]["FacetResponse"];
 type ArticleListPayload = components["schemas"]["ArticleListPayload"];
 type ArticlePayload = components["schemas"]["ArticlePayload"];
+type EditorResponse = components["schemas"]["EditorResponse"];
 
 /**
  * Mocks the backend API responses for E2E tests.
@@ -16,7 +17,34 @@ type ArticlePayload = components["schemas"]["ArticlePayload"];
  * by spinning up the database and backend in a dedicated full-stack CI workflow.
  * For now, this isolates the frontend tests and makes them fast and reliable.
  */
-export async function mockApi(page: Page) {
+export async function mockApi(page: Page, options?: { withAuth?: boolean }) {
+    const { withAuth = false } = options ?? {};
+
+    if (withAuth) {
+        await page.context().addCookies([
+            {
+                name: "session_present",
+                value: "1",
+                domain: "localhost",
+                path: "/",
+                httpOnly: false,
+                secure: false,
+            },
+        ]);
+
+        const editorResponse: EditorResponse = {
+            id: "00000000-0000-4000-8000-000000000001",
+            email: "test@example.com",
+            role: "admin",
+        };
+        await page.route("**/api/editor/me**", async (route) => {
+            await route.fulfill({ json: editorResponse });
+        });
+        await page.route("**/api/auth/refresh**", async (route) => {
+            await route.fulfill({ json: { success: true, message: "refreshed" } });
+        });
+    }
+
     const productionId = (i: number) => "00000000-0000-4000-8000-" + String(i).padStart(12, "0");
 
     // Mock productions (return enough items to trigger pagination > 20 items)
@@ -111,6 +139,10 @@ export async function mockApi(page: Page) {
     ];
     await page.route("**/api/taxonomy/facets**", async (route) => {
         await route.fulfill({ json: facets });
+    });
+
+    await page.route("**/api/import/entity-types**", async (route) => {
+        await route.fulfill({ json: ["production", "artist", "location", "article"] });
     });
 
     // Mock articles

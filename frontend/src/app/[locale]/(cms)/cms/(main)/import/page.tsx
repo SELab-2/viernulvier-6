@@ -3,13 +3,60 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 import { animate } from "animejs";
-import { Construction } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { History } from "lucide-react";
 import { PageHeader } from "@/components/cms/PageHeader";
+import { ImportStepper, type ImportStage } from "@/components/cms/import/ImportStepper";
+import { CommitStage } from "@/components/cms/import/CommitStage";
+import { DryRunStage } from "@/components/cms/import/DryRunStage";
+import { MappingStage } from "@/components/cms/import/MappingStage";
+import { UploadStage } from "@/components/cms/import/UploadStage";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/routing";
+import { useImportSession } from "@/hooks/api/useImport";
+import type { ImportSessionStatus } from "@/types/models/import.types";
+
+function deriveStage(status: ImportSessionStatus | undefined): ImportStage {
+    if (!status) {
+        return "upload";
+    }
+    switch (status) {
+        case "mapping":
+            return "mapping";
+        case "dry_run_pending":
+        case "dry_run_ready":
+            return "dry_run";
+        case "committing":
+        case "committed":
+        case "failed":
+            return "commit";
+        default:
+            return "upload";
+    }
+}
 
 export default function ImportPage() {
     const t = useTranslations("Cms.Import");
     const tEditions = useTranslations("Cms.editions");
     const contentRef = useRef<HTMLDivElement>(null);
+    const searchParams = useSearchParams();
+    const sessionId = searchParams?.get("session") ?? "";
+    const stageOverride = searchParams?.get("stage") as ImportStage | null;
+    const VALID_STAGES: ImportStage[] = ["upload", "mapping", "dry_run", "commit"];
+
+    const {
+        data: session,
+        isPending: sessionLoading,
+        isError: sessionError,
+    } = useImportSession(sessionId, { enabled: sessionId !== "" });
+
+    const currentStage =
+        sessionId === ""
+            ? "upload"
+            : stageOverride !== null && VALID_STAGES.includes(stageOverride)
+              ? stageOverride
+              : deriveStage(session?.status);
 
     useEffect(() => {
         if (contentRef.current) {
@@ -31,29 +78,56 @@ export default function ImportPage() {
             <PageHeader eyebrow={tEditions("edition6")} title={t("title")} />
 
             <div ref={contentRef} className="flex-1 overflow-auto">
-                <div className="max-w-2xl">
-                    <div className="border-border/80 bg-foreground/[0.02] border p-8">
-                        <div className="flex items-start gap-4">
-                            <div className="bg-foreground/5 flex h-12 w-12 shrink-0 items-center justify-center">
-                                <Construction
-                                    className="text-muted-foreground h-6 w-6"
-                                    strokeWidth={1.5}
-                                />
-                            </div>
-                            <div>
-                                <div className="text-muted-foreground mb-2 font-mono text-[9px] tracking-[2px] uppercase">
-                                    {t("comingSoon")}
-                                </div>
-                                <h2 className="font-display text-foreground mb-3 text-2xl font-bold tracking-tight">
-                                    {t("notAvailable")}
-                                </h2>
-                                <p className="text-muted-foreground font-body text-sm leading-relaxed">
-                                    {t("description")}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                <div className="mb-2 flex justify-end">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        asChild
+                        className="h-7 rounded-none px-2 font-mono text-[10px] tracking-[1.5px] uppercase"
+                    >
+                        <Link href="/cms/import/history" className="flex items-center gap-1.5">
+                            <History className="h-3.5 w-3.5" />
+                            {t("viewHistory")}
+                        </Link>
+                    </Button>
                 </div>
+
+                <ImportStepper currentStage={currentStage} />
+
+                {sessionId !== "" && sessionLoading && !sessionError && (
+                    <div className="mx-auto max-w-3xl space-y-6 pt-4">
+                        <Skeleton className="h-5 w-48" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+                )}
+                {sessionId !== "" && sessionError && (
+                    <p role="alert" className="text-destructive pt-4 text-sm">
+                        {t("errors.sessionLoadFailed")}
+                    </p>
+                )}
+                {(sessionId === "" || (!sessionLoading && !sessionError)) &&
+                    currentStage === "upload" && <UploadStage />}
+                {!sessionLoading &&
+                    !sessionError &&
+                    currentStage === "mapping" &&
+                    sessionId !== "" && <MappingStage sessionId={sessionId} />}
+                {!sessionLoading &&
+                    !sessionError &&
+                    currentStage === "mapping" &&
+                    sessionId === "" && <div />}
+                {!sessionLoading &&
+                    !sessionError &&
+                    currentStage === "dry_run" &&
+                    sessionId !== "" && <DryRunStage sessionId={sessionId} />}
+                {!sessionLoading &&
+                    !sessionError &&
+                    currentStage === "commit" &&
+                    sessionId !== "" && <CommitStage sessionId={sessionId} />}
+                {!sessionLoading &&
+                    !sessionError &&
+                    currentStage === "commit" &&
+                    sessionId === "" && <div />}
             </div>
         </div>
     );

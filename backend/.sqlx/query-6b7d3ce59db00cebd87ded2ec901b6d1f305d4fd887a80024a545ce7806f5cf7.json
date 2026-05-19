@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM import_rows WHERE session_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6b7d3ce59db00cebd87ded2ec901b6d1f305d4fd887a80024a545ce7806f5cf7"
+}

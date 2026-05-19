@@ -1,5 +1,13 @@
 {
   "title": "Documentation",
   "root": true,
-  "pages": ["getting-started", "frontend", "api", "database", "deployment", "normalization"]
+  "pages": [
+    "getting-started",
+    "frontend",
+    "api",
+    "database",
+    "import",
+    "deployment",
+    "normalization"
+  ]
 }

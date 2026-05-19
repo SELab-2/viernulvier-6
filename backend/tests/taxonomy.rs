@@ -99,14 +99,16 @@ async fn create_tag_success(db: PgPool) {
     let data: TagResponse = response.into_struct().await;
     assert_eq!(data.slug, "nieuwe-discipline");
     assert_eq!(data.translations.len(), 2);
-    assert!(data
-        .translations
-        .iter()
-        .any(|t| t.language_code == "nl" && t.label == "Nieuwe Discipline"));
-    assert!(data
-        .translations
-        .iter()
-        .any(|t| t.language_code == "en" && t.label == "New Discipline"));
+    assert!(
+        data.translations
+            .iter()
+            .any(|t| t.language_code == "nl" && t.label == "Nieuwe Discipline")
+    );
+    assert!(
+        data.translations
+            .iter()
+            .any(|t| t.language_code == "en" && t.label == "New Discipline")
+    );
 }
 
 #[sqlx::test]

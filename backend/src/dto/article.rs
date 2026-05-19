@@ -16,7 +16,10 @@ use uuid::Uuid;
 
 use slug::slugify;
 
-use crate::{dto::{build_cover_url, paginated::PaginatedResponse}, error::AppError};
+use crate::{
+    dto::{build_cover_url, paginated::PaginatedResponse},
+    error::AppError,
+};
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ArticlePayload {
@@ -59,7 +62,11 @@ impl From<Article> for ArticlePayload {
 }
 
 impl ArticlePayload {
-    pub async fn by_id(db: &Database, id: Uuid, public_url: Option<&str>) -> Result<Self, AppError> {
+    pub async fn by_id(
+        db: &Database,
+        id: Uuid,
+        public_url: Option<&str>,
+    ) -> Result<Self, AppError> {
         let mut payload: Self = db.articles().by_id(id).await?.into();
 
         if let Some(base) = public_url {
@@ -83,7 +90,11 @@ impl ArticlePayload {
         Ok(payload)
     }
 
-    pub async fn by_slug_published(db: &Database, slug: &str, public_url: Option<&str>) -> Result<Self, AppError> {
+    pub async fn by_slug_published(
+        db: &Database,
+        slug: &str,
+        public_url: Option<&str>,
+    ) -> Result<Self, AppError> {
         let mut payload: Self = db.articles().by_slug_published(slug).await?.into();
         let id = payload.id;
 
@@ -290,10 +301,7 @@ impl ArticleListPayload {
             serde_json::from_slice(&bytes).ok()
         });
 
-        let (articles, next_cursor) = db
-            .articles()
-            .search_cms(limit, cursor, search)
-            .await?;
+        let (articles, next_cursor) = db.articles().search_cms(limit, cursor, search).await?;
 
         let mut data: Vec<Self> = articles.into_iter().map(Self::from).collect();
         let ids: Vec<Uuid> = data.iter().map(|a| a.id).collect();

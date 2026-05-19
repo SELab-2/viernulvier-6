@@ -96,9 +96,11 @@ async fn get_all_paginates(db: PgPool) {
             Some(c) => format!("/articles?limit=2&cursor={c}"),
             None => "/articles?limit=2".to_string(),
         };
-        let page: PaginatedResponse<ArticleListPayload> =
-            app.get(&url).await.into_struct().await;
-        assert!(!page.data.is_empty(), "page should not be empty mid-iteration");
+        let page: PaginatedResponse<ArticleListPayload> = app.get(&url).await.into_struct().await;
+        assert!(
+            !page.data.is_empty(),
+            "page should not be empty mid-iteration"
+        );
         all_ids.extend(page.data.iter().map(|a| a.id));
         cursor = page.next_cursor;
         if cursor.is_none() {
@@ -908,7 +910,10 @@ async fn search_cms_paginates(db: PgPool) {
     assert_eq!(response.status(), StatusCode::OK);
     let page1: PaginatedResponse<ArticleListPayload> = response.into_struct().await;
     assert_eq!(page1.data.len(), 1);
-    assert!(page1.next_cursor.is_some(), "first page should have a next_cursor");
+    assert!(
+        page1.next_cursor.is_some(),
+        "first page should have a next_cursor"
+    );
 
     let cursor = page1.next_cursor.unwrap();
     let response = app

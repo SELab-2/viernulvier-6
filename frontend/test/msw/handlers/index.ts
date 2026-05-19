@@ -5,6 +5,7 @@ import { collectionHandlers } from "./collections.handlers";
 import { entityTagHandlers } from "./entity-tags.handlers";
 import { eventHandlers } from "./events.handlers";
 import { hallHandlers } from "./halls.handlers";
+import { importHandlers } from "./import.handlers";
 import { importErrorHandlers } from "./import-errors.handlers";
 import { locationHandlers } from "./locations.handlers";
 import { mediaHandlers } from "./media.handlers";
@@ -21,6 +22,7 @@ export const handlers = [
     ...collectionHandlers,
     ...entityTagHandlers,
     ...eventHandlers,
+    ...importHandlers,
     ...importErrorHandlers,
     ...locationHandlers,
     ...mediaHandlers,

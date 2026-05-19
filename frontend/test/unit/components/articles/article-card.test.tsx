@@ -22,6 +22,13 @@ vi.mock("@/i18n/routing", () => ({
     ),
 }));
 
+vi.mock("@/hooks/api/useTaxonomyLookup", () => ({
+    useTaxonomyLookup: () =>
+        new Map([
+            ["concert", { label: "Concert", facet: "discipline", sortOrder: 1, facetSortIndex: 0 }],
+        ]),
+}));
+
 const messages = { Articles: { untitled: "Untitled" } };
 
 const renderWithIntl = (ui: React.ReactElement) =>
@@ -63,6 +70,28 @@ describe("ArticleCard", () => {
         renderWithIntl(<ArticleCard article={mockArticle} locale="en" />);
         const link = screen.getByRole("link");
         expect(link).toHaveAttribute("href", "/articles/test-article");
+    });
+
+    it("does not nest tag links inside the article link", () => {
+        const { container } = renderWithIntl(
+            <ArticleCard
+                article={{
+                    ...mockArticle,
+                    tags: [{ slug: "concert", facet: "discipline" }],
+                }}
+                locale="en"
+            />
+        );
+
+        expect(container.querySelector("a a")).toBeNull();
+        expect(screen.getByRole("link", { name: "Test Article" })).toHaveAttribute(
+            "href",
+            "/articles/test-article"
+        );
+        expect(screen.getByRole("link", { name: "Concert" })).toHaveAttribute(
+            "href",
+            "/search?facet=discipline&tag=concert"
+        );
     });
 
     it("renders the subject period when both dates are set", () => {

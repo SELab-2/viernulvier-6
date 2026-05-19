@@ -230,15 +230,14 @@ impl<'a> TagRepo<'a> {
         slug: &str,
         translations: &[(String, String)],
     ) -> Result<(), DatabaseError> {
-        let tag_id: Uuid =
-            sqlx::query_scalar("SELECT id FROM tags WHERE slug = $1")
-                .bind(slug)
-                .fetch_one(self.db)
-                .await
-                .map_err(|e| match e {
-                    sqlx::Error::RowNotFound => DatabaseError::NotFound,
-                    other => DatabaseError::Sqlx(other),
-                })?;
+        let tag_id: Uuid = sqlx::query_scalar("SELECT id FROM tags WHERE slug = $1")
+            .bind(slug)
+            .fetch_one(self.db)
+            .await
+            .map_err(|e| match e {
+                sqlx::Error::RowNotFound => DatabaseError::NotFound,
+                other => DatabaseError::Sqlx(other),
+            })?;
         self.set_tag_translations(tag_id, translations).await
     }
 

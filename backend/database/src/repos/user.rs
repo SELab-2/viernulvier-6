@@ -55,10 +55,12 @@ impl<'a> UserRepo<'a> {
     }
 
     pub async fn admin_count(&self) -> Result<i64, DatabaseError> {
-        Ok(sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM users WHERE role = $1")
-            .bind(UserRole::Admin)
-            .fetch_one(self.db)
-            .await?)
+        Ok(
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM users WHERE role = $1")
+                .bind(UserRole::Admin)
+                .fetch_one(self.db)
+                .await?,
+        )
     }
 
     pub async fn delete(&self, user_id: Uuid) -> Result<(), DatabaseError> {

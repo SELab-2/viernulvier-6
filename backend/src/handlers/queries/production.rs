@@ -38,12 +38,12 @@ impl From<ProductionSearchQuery> for ProductionFilters {
         Self {
             search: value.q,
             facets: FacetFilters {
-                disciplines:    value.discipline.as_deref().map(split_strip),
-                formats:        value.format.as_deref().map(split_strip),
-                themes:         value.theme.as_deref().map(split_strip),
-                audiences:      value.audience.as_deref().map(split_strip),
+                disciplines: value.discipline.as_deref().map(split_strip),
+                formats: value.format.as_deref().map(split_strip),
+                themes: value.theme.as_deref().map(split_strip),
+                audiences: value.audience.as_deref().map(split_strip),
                 accessibilities: value.accessibility.as_deref().map(split_strip),
-                languages:      value.language.as_deref().map(split_strip),
+                languages: value.language.as_deref().map(split_strip),
             },
             locations: value.location.as_deref().map(split_strip),
             date_from: value.date_from,
