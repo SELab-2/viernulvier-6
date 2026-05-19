@@ -273,7 +273,7 @@ To find the slug for an artist, query `SELECT slug FROM artists WHERE name ILIKE
 
 ### `images/location_images.json` - attach a cover image to a location
 
-Identifies the location by `source_id` (from `seed/raw/locations.json`) or `slug` (for locations created via `location_creations.json`). The image file is a path relative to `seed/raw/` (i.e. relative to the seed directory).
+Identifies the location by `source_id` (from `seed/raw/locations.json`) or `slug` (for locations created via `location_creations.json`). The image file is a path relative to `seed/` (i.e. relative to the seed directory parent).
 
 `role` defaults to `"cover"`. `credit` maps to `credit_nl` in the DB. All metadata fields are optional.
 

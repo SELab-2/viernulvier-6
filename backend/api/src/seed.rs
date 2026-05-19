@@ -35,6 +35,10 @@ pub enum SeedError {
     Import(#[from] ImportItemError),
     #[error("S3 error uploading seed image: {0}")]
     S3(String),
+    #[error("Unsupported image extension '{0}' in seed patch")]
+    InvalidExtension(String),
+    #[error("Invalid entity_media role '{0}' in seed patch")]
+    InvalidRole(String),
 }
 
 #[derive(Deserialize)]
@@ -1257,10 +1261,15 @@ impl SeedImporter {
         credit: Option<&str>,
         s3_bucket: &str,
     ) -> Result<(), SeedError> {
+        const VALID_ROLES: &[&str] =
+            &["gallery", "cover", "poster", "review", "hero", "thumbnail", "inline", "media"];
+        if !VALID_ROLES.contains(&role) {
+            return Err(SeedError::InvalidRole(role.to_string()));
+        }
+
         let file_name = file_path.to_str().unwrap_or("");
-        let (ext, mime) = seed_ext_and_mime(file_name);
+        let (ext, mime) = seed_ext_and_mime(file_name)?;
         let s3_key = format!("media/seed/{entity_type}/{entity_id}/{role}.{ext}");
-        let source_uri = patch_source_uri(file_path);
 
         let (checksum, file_size, width, height) =
             self.upload_seed_image(file_path, &s3_key, mime, s3_bucket).await?;
@@ -1306,7 +1315,7 @@ impl SeedImporter {
         .bind(alt_text_nl)
         .bind(alt_text_en)
         .bind(credit)
-        .bind(&source_uri)
+        .bind(&s3_key)
         .fetch_one(self.db.pool())
         .await
         .map_err(DatabaseError::from)?;
@@ -1453,27 +1462,20 @@ impl SeedImporter {
     }
 }
 
-fn seed_ext_and_mime(file_path: &str) -> (&'static str, &'static str) {
+fn seed_ext_and_mime(file_path: &str) -> Result<(&'static str, &'static str), SeedError> {
     let ext = Path::new(file_path)
         .extension()
         .and_then(|e| e.to_str())
         .unwrap_or("")
         .to_ascii_lowercase();
     match ext.as_str() {
-        "jpg" | "jpeg" => ("jpg", "image/jpeg"),
-        "png" => ("png", "image/png"),
-        "webp" => ("webp", "image/webp"),
-        "gif" => ("gif", "image/gif"),
-        "svg" => ("svg", "image/svg+xml"),
-        _ => ("jpg", "image/jpeg"),
+        "jpg" | "jpeg" => Ok(("jpg", "image/jpeg")),
+        "png" => Ok(("png", "image/png")),
+        "webp" => Ok(("webp", "image/webp")),
+        "gif" => Ok(("gif", "image/gif")),
+        "svg" => Ok(("svg", "image/svg+xml")),
+        _ => Err(SeedError::InvalidExtension(ext)),
     }
-}
-
-fn patch_source_uri(file_path: &Path) -> String {
-    file_path
-        .to_str()
-        .map(|s| s.replace('\\', "/"))
-        .unwrap_or_default()
 }
 
 /// Split an artist field on `/`, `&`, `|`, and `,`, but not when inside
