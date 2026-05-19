@@ -34,15 +34,17 @@ function MemoSubTableInner<T>({
     rowSelection,
     onRowSelectionChange,
     getRowId,
+    rowRenderVersion,
 }: {
     items: T[];
     columns: ColumnDef<T>[];
     rowSelection?: RowSelectionState;
     onRowSelectionChange?: OnChangeFn<RowSelectionState>;
     getRowId?: (row: T) => string;
+    rowRenderVersion?: number;
 }) {
     return (
-        <div className="border-foreground/10 bg-foreground/[0.02] py-1 pr-6 pl-14">
+        <div className="border-border/80 bg-foreground/[0.02] py-1 pr-6 pl-14">
             <DataTable
                 columns={columns}
                 data={items}
@@ -50,6 +52,7 @@ function MemoSubTableInner<T>({
                 rowSelection={rowSelection}
                 onRowSelectionChange={onRowSelectionChange}
                 getRowId={getRowId}
+                rowRenderVersion={rowRenderVersion}
             />
         </div>
     );
@@ -91,6 +94,7 @@ export const MemoSubTable = memo(
             rowSelection?: RowSelectionState;
             onRowSelectionChange?: OnChangeFn<RowSelectionState>;
             getRowId?: (row: T) => string;
+            rowRenderVersion?: number;
         },
         next: {
             items: T[];
@@ -98,6 +102,7 @@ export const MemoSubTable = memo(
             rowSelection?: RowSelectionState;
             onRowSelectionChange?: OnChangeFn<RowSelectionState>;
             getRowId?: (row: T) => string;
+            rowRenderVersion?: number;
         }
     ) =>
         prev.columns === next.columns &&
@@ -105,13 +110,15 @@ export const MemoSubTable = memo(
         prev.items.every((item, i) => item === next.items[i]) &&
         shallowEqual(prev.rowSelection, next.rowSelection) &&
         prev.onRowSelectionChange === next.onRowSelectionChange &&
-        prev.getRowId === next.getRowId
+        prev.getRowId === next.getRowId &&
+        prev.rowRenderVersion === next.rowRenderVersion
 ) as <T>(props: {
     items: T[];
     columns: ColumnDef<T>[];
     rowSelection?: RowSelectionState;
     onRowSelectionChange?: OnChangeFn<RowSelectionState>;
     getRowId?: (row: T) => string;
+    rowRenderVersion?: number;
 }) => ReactNode;
 
 // Memoized table row that only re-renders when its selection, focus, or data changes.
@@ -129,6 +136,7 @@ interface MemoTableRowProps<TData> {
     onRowClick?: (row: TData) => void;
     rowRefCallback: (index: number) => (el: HTMLTableRowElement | null) => void;
     allColumnsLength: number;
+    rowRenderVersion?: number;
     renderSubComponent?: (row: Row<TData>) => ReactNode;
     focusRowAt: (index: number) => void;
 }
@@ -231,6 +239,7 @@ const MemoTableRow = memo(
         prev.tabIndex === next.tabIndex &&
         prev.hasSelection === next.hasSelection &&
         prev.allColumnsLength === next.allColumnsLength &&
+        prev.rowRenderVersion === next.rowRenderVersion &&
         prev.handleRowClick === next.handleRowClick &&
         prev.handleRowMouseDown === next.handleRowMouseDown &&
         prev.onRowClick === next.onRowClick &&
@@ -262,6 +271,7 @@ interface DataTableProps<TData, TValue> {
     getRowId?: (row: TData) => string;
     onRowClick?: (row: TData) => void;
     onJumpToEnd?: () => Promise<void>;
+    rowRenderVersion?: number;
 }
 
 export function DataTable<TData, TValue>({
@@ -280,6 +290,7 @@ export function DataTable<TData, TValue>({
     getRowId,
     onRowClick,
     onJumpToEnd,
+    rowRenderVersion,
 }: DataTableProps<TData, TValue>) {
     const t = useTranslations("Cms.DataTable");
     const [expandedInternal, setExpandedInternal] = useState<ExpandedState>({});
@@ -304,16 +315,13 @@ export function DataTable<TData, TValue>({
                     <div
                         role="checkbox"
                         aria-checked={selected}
+                        aria-label={t("selectRow")}
                         className={cn(
                             "flex size-4 items-center justify-center border",
                             selected
                                 ? "border-foreground bg-foreground text-background"
                                 : "border-foreground/30"
                         )}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            row.toggleSelected(!selected);
-                        }}
                     >
                         {selected && <Check className="size-3.5" />}
                     </div>
@@ -322,7 +330,7 @@ export function DataTable<TData, TValue>({
             enableSorting: false,
             enableHiding: false,
         }),
-        []
+        [t]
     );
 
     const expanderColumn = useMemo<ColumnDef<TData>>(
@@ -438,15 +446,15 @@ export function DataTable<TData, TValue>({
                                     <TableHead
                                         key={header.id}
                                         className={cn(
-                                            "bg-muted relative z-10 shadow-[0_1px_0_0_hsl(var(--border))]",
+                                            "bg-muted text-foreground relative z-20 shadow-[0_1px_0_0_hsl(var(--border))]",
                                             compact ? "" : "sticky top-0",
                                             header.column.id === "select"
                                                 ? "w-px px-4 py-2 whitespace-nowrap"
                                                 : header.column.id === "expander"
                                                   ? "w-px px-2 py-2 whitespace-nowrap"
                                                   : header.column.id === "actions"
-                                                    ? "text-muted-foreground px-3 py-2 text-right font-mono text-[10px] tracking-[1.2px] uppercase"
-                                                    : "text-muted-foreground max-w-[300px] px-3 py-2 font-mono text-[10px] tracking-[1.2px] break-words whitespace-normal uppercase"
+                                                    ? "px-3 py-2 text-right font-mono text-[10px] tracking-[1.2px] uppercase"
+                                                    : "max-w-[300px] px-3 py-2 font-mono text-[10px] tracking-[1.2px] break-words whitespace-normal uppercase"
                                         )}
                                     >
                                         {header.isPlaceholder
@@ -464,7 +472,7 @@ export function DataTable<TData, TValue>({
                         {visibleRows.length ? (
                             visibleRows.map((row, rowIndex) => (
                                 <MemoTableRow
-                                    key={row.id}
+                                    key={`${row.id}-${row.getIsExpanded() ? "e" : "c"}`}
                                     row={row}
                                     rowIndex={rowIndex}
                                     isSelected={row.getIsSelected()}
@@ -477,6 +485,7 @@ export function DataTable<TData, TValue>({
                                     onRowClick={onRowClick}
                                     rowRefCallback={rowRefCallback}
                                     allColumnsLength={allColumns.length}
+                                    rowRenderVersion={rowRenderVersion}
                                     renderSubComponent={renderSubComponent}
                                     focusRowAt={focusRowAt}
                                 />

@@ -14,7 +14,7 @@ import { usePreviewContext } from "@/contexts/PreviewContext";
 import { CmsMobileMenu } from "@/components/cms";
 import { LanguageSelector } from "@/components/cms/language-selector";
 import { useGetProduction, useUpdateProduction } from "@/hooks/api/useProductions";
-import { useGetEvents } from "@/hooks/api/useEvents";
+import { useGetEventsByProduction } from "@/hooks/api/useEvents";
 import { ProductionRow } from "@/types/models/production.types";
 import { ProductionPreviewData } from "@/types/production-preview.types";
 import { toProductionRow, toProductionUpdateInput } from "../../../../tables/productions/columns";
@@ -121,7 +121,7 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
     const { setPreview, clearPreviewFor } = usePreviewContext();
 
     const { data: fetchedProduction, isLoading: productionLoading } = useGetProduction(id);
-    const { data: eventsResult } = useGetEvents();
+    const { data: productionEvents } = useGetEventsByProduction(id, { enabled: !!id });
     const updateProduction = useUpdateProduction();
 
     const { tagSlugs, inheritedTagSlugs, setTagEdits, resetTagEdits, replaceEntityTags } =
@@ -225,25 +225,23 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
         localeChangeSourceRef.current = null;
     }, [activeLang, isPreviewOpen, production?.id, previewSessionId]);
 
-    // Get events for this production
-    const productionEvents = useMemo(() => {
-        if (!eventsResult?.data || !id) return [];
-        return eventsResult.data.filter((e) => e.productionId === id);
-    }, [eventsResult, id]);
-
     // Sync preview data to localStorage whenever production changes and preview is open
     useEffect(() => {
         if (!production || !isPreviewOpen) return;
 
-        // Create a hash of the current production + tags to check if it changed
-        const productionHash = JSON.stringify({ production, tags: resolvedTagsForPreview });
+        // Create a hash of the current production + tags + events to check if it changed
+        const productionHash = JSON.stringify({
+            production,
+            tags: resolvedTagsForPreview,
+            events: productionEvents,
+        });
         if (productionHash === lastSyncedProductionRef.current) return;
 
         lastSyncedProductionRef.current = productionHash;
         const productionForPreview = convertProductionRowToProduction(production);
         const previewData: ProductionPreviewData = {
             production: { ...productionForPreview, tags: resolvedTagsForPreview },
-            events: productionEvents,
+            events: productionEvents ?? [],
         };
         setPreview("production", production.id, previewData, locale, previewSessionId);
     }, [
@@ -292,7 +290,7 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
             const productionForPreview = convertProductionRowToProduction(production);
             const previewData: ProductionPreviewData = {
                 production: { ...productionForPreview, tags: resolvedTagsForPreview },
-                events: productionEvents,
+                events: productionEvents ?? [],
             };
             setPreview("production", production.id, previewData, locale, previewSessionId);
         }
@@ -373,7 +371,7 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
                         <div className="space-y-8">
                             {/* General Fields Section */}
                             <section className="space-y-4">
-                                <h2 className="border-foreground/10 border-b pb-2 text-sm font-semibold">
+                                <h2 className="border-border/80 border-b pb-2 text-sm font-semibold">
                                     {t("generalSection")}
                                 </h2>
                                 <div className="grid gap-4">
@@ -402,7 +400,7 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
 
                             {/* Bilingual Fields Section */}
                             <section className="space-y-4">
-                                <div className="border-foreground/10 flex items-center justify-between border-b pb-2">
+                                <div className="border-border/80 flex items-center justify-between border-b pb-2">
                                     <h2 className="text-sm font-semibold">{t("contentSection")}</h2>
                                     <LanguageSelector
                                         activeLang={activeLang}
@@ -465,9 +463,9 @@ export function ProductionEditorPage({ id }: ProductionEditorPageProps) {
 
                 {/* Preview Panel - right side */}
                 {isPreviewOpen && (
-                    <div className="border-muted flex min-h-[70vh] w-full flex-1 flex-col overflow-hidden border-t lg:min-h-0 lg:w-[55%] lg:min-w-[400px] lg:border-t-0 lg:border-l">
-                        <div className="bg-muted flex items-center justify-between px-4 py-3 shadow-[0_1px_0_0_hsl(var(--border))]">
-                            <span className="text-background font-mono text-[10px] font-medium tracking-[1.2px] uppercase">
+                    <div className="border-border/80 flex min-h-[70vh] w-full flex-1 flex-col overflow-hidden border-t lg:min-h-0 lg:w-[55%] lg:min-w-[400px] lg:border-t-0 lg:border-l">
+                        <div className="bg-muted/70 flex items-center justify-between px-4 py-3 shadow-[0_1px_0_0_hsl(var(--border))]">
+                            <span className="text-muted-foreground font-mono text-[10px] font-medium tracking-[1.2px] uppercase">
                                 {t("previewLabel")}
                             </span>
                         </div>

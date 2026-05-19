@@ -136,13 +136,13 @@ export function CollectionPickerDialog({
                         placeholder={t("searchCollections")}
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
-                        className="border-foreground/20 h-9 rounded-none text-sm focus-visible:ring-0"
+                        className="border-border/80 h-9 rounded-none text-sm focus-visible:ring-0"
                     />
                     <div className="max-h-56 min-h-56 space-y-1 overflow-auto border p-2">
                         {showCreate && (
                             <button
                                 type="button"
-                                className="text-muted-foreground hover:bg-muted hover:text-background block w-full cursor-pointer px-2 py-1 text-left text-sm"
+                                className="text-muted-foreground hover:bg-muted/60 hover:text-foreground block w-full cursor-pointer px-2 py-1 text-left text-sm"
                                 onClick={createNewCollection}
                             >
                                 + {t("createNamed", { name: query.trim() })}
@@ -154,8 +154,8 @@ export function CollectionPickerDialog({
                                 type="button"
                                 className={`text-muted-foreground block w-full cursor-pointer px-2 py-1 text-left text-sm ${
                                     selectedCollectionId === collection.id
-                                        ? "bg-muted text-background"
-                                        : "hover:bg-muted hover:text-background"
+                                        ? "bg-muted/70 text-foreground"
+                                        : "hover:bg-muted/60 hover:text-foreground"
                                 }`}
                                 onClick={() => setSelectedCollectionId(collection.id)}
                             >

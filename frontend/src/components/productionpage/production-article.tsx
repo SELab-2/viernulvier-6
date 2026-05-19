@@ -11,6 +11,7 @@ import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotli
 import type { Production } from "@/types/models/production.types";
 import type { Media } from "@/types/models/media.types";
 import type { Artist } from "@/types/models/artist.types";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 
 function stripHtmlAndDecode(html: string | null | undefined): string {
     if (!html) return "";
@@ -246,7 +247,7 @@ export function ProductionArticle({
                                 key={m.id ?? `placeholder-${i}`}
                                 className="relative aspect-[4/3] overflow-hidden bg-[#ccc6bc]"
                             >
-                                <div className="h-full w-full bg-gradient-to-tr from-[#CCC6BC] to-[#B5AEA4]" />
+                                <ImagePlaceholder className="h-full w-full" />
                             </div>
                         );
                     })}

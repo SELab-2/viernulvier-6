@@ -1204,3 +1204,81 @@ fn media_role_from_gallery_type(gallery_type: &str) -> &str {
         other => other,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_decode_url_from_crop_valid_base64() {
+        let encoded = general_purpose::URL_SAFE_NO_PAD.encode("https://example.com/img.jpg");
+        let crop = format!("https://cdn.example.com/crop/{}", encoded);
+        assert_eq!(
+            decode_url_from_crop(&crop),
+            Some("https://example.com/img.jpg".into())
+        );
+    }
+
+    #[test]
+    fn test_decode_url_from_crop_not_http() {
+        let encoded = general_purpose::URL_SAFE_NO_PAD.encode("ftp://example.com/file");
+        let crop = format!("https://cdn.example.com/crop/{}", encoded);
+        assert_eq!(decode_url_from_crop(&crop), None);
+    }
+
+    #[test]
+    fn test_decode_url_from_crop_invalid_base64() {
+        assert_eq!(decode_url_from_crop("https://cdn.example.com/crop/!!!@@@"), None);
+    }
+
+    #[test]
+    fn test_decode_url_from_crop_empty_crop() {
+        assert_eq!(decode_url_from_crop("https://cdn.example.com/crop/"), None);
+    }
+
+    #[test]
+    fn test_get_format_info_jpeg_variants() {
+        let info = get_format_info("image/jpeg");
+        assert_eq!(info.extension, "jpg");
+        assert_eq!(info.mime, "image/jpeg");
+
+        let info = get_format_info("image/JPG");
+        assert_eq!(info.extension, "jpg");
+
+        let info = get_format_info("video/mp4-h264");
+        assert_eq!(info.extension, "mp4");
+    }
+
+    #[test]
+    fn test_get_format_info_all_formats() {
+        assert_eq!(get_format_info("image/png").extension, "png");
+        assert_eq!(get_format_info("image/gif").extension, "gif");
+        assert_eq!(get_format_info("image/webp").extension, "webp");
+        assert_eq!(get_format_info("image/svg+xml").extension, "svg");
+        assert_eq!(get_format_info("video/mp4").extension, "mp4");
+        assert_eq!(get_format_info("application/pdf").extension, "pdf");
+    }
+
+    #[test]
+    fn test_get_format_info_unknown() {
+        let info = get_format_info("application/octet-stream");
+        assert_eq!(info.extension, "bin");
+        assert_eq!(info.mime, "application/octet-stream");
+
+        let info = get_format_info("totally/unknown");
+        assert_eq!(info.extension, "bin");
+    }
+
+    #[test]
+    fn test_media_role_from_gallery_type_known() {
+        assert_eq!(media_role_from_gallery_type("media"), "gallery");
+        assert_eq!(media_role_from_gallery_type("poster"), "poster");
+        assert_eq!(media_role_from_gallery_type("review"), "review");
+    }
+
+    #[test]
+    fn test_media_role_from_gallery_type_unknown_passthrough() {
+        assert_eq!(media_role_from_gallery_type("photo"), "photo");
+        assert_eq!(media_role_from_gallery_type("video"), "video");
+    }
+}

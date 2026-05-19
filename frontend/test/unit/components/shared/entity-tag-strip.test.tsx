@@ -92,7 +92,8 @@ describe("EntityTagStrip", () => {
             <EntityTagStrip tags={[{ slug: "concert", facet: "discipline" }]} locale="nl" />
         );
         const defaultChip = screen.getByTestId("entity-tag-chip");
-        expect(defaultChip.className).toContain("px-1.5");
+        expect(defaultChip.className).toContain("px-2");
+        expect(defaultChip.className).toContain("py-1");
 
         rerender(
             <EntityTagStrip
@@ -102,6 +103,7 @@ describe("EntityTagStrip", () => {
             />
         );
         const compactChip = screen.getByTestId("entity-tag-chip");
-        expect(compactChip.className).toContain("px-1");
+        expect(compactChip.className).toContain("px-1.5");
+        expect(compactChip.className).toContain("py-0.5");
     });
 });

@@ -5,13 +5,15 @@ import { useUser, useLogout } from "@/hooks/useAuth";
 import { usePathname } from "@/i18n/routing";
 import { ThemeSwitcher } from "@/components/shared/theme-switcher";
 import { LocaleSwitcher } from "@/components/shared/locale-switcher";
+import { isProtectedRoute } from "@/lib/auth-routing";
 
 export const Header = () => {
     const t = useTranslations("Header");
     const pathname = usePathname();
     const isLoginPage = pathname === "/login";
+    const shouldCheckUser = isProtectedRoute(pathname) && !isLoginPage;
 
-    const { data: user } = useUser({ enabled: !isLoginPage });
+    const { data: user } = useUser({ enabled: shouldCheckUser });
     const { mutate: logout, isPending: isLoggingOut } = useLogout();
 
     return (

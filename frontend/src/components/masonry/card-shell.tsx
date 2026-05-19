@@ -4,6 +4,9 @@ import { useContext } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
 import { UniformCardsContext } from "./masonry-grid";
+import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
+import type { EntityTagSlim } from "@/types/models/taxonomy.types";
 
 const ASPECT_CLASSES = ["aspect-[4/3]", "aspect-[3/4]"] as const;
 
@@ -14,6 +17,10 @@ export interface CardShellProps {
     imageUrl: string | null;
     href: string | null;
     typeLabel: string;
+    subtitle?: string | null;
+    description?: string | null;
+    tags?: EntityTagSlim[];
+    locale?: string;
     comment?: string | null;
 }
 
@@ -24,6 +31,10 @@ export function CardShell({
     imageUrl,
     href,
     typeLabel,
+    subtitle,
+    description,
+    tags = [],
+    locale,
     comment,
 }: CardShellProps) {
     const uniform = useContext(UniformCardsContext);
@@ -37,7 +48,7 @@ export function CardShell({
                 </span>
             </div>
 
-            <div className={`relative w-full overflow-hidden ${aspectClass}`}>
+            <div className={`bg-muted relative w-full overflow-hidden ${aspectClass}`}>
                 {isLoading ? (
                     <div className="bg-muted/10 h-full w-full animate-pulse" />
                 ) : imageUrl ? (
@@ -49,7 +60,7 @@ export function CardShell({
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     />
                 ) : (
-                    <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                    <ImagePlaceholder id={index.toString()} className="h-full w-full" />
                 )}
             </div>
 
@@ -57,11 +68,35 @@ export function CardShell({
                 {isLoading ? (
                     <div className="bg-muted/20 mb-1 h-5 w-3/4 animate-pulse rounded-none" />
                 ) : (
-                    <h2 className="font-display text-foreground text-[18px] leading-[1.15] font-bold tracking-[-0.02em]">
-                        {title ?? "—"}
-                    </h2>
+                    <>
+                        <h2 className="font-display text-foreground text-[18px] leading-[1.15] font-bold tracking-[-0.02em]">
+                            {title ?? "—"}
+                        </h2>
+                        {subtitle && (
+                            <p className="text-muted-foreground font-display mt-1 text-[15px] leading-tight font-bold tracking-[-0.01em] italic">
+                                {subtitle}
+                            </p>
+                        )}
+                        {description && (
+                            <p className="text-muted-foreground mt-2 line-clamp-3 text-sm leading-snug">
+                                {description}
+                            </p>
+                        )}
+                    </>
                 )}
             </div>
+
+            {tags.length > 0 && locale ? (
+                <div className="px-3 pt-3">
+                    <EntityTagStrip
+                        tags={tags}
+                        locale={locale}
+                        cap={3}
+                        variant="compact"
+                        interactive={false}
+                    />
+                </div>
+            ) : null}
 
             {comment ? (
                 <>

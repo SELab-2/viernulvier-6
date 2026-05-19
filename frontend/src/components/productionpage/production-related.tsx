@@ -7,10 +7,21 @@ import { Link } from "@/i18n/routing";
 import { getLocalizedField } from "@/lib/locale";
 import { useGetEntityMedia } from "@/hooks/api/useMedia";
 import type { Production } from "@/types/models/production.types";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
+
+function formatUitdatabankType(raw: string | null, fallback: string): string {
+    if (!raw) return fallback;
+    if (raw.startsWith("/api/") || raw.startsWith("http")) return fallback;
+    return raw;
+}
 
 function RelatedProductionCard({ production, locale }: { production: Production; locale: string }) {
     const t = useTranslations("ProductionPage");
     const { data: media = [] } = useGetEntityMedia("production", production.id);
+    const typeLabel = formatUitdatabankType(
+        production.uitdatabankType,
+        t("relatedProductionFallback")
+    );
 
     const title = getLocalizedField(production, "title", locale) ?? production.slug;
     const artist = getLocalizedField(production, "artist", locale);
@@ -27,7 +38,7 @@ function RelatedProductionCard({ production, locale }: { production: Production;
     return (
         <Link
             href={`/productions/${production.id}`}
-            className="bg-background hover:bg-muted/5 group block cursor-pointer p-4 transition-colors"
+            className="bg-background group hover:bg-muted block cursor-pointer p-4 transition-colors"
         >
             <div className="relative mb-3 aspect-[4/3] w-full overflow-hidden bg-[#ccc6bc]">
                 {coverImage?.url ? (
@@ -39,18 +50,17 @@ function RelatedProductionCard({ production, locale }: { production: Production;
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     />
                 ) : (
-                    <div className="absolute inset-0 bg-gradient-to-tr from-[#CCC6BC] to-[#B5AEA4] grayscale-[15%] transition-all duration-300 group-hover:grayscale-0" />
+                    <ImagePlaceholder className="absolute inset-0" />
                 )}
             </div>
             <div className="text-muted-foreground mb-1.5 line-clamp-1 font-mono text-[8px] tracking-[1.4px] uppercase">
-                {production.uitdatabankType ?? t("relatedProductionFallback")} ·{" "}
-                {t("relatedArchive")}
+                {typeLabel} · {t("relatedArchive")}
             </div>
             <div className="font-display text-foreground mb-0.5 line-clamp-2 text-[16px] leading-[1.2] font-bold tracking-[-0.02em]">
                 {title}
             </div>
             {artist && (
-                <div className="font-display text-foreground/40 mb-2 line-clamp-1 text-[16px] leading-[1.2] font-bold italic">
+                <div className="text-muted-foreground font-display mb-2 line-clamp-1 text-[16px] leading-[1.2] font-bold italic">
                     {artist}
                 </div>
             )}
@@ -81,7 +91,7 @@ export function ProductionRelated({
                 </Link>
             </div>
 
-            <div className="bg-muted/30 border-muted/30 grid grid-cols-1 gap-[1px] border sm:grid-cols-2 lg:grid-cols-4">
+            <div className="bg-border/70 border-border/80 grid grid-cols-1 gap-[1px] sm:grid-cols-2 lg:grid-cols-4">
                 {productions.map((p) => (
                     <RelatedProductionCard key={p.id} production={p} locale={locale} />
                 ))}

@@ -18,8 +18,6 @@ import { YearRangeSlider } from "./YearRangeSlider";
 import { DateRangePicker } from "./DateRangePicker";
 import { yearBoundsFromStats } from "./statsYearBounds";
 
-const CATEGORIES = ["productions", "artists", "locations", "articles"] as const;
-
 function parseLocalDate(s: string): Date {
     const [y, m, d] = s.split("-").map(Number);
     return new Date(y, m - 1, d);
@@ -37,9 +35,16 @@ type DateFilterMode = "year" | "exact";
 interface ArchiveSidebarProps {
     minYear?: number;
     initialTag?: string;
+    categories: readonly string[];
+    defaultCategories: Set<string>;
 }
 
-export function ArchiveSidebar({ minYear: minYearProp, initialTag }: ArchiveSidebarProps) {
+export function ArchiveSidebar({
+    minYear: minYearProp,
+    initialTag,
+    categories,
+    defaultCategories,
+}: ArchiveSidebarProps) {
     const t = useTranslations("Sidebar");
     const locale = useLocale();
     const router = useRouter();
@@ -74,9 +79,12 @@ export function ArchiveSidebar({ minYear: minYearProp, initialTag }: ArchiveSide
     const maxDate = useMemo(() => new Date(bounds.maxYear, 11, 31), [bounds.maxYear]);
 
     const [mobileOpen, setMobileOpen] = useState(false);
-    const [checkedCategories, setCheckedCategories] = useState<Set<string>>(
-        new Set(["productions"])
-    );
+    const checkedCategories = useMemo(() => {
+        const raw = searchParams.get("category");
+        if (!raw) return new Set(defaultCategories);
+        const parsed = raw.split(",").filter(Boolean);
+        return parsed.length > 0 ? new Set(parsed) : new Set(defaultCategories);
+    }, [searchParams, defaultCategories]);
     const checkedLocations = useMemo(() => {
         const raw = searchParams.get("location");
         return new Set(raw ? raw.split(",").filter(Boolean) : []);
@@ -276,14 +284,30 @@ export function ArchiveSidebar({ minYear: minYearProp, initialTag }: ArchiveSide
         );
     }, [router, pathname]);
 
-    const toggleCategory = useCallback((cat: string) => {
-        setCheckedCategories((prev) => {
-            const next = new Set(prev);
-            if (next.has(cat)) next.delete(cat);
-            else next.add(cat);
-            return next;
-        });
-    }, []);
+    const toggleCategory = useCallback(
+        (cat: string) => {
+            const params = new URLSearchParams(window.location.search);
+            const raw = params.get("category");
+            const next = raw ? new Set(raw.split(",").filter(Boolean)) : new Set(defaultCategories);
+            if (next.has(cat)) {
+                next.delete(cat);
+            } else {
+                next.add(cat);
+            }
+
+            if (next.size === 0 || next.size === categories.length) {
+                params.delete("category");
+            } else {
+                params.set("category", categories.filter((entry) => next.has(entry)).join(","));
+            }
+
+            const qs = params.toString();
+            router.replace(
+                (qs ? `${pathname}?${qs}` : pathname) as Parameters<typeof router.replace>[0]
+            );
+        },
+        [router, pathname, categories, defaultCategories]
+    );
 
     const toggleLocation = useCallback(
         (id: string) => {
@@ -309,7 +333,6 @@ export function ArchiveSidebar({ minYear: minYearProp, initialTag }: ArchiveSide
     );
 
     const clearAll = useCallback(() => {
-        setCheckedCategories(new Set());
         setYearRangeDraft(null);
         // Strip all filter params, keep only q
         const params = new URLSearchParams();
@@ -410,7 +433,7 @@ export function ArchiveSidebar({ minYear: minYearProp, initialTag }: ArchiveSide
             ) : (
                 <FilterGroup label={t("categories.label")}>
                     <div className="flex flex-wrap gap-2 pb-2.5">
-                        {CATEGORIES.map((cat) => (
+                        {categories.map((cat) => (
                             <button
                                 key={cat}
                                 type="button"

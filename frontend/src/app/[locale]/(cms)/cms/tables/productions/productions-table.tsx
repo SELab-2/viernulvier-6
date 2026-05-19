@@ -1,15 +1,15 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Archive, ChevronsUp } from "lucide-react";
+import { Archive, ChevronsUp, Tags, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { ExpandedState, Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
 import { makeProductionColumns } from "./columns";
-import { makeEventFields, toEventUpdateInput } from "./event-columns";
+import { EventPriceExtraContent, makeEventFields, toEventUpdateInput } from "./event-columns";
 import { ActionBar } from "../action-bar";
 import { SearchInput } from "@/components/cms/search-input";
 import { useParentChildSelection } from "../use-parent-child-selection";
@@ -18,11 +18,14 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { LoadMoreSentinel } from "@/components/cms/load-more-sentinel";
 import { useDeleteProduction, useGetInfiniteProductions } from "@/hooks/api/useProductions";
-import { useGetEvents, useUpdateEvent } from "@/hooks/api/useEvents";
+import { useGetInfiniteEvents, useUpdateEvent } from "@/hooks/api/useEvents";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
+import { BulkTagDialog } from "@/components/cms/bulk-tag-dialog";
 import { ProductionMediaSheet } from "@/components/cms/production-media-sheet";
 import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
+import { getCmsFacetParams } from "@/lib/cms-filter-params";
 import type { PickerItem } from "@/lib/collection-picker-utils";
+import { ActionVariant } from "@/types/cms/actions";
 import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
 
@@ -31,29 +34,49 @@ export function ProductionsTable() {
     const tCommon = useTranslations("Cms.common");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
+    const tActionBar = useTranslations("Cms.ActionBar");
     const locale = useLocale();
     const searchParams = useSearchParams();
     const q = searchParams.get("q") ?? undefined;
+    const facetParams = useMemo(
+        () => getCmsFacetParams(new URLSearchParams(searchParams.toString())),
+        [searchParams]
+    );
 
     const {
         data: infiniteData,
         fetchNextPage,
         hasNextPage,
-    } = useGetInfiniteProductions({ limit: 50, ...(q ? { q } : {}) });
+    } = useGetInfiniteProductions({ limit: 50, ...(q ? { q } : {}), ...facetParams });
     const deleteProduction = useDeleteProduction();
-
-    const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
 
     const allProductions = useMemo(
         () => infiniteData?.pages.flatMap((page) => page.data) ?? [],
         [infiniteData]
     );
 
-    const allEvents = useMemo(() => eventsResult?.data ?? [], [eventsResult]);
+    const {
+        data: infiniteEvents,
+        fetchNextPage: fetchNextEvents,
+        hasNextPage: hasMoreEvents,
+        isFetchingNextPage: isFetchingMoreEvents,
+        isLoading: eventsLoading,
+    } = useGetInfiniteEvents(100);
+
+    useEffect(() => {
+        if (hasMoreEvents && !isFetchingMoreEvents) fetchNextEvents();
+    }, [hasMoreEvents, isFetchingMoreEvents, fetchNextEvents]);
+
+    const allEvents = useMemo(
+        () => infiniteEvents?.pages.flatMap((page) => page.data) ?? [],
+        [infiniteEvents]
+    );
+
     const updateEvent = useUpdateEvent();
 
     const [editEvent, setEditEvent] = useState<Event | null>(null);
     const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
+    const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
     const [mediaProduction, setMediaProduction] = useState<Production | null>(null);
     const [spotlight, setSpotlight] = useState<{ src: string; alt: string } | null>(null);
     const [expanded, setExpanded] = useState<ExpandedState>({});
@@ -81,6 +104,7 @@ export function ProductionsTable() {
         selectColumn,
         selectedParentCount: selectedProductionCount,
         selectedChildCount: selectedEventCount,
+        selectionVersion,
         clearSelection,
     } = useParentChildSelection<Production>(eventsByProduction);
 
@@ -230,6 +254,7 @@ export function ProductionsTable() {
                     rowSelection={childSelectionRef.current.get(productionId)}
                     onRowSelectionChange={getChildHandler(productionId)}
                     getRowId={getEventRowId}
+                    rowRenderVersion={selectionVersion}
                 />
             );
         },
@@ -240,6 +265,7 @@ export function ProductionsTable() {
             eventsLoading,
             getChildHandler,
             getEventRowId,
+            selectionVersion,
         ]
     );
 
@@ -257,10 +283,18 @@ export function ProductionsTable() {
             {
                 key: "delete",
                 label: tCommon("delete"),
+                icon: <Trash2 className="h-3.5 w-3.5" />,
+                variant: ActionVariant.Destructive,
                 onClick: handleBulkDelete,
             },
+            {
+                key: "bulk-tags",
+                label: tActionBar("bulkEdit"),
+                icon: <Tags className="h-3.5 w-3.5" />,
+                onClick: () => setBulkTagDialogOpen(true),
+            },
         ],
-        [tCollections, tCommon, handleBulkDelete]
+        [tCollections, tCommon, tActionBar, handleBulkDelete]
     );
 
     return (
@@ -301,6 +335,7 @@ export function ProductionsTable() {
                     expanded={expanded}
                     onExpandedChange={setExpanded}
                     getRowId={getProductionRowId}
+                    rowRenderVersion={selectionVersion}
                     onJumpToEnd={handleJumpToEnd}
                 />
 
@@ -318,6 +353,9 @@ export function ProductionsTable() {
                         await updateEvent.mutateAsync(toEventUpdateInput(values));
                         setEditEvent(null);
                     }}
+                    extraContent={(entity) => (
+                        <EventPriceExtraContent entity={entity as unknown as Event} />
+                    )}
                 />
             )}
 
@@ -325,6 +363,13 @@ export function ProductionsTable() {
                 open={collectionDialogOpen}
                 onOpenChange={setCollectionDialogOpen}
                 items={collectionPickerItems}
+            />
+            <BulkTagDialog
+                open={bulkTagDialogOpen}
+                onOpenChange={setBulkTagDialogOpen}
+                entityType="production"
+                entityIds={selectedProductions.map((production) => production.id)}
+                onApplied={clearSelection}
             />
 
             {mediaProduction && (

@@ -58,6 +58,7 @@ pub async fn get_all(
     Query(params): Query<ArticleListParams>,
 ) -> JsonResponse<PaginatedResponse<ArticleListPayload>> {
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    let facets = search.facets();
     ArticleListPayload::list_published(
         &db,
         pagination.cursor,
@@ -67,6 +68,7 @@ pub async fn get_all(
             subject_start: params.subject_start,
             subject_end: params.subject_end,
             tag_slug: params.tag_slug,
+            facets,
             related_entity_id: params.related_entity_id,
             related_entity_type: params.related_entity_type,
         },
@@ -96,7 +98,9 @@ pub async fn get_one(
     Path(slug): Path<String>,
 ) -> JsonResponse<ArticlePayload> {
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
-    ArticlePayload::by_slug_published(&db, &slug, public_url).await?.json()
+    ArticlePayload::by_slug_published(&db, &slug, public_url)
+        .await?
+        .json()
 }
 
 #[utoipa::path(
@@ -139,6 +143,7 @@ pub async fn get_all_cms_search(
     Query(search): Query<ArticleSearchQuery>,
 ) -> JsonResponse<PaginatedResponse<ArticleListPayload>> {
     let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    let facets = search.facets();
     ArticleListPayload::list_cms_search(
         &db,
         pagination.cursor,
@@ -148,6 +153,7 @@ pub async fn get_all_cms_search(
             subject_start: None,
             subject_end: None,
             tag_slug: None,
+            facets,
             related_entity_id: None,
             related_entity_type: None,
         },

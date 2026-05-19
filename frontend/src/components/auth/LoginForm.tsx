@@ -1,13 +1,23 @@
 "use client";
 
+import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { AxiosError } from "axios";
 
-import { useLogin } from "@/hooks/useAuth";
+import { useLogin, useUser } from "@/hooks/useAuth";
+import { useRouter } from "@/i18n/routing";
 
 export function LoginForm() {
     const loginTranslations = useTranslations("Login");
+    const router = useRouter();
     const { mutate, isPending, error, isError } = useLogin();
+    const { data: user } = useUser();
+
+    useEffect(() => {
+        if (user) {
+            router.replace("/cms");
+        }
+    }, [router, user]);
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();

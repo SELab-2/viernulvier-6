@@ -138,6 +138,13 @@ struct ProductionCorrection {
 }
 
 #[derive(Deserialize)]
+struct LocationDescriptionPatch {
+    slug: String,
+    description_nl: Option<String>,
+    description_en: Option<String>,
+}
+
+#[derive(Deserialize)]
 struct ArtistMerge {
     keep_slug: String,
     remove_slug: String,
@@ -266,6 +273,7 @@ impl SeedImporter {
         self.apply_space_location_patches().await?;
         self.apply_location_deletions().await?;
         self.derive_location_slugs().await?;
+        self.apply_location_description_patches().await?;
         self.apply_hall_merges().await?;
         self.apply_hall_name_patches().await?;
         self.apply_hall_expansions().await?;
@@ -510,6 +518,40 @@ impl SeedImporter {
                 .map_err(DatabaseError::from)?;
         }
 
+        Ok(())
+    }
+
+    async fn apply_location_description_patches(&self) -> Result<(), SeedError> {
+        let Some(patches) = self
+            .read_normalization_file::<LocationDescriptionPatch>("locations/location_descriptions.json")
+        else {
+            return Ok(());
+        };
+
+        info!("Applying {} location description patches", patches.len());
+        for patch in &patches {
+            for (lang, desc) in [("nl", patch.description_nl.as_deref()), ("en", patch.description_en.as_deref())] {
+                let Some(description) = desc else { continue };
+                let rows = sqlx::query(
+                    "INSERT INTO location_translations (id, location_id, language_code, description)
+                     SELECT gen_random_uuid(), l.id, $2, $3
+                     FROM locations l WHERE l.slug = $1
+                     ON CONFLICT (location_id, language_code)
+                     DO UPDATE SET description = EXCLUDED.description",
+                )
+                .bind(&patch.slug)
+                .bind(lang)
+                .bind(description)
+                .execute(self.db.pool())
+                .await
+                .map_err(DatabaseError::from)?
+                .rows_affected();
+
+                if rows == 0 {
+                    warn!(slug = %patch.slug, lang, "location description patch matched no rows");
+                }
+            }
+        }
         Ok(())
     }
 

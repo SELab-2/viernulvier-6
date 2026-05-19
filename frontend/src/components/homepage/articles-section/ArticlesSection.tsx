@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 
 import type { ArticleListItem } from "@/types/models/article.types";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 
 interface ArticlesSectionProps {
     articles: ArticleListItem[];
@@ -20,13 +21,13 @@ export function ArticlesSection({ articles }: ArticlesSectionProps) {
         <div>
             <div className="text-muted-foreground mb-3 flex items-center gap-2.5 font-mono text-[9px] font-medium tracking-[2px] uppercase">
                 {t("articles.label")}
-                <span className="bg-muted/40 h-px flex-1" />
+                <span className="bg-border/80 h-px flex-1" />
                 <Link href="/articles" className="hover:text-foreground transition-colors">
                     {t("articles.viewAll")} →
                 </Link>
             </div>
 
-            <div className="bg-muted -mx-4 grid grid-cols-1 gap-px sm:-mx-[30px] sm:grid-cols-3">
+            <div className="sm:divide-border/70 -mx-4 grid grid-cols-1 sm:-mx-[30px] sm:grid-cols-3 sm:divide-x">
                 {items.map((article) => (
                     <ArticleCard key={article.id} article={article} locale={locale} />
                 ))}
@@ -50,9 +51,9 @@ function ArticleCard({ article, locale }: { article: ArticleListItem; locale: st
     return (
         <Link
             href={`/articles/${article.slug}`}
-            className="group bg-background hover:bg-muted/5 block p-4 pb-5 transition-colors sm:p-5"
+            className="group border-border/70 bg-background hover:bg-muted/40 block cursor-pointer p-4 pb-5 transition-all"
         >
-            <div className="relative mb-3 h-[120px] w-full overflow-hidden bg-[#CCC6BC]">
+            <div className="bg-muted border-border/70 relative mb-3 h-[120px] w-full overflow-hidden border">
                 {article.coverImageUrl ? (
                     <Image
                         src={article.coverImageUrl}
@@ -62,7 +63,7 @@ function ArticleCard({ article, locale }: { article: ArticleListItem; locale: st
                         sizes="(min-width: 640px) 33vw, 100vw"
                     />
                 ) : (
-                    <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                    <ImagePlaceholder className="h-full w-full" />
                 )}
             </div>
 

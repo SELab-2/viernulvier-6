@@ -81,6 +81,12 @@ export type ProductionSearchParams = {
     cursor?: string | null;
     limit?: number;
     sort?: ProductionSortOption;
+    discipline?: string;
+    format?: string;
+    theme?: string;
+    audience?: string;
+    accessibility?: string;
+    language?: string;
 };
 
 export type ProductionRow = {

@@ -60,7 +60,7 @@ export function CollectionHeader({
             </h1>
 
             {/* Cover image */}
-            {collection.coverImageUrl ? (
+            {collection.coverImageUrl && (
                 <div className="relative mt-6 aspect-[16/7] w-full overflow-hidden">
                     <Image
                         src={collection.coverImageUrl}
@@ -71,8 +71,6 @@ export function CollectionHeader({
                         sizes="(max-width: 768px) 100vw, 1100px"
                     />
                 </div>
-            ) : (
-                <div className="mt-6 aspect-[16/7] w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
             )}
 
             {/* Dateline bar */}

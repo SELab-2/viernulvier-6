@@ -2,7 +2,11 @@ use uuid::Uuid;
 
 use sqlx::PgPool;
 
-use crate::{error::DatabaseError, models::artist::Artist};
+use crate::{
+    error::DatabaseError,
+    models::{artist::Artist, entity_type::EntityType, filtering::facets::FacetFilters},
+    repos::query_filters::facets::AddFacetFilters,
+};
 
 pub struct ArtistRepo<'a> {
     db: &'a PgPool,
@@ -42,8 +46,7 @@ impl<'a> ArtistRepo<'a> {
                     )
                     .bind(&pattern)
                     .fetch_all(self.db)
-                    .await?,
-                )
+                    .await?)
             }
         }
     }
@@ -53,6 +56,7 @@ impl<'a> ArtistRepo<'a> {
         limit: u32,
         cursor: Option<(String, Uuid)>,
         q: Option<&str>,
+        facets: &FacetFilters,
     ) -> Result<(Vec<Artist>, Option<(String, Uuid)>), DatabaseError> {
         let fetch_limit: i64 = i64::from(limit) + 1;
         let mut builder = sqlx::QueryBuilder::new("SELECT * FROM artists WHERE true");
@@ -66,6 +70,8 @@ impl<'a> ArtistRepo<'a> {
                 .push_bind(pattern)
                 .push(")");
         }
+
+        builder.apply_facet_filters(EntityType::Artist, "artists.id", facets);
 
         if let Some((last_name, last_id)) = &cursor {
             builder
@@ -125,18 +131,19 @@ impl<'a> ArtistRepo<'a> {
         .ok_or(DatabaseError::NotFound)
     }
 
-    pub async fn by_production_id(&self, production_id: Uuid) -> Result<Vec<Artist>, DatabaseError> {
-        Ok(
-            sqlx::query_as::<_, Artist>(
-                "SELECT a.* FROM artists a \
+    pub async fn by_production_id(
+        &self,
+        production_id: Uuid,
+    ) -> Result<Vec<Artist>, DatabaseError> {
+        Ok(sqlx::query_as::<_, Artist>(
+            "SELECT a.* FROM artists a \
                  INNER JOIN production_artists pa ON pa.artist_id = a.id \
                  WHERE pa.production_id = $1 \
                  ORDER BY a.id ASC",
-            )
-            .bind(production_id)
-            .fetch_all(self.db)
-            .await?,
         )
+        .bind(production_id)
+        .fetch_all(self.db)
+        .await?)
     }
 
     pub async fn delete(&self, id: Uuid) -> Result<(), DatabaseError> {

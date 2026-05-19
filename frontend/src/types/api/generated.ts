@@ -345,7 +345,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Get all events */
+        /** @description Get all events, optionally filtered by production IDs */
         get: operations["get_all_events"];
         /** @description Update an event */
         put: operations["update_event"];
@@ -2024,6 +2024,12 @@ export interface operations {
                 cursor?: string | null;
                 limit?: number;
                 q?: string | null;
+                discipline?: string;
+                format?: string;
+                theme?: string;
+                audience?: string;
+                accessibility?: string;
+                language?: string;
                 subject_start?: string;
                 subject_end?: string;
                 tag_slug?: string;
@@ -2115,6 +2121,12 @@ export interface operations {
                 cursor?: string | null;
                 limit?: number;
                 q?: string | null;
+                discipline?: string;
+                format?: string;
+                theme?: string;
+                audience?: string;
+                accessibility?: string;
+                language?: string;
             };
             header?: never;
             path?: never;
@@ -2379,6 +2391,12 @@ export interface operations {
                 cursor?: string | null;
                 limit?: number;
                 q?: string | null;
+                discipline?: string;
+                format?: string;
+                theme?: string;
+                audience?: string;
+                accessibility?: string;
+                language?: string;
             };
             header?: never;
             path?: never;
@@ -3058,6 +3076,8 @@ export interface operations {
             query?: {
                 cursor?: string | null;
                 limit?: number;
+                /** @description Comma-separated list of production UUIDs to filter by */
+                production_ids?: string | null;
             };
             header?: never;
             path?: never;

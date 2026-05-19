@@ -97,9 +97,9 @@ describe("CollectionHeader", () => {
         expect(screen.queryByText("A test description.")).not.toBeInTheDocument();
     });
 
-    it("renders the cover image gradient placeholder", () => {
+    it("renders no cover image block when no cover image exists", () => {
         const { container } = renderWithIntl(<CollectionHeader collection={makeCollection()} />);
-        const placeholder = container.querySelector(".bg-gradient-to-br");
-        expect(placeholder).toBeInTheDocument();
+        expect(container.querySelector(".bg-gradient-to-br")).not.toBeInTheDocument();
+        expect(screen.queryByRole("img")).not.toBeInTheDocument();
     });
 });

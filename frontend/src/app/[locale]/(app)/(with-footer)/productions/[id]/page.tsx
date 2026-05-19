@@ -32,6 +32,7 @@ import { ProductionSidebar } from "@/components/productionpage/production-sideba
 import { ProductionRelated } from "@/components/productionpage/production-related";
 import { ProductionArticles } from "@/components/productionpage/production-articles";
 import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 import { Production, ProductionRow } from "@/types/models/production.types";
 
 // Helper to get title from Production or ProductionRow
@@ -241,7 +242,7 @@ export default function ProductionPage({
             {/* Part of Collections */}
             {publicCollections.length > 0 && (
                 <section className="border-foreground/10 border-t px-6 py-10 sm:px-10">
-                    <h2 className="text-muted-foreground mb-6 font-mono text-[9px] tracking-[2px] uppercase">
+                    <h2 className="font-display text-foreground mb-6 text-[22px] font-bold tracking-[-0.02em]">
                         {tProd("partOfTitle")}
                     </h2>
                     <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -255,7 +256,7 @@ export default function ProductionPage({
                                 <li key={col.id}>
                                     <Link
                                         href={`/collections/${col.slug}`}
-                                        className="border-foreground/10 hover:border-foreground/30 hover:bg-muted/5 group flex gap-4 border p-4 transition-colors"
+                                        className="border-border/70 hover:bg-foreground/[0.06] group flex gap-4 border p-4 transition-colors"
                                     >
                                         <div className="bg-muted relative h-20 w-20 shrink-0 overflow-hidden">
                                             {col.coverImageUrl ? (
@@ -266,7 +267,7 @@ export default function ProductionPage({
                                                     className="object-cover"
                                                 />
                                             ) : (
-                                                <div className="from-muted to-muted/40 h-full w-full bg-gradient-to-br" />
+                                                <ImagePlaceholder className="h-full w-full" />
                                             )}
                                         </div>
                                         <div className="flex min-w-0 flex-col justify-center gap-1">

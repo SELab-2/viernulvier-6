@@ -13,14 +13,20 @@ import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import type { Modifier } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import Image from "next/image";
-import { ArrowLeft, Eye, EyeOff, GripVertical, Link2, Trash2 } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, GripVertical, Link2, Plus, Search, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Link, useRouter } from "@/i18n/routing";
 import {
     useDeleteCollection,
+    useAddCollectionItem,
     useGetCollection,
-    useGetEvents,
+    useGetInfiniteArticlesCms,
+    useGetInfiniteArtists,
+    useGetInfiniteEvents,
+    useGetInfiniteLocations,
+    useGetInfiniteMedia,
+    useGetInfiniteProductions,
     useGetLocations,
     useGetProductionsByIds,
     useUpdateCollection,
@@ -47,6 +53,7 @@ import { useEntityTagEditor } from "@/hooks/useEntityTagEditor";
 import type { EntityTagSlim } from "@/types/models/taxonomy.types";
 import type {
     Collection,
+    CollectionContentType,
     CollectionItem,
     CollectionVisibility,
 } from "@/types/models/collection.types";
@@ -55,6 +62,9 @@ import { usePreviewContext } from "@/contexts/PreviewContext";
 import type { Production } from "@/types/models/production.types";
 import type { Event } from "@/types/models/event.types";
 import type { Location } from "@/types/models/location.types";
+import type { Artist } from "@/types/models/artist.types";
+import type { ArticleListItem } from "@/types/models/article.types";
+import type { Media } from "@/types/models/media.types";
 
 type Lang = "nl" | "en";
 
@@ -124,8 +134,21 @@ type EntityData =
     | { type: "production"; data: Production }
     | { type: "event"; data: Event; productionTitle?: string }
     | { type: "location"; data: Location }
+    | { type: "artist"; data: Artist }
+    | { type: "blogpost"; data: ArticleListItem }
+    | { type: "media"; data: Media }
     | { type: "loading" }
     | { type: "unknown" };
+
+type AddableContentType = Exclude<CollectionContentType, "event">;
+
+type AddCandidate = {
+    id: string;
+    contentId: string;
+    contentType: AddableContentType;
+    title: string;
+    subtitle: string | null;
+};
 
 function getItemSubtitle(entity: EntityData, locale: Lang): string | null {
     if (entity.type === "production") {
@@ -141,6 +164,18 @@ function getItemSubtitle(entity: EntityData, locale: Lang): string | null {
     }
     if (entity.type === "location") {
         return [entity.data.city, entity.data.country].filter(Boolean).join(", ") || null;
+    }
+    if (entity.type === "artist") return entity.data.slug;
+    if (entity.type === "blogpost") return entity.data.publishedAt;
+    if (entity.type === "media") {
+        return [
+            entity.data.mimeType,
+            entity.data.width && entity.data.height
+                ? `${entity.data.width}x${entity.data.height}`
+                : null,
+        ]
+            .filter(Boolean)
+            .join(" · ");
     }
     return null;
 }
@@ -374,13 +409,40 @@ export function CollectionEditorPage({ id }: { id: string }) {
     });
 
     const { data: collection, isLoading } = useGetCollection(id);
-    const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
-    const { data: locationsResult, isLoading: locationsLoading } = useGetLocations();
-    const events = useMemo(() => eventsResult?.data ?? [], [eventsResult?.data]);
-    const locations = useMemo(() => locationsResult?.data ?? [], [locationsResult?.data]);
+    const {
+        data: infiniteEvents,
+        fetchNextPage: fetchNextEvents,
+        hasNextPage: hasMoreEvents,
+        isFetchingNextPage: isFetchingMoreEvents,
+        isLoading: eventsLoading,
+    } = useGetInfiniteEvents(100);
+    const {
+        data: infiniteLocations,
+        fetchNextPage: fetchNextLocations,
+        hasNextPage: hasMoreLocations,
+        isFetchingNextPage: isFetchingMoreLocations,
+        isLoading: locationsLoading,
+    } = useGetInfiniteLocations({ limit: 100 });
+
+    useEffect(() => {
+        if (hasMoreEvents && !isFetchingMoreEvents) fetchNextEvents();
+    }, [hasMoreEvents, isFetchingMoreEvents, fetchNextEvents]);
+    useEffect(() => {
+        if (hasMoreLocations && !isFetchingMoreLocations) fetchNextLocations();
+    }, [hasMoreLocations, isFetchingMoreLocations, fetchNextLocations]);
+
+    const events = useMemo(
+        () => infiniteEvents?.pages.flatMap((page) => page.data) ?? [],
+        [infiniteEvents]
+    );
+    const locations = useMemo(
+        () => infiniteLocations?.pages.flatMap((page) => page.data) ?? [],
+        [infiniteLocations]
+    );
 
     const updateCollection = useUpdateCollection();
     const updateItems = useUpdateCollectionItems(id);
+    const addCollectionItem = useAddCollectionItem();
     const deleteCollection = useDeleteCollection();
     const { tagSlugs, inheritedTagSlugs, tagDirty, setTagEdits, resetTagEdits, replaceEntityTags } =
         useEntityTagEditor("collection", id);
@@ -393,6 +455,8 @@ export function CollectionEditorPage({ id }: { id: string }) {
     const [descriptionEn, setDescriptionEn] = useState<string | null>(null);
     const [visibility, setVisibility] = useState<CollectionVisibility | null>(null);
     const [items, setItems] = useState<LocalCollectionItem[] | null>(null);
+    const [addType, setAddType] = useState<AddableContentType>("production");
+    const [addSearch, setAddSearch] = useState("");
 
     const itemsContainerRef = useRef<HTMLDivElement>(null);
     const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -463,6 +527,36 @@ export function CollectionEditorPage({ id }: { id: string }) {
     }, [collection, descriptionEn, descriptionNl, initialMetadata, titleEn, titleNl]);
 
     const localItems = items ?? initialItems;
+
+    const addSearchParams = useMemo(
+        () => ({ q: addSearch.trim() || undefined, limit: 8 }),
+        [addSearch]
+    );
+    const { data: addProductionsPages } = useGetInfiniteProductions(addSearchParams);
+    const { data: addArtistsPages } = useGetInfiniteArtists(addSearchParams);
+    const { data: addArticlesPages } = useGetInfiniteArticlesCms(addSearchParams);
+    const { data: addMediaPages } = useGetInfiniteMedia(addSearchParams);
+    const { data: addLocationsResult } = useGetLocations({
+        pagination: { q: addSearch.trim() || undefined, limit: 8 },
+    });
+
+    const addProductions = useMemo(
+        () => addProductionsPages?.pages.flatMap((page) => page.data) ?? [],
+        [addProductionsPages]
+    );
+    const addArtists = useMemo(
+        () => addArtistsPages?.pages.flatMap((page) => page.data) ?? [],
+        [addArtistsPages]
+    );
+    const addArticles = useMemo(
+        () => addArticlesPages?.pages.flatMap((page) => page.data) ?? [],
+        [addArticlesPages]
+    );
+    const addMedia = useMemo(
+        () => addMediaPages?.pages.flatMap((page) => page.data) ?? [],
+        [addMediaPages]
+    );
+    const addLocations = useMemo(() => addLocationsResult?.data ?? [], [addLocationsResult?.data]);
 
     const tagToFacetMap = useMemo(() => {
         const map = new Map<string, string>();
@@ -673,6 +767,71 @@ export function CollectionEditorPage({ id }: { id: string }) {
 
     const eventMap = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
     const locationMap = useMemo(() => new Map(locations.map((l) => [l.id, l])), [locations]);
+    const artistMap = useMemo(() => new Map(addArtists.map((a) => [a.id, a])), [addArtists]);
+    const articleMap = useMemo(() => new Map(addArticles.map((a) => [a.id, a])), [addArticles]);
+    const mediaMap = useMemo(() => new Map(addMedia.map((m) => [m.id, m])), [addMedia]);
+
+    const existingItemKeys = useMemo(
+        () => new Set(localItems.map((item) => `${item.contentType}:${item.contentId}`)),
+        [localItems]
+    );
+
+    const addCandidates = useMemo<AddCandidate[]>(() => {
+        switch (addType) {
+            case "production":
+                return addProductions.map((production) => ({
+                    id: `production-${production.id}`,
+                    contentId: production.id,
+                    contentType: "production",
+                    title:
+                        getTranslation(production.translations, activeLang)?.title ||
+                        getTranslation(production.translations, activeLang === "nl" ? "en" : "nl")
+                            ?.title ||
+                        production.slug,
+                    subtitle:
+                        getTranslation(production.translations, activeLang)?.artist ||
+                        getTranslation(production.translations, activeLang === "nl" ? "en" : "nl")
+                            ?.artist ||
+                        null,
+                }));
+            case "artist":
+                return addArtists.map((artist) => ({
+                    id: `artist-${artist.id}`,
+                    contentId: artist.id,
+                    contentType: "artist",
+                    title: artist.name,
+                    subtitle: artist.slug,
+                }));
+            case "location":
+                return addLocations.map((location) => ({
+                    id: `location-${location.id}`,
+                    contentId: location.id,
+                    contentType: "location",
+                    title: location.name || location.address || location.id,
+                    subtitle: [location.city, location.country].filter(Boolean).join(", ") || null,
+                }));
+            case "blogpost":
+                return addArticles.map((article) => ({
+                    id: `blogpost-${article.id}`,
+                    contentId: article.id,
+                    contentType: "blogpost",
+                    title: article.title || article.slug,
+                    subtitle: article.status,
+                }));
+            case "media":
+                return addMedia.map((media) => ({
+                    id: `media-${media.id}`,
+                    contentId: media.id,
+                    contentType: "media",
+                    title:
+                        (activeLang === "nl" ? media.altTextNl : media.altTextEn) ||
+                        media.altTextNl ||
+                        media.altTextEn ||
+                        media.s3Key,
+                    subtitle: media.mimeType,
+                }));
+        }
+    }, [activeLang, addArticles, addArtists, addLocations, addMedia, addProductions, addType]);
 
     const getItemTitle = (item: LocalCollectionItem): string => {
         if (entitiesLoading) return "…";
@@ -695,6 +854,24 @@ export function CollectionEditorPage({ id }: { id: string }) {
             case "location": {
                 const l = locationMap.get(item.contentId);
                 return l?.name || l?.address || item.contentId;
+            }
+            case "artist": {
+                const a = artistMap.get(item.contentId);
+                return a?.name || item.contentId;
+            }
+            case "blogpost": {
+                const article = articleMap.get(item.contentId);
+                return article?.title || article?.slug || item.contentId;
+            }
+            case "media": {
+                const media = mediaMap.get(item.contentId);
+                return (
+                    (activeLang === "nl" ? media?.altTextNl : media?.altTextEn) ||
+                    media?.altTextNl ||
+                    media?.altTextEn ||
+                    media?.s3Key ||
+                    item.contentId
+                );
             }
             default:
                 return item.contentId;
@@ -724,10 +901,61 @@ export function CollectionEditorPage({ id }: { id: string }) {
                 const data = locationMap.get(item.contentId);
                 return data ? { type: "location", data } : { type: "unknown" };
             }
+            case "artist": {
+                const data = artistMap.get(item.contentId);
+                return data ? { type: "artist", data } : { type: "unknown" };
+            }
+            case "blogpost": {
+                const data = articleMap.get(item.contentId);
+                return data ? { type: "blogpost", data } : { type: "unknown" };
+            }
+            case "media": {
+                const data = mediaMap.get(item.contentId);
+                return data ? { type: "media", data } : { type: "unknown" };
+            }
             default:
                 return { type: "unknown" };
         }
     };
+
+    const addItem = useCallback(
+        async (candidate: AddCandidate) => {
+            if (!collection) return;
+            const key = `${candidate.contentType}:${candidate.contentId}`;
+            if (existingItemKeys.has(key)) {
+                toast.message(t("alreadyInCollection", { title: candidate.title }));
+                return;
+            }
+
+            try {
+                const added = await addCollectionItem.mutateAsync({
+                    collectionId: collection.id,
+                    contentId: candidate.contentId,
+                    contentType: candidate.contentType,
+                    position: localItems.length + 1,
+                });
+                setItems(
+                    normalizeItems([
+                        ...localItems,
+                        {
+                            id: added.id,
+                            contentId: added.content_id,
+                            contentType: added.content_type,
+                            position: added.position,
+                            translations: added.translations.map((translation) => ({
+                                languageCode: translation.language_code,
+                                comment: translation.comment ?? null,
+                            })),
+                        },
+                    ])
+                );
+                toast.success(t("addedToCollection", { collection: candidate.title }));
+            } catch {
+                toast.error(t("itemsError"));
+            }
+        },
+        [addCollectionItem, collection, existingItemKeys, localItems, t]
+    );
 
     const groupedItems = useMemo(
         () => groupItemsByProduction(localItems, eventMap),
@@ -755,6 +983,15 @@ export function CollectionEditorPage({ id }: { id: string }) {
                     case "location":
                         coverImageUrl = locationMap.get(item.contentId)?.coverImageUrl ?? null;
                         break;
+                    case "artist":
+                        coverImageUrl = artistMap.get(item.contentId)?.coverImageUrl ?? null;
+                        break;
+                    case "blogpost":
+                        coverImageUrl = articleMap.get(item.contentId)?.coverImageUrl ?? null;
+                        break;
+                    case "media":
+                        coverImageUrl = mediaMap.get(item.contentId)?.url ?? null;
+                        break;
                 }
             }
 
@@ -776,7 +1013,19 @@ export function CollectionEditorPage({ id }: { id: string }) {
             };
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [entitiesLoading, eventMap, locationMap, productionMap, removeItem, t, updateComment]
+        [
+            activeLang,
+            articleMap,
+            artistMap,
+            entitiesLoading,
+            eventMap,
+            locationMap,
+            mediaMap,
+            productionMap,
+            removeItem,
+            t,
+            updateComment,
+        ]
     );
 
     const handleDragEnd = (event: DragEndEvent) => {
@@ -928,7 +1177,7 @@ export function CollectionEditorPage({ id }: { id: string }) {
                         <div className="space-y-8">
                             {/* Metadata section */}
                             <section className="space-y-4">
-                                <div className="border-foreground/10 flex items-center justify-between border-b pb-2">
+                                <div className="border-border/80 flex items-center justify-between border-b pb-2">
                                     <h2 className="text-sm font-semibold">
                                         {t("metadataSection")}
                                     </h2>
@@ -1013,9 +1262,87 @@ export function CollectionEditorPage({ id }: { id: string }) {
 
                             {/* Items section */}
                             <section className="space-y-4">
-                                <h2 className="border-foreground/10 border-b pb-2 text-sm font-semibold">
-                                    {t("itemsTitle", { count: localItems.length })}
-                                </h2>
+                                <div className="border-border/80 border-b pb-2">
+                                    <h2 className="text-sm font-semibold">
+                                        {t("itemsTitle", { count: localItems.length })}
+                                    </h2>
+                                    <p className="text-muted-foreground mt-1 text-xs">
+                                        {t("itemsHelp")}
+                                    </p>
+                                </div>
+                                <div className="border-border/80 bg-foreground/[0.02] space-y-3 border p-3">
+                                    <div className="flex flex-col gap-2 sm:flex-row">
+                                        <Select
+                                            value={addType}
+                                            onValueChange={(value) =>
+                                                setAddType(value as AddableContentType)
+                                            }
+                                        >
+                                            <SelectTrigger className="h-9 rounded-none text-sm sm:w-44">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {(
+                                                    [
+                                                        "production",
+                                                        "artist",
+                                                        "location",
+                                                        "blogpost",
+                                                        "media",
+                                                    ] as AddableContentType[]
+                                                ).map((type) => (
+                                                    <SelectItem key={type} value={type}>
+                                                        {t(
+                                                            `contentTypes.${type}` as "contentTypes.production"
+                                                        )}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <div className="relative flex-1">
+                                            <Search className="text-muted-foreground absolute top-1/2 left-2 h-3.5 w-3.5 -translate-y-1/2" />
+                                            <Input
+                                                value={addSearch}
+                                                onChange={(event) =>
+                                                    setAddSearch(event.target.value)
+                                                }
+                                                placeholder={t("searchItems")}
+                                                className="h-9 rounded-none pl-8 text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid gap-1">
+                                        {addCandidates.slice(0, 6).map((candidate) => {
+                                            const exists = existingItemKeys.has(
+                                                `${candidate.contentType}:${candidate.contentId}`
+                                            );
+                                            return (
+                                                <button
+                                                    key={candidate.id}
+                                                    type="button"
+                                                    disabled={exists || addCollectionItem.isPending}
+                                                    onClick={() => void addItem(candidate)}
+                                                    className="border-border/70 hover:bg-muted/40 disabled:text-muted-foreground flex items-center gap-3 border px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                                                >
+                                                    <Plus className="h-3.5 w-3.5 shrink-0" />
+                                                    <span className="min-w-0 flex-1">
+                                                        <span className="block truncate text-sm font-medium">
+                                                            {candidate.title}
+                                                        </span>
+                                                        {candidate.subtitle && (
+                                                            <span className="text-muted-foreground block truncate text-xs">
+                                                                {candidate.subtitle}
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                    <span className="text-muted-foreground shrink-0 font-mono text-[9px] tracking-[1.1px] uppercase">
+                                                        {exists ? t("alreadyAdded") : t("addItem")}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
                                 {localItems.length === 0 ? (
                                     <div className="text-muted-foreground space-y-2 text-sm">
                                         <p>{t("noItems")}</p>
@@ -1057,9 +1384,9 @@ export function CollectionEditorPage({ id }: { id: string }) {
 
                 {/* Preview Panel - right side */}
                 {isPreviewOpen && (
-                    <div className="border-muted flex min-h-[70vh] w-full flex-1 flex-col overflow-hidden border-t lg:min-h-0 lg:w-[55%] lg:min-w-[400px] lg:border-t-0 lg:border-l">
-                        <div className="bg-muted flex items-center justify-between px-4 py-3 shadow-[0_1px_0_0_hsl(var(--border))]">
-                            <span className="text-background font-mono text-[10px] font-medium tracking-[1.2px] uppercase">
+                    <div className="border-border/80 flex min-h-[70vh] w-full flex-1 flex-col overflow-hidden border-t lg:min-h-0 lg:w-[55%] lg:min-w-[400px] lg:border-t-0 lg:border-l">
+                        <div className="bg-muted/70 flex items-center justify-between px-4 py-3 shadow-[0_1px_0_0_hsl(var(--border))]">
+                            <span className="text-muted-foreground font-mono text-[10px] font-medium tracking-[1.2px] uppercase">
                                 {t("previewLabel")}
                             </span>
                         </div>

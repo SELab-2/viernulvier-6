@@ -6,6 +6,8 @@ import { useTranslations } from "next-intl";
 import type { Production } from "@/types/models/production.types";
 import { getLocalizedField } from "@/lib/locale";
 import { Link } from "@/i18n/routing";
+import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 
 interface FeaturedSectionProps {
     productions: Production[];
@@ -24,10 +26,10 @@ export function FeaturedSection({ productions, locale }: FeaturedSectionProps) {
         <div>
             <div className="text-muted-foreground mb-3 flex items-center gap-2.5 font-mono text-[9px] font-medium tracking-[2px] uppercase">
                 {t("label")}
-                <span className="bg-muted/40 h-px flex-1" />
+                <span className="bg-border/80 h-px flex-1" />
             </div>
 
-            <div className="bg-muted border-foreground -mx-4 grid grid-cols-1 gap-px sm:-mx-[30px] sm:grid-cols-[1.6fr_1fr_1fr]">
+            <div className="sm:divide-border/70 -mx-4 grid grid-cols-1 sm:-mx-[30px] sm:grid-cols-[1.6fr_1fr_1fr] sm:divide-x">
                 {featured.map((production, index) => (
                     <FeaturedCard
                         key={production.id}
@@ -53,15 +55,14 @@ function FeaturedCard({
     const title = getLocalizedField(production, "title", locale) ?? production.slug;
     const artist = getLocalizedField(production, "artist", locale);
     const tagline = getLocalizedField(production, "tagline", locale);
-    const displayType = production.uitdatabankType ?? production.uitdatabankTheme;
 
     return (
         <Link
             href={`/productions/${production.id}`}
-            className="group bg-background hover:bg-muted/5 relative block cursor-pointer p-4 pb-5 transition-colors sm:p-5"
+            className="group bg-background hover:bg-muted/40 relative block cursor-pointer p-4 pb-5 transition-all sm:p-5"
         >
             <div
-                className={`relative mb-3 w-full overflow-hidden bg-[#CCC6BC] ${isFirst ? "h-[180px] sm:h-[260px]" : "h-[140px] sm:h-[170px]"}`}
+                className={`bg-muted border-border/70 relative mb-3 w-full overflow-hidden border ${isFirst ? "h-[180px] sm:h-[260px]" : "h-[140px] sm:h-[170px]"}`}
             >
                 {production.coverImageUrl ? (
                     <Image
@@ -76,14 +77,19 @@ function FeaturedCard({
                         }
                     />
                 ) : (
-                    <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                    <ImagePlaceholder className="h-full w-full" />
                 )}
             </div>
 
-            {displayType && (
-                <div className="text-muted-foreground group-hover:text-foreground mb-1.5 font-mono text-[9px] tracking-[1.4px] uppercase transition-colors">
-                    {displayType}
-                </div>
+            {production.tags.length > 0 && (
+                <EntityTagStrip
+                    tags={production.tags}
+                    locale={locale}
+                    cap={isFirst ? 3 : 2}
+                    variant="compact"
+                    className="mb-2"
+                    interactive={false}
+                />
             )}
 
             <div
@@ -102,7 +108,7 @@ function FeaturedCard({
 
             {tagline && (
                 <p
-                    className={`font-body text-foreground/70 group-hover:text-foreground border-muted/30 border-t pt-2.5 leading-snug transition-colors ${isFirst ? "text-sm" : "text-xs"}`}
+                    className={`font-body text-foreground/70 group-hover:text-foreground border-border/70 border-t pt-2.5 leading-snug transition-colors ${isFirst ? "text-sm" : "text-xs"}`}
                 >
                     {tagline}
                 </p>

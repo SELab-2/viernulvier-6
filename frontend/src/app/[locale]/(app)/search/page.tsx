@@ -15,6 +15,7 @@ import { useGetFacets } from "@/hooks/api/useTaxonomy";
 import { queryKeys } from "@/hooks/api/query-keys";
 import type { Production, ProductionSortOption } from "@/types/models/production.types";
 import type { PaginatedResult, SearchPaginationParams } from "@/types/api/api.types";
+import { getLocalizedField } from "@/lib/locale";
 
 import { UnifiedHeader } from "@/components/layout/header";
 import { SearchHero } from "@/components/searchpage/search-hero";
@@ -24,14 +25,19 @@ import { ProductionList } from "@/components/searchpage/production-list";
 import { ArticleList } from "@/components/searchpage/article-list";
 import { ArtistList } from "@/components/searchpage/artist-list";
 import { LocationList } from "@/components/searchpage/location-list";
+import { SearchGrid, type SearchGridItem } from "@/components/searchpage/search-grid";
 import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
 
 const ARCHIVE_MIN_YEAR = 1980;
 const SORT_VALUES: ProductionSortOption[] = ["recent", "oldest", "relevance"];
 
+const CATEGORIES = ["productions", "artists", "locations", "articles"] as const;
+const DEFAULT_CATEGORY_SET = new Set(["productions"]); // , "artists", "locations", "articles"
+
 export default function SearchPage() {
     const locale = useLocale();
     const t = useTranslations("Search");
+    const tCategories = useTranslations("Sidebar.categories");
     const loadMoreRef = useRef<HTMLDivElement>(null);
     const heroObserverRef = useRef<IntersectionObserver | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -53,6 +59,17 @@ export default function SearchPage() {
             ? (rawSort as ProductionSortOption)
             : undefined;
     const locationFilter = searchParams.get("location") ?? undefined;
+    const selectedCategories = useMemo(() => {
+        const raw = searchParams.get("category");
+        if (!raw) return new Set(DEFAULT_CATEGORY_SET);
+        const parsed = raw.split(",").filter(Boolean);
+        return parsed.length > 0 ? new Set(parsed) : new Set(DEFAULT_CATEGORY_SET);
+    }, [searchParams]);
+    const showProductions = selectedCategories.has("productions");
+    const showArtists = selectedCategories.has("artists");
+    const showLocations = selectedCategories.has("locations");
+    const showArticles = selectedCategories.has("articles");
+    const view = searchParams.get("view") === "grid" ? "grid" : "list";
 
     const { data: facets } = useGetFacets({ entityType: "production" });
 
@@ -117,6 +134,13 @@ export default function SearchPage() {
         [router, searchParams, pathname]
     );
 
+    useEffect(() => {
+        const trimmed = draftQuery.trim();
+        if (trimmed === query) return;
+        const timer = setTimeout(() => handleSearch(draftQuery), 300);
+        return () => clearTimeout(timer);
+    }, [draftQuery, handleSearch, query]);
+
     const handleSortChange = useCallback(
         (newSort: ProductionSortOption) => {
             const params = new URLSearchParams(searchParams.toString());
@@ -124,6 +148,22 @@ export default function SearchPage() {
                 params.delete("sort");
             } else {
                 params.set("sort", newSort);
+            }
+            const qs = params.toString();
+            router.replace(
+                (qs ? `${pathname}?${qs}` : pathname) as Parameters<typeof router.replace>[0]
+            );
+        },
+        [router, searchParams, pathname]
+    );
+
+    const handleViewChange = useCallback(
+        (nextView: "list" | "grid") => {
+            const params = new URLSearchParams(searchParams.toString());
+            if (nextView === "grid") {
+                params.set("view", "grid");
+            } else {
+                params.delete("view");
             }
             const qs = params.toString();
             router.replace(
@@ -240,10 +280,92 @@ export default function SearchPage() {
         productionsLoading || artistsLoading || locationSearchLoading || articlesLoading;
 
     const hasAnyResults =
-        allProductions.length > 0 ||
-        artistsData.length > 0 ||
-        locationSearchData.length > 0 ||
-        articlesData.length > 0;
+        (showProductions && allProductions.length > 0) ||
+        (showArtists && artistsData.length > 0) ||
+        (showLocations && locationSearchData.length > 0) ||
+        (showArticles && articlesData.length > 0);
+
+    const gridItems = useMemo<SearchGridItem[]>(
+        () => [
+            ...(showProductions
+                ? allProductions.map((production) => ({
+                      id: `production-${production.id}`,
+                      title:
+                          getLocalizedField(production, "title", locale) ?? production.slug ?? null,
+                      subtitle: getLocalizedField(production, "artist", locale),
+                      description:
+                          getLocalizedField(production, "descriptionShort", locale) ??
+                          getLocalizedField(production, "tagline", locale) ??
+                          getLocalizedField(production, "teaser", locale),
+                      imageUrl: production.coverImageUrl,
+                      href: `/productions/${production.id}`,
+                      typeLabel: tCategories("productions"),
+                      tags: production.tags,
+                  }))
+                : []),
+            ...(showArtists
+                ? artistsData.map((artist) => ({
+                      id: `artist-${artist.id}`,
+                      title: artist.name,
+                      subtitle: artist.slug,
+                      description: null,
+                      imageUrl: artist.coverImageUrl,
+                      href: `/artists/${artist.id}`,
+                      typeLabel: tCategories("artists"),
+                      tags: [],
+                  }))
+                : []),
+            ...(showLocations
+                ? locationSearchData.map((location) => ({
+                      id: `location-${location.id}`,
+                      title: location.name ?? location.address ?? null,
+                      subtitle: [location.city, location.country].filter(Boolean).join(", "),
+                      description:
+                          location.translations.find((tr) => tr.languageCode === locale)
+                              ?.description ??
+                          location.translations.find((tr) => tr.description)?.description ??
+                          null,
+                      imageUrl: location.coverImageUrl,
+                      href: location.slug ? `/locations/${location.slug}` : null,
+                      typeLabel: tCategories("locations"),
+                      tags: [],
+                  }))
+                : []),
+            ...(showArticles
+                ? articlesData.map((article) => ({
+                      id: `article-${article.id}`,
+                      title: article.title,
+                      subtitle: article.publishedAt
+                          ? new Date(article.publishedAt).toLocaleDateString(
+                                locale === "en" ? "en-GB" : "nl-BE",
+                                {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                }
+                            )
+                          : null,
+                      description: null,
+                      imageUrl: article.coverImageUrl,
+                      href: `/articles/${article.slug}`,
+                      typeLabel: tCategories("articles"),
+                      tags: article.tags,
+                  }))
+                : []),
+        ],
+        [
+            showProductions,
+            allProductions,
+            locale,
+            tCategories,
+            showArtists,
+            artistsData,
+            showLocations,
+            locationSearchData,
+            showArticles,
+            articlesData,
+        ]
+    );
 
     return (
         <>
@@ -268,6 +390,8 @@ export default function SearchPage() {
             >
                 <ArchiveSidebar
                     minYear={ARCHIVE_MIN_YEAR}
+                    categories={CATEGORIES}
+                    defaultCategories={DEFAULT_CATEGORY_SET}
                     initialTag={searchParams.get("tag") ?? undefined}
                 />
                 <main className="flex min-w-0 flex-1 flex-col">
@@ -278,6 +402,8 @@ export default function SearchPage() {
                         showSearch={!isHeroVisible}
                         sort={sort ?? "relevance"}
                         onSortChange={handleSortChange}
+                        view={view}
+                        onViewChange={handleViewChange}
                     />
 
                     {!hasAnyResults && !isAnyLoading ? (
@@ -287,30 +413,40 @@ export default function SearchPage() {
                             imagePath="/images/de_vooruit_decaying.png"
                             caption={t("articleImageCaption")}
                         />
+                    ) : view === "grid" ? (
+                        <SearchGrid items={gridItems} locale={locale} />
                     ) : (
                         <>
-                            <ProductionList
-                                productions={allProductions}
-                                locale={locale}
-                                isLoading={productionsLoading}
-                            />
+                            {showProductions && (
+                                <ProductionList
+                                    productions={allProductions}
+                                    locale={locale}
+                                    isLoading={productionsLoading}
+                                />
+                            )}
 
-                            <ArtistList artists={artistsData} isLoading={artistsLoading} />
+                            {showArtists && (
+                                <ArtistList artists={artistsData} isLoading={artistsLoading} />
+                            )}
 
-                            <LocationList
-                                locations={locationSearchData}
-                                isLoading={locationSearchLoading}
-                            />
+                            {showLocations && (
+                                <LocationList
+                                    locations={locationSearchData}
+                                    isLoading={locationSearchLoading}
+                                />
+                            )}
 
-                            <ArticleList
-                                articles={articlesData}
-                                locale={locale}
-                                isLoading={articlesLoading}
-                            />
+                            {showArticles && (
+                                <ArticleList
+                                    articles={articlesData}
+                                    locale={locale}
+                                    isLoading={articlesLoading}
+                                />
+                            )}
                         </>
                     )}
 
-                    {allProductions.length > 0 && nextCursor !== null && (
+                    {showProductions && allProductions.length > 0 && nextCursor !== null && (
                         <div ref={loadMoreRef} className="flex justify-center py-8">
                             {isFetching && (
                                 <div className="text-muted-foreground flex items-center gap-2">

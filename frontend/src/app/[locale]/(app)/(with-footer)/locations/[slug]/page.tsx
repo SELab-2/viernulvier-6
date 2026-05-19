@@ -3,14 +3,15 @@
 import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { MapPin, Phone, ArrowRight } from "lucide-react";
-import { toast } from "sonner";
+import { MapPin, Phone } from "lucide-react";
 import Image from "next/image";
 
 import { UnifiedHeader } from "@/components/layout/header";
 import { LoadingState } from "@/components/shared/loading-state";
+import { MasonryGrid } from "@/components/masonry";
 import { useGetLocationBySlug } from "@/hooks/api/useLocations";
 import { useGetHallsForLocation } from "@/hooks/api/useHalls";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 
 export default function LocationPage() {
     const { slug } = useParams<{ slug: string }>();
@@ -126,13 +127,6 @@ export default function LocationPage() {
                         {translation.description}
                     </p>
                 )}
-                <button
-                    onClick={() => toast.info(t("searchNotImplemented"))}
-                    className="border-foreground text-foreground hover:bg-foreground hover:text-background mt-6 inline-flex items-center gap-2 border-2 px-5 py-2.5 font-mono text-[11px] tracking-[1.2px] uppercase transition-colors"
-                >
-                    {t("searchArchive")}
-                    <ArrowRight className="size-4" />
-                </button>
 
                 {/* History */}
                 {translation?.history && (
@@ -152,35 +146,31 @@ export default function LocationPage() {
                         <h2 className="text-muted-foreground mb-6 font-mono text-[10px] tracking-[1.6px] uppercase">
                             {t("halls")}
                         </h2>
-                        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
-                            {locationHalls.map((hall) => (
-                                <div key={hall.id}>
-                                    <div className="aspect-[4/3] max-w-[320px] bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
-                                    <h3 className="font-display text-foreground mt-4 text-lg font-semibold sm:text-xl">
-                                        {hall.name}
-                                    </h3>
-                                    {hall.remark && (
-                                        <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-                                            {hall.remark}
-                                        </p>
-                                    )}
-                                    {(hall.seatSelection || hall.openSeating) && (
-                                        <div className="mt-2 flex items-center gap-1.5">
-                                            {hall.seatSelection && (
-                                                <span className="border-border text-muted-foreground border px-1.5 py-px font-mono text-[9px] tracking-[1.4px] uppercase">
-                                                    {t("seated")}
-                                                </span>
-                                            )}
-                                            {hall.openSeating && (
-                                                <span className="border-border text-muted-foreground border px-1.5 py-px font-mono text-[9px] tracking-[1.4px] uppercase">
-                                                    {t("openSeating")}
-                                                </span>
-                                            )}
-                                        </div>
+                        <MasonryGrid
+                            items={locationHalls}
+                            renderItem={(hall) => (
+                                <div className="border-foreground/20 border">
+                                    <div className="relative aspect-[4/3] w-full overflow-hidden">
+                                        <ImagePlaceholder className="h-full w-full" />
+                                    </div>
+                                    <div className="px-3 pt-3">
+                                        <h2 className="font-display text-foreground text-[18px] leading-[1.15] font-bold tracking-[-0.02em]">
+                                            {hall.name}
+                                        </h2>
+                                    </div>
+                                    {hall.remark ? (
+                                        <>
+                                            <div className="border-foreground/10 mx-3 mt-3 border-t" />
+                                            <p className="text-muted-foreground px-3 pt-2 pb-3 font-mono text-[11px] leading-snug break-words italic">
+                                                {hall.remark}
+                                            </p>
+                                        </>
+                                    ) : (
+                                        <div className="pb-3" />
                                     )}
                                 </div>
-                            ))}
-                        </div>
+                            )}
+                        />
                     </div>
                 )}
             </div>

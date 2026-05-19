@@ -62,11 +62,12 @@
         }
     },
     "ResultsBar": {
-        "sortBy": "Sort by:",
-        "relevance": "Most relevant",
-        "recent": "Most recent",
-        "oldest": "Oldest first",
-        "relevance": "Most relevant"
+        "sortBy": "Sort by",
+        "relevance": "Most Relevant",
+        "recent": "Most Recent",
+        "oldest": "Oldest First",
+        "viewList": "List view",
+        "viewGrid": "Grid view"
     },
     "Featured": {
         "label": "Featured from the archive"
@@ -181,7 +182,10 @@
         "past": "Past",
         "date": "Date",
         "status": "Status",
-        "noEvents": "No events available"
+        "noEvents": "No events available",
+        "showAllDates": "Show all {count} dates",
+        "showFewerDates": "Show fewer dates",
+        "free": "Free"
     },
     "Login": {
         "title": "Welcome back",
@@ -252,7 +256,8 @@
             "saving": "Saving…"
         },
         "DataTable": {
-            "noResults": "No results."
+            "noResults": "No results.",
+            "selectRow": "Select row"
         },
         "ActionBar": {
             "clearSelection": "Clear selection",
@@ -280,6 +285,7 @@
         "ActionsColumn": {
             "openMenu": "Open menu",
             "actions": "Actions",
+            "open": "Open {label}",
             "copy": "Copy {key}",
             "copied": "Copied {key}",
             "copyFailed": "Failed to copy to clipboard",
@@ -395,6 +401,14 @@
             "fieldEventVendorId": "Vendor ID",
             "fieldEventBoxOfficeId": "Box office ID",
             "fieldEventUitdatabankId": "UiTdatabank ID",
+            "eventPriceColumn": "Prices",
+            "eventPriceCount": "{count} {count, plural, one {price} other {prices}}",
+            "fieldEventPrices": "Event Prices",
+            "fieldEventPriceAmount": "Price",
+            "fieldEventPriceRank": "Rank",
+            "fieldEventPriceAvailable": "Available",
+            "fieldEventPriceType": "Type",
+            "fieldEventPriceFree": "Free",
             "eyebrow": "Production",
             "search": "Search productions…"
         },
@@ -604,12 +618,17 @@
             "addedToCollectionMultiple": "Added {count} items to \"{collection}\"",
             "removeItem": "Remove item",
             "comment": "Comment",
+            "itemsHelp": "Add more items from the CMS entity tables or media ingest page, then return here to order items and add collection comments.",
+            "searchItems": "Search items…",
+            "addItem": "Add",
+            "alreadyAdded": "Added",
             "contentTypes": {
                 "production": "Production",
                 "event": "Event",
                 "blogpost": "Article",
                 "artist": "Artist",
-                "location": "Location"
+                "location": "Location",
+                "media": "Media"
             }
         },
         "Media": {
@@ -758,6 +777,7 @@
         "metaType": "Type",
         "metaTheme": "Theme",
         "metaLanguage": "Language",
+        "practical": "Practical",
         "languageNlEn": "EN / NL",
         "languageNl": "NL",
         "imageCaptionFallback": "VIERNULVIER Archive",
@@ -803,8 +823,6 @@
         "halls": "Halls",
         "seated": "Seated",
         "openSeating": "Open seating",
-        "searchArchive": "View all productions at this location",
-        "searchNotImplemented": "Search filtering by location is not yet available.",
         "loading": "Loading location...",
         "notFound": "Location not found.",
         "error": "Something went wrong while loading this location."
