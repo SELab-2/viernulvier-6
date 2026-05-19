@@ -255,7 +255,7 @@ export default function ProductionPage({
                                 <li key={col.id}>
                                     <Link
                                         href={`/collections/${col.slug}`}
-                                        className="border-foreground/10 hover:border-foreground/30 hover:bg-muted/5 group flex gap-4 border p-4 transition-colors"
+                                        className="border-border/70 hover:bg-foreground/[0.06] group flex gap-4 border p-4 transition-colors"
                                     >
                                         <div className="bg-muted relative h-20 w-20 shrink-0 overflow-hidden">
                                             {col.coverImageUrl ? (
