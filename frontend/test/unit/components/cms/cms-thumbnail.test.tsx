@@ -14,7 +14,7 @@ describe("CmsThumbnail", () => {
     });
 
     it("renders the shared fallback box when no source exists", () => {
-        const { container } = render(<CmsThumbnail src={null} alt="Fallback image" />);
-        expect(container.querySelector(".bg-gradient-to-br")).toBeInTheDocument();
+        render(<CmsThumbnail src={null} alt="Fallback image" />);
+        expect(screen.getByTestId("image-placeholder")).toBeInTheDocument();
     });
 });

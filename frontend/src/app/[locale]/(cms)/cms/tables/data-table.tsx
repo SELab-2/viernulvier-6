@@ -315,6 +315,7 @@ export function DataTable<TData, TValue>({
                     <div
                         role="checkbox"
                         aria-checked={selected}
+                        aria-label={t("selectRow")}
                         className={cn(
                             "flex size-4 items-center justify-center border",
                             selected
@@ -329,7 +330,7 @@ export function DataTable<TData, TValue>({
             enableSorting: false,
             enableHiding: false,
         }),
-        []
+        [t]
     );
 
     const expanderColumn = useMemo<ColumnDef<TData>>(

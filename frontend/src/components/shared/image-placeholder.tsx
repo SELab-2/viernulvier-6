@@ -7,7 +7,7 @@ interface ImagePlaceholderProps {
 
 export function ImagePlaceholder({ id, className = "" }: ImagePlaceholderProps) {
     return (
-        <div className={`relative ${className}`}>
+        <div data-testid="image-placeholder" className={`relative ${className}`}>
             <div
                 className="absolute inset-0 opacity-[0.08]"
                 style={{
