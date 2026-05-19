@@ -74,14 +74,13 @@ impl ApiEvent {
             None
         };
 
-        let status = status_map
-            .get(&self.status)
-            .cloned()
-            .ok_or_else(|| ImportItemError::invalid_reference(
+        let status = status_map.get(&self.status).cloned().ok_or_else(|| {
+            ImportItemError::invalid_reference(
                 ImportEntity::Event,
                 ImportField::Status,
                 &self.status,
-            ))?;
+            )
+        })?;
 
         let event_conversion = self.to_create(production.production.id, status)?;
         warnings.extend(event_conversion.warnings);

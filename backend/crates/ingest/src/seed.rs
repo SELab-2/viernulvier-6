@@ -12,14 +12,8 @@ use tracing::{info, warn};
 use crate::error::ImportItemError;
 use crate::helper::extract_source_id;
 use crate::models::{
-    event::ApiEvent,
-    event_price::ApiEventPrice,
-    event_status::ApiEventStatus,
-    hall::ApiHall,
-    location::ApiLocation,
-    price::ApiPrice,
-    price_rank::ApiPriceRank,
-    production::ApiProduction,
+    event::ApiEvent, event_price::ApiEventPrice, event_status::ApiEventStatus, hall::ApiHall,
+    location::ApiLocation, price::ApiPrice, price_rank::ApiPriceRank, production::ApiProduction,
     space::ApiSpace,
 };
 
@@ -324,9 +318,9 @@ impl SeedImporter {
     }
 
     async fn apply_production_corrections(&self) -> Result<(), SeedError> {
-        let Some(corrections) = self
-            .read_normalization_file::<ProductionCorrection>("productions/production_corrections.json")
-        else {
+        let Some(corrections) = self.read_normalization_file::<ProductionCorrection>(
+            "productions/production_corrections.json",
+        ) else {
             return Ok(());
         };
 
@@ -359,21 +353,20 @@ impl SeedImporter {
     }
 
     async fn apply_location_name_patches(&self) -> Result<(), SeedError> {
-        let Some(patches) = self.read_normalization_file::<LocationNamePatch>("locations/location_names.json")
+        let Some(patches) =
+            self.read_normalization_file::<LocationNamePatch>("locations/location_names.json")
         else {
             return Ok(());
         };
 
         info!("Applying {} location name patches", patches.len());
         for patch in patches {
-            sqlx::query(
-                "UPDATE locations SET name = $1 WHERE source_id = $2",
-            )
-            .bind(&patch.name)
-            .bind(patch.source_id)
-            .execute(self.db.pool())
-            .await
-            .map_err(DatabaseError::from)?;
+            sqlx::query("UPDATE locations SET name = $1 WHERE source_id = $2")
+                .bind(&patch.name)
+                .bind(patch.source_id)
+                .execute(self.db.pool())
+                .await
+                .map_err(DatabaseError::from)?;
         }
         Ok(())
     }
@@ -437,14 +430,12 @@ impl SeedImporter {
             .map_err(DatabaseError::from)?;
 
             for space_source_id in &creation.space_source_ids {
-                sqlx::query(
-                    "UPDATE spaces SET location_id = $1 WHERE source_id = $2",
-                )
-                .bind(location_id)
-                .bind(space_source_id)
-                .execute(self.db.pool())
-                .await
-                .map_err(DatabaseError::from)?;
+                sqlx::query("UPDATE spaces SET location_id = $1 WHERE source_id = $2")
+                    .bind(location_id)
+                    .bind(space_source_id)
+                    .execute(self.db.pool())
+                    .await
+                    .map_err(DatabaseError::from)?;
             }
         }
         Ok(())
@@ -469,23 +460,21 @@ impl SeedImporter {
     }
 
     async fn derive_location_slugs(&self) -> Result<(), SeedError> {
-        let rows: Vec<(uuid::Uuid, Option<String>)> = sqlx::query_as(
-            "SELECT id, name FROM locations WHERE slug IS NULL ORDER BY id",
-        )
-        .fetch_all(self.db.pool())
-        .await
-        .map_err(DatabaseError::from)?;
+        let rows: Vec<(uuid::Uuid, Option<String>)> =
+            sqlx::query_as("SELECT id, name FROM locations WHERE slug IS NULL ORDER BY id")
+                .fetch_all(self.db.pool())
+                .await
+                .map_err(DatabaseError::from)?;
 
         info!("Deriving slugs for {} locations without a slug", rows.len());
 
-        let mut used: std::collections::HashSet<String> = sqlx::query_scalar(
-            "SELECT slug FROM locations WHERE slug IS NOT NULL",
-        )
-        .fetch_all(self.db.pool())
-        .await
-        .map_err(DatabaseError::from)?
-        .into_iter()
-        .collect();
+        let mut used: std::collections::HashSet<String> =
+            sqlx::query_scalar("SELECT slug FROM locations WHERE slug IS NOT NULL")
+                .fetch_all(self.db.pool())
+                .await
+                .map_err(DatabaseError::from)?
+                .into_iter()
+                .collect();
 
         for (id, name) in rows {
             let name = name.unwrap_or_default();
@@ -556,7 +545,8 @@ impl SeedImporter {
     }
 
     async fn apply_hall_merges(&self) -> Result<(), SeedError> {
-        let Some(merges) = self.read_normalization_file::<HallMerge>("halls/hall_merges.json") else {
+        let Some(merges) = self.read_normalization_file::<HallMerge>("halls/hall_merges.json")
+        else {
             return Ok(());
         };
 
@@ -619,7 +609,8 @@ impl SeedImporter {
     }
 
     async fn apply_hall_name_patches(&self) -> Result<(), SeedError> {
-        let Some(patches) = self.read_normalization_file::<HallNamePatch>("halls/hall_names.json") else {
+        let Some(patches) = self.read_normalization_file::<HallNamePatch>("halls/hall_names.json")
+        else {
             return Ok(());
         };
 
@@ -670,8 +661,7 @@ impl SeedImporter {
                 if !exists {
                     warn!(
                         combo_source_id = expansion.combo_source_id,
-                        component_source_id,
-                        "hall expansion skipped: component hall not found"
+                        component_source_id, "hall expansion skipped: component hall not found"
                     );
                     missing_components = true;
                 }
@@ -714,7 +704,8 @@ impl SeedImporter {
     }
 
     async fn apply_hall_deletions(&self) -> Result<(), SeedError> {
-        let Some(deletions) = self.read_normalization_file::<HallDeletion>("halls/hall_deletions.json")
+        let Some(deletions) =
+            self.read_normalization_file::<HallDeletion>("halls/hall_deletions.json")
         else {
             return Ok(());
         };
@@ -793,9 +784,9 @@ impl SeedImporter {
     }
 
     async fn apply_uitdatabank_theme_mappings(&self) -> Result<(), SeedError> {
-        let Some(mappings) = self
-            .read_normalization_file::<UitdatabankThemeMapping>("genres/uitdatabank_theme_mappings.json")
-        else {
+        let Some(mappings) = self.read_normalization_file::<UitdatabankThemeMapping>(
+            "genres/uitdatabank_theme_mappings.json",
+        ) else {
             return Ok(());
         };
 
@@ -847,8 +838,8 @@ impl SeedImporter {
     }
 
     async fn apply_genre_location_mappings(&self) -> Result<(), SeedError> {
-        let Some(mappings) =
-            self.read_normalization_file::<GenreLocationMapping>("genres/genre_location_mappings.json")
+        let Some(mappings) = self
+            .read_normalization_file::<GenreLocationMapping>("genres/genre_location_mappings.json")
         else {
             return Ok(());
         };
@@ -875,7 +866,10 @@ impl SeedImporter {
             if let Some(id) = location_id {
                 location_index.insert(m.genre_source_id, id);
             } else {
-                warn!(genre_source_id = m.genre_source_id, "genre_location_mapping: location not found, skipping");
+                warn!(
+                    genre_source_id = m.genre_source_id,
+                    "genre_location_mapping: location not found, skipping"
+                );
             }
         }
 
@@ -1055,7 +1049,9 @@ impl SeedImporter {
     }
 
     async fn apply_artist_merges(&self) -> Result<(), SeedError> {
-        let Some(merges) = self.read_normalization_file::<ArtistMerge>("artists/artist_merges.json") else {
+        let Some(merges) =
+            self.read_normalization_file::<ArtistMerge>("artists/artist_merges.json")
+        else {
             return Ok(());
         };
 
@@ -1469,8 +1465,10 @@ impl SeedImporter {
 
     async fn import_events(&self) -> Result<(), SeedError> {
         let statuses: Vec<ApiEventStatus> = self.read_file("event_statuses.json")?;
-        let status_map: HashMap<String, String> =
-            statuses.into_iter().map(|s| (s.id.clone(), s.display())).collect();
+        let status_map: HashMap<String, String> = statuses
+            .into_iter()
+            .map(|s| (s.id.clone(), s.display()))
+            .collect();
 
         let items: Vec<ApiEvent> = self.read_file("events.json")?;
         info!("Seed: importing {} events", items.len());
@@ -1482,7 +1480,9 @@ impl SeedImporter {
             }
         }
         if skipped > 0 {
-            warn!("Seed: skipped {skipped} events (likely reference LongtermProduction records not in seed)");
+            warn!(
+                "Seed: skipped {skipped} events (likely reference LongtermProduction records not in seed)"
+            );
         }
         Ok(())
     }

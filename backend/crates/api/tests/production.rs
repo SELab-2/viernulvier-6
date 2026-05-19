@@ -141,7 +141,10 @@ async fn get_search_filter_location(db: PgPool) {
     assert_eq!(response.status(), StatusCode::OK);
 
     let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
-    assert!(data.data.is_empty(), "invalid location should not return unfiltered data");
+    assert!(
+        data.data.is_empty(),
+        "invalid location should not return unfiltered data"
+    );
 }
 
 #[sqlx::test(fixtures("productions", "events", "locations", "spaces", "halls", "event_halls"))]
@@ -157,7 +160,11 @@ async fn get_filter_location_by_uuid(db: PgPool) {
     assert_eq!(response.status(), StatusCode::OK);
 
     let data: PaginatedResponse<ProductionPayload> = response.into_struct().await;
-    assert_eq!(data.data.len(), 1, "expected exactly 1 production at this location");
+    assert_eq!(
+        data.data.len(),
+        1,
+        "expected exactly 1 production at this location"
+    );
     assert_eq!(
         data.data[0].id.to_string(),
         "11111111-1111-1111-1111-111111111111"

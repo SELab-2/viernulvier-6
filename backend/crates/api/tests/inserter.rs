@@ -4,11 +4,7 @@ use chrono::Utc;
 use db::Database;
 use sqlx::PgPool;
 
-use ingest::models::{
-    location::ApiLocation,
-    price::ApiPrice,
-    price_rank::ApiPriceRank,
-};
+use ingest::models::{location::ApiLocation, price::ApiPrice, price_rank::ApiPriceRank};
 
 #[sqlx::test]
 #[test_log::test]

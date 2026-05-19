@@ -1,0 +1,78 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT\n                       id,\n                       session_id,\n                       row_number,\n                       raw_data       AS \"raw_data: Json<BTreeMap<String, RawCell>>\",\n                       overrides      AS \"overrides: Json<BTreeMap<String, serde_json::Value>>\",\n                       resolved_refs  AS \"resolved_refs: Json<BTreeMap<String, Option<Uuid>>>\",\n                       status         AS \"status: ImportRowStatus\",\n                       target_entity_id,\n                       diff           AS \"diff: Json<BTreeMap<String, DiffEntry>>\",\n                       warnings       AS \"warnings: Json<Vec<ImportWarning>>\"\n                     FROM import_rows\n                     WHERE session_id = $1\n                     ORDER BY row_number\n                     LIMIT $2 OFFSET $3",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "session_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "row_number",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "raw_data: Json<BTreeMap<String, RawCell>>",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 4,
+        "name": "overrides: Json<BTreeMap<String, serde_json::Value>>",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 5,
+        "name": "resolved_refs: Json<BTreeMap<String, Option<Uuid>>>",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 6,
+        "name": "status: ImportRowStatus",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "target_entity_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 8,
+        "name": "diff: Json<BTreeMap<String, DiffEntry>>",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 9,
+        "name": "warnings: Json<Vec<ImportWarning>>",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "eb87247b65898e2480059c3c4f409d87a42810e3a897b83a8f8ea2a28cd88439"
+}

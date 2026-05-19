@@ -157,7 +157,10 @@ pub async fn delete_tag(
 ) -> Result<impl IntoResponse, AppError> {
     let count = db.tags().usage_count(&slug).await?;
     if count > 0 && !params.force.unwrap_or(false) {
-        return Ok((StatusCode::CONFLICT, Json(TagUsageResponse { usage_count: count }))
+        return Ok((
+            StatusCode::CONFLICT,
+            Json(TagUsageResponse { usage_count: count }),
+        )
             .into_response());
     }
     db.tags().delete_tag(&slug).await?;

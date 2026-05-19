@@ -1,21 +1,15 @@
-use std::collections::HashMap;
 use ingest::{
-    error::{ImportEntity, ImportField, ImportItemError, ImportRelation, ImportItemWarning},
+    error::{ImportEntity, ImportField, ImportItemError, ImportItemWarning, ImportRelation},
     models::{
-        event::ApiEvent,
-        event_price::ApiEventPrice,
-        hall::ApiHall,
-        localized_text::ApiLocalizedText,
-        location::ApiLocation,
-        price::ApiPrice,
-        price_rank::ApiPriceRank,
-        production::ApiProduction,
-        space::ApiSpace,
+        event::ApiEvent, event_price::ApiEventPrice, hall::ApiHall,
+        localized_text::ApiLocalizedText, location::ApiLocation, price::ApiPrice,
+        price_rank::ApiPriceRank, production::ApiProduction, space::ApiSpace,
     },
 };
 use chrono::Utc;
 use db::Database;
 use sqlx::PgPool;
+use std::collections::HashMap;
 
 fn space_with_location(location: &str) -> ApiSpace {
     ApiSpace {
@@ -190,7 +184,11 @@ fn hall_with_space(space: &str) -> ApiHall {
         box_office_id: None,
         seat_selection: "".into(),
         open_seating: "".into(),
-        name: ApiLocalizedText { nl: Some("Zaal".into()), en: None, fr: None },
+        name: ApiLocalizedText {
+            nl: Some("Zaal".into()),
+            en: None,
+            fr: None,
+        },
         remark: None,
         space: Some(space.into()),
     }
@@ -218,7 +216,8 @@ fn event_with_status(status: &str) -> ApiEvent {
         "info": null,
         "eticket_info": null,
         "external_order_url": null
-    })).unwrap()
+    }))
+    .unwrap()
 }
 
 fn location_with_name(name: &str) -> ApiLocation {
@@ -228,9 +227,16 @@ fn location_with_name(name: &str) -> ApiLocation {
         created_at: Utc::now(),
         updated_at: Utc::now(),
         name: Some(name.into()),
-        code: None, street: None, number: None,
-        postal_code: None, city: None, phone_1: None, phone_2: None,
-        own_location: "".into(), country: None, uitdatabank_id: None,
+        code: None,
+        street: None,
+        number: None,
+        postal_code: None,
+        city: None,
+        phone_1: None,
+        phone_2: None,
+        own_location: "".into(),
+        country: None,
+        uitdatabank_id: None,
     }
 }
 
@@ -249,7 +255,11 @@ async fn importer_hall_missing_space_is_warning(db: PgPool) {
     assert_eq!(result.value, Some(10));
     assert_eq!(result.warnings.len(), 1);
     match &result.warnings[0] {
-        ImportItemWarning::MissingOptionalRelation { entity, relation, source_id } => {
+        ImportItemWarning::MissingOptionalRelation {
+            entity,
+            relation,
+            source_id,
+        } => {
             assert_eq!(*entity, ImportEntity::Hall);
             assert_eq!(*relation, ImportRelation::Space);
             assert_eq!(*source_id, 404);
@@ -284,7 +294,8 @@ async fn importer_event_invalid_status_is_error(db: PgPool) {
         "genres": [], "events": [], "media_gallery": null,
         "review_gallery": null, "poster_gallery": null,
         "uitdatabank_keywords": [], "uitdatabank_theme": null, "uitdatabank_type": null
-    })).unwrap();
+    }))
+    .unwrap();
     let data: ingest::models::production::ProductionImportData = prod.into();
     database
         .productions()
@@ -298,7 +309,11 @@ async fn importer_event_invalid_status_is_error(db: PgPool) {
         .unwrap_err();
 
     match err {
-        ImportItemError::InvalidReference { entity, field, value } => {
+        ImportItemError::InvalidReference {
+            entity,
+            field,
+            value,
+        } => {
             assert_eq!(entity, ImportEntity::Event);
             assert_eq!(field, ImportField::Status);
             assert_eq!(value, "bogus-status");
@@ -320,7 +335,11 @@ async fn importer_event_missing_production_is_error(db: PgPool) {
         .unwrap_err();
 
     match err {
-        ImportItemError::MissingRelation { entity, relation, source_id } => {
+        ImportItemError::MissingRelation {
+            entity,
+            relation,
+            source_id,
+        } => {
             assert_eq!(entity, ImportEntity::Event);
             assert_eq!(relation, ImportRelation::Production);
             assert_eq!(source_id, 404);
@@ -355,7 +374,8 @@ async fn importer_event_missing_hall_is_warning(db: PgPool) {
         "genres": [], "events": [], "media_gallery": null,
         "review_gallery": null, "poster_gallery": null,
         "uitdatabank_keywords": [], "uitdatabank_theme": null, "uitdatabank_type": null
-    })).unwrap();
+    }))
+    .unwrap();
     let data: ingest::models::production::ProductionImportData = prod.into();
     database
         .productions()
@@ -365,18 +385,18 @@ async fn importer_event_missing_hall_is_warning(db: PgPool) {
 
     let mut event = event_with_status("available");
     event.hall = "/api/v1/halls/404".into();
-    let result = event
-        .upsert_import(&database, &status_map())
-        .await
-        .unwrap();
+    let result = event.upsert_import(&database, &status_map()).await.unwrap();
 
     assert_eq!(result.value, Some(99));
     assert!(
-        result.warnings.iter().any(|w| matches!(w, ImportItemWarning::MissingOptionalRelation {
-            entity: ImportEntity::Event,
-            relation: ImportRelation::Hall,
-            source_id: 404,
-        })),
+        result.warnings.iter().any(|w| matches!(
+            w,
+            ImportItemWarning::MissingOptionalRelation {
+                entity: ImportEntity::Event,
+                relation: ImportRelation::Hall,
+                source_id: 404,
+            }
+        )),
         "expected a missing_optional_relation warning for hall 404"
     );
 }
@@ -391,7 +411,12 @@ async fn importer_location_inserts_and_returns_source_id(db: PgPool) {
         .unwrap();
     assert_eq!(result, Some(55));
 
-    let inserted = database.locations().by_source_id(55).await.unwrap().unwrap();
+    let inserted = database
+        .locations()
+        .by_source_id(55)
+        .await
+        .unwrap()
+        .unwrap();
     assert_eq!(inserted.name, Some("Testlocatie".into()));
 }
 
@@ -420,11 +445,17 @@ async fn importer_production_inserts_and_returns_source_id(db: PgPool) {
         "genres": [], "events": [], "media_gallery": null,
         "review_gallery": null, "poster_gallery": null,
         "uitdatabank_keywords": [], "uitdatabank_theme": null, "uitdatabank_type": null
-    })).unwrap();
+    }))
+    .unwrap();
     let result = prod.upsert_import(&database).await.unwrap();
     assert_eq!(result, Some(77));
 
-    let inserted = database.productions().by_source_id(77).await.unwrap().unwrap();
+    let inserted = database
+        .productions()
+        .by_source_id(77)
+        .await
+        .unwrap()
+        .unwrap();
     assert!(inserted.production.slug.contains("import-test"));
     assert!(inserted.production.slug.contains("77"));
 }
@@ -483,7 +514,12 @@ async fn importer_price_rank_inserts_and_returns_source_id(db: PgPool) {
     let result = rank.upsert_import(&database).await.unwrap();
     assert_eq!(result.value, Some(7));
 
-    let inserted = database.price_ranks().by_source_id(7).await.unwrap().unwrap();
+    let inserted = database
+        .price_ranks()
+        .by_source_id(7)
+        .await
+        .unwrap()
+        .unwrap();
     assert_eq!(inserted.code, "A");
     assert_eq!(inserted.position, 1);
 }
@@ -514,7 +550,8 @@ async fn importer_event_price_happy_path(db: PgPool) {
         "genres": [], "events": [], "media_gallery": null,
         "review_gallery": null, "poster_gallery": null,
         "uitdatabank_keywords": [], "uitdatabank_theme": null, "uitdatabank_type": null
-    })).unwrap();
+    }))
+    .unwrap();
     let data: ingest::models::production::ProductionImportData = prod.into();
     database
         .productions()
@@ -529,10 +566,16 @@ async fn importer_event_price_happy_path(db: PgPool) {
         updated_at: Utc::now(),
         price_type: "base".into(),
         visibility: "public".into(),
-        code: None, description: None,
-        minimum: 0, maximum: None, step: 0, order: 0,
-        auto_select_combo: false, include_in_price_range: false,
-        cineville_box: false, membership: None,
+        code: None,
+        description: None,
+        minimum: 0,
+        maximum: None,
+        step: 0,
+        order: 0,
+        auto_select_combo: false,
+        include_in_price_range: false,
+        cineville_box: false,
+        membership: None,
     };
     price.upsert_import(&database).await.unwrap();
 
@@ -541,7 +584,9 @@ async fn importer_event_price_happy_path(db: PgPool) {
         jsonld_type: "PriceRank".into(),
         created_at: Utc::now(),
         updated_at: Utc::now(),
-        description: None, code: "A".into(), position: 1,
+        description: None,
+        code: "A".into(),
+        position: 1,
         sold_out_buffer: None,
     };
     rank.upsert_import(&database).await.unwrap();

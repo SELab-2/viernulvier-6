@@ -16,8 +16,8 @@ use crate::{
     config::S3Config,
     dto::{
         media::{
-            AttachMediaRequest, CheckMediaRequest, CheckMediaResponse,
-            CreateMediaRequest, LinkMediaRequest, MediaEntityLink, MediaPayload, MediaVariantPayload,
+            AttachMediaRequest, CheckMediaRequest, CheckMediaResponse, CreateMediaRequest,
+            LinkMediaRequest, MediaEntityLink, MediaPayload, MediaVariantPayload,
             ReconcileResponse, TitleTranslations, UploadUrlRequest, UploadUrlResponse,
         },
         paginated::PaginatedResponse,
@@ -118,7 +118,8 @@ pub async fn get_media_entities(
             title: Some(TitleTranslations {
                 en: l.title_en.clone(),
                 nl: l.title_nl,
-            }).filter(|t| t.en.is_some() || t.nl.is_some()),
+            })
+            .filter(|t| t.en.is_some() || t.nl.is_some()),
         })
         .collect();
     Ok(Json(result))

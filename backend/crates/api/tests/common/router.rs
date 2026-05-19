@@ -9,9 +9,9 @@ use dotenvy::dotenv;
 use serde::Serialize;
 use sqlx::PgPool;
 use std::sync::Once;
-use tower::ServiceExt;
-use api::{AppState, config::AppConfig, router};
 use std::time::Duration;
+use tower::ServiceExt;
+use api::{AppState, config::AppConfig, import::default_registry, router};
 
 use crate::common::user::{create_test_user, login_user};
 
@@ -47,6 +47,7 @@ impl TestRouter {
             db: Database::new(db.clone()),
             config,
             s3_client: None,
+            import_registry: default_registry(),
             revoked: db::revocation::RevokedUsers::new(Duration::from_secs(7 * 24 * 60 * 60)),
         };
 
@@ -113,6 +114,32 @@ impl TestRouter {
     /// must have a leading "/"
     pub async fn delete(&self, path: &str) -> Response<Body> {
         self.request(Method::DELETE, path, None::<()>).await
+    }
+
+    /// Send a multipart POST to an endpoint. Must have a leading "/".
+    /// Returns the response.
+    pub async fn post_multipart(
+        &self,
+        path: &str,
+        content_type: &str,
+        body: Vec<u8>,
+    ) -> Response<Body> {
+        let path = path.trim_start_matches('/');
+        let uri = format!("/api/{path}");
+        let mut request_builder = Request::builder()
+            .method(Method::POST)
+            .uri(uri)
+            .header(header::CONTENT_TYPE, content_type);
+
+        if let Some(cookie) = &self.cookie {
+            request_builder = request_builder.header(header::COOKIE, cookie);
+        }
+
+        self.router
+            .clone()
+            .oneshot(request_builder.body(Body::from(body)).unwrap())
+            .await
+            .unwrap()
     }
 
     /// send a request to an endpoint on this router with explicit cookies

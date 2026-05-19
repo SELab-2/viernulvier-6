@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE import_rows SET resolved_refs = $1 WHERE id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Jsonb",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "81bbbe7d2743b3f9a77c50d91b12f15abab22d866a0590cfb4d9d2b1279c39fb"
+}

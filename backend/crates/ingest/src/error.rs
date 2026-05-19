@@ -779,8 +779,17 @@ mod tests {
     #[test]
     fn import_entity_from_all_valid_strings() {
         for s in [
-            "event", "event_price", "gallery", "hall", "location", "media", "media_variant",
-            "price", "price_rank", "production", "space",
+            "event",
+            "event_price",
+            "gallery",
+            "hall",
+            "location",
+            "media",
+            "media_variant",
+            "price",
+            "price_rank",
+            "production",
+            "space",
         ] {
             let _ = ImportEntity::from(s);
         }
@@ -795,9 +804,23 @@ mod tests {
     #[test]
     fn import_field_from_all_valid_strings() {
         for s in [
-            "amount", "cdn_url", "crop", "event", "format", "gallery_url", "location",
-            "max_tickets_per_order", "name", "open_seating", "price", "production", "rank",
-            "seat_selection", "source_id", "source_uri", "status",
+            "amount",
+            "cdn_url",
+            "crop",
+            "event",
+            "format",
+            "gallery_url",
+            "location",
+            "max_tickets_per_order",
+            "name",
+            "open_seating",
+            "price",
+            "production",
+            "rank",
+            "seat_selection",
+            "source_id",
+            "source_uri",
+            "status",
         ] {
             let _ = ImportField::from(s);
         }
@@ -812,8 +835,17 @@ mod tests {
     #[test]
     fn import_relation_from_all_valid_strings() {
         for s in [
-            "event", "event_price", "gallery", "hall", "location", "media", "media_variant",
-            "price", "price_rank", "production", "space",
+            "event",
+            "event_price",
+            "gallery",
+            "hall",
+            "location",
+            "media",
+            "media_variant",
+            "price",
+            "price_rank",
+            "production",
+            "space",
         ] {
             let _ = ImportRelation::from(s);
         }

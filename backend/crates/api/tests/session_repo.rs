@@ -2,7 +2,6 @@ mod common;
 
 use chrono::Utc;
 use db::{
-    Database,
     models::{
         session::SessionCreate,
         user::{UserCreate, UserPatch, UserRole},

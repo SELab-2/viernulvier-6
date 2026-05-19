@@ -3,11 +3,11 @@
 mod common;
 
 use axum::body::Body;
-use axum::http::header;
 use axum::http::Method;
+use axum::http::header;
 use axum::response::Response;
-use db::models::user::UserRole;
 use db::Database;
+use db::models::user::UserRole;
 use sqlx::PgPool;
 
 use crate::common::router::TestRouter;
@@ -47,6 +47,7 @@ async fn extract_cookies(response: &Response<Body>) -> String {
 
 #[derive(serde::Deserialize)]
 struct AuthResponse {
+    #[allow(dead_code)]
     message: String,
     success: bool,
 }

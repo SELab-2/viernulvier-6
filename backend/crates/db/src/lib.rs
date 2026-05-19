@@ -5,12 +5,11 @@ use crate::{
     error::DatabaseError,
     repos::{
         article::ArticleRepo, artist::ArtistRepo, collection::CollectionRepo, event::EventRepo,
-        event_price::EventPriceRepo, hall::HallRepo, internal_state::InternalStateRepo,
-        location::LocationRepo, media::MediaRepo, media_variant::MediaVariantRepo,
-        normalization_log::NormalizationLogRepo, price::PriceRepo, price_rank::PriceRankRepo,
-        import_error::ImportErrorRepo,
-        production::ProductionRepo, sessions::SessionRepo, space::SpaceRepo,
-        tag::TagRepo, user::UserRepo,
+        event_price::EventPriceRepo, hall::HallRepo, import::ImportRepo,
+        import_error::ImportErrorRepo, internal_state::InternalStateRepo, location::LocationRepo,
+        media::MediaRepo, media_variant::MediaVariantRepo, normalization_log::NormalizationLogRepo,
+        price::PriceRepo, price_rank::PriceRankRepo, production::ProductionRepo,
+        sessions::SessionRepo, space::SpaceRepo, tag::TagRepo, user::UserRepo,
     },
 };
 
@@ -28,6 +27,8 @@ pub mod models {
     pub mod filtering;
     pub mod hall;
     pub mod import_error;
+    pub mod import_row;
+    pub mod import_session;
     pub mod internal_state;
     pub mod location;
     pub mod media;
@@ -52,6 +53,7 @@ pub mod repos {
     pub mod event;
     pub mod event_price;
     pub mod hall;
+    pub mod import;
     pub mod import_error;
     pub mod internal_state;
     pub mod location;
@@ -62,6 +64,7 @@ pub mod repos {
     pub mod price_rank;
     pub mod production;
     pub mod sessions;
+    pub(crate) mod slug;
     pub mod space;
     pub mod tag;
     pub mod user;
@@ -169,11 +172,23 @@ impl Database {
         NormalizationLogRepo::new(&self.db)
     }
 
+    pub fn imports<'a>(&'a self) -> ImportRepo<'a> {
+        ImportRepo::new(&self.db)
+    }
+
     pub fn pool(&self) -> &PgPool {
         &self.db
     }
 
     pub fn import_errors<'a>(&'a self) -> ImportErrorRepo<'a> {
         ImportErrorRepo::new(&self.db)
+    }
+
+    /// Begin a database transaction.  The caller is responsible for calling
+    /// `tx.commit()` or `tx.rollback()`.
+    pub async fn begin_transaction(
+        &self,
+    ) -> Result<sqlx::Transaction<'_, sqlx::Postgres>, sqlx::Error> {
+        self.db.begin().await
     }
 }

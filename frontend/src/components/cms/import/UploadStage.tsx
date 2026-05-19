@@ -1,0 +1,223 @@
+"use client";
+
+import { useRef, useState, type DragEvent, type ChangeEvent } from "react";
+import { useTranslations } from "next-intl";
+import { FileSpreadsheet, UploadCloud } from "lucide-react";
+
+import { useRouter } from "@/i18n/routing";
+import { useCreateImportSession, useEntityTypes } from "@/hooks/api/useImport";
+import { uploadErrorKey } from "@/lib/import/uploadErrorMap";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+
+const MAX_FILE_SIZE_MB = 20;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+export function UploadStage() {
+    const t = useTranslations("Cms.Import");
+    const router = useRouter();
+
+    const [file, setFile] = useState<File | null>(null);
+    const [entityType, setEntityType] = useState<string>("");
+    const [isDragging, setIsDragging] = useState(false);
+    const [fileSizeError, setFileSizeError] = useState(false);
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const {
+        data: entityTypes,
+        isPending: entityTypesLoading,
+        isError: entityTypesError,
+    } = useEntityTypes();
+
+    const {
+        mutateAsync: createSession,
+        isPending: isSubmitting,
+        error: mutationError,
+    } = useCreateImportSession();
+
+    function handleFileChange(incoming: File | null) {
+        if (!incoming) {
+            return;
+        }
+        if (incoming.size > MAX_FILE_SIZE_BYTES) {
+            setFileSizeError(true);
+            setFile(null);
+            return;
+        }
+        setFileSizeError(false);
+        setFile(incoming);
+    }
+
+    function handleInputChange(e: ChangeEvent<HTMLInputElement>) {
+        handleFileChange(e.target.files?.[0] ?? null);
+    }
+
+    function handleDragOver(e: DragEvent<HTMLDivElement>) {
+        e.preventDefault();
+        setIsDragging(true);
+    }
+
+    function handleDragLeave(e: DragEvent<HTMLDivElement>) {
+        e.preventDefault();
+        setIsDragging(false);
+    }
+
+    function handleDrop(e: DragEvent<HTMLDivElement>) {
+        e.preventDefault();
+        setIsDragging(false);
+        handleFileChange(e.dataTransfer.files?.[0] ?? null);
+    }
+
+    async function handleSubmit() {
+        if (!file || !entityType) {
+            return;
+        }
+        const result = await createSession({ file, entityType });
+        router.push(`/cms/import?session=${result.sessionId}`);
+    }
+
+    const submitDisabled =
+        !file || !entityType || isSubmitting || entityTypesError || entityTypesLoading;
+
+    return (
+        <div className="mx-auto max-w-3xl space-y-5 pt-2">
+            <div>
+                <h2 className="font-display text-foreground text-lg font-bold tracking-tight">
+                    {t("upload.title")}
+                </h2>
+                <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed">
+                    {t("upload.helperText")}
+                </p>
+            </div>
+
+            {/* Drop zone */}
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
+                <div>
+                    <p className="text-muted-foreground mb-2 font-mono text-[10px] font-medium tracking-[1.5px] uppercase">
+                        {t("upload.fileLabel")}
+                    </p>
+                    <div
+                        role="button"
+                        tabIndex={0}
+                        aria-label={t("upload.fileLabel")}
+                        className={[
+                            "group flex min-h-[210px] cursor-pointer flex-col items-center justify-center gap-3 border border-dashed px-6 py-10 text-center transition-colors",
+                            isDragging
+                                ? "border-foreground bg-muted"
+                                : file
+                                  ? "border-foreground bg-muted/50"
+                                  : "border-border hover:border-foreground/40",
+                        ].join(" ")}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        onClick={() => fileInputRef.current?.click()}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                                fileInputRef.current?.click();
+                            }
+                        }}
+                    >
+                        {file ? (
+                            <>
+                                <FileSpreadsheet
+                                    className="text-foreground h-6 w-6"
+                                    strokeWidth={1.5}
+                                />
+                                <span className="max-w-full truncate text-sm font-medium">
+                                    {file.name}
+                                </span>
+                                <span className="text-muted-foreground font-mono text-[10px] tracking-wide uppercase">
+                                    {(file.size / 1024).toFixed(0)} KB
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                <UploadCloud
+                                    className="text-muted-foreground h-6 w-6 transition-transform group-hover:scale-110"
+                                    strokeWidth={1.5}
+                                />
+                                <span className="text-muted-foreground max-w-xs text-sm leading-relaxed">
+                                    {t("upload.description")}
+                                </span>
+                            </>
+                        )}
+                    </div>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".csv,text/csv"
+                        className="sr-only"
+                        onChange={handleInputChange}
+                        data-testid="csv-file-input"
+                    />
+                    <p className="text-muted-foreground mt-2 text-xs">{t("upload.formatHint")}</p>
+                </div>
+
+                {/* Entity type select */}
+                <div className="space-y-4">
+                    <div>
+                        <p className="text-muted-foreground mb-2 font-mono text-[10px] font-medium tracking-[1.5px] uppercase">
+                            {t("upload.entityTypeLabel")}
+                        </p>
+                        {entityTypesLoading ? (
+                            <Skeleton className="h-9 w-full" />
+                        ) : (
+                            <Select
+                                value={entityType}
+                                onValueChange={setEntityType}
+                                disabled={entityTypesError}
+                            >
+                                <SelectTrigger className="w-full rounded-none font-mono text-xs">
+                                    <SelectValue placeholder={t("upload.entityTypePlaceholder")} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {(entityTypes ?? []).map((type) => (
+                                        <SelectItem key={type} value={type}>
+                                            {type}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                    </div>
+                    <Button
+                        onClick={handleSubmit}
+                        disabled={submitDisabled}
+                        className="w-full rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                    >
+                        {isSubmitting ? t("upload.submitting") : t("upload.submit")}
+                    </Button>
+                </div>
+            </div>
+
+            {/* Error panels */}
+            {fileSizeError && (
+                <p role="alert" className="text-destructive text-sm">
+                    {t("errors.fileTooLarge", { maxMb: MAX_FILE_SIZE_MB })}
+                </p>
+            )}
+            {entityTypesError && !fileSizeError && (
+                <p role="alert" className="text-destructive text-sm">
+                    {t("errors.entityTypesFailed")}
+                </p>
+            )}
+            {mutationError && !fileSizeError && (
+                <div
+                    role="alert"
+                    className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border px-4 py-3 text-sm"
+                >
+                    <p>{t(uploadErrorKey(mutationError))}</p>
+                </div>
+            )}
+        </div>
+    );
+}

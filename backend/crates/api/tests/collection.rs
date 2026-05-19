@@ -1,10 +1,10 @@
 #![allow(clippy::indexing_slicing)]
 use axum::http::StatusCode;
+use db::models::collection::CollectionVisibility;
 use serde_json::json;
 use sqlx::PgPool;
 use std::str::FromStr;
 use uuid::Uuid;
-use db::models::collection::CollectionVisibility;
 use api::dto::{
     collection::{
         CollectionItemPayload, CollectionItemPostPayload, CollectionPayload, CollectionPostPayload,
@@ -545,7 +545,10 @@ async fn get_collections_for_production_empty(db: PgPool) {
 
     assert_eq!(response.status(), StatusCode::OK);
     let data: Vec<CollectionPayload> = response.into_struct().await;
-    assert!(data.is_empty(), "should return empty when production has no collection items");
+    assert!(
+        data.is_empty(),
+        "should return empty when production has no collection items"
+    );
 }
 
 #[sqlx::test(fixtures("collections"))]

@@ -198,7 +198,8 @@ mod tests {
             "uitdatabank_keywords": [],
             "uitdatabank_theme": null,
             "uitdatabank_type": null
-        })).unwrap()
+        }))
+        .unwrap()
     }
 
     #[test]

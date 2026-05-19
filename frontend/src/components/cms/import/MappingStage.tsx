@@ -1,0 +1,368 @@
+"use client";
+
+import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { toast } from "sonner";
+
+import { useRouter } from "@/i18n/routing";
+
+import {
+    useFieldSpec,
+    useImportRows,
+    useImportSession,
+    useStartDryRun,
+    useUpdateMapping,
+} from "@/hooks/api/useImport";
+import { autoSuggestMapping } from "@/lib/import/autoSuggestMapping";
+import type {
+    FieldSpec,
+    ImportMapping,
+    ImportRow,
+    ImportSession,
+} from "@/types/models/import.types";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ColumnMapRow } from "./ColumnMapRow";
+
+type MappingStageProps = {
+    sessionId: string;
+};
+
+function buildSampleValues(header: string, rows: ImportRow[]): string[] {
+    return rows.map((row) => {
+        const v = row.rawData[header];
+        return v == null ? "" : String(v);
+    });
+}
+
+function isValueCompatible(value: string, field: FieldSpec): boolean {
+    const trimmed = value.trim();
+    if (trimmed === "") return true;
+
+    switch (field.fieldType.kind) {
+        case "string":
+        case "text":
+        case "foreign_key":
+            return true;
+        case "integer":
+            return /^-?\d+$/.test(trimmed);
+        case "decimal":
+            return /^-?\d+([,.]\d+)?$/.test(trimmed);
+        case "boolean":
+            return /^(true|false|1|0|yes|no|ja|nee)$/i.test(trimmed);
+        case "date":
+            return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) && !Number.isNaN(Date.parse(trimmed));
+        case "date_time":
+            return (
+                !Number.isNaN(Date.parse(trimmed)) ||
+                /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(trimmed)
+            );
+    }
+}
+
+function typeMismatchForColumn(field: FieldSpec | null, sampleValues: string[]) {
+    if (!field) {
+        return { count: 0, examples: [] };
+    }
+
+    const mismatches = sampleValues
+        .filter((value) => !isValueCompatible(value, field))
+        .map((value) => value.trim())
+        .filter(Boolean);
+
+    return {
+        count: mismatches.length,
+        examples: [...new Set(mismatches)].slice(0, 2),
+    };
+}
+
+function columnsAreEqual(
+    a: Record<string, string | null>,
+    b: Record<string, string | null>,
+    headers: string[]
+): boolean {
+    for (const h of headers) {
+        if ((a[h] ?? null) !== (b[h] ?? null)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function buildInitialColumns(
+    headers: string[],
+    savedColumns: Record<string, string | null>,
+    fields: FieldSpec[]
+): Record<string, string | null> {
+    const suggested = autoSuggestMapping(headers, fields);
+    const initial: Record<string, string | null> = {};
+    for (const header of headers) {
+        const hasSaved = Object.prototype.hasOwnProperty.call(savedColumns, header);
+        initial[header] = hasSaved ? (savedColumns[header] ?? null) : (suggested[header] ?? null);
+    }
+    return initial;
+}
+
+// ── Inner component — receives session and fields synchronously so useState initializer runs once ──
+
+type MappingStageInnerProps = {
+    session: ImportSession;
+    fields: FieldSpec[];
+    previewRows: ImportRow[];
+    savedMapping: ImportMapping;
+};
+
+function MappingStageInner({ session, fields, previewRows, savedMapping }: MappingStageInnerProps) {
+    const t = useTranslations("Cms.Import");
+
+    const router = useRouter();
+    const updateMapping = useUpdateMapping();
+    const startDryRun = useStartDryRun();
+
+    const [columns, setColumns] = useState<Record<string, string | null>>(() =>
+        buildInitialColumns(session.originalHeaders, savedMapping.columns, fields)
+    );
+
+    const headers = session.originalHeaders;
+
+    const isDirty = !columnsAreEqual(columns, savedMapping.columns, headers);
+
+    const requiredFields = fields.filter((f) => f.required);
+    const mappedFieldNames = new Set(Object.values(columns).filter((s): s is string => s !== null));
+    const missingRequired = requiredFields.filter((f) => !mappedFieldNames.has(f.name));
+    const fieldByName = new Map(fields.map((field) => [field.name, field]));
+    const typeMismatches = headers
+        .map((header) => {
+            const selectedField = columns[header]
+                ? fieldByName.get(columns[header] as string)
+                : null;
+            const mismatch = typeMismatchForColumn(
+                selectedField ?? null,
+                buildSampleValues(header, previewRows)
+            );
+            return { header, selectedField: selectedField ?? null, ...mismatch };
+        })
+        .filter((mismatch) => mismatch.count > 0);
+
+    function handleColumnChange(header: string, fieldName: string | null) {
+        setColumns((prev) => ({ ...prev, [header]: fieldName }));
+    }
+
+    function handleSave() {
+        updateMapping.mutate(
+            { id: session.id, mapping: { columns } },
+            { onSuccess: () => toast.success(t("mapping.saveSuccess")) }
+        );
+    }
+
+    function handleStartDryRun() {
+        startDryRun.mutate(session.id, {
+            onSuccess: () => {
+                router.replace(`/cms/import?session=${session.id}`);
+            },
+        });
+    }
+
+    const isSaving = updateMapping.isPending;
+    const isStartingDryRun = startDryRun.isPending;
+    const dryRunDisabled =
+        isSaving ||
+        isStartingDryRun ||
+        isDirty ||
+        missingRequired.length > 0 ||
+        typeMismatches.length > 0;
+
+    return (
+        <div className="mx-auto max-w-4xl space-y-5 pt-2">
+            <div>
+                <h2 className="font-display text-foreground text-lg font-bold tracking-tight">
+                    {t("mapping.title")}
+                </h2>
+                <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed">
+                    {t("mapping.helperText")}
+                </p>
+            </div>
+
+            {missingRequired.length > 0 && (
+                <div
+                    role="alert"
+                    className="animate-in fade-in slide-in-from-top-1 border-destructive/40 bg-destructive/10 text-destructive border px-4 py-3 text-sm duration-200"
+                >
+                    <p className="font-medium">{t("mapping.requiredMissing")}</p>
+                    <ul className="mt-1.5 list-disc space-y-0.5 pl-4">
+                        {missingRequired.map((f) => (
+                            <li key={f.name}>{f.label}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            {typeMismatches.length > 0 && (
+                <div
+                    role="alert"
+                    className="border-destructive/40 bg-destructive/10 text-destructive border px-4 py-3 text-sm"
+                >
+                    <p className="font-medium">{t("mapping.typeMismatchTitle")}</p>
+                    <ul className="mt-1.5 list-disc space-y-0.5 pl-4">
+                        {typeMismatches.map((mismatch) => (
+                            <li key={mismatch.header}>
+                                {t("mapping.typeMismatchColumn", {
+                                    column: mismatch.header,
+                                    count: mismatch.count,
+                                    examples: mismatch.examples.join(", "),
+                                })}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            {updateMapping.isError && (
+                <p role="alert" className="text-destructive text-sm">
+                    {t("errors.saveMappingFailed")}
+                </p>
+            )}
+
+            {startDryRun.isError && (
+                <p role="alert" className="text-destructive text-sm">
+                    {t("errors.dryRunStartFailed")}
+                </p>
+            )}
+
+            <div className="overflow-x-auto border">
+                <table className="w-full min-w-[500px] text-sm">
+                    <thead>
+                        <tr className="border-foreground/10 border-b text-left">
+                            <th className="text-muted-foreground px-5 py-3 font-mono text-[10px] font-medium tracking-[1.5px] uppercase">
+                                {t("mapping.headerColumn")}
+                            </th>
+                            <th className="text-muted-foreground px-5 py-3 font-mono text-[10px] font-medium tracking-[1.5px] uppercase">
+                                {t("mapping.fieldColumn")}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {headers.map((header) => {
+                            const selectedField = columns[header]
+                                ? (fieldByName.get(columns[header] as string) ?? null)
+                                : null;
+                            const mismatch = typeMismatchForColumn(
+                                selectedField,
+                                buildSampleValues(header, previewRows)
+                            );
+
+                            return (
+                                <ColumnMapRow
+                                    key={header}
+                                    header={header}
+                                    sampleValues={buildSampleValues(header, previewRows)}
+                                    fields={fields}
+                                    currentMapping={columns[header] ?? null}
+                                    selectedField={selectedField}
+                                    mismatchCount={mismatch.count}
+                                    mismatchExamples={mismatch.examples}
+                                    onChange={(fieldName) => handleColumnChange(header, fieldName)}
+                                />
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+                <Button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    variant="outline"
+                    className="rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                >
+                    {isSaving ? t("mapping.saving") : t("mapping.save")}
+                </Button>
+
+                <Button
+                    onClick={handleStartDryRun}
+                    disabled={dryRunDisabled}
+                    className="rounded-none font-mono text-[10px] tracking-[1.5px] uppercase"
+                >
+                    {isStartingDryRun ? t("mapping.startingDryRun") : t("mapping.startDryRun")}
+                </Button>
+
+                {isDirty && (
+                    <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                        <span
+                            className="inline-block h-2 w-2 rounded-full bg-current"
+                            aria-hidden="true"
+                        />
+                        <span className="font-mono text-[10px] tracking-wide">
+                            {t("mapping.unsavedChanges")}
+                        </span>
+                    </span>
+                )}
+            </div>
+        </div>
+    );
+}
+
+// ── Outer loader component ──
+
+export function MappingStage({ sessionId }: MappingStageProps) {
+    const t = useTranslations("Cms.Import");
+
+    const {
+        data: session,
+        isPending: sessionLoading,
+        isError: sessionError,
+    } = useImportSession(sessionId);
+
+    const {
+        data: fields,
+        isPending: fieldsLoading,
+        isError: fieldsError,
+    } = useFieldSpec(session?.entityType ?? "", {
+        enabled: Boolean(session?.entityType),
+    });
+
+    const { data: previewRows } = useImportRows(sessionId, { limit: 20 });
+
+    if (sessionLoading || fieldsLoading) {
+        return (
+            <div className="mx-auto max-w-4xl space-y-6 pt-4">
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+        );
+    }
+
+    if (sessionError) {
+        return (
+            <p role="alert" className="text-destructive pt-4 text-sm">
+                {t("errors.sessionLoadFailed")}
+            </p>
+        );
+    }
+
+    if (fieldsError) {
+        return (
+            <p role="alert" className="text-destructive pt-4 text-sm">
+                {t("errors.fieldsLoadFailed")}
+            </p>
+        );
+    }
+
+    if (!session || !fields) {
+        return null;
+    }
+
+    return (
+        // Remounting on save discards concurrent local edits (acceptable v1; Phase 10 should revisit).
+        <MappingStageInner
+            key={`${session.id}:${session.updatedAt}`}
+            session={session}
+            fields={fields}
+            previewRows={previewRows ?? []}
+            savedMapping={session.mapping}
+        />
+    );
+}

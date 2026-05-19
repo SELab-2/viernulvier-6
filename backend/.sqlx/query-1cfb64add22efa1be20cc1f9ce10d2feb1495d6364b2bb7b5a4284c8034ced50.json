@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE import_sessions\n               SET updated_at = NOW()\n               WHERE id = (\n                   SELECT id FROM import_sessions\n                   WHERE status IN ('dry_run_pending', 'committing')\n                   ORDER BY updated_at\n                   LIMIT 1\n                   FOR UPDATE SKIP LOCKED\n               )\n               RETURNING id AS \"id!: Uuid\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!: Uuid",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "1cfb64add22efa1be20cc1f9ce10d2feb1495d6364b2bb7b5a4284c8034ced50"
+}

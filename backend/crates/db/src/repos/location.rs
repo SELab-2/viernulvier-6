@@ -204,6 +204,14 @@ impl<'a> LocationRepo<'a> {
         })
     }
 
+    pub async fn insert_on(
+        &self,
+        conn: &mut sqlx::PgConnection,
+        location: LocationCreate,
+    ) -> Result<Location, DatabaseError> {
+        Ok(location.insert(conn).await?)
+    }
+
     pub async fn upsert_by_source_id(
         &self,
         location: LocationCreate,
@@ -258,10 +266,35 @@ impl<'a> LocationRepo<'a> {
         })
     }
 
+    pub async fn update_on(
+        &self,
+        conn: &mut sqlx::PgConnection,
+        location: Location,
+    ) -> Result<Location, DatabaseError> {
+        Ok(location.update_all_fields(conn).await?)
+    }
+
     pub async fn delete(&self, id: Uuid) -> Result<(), DatabaseError> {
         let res = sqlx::query("DELETE FROM locations WHERE id = $1")
             .bind(id)
             .execute(self.db)
+            .await?;
+
+        if res.rows_affected() == 0 {
+            return Err(DatabaseError::NotFound);
+        }
+
+        Ok(())
+    }
+
+    pub async fn delete_on(
+        &self,
+        conn: &mut sqlx::PgConnection,
+        id: Uuid,
+    ) -> Result<(), DatabaseError> {
+        let res = sqlx::query("DELETE FROM locations WHERE id = $1")
+            .bind(id)
+            .execute(conn)
             .await?;
 
         if res.rows_affected() == 0 {

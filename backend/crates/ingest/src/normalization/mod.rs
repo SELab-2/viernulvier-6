@@ -79,6 +79,9 @@ mod tests {
         // OnceLock is stateful — run in a subprocess would be ideal,
         // but the fallback is that init() returns None without API key.
         let ctx = init();
-        assert!(ctx.is_none(), "normalization must be disabled without LLM_API_KEY");
+        assert!(
+            ctx.is_none(),
+            "normalization must be disabled without LLM_API_KEY"
+        );
     }
 }

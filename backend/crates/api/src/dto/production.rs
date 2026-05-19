@@ -96,7 +96,11 @@ impl ProductionPayload {
             .fetch_location_summaries_for(id)
             .await?
             .into_iter()
-            .map(|(loc_id, slug, name)| LocationSummary { id: loc_id, slug, name })
+            .map(|(loc_id, slug, name)| LocationSummary {
+                id: loc_id,
+                slug,
+                name,
+            })
             .collect();
 
         let mut tags_by_id = db
