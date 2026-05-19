@@ -4,7 +4,7 @@ use chrono::Utc;
 use database::{
     models::{
         session::SessionCreate,
-        user::{UserCreate, UserPatch, UserRole},
+        user::{UserCreate, UserRole},
     },
     repos::{sessions::SessionRepo, user::UserRepo},
 };
