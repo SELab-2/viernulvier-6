@@ -10,10 +10,7 @@ import type { Production } from "@/types/models/production.types";
 
 function formatUitdatabankType(raw: string | null, fallback: string): string {
     if (!raw) return fallback;
-    if (raw.startsWith("/api/") || raw.startsWith("http")) {
-        const last = raw.split("/").pop() ?? "";
-        return last ? `${fallback} ${last}` : fallback;
-    }
+    if (raw.startsWith("/api/") || raw.startsWith("http")) return fallback;
     return raw;
 }
 
