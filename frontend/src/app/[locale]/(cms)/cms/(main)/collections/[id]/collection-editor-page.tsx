@@ -1322,20 +1322,20 @@ export function CollectionEditorPage({ id }: { id: string }) {
                                                     type="button"
                                                     disabled={exists || addCollectionItem.isPending}
                                                     onClick={() => void addItem(candidate)}
-                                                    className="border-border/70 hover:bg-muted/40 disabled:text-muted-foreground flex items-center gap-3 border px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                                                    className="border-border/70 hover:bg-muted/40 disabled:text-muted-foreground grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1 border px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:hover:bg-transparent sm:grid-cols-[auto_minmax(0,1fr)_auto]"
                                                 >
                                                     <Plus className="h-3.5 w-3.5 shrink-0" />
                                                     <span className="min-w-0 flex-1">
-                                                        <span className="block truncate text-sm font-medium">
+                                                        <span className="block text-sm leading-snug font-medium break-words whitespace-normal">
                                                             {candidate.title}
                                                         </span>
                                                         {candidate.subtitle && (
-                                                            <span className="text-muted-foreground block truncate text-xs">
+                                                            <span className="text-muted-foreground block text-xs leading-snug break-words whitespace-normal">
                                                                 {candidate.subtitle}
                                                             </span>
                                                         )}
                                                     </span>
-                                                    <span className="text-muted-foreground shrink-0 font-mono text-[9px] tracking-[1.1px] uppercase">
+                                                    <span className="text-muted-foreground col-start-2 shrink-0 font-mono text-[9px] tracking-[1.1px] uppercase sm:col-start-auto sm:self-center">
                                                         {exists ? t("alreadyAdded") : t("addItem")}
                                                     </span>
                                                 </button>
