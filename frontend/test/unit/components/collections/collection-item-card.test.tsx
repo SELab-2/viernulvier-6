@@ -85,11 +85,11 @@ describe("EntityCard", () => {
         expect(link).toHaveAttribute("href", `/productions/${PRODUCTION_ID}`);
     });
 
-    it("renders the gradient placeholder when no cover image is available", async () => {
+    it("renders the image placeholder when no cover image is available", async () => {
         const item = makeItem(PRODUCTION_ID, "production");
         const { container } = renderWithIntl(<EntityCard item={item} locale="en" />);
         await screen.findByText("Production EN");
-        expect(container.querySelector(".bg-gradient-to-br")).toBeInTheDocument();
+        expect(container.textContent).toContain("N\u00b01");
     });
 
     it("shows the curator comment when provided", () => {

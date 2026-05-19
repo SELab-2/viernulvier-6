@@ -28,7 +28,7 @@ export function FeaturedSection({ productions, locale }: FeaturedSectionProps) {
                 <span className="bg-border/80 h-px flex-1" />
             </div>
 
-            <div className="-mx-4 grid grid-cols-1 sm:-mx-[30px] sm:grid-cols-[1.6fr_1fr_1fr]">
+            <div className="sm:divide-border/70 -mx-4 grid grid-cols-1 sm:-mx-[30px] sm:grid-cols-[1.6fr_1fr_1fr] sm:divide-x">
                 {featured.map((production, index) => (
                     <FeaturedCard
                         key={production.id}

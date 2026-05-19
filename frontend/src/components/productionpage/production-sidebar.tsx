@@ -63,7 +63,7 @@ export function ProductionSidebar({
     return (
         <aside className="flex flex-col">
             {/* Events Section */}
-            <div className="border-border/70 mb-6 border-b pb-6">
+            <div className="border-border/70 mb-6 pb-6">
                 <span className="text-muted-foreground mb-3 block font-mono text-[11px] font-medium tracking-[2px] uppercase">
                     {t("title") || "Voorstellingen"}
                 </span>
@@ -138,10 +138,10 @@ export function ProductionSidebar({
             {/* Practical Info */}
             <div className="border-border/70 mb-6 border-b pb-6">
                 <span className="text-muted-foreground mb-4 block font-mono text-[11px] font-medium tracking-[2px] uppercase">
-                    Praktisch
+                    {tProd("practical")}
                 </span>
 
-                <div className="border-border/70 font-body flex items-baseline justify-between border-b py-1.5 text-[15px]">
+                <div className="border-border/70 font-body flex items-baseline justify-between py-1.5 text-[15px]">
                     <span className="text-muted-foreground font-mono text-[11px] tracking-[1.2px] uppercase">
                         {tProd("metaLanguage")}
                     </span>
