@@ -55,28 +55,41 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 name = "api"
 version = "0.1.0"
 dependencies = [
+ "argon2",
+ "aws-config",
  "aws-sdk-s3",
+ "axum",
+ "axum-extra",
  "base64",
  "chrono",
- "database",
+ "db",
+ "dotenvy",
  "futures",
  "hex",
- "imagesize",
- "ormlite",
- "reqwest",
- "scraper",
+ "hmac 0.13.0",
+ "http-body-util",
+ "ingest",
+ "jsonwebtoken",
+ "mime",
+ "o2o",
+ "rand 0.10.1",
  "serde",
  "serde_json",
  "sha2 0.11.0",
  "slug",
  "sqlx",
- "tempfile",
+ "test-log",
  "thiserror 2.0.18",
+ "time",
  "tokio",
+ "tower",
+ "tower-http",
  "tracing",
  "tracing-subscriber",
+ "utoipa",
+ "utoipa-axum",
+ "utoipa-swagger-ui",
  "uuid",
- "wiremock",
 ]
 
 [[package]]
@@ -1128,7 +1141,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "database"
+name = "db"
 version = "0.1.0"
 dependencies = [
  "chrono",
@@ -2167,6 +2180,34 @@ dependencies = [
  "hashbrown 0.17.0",
  "serde",
  "serde_core",
+]
+
+[[package]]
+name = "ingest"
+version = "0.1.0"
+dependencies = [
+ "aws-sdk-s3",
+ "base64",
+ "chrono",
+ "db",
+ "futures",
+ "hex",
+ "imagesize",
+ "ormlite",
+ "reqwest",
+ "scraper",
+ "serde",
+ "serde_json",
+ "sha2 0.11.0",
+ "slug",
+ "sqlx",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "wiremock",
 ]
 
 [[package]]
@@ -4719,40 +4760,12 @@ name = "viernulvier_archive"
 version = "0.1.0"
 dependencies = [
  "api",
- "argon2",
- "aws-config",
- "aws-sdk-s3",
- "axum",
- "axum-extra",
- "base64",
- "chrono",
- "database",
+ "db",
  "dotenvy",
- "futures",
- "hex",
- "hmac 0.13.0",
- "http-body-util",
- "jsonwebtoken",
- "mime",
- "o2o",
- "rand 0.10.1",
- "serde",
- "serde_json",
- "sha2 0.11.0",
- "slug",
- "sqlx",
- "test-log",
- "thiserror 2.0.18",
- "time",
+ "ingest",
  "tokio",
- "tower",
- "tower-http",
  "tracing",
  "tracing-subscriber",
- "utoipa",
- "utoipa-axum",
- "utoipa-swagger-ui",
- "uuid",
 ]
 
 [[package]]

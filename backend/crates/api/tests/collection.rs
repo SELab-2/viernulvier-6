@@ -1,0 +1,571 @@
+#![allow(clippy::indexing_slicing)]
+use axum::http::StatusCode;
+use serde_json::json;
+use sqlx::PgPool;
+use std::str::FromStr;
+use uuid::Uuid;
+use db::models::collection::CollectionVisibility;
+use api::dto::{
+    collection::{
+        CollectionItemPayload, CollectionItemPostPayload, CollectionPayload, CollectionPostPayload,
+    },
+    paginated::PaginatedResponse,
+};
+
+use crate::common::{into_struct::IntoStruct, router::TestRouter};
+
+mod common;
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn get_all(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/collections").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<CollectionPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 5);
+}
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn get_search_single_result(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/collections?q=zomer").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<CollectionPayload> = response.into_struct().await;
+
+    assert_eq!(data.data.len(), 1);
+    assert_eq!(data.data[0].slug, "zomerselectie");
+    assert!(data.next_cursor.is_none());
+}
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn get_search_no_results(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/collections?q=doesnotexist").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<CollectionPayload> = response.into_struct().await;
+
+    assert!(data.data.is_empty());
+    assert!(data.next_cursor.is_none());
+}
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn get_search_paginated(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/collections?q=selectie&limit=1").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // page 1
+    let page1: PaginatedResponse<CollectionPayload> = response.into_struct().await;
+    assert_eq!(page1.data.len(), 1, "page 1 should respect the limit of 1");
+    assert!(page1.next_cursor.is_some(), "there should be a next cursor");
+
+    let cursor1 = page1.next_cursor.unwrap();
+
+    // page 2
+    let response = app
+        .get(&format!("/collections?q=selectie&limit=1&cursor={cursor1}"))
+        .await;
+
+    let page2: PaginatedResponse<CollectionPayload> = response.into_struct().await;
+    assert_eq!(page2.data.len(), 1, "page 2 should respect the limit of 1");
+    assert!(page2.next_cursor.is_some(), "there should be a next cursor");
+
+    let cursor2 = page2.next_cursor.unwrap();
+
+    let response = app
+        .get(&format!("/collections?q=selectie&limit=1&cursor={cursor2}"))
+        .await;
+
+    // page 3
+    let page3: PaginatedResponse<CollectionPayload> = response.into_struct().await;
+    assert_eq!(page3.data.len(), 1, "page 3 should respect the limit of 1");
+    assert!(
+        page3.next_cursor.is_none(),
+        "last page should have no next cursor"
+    );
+
+    let mut all_ids = vec![page1.data[0].id, page2.data[0].id, page3.data[0].id];
+    let original_length = all_ids.len();
+
+    all_ids.sort();
+    all_ids.dedup();
+
+    assert_eq!(
+        all_ids.len(),
+        original_length,
+        "all paginated search results must be unique"
+    );
+}
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn get_paginated_without_search(db: PgPool) {
+    let app = TestRouter::new(db);
+    let limit = 2;
+
+    let mut cursor = None;
+    let mut all_ids = Vec::new();
+
+    loop {
+        let url = if let Some(c) = &cursor {
+            format!("/collections?limit={limit}&cursor={c}")
+        } else {
+            format!("/collections?limit={limit}")
+        };
+
+        let response = app.get(&url).await;
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let page: PaginatedResponse<CollectionPayload> = response.into_struct().await;
+
+        // check for duplicates within the page
+        let mut page_ids: Vec<_> = page.data.iter().map(|c| c.id).collect();
+        page_ids.sort();
+        page_ids.dedup();
+        assert_eq!(page.data.len(), page_ids.len(), "duplicates within page");
+
+        // check for duplicates across pages
+        for id in &page.data {
+            assert!(
+                !all_ids.contains(&id.id),
+                "duplicate id {} across pages",
+                id.id
+            );
+            all_ids.push(id.id);
+        }
+
+        if page.next_cursor.is_none() {
+            break;
+        }
+
+        cursor = page.next_cursor;
+    }
+}
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn get_one_success(db: PgPool) {
+    let app = TestRouter::new(db);
+    let target_id = Uuid::from_str("20000000-0000-0000-0000-000000000001").unwrap();
+
+    let response = app.get(&format!("/collections/{target_id}")).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: CollectionPayload = response.into_struct().await;
+    assert_eq!(data.id, target_id);
+    assert_eq!(data.slug, "zomerselectie");
+    let nl = data
+        .translations
+        .iter()
+        .find(|t| t.language_code == "nl")
+        .expect("Dutch translation not found");
+    assert_eq!(nl.title, "Zomerselectie");
+    assert_eq!(data.items.len(), 2);
+    let first_item = data.items.first().expect("expected first collection item");
+    assert_eq!(first_item.position, 1);
+    let second_item = data.items.get(1).expect("expected second collection item");
+    assert_eq!(second_item.position, 2);
+}
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn get_by_slug_success(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/collections/slug/zomerselectie").await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: CollectionPayload = response.into_struct().await;
+    assert_eq!(
+        data.id,
+        Uuid::from_str("20000000-0000-0000-0000-000000000001").unwrap()
+    );
+    assert_eq!(data.slug, "zomerselectie");
+    assert_eq!(data.items.len(), 2);
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn get_by_slug_not_found(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get("/collections/slug/missing-collection").await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn get_one_not_found(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app.get(&format!("/collections/{}", Uuid::nil())).await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn post_success(db: PgPool) {
+    let unauthenticated_app = TestRouter::new(db.clone());
+    let payload = mock_post_payload();
+
+    let unauthenticated_response = unauthenticated_app.post("/collections", &payload).await;
+    assert_eq!(unauthenticated_response.status(), StatusCode::UNAUTHORIZED);
+
+    let app = TestRouter::as_editor(db).await;
+
+    let response = app.post("/collections", &payload).await;
+    assert_eq!(response.status(), StatusCode::CREATED);
+
+    let data: CollectionPayload = response.into_struct().await;
+    assert_eq!(data.slug, "test-selectie");
+    let nl = data
+        .translations
+        .iter()
+        .find(|t| t.language_code == "nl")
+        .expect("Dutch translation not found");
+    let en = data
+        .translations
+        .iter()
+        .find(|t| t.language_code == "en")
+        .expect("English translation not found");
+    assert_eq!(nl.title, "Test Selectie");
+    assert_eq!(en.title, "Test Selection");
+    assert_eq!(nl.description, "");
+    assert_eq!(en.description, "");
+    assert!(data.items.is_empty());
+    assert!(!data.id.is_nil());
+}
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn put_success(db: PgPool) {
+    let target_id = Uuid::from_str("20000000-0000-0000-0000-000000000002").unwrap();
+
+    let unauthenticated_app = TestRouter::new(db.clone());
+    let app = TestRouter::as_editor(db).await;
+
+    let update_payload: CollectionPayload = serde_json::from_value(json!({
+        "id": target_id,
+        "slug": "dans-2025-bijgewerkt",
+        "translations": [
+            { "language_code": "nl", "title": "Dans 2025 (bijgewerkt)", "description": "" },
+            { "language_code": "en", "title": "Dance 2025 (updated)", "description": "" }
+        ],
+        "items": [],
+        "created_at": "2026-01-01T00:00:00Z",
+        "updated_at": "2026-01-01T00:00:00Z",
+        "visibility": "public"
+    }))
+    .expect("Failed to deserialize CollectionPayload");
+
+    let unauthenticated_response = unauthenticated_app
+        .put("/collections", &update_payload)
+        .await;
+    assert_eq!(unauthenticated_response.status(), StatusCode::UNAUTHORIZED);
+
+    let response = app.put("/collections", &update_payload).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: CollectionPayload = response.into_struct().await;
+    assert_eq!(data.id, target_id);
+    assert_eq!(data.slug, "dans-2025-bijgewerkt");
+    let nl = data
+        .translations
+        .iter()
+        .find(|t| t.language_code == "nl")
+        .expect("Dutch translation not found");
+    assert_eq!(nl.title, "Dans 2025 (bijgewerkt)");
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn put_not_found(db: PgPool) {
+    let app = TestRouter::as_editor(db).await;
+
+    let missing: CollectionPayload = serde_json::from_value(json!({
+        "id": Uuid::nil(),
+        "slug": "missing",
+        "translations": [
+            { "language_code": "nl", "title": "Missing", "description": "" },
+            { "language_code": "en", "title": "Missing", "description": "" }
+        ],
+        "items": [],
+        "created_at": "2026-01-01T00:00:00Z",
+        "updated_at": "2026-01-01T00:00:00Z",
+        "visibility": "public"
+    }))
+    .expect("Failed to deserialize CollectionPayload");
+
+    let response = app.put("/collections", &missing).await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn delete_success(db: PgPool) {
+    let target_id = Uuid::from_str("20000000-0000-0000-0000-000000000001").unwrap();
+
+    let unauthenticated_app = TestRouter::new(db.clone());
+    let unauthenticated_response = unauthenticated_app
+        .delete(&format!("/collections/{target_id}"))
+        .await;
+    assert_eq!(unauthenticated_response.status(), StatusCode::UNAUTHORIZED);
+
+    let app = TestRouter::as_editor(db).await;
+
+    let response = app.delete(&format!("/collections/{target_id}")).await;
+    assert_eq!(response.status(), StatusCode::NO_CONTENT);
+
+    let verify_res = app.get(&format!("/collections/{target_id}")).await;
+    assert_eq!(verify_res.status(), StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn delete_not_found(db: PgPool) {
+    let app = TestRouter::as_editor(db).await;
+
+    let response = app.delete(&format!("/collections/{}", Uuid::nil())).await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn post_item_success(db: PgPool) {
+    let collection_id = Uuid::from_str("20000000-0000-0000-0000-000000000002").unwrap();
+    let content_id = Uuid::from_str("99999999-0000-0000-0000-000000000001").unwrap();
+
+    let unauthenticated_app = TestRouter::new(db.clone());
+    let item_payload: CollectionItemPostPayload = serde_json::from_value(json!({
+        "content_id": content_id,
+        "content_type": "event",
+        "position": 1,
+        "translations": [
+            { "language_code": "nl", "comment": null },
+            { "language_code": "en", "comment": null }
+        ]
+    }))
+    .expect("Failed to deserialize CollectionItemPostPayload");
+
+    let unauthenticated_response = unauthenticated_app
+        .post(
+            &format!("/collections/{collection_id}/items"),
+            &item_payload,
+        )
+        .await;
+    assert_eq!(unauthenticated_response.status(), StatusCode::UNAUTHORIZED);
+
+    let app = TestRouter::as_editor(db).await;
+
+    let response = app
+        .post(
+            &format!("/collections/{collection_id}/items"),
+            &item_payload,
+        )
+        .await;
+    assert_eq!(response.status(), StatusCode::CREATED);
+
+    let data: CollectionItemPayload = response.into_struct().await;
+    assert_eq!(data.content_id, content_id);
+    assert_eq!(data.position, 1);
+    assert!(!data.id.is_nil());
+}
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn delete_item_success(db: PgPool) {
+    let collection_id = Uuid::from_str("20000000-0000-0000-0000-000000000001").unwrap();
+    let item_id = Uuid::from_str("20000000-0000-0000-0001-000000000001").unwrap();
+
+    let unauthenticated_app = TestRouter::new(db.clone());
+    let unauthenticated_response = unauthenticated_app
+        .delete(&format!("/collections/{collection_id}/items/{item_id}"))
+        .await;
+    assert_eq!(unauthenticated_response.status(), StatusCode::UNAUTHORIZED);
+
+    let app = TestRouter::as_editor(db).await;
+
+    let response = app
+        .delete(&format!("/collections/{collection_id}/items/{item_id}"))
+        .await;
+    assert_eq!(response.status(), StatusCode::NO_CONTENT);
+
+    let verify_res = app.get(&format!("/collections/{collection_id}")).await;
+    let data: CollectionPayload = verify_res.into_struct().await;
+    assert_eq!(data.items.len(), 1);
+}
+
+#[sqlx::test]
+#[test_log::test]
+async fn delete_item_not_found(db: PgPool) {
+    let collection_id = Uuid::nil();
+    let app = TestRouter::as_editor(db).await;
+
+    let response = app
+        .delete(&format!(
+            "/collections/{collection_id}/items/{}",
+            Uuid::nil()
+        ))
+        .await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test(fixtures("collections", "media", "entity_media_collection_cover"))]
+#[test_log::test]
+async fn get_one_collection_returns_cover_image_url(db: PgPool) {
+    let app = TestRouter::new(db);
+    let id = Uuid::from_str("20000000-0000-0000-0000-000000000001").unwrap();
+
+    let response = app.get(&format!("/collections/{id}")).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let payload: CollectionPayload = response.into_struct().await;
+
+    let url = payload
+        .cover_image_url
+        .expect("cover_image_url should be set");
+    assert!(
+        url.ends_with("/media/production/1001/media/cover.jpg"),
+        "unexpected URL: {url}"
+    );
+}
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn get_one_collection_without_cover_returns_null(db: PgPool) {
+    let app = TestRouter::new(db);
+    let id = Uuid::from_str("20000000-0000-0000-0000-000000000001").unwrap();
+    let response = app.get(&format!("/collections/{id}")).await;
+    let payload: CollectionPayload = response.into_struct().await;
+    assert!(payload.cover_image_url.is_none());
+}
+
+#[sqlx::test(fixtures("collections", "media", "entity_media_collection_cover"))]
+#[test_log::test]
+async fn get_all_collections_returns_cover_image_urls(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/collections").await;
+    let body: PaginatedResponse<CollectionPayload> = response.into_struct().await;
+    let with_cover = body.data.iter().find(|c| c.cover_image_url.is_some());
+    assert!(
+        with_cover.is_some(),
+        "at least one collection should have a resolved cover URL"
+    );
+}
+
+#[sqlx::test(fixtures("collections", "media", "entity_media_collection_cover"))]
+#[test_log::test]
+async fn set_cover_for_collection_round_trips(db: PgPool) {
+    let app = TestRouter::as_editor(db).await;
+    let collection_id = Uuid::from_str("20000000-0000-0000-0000-000000000001").unwrap();
+    let media_id = Uuid::from_str("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa").unwrap();
+
+    let set = app
+        .post(
+            &format!("/media/entity/collection/{collection_id}/{media_id}/set-cover"),
+            &(),
+        )
+        .await;
+    assert_eq!(
+        set.status(),
+        StatusCode::NO_CONTENT,
+        "set-cover should succeed"
+    );
+
+    let resp = app.get(&format!("/collections/{collection_id}")).await;
+    let payload: CollectionPayload = resp.into_struct().await;
+    assert!(
+        payload.cover_image_url.is_some(),
+        "cover_image_url should be set after set-cover"
+    );
+}
+
+fn mock_post_payload() -> CollectionPostPayload {
+    serde_json::from_value(json!({
+        "slug": "test-selectie",
+        "translations": [
+            { "language_code": "nl", "title": "Test Selectie", "description": "" },
+            { "language_code": "en", "title": "Test Selection", "description": "" }
+
+        ]
+    }))
+    .expect("Failed to deserialize mock CollectionPostPayload")
+}
+
+#[sqlx::test(fixtures("collections", "productions", "collection_items_production"))]
+#[test_log::test]
+async fn get_collections_for_production_returns_public(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app
+        .get("/productions/11111111-1111-1111-1111-111111111111/collections")
+        .await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: Vec<CollectionPayload> = response.into_struct().await;
+    assert_eq!(data.len(), 1, "should return only the public collection");
+    assert_eq!(data[0].slug, "zomerselectie");
+    assert_eq!(data[0].visibility, CollectionVisibility::Public);
+}
+
+#[sqlx::test(fixtures("collections", "productions", "collection_items_production"))]
+#[test_log::test]
+async fn get_collections_for_production_unlisted(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app
+        .get("/productions/11111111-1111-1111-1111-111111111111/collections?visibility=unlisted")
+        .await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: Vec<CollectionPayload> = response.into_struct().await;
+    assert_eq!(data.len(), 1, "should return only the unlisted collection");
+    assert_eq!(data[0].slug, "lentespecial");
+    assert_eq!(data[0].visibility, CollectionVisibility::Unlisted);
+}
+
+#[sqlx::test(fixtures("collections", "productions"))]
+#[test_log::test]
+async fn get_collections_for_production_empty(db: PgPool) {
+    let app = TestRouter::new(db);
+
+    let response = app
+        .get("/productions/11111111-1111-1111-1111-111111111111/collections")
+        .await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: Vec<CollectionPayload> = response.into_struct().await;
+    assert!(data.is_empty(), "should return empty when production has no collection items");
+}
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn collection_has_visibility_field(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/collections/slug/zomerselectie").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: CollectionPayload = response.into_struct().await;
+    assert_eq!(data.visibility, CollectionVisibility::Public);
+}
+
+#[sqlx::test(fixtures("collections"))]
+#[test_log::test]
+async fn unlisted_collection_has_visibility_field(db: PgPool) {
+    let app = TestRouter::new(db);
+    let response = app.get("/collections/slug/lentespecial").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: CollectionPayload = response.into_struct().await;
+    assert_eq!(data.visibility, CollectionVisibility::Unlisted);
+}

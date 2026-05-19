@@ -1,0 +1,300 @@
+use axum::{
+    Json,
+    extract::{Path, Query, State},
+    http::StatusCode,
+};
+use chrono::NaiveDate;
+use db::{
+    Database,
+    models::{article::ArticleSearch, entity_type::EntityType},
+};
+use serde::Deserialize;
+use utoipa::IntoParams;
+use uuid::Uuid;
+
+use crate::{
+    AppState,
+    dto::article::{
+        ArticleListPayload, ArticlePayload, ArticlePostPayload, ArticleRelationsPayload,
+        ArticleUpdatePayload,
+    },
+    dto::paginated::PaginatedResponse,
+    error::ErrorResponse,
+    handlers::{
+        IntoApiResponse, JsonResponse, JsonStatusResponse, StatusResponse,
+        queries::{article::ArticleSearchQuery, pagination::PaginationQuery},
+    },
+};
+
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct ArticleListParams {
+    #[param(value_type = String, required = false)]
+    pub subject_start: Option<NaiveDate>,
+    #[param(value_type = String, required = false)]
+    pub subject_end: Option<NaiveDate>,
+    #[param(value_type = String, required = false)]
+    pub tag_slug: Option<String>,
+    pub related_entity_id: Option<Uuid>,
+    #[param(value_type = EntityType, inline, required = false)]
+    pub related_entity_type: Option<EntityType>,
+}
+
+#[utoipa::path(
+    method(get),
+    path = "/articles",
+    tag = "Articles",
+    operation_id = "get_all_articles",
+    description = "Get published articles with optional filters",
+    params(PaginationQuery, ArticleSearchQuery, ArticleListParams),
+    responses(
+        (status = 200, description = "Success", body = PaginatedResponse<ArticleListPayload>)
+    )
+)]
+pub async fn get_all(
+    State(state): State<AppState>,
+    db: Database,
+    Query(pagination): Query<PaginationQuery>,
+    Query(search): Query<ArticleSearchQuery>,
+    Query(params): Query<ArticleListParams>,
+) -> JsonResponse<PaginatedResponse<ArticleListPayload>> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    let facets = search.facets();
+    ArticleListPayload::list_published(
+        &db,
+        pagination.cursor,
+        pagination.limit,
+        ArticleSearch {
+            q: search.q,
+            subject_start: params.subject_start,
+            subject_end: params.subject_end,
+            tag_slug: params.tag_slug,
+            facets,
+            related_entity_id: params.related_entity_id,
+            related_entity_type: params.related_entity_type,
+        },
+        public_url,
+    )
+    .await?
+    .json()
+}
+
+#[utoipa::path(
+    method(get),
+    path = "/articles/{slug}",
+    tag = "Articles",
+    operation_id = "get_article_by_slug",
+    description = "Get a published article by slug",
+    params(
+        ("slug" = String, Path, description = "Article slug")
+    ),
+    responses(
+        (status = 200, description = "Success", body = ArticlePayload),
+        (status = 404, description = "Not found")
+    )
+)]
+pub async fn get_one(
+    State(state): State<AppState>,
+    db: Database,
+    Path(slug): Path<String>,
+) -> JsonResponse<ArticlePayload> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    ArticlePayload::by_slug_published(&db, &slug, public_url)
+        .await?
+        .json()
+}
+
+#[utoipa::path(
+    method(get),
+    path = "/articles/cms",
+    tag = "Articles",
+    operation_id = "get_all_articles_cms",
+    description = "Get all articles (all statuses) — editor only",
+    responses(
+        (status = 200, description = "Success", body = [ArticleListPayload]),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    ),
+    security(("cookie_auth" = []))
+)]
+pub async fn get_all_cms(
+    State(state): State<AppState>,
+    db: Database,
+) -> JsonResponse<Vec<ArticleListPayload>> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    ArticleListPayload::all_cms(&db, public_url).await?.json()
+}
+
+#[utoipa::path(
+    method(get),
+    path = "/articles/cms/search",
+    tag = "Articles",
+    operation_id = "search_articles_cms",
+    description = "Search all articles (all statuses) — editor only",
+    params(PaginationQuery, ArticleSearchQuery),
+    responses(
+        (status = 200, description = "Success", body = PaginatedResponse<ArticleListPayload>),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    ),
+    security(("cookie_auth" = []))
+)]
+pub async fn get_all_cms_search(
+    State(state): State<AppState>,
+    db: Database,
+    Query(pagination): Query<PaginationQuery>,
+    Query(search): Query<ArticleSearchQuery>,
+) -> JsonResponse<PaginatedResponse<ArticleListPayload>> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    let facets = search.facets();
+    ArticleListPayload::list_cms_search(
+        &db,
+        pagination.cursor,
+        pagination.limit,
+        ArticleSearch {
+            q: search.q,
+            subject_start: None,
+            subject_end: None,
+            tag_slug: None,
+            facets,
+            related_entity_id: None,
+            related_entity_type: None,
+        },
+        public_url,
+    )
+    .await?
+    .json()
+}
+
+#[utoipa::path(
+    method(get),
+    path = "/articles/cms/{id}",
+    tag = "Articles",
+    operation_id = "get_article_by_id_cms",
+    description = "Get a single article by UUID — editor only",
+    params(
+        ("id" = Uuid, Path, description = "Article UUID")
+    ),
+    responses(
+        (status = 200, description = "Success", body = ArticlePayload),
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    ),
+    security(("cookie_auth" = []))
+)]
+pub async fn get_one_cms(
+    State(state): State<AppState>,
+    db: Database,
+    Path(id): Path<Uuid>,
+) -> JsonResponse<ArticlePayload> {
+    let public_url = state.config.s3.as_ref().map(|s| s.public_url.as_str());
+    ArticlePayload::by_id(&db, id, public_url).await?.json()
+}
+
+#[utoipa::path(
+    method(post),
+    path = "/articles",
+    tag = "Articles",
+    operation_id = "create_article",
+    description = "Create a new draft article",
+    responses(
+        (status = 201, description = "Created", body = ArticlePayload),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    ),
+    security(("cookie_auth" = []))
+)]
+pub async fn post(
+    db: Database,
+    Json(article): Json<ArticlePostPayload>,
+) -> JsonStatusResponse<ArticlePayload> {
+    article.create(&db).await?.json_created()
+}
+
+#[utoipa::path(
+    method(put),
+    path = "/articles/cms/{id}",
+    tag = "Articles",
+    operation_id = "update_article",
+    description = "Update an article",
+    params(
+        ("id" = Uuid, Path, description = "Article UUID")
+    ),
+    responses(
+        (status = 200, description = "Success", body = ArticlePayload),
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    ),
+    security(("cookie_auth" = []))
+)]
+pub async fn put(
+    db: Database,
+    Path(id): Path<Uuid>,
+    Json(article): Json<ArticleUpdatePayload>,
+) -> JsonResponse<ArticlePayload> {
+    article.update(&db, id).await?.json()
+}
+
+#[utoipa::path(
+    method(delete),
+    path = "/articles/cms/{id}",
+    tag = "Articles",
+    operation_id = "delete_article",
+    description = "Delete an article",
+    params(
+        ("id" = Uuid, Path, description = "Article UUID")
+    ),
+    responses(
+        (status = 204, description = "No Content"),
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    ),
+    security(("cookie_auth" = []))
+)]
+pub async fn delete(db: Database, Path(id): Path<Uuid>) -> StatusResponse {
+    ArticlePayload::delete(&db, id).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
+    method(get),
+    path = "/articles/cms/{id}/relations",
+    tag = "Articles",
+    operation_id = "get_article_relations",
+    description = "Get related entities for an article — editor only",
+    params(
+        ("id" = Uuid, Path, description = "Article UUID")
+    ),
+    responses(
+        (status = 200, description = "Success", body = ArticleRelationsPayload),
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    ),
+    security(("cookie_auth" = []))
+)]
+pub async fn get_relations(
+    db: Database,
+    Path(id): Path<Uuid>,
+) -> JsonResponse<ArticleRelationsPayload> {
+    ArticleRelationsPayload::get(&db, id).await?.json()
+}
+
+#[utoipa::path(
+    method(put),
+    path = "/articles/cms/{id}/relations",
+    tag = "Articles",
+    operation_id = "update_article_relations",
+    description = "Replace all related entities for an article — editor only",
+    params(
+        ("id" = Uuid, Path, description = "Article UUID")
+    ),
+    responses(
+        (status = 200, description = "Success", body = ArticleRelationsPayload),
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    ),
+    security(("cookie_auth" = []))
+)]
+pub async fn put_relations(
+    db: Database,
+    Path(id): Path<Uuid>,
+    Json(relations): Json<ArticleRelationsPayload>,
+) -> JsonResponse<ArticleRelationsPayload> {
+    relations.set(&db, id).await?.json()
+}
