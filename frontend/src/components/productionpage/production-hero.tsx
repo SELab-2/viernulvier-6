@@ -66,7 +66,7 @@ export function ProductionHero({
                         />
                     </button>
                 ) : (
-                    <ImagePlaceholder />
+                    <ImagePlaceholder className="absolute inset-0" />
                 )}
                 <div className="bg-foreground/70 text-background/80 pointer-events-none absolute right-0 bottom-0 left-0 p-3 font-mono text-[8px] tracking-[1.2px] uppercase">
                     © {credit ?? t("imageCaptionFallback")}

@@ -44,7 +44,7 @@ function ArticleItem({ article, locale }: ArticleItemProps) {
                         sizes="180px"
                     />
                 ) : (
-                    <ImagePlaceholder id={article.id} />
+                    <ImagePlaceholder id={article.id} className="absolute inset-0" />
                 )}
             </div>
 

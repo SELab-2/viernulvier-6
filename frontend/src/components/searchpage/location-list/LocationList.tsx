@@ -28,7 +28,7 @@ function LocationItem({ location }: LocationItemProps) {
                         sizes="180px"
                     />
                 ) : (
-                    <ImagePlaceholder id={location.id} />
+                    <ImagePlaceholder id={location.id} className="absolute inset-0" />
                 )}
             </div>
 

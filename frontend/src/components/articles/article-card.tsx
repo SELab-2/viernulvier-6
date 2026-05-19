@@ -56,7 +56,7 @@ export function ArticleCard({ article, locale }: ArticleCardProps) {
                             sizes="(max-width: 640px) 110px, 160px"
                         />
                     ) : (
-                        <ImagePlaceholder id={article.id} />
+                        <ImagePlaceholder id={article.id} className="absolute inset-0" />
                     )}
                 </div>
 

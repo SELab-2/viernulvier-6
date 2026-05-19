@@ -33,7 +33,7 @@ function ArticleCard({ article, locale }: { article: ArticleListItem; locale: st
                         sizes="(max-width: 640px) 100vw, 50vw"
                     />
                 ) : (
-                    <ImagePlaceholder />
+                    <ImagePlaceholder className="absolute inset-0" />
                 )}
             </div>
             {article.publishedAt && (

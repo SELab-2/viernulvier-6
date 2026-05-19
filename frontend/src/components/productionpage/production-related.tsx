@@ -50,7 +50,7 @@ function RelatedProductionCard({ production, locale }: { production: Production;
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     />
                 ) : (
-                    <ImagePlaceholder />
+                    <ImagePlaceholder className="absolute inset-0" />
                 )}
             </div>
             <div className="text-muted-foreground mb-1.5 line-clamp-1 font-mono text-[8px] tracking-[1.4px] uppercase">

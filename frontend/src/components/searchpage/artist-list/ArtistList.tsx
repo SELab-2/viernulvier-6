@@ -30,7 +30,7 @@ function ArtistItem({ artist }: ArtistItemProps) {
                         sizes="180px"
                     />
                 ) : (
-                    <ImagePlaceholder id={artist.id} />
+                    <ImagePlaceholder id={artist.id} className="absolute inset-0" />
                 )}
             </div>
 
