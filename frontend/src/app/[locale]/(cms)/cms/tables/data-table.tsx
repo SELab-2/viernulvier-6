@@ -464,7 +464,7 @@ export function DataTable<TData, TValue>({
                         {visibleRows.length ? (
                             visibleRows.map((row, rowIndex) => (
                                 <MemoTableRow
-                                    key={row.id}
+                                    key={`${row.id}-${row.getIsExpanded() ? "e" : "c"}`}
                                     row={row}
                                     rowIndex={rowIndex}
                                     isSelected={row.getIsSelected()}

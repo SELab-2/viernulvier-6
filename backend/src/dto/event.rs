@@ -57,6 +57,18 @@ impl EventPayload {
         Ok(payloads)
     }
 
+    pub async fn by_production_ids(
+        db: &Database,
+        ids: &[Uuid],
+    ) -> Result<Vec<Self>, AppError> {
+        let events = db.events().by_production_ids(ids).await?;
+        let mut payloads = Vec::with_capacity(events.len());
+        for event in events {
+            payloads.push(Self::from_model(db, event).await?);
+        }
+        Ok(payloads)
+    }
+
     pub async fn update(self, db: &Database) -> Result<Self, AppError> {
         let (mut event, prices, hall_ids) = self.into_parts();
         event.updated_at = Utc::now();

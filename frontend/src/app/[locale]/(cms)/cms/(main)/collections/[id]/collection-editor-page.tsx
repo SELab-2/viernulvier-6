@@ -374,8 +374,12 @@ export function CollectionEditorPage({ id }: { id: string }) {
     });
 
     const { data: collection, isLoading } = useGetCollection(id);
-    const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
-    const { data: locationsResult, isLoading: locationsLoading } = useGetLocations();
+    const { data: eventsResult, isLoading: eventsLoading } = useGetEvents({
+        pagination: { limit: 100 },
+    });
+    const { data: locationsResult, isLoading: locationsLoading } = useGetLocations({
+        pagination: { limit: 100 },
+    });
     const events = useMemo(() => eventsResult?.data ?? [], [eventsResult?.data]);
     const locations = useMemo(() => locationsResult?.data ?? [], [locationsResult?.data]);
 

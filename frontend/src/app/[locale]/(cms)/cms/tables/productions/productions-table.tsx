@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Archive, ChevronsUp } from "lucide-react";
@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { LoadMoreSentinel } from "@/components/cms/load-more-sentinel";
 import { useDeleteProduction, useGetInfiniteProductions } from "@/hooks/api/useProductions";
-import { useGetEvents, useUpdateEvent } from "@/hooks/api/useEvents";
+import { useGetInfiniteEvents, useUpdateEvent } from "@/hooks/api/useEvents";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
 import { ProductionMediaSheet } from "@/components/cms/production-media-sheet";
 import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
@@ -42,14 +42,28 @@ export function ProductionsTable() {
     } = useGetInfiniteProductions({ limit: 50, ...(q ? { q } : {}) });
     const deleteProduction = useDeleteProduction();
 
-    const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
-
     const allProductions = useMemo(
         () => infiniteData?.pages.flatMap((page) => page.data) ?? [],
         [infiniteData]
     );
 
-    const allEvents = useMemo(() => eventsResult?.data ?? [], [eventsResult]);
+    const {
+        data: infiniteEvents,
+        fetchNextPage: fetchNextEvents,
+        hasNextPage: hasMoreEvents,
+        isFetchingNextPage: isFetchingMoreEvents,
+        isLoading: eventsLoading,
+    } = useGetInfiniteEvents(100);
+
+    useEffect(() => {
+        if (hasMoreEvents && !isFetchingMoreEvents) fetchNextEvents();
+    }, [hasMoreEvents, isFetchingMoreEvents, fetchNextEvents]);
+
+    const allEvents = useMemo(
+        () => infiniteEvents?.pages.flatMap((page) => page.data) ?? [],
+        [infiniteEvents]
+    );
+
     const updateEvent = useUpdateEvent();
 
     const [editEvent, setEditEvent] = useState<Event | null>(null);

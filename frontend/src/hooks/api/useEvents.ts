@@ -1,4 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    keepPreviousData,
+    useInfiniteQuery,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
 
 import { api } from "@/lib/api-client";
 import {
@@ -37,11 +43,37 @@ const fetchEventsByProductionId = async (productionId: string): Promise<Event[]>
     return mapEvents(data);
 };
 
+const fetchEventsByProductionIds = async (ids: string[]): Promise<Event[]> => {
+    if (ids.length === 0) return [];
+    const { data } = await api.get<GetAllEventsResponse>("/events", {
+        params: { production_ids: ids.join(",") },
+    });
+    return mapEvents(data.data);
+};
+
 export const useGetEvents = (options?: { enabled?: boolean; pagination?: PaginationParams }) => {
     return useQuery({
         queryKey: queryKeys.events.all(options?.pagination),
         queryFn: () => fetchEvents(options?.pagination),
         ...options,
+    });
+};
+
+export const useGetEventsByProductionIds = (ids: string[], options?: { enabled?: boolean }) => {
+    return useQuery({
+        queryKey: queryKeys.events.byProductionIds(ids),
+        queryFn: () => fetchEventsByProductionIds(ids),
+        enabled: ids.length > 0 && (options?.enabled ?? true),
+        placeholderData: keepPreviousData,
+    });
+};
+
+export const useGetInfiniteEvents = (limit: number = 100) => {
+    return useInfiniteQuery({
+        queryKey: ["events", "infinite"],
+        queryFn: async ({ pageParam }) => fetchEvents({ limit, cursor: pageParam }),
+        getNextPageParam: (lastPage) => lastPage.nextCursor ?? null,
+        initialPageParam: null as string | null,
     });
 };
 
@@ -77,6 +109,12 @@ export const useCreateEvent = () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.productions.events(event.productionId),
             });
+            queryClient.invalidateQueries({
+                queryKey: ["events", "byProductionIds"],
+            });
+            queryClient.invalidateQueries({
+                queryKey: ["events", "infinite"],
+            });
         },
     });
 };
@@ -97,6 +135,12 @@ export const useUpdateEvent = () => {
             queryClient.setQueryData(queryKeys.events.detail(event.id), event);
             queryClient.invalidateQueries({
                 queryKey: queryKeys.productions.events(event.productionId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: ["events", "byProductionIds"],
+            });
+            queryClient.invalidateQueries({
+                queryKey: ["events", "infinite"],
             });
         },
     });

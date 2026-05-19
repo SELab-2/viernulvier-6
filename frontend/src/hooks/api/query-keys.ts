@@ -54,6 +54,10 @@ export const queryKeys = {
     events: {
         all: (pagination?: PaginationParams) => buildQueryKey(["events"], pagination),
         detail: (id: string) => ["events", id] as const,
+        byProductionIds: (ids: string[]) =>
+            ids.length
+                ? (["events", "byProductionIds", ids.sort().join(",")] as const)
+                : (["events", "byProductionIds"] as const),
     },
     halls: {
         all: (pagination?: PaginationParams) => buildQueryKey(["halls"], pagination),
