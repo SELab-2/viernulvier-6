@@ -1,14 +1,17 @@
 use base64::{Engine, prelude::BASE64_URL_SAFE};
 use database::{
     Database,
-    models::{artist::Artist, entity_type::EntityType},
+    models::{artist::Artist, entity_type::EntityType, filtering::facets::FacetFilters},
 };
 use serde::{Deserialize, Serialize};
 use slug::slugify;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::{dto::paginated::PaginatedResponse, dto::production::ProductionPayload, dto::build_cover_url, error::AppError};
+use crate::{
+    dto::build_cover_url, dto::paginated::PaginatedResponse, dto::production::ProductionPayload,
+    error::AppError,
+};
 
 #[derive(Serialize, Deserialize)]
 struct ArtistCursor {
@@ -44,7 +47,11 @@ pub struct ArtistPostPayload {
 }
 
 impl ArtistPostPayload {
-    pub async fn create(&self, db: &Database, public_url: Option<&str>) -> Result<ArtistPayload, AppError> {
+    pub async fn create(
+        &self,
+        db: &Database,
+        public_url: Option<&str>,
+    ) -> Result<ArtistPayload, AppError> {
         let slug = slugify(&self.name);
         let artist = db.artists().insert(&self.name, &slug).await?;
         ArtistPayload::by_id(db, artist.id, public_url).await
@@ -58,7 +65,12 @@ pub struct ArtistUpdatePayload {
 }
 
 impl ArtistUpdatePayload {
-    pub async fn update(&self, db: &Database, id: Uuid, public_url: Option<&str>) -> Result<ArtistPayload, AppError> {
+    pub async fn update(
+        &self,
+        db: &Database,
+        id: Uuid,
+        public_url: Option<&str>,
+    ) -> Result<ArtistPayload, AppError> {
         db.artists().update(id, &self.name, &self.slug).await?;
         ArtistPayload::by_id(db, id, public_url).await
     }
@@ -78,6 +90,7 @@ impl ArtistPayload {
         limit: u32,
         public_url: Option<&str>,
         q: Option<&str>,
+        facets: &FacetFilters,
     ) -> Result<PaginatedResponse<Self>, AppError> {
         let cursor: Option<(String, Uuid)> = cursor_str.and_then(|b64| {
             let bytes = BASE64_URL_SAFE.decode(b64).ok()?;
@@ -85,7 +98,7 @@ impl ArtistPayload {
             Some((c.name, c.id))
         });
 
-        let (artists, next) = db.artists().paginated(limit, cursor, q).await?;
+        let (artists, next) = db.artists().paginated(limit, cursor, q, facets).await?;
         let mut result: Vec<Self> = artists.into_iter().map(Self::from).collect();
 
         let next_cursor = next.and_then(|(name, id)| {
@@ -113,7 +126,11 @@ impl ArtistPayload {
         })
     }
 
-    pub async fn by_id(db: &Database, id: Uuid, public_url: Option<&str>) -> Result<Self, AppError> {
+    pub async fn by_id(
+        db: &Database,
+        id: Uuid,
+        public_url: Option<&str>,
+    ) -> Result<Self, AppError> {
         let mut payload: Self = db.artists().by_id(id).await?.into();
 
         if let Some(base) = public_url {

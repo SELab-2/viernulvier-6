@@ -2,8 +2,8 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { Archive, ChevronsUp } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { Archive, ChevronsUp, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { ExpandedState, Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
@@ -33,12 +33,14 @@ import { useGetHalls, useUpdateHall } from "@/hooks/api/useHalls";
 import { useGetSpaces } from "@/hooks/api/useSpaces";
 import type { Location, LocationRow } from "@/types/models/location.types";
 import type { Hall } from "@/types/models/hall.types";
+import { ActionVariant } from "@/types/cms/actions";
 
 export function LocationsTable() {
     const t = useTranslations("Cms.Locations");
     const tCommon = useTranslations("Cms.common");
     const tCollections = useTranslations("Cms.Collections");
     const tActions = useTranslations("Cms.ActionsColumn");
+    const locale = useLocale();
     const searchParams = useSearchParams();
     const q = searchParams.get("q") ?? undefined;
 
@@ -105,6 +107,7 @@ export function LocationsTable() {
         selectColumn,
         selectedParentCount: selectedLocationCount,
         selectedChildCount: selectedHallCount,
+        selectionVersion,
         clearSelection,
     } = useParentChildSelection<Location>(hallsByLocation);
 
@@ -132,10 +135,11 @@ export function LocationsTable() {
                 onEdit: (row) => setEditLocationId(row.id),
                 onDelete: handleDeleteLocation,
                 t: tActions,
+                locale,
                 onOpenSpotlight: openSpotlight,
             }),
         ],
-        [selectColumn, tActions, handleDeleteLocation, openSpotlight]
+        [selectColumn, tActions, handleDeleteLocation, locale, openSpotlight]
     );
 
     const hallCols = useMemo(
@@ -211,10 +215,19 @@ export function LocationsTable() {
                     rowSelection={childSelectionRef.current.get(locationId)}
                     onRowSelectionChange={getChildHandler(locationId)}
                     getRowId={getHallRowId}
+                    rowRenderVersion={selectionVersion}
                 />
             );
         },
-        [childSelectionRef, getChildHandler, getHallRowId, hallCols, hallsByLocation, hallsLoading]
+        [
+            childSelectionRef,
+            getChildHandler,
+            getHallRowId,
+            hallCols,
+            hallsByLocation,
+            hallsLoading,
+            selectionVersion,
+        ]
     );
 
     const hasExpanded = Object.keys(expanded).length > 0;
@@ -231,6 +244,8 @@ export function LocationsTable() {
             {
                 key: "delete",
                 label: tCommon("delete"),
+                icon: <Trash2 className="h-3.5 w-3.5" />,
+                variant: ActionVariant.Destructive,
                 onClick: handleBulkDelete,
             },
         ],
@@ -274,6 +289,7 @@ export function LocationsTable() {
                     expanded={expanded}
                     onExpandedChange={setExpanded}
                     getRowId={getLocationRowId}
+                    rowRenderVersion={selectionVersion}
                 />
 
                 <LoadMoreSentinel hasNextPage={hasNextPage ?? false} onLoadMore={fetchNextPage} />

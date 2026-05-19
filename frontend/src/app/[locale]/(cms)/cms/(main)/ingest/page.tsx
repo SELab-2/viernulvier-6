@@ -9,6 +9,7 @@ import { MediaIngestCard } from "@/components/ingest/media-ingest-card";
 import { MediaUploadDialog } from "@/components/ingest/media-upload-dialog";
 import { MediaEditSheet } from "@/components/ingest/media-edit-sheet";
 import { ImageSpotlight } from "@/components/ui/image-spotlight";
+import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
@@ -31,6 +32,7 @@ import { toast } from "sonner";
 import { Media } from "@/types/models/media.types";
 import type { SpotlightItem } from "@/components/ui/image-spotlight";
 import { useEntityTagEditor } from "@/hooks/useEntityTagEditor";
+import type { PickerItem } from "@/lib/collection-picker-utils";
 
 export default function IngestPage() {
     const t = useTranslations("Cms.Ingest");
@@ -45,6 +47,7 @@ export default function IngestPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [sort, setSort] = useState<"recent" | "oldest" | "relevance">("recent");
     const [gridColumns, setGridColumns] = useState<ColumnCount>(4);
+    const [collectionMedia, setCollectionMedia] = useState<Media | null>(null);
 
     const searchParams = useMemo(
         () => ({ q: searchQuery || undefined, sort }),
@@ -130,6 +133,30 @@ export default function IngestPage() {
         },
         [deleteMedia, t]
     );
+
+    const collectionPickerItems = useMemo<PickerItem[]>(() => {
+        if (!collectionMedia) return [];
+        const primaryAlt = collectionMedia.altTextNl || collectionMedia.altTextEn;
+        const label =
+            primaryAlt ||
+            [
+                collectionMedia.mimeType,
+                collectionMedia.width && collectionMedia.height
+                    ? `${collectionMedia.width}x${collectionMedia.height}`
+                    : null,
+            ]
+                .filter(Boolean)
+                .join(" - ") ||
+            collectionMedia.id;
+
+        return [
+            {
+                contentId: collectionMedia.id,
+                contentType: "media",
+                label,
+            },
+        ];
+    }, [collectionMedia]);
 
     const handleCleanup = useCallback(() => {
         if (typeof window !== "undefined" && window.confirm(t("confirmCleanup"))) {
@@ -299,7 +326,7 @@ export default function IngestPage() {
                         <Spinner className="text-muted-foreground h-6 w-6" />
                     </div>
                 ) : mediaItems.length === 0 ? (
-                    <div className="border-foreground/10 bg-foreground/[0.02] flex flex-col items-center justify-center border py-16">
+                    <div className="border-border/80 bg-foreground/[0.02] flex flex-col items-center justify-center border py-16">
                         <Upload className="text-muted-foreground mb-4 h-8 w-8" />
                         <p className="text-muted-foreground font-mono text-[10px] tracking-wider uppercase">
                             {t("noMedia")}
@@ -314,6 +341,7 @@ export default function IngestPage() {
                                         media={media}
                                         onView={() => handleView(media)}
                                         onEdit={() => handleEdit(media)}
+                                        onAddToCollection={() => setCollectionMedia(media)}
                                         onDelete={() => handleDelete(media)}
                                     />
                                 </div>
@@ -356,6 +384,14 @@ export default function IngestPage() {
                 tagSlugs={tagSlugs}
                 inheritedTagSlugs={inheritedTagSlugs}
                 onTagsChange={(next) => setTagEdits(next)}
+            />
+
+            <CollectionPickerDialog
+                open={collectionMedia !== null}
+                onOpenChange={(open) => {
+                    if (!open) setCollectionMedia(null);
+                }}
+                items={collectionPickerItems}
             />
 
             {/* Spotlight */}

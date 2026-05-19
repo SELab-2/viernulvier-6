@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, Tags, Trash2 } from "lucide-react";
 import { RowSelectionState } from "@tanstack/react-table";
 import { useRouter } from "@/i18n/routing";
 import { DataTable } from "../data-table";
@@ -13,12 +13,15 @@ import { ActionBar } from "../action-bar";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
+import { BulkTagDialog } from "@/components/cms/bulk-tag-dialog";
 import { useDeleteCollection, useGetInfiniteCollections } from "@/hooks/api";
 import { toCollectionRow } from "@/mappers/collection.mapper";
 import { CollectionRow } from "@/types/models/collection.types";
+import { ActionVariant } from "@/types/cms/actions";
 
 export function CollectionsTable() {
     const t = useTranslations("Cms.Collections");
+    const tActionBar = useTranslations("Cms.ActionBar");
     const locale = useLocale();
     const router = useRouter();
     const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -58,6 +61,7 @@ export function CollectionsTable() {
 
     const deleteCollection = useDeleteCollection();
     const [createOpen, setCreateOpen] = useState(false);
+    const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
     const [spotlight, setSpotlight] = useState<{ src: string; alt: string } | null>(null);
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
     const openSpotlight = useCallback((src: string, alt: string) => setSpotlight({ src, alt }), []);
@@ -102,13 +106,48 @@ export function CollectionsTable() {
         : [];
 
     const selectedCount = Object.values(rowSelection).filter(Boolean).length;
+    const selectedCollections = useMemo(
+        () => rows.filter((collection) => rowSelection[collection.id]),
+        [rows, rowSelection]
+    );
+
+    const handleBulkDelete = useCallback(() => {
+        if (selectedCollections.length === 0) return;
+        const ok = window.confirm(
+            tActionBar("delete") + ` ${selectedCollections.length} collection(s)?`
+        );
+        if (!ok) return;
+        for (const collection of selectedCollections) {
+            deleteCollection.mutate(collection.id);
+        }
+        setRowSelection({});
+    }, [selectedCollections, deleteCollection, tActionBar]);
+
+    const bulkActions = useMemo(
+        () => [
+            {
+                key: "bulk-tags",
+                label: tActionBar("bulkEdit"),
+                icon: <Tags className="h-3.5 w-3.5" />,
+                onClick: () => setBulkTagDialogOpen(true),
+            },
+            {
+                key: "bulk-delete",
+                label: tActionBar("delete"),
+                icon: <Trash2 className="h-3.5 w-3.5" />,
+                variant: ActionVariant.Destructive,
+                onClick: handleBulkDelete,
+            },
+        ],
+        [tActionBar, handleBulkDelete]
+    );
 
     return (
         <div className="flex h-full flex-col">
             <div className="bg-background sticky top-0 z-10 flex items-center gap-2">
                 <ActionBar
                     entityCounts={[{ countKey: "collectionsSelected", count: selectedCount }]}
-                    actions={[]}
+                    actions={bulkActions}
                     onClear={() => setRowSelection({})}
                     className="flex-1"
                 />
@@ -134,6 +173,13 @@ export function CollectionsTable() {
                 )}
             </div>
             <CreateCollectionDialog open={createOpen} onOpenChange={setCreateOpen} />
+            <BulkTagDialog
+                open={bulkTagDialogOpen}
+                onOpenChange={setBulkTagDialogOpen}
+                entityType="collection"
+                entityIds={selectedCollections.map((collection) => collection.id)}
+                onApplied={() => setRowSelection({})}
+            />
             <ImageSpotlight
                 items={spotlightItems}
                 index={0}

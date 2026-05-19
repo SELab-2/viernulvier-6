@@ -6,6 +6,7 @@ import { Link } from "@/i18n/routing";
 
 import type { Artist } from "@/types/models/artist.types";
 import { LoadingState } from "@/components/shared/loading-state";
+import { ResultImagePlaceholder } from "@/components/searchpage/result-image-placeholder";
 
 interface ArtistItemProps {
     artist: Artist;
@@ -16,7 +17,7 @@ function ArtistItem({ artist }: ArtistItemProps) {
     return (
         <Link
             href={`/artists/${artist.id}`}
-            className="border-muted/35 hover:bg-muted/5 flex cursor-pointer items-center gap-3 border-b px-4 py-3.5 transition-all sm:gap-[18px] sm:px-7"
+            className="border-border/70 hover:bg-muted/40 flex cursor-pointer items-center gap-3 border-b px-4 py-3.5 transition-all sm:gap-[18px] sm:px-7"
             style={{ animation: "fadein 0.3s ease both" }}
         >
             <div className="bg-muted relative h-[108px] w-[144px] shrink-0 overflow-hidden sm:h-[136px] sm:w-[180px]">
@@ -29,13 +30,16 @@ function ArtistItem({ artist }: ArtistItemProps) {
                         sizes="180px"
                     />
                 ) : (
-                    <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                    <ResultImagePlaceholder id={artist.id} />
                 )}
             </div>
 
             <div className="min-w-0 flex-1">
                 <span className="font-display text-foreground block text-[19px] leading-[1.1] font-bold tracking-[-0.02em] hover:underline sm:text-[22px]">
                     {artist.name}
+                </span>
+                <span className="text-muted-foreground mt-1 block font-mono text-[11px] tracking-[0.08em]">
+                    {artist.slug}
                 </span>
             </div>
 

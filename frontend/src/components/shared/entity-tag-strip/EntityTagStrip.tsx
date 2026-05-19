@@ -12,12 +12,13 @@ export type EntityTagStripProps = {
     cap?: number;
     variant?: "default" | "compact";
     className?: string;
+    interactive?: boolean;
 };
 
 const CHIP_BASE =
-    "border-border text-muted-foreground border font-mono text-[8px] tracking-[1.1px] uppercase";
-const CHIP_DEFAULT_PAD = "px-1.5 py-px sm:px-2 sm:py-0.5";
-const CHIP_COMPACT_PAD = "px-1 py-px";
+    "border-border/80 text-foreground/80 inline-flex items-center border font-mono text-[9px] tracking-[1.2px] uppercase transition-colors";
+const CHIP_DEFAULT_PAD = "px-2 py-1";
+const CHIP_COMPACT_PAD = "px-1.5 py-0.5";
 
 export function EntityTagStrip({
     tags,
@@ -25,6 +26,7 @@ export function EntityTagStrip({
     cap = 4,
     variant = "default",
     className,
+    interactive = true,
 }: EntityTagStripProps) {
     const lookup = useTaxonomyLookup(locale);
 
@@ -54,16 +56,26 @@ export function EntityTagStrip({
 
     return (
         <div className={`flex flex-wrap gap-1 ${className ?? ""}`}>
-            {visible.map((tag) => (
-                <Link
-                    key={tag.slug}
-                    href={`/search?facet=${tag.facet}&tag=${tag.slug}`}
-                    data-testid="entity-tag-chip"
-                    className={`${CHIP_BASE} ${padding} hover:border-foreground hover:text-foreground transition-colors`}
-                >
-                    {tag.label}
-                </Link>
-            ))}
+            {visible.map((tag) =>
+                interactive ? (
+                    <Link
+                        key={tag.slug}
+                        href={`/search?facet=${tag.facet}&tag=${tag.slug}`}
+                        data-testid="entity-tag-chip"
+                        className={`${CHIP_BASE} ${padding} hover:border-foreground hover:text-foreground`}
+                    >
+                        {tag.label}
+                    </Link>
+                ) : (
+                    <span
+                        key={tag.slug}
+                        data-testid="entity-tag-chip"
+                        className={`${CHIP_BASE} ${padding}`}
+                    >
+                        {tag.label}
+                    </span>
+                )
+            )}
             {hidden.length > 0 && (
                 <TooltipProvider delayDuration={100}>
                     <Tooltip>

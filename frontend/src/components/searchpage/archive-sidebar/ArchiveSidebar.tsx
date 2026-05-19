@@ -19,6 +19,7 @@ import { DateRangePicker } from "./DateRangePicker";
 import { yearBoundsFromStats } from "./statsYearBounds";
 
 const CATEGORIES = ["productions", "artists", "locations", "articles"] as const;
+const DEFAULT_CATEGORY_SET = new Set<string>(CATEGORIES);
 
 function parseLocalDate(s: string): Date {
     const [y, m, d] = s.split("-").map(Number);
@@ -74,9 +75,12 @@ export function ArchiveSidebar({ minYear: minYearProp, initialTag }: ArchiveSide
     const maxDate = useMemo(() => new Date(bounds.maxYear, 11, 31), [bounds.maxYear]);
 
     const [mobileOpen, setMobileOpen] = useState(false);
-    const [checkedCategories, setCheckedCategories] = useState<Set<string>>(
-        new Set(["productions"])
-    );
+    const checkedCategories = useMemo(() => {
+        const raw = searchParams.get("category");
+        if (!raw) return new Set(DEFAULT_CATEGORY_SET);
+        const parsed = raw.split(",").filter(Boolean);
+        return parsed.length > 0 ? new Set(parsed) : new Set(DEFAULT_CATEGORY_SET);
+    }, [searchParams]);
     const checkedLocations = useMemo(() => {
         const raw = searchParams.get("location");
         return new Set(raw ? raw.split(",").filter(Boolean) : []);
@@ -276,14 +280,32 @@ export function ArchiveSidebar({ minYear: minYearProp, initialTag }: ArchiveSide
         );
     }, [router, pathname]);
 
-    const toggleCategory = useCallback((cat: string) => {
-        setCheckedCategories((prev) => {
-            const next = new Set(prev);
-            if (next.has(cat)) next.delete(cat);
-            else next.add(cat);
-            return next;
-        });
-    }, []);
+    const toggleCategory = useCallback(
+        (cat: string) => {
+            const params = new URLSearchParams(window.location.search);
+            const raw = params.get("category");
+            const next = raw
+                ? new Set(raw.split(",").filter(Boolean))
+                : new Set(DEFAULT_CATEGORY_SET);
+            if (next.has(cat)) {
+                next.delete(cat);
+            } else {
+                next.add(cat);
+            }
+
+            if (next.size === 0 || next.size === CATEGORIES.length) {
+                params.delete("category");
+            } else {
+                params.set("category", CATEGORIES.filter((entry) => next.has(entry)).join(","));
+            }
+
+            const qs = params.toString();
+            router.replace(
+                (qs ? `${pathname}?${qs}` : pathname) as Parameters<typeof router.replace>[0]
+            );
+        },
+        [router, pathname]
+    );
 
     const toggleLocation = useCallback(
         (id: string) => {
@@ -309,7 +331,6 @@ export function ArchiveSidebar({ minYear: minYearProp, initialTag }: ArchiveSide
     );
 
     const clearAll = useCallback(() => {
-        setCheckedCategories(new Set());
         setYearRangeDraft(null);
         // Strip all filter params, keep only q
         const params = new URLSearchParams();

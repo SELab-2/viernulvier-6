@@ -60,6 +60,7 @@ const messages = {
             label: "Categories",
             artists: "Artists",
             productions: "Productions",
+            locations: "Locations",
             articles: "Articles",
         },
         tags: {
@@ -206,7 +207,7 @@ describe("ArchiveSidebar component", () => {
         expect(screen.getByText("Tag 2")).toBeInTheDocument();
     });
 
-    it("has 'productions' category checked by default", () => {
+    it("has all categories checked by default", () => {
         renderWithIntl(<ArchiveSidebar />);
 
         const productionsButton = screen.getByRole("button", {
@@ -215,7 +216,10 @@ describe("ArchiveSidebar component", () => {
         expect(productionsButton).toHaveAttribute("aria-pressed", "true");
 
         const artistsButton = screen.getByRole("button", { name: "Artists" });
-        expect(artistsButton).toHaveAttribute("aria-pressed", "false");
+        expect(artistsButton).toHaveAttribute("aria-pressed", "true");
+
+        const locationsButton = screen.getByRole("button", { name: "Locations" });
+        expect(locationsButton).toHaveAttribute("aria-pressed", "true");
     });
 
     it("toggles categories on click", async () => {
@@ -223,11 +227,14 @@ describe("ArchiveSidebar component", () => {
         renderWithIntl(<ArchiveSidebar />);
 
         const artistsButton = screen.getByRole("button", { name: "Artists" });
-        expect(artistsButton).toHaveAttribute("aria-pressed", "false");
+        expect(artistsButton).toHaveAttribute("aria-pressed", "true");
 
         await user.click(artistsButton);
 
-        expect(artistsButton).toHaveAttribute("aria-pressed", "true");
+        expect(mockReplace).toHaveBeenCalledOnce();
+        const calledUrl = mockReplace.mock.calls[0][0] as string;
+        expect(calledUrl).toContain("category=");
+        expect(calledUrl).not.toContain("artists");
     });
 
     it("tag starts unchecked when not in URL", () => {
@@ -504,7 +511,7 @@ describe("ArchiveSidebar component", () => {
 
         expect(screen.getByRole("button", { name: "Artists" })).toHaveAttribute(
             "aria-pressed",
-            "false"
+            "true"
         );
     });
 

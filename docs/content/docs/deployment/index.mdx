@@ -73,6 +73,7 @@ We use **self-hosted GitHub Actions runners** that run directly on the deploymen
 - Isolated by `PREVIEW_NAME` (e.g., `pr-123`)
 - Separate PostgreSQL database per preview
 - Accessed via `/pr-123/` path prefix
+- Frontend server components use `NEXT_SERVER_API_URL` to reach the preview API over the internal Docker network
 
 ---
 
@@ -85,6 +86,9 @@ Both pipelines run on **self-hosted runners** with direct Docker access.
 1. **Build & Push**: Builds Rust backend, Next.js frontend, and docs images
 2. **Tagging**: Tags images as `latest` and commit SHA
 3. **Deploy**: Pulls images and recreates production stack
+
+The production compose file injects `NEXT_SERVER_API_URL=http://backend:3001/api` at runtime so
+server-side CMS auth checks do not depend on the public Traefik route.
 
 ### Preview Pipeline (`deploy-preview.yml`)
 

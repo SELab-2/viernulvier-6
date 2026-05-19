@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Pencil, Trash2, ImageIcon } from "lucide-react";
-import { useLocale } from "next-intl";
+import { Archive, Pencil, Trash2, ImageIcon } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { Media } from "@/types/models/media.types";
 import { resolveLocalized } from "@/components/ui/localized-text";
 
@@ -11,6 +11,7 @@ interface MediaIngestCardProps {
     media: Media;
     onView: () => void;
     onEdit: () => void;
+    onAddToCollection?: () => void;
     onDelete: () => void;
 }
 
@@ -19,9 +20,16 @@ function thumbnailUrl(media: Media): string | null {
     return crop?.url ?? media.url ?? null;
 }
 
-export function MediaIngestCard({ media, onView, onEdit, onDelete }: MediaIngestCardProps) {
+export function MediaIngestCard({
+    media,
+    onView,
+    onEdit,
+    onAddToCollection,
+    onDelete,
+}: MediaIngestCardProps) {
     const [loaded, setLoaded] = useState(false);
     const locale = useLocale();
+    const tCollections = useTranslations("Cms.Collections");
     const url = thumbnailUrl(media);
     const primaryAlt = locale === "en" ? media.altTextEn : media.altTextNl;
     const fallbackAlt = locale === "en" ? media.altTextNl : media.altTextEn;
@@ -83,6 +91,19 @@ export function MediaIngestCard({ media, onView, onEdit, onDelete }: MediaIngest
                     >
                         <Pencil className="h-3 w-3" />
                     </button>
+                    {onAddToCollection && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onAddToCollection();
+                            }}
+                            className="text-muted-foreground hover:text-foreground flex h-6 w-6 items-center justify-center transition-colors"
+                            aria-label={tCollections("addToCollection")}
+                        >
+                            <Archive className="h-3 w-3" />
+                        </button>
+                    )}
                     <button
                         type="button"
                         onClick={(e) => {

@@ -1,13 +1,13 @@
 "use client";
 
-import Image from "next/image";
 import { ColumnDef } from "@tanstack/react-table";
-import { ImageIcon, SquarePen, Trash2 } from "lucide-react";
+import { ArrowUpRight, SquarePen, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
 import { StatusBadge } from "@/components/cms/status-badge";
 import { CollectionPickerSubmenu } from "@/components/cms/collection-picker-submenu";
+import { CmsThumbnail } from "@/components/cms/cms-thumbnail";
 import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
 import { makeActionsColumn } from "../actions-column";
 import { Action, ActionDisplay, ActionVariant } from "@/types/cms/actions";
@@ -52,6 +52,14 @@ export function makeArticleColumns(
             },
         },
         {
+            key: "open-public",
+            label: t("open", { label: "article" }),
+            icon: ArrowUpRight,
+            onClick: (article) => {
+                window.location.assign(`/${locale}/articles/${article.slug}`);
+            },
+        },
+        {
             key: "add-to-collection",
             render: (article, closeMenu) => (
                 <CollectionPickerSubmenu
@@ -79,12 +87,8 @@ export function makeArticleColumns(
             header: "",
             cell: ({ row }) => {
                 const url = row.original.coverImageUrl;
-                if (!url) return <ImageIcon className="text-muted-foreground size-4" />;
-                return (
-                    <div className="relative size-10 overflow-hidden rounded">
-                        <Image src={url} alt="" fill className="object-cover" sizes="40px" />
-                    </div>
-                );
+                if (!url) return <CmsThumbnail src={null} alt="" />;
+                return <CmsThumbnail src={url} alt={row.original.title ?? row.original.slug} />;
             },
             size: 52,
         },

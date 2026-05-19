@@ -67,15 +67,18 @@ export function FacetCombobox({
                         return (
                             <Badge
                                 key={slug}
-                                variant="secondary"
-                                className={cn("gap-1", isInherited && "opacity-60")}
+                                variant="outline"
+                                className={cn(
+                                    "border-border/80 gap-1 rounded-none px-2 py-1 font-mono text-[9px] tracking-[1.2px] uppercase",
+                                    isInherited && "opacity-60"
+                                )}
                             >
                                 {getLabel(tag.translations)}
                                 {!isInherited && (
                                     <button
                                         type="button"
                                         onClick={() => toggle(slug)}
-                                        className="hover:text-destructive ml-0.5 rounded-full"
+                                        className="hover:text-destructive ml-0.5"
                                         aria-label={t("deleteAriaLabel", {
                                             label: getLabel(tag.translations),
                                         })}

@@ -1,6 +1,8 @@
 import { describe, expect, it, afterEach, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { useState } from "react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
+import type { RowSelectionState, Updater } from "@tanstack/react-table";
 
 vi.mock("@/i18n/routing", () => ({
     Link: ({
@@ -117,6 +119,45 @@ describe("DataTable", () => {
         expect(checkboxes.length).toBeGreaterThan(0);
     });
 
+    it("selects an inclusive range when shift-clicking row checkboxes upward", () => {
+        const data: Item[] = [
+            { id: "1", name: "Item One" },
+            { id: "2", name: "Item Two" },
+            { id: "3", name: "Item Three" },
+            { id: "4", name: "Item Four" },
+        ];
+
+        function ControlledTable() {
+            const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+            const handleRowSelectionChange = (updater: Updater<RowSelectionState>) => {
+                setRowSelection((prev) =>
+                    typeof updater === "function" ? updater(prev) : updater
+                );
+            };
+
+            return (
+                <DataTable
+                    columns={columns}
+                    data={data}
+                    getRowId={(row) => row.id}
+                    onRowSelectionChange={handleRowSelectionChange}
+                    rowSelection={rowSelection}
+                />
+            );
+        }
+
+        render(<ControlledTable />, { wrapper: TestWrapper });
+
+        const checkboxes = screen.getAllByRole("checkbox");
+        fireEvent.click(checkboxes[3], { ctrlKey: true });
+        fireEvent.click(checkboxes[1], { shiftKey: true });
+
+        expect(checkboxes[0]).toHaveAttribute("aria-checked", "false");
+        expect(checkboxes[1]).toHaveAttribute("aria-checked", "true");
+        expect(checkboxes[2]).toHaveAttribute("aria-checked", "true");
+        expect(checkboxes[3]).toHaveAttribute("aria-checked", "true");
+    });
+
     it("does not render select column when onRowSelectionChange is not provided", () => {
         const data: Item[] = [{ id: "1", name: "Test" }];
 
@@ -128,7 +169,7 @@ describe("DataTable", () => {
     it("renders compact variant without sticky headers", () => {
         const data: Item[] = [{ id: "1", name: "Test" }];
 
-        const { container } = render(<DataTable columns={columns} data={data} compact />, {
+        render(<DataTable columns={columns} data={data} compact />, {
             wrapper: TestWrapper,
         });
 

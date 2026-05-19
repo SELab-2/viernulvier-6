@@ -7,6 +7,14 @@ import { EntityFacet, EntityType } from "@/types/models/taxonomy.types";
 
 import { queryKeys } from "./query-keys";
 
+const TAGGABLE_ENTITY_ROOT_KEYS: Record<EntityType, readonly string[]> = {
+    production: ["productions"],
+    artist: ["artists"],
+    article: ["articles"],
+    media: ["media"],
+    collection: ["collections"],
+};
+
 const fetchEntityTags = async (
     entityType: EntityType,
     entityId: string
@@ -54,6 +62,38 @@ export const useReplaceEntityTags = () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.taxonomy.entityTags(entityType, entityId),
             });
+        },
+    });
+};
+
+export const useBulkAddEntityTags = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({
+            entityType,
+            entityIds,
+            tagSlugs,
+        }: {
+            entityType: EntityType;
+            entityIds: string[];
+            tagSlugs: string[];
+        }) => {
+            return Promise.all(
+                entityIds.map(async (entityId) => {
+                    const current = await fetchEntityTags(entityType, entityId);
+                    const existing = current.flatMap((facet) => facet.tags.map((tag) => tag.slug));
+                    const merged = [...new Set([...existing, ...tagSlugs])];
+                    return replaceEntityTagsFn(entityType, entityId, merged);
+                })
+            );
+        },
+        onSuccess: (_data, { entityType, entityIds }) => {
+            entityIds.forEach((entityId) => {
+                queryClient.invalidateQueries({
+                    queryKey: queryKeys.taxonomy.entityTags(entityType, entityId),
+                });
+            });
+            queryClient.invalidateQueries({ queryKey: TAGGABLE_ENTITY_ROOT_KEYS[entityType] });
         },
     });
 };
