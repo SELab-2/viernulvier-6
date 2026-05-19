@@ -7,7 +7,6 @@ import { UniformCardsContext } from "./masonry-grid";
 import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
 import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 import type { EntityTagSlim } from "@/types/models/taxonomy.types";
-import { ResultImagePlaceholder } from "@/components/searchpage/result-image-placeholder";
 
 const ASPECT_CLASSES = ["aspect-[4/3]", "aspect-[3/4]"] as const;
 
@@ -61,7 +60,7 @@ export function CardShell({
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     />
                 ) : (
-                    <ResultImagePlaceholder id={index.toString()} />
+                    <ImagePlaceholder id={index.toString()} className="h-full w-full" />
                 )}
             </div>
 
