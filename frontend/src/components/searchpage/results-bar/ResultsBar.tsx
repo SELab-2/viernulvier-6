@@ -57,6 +57,25 @@ export function ResultsBar({
             </div>
 
             <div className="flex items-center gap-4">
+                <div className="hidden items-center gap-4 sm:flex">
+                    <span className="text-muted-foreground font-mono text-[11px] tracking-[1.2px] uppercase">
+                        {t("sortBy")}
+                    </span>
+                    {SORT_OPTIONS.map((option) => (
+                        <button
+                            key={option}
+                            onClick={() => onSortChange(option)}
+                            className={`cursor-pointer border-b pb-0.5 font-mono text-[11px] tracking-[1.2px] uppercase transition-all ${
+                                sort === option
+                                    ? "border-foreground text-foreground"
+                                    : "text-muted-foreground hover:text-foreground border-transparent"
+                            }`}
+                        >
+                            {t(option)}
+                        </button>
+                    ))}
+                </div>
+
                 <div className="border-border/80 flex items-center border">
                     <button
                         type="button"
@@ -82,24 +101,6 @@ export function ResultsBar({
                     >
                         <LayoutGrid className="h-3.5 w-3.5" />
                     </button>
-                </div>
-                <div className="hidden items-center gap-4 sm:flex">
-                    <span className="text-muted-foreground font-mono text-[11px] tracking-[1.2px] uppercase">
-                        {t("sortBy")}
-                    </span>
-                    {SORT_OPTIONS.map((option) => (
-                        <button
-                            key={option}
-                            onClick={() => onSortChange(option)}
-                            className={`cursor-pointer border-b pb-0.5 font-mono text-[11px] tracking-[1.2px] uppercase transition-all ${
-                                sort === option
-                                    ? "border-foreground text-foreground"
-                                    : "text-muted-foreground hover:text-foreground border-transparent"
-                            }`}
-                        >
-                            {t(option)}
-                        </button>
-                    ))}
                 </div>
             </div>
         </div>
