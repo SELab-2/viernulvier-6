@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 
 import type { ArticleListItem } from "@/types/models/article.types";
 import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
@@ -55,20 +56,7 @@ export function ArticleCard({ article, locale }: ArticleCardProps) {
                             sizes="(max-width: 640px) 110px, 160px"
                         />
                     ) : (
-                        <>
-                            <div
-                                className="absolute inset-0 opacity-[0.08]"
-                                style={{
-                                    backgroundImage:
-                                        "repeating-linear-gradient(45deg, currentColor 0 1px, transparent 1px 8px)",
-                                }}
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <span className="text-muted-foreground/50 font-mono text-[9px] tracking-[2px] uppercase">
-                                    N°{article.id.slice(-3)}
-                                </span>
-                            </div>
-                        </>
+                        <ImagePlaceholder id={article.id} className="absolute inset-0" />
                     )}
                 </div>
 

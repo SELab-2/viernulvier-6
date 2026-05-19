@@ -175,7 +175,7 @@ function SidebarContent({ onNavigate, showHeader = true }: SidebarContentProps) 
     }, [facets, pathname, router]);
 
     const isActive = (href: string) => {
-        return pathname.startsWith(href);
+        return pathname === href || pathname.startsWith(href + "/");
     };
 
     const handleNavClick = () => {

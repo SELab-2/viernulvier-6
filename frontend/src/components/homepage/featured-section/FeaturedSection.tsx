@@ -7,6 +7,7 @@ import type { Production } from "@/types/models/production.types";
 import { getLocalizedField } from "@/lib/locale";
 import { Link } from "@/i18n/routing";
 import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 
 interface FeaturedSectionProps {
     productions: Production[];
@@ -76,7 +77,7 @@ function FeaturedCard({
                         }
                     />
                 ) : (
-                    <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                    <ImagePlaceholder className="h-full w-full" />
                 )}
             </div>
 

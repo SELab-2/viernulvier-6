@@ -134,6 +134,13 @@ export default function SearchPage() {
         [router, searchParams, pathname]
     );
 
+    useEffect(() => {
+        const trimmed = draftQuery.trim();
+        if (trimmed === query) return;
+        const timer = setTimeout(() => handleSearch(draftQuery), 300);
+        return () => clearTimeout(timer);
+    }, [draftQuery, handleSearch, query]);
+
     const handleSortChange = useCallback(
         (newSort: ProductionSortOption) => {
             const params = new URLSearchParams(searchParams.toString());

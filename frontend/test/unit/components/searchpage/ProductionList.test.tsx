@@ -102,7 +102,7 @@ describe("ProductionList component", () => {
         expect(img).toHaveAttribute("alt", "prod-1");
     });
 
-    it("renders placeholder gradient when coverImageUrl is null", () => {
+    it("renders image placeholder when coverImageUrl is null", () => {
         const { container } = renderWithIntl(
             <ProductionList productions={mockProductions} locale="en" />
         );
@@ -110,7 +110,6 @@ describe("ProductionList component", () => {
         const images = container.querySelectorAll("img");
         expect(images).toHaveLength(0);
 
-        const gradients = container.querySelectorAll(".bg-gradient-to-br");
-        expect(gradients.length).toBeGreaterThan(0);
+        expect(screen.getAllByTestId("image-placeholder").length).toBeGreaterThan(0);
     });
 });

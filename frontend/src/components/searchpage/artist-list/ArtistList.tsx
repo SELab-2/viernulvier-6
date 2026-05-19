@@ -6,7 +6,7 @@ import { Link } from "@/i18n/routing";
 
 import type { Artist } from "@/types/models/artist.types";
 import { LoadingState } from "@/components/shared/loading-state";
-import { ResultImagePlaceholder } from "@/components/searchpage/result-image-placeholder";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 
 interface ArtistItemProps {
     artist: Artist;
@@ -30,7 +30,7 @@ function ArtistItem({ artist }: ArtistItemProps) {
                         sizes="180px"
                     />
                 ) : (
-                    <ResultImagePlaceholder id={artist.id} />
+                    <ImagePlaceholder id={artist.id} className="absolute inset-0" />
                 )}
             </div>
 

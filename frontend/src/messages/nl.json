@@ -256,7 +256,8 @@
             "saving": "Bezig met opslaan…"
         },
         "DataTable": {
-            "noResults": "Geen resultaten."
+            "noResults": "Geen resultaten.",
+            "selectRow": "Rij selecteren"
         },
         "ActionBar": {
             "clearSelection": "Selectie wissen",

@@ -256,7 +256,8 @@
             "saving": "Saving…"
         },
         "DataTable": {
-            "noResults": "No results."
+            "noResults": "No results.",
+            "selectRow": "Select row"
         },
         "ActionBar": {
             "clearSelection": "Clear selection",

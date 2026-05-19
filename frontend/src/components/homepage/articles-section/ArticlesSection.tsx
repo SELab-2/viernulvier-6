@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 
 import type { ArticleListItem } from "@/types/models/article.types";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 
 interface ArticlesSectionProps {
     articles: ArticleListItem[];
@@ -62,7 +63,7 @@ function ArticleCard({ article, locale }: { article: ArticleListItem; locale: st
                         sizes="(min-width: 640px) 33vw, 100vw"
                     />
                 ) : (
-                    <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                    <ImagePlaceholder className="h-full w-full" />
                 )}
             </div>
 

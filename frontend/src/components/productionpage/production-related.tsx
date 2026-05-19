@@ -7,10 +7,21 @@ import { Link } from "@/i18n/routing";
 import { getLocalizedField } from "@/lib/locale";
 import { useGetEntityMedia } from "@/hooks/api/useMedia";
 import type { Production } from "@/types/models/production.types";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
+
+function formatUitdatabankType(raw: string | null, fallback: string): string {
+    if (!raw) return fallback;
+    if (raw.startsWith("/api/") || raw.startsWith("http")) return fallback;
+    return raw;
+}
 
 function RelatedProductionCard({ production, locale }: { production: Production; locale: string }) {
     const t = useTranslations("ProductionPage");
     const { data: media = [] } = useGetEntityMedia("production", production.id);
+    const typeLabel = formatUitdatabankType(
+        production.uitdatabankType,
+        t("relatedProductionFallback")
+    );
 
     const title = getLocalizedField(production, "title", locale) ?? production.slug;
     const artist = getLocalizedField(production, "artist", locale);
@@ -39,12 +50,11 @@ function RelatedProductionCard({ production, locale }: { production: Production;
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     />
                 ) : (
-                    <div className="absolute inset-0 bg-gradient-to-tr from-[#CCC6BC] to-[#B5AEA4] grayscale-[15%] transition-all duration-300 group-hover:grayscale-0" />
+                    <ImagePlaceholder className="absolute inset-0" />
                 )}
             </div>
             <div className="text-muted-foreground mb-1.5 line-clamp-1 font-mono text-[8px] tracking-[1.4px] uppercase">
-                {production.uitdatabankType ?? t("relatedProductionFallback")} ·{" "}
-                {t("relatedArchive")}
+                {typeLabel} · {t("relatedArchive")}
             </div>
             <div className="font-display text-foreground mb-0.5 line-clamp-2 text-[16px] leading-[1.2] font-bold tracking-[-0.02em]">
                 {title}

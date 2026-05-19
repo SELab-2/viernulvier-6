@@ -10,6 +10,7 @@ import { useGetArticle } from "@/hooks/api/useArticles";
 import { useGetArtist } from "@/hooks/api/useArtists";
 import { useGetMedia } from "@/hooks/api/useMedia";
 import type { CollectionContentType, EntityGridItem } from "@/types/models/collection.types";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 
 interface ListShellProps {
     isLoading: boolean;
@@ -35,7 +36,7 @@ function ListShell({ isLoading, title, imageUrl, href, typeLabel, comment }: Lis
                         sizes="80px"
                     />
                 ) : (
-                    <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                    <ImagePlaceholder className="h-full w-full" />
                 )}
             </div>
             <div className="border-foreground/20 flex flex-col justify-center gap-1 border-l px-3 py-2">
