@@ -12,6 +12,7 @@ import { getLocalizedField } from "@/lib/locale";
 import { useGetEventsByProduction } from "@/hooks/api/useEvents";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 
 interface ProductionItemProps {
     production: Production;
@@ -119,7 +120,7 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
                             sizes="180px"
                         />
                     ) : (
-                        <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                        <ImagePlaceholder className="h-full w-full" />
                     )}
                 </div>
 

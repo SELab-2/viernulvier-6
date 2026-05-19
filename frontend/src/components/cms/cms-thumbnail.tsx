@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 
 type CmsThumbnailProps = {
     src: string | null | undefined;
@@ -16,7 +17,7 @@ export function CmsThumbnail({ src, alt, size = 40, onClick }: CmsThumbnailProps
             {src ? (
                 <Image src={src} alt={alt} fill className="object-cover" sizes={`${size}px`} />
             ) : (
-                <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                <ImagePlaceholder className="h-full w-full" />
             )}
         </div>
     );

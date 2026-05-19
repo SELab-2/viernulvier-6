@@ -184,6 +184,21 @@ impl<'a> EventRepo<'a> {
             .await?)
     }
 
+    pub async fn by_production_ids(
+        &self,
+        production_ids: &[Uuid],
+    ) -> Result<Vec<Event>, DatabaseError> {
+        if production_ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        Ok(Event::select()
+            .where_("production_id = ANY($1)")
+            .bind(production_ids)
+            .order_desc("id")
+            .fetch_all(self.db)
+            .await?)
+    }
+
     pub async fn hall_ids_for(&self, event_id: Uuid) -> Result<Vec<Uuid>, DatabaseError> {
         Ok(
             sqlx::query_scalar::<_, Uuid>("SELECT hall_id FROM event_halls WHERE event_id = $1")

@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
+use aws_sdk_s3::config::{Builder as S3Builder, Credentials, Region};
 use database::{Database, error::DatabaseError};
 use serde::Deserialize;
+use sha2::{Digest, Sha256};
 use thiserror::Error;
 use tracing::{info, warn};
 
@@ -25,6 +27,12 @@ pub enum SeedError {
     Db(#[from] DatabaseError),
     #[error("Import error during seed: {0}")]
     Import(#[from] ImportItemError),
+    #[error("S3 error uploading seed image: {0}")]
+    S3(String),
+    #[error("Unsupported image extension '{0}' in seed patch")]
+    InvalidExtension(String),
+    #[error("Invalid entity_media role '{0}' in seed patch")]
+    InvalidRole(String),
 }
 
 #[derive(Deserialize)]
@@ -142,6 +150,44 @@ struct ArtistNamePatch {
     name: String,
 }
 
+#[derive(Deserialize)]
+struct LocationImagePatch {
+    source_id: Option<i32>,
+    slug: Option<String>,
+    file: String,
+    #[serde(default = "default_cover_role")]
+    role: String,
+    alt_text_nl: Option<String>,
+    alt_text_en: Option<String>,
+    credit: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct ArtistImagePatch {
+    slug: String,
+    file: String,
+    #[serde(default = "default_cover_role")]
+    role: String,
+    alt_text_nl: Option<String>,
+    alt_text_en: Option<String>,
+    credit: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct ArticleImagePatch {
+    slug: String,
+    file: String,
+    #[serde(default = "default_cover_role")]
+    role: String,
+    alt_text_nl: Option<String>,
+    alt_text_en: Option<String>,
+    credit: Option<String>,
+}
+
+fn default_cover_role() -> String {
+    "cover".to_string()
+}
+
 /// Imports entities from local seed JSON files produced by `fetch_404`.
 ///
 /// Constructed via [`SeedImporter::from_env`]; returns `None` when no seed
@@ -150,6 +196,8 @@ struct ArtistNamePatch {
 pub struct SeedImporter {
     db: Database,
     seed_dir: PathBuf,
+    s3_client: Option<aws_sdk_s3::Client>,
+    s3_bucket: Option<String>,
 }
 
 impl SeedImporter {
@@ -165,7 +213,34 @@ impl SeedImporter {
             return None;
         }
 
-        Some(Self { db, seed_dir })
+        let (s3_client, s3_bucket) = if let (Ok(endpoint), Ok(access_key), Ok(secret_key), Ok(bucket)) = (
+            std::env::var("S3_ENDPOINT"),
+            std::env::var("S3_ACCESS_KEY"),
+            std::env::var("S3_SECRET_KEY"),
+            std::env::var("S3_BUCKET"),
+        ) {
+            let region = std::env::var("S3_REGION").unwrap_or_else(|_| "garage".to_string());
+            let creds = Credentials::new(&access_key, &secret_key, None, None, "seed");
+            let s3_conf = S3Builder::new()
+                .region(Region::new(region))
+                .endpoint_url(&endpoint)
+                .credentials_provider(creds)
+                .force_path_style(true)
+                .request_checksum_calculation(
+                    aws_sdk_s3::config::RequestChecksumCalculation::WhenRequired,
+                )
+                .response_checksum_validation(
+                    aws_sdk_s3::config::ResponseChecksumValidation::WhenRequired,
+                )
+                .build();
+            info!("SeedImporter: S3 configured, image patches enabled");
+            (Some(aws_sdk_s3::Client::from_conf(s3_conf)), Some(bucket))
+        } else {
+            info!("SeedImporter: S3 not configured, image patches will be skipped");
+            (None, None)
+        };
+
+        Some(Self { db, seed_dir, s3_client, s3_bucket })
     }
 
     /// Returns `max_updated_at` from `manifest.json`, or `None` if absent or null.
@@ -204,6 +279,9 @@ impl SeedImporter {
         self.import_artists().await?;
         self.apply_artist_merges().await?;
         self.apply_artist_name_patches().await?;
+        self.apply_location_image_patches().await?;
+        self.apply_artist_image_patches().await?;
+        self.apply_article_image_patches().await?;
         Ok(())
     }
 
@@ -220,6 +298,10 @@ impl SeedImporter {
             .parent()
             .unwrap_or(&self.seed_dir)
             .join("normalization")
+    }
+
+    fn seed_root(&self) -> &Path {
+        self.seed_dir.parent().unwrap_or(&self.seed_dir)
     }
 
     fn read_normalization_file<T: serde::de::DeserializeOwned>(
@@ -407,7 +489,7 @@ impl SeedImporter {
             } else {
                 let mut n = 2u32;
                 loop {
-                    let candidate = format!("{}-{}", base, n);
+                    let candidate = format!("{base}-{n}");
                     if !used.contains(&candidate) {
                         break candidate;
                     }
@@ -1036,6 +1118,297 @@ impl SeedImporter {
         Ok(())
     }
 
+    async fn apply_location_image_patches(&self) -> Result<(), SeedError> {
+        let Some(s3_bucket) = &self.s3_bucket else {
+            return Ok(());
+        };
+        let Some(patches) =
+            self.read_normalization_file::<LocationImagePatch>("images/location_images.json")
+        else {
+            return Ok(());
+        };
+
+        let mut count = 0u32;
+        info!("Applying {} location image patches", patches.len());
+        for patch in &patches {
+            let entity_id: Option<uuid::Uuid> = if let Some(sid) = patch.source_id {
+                sqlx::query_scalar("SELECT id FROM locations WHERE source_id = $1")
+                    .bind(sid)
+                    .fetch_optional(self.db.pool())
+                    .await
+                    .map_err(DatabaseError::from)?
+            } else if let Some(slug) = &patch.slug {
+                sqlx::query_scalar("SELECT id FROM locations WHERE slug = $1")
+                    .bind(slug)
+                    .fetch_optional(self.db.pool())
+                    .await
+                    .map_err(DatabaseError::from)?
+            } else {
+                warn!(file = %patch.file, "location image patch: neither source_id nor slug provided, skipping");
+                continue;
+            };
+
+            let Some(entity_id) = entity_id else {
+                warn!(file = %patch.file, "location image patch: location not found, skipping");
+                continue;
+            };
+
+            let file_path = self.seed_root().join(&patch.file);
+            if !file_path.exists() {
+                warn!(file = %patch.file, "location image patch: file not found, skipping");
+                continue;
+            }
+
+            if let Err(e) = self
+                .seed_entity_image(
+                    "location",
+                    entity_id,
+                    &file_path,
+                    &patch.role,
+                    patch.alt_text_nl.as_deref(),
+                    patch.alt_text_en.as_deref(),
+                    patch.credit.as_deref(),
+                    s3_bucket,
+                )
+                .await
+            {
+                warn!(file = %patch.file, error = %e, "location image patch: failed, skipping");
+                continue;
+            }
+            count += 1;
+        }
+        info!("Applied {count} location image patches");
+        Ok(())
+    }
+
+    async fn apply_artist_image_patches(&self) -> Result<(), SeedError> {
+        let Some(s3_bucket) = &self.s3_bucket else {
+            return Ok(());
+        };
+        let Some(patches) =
+            self.read_normalization_file::<ArtistImagePatch>("images/artist_images.json")
+        else {
+            return Ok(());
+        };
+
+        let mut count = 0u32;
+        info!("Applying {} artist image patches", patches.len());
+        for patch in &patches {
+            let entity_id: Option<uuid::Uuid> =
+                sqlx::query_scalar("SELECT id FROM artists WHERE slug = $1")
+                    .bind(&patch.slug)
+                    .fetch_optional(self.db.pool())
+                    .await
+                    .map_err(DatabaseError::from)?;
+
+            let Some(entity_id) = entity_id else {
+                warn!(slug = %patch.slug, "artist image patch: artist not found, skipping");
+                continue;
+            };
+
+            let file_path = self.seed_root().join(&patch.file);
+            if !file_path.exists() {
+                warn!(file = %patch.file, "artist image patch: file not found, skipping");
+                continue;
+            }
+
+            if let Err(e) = self
+                .seed_entity_image(
+                    "artist",
+                    entity_id,
+                    &file_path,
+                    &patch.role,
+                    patch.alt_text_nl.as_deref(),
+                    patch.alt_text_en.as_deref(),
+                    patch.credit.as_deref(),
+                    s3_bucket,
+                )
+                .await
+            {
+                warn!(file = %patch.file, error = %e, "artist image patch: failed, skipping");
+                continue;
+            }
+            count += 1;
+        }
+        info!("Applied {count} artist image patches");
+        Ok(())
+    }
+
+    async fn apply_article_image_patches(&self) -> Result<(), SeedError> {
+        let Some(s3_bucket) = &self.s3_bucket else {
+            return Ok(());
+        };
+        let Some(patches) =
+            self.read_normalization_file::<ArticleImagePatch>("images/article_images.json")
+        else {
+            return Ok(());
+        };
+
+        let mut count = 0u32;
+        info!("Applying {} article image patches", patches.len());
+        for patch in &patches {
+            let entity_id: Option<uuid::Uuid> =
+                sqlx::query_scalar("SELECT id FROM articles WHERE slug = $1")
+                    .bind(&patch.slug)
+                    .fetch_optional(self.db.pool())
+                    .await
+                    .map_err(DatabaseError::from)?;
+
+            let Some(entity_id) = entity_id else {
+                warn!(slug = %patch.slug, "article image patch: article not found, skipping");
+                continue;
+            };
+
+            let file_path = self.seed_root().join(&patch.file);
+            if !file_path.exists() {
+                warn!(file = %patch.file, "article image patch: file not found, skipping");
+                continue;
+            }
+
+            if let Err(e) = self
+                .seed_entity_image(
+                    "article",
+                    entity_id,
+                    &file_path,
+                    &patch.role,
+                    patch.alt_text_nl.as_deref(),
+                    patch.alt_text_en.as_deref(),
+                    patch.credit.as_deref(),
+                    s3_bucket,
+                )
+                .await
+            {
+                warn!(file = %patch.file, error = %e, "article image patch: failed, skipping");
+                continue;
+            }
+            count += 1;
+        }
+        info!("Applied {count} article image patches");
+        Ok(())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    async fn seed_entity_image(
+        &self,
+        entity_type: &str,
+        entity_id: uuid::Uuid,
+        file_path: &Path,
+        role: &str,
+        alt_text_nl: Option<&str>,
+        alt_text_en: Option<&str>,
+        credit: Option<&str>,
+        s3_bucket: &str,
+    ) -> Result<(), SeedError> {
+        const VALID_ROLES: &[&str] =
+            &["gallery", "cover", "poster", "review", "hero", "thumbnail", "inline", "media"];
+        if !VALID_ROLES.contains(&role) {
+            return Err(SeedError::InvalidRole(role.to_string()));
+        }
+
+        let file_name = file_path.to_str().unwrap_or("");
+        let (ext, mime) = seed_ext_and_mime(file_name)?;
+        let s3_key = format!("media/seed/{entity_type}/{entity_id}/{role}.{ext}");
+
+        let (checksum, file_size, width, height) =
+            self.upload_seed_image(file_path, &s3_key, mime, s3_bucket).await?;
+
+        let is_cover = role == "cover";
+
+        // Clear any existing cover for this entity+role before inserting, so the
+        // cover unique index doesn't conflict if the image changed across re-seeds.
+        if is_cover {
+            sqlx::query(
+                "UPDATE entity_media SET is_cover_image = false
+                 WHERE entity_type = $1::entity_type AND entity_id = $2 AND role = $3
+                   AND is_cover_image = true",
+            )
+            .bind(entity_type)
+            .bind(entity_id)
+            .bind(role)
+            .execute(self.db.pool())
+            .await
+            .map_err(DatabaseError::from)?;
+        }
+
+        let media_id: uuid::Uuid = sqlx::query_scalar(
+            "WITH ins AS (
+                INSERT INTO media (s3_key, mime_type, file_size, width, height, checksum,
+                                   alt_text_nl, alt_text_en, credit_nl,
+                                   source_system, source_uri)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'seed', $10)
+                ON CONFLICT (source_system, source_uri) WHERE source_uri IS NOT NULL DO NOTHING
+                RETURNING id
+             )
+             SELECT id FROM ins
+             UNION ALL
+             SELECT id FROM media WHERE source_system = 'seed' AND source_uri = $10
+             LIMIT 1",
+        )
+        .bind(&s3_key)
+        .bind(mime)
+        .bind(file_size)
+        .bind(width)
+        .bind(height)
+        .bind(&checksum)
+        .bind(alt_text_nl)
+        .bind(alt_text_en)
+        .bind(credit)
+        .bind(&s3_key)
+        .fetch_one(self.db.pool())
+        .await
+        .map_err(DatabaseError::from)?;
+
+        sqlx::query(
+            "INSERT INTO entity_media (entity_type, entity_id, media_id, role, sort_order, is_cover_image)
+             VALUES ($1::entity_type, $2, $3, $4, 0, $5)
+             ON CONFLICT (entity_type, entity_id, media_id)
+             DO UPDATE SET role = EXCLUDED.role, is_cover_image = EXCLUDED.is_cover_image",
+        )
+        .bind(entity_type)
+        .bind(entity_id)
+        .bind(media_id)
+        .bind(role)
+        .bind(is_cover)
+        .execute(self.db.pool())
+        .await
+        .map_err(DatabaseError::from)?;
+
+        Ok(())
+    }
+
+    async fn upload_seed_image(
+        &self,
+        file_path: &Path,
+        s3_key: &str,
+        mime: &str,
+        s3_bucket: &str,
+    ) -> Result<(String, i64, Option<i32>, Option<i32>), SeedError> {
+        let bytes = fs::read(file_path)?;
+        let file_size = bytes.len() as i64;
+
+        let mut hasher = Sha256::new();
+        hasher.update(&bytes);
+        let checksum = hex::encode(hasher.finalize());
+
+        let (width, height) = imagesize::size(file_path)
+            .map_or((None, None), |d| (Some(d.width as i32), Some(d.height as i32)));
+
+        let s3_client = self.s3_client.as_ref().unwrap();
+        let byte_stream = aws_sdk_s3::primitives::ByteStream::from(bytes);
+
+        s3_client
+            .put_object()
+            .bucket(s3_bucket)
+            .key(s3_key)
+            .body(byte_stream)
+            .content_type(mime)
+            .send()
+            .await
+            .map_err(|e| SeedError::S3(e.to_string()))?;
+
+        Ok((checksum, file_size, width, height))
+    }
+
     async fn import_locations(&self) -> Result<(), SeedError> {
         let items: Vec<ApiLocation> = self.read_file("locations.json")?;
         info!("Seed: importing {} locations", items.len());
@@ -1131,6 +1504,22 @@ impl SeedImporter {
     }
 }
 
+fn seed_ext_and_mime(file_path: &str) -> Result<(&'static str, &'static str), SeedError> {
+    let ext = Path::new(file_path)
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    match ext.as_str() {
+        "jpg" | "jpeg" => Ok(("jpg", "image/jpeg")),
+        "png" => Ok(("png", "image/png")),
+        "webp" => Ok(("webp", "image/webp")),
+        "gif" => Ok(("gif", "image/gif")),
+        "svg" => Ok(("svg", "image/svg+xml")),
+        _ => Err(SeedError::InvalidExtension(ext)),
+    }
+}
+
 /// Split an artist field on `/`, `&`, `|`, and `,`, but not when inside
 /// single or double quotes — so names like `'hi, paris'` stay intact.
 fn split_artist_field(text: &str) -> Vec<&str> {
@@ -1138,11 +1527,8 @@ fn split_artist_field(text: &str) -> Vec<&str> {
     let mut start = 0;
     let mut in_single = false;
     let mut in_double = false;
-    let bytes = text.as_bytes();
-    let mut i = 0;
-
-    while i < bytes.len() {
-        match bytes[i] {
+    for (i, &b) in text.as_bytes().iter().enumerate() {
+        match b {
             b'\'' if !in_double => in_single = !in_single,
             b'"' if !in_single => in_double = !in_double,
             b'/' | b'&' | b'|' | b',' if !in_single && !in_double => {
@@ -1151,7 +1537,6 @@ fn split_artist_field(text: &str) -> Vec<&str> {
             }
             _ => {}
         }
-        i += 1;
     }
     parts.push(&text[start..]);
     parts

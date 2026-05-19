@@ -121,7 +121,7 @@ impl RevokedUsers {
         }
 
         let should_cleanup_all =
-            self.checks_since_cleanup.fetch_add(1, Ordering::Relaxed) % 256 == 0;
+            self.checks_since_cleanup.fetch_add(1, Ordering::Relaxed).is_multiple_of(256);
         if !should_remove_current && !should_cleanup_all {
             // Cache miss — check the database as a fallback
             if let Ok(Some(_)) =

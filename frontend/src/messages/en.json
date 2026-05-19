@@ -184,7 +184,8 @@
         "status": "Status",
         "noEvents": "No events available",
         "showAllDates": "Show all {count} dates",
-        "showFewerDates": "Show fewer dates"
+        "showFewerDates": "Show fewer dates",
+        "free": "Free"
     },
     "Login": {
         "title": "Welcome back",
@@ -255,7 +256,8 @@
             "saving": "Saving…"
         },
         "DataTable": {
-            "noResults": "No results."
+            "noResults": "No results.",
+            "selectRow": "Select row"
         },
         "ActionBar": {
             "clearSelection": "Clear selection",
@@ -399,6 +401,14 @@
             "fieldEventVendorId": "Vendor ID",
             "fieldEventBoxOfficeId": "Box office ID",
             "fieldEventUitdatabankId": "UiTdatabank ID",
+            "eventPriceColumn": "Prices",
+            "eventPriceCount": "{count} {count, plural, one {price} other {prices}}",
+            "fieldEventPrices": "Event Prices",
+            "fieldEventPriceAmount": "Price",
+            "fieldEventPriceRank": "Rank",
+            "fieldEventPriceAvailable": "Available",
+            "fieldEventPriceType": "Type",
+            "fieldEventPriceFree": "Free",
             "eyebrow": "Production",
             "search": "Search productions…"
         },
@@ -1030,6 +1040,7 @@
         "metaType": "Type",
         "metaTheme": "Theme",
         "metaLanguage": "Language",
+        "practical": "Practical",
         "languageNlEn": "EN / NL",
         "languageNl": "NL",
         "imageCaptionFallback": "VIERNULVIER Archive",

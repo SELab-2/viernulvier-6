@@ -7,6 +7,7 @@ import type { Production } from "@/types/models/production.types";
 import { getLocalizedField } from "@/lib/locale";
 import { Link } from "@/i18n/routing";
 import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 
 interface FeaturedSectionProps {
     productions: Production[];
@@ -28,7 +29,7 @@ export function FeaturedSection({ productions, locale }: FeaturedSectionProps) {
                 <span className="bg-border/80 h-px flex-1" />
             </div>
 
-            <div className="-mx-4 grid grid-cols-1 sm:-mx-[30px] sm:grid-cols-[1.6fr_1fr_1fr]">
+            <div className="sm:divide-border/70 -mx-4 grid grid-cols-1 sm:-mx-[30px] sm:grid-cols-[1.6fr_1fr_1fr] sm:divide-x">
                 {featured.map((production, index) => (
                     <FeaturedCard
                         key={production.id}
@@ -76,7 +77,7 @@ function FeaturedCard({
                         }
                     />
                 ) : (
-                    <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                    <ImagePlaceholder className="h-full w-full" />
                 )}
             </div>
 

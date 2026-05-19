@@ -663,6 +663,89 @@ async fn put_success_clears_halls_when_empty_array(db: PgPool) {
     assert!(data.hall_ids.is_empty());
 }
 
+#[sqlx::test(fixtures("productions", "events"))]
+#[test_log::test]
+async fn get_by_production_ids_multiple(db: PgPool) {
+    let app = TestRouter::new(db);
+    let prod1 = "11111111-1111-1111-1111-111111111111";
+    let prod2 = "22222222-2222-2222-2222-222222222222";
+
+    let response = app
+        .get(&format!("/events?production_ids={prod1},{prod2}"))
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<EventPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 3);
+    assert_eq!(data.next_cursor, None);
+}
+
+#[sqlx::test(fixtures("productions", "events"))]
+#[test_log::test]
+async fn get_by_production_ids_single(db: PgPool) {
+    let app = TestRouter::new(db);
+    let prod = "11111111-1111-1111-1111-111111111111";
+
+    let response = app
+        .get(&format!("/events?production_ids={prod}"))
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<EventPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 2);
+    assert_eq!(data.next_cursor, None);
+}
+
+#[sqlx::test(fixtures("productions", "events"))]
+#[test_log::test]
+async fn get_by_production_ids_nonexistent(db: PgPool) {
+    let app = TestRouter::new(db);
+    let fake_id = "00000000-0000-0000-0000-000000000000";
+
+    let response = app
+        .get(&format!("/events?production_ids={fake_id}"))
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<EventPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 0);
+    assert_eq!(data.next_cursor, None);
+}
+
+#[sqlx::test(fixtures("productions", "events"))]
+#[test_log::test]
+async fn get_by_production_ids_partial(db: PgPool) {
+    let app = TestRouter::new(db);
+    let prod_with_events = "11111111-1111-1111-1111-111111111111";
+    let prod_without_events = "33333333-3333-3333-3333-333333333333";
+
+    let response = app
+        .get(&format!(
+            "/events?production_ids={prod_with_events},{prod_without_events}"
+        ))
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<EventPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 2);
+    assert_eq!(data.next_cursor, None);
+}
+
+#[sqlx::test(fixtures("productions", "events"))]
+#[test_log::test]
+async fn get_by_production_ids_invalid_uuid_ignored(db: PgPool) {
+    let app = TestRouter::new(db);
+    let valid = "11111111-1111-1111-1111-111111111111";
+
+    let response = app
+        .get(&format!("/events?production_ids={valid},not-a-uuid"))
+        .await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let data: PaginatedResponse<EventPayload> = response.into_struct().await;
+    assert_eq!(data.data.len(), 2);
+}
+
 fn mock_post_payload() -> EventPostPayload {
     serde_json::from_value(json!({
         "source_id": 9999,

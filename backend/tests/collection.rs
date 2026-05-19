@@ -1,3 +1,4 @@
+#![allow(clippy::indexing_slicing)]
 use axum::http::StatusCode;
 use database::models::collection::CollectionVisibility;
 use serde_json::json;
@@ -118,9 +119,9 @@ async fn get_paginated_without_search(db: PgPool) {
 
     loop {
         let url = if let Some(c) = &cursor {
-            format!("/collections?limit={}&cursor={}", limit, c)
+            format!("/collections?limit={limit}&cursor={c}")
         } else {
-            format!("/collections?limit={}", limit)
+            format!("/collections?limit={limit}")
         };
 
         let response = app.get(&url).await;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Archive, ChevronsUp, Tags, Trash2 } from "lucide-react";
@@ -9,7 +9,7 @@ import type { ExpandedState, Row } from "@tanstack/react-table";
 import { DataTable, MemoSubTable } from "../data-table";
 import { EditSheet } from "../edit-sheet";
 import { makeProductionColumns } from "./columns";
-import { makeEventFields, toEventUpdateInput } from "./event-columns";
+import { EventPriceExtraContent, makeEventFields, toEventUpdateInput } from "./event-columns";
 import { ActionBar } from "../action-bar";
 import { SearchInput } from "@/components/cms/search-input";
 import { useParentChildSelection } from "../use-parent-child-selection";
@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { LoadMoreSentinel } from "@/components/cms/load-more-sentinel";
 import { useDeleteProduction, useGetInfiniteProductions } from "@/hooks/api/useProductions";
-import { useGetEvents, useUpdateEvent } from "@/hooks/api/useEvents";
+import { useGetInfiniteEvents, useUpdateEvent } from "@/hooks/api/useEvents";
 import { CollectionPickerDialog } from "@/components/cms/collection-picker-dialog";
 import { BulkTagDialog } from "@/components/cms/bulk-tag-dialog";
 import { ProductionMediaSheet } from "@/components/cms/production-media-sheet";
@@ -50,14 +50,28 @@ export function ProductionsTable() {
     } = useGetInfiniteProductions({ limit: 50, ...(q ? { q } : {}), ...facetParams });
     const deleteProduction = useDeleteProduction();
 
-    const { data: eventsResult, isLoading: eventsLoading } = useGetEvents();
-
     const allProductions = useMemo(
         () => infiniteData?.pages.flatMap((page) => page.data) ?? [],
         [infiniteData]
     );
 
-    const allEvents = useMemo(() => eventsResult?.data ?? [], [eventsResult]);
+    const {
+        data: infiniteEvents,
+        fetchNextPage: fetchNextEvents,
+        hasNextPage: hasMoreEvents,
+        isFetchingNextPage: isFetchingMoreEvents,
+        isLoading: eventsLoading,
+    } = useGetInfiniteEvents(100);
+
+    useEffect(() => {
+        if (hasMoreEvents && !isFetchingMoreEvents) fetchNextEvents();
+    }, [hasMoreEvents, isFetchingMoreEvents, fetchNextEvents]);
+
+    const allEvents = useMemo(
+        () => infiniteEvents?.pages.flatMap((page) => page.data) ?? [],
+        [infiniteEvents]
+    );
+
     const updateEvent = useUpdateEvent();
 
     const [editEvent, setEditEvent] = useState<Event | null>(null);
@@ -339,6 +353,9 @@ export function ProductionsTable() {
                         await updateEvent.mutateAsync(toEventUpdateInput(values));
                         setEditEvent(null);
                     }}
+                    extraContent={(entity) => (
+                        <EventPriceExtraContent entity={entity as unknown as Event} />
+                    )}
                 />
             )}
 

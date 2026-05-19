@@ -276,6 +276,7 @@ fn load_gallery_refs_from_disk(out_dir: &std::path::Path) -> Result<Vec<GalleryR
     Ok(extract_gallery_refs(&members))
 }
 
+#[allow(clippy::indexing_slicing)]
 fn write_manifest(
     out_dir: &std::path::Path,
     started: DateTime<Utc>,

@@ -30,7 +30,9 @@ import { VintageEmptyState } from "@/components/shared/vintage-empty-state";
 
 const ARCHIVE_MIN_YEAR = 1980;
 const SORT_VALUES: ProductionSortOption[] = ["recent", "oldest", "relevance"];
-const DEFAULT_CATEGORY_SET = new Set(["productions", "artists", "locations", "articles"]);
+
+const CATEGORIES = ["productions", "artists", "locations", "articles"] as const;
+const DEFAULT_CATEGORY_SET = new Set(["productions"]); // , "artists", "locations", "articles"
 
 export default function SearchPage() {
     const locale = useLocale();
@@ -131,6 +133,13 @@ export default function SearchPage() {
         },
         [router, searchParams, pathname]
     );
+
+    useEffect(() => {
+        const trimmed = draftQuery.trim();
+        if (trimmed === query) return;
+        const timer = setTimeout(() => handleSearch(draftQuery), 300);
+        return () => clearTimeout(timer);
+    }, [draftQuery, handleSearch, query]);
 
     const handleSortChange = useCallback(
         (newSort: ProductionSortOption) => {
@@ -381,6 +390,8 @@ export default function SearchPage() {
             >
                 <ArchiveSidebar
                     minYear={ARCHIVE_MIN_YEAR}
+                    categories={CATEGORIES}
+                    defaultCategories={DEFAULT_CATEGORY_SET}
                     initialTag={searchParams.get("tag") ?? undefined}
                 />
                 <main className="flex min-w-0 flex-1 flex-col">

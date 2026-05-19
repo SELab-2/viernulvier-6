@@ -196,7 +196,7 @@ export function useTableSelection<TData>({
                 setAnchorRowId(rowId);
                 focusRowRef.current(rowIndex);
             } else {
-                toggleRowRef.current(rowId);
+                onRowSelectionChangeRef.current?.({ [rowId]: true });
                 setAnchorRowId(rowId);
                 focusRowRef.current(rowIndex);
             }

@@ -160,7 +160,7 @@ describe("useParentChildSelection", () => {
         expect(screen.getByRole("columnheader", { name: "Label" })).toHaveClass("text-foreground");
     });
 
-    it("deselects the clicked row when multiple plain table rows are selected", () => {
+    it("replaces selection on plain row click when multiple rows are selected", () => {
         render(
             <NextIntlClientProvider locale="en" messages={messages}>
                 <PlainSelectionHarness />
@@ -170,16 +170,14 @@ describe("useParentChildSelection", () => {
         const checkboxes = screen.getAllByRole("checkbox");
 
         fireEvent.click(checkboxes[0]);
-        fireEvent.click(checkboxes[1]);
-        fireEvent.click(checkboxes[2]);
+        fireEvent.click(checkboxes[1], { ctrlKey: true });
+        fireEvent.click(checkboxes[2], { ctrlKey: true });
         expect(screen.getByTestId("plain-selected")).toHaveTextContent("p1,p2,p3");
 
-        fireEvent.click(checkboxes[1]);
+        // Plain click on row text should replace selection, not toggle
+        fireEvent.click(screen.getByText("Production 1"));
 
-        expect(screen.getByTestId("plain-selected")).toHaveTextContent("p1,p3");
-        expect(checkboxes[0]).toHaveAttribute("aria-checked", "true");
-        expect(checkboxes[1]).toHaveAttribute("aria-checked", "false");
-        expect(checkboxes[2]).toHaveAttribute("aria-checked", "true");
+        expect(screen.getByTestId("plain-selected")).toHaveTextContent("p1");
     });
 
     it("deselects the ctrl-clicked row when multiple plain table rows are selected", () => {
@@ -199,20 +197,28 @@ describe("useParentChildSelection", () => {
         expect(screen.getByTestId("plain-selected")).toHaveTextContent("p1,p3");
     });
 
-    it("toggles plain table rows so multiple rows can be selected without modifiers", () => {
+    it("replaces selection on plain click and toggles with ctrl+click", () => {
         render(
             <NextIntlClientProvider locale="en" messages={messages}>
                 <PlainSelectionHarness />
             </NextIntlClientProvider>
         );
 
+        // Plain click selects only that row
         fireEvent.click(screen.getByText("Production 1"));
+        expect(screen.getByTestId("plain-selected")).toHaveTextContent("p1");
+
+        // Another plain click replaces
         fireEvent.click(screen.getByText("Production 2"));
-        fireEvent.click(screen.getByText("Production 3"));
+        expect(screen.getByTestId("plain-selected")).toHaveTextContent("p2");
+
+        // Ctrl+click toggles (adds row to selection)
+        fireEvent.click(screen.getByText("Production 1"), { ctrlKey: true });
+        fireEvent.click(screen.getByText("Production 3"), { ctrlKey: true });
         expect(screen.getByTestId("plain-selected")).toHaveTextContent("p1,p2,p3");
 
-        fireEvent.click(screen.getByText("Production 2"));
-
+        // Ctrl+click toggles (removes row from selection)
+        fireEvent.click(screen.getByText("Production 2"), { ctrlKey: true });
         expect(screen.getByTestId("plain-selected")).toHaveTextContent("p1,p3");
     });
 
@@ -221,25 +227,25 @@ describe("useParentChildSelection", () => {
 
         const [parentCheckbox] = screen.getAllByRole("checkbox");
 
-        fireEvent.click(parentCheckbox);
-        fireEvent.click(parentCheckbox);
+        fireEvent.click(parentCheckbox, { ctrlKey: true });
+        fireEvent.click(parentCheckbox, { ctrlKey: true });
 
         expect(screen.getByTestId("counts")).toHaveTextContent("0:0:1");
         expect(parentCheckbox).toHaveAttribute("aria-checked", "false");
     });
 
-    it("deselects the clicked parent row without changing the last selected parent", () => {
+    it("toggles the ctrl-clicked parent row without changing other selected parents", () => {
         renderSelectionHarness();
 
         let checkboxes = screen.getAllByRole("checkbox");
 
-        fireEvent.click(checkboxes[0]);
-        fireEvent.click(checkboxes[2]);
-        fireEvent.click(checkboxes[4]);
+        fireEvent.click(checkboxes[0], { ctrlKey: true });
+        fireEvent.click(checkboxes[2], { ctrlKey: true });
+        fireEvent.click(checkboxes[4], { ctrlKey: true });
         expect(screen.getByTestId("counts")).toHaveTextContent("3:3:3");
 
         checkboxes = screen.getAllByRole("checkbox");
-        fireEvent.click(checkboxes[2]);
+        fireEvent.click(checkboxes[2], { ctrlKey: true });
 
         checkboxes = screen.getAllByRole("checkbox");
         expect(screen.getByTestId("counts")).toHaveTextContent("2:2:3");

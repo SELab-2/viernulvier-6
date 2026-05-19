@@ -32,6 +32,9 @@ locations → spaces → halls → productions → prices → price_ranks → ev
   → artists              (derived from already-inserted productions)
   → artists/artist_merges        (patch)
   → artists/artist_names         (patch)
+  → images/location_images       (patch, requires S3)
+  → images/artist_images         (patch, requires S3)
+  → images/article_images        (patch, requires S3)
 ```
 
 ## Normalisation files (`seed/normalization/`)
@@ -40,13 +43,14 @@ All files are JSON arrays. Unknown fields (e.g. `note`) are silently ignored by 
 
 Source IDs come from the `@id` hyperlink in the raw JSON (`/api/v1/halls/42` → source_id `42`). Use `backend/seed/raw/halls.json` (or the relevant raw file) to look up source IDs.
 
-Files are grouped into five subdirectories by entity type:
+Files are grouped into six subdirectories by entity type:
 
 - `productions/` — production_corrections
 - `locations/` — location_names, location_creations, location_deletions, space_locations
 - `halls/` — hall_merges, hall_names, hall_expansions, hall_deletions
 - `genres/` — genre_tag_mappings, uitdatabank_theme_mappings, genre_location_mappings, genre_series_mappings
 - `artists/` — artist_merges, artist_names
+- `images/` — location_images, artist_images, article_images
 
 All `*.json` files in subdirectories are encrypted by git-crypt (the `.gitattributes` pattern applies recursively).
 
@@ -259,3 +263,49 @@ To find the slug for an artist, query `SELECT slug FROM artists WHERE name ILIKE
 2. Query `SELECT slug, name FROM artists ORDER BY name` to find duplicate or incorrectly named records.
 3. Add entries to `artist_merges.json` (for duplicates) and/or `artist_names.json` (for display name fixes).
 4. Re-seed to verify.
+
+**For image patches:**
+1. Copy the image file into `backend/seed/images/{entity_type}/` (e.g. `seed/images/locations/de-vooruit.jpg`).
+2. Add an entry to the appropriate file in `seed/normalization/images/`.
+3. Re-seed the DB to verify. S3 env vars (`S3_ENDPOINT`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET`) must be set; the steps are silently skipped otherwise.
+
+---
+
+### `images/location_images.json` - attach a cover image to a location
+
+Identifies the location by `source_id` (from `seed/raw/locations.json`) or `slug` (for locations created via `location_creations.json`). The image file is a path relative to `seed/` (i.e. relative to the seed directory parent).
+
+`role` defaults to `"cover"`. `credit` maps to `credit_nl` in the DB. All metadata fields are optional.
+
+```json
+{ "source_id": 1, "file": "images/locations/de-vooruit.jpg", "role": "cover", "alt_text_nl": "De Vooruit", "credit": "Foto: Pieter Maes" }
+{ "slug": "de-krook", "file": "images/locations/de-krook.jpg", "alt_text_nl": "De Krook", "alt_text_en": "De Krook" }
+```
+
+---
+
+### `images/artist_images.json` - attach a cover image to an artist
+
+Identifies the artist by slug. Slugs are derived from the production artist field — query `SELECT slug FROM artists WHERE name ILIKE '%...'` after seeding.
+
+```json
+{ "slug": "jan-de-smedt", "file": "images/artists/jan-de-smedt.jpg", "role": "cover", "credit": "Foto: ..." }
+```
+
+---
+
+### `images/article_images.json` - attach a cover image to an article
+
+Identifies the article by slug. Articles are seeded via SQL migration files.
+
+```json
+{ "slug": "some-article-slug", "file": "images/articles/some-article.jpg", "role": "cover", "alt_text_nl": "...", "alt_text_en": "..." }
+```
+
+---
+
+### Image file storage
+
+Image files live in `backend/seed/images/{entity_type}/` and are tracked by Git LFS (via the `.gitattributes` rule `backend/seed/images/**/*`). Filenames are free-form — the patch file maps them to entities.
+
+**Idempotency:** each image patch is keyed on its file path (`source_uri` in the `media` table with `source_system = 'seed'`). Re-seeding does not duplicate rows; re-uploading to the same S3 key overwrites with identical bytes.

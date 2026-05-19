@@ -184,7 +184,8 @@
         "status": "Status",
         "noEvents": "Geen evenementen beschikbaar",
         "showAllDates": "Toon alle {count} datums",
-        "showFewerDates": "Minder datums tonen"
+        "showFewerDates": "Minder datums tonen",
+        "free": "Gratis"
     },
     "Login": {
         "title": "Welkom terug",
@@ -255,7 +256,8 @@
             "saving": "Bezig met opslaan…"
         },
         "DataTable": {
-            "noResults": "Geen resultaten."
+            "noResults": "Geen resultaten.",
+            "selectRow": "Rij selecteren"
         },
         "ActionBar": {
             "clearSelection": "Selectie wissen",
@@ -399,6 +401,14 @@
             "fieldEventVendorId": "Vendor-ID",
             "fieldEventBoxOfficeId": "Box office ID",
             "fieldEventUitdatabankId": "UiTdatabank ID",
+            "eventPriceColumn": "Prijzen",
+            "eventPriceCount": "{count} {count, plural, one {prijs} other {prijzen}}",
+            "fieldEventPrices": "Evenement Prijzen",
+            "fieldEventPriceAmount": "Prijs",
+            "fieldEventPriceRank": "Rang",
+            "fieldEventPriceAvailable": "Beschikbaar",
+            "fieldEventPriceType": "Type",
+            "fieldEventPriceFree": "Gratis",
             "eyebrow": "Productie",
             "search": "Zoek producties…"
         },
@@ -1030,6 +1040,7 @@
         "metaType": "Type",
         "metaTheme": "Thema",
         "metaLanguage": "Taal",
+        "practical": "Praktisch",
         "languageNlEn": "EN / NL",
         "languageNl": "NL",
         "imageCaptionFallback": "Archief VIERNULVIER",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowUpRight, Link2, Mail } from "lucide-react";
+import { ArrowUpRight, Link2, Mail, Ticket } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { getLocalizedField } from "@/lib/locale";
@@ -63,7 +63,7 @@ export function ProductionSidebar({
     return (
         <aside className="flex flex-col">
             {/* Events Section */}
-            <div className="border-border/70 mb-6 border-b pb-6">
+            <div className="border-border/70 mb-6 pb-6">
                 <span className="text-muted-foreground mb-3 block font-mono text-[11px] font-medium tracking-[2px] uppercase">
                     {t("title") || "Voorstellingen"}
                 </span>
@@ -73,18 +73,45 @@ export function ProductionSidebar({
                         <div className="border-border/70 border-t">
                             {visibleEvents.map((event) => {
                                 return (
-                                    <div
-                                        key={event.id}
-                                        className="border-border/70 grid grid-cols-[1fr_auto] items-baseline gap-3 border-b py-2"
-                                    >
-                                        <div className="font-body text-foreground min-w-0 text-[13px] leading-tight font-medium capitalize">
-                                            {formatDateFull(event.startsAt, locale)}
+                                    <div key={event.id} className="border-border/70 border-b py-2">
+                                        <div className="grid grid-cols-[1fr_auto] items-baseline gap-3">
+                                            <div className="font-body text-foreground min-w-0 text-[13px] leading-tight font-medium capitalize">
+                                                {formatDateFull(event.startsAt, locale)}
+                                            </div>
+                                            <div className="text-muted-foreground font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase">
+                                                {formatTime(event.startsAt, locale)}
+                                                {event.endsAt &&
+                                                    ` – ${formatTime(event.endsAt, locale)}`}
+                                            </div>
                                         </div>
-                                        <div className="text-muted-foreground font-mono text-[10px] tracking-[1.1px] whitespace-nowrap uppercase">
-                                            {formatTime(event.startsAt, locale)}
-                                            {event.endsAt &&
-                                                ` – ${formatTime(event.endsAt, locale)}`}
-                                        </div>
+                                        {event.prices && event.prices.length > 0 && (
+                                            <div className="border-muted/25 divide-muted/[0.06] mt-2 divide-y rounded-sm border">
+                                                {event.prices.map((price, idx) => (
+                                                    <div
+                                                        key={price.id ?? idx}
+                                                        className="flex items-center justify-between gap-2 px-2.5 py-1.5"
+                                                    >
+                                                        <div className="flex min-w-0 items-center gap-1.5">
+                                                            <Ticket className="text-muted-foreground h-3 w-3 shrink-0" />
+                                                            <span className="text-foreground truncate font-mono text-[11px]">
+                                                                {price.price.descriptionNl ??
+                                                                    price.price.type}
+                                                            </span>
+                                                            {price.rank.code && (
+                                                                <span className="text-muted-foreground shrink-0 font-mono text-[9px] tabular-nums">
+                                                                    {price.rank.code}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <span className="text-foreground shrink-0 font-mono text-[11px] tabular-nums">
+                                                            {price.amountCents === 0
+                                                                ? t("free")
+                                                                : `€${(price.amountCents / 100).toFixed(2)}`}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -111,10 +138,10 @@ export function ProductionSidebar({
             {/* Practical Info */}
             <div className="border-border/70 mb-6 border-b pb-6">
                 <span className="text-muted-foreground mb-4 block font-mono text-[11px] font-medium tracking-[2px] uppercase">
-                    Praktisch
+                    {tProd("practical")}
                 </span>
 
-                <div className="border-border/70 font-body flex items-baseline justify-between border-b py-1.5 text-[15px]">
+                <div className="border-border/70 font-body flex items-baseline justify-between py-1.5 text-[15px]">
                     <span className="text-muted-foreground font-mono text-[11px] tracking-[1.2px] uppercase">
                         {tProd("metaLanguage")}
                     </span>
