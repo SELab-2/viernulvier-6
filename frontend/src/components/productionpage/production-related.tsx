@@ -8,9 +8,22 @@ import { getLocalizedField } from "@/lib/locale";
 import { useGetEntityMedia } from "@/hooks/api/useMedia";
 import type { Production } from "@/types/models/production.types";
 
+function formatUitdatabankType(raw: string | null, fallback: string): string {
+    if (!raw) return fallback;
+    if (raw.startsWith("/api/") || raw.startsWith("http")) {
+        const last = raw.split("/").pop() ?? "";
+        return last ? `${fallback} ${last}` : fallback;
+    }
+    return raw;
+}
+
 function RelatedProductionCard({ production, locale }: { production: Production; locale: string }) {
     const t = useTranslations("ProductionPage");
     const { data: media = [] } = useGetEntityMedia("production", production.id);
+    const typeLabel = formatUitdatabankType(
+        production.uitdatabankType,
+        t("relatedProductionFallback")
+    );
 
     const title = getLocalizedField(production, "title", locale) ?? production.slug;
     const artist = getLocalizedField(production, "artist", locale);
@@ -43,8 +56,7 @@ function RelatedProductionCard({ production, locale }: { production: Production;
                 )}
             </div>
             <div className="text-muted-foreground mb-1.5 line-clamp-1 font-mono text-[8px] tracking-[1.4px] uppercase">
-                {production.uitdatabankType ?? t("relatedProductionFallback")} ·{" "}
-                {t("relatedArchive")}
+                {typeLabel} · {t("relatedArchive")}
             </div>
             <div className="font-display text-foreground mb-0.5 line-clamp-2 text-[16px] leading-[1.2] font-bold tracking-[-0.02em]">
                 {title}

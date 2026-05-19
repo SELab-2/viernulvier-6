@@ -40,15 +40,8 @@ export const SearchHero = forwardRef<HTMLDivElement, SearchHeroProps>(function S
                     }}
                     placeholder={t("heroPlaceholder")}
                     autoComplete="off"
-                    className="border-foreground focus:border-primary font-display text-foreground placeholder:text-muted-foreground w-full border-b-2 bg-transparent pt-3 pr-24 pb-3 pl-[34px] text-[18px] font-normal transition-all outline-none placeholder:italic sm:pr-28 sm:text-[22px]"
+                    className="border-foreground focus:border-primary font-display text-foreground placeholder:text-muted-foreground w-full border-b-2 bg-transparent pt-3 pr-4 pb-3 pl-[34px] text-[18px] font-normal transition-all outline-none placeholder:italic sm:text-[22px]"
                 />
-                <span className="text-muted-foreground absolute top-1/2 right-0 hidden -translate-y-1/2 items-center gap-1.5 font-mono text-[9px] tracking-[1.2px] uppercase sm:flex">
-                    {t("enter")}
-                    <kbd className="border-border flex items-center justify-center border px-[5px] py-0.5">
-                        ↵
-                    </kbd>
-                </span>
-
                 <div className="bg-primary absolute -bottom-[2px] left-0 h-[2.5px] w-0 transition-all duration-500 group-focus-within:w-full group-focus-within:shadow-[0_4px_16px_rgba(var(--primary-rgb),0.6)]" />
             </div>
         </div>
