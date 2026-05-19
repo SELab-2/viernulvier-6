@@ -8,6 +8,7 @@ import { getLocalizedField } from "@/lib/locale";
 import { ImageSpotlight, type SpotlightItem } from "@/components/ui/image-spotlight";
 import type { Production } from "@/types/models/production.types";
 import type { Media } from "@/types/models/media.types";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 
 export function ProductionHero({
     production,
@@ -65,7 +66,7 @@ export function ProductionHero({
                         />
                     </button>
                 ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                    <ImagePlaceholder />
                 )}
                 <div className="bg-foreground/70 text-background/80 pointer-events-none absolute right-0 bottom-0 left-0 p-3 font-mono text-[8px] tracking-[1.2px] uppercase">
                     © {credit ?? t("imageCaptionFallback")}

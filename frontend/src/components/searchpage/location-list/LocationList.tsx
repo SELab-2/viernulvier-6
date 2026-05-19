@@ -6,7 +6,7 @@ import { Link } from "@/i18n/routing";
 
 import type { Location } from "@/types/models/location.types";
 import { LoadingState } from "@/components/shared/loading-state";
-import { ResultImagePlaceholder } from "@/components/searchpage/result-image-placeholder";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 
 interface LocationItemProps {
     location: Location;
@@ -28,7 +28,7 @@ function LocationItem({ location }: LocationItemProps) {
                         sizes="180px"
                     />
                 ) : (
-                    <ResultImagePlaceholder id={location.id} />
+                    <ImagePlaceholder id={location.id} />
                 )}
             </div>
 

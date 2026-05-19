@@ -6,6 +6,7 @@ import { LayoutGrid, List } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Collection } from "@/types/models/collection.types";
 import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 
 function getLocalized(
     translations: { languageCode: string; title: string; description: string }[],
@@ -72,7 +73,7 @@ export function CollectionHeader({
                     />
                 </div>
             ) : (
-                <div className="mt-6 aspect-[16/7] w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                <ImagePlaceholder className="mt-6 aspect-[16/7] w-full" />
             )}
 
             {/* Dateline bar */}

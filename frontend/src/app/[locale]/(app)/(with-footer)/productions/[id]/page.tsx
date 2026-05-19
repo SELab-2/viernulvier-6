@@ -32,6 +32,7 @@ import { ProductionSidebar } from "@/components/productionpage/production-sideba
 import { ProductionRelated } from "@/components/productionpage/production-related";
 import { ProductionArticles } from "@/components/productionpage/production-articles";
 import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 import { Production, ProductionRow } from "@/types/models/production.types";
 
 // Helper to get title from Production or ProductionRow
@@ -266,7 +267,7 @@ export default function ProductionPage({
                                                     className="object-cover"
                                                 />
                                             ) : (
-                                                <div className="from-muted to-muted/40 h-full w-full bg-gradient-to-br" />
+                                                <ImagePlaceholder className="h-full w-full" />
                                             )}
                                         </div>
                                         <div className="flex min-w-0 flex-col justify-center gap-1">

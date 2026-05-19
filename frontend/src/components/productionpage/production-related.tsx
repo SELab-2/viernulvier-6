@@ -7,6 +7,7 @@ import { Link } from "@/i18n/routing";
 import { getLocalizedField } from "@/lib/locale";
 import { useGetEntityMedia } from "@/hooks/api/useMedia";
 import type { Production } from "@/types/models/production.types";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 
 function formatUitdatabankType(raw: string | null, fallback: string): string {
     if (!raw) return fallback;
@@ -49,7 +50,7 @@ function RelatedProductionCard({ production, locale }: { production: Production;
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     />
                 ) : (
-                    <div className="absolute inset-0 bg-gradient-to-tr from-[#CCC6BC] to-[#B5AEA4] grayscale-[15%] transition-all duration-300 group-hover:grayscale-0" />
+                    <ImagePlaceholder />
                 )}
             </div>
             <div className="text-muted-foreground mb-1.5 line-clamp-1 font-mono text-[8px] tracking-[1.4px] uppercase">

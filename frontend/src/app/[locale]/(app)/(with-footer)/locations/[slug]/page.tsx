@@ -10,6 +10,7 @@ import { LoadingState } from "@/components/shared/loading-state";
 import { MasonryGrid } from "@/components/masonry";
 import { useGetLocationBySlug } from "@/hooks/api/useLocations";
 import { useGetHallsForLocation } from "@/hooks/api/useHalls";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 
 export default function LocationPage() {
     const { slug } = useParams<{ slug: string }>();
@@ -85,7 +86,7 @@ export default function LocationPage() {
             />
 
             {/* Hero banner */}
-            <div className="h-[200px] w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4] sm:h-[300px] md:h-[360px]" />
+            <ImagePlaceholder className="h-[200px] w-full sm:h-[300px] md:h-[360px]" />
 
             <div className="mx-auto max-w-[960px] px-4 py-8 sm:px-10 sm:py-12">
                 <h1 className="font-display text-foreground text-[32px] leading-[1.1] font-bold tracking-[-0.03em] sm:text-[48px] md:text-[56px]">
@@ -136,7 +137,7 @@ export default function LocationPage() {
                             renderItem={(hall) => (
                                 <div className="border-foreground/20 border">
                                     <div className="relative aspect-[4/3] w-full overflow-hidden">
-                                        <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                                        <ImagePlaceholder className="h-full w-full" />
                                     </div>
                                     <div className="px-3 pt-3">
                                         <h2 className="font-display text-foreground text-[18px] leading-[1.15] font-bold tracking-[-0.02em]">

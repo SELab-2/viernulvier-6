@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Link } from "@/i18n/routing";
 import { UniformCardsContext } from "./masonry-grid";
 import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
+import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 import type { EntityTagSlim } from "@/types/models/taxonomy.types";
 
 const ASPECT_CLASSES = ["aspect-[4/3]", "aspect-[3/4]"] as const;
@@ -59,7 +60,7 @@ export function CardShell({
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     />
                 ) : (
-                    <div className="h-full w-full bg-gradient-to-br from-[#CCC6BC] to-[#B5AEA4]" />
+                    <ImagePlaceholder className="h-full w-full" />
                 )}
             </div>
 
