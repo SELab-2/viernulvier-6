@@ -84,7 +84,7 @@ export function ArchiveSidebar({
         if (!raw) return new Set(defaultCategories);
         const parsed = raw.split(",").filter(Boolean);
         return parsed.length > 0 ? new Set(parsed) : new Set(defaultCategories);
-    }, [searchParams]);
+    }, [searchParams, defaultCategories]);
     const checkedLocations = useMemo(() => {
         const raw = searchParams.get("location");
         return new Set(raw ? raw.split(",").filter(Boolean) : []);
@@ -306,7 +306,7 @@ export function ArchiveSidebar({
                 (qs ? `${pathname}?${qs}` : pathname) as Parameters<typeof router.replace>[0]
             );
         },
-        [router, pathname]
+        [router, pathname, categories, defaultCategories]
     );
 
     const toggleLocation = useCallback(
