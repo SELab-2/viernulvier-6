@@ -15,6 +15,8 @@ const production = (id: string): Production => ({
     uitdatabankType: null,
     translations: [],
     coverImageUrl: null,
+    locations: [],
+    tags: [],
 });
 
 const event = (id: string, productionId: string, startsAt: string): Event => ({
@@ -32,7 +34,7 @@ const event = (id: string, productionId: string, startsAt: string): Event => ({
     maxTicketsPerOrder: null,
     productionId,
     status: "published",
-    hallId: null,
+    hallIds: [],
     prices: [],
 });
 
