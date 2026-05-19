@@ -1,3 +1,4 @@
+#![allow(clippy::indexing_slicing)]
 use axum::http::StatusCode;
 use database::{
     Database,

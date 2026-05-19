@@ -5,18 +5,13 @@ use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema, sqlx::Type)]
+#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize, ToSchema, sqlx::Type)]
 #[sqlx(type_name = "collection_visibility", rename_all = "lowercase")]
 #[serde(rename_all = "lowercase")]
 pub enum CollectionVisibility {
+    #[default]
     Public,
     Unlisted,
-}
-
-impl Default for CollectionVisibility {
-    fn default() -> Self {
-        Self::Public
-    }
 }
 
 #[derive(Debug, Model, PartialEq)]
