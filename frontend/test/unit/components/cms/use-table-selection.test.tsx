@@ -89,9 +89,27 @@ describe("useTableSelection", () => {
             });
 
             expect(onRowSelectionChange).toHaveBeenCalled();
-            const updater = onRowSelectionChange.mock.calls[0][0];
-            expect(typeof updater).toBe("function");
-            expect(updater({})).toEqual({ "row-1": true });
+            const callArg = onRowSelectionChange.mock.calls[0][0];
+            expect(callArg).toEqual({ "row-1": true });
+        });
+
+        it("replaces existing selection on plain click", () => {
+            const existingSelection = { "row-0": true, "row-2": true };
+            const { result } = setup({ rowSelection: existingSelection });
+
+            act(() => {
+                result.current.handleRowClick(rows[1], {
+                    target: document.createElement("div"),
+                    stopPropagation: vi.fn(),
+                    preventDefault: vi.fn(),
+                } as unknown as React.MouseEvent);
+            });
+
+            expect(onRowSelectionChange).toHaveBeenCalled();
+            // plain click should call onRowSelectionChange with { row-1: true },
+            // replacing the old selection, not toggling
+            const callArg = onRowSelectionChange.mock.calls[0][0];
+            expect(callArg).toEqual({ "row-1": true });
         });
 
         it("toggles a row on ctrl+click", () => {
