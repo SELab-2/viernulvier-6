@@ -7,7 +7,10 @@ use sqlx::PgPool;
 use uuid::Uuid;
 use viernulvier_archive::{
     config::AppConfig,
-    dto::{media::MediaPayload, paginated::PaginatedResponse},
+    dto::{
+        media::{MediaEntityLink, MediaPayload},
+        paginated::PaginatedResponse,
+    },
 };
 
 use crate::common::into_struct::IntoStruct;
@@ -81,6 +84,29 @@ async fn get_entity_media_with_crops(db: PgPool) {
     assert_eq!(media.crops.len(), 1);
     let crop = media.crops.first().expect("expected one crop");
     assert_eq!(crop.crop_name.as_deref(), Some("square"));
+}
+
+#[sqlx::test(fixtures("productions", "media"))]
+#[test_log::test]
+async fn get_media_entity_links_returns_production_link(db: PgPool) {
+    let app = TestRouter::new(db);
+    let media_id = Uuid::parse_str("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa").unwrap();
+
+    let response = app.get(&format!("/media/{media_id}/entities")).await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let data: Vec<MediaEntityLink> = response.into_struct().await;
+    assert_eq!(data.len(), 1);
+    let link = data.first().expect("expected one media entity link");
+    assert_eq!(link.entity_type, "production");
+    assert_eq!(
+        link.entity_id,
+        Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap()
+    );
+    assert_eq!(
+        link.title.as_ref().and_then(|t| t.nl.as_deref()),
+        Some("Heavy Metal Breien SEARCH")
+    );
 }
 
 #[sqlx::test(fixtures("productions", "media"))]

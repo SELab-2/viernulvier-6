@@ -3,19 +3,31 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use aws_sdk_s3::config::{Builder as S3Builder, Credentials, Region};
+use database::models::{entity_type::EntityType, media::MediaCreate};
 use database::{Database, error::DatabaseError};
+use futures::StreamExt;
+use reqwest::Client;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 use tracing::{info, warn};
+use uuid::Uuid;
 
 use crate::error::ImportItemError;
 use crate::helper::extract_source_id;
 use crate::models::{
-    event::ApiEvent, event_price::ApiEventPrice, event_status::ApiEventStatus, hall::ApiHall,
-    location::ApiLocation, price::ApiPrice, price_rank::ApiPriceRank, production::ApiProduction,
+    event::ApiEvent,
+    event_price::ApiEventPrice,
+    event_status::ApiEventStatus,
+    hall::ApiHall,
+    location::ApiLocation,
+    media::{ApiMediaGallery, ApiMediaItem},
+    price::ApiPrice,
+    price_rank::ApiPriceRank,
+    production::ApiProduction,
     space::ApiSpace,
 };
+use crate::{decode_url_from_crop, get_format_info, media_role_from_gallery_type};
 
 #[derive(Debug, Error)]
 pub enum SeedError {
@@ -29,6 +41,8 @@ pub enum SeedError {
     Import(#[from] ImportItemError),
     #[error("S3 error uploading seed image: {0}")]
     S3(String),
+    #[error("HTTP error importing seed image: {0}")]
+    Http(#[from] reqwest::Error),
     #[error("Unsupported image extension '{0}' in seed patch")]
     InvalidExtension(String),
     #[error("Invalid entity_media role '{0}' in seed patch")]
@@ -184,6 +198,13 @@ struct ArticleImagePatch {
     credit: Option<String>,
 }
 
+#[derive(Deserialize)]
+struct SeedMediaGalleryEntry {
+    production_source_id: i32,
+    gallery_type: String,
+    gallery: ApiMediaGallery,
+}
+
 fn default_cover_role() -> String {
     "cover".to_string()
 }
@@ -196,6 +217,7 @@ fn default_cover_role() -> String {
 pub struct SeedImporter {
     db: Database,
     seed_dir: PathBuf,
+    client: Client,
     s3_client: Option<aws_sdk_s3::Client>,
     s3_bucket: Option<String>,
 }
@@ -213,34 +235,41 @@ impl SeedImporter {
             return None;
         }
 
-        let (s3_client, s3_bucket) = if let (Ok(endpoint), Ok(access_key), Ok(secret_key), Ok(bucket)) = (
-            std::env::var("S3_ENDPOINT"),
-            std::env::var("S3_ACCESS_KEY"),
-            std::env::var("S3_SECRET_KEY"),
-            std::env::var("S3_BUCKET"),
-        ) {
-            let region = std::env::var("S3_REGION").unwrap_or_else(|_| "garage".to_string());
-            let creds = Credentials::new(&access_key, &secret_key, None, None, "seed");
-            let s3_conf = S3Builder::new()
-                .region(Region::new(region))
-                .endpoint_url(&endpoint)
-                .credentials_provider(creds)
-                .force_path_style(true)
-                .request_checksum_calculation(
-                    aws_sdk_s3::config::RequestChecksumCalculation::WhenRequired,
-                )
-                .response_checksum_validation(
-                    aws_sdk_s3::config::ResponseChecksumValidation::WhenRequired,
-                )
-                .build();
-            info!("SeedImporter: S3 configured, image patches enabled");
-            (Some(aws_sdk_s3::Client::from_conf(s3_conf)), Some(bucket))
-        } else {
-            info!("SeedImporter: S3 not configured, image patches will be skipped");
-            (None, None)
-        };
+        let (s3_client, s3_bucket) =
+            if let (Ok(endpoint), Ok(access_key), Ok(secret_key), Ok(bucket)) = (
+                std::env::var("S3_ENDPOINT"),
+                std::env::var("S3_ACCESS_KEY"),
+                std::env::var("S3_SECRET_KEY"),
+                std::env::var("S3_BUCKET"),
+            ) {
+                let region = std::env::var("S3_REGION").unwrap_or_else(|_| "garage".to_string());
+                let creds = Credentials::new(&access_key, &secret_key, None, None, "seed");
+                let s3_conf = S3Builder::new()
+                    .region(Region::new(region))
+                    .endpoint_url(&endpoint)
+                    .credentials_provider(creds)
+                    .force_path_style(true)
+                    .request_checksum_calculation(
+                        aws_sdk_s3::config::RequestChecksumCalculation::WhenRequired,
+                    )
+                    .response_checksum_validation(
+                        aws_sdk_s3::config::ResponseChecksumValidation::WhenRequired,
+                    )
+                    .build();
+                info!("SeedImporter: S3 configured, image patches enabled");
+                (Some(aws_sdk_s3::Client::from_conf(s3_conf)), Some(bucket))
+            } else {
+                info!("SeedImporter: S3 not configured, image patches will be skipped");
+                (None, None)
+            };
 
-        Some(Self { db, seed_dir, s3_client, s3_bucket })
+        Some(Self {
+            db,
+            seed_dir,
+            client: Client::builder().user_agent("selab6-seed").build().ok()?,
+            s3_client,
+            s3_bucket,
+        })
     }
 
     /// Returns `max_updated_at` from `manifest.json`, or `None` if absent or null.
@@ -282,6 +311,7 @@ impl SeedImporter {
         self.apply_location_image_patches().await?;
         self.apply_artist_image_patches().await?;
         self.apply_article_image_patches().await?;
+        self.import_media_galleries().await?;
         Ok(())
     }
 
@@ -511,15 +541,18 @@ impl SeedImporter {
     }
 
     async fn apply_location_description_patches(&self) -> Result<(), SeedError> {
-        let Some(patches) = self
-            .read_normalization_file::<LocationDescriptionPatch>("locations/location_descriptions.json")
-        else {
+        let Some(patches) = self.read_normalization_file::<LocationDescriptionPatch>(
+            "locations/location_descriptions.json",
+        ) else {
             return Ok(());
         };
 
         info!("Applying {} location description patches", patches.len());
         for patch in &patches {
-            for (lang, desc) in [("nl", patch.description_nl.as_deref()), ("en", patch.description_en.as_deref())] {
+            for (lang, desc) in [
+                ("nl", patch.description_nl.as_deref()),
+                ("en", patch.description_en.as_deref()),
+            ] {
                 let Some(description) = desc else { continue };
                 let rows = sqlx::query(
                     "INSERT INTO location_translations (id, location_id, language_code, description)
@@ -1299,8 +1332,16 @@ impl SeedImporter {
         credit: Option<&str>,
         s3_bucket: &str,
     ) -> Result<(), SeedError> {
-        const VALID_ROLES: &[&str] =
-            &["gallery", "cover", "poster", "review", "hero", "thumbnail", "inline", "media"];
+        const VALID_ROLES: &[&str] = &[
+            "gallery",
+            "cover",
+            "poster",
+            "review",
+            "hero",
+            "thumbnail",
+            "inline",
+            "media",
+        ];
         if !VALID_ROLES.contains(&role) {
             return Err(SeedError::InvalidRole(role.to_string()));
         }
@@ -1309,8 +1350,9 @@ impl SeedImporter {
         let (ext, mime) = seed_ext_and_mime(file_name)?;
         let s3_key = format!("media/seed/{entity_type}/{entity_id}/{role}.{ext}");
 
-        let (checksum, file_size, width, height) =
-            self.upload_seed_image(file_path, &s3_key, mime, s3_bucket).await?;
+        let (checksum, file_size, width, height) = self
+            .upload_seed_image(file_path, &s3_key, mime, s3_bucket)
+            .await?;
 
         let is_cover = role == "cover";
 
@@ -1390,8 +1432,9 @@ impl SeedImporter {
         hasher.update(&bytes);
         let checksum = hex::encode(hasher.finalize());
 
-        let (width, height) = imagesize::size(file_path)
-            .map_or((None, None), |d| (Some(d.width as i32), Some(d.height as i32)));
+        let (width, height) = imagesize::size(file_path).map_or((None, None), |d| {
+            (Some(d.width as i32), Some(d.height as i32))
+        });
 
         let s3_client = self.s3_client.as_ref().unwrap();
         let byte_stream = aws_sdk_s3::primitives::ByteStream::from(bytes);
@@ -1402,6 +1445,330 @@ impl SeedImporter {
             .key(s3_key)
             .body(byte_stream)
             .content_type(mime)
+            .send()
+            .await
+            .map_err(|e| SeedError::S3(e.to_string()))?;
+
+        Ok((checksum, file_size, width, height))
+    }
+
+    async fn import_media_galleries(&self) -> Result<(), SeedError> {
+        if self.s3_client.is_none() || self.s3_bucket.is_none() {
+            return Ok(());
+        }
+
+        let path = self.seed_dir.join("media_galleries.json");
+        if !path.exists() {
+            return Ok(());
+        }
+
+        let entries: Vec<SeedMediaGalleryEntry> = self.read_file("media_galleries.json")?;
+        info!(
+            "Seed: importing {} production media galleries",
+            entries.len()
+        );
+
+        let mut imported = 0u32;
+        for entry in entries {
+            let production = match self
+                .db
+                .productions()
+                .by_source_id(entry.production_source_id)
+                .await
+                .map_err(DatabaseError::from)?
+            {
+                Some(production) => production,
+                None => {
+                    warn!(
+                        production_source_id = entry.production_source_id,
+                        "seed media gallery: production not found, skipping"
+                    );
+                    continue;
+                }
+            };
+
+            for item in entry.gallery.items {
+                match self
+                    .import_seed_media_item(
+                        item,
+                        production.production.id,
+                        entry.production_source_id,
+                        &entry.gallery_type,
+                    )
+                    .await
+                {
+                    Ok(true) => imported += 1,
+                    Ok(false) => {}
+                    Err(e) => warn!(
+                        production_source_id = entry.production_source_id,
+                        gallery_type = %entry.gallery_type,
+                        error = %e,
+                        "seed media gallery: failed to import media item, skipping"
+                    ),
+                }
+            }
+        }
+
+        info!("Seed: imported {imported} production media items");
+        Ok(())
+    }
+
+    async fn import_seed_media_item(
+        &self,
+        item: ApiMediaItem,
+        production_id: uuid::Uuid,
+        production_source_id: i32,
+        gallery_type: &str,
+    ) -> Result<bool, SeedError> {
+        let item_url = item.id.clone().unwrap_or_default();
+        let source_id = extract_source_id(&item_url);
+
+        if let Some(existing) = self
+            .db
+            .media()
+            .by_source_uri("viernulvier", &item_url)
+            .await
+            .map_err(DatabaseError::from)?
+        {
+            let is_cover = item.position == Some(0);
+            let role = if is_cover && gallery_type == "media" {
+                "cover"
+            } else {
+                media_role_from_gallery_type(gallery_type)
+            };
+            if is_cover {
+                self.db
+                    .media()
+                    .clear_cover(EntityType::Production, production_id)
+                    .await
+                    .map_err(DatabaseError::from)?;
+            }
+            self.db
+                .media()
+                .link_to_entity(
+                    EntityType::Production,
+                    production_id,
+                    existing.id,
+                    role,
+                    item.position.unwrap_or(999) as i32,
+                    is_cover,
+                )
+                .await
+                .map_err(DatabaseError::from)?;
+            return Ok(false);
+        }
+
+        let title_nl = item.title.nl;
+        let title_en = item.title.en;
+        let title_fr = item.title.fr;
+
+        let description_nl = item.description.nl;
+        let description_en = item.description.en;
+        let description_fr = item.description.fr;
+
+        let credit_nl = item.credits.nl;
+        let credit_en = item.credits.en;
+        let credit_fr = item.credits.fr;
+
+        let format = item.format.as_deref().unwrap_or("");
+        let format_info = get_format_info(format);
+        let mut cdn_url = item.link.nl.or(item.link.en).or(item.link.fr);
+        if cdn_url.is_none() {
+            for crop in &item.crops {
+                if let Some(url) = &crop.url
+                    && let Some(decoded) = decode_url_from_crop(url)
+                {
+                    cdn_url = Some(decoded);
+                    break;
+                }
+            }
+        }
+
+        if cdn_url.is_none() {
+            if let Some(hd_crop) = item.crops.iter().find(|c| {
+                c.name.as_deref() == Some("hd_ready") || c.name.as_deref() == Some("FE3_header")
+            }) {
+                cdn_url = hd_crop.url.clone();
+            } else if let Some(first_crop) = item.crops.first() {
+                cdn_url = first_crop.url.clone();
+            }
+        }
+
+        let Some(url) = cdn_url else {
+            warn!(
+                media_source_id = ?source_id,
+                "seed media gallery: media item has no downloadable URL, skipping"
+            );
+            return Ok(false);
+        };
+
+        let s3_client = self.s3_client.as_ref().unwrap();
+        let s3_bucket = self.s3_bucket.as_ref().unwrap();
+        let file_uuid = Uuid::now_v7();
+        let s3_key = format!(
+            "media/production/{production_source_id}/{gallery_type}/{file_uuid}.{}",
+            format_info.extension
+        );
+
+        let (checksum, file_size, width, height) = self
+            .download_and_upload_to_key(s3_client, s3_bucket, &url, &s3_key, format)
+            .await?;
+
+        let media = self
+            .db
+            .media()
+            .insert(MediaCreate {
+                s3_key,
+                mime_type: format_info.mime.to_string(),
+                file_size: Some(file_size),
+                width: item.width.map(|w| w as i32).or(width),
+                height: item.height.map(|h| h as i32).or(height),
+                checksum: Some(checksum),
+                alt_text_nl: title_nl,
+                alt_text_en: title_en,
+                alt_text_fr: title_fr,
+                description_nl,
+                description_en,
+                description_fr,
+                credit_nl,
+                credit_en,
+                credit_fr,
+                geo_latitude: None,
+                geo_longitude: None,
+                parent_id: None,
+                derivative_type: None,
+                gallery_type: Some(gallery_type.to_string()),
+                source_id,
+                source_system: "viernulvier".to_string(),
+                source_uri: Some(item_url),
+                source_updated_at: item.updated_at,
+            })
+            .await
+            .map_err(DatabaseError::from)?;
+
+        let is_cover = item.position == Some(0);
+        let role = if is_cover && gallery_type == "media" {
+            "cover"
+        } else {
+            media_role_from_gallery_type(gallery_type)
+        };
+        if is_cover {
+            self.db
+                .media()
+                .clear_cover(EntityType::Production, production_id)
+                .await
+                .map_err(DatabaseError::from)?;
+        }
+        self.db
+            .media()
+            .link_to_entity(
+                EntityType::Production,
+                production_id,
+                media.id,
+                role,
+                item.position.unwrap_or(999) as i32,
+                is_cover,
+            )
+            .await
+            .map_err(DatabaseError::from)?;
+
+        for crop in item.crops {
+            if let (Some(name), Some(url)) = (crop.name, crop.url)
+                && (name == "hd_ready" || name == "FE3_header")
+            {
+                let crop_uuid = Uuid::now_v7();
+                let crop_s3_key = format!(
+                    "media/production/{production_source_id}/{gallery_type}/crop_{name}_{crop_uuid}.{}",
+                    format_info.extension
+                );
+
+                match self
+                    .download_and_upload_to_key(s3_client, s3_bucket, &url, &crop_s3_key, format)
+                    .await
+                {
+                    Ok((checksum, file_size, width, height)) => {
+                        let upsert = database::repos::media_variant::CropVariantUpsert {
+                            media_id: media.id,
+                            crop_name: name.clone(),
+                            s3_key: crop_s3_key,
+                            mime_type: Some(format_info.mime.to_string()),
+                            file_size: Some(file_size),
+                            width,
+                            height,
+                            checksum: Some(checksum),
+                            source_uri: Some(url),
+                        };
+                        if let Err(err) = self.db.media_variants().upsert_crop(upsert).await {
+                            warn!(
+                                media_source_id = ?source_id,
+                                crop_name = %name,
+                                error = %err,
+                                "seed media gallery: failed to upsert crop variant"
+                            );
+                        }
+                    }
+                    Err(err) => warn!(
+                        media_source_id = ?source_id,
+                        crop_name = %name,
+                        error = %err,
+                        "seed media gallery: failed to download crop variant"
+                    ),
+                }
+            }
+        }
+
+        Ok(true)
+    }
+
+    async fn download_and_upload_to_key(
+        &self,
+        s3_client: &aws_sdk_s3::Client,
+        s3_bucket: &str,
+        source_url: &str,
+        s3_key: &str,
+        format: &str,
+    ) -> Result<(String, i64, Option<i32>, Option<i32>), SeedError> {
+        let response = self
+            .client
+            .get(source_url)
+            .send()
+            .await?
+            .error_for_status()?;
+        let temp_file = tempfile::Builder::new()
+            .prefix("viernulvier_seed_import_")
+            .tempfile()?;
+
+        let mut file = tokio::fs::File::from_std(temp_file.as_file().try_clone()?);
+        let mut hasher = Sha256::new();
+        let mut file_size = 0i64;
+        let mut stream = response.bytes_stream();
+
+        use tokio::io::AsyncWriteExt;
+        while let Some(chunk) = stream.next().await {
+            let chunk = chunk?;
+            file.write_all(&chunk).await?;
+            hasher.update(&chunk);
+            file_size += chunk.len() as i64;
+        }
+
+        file.flush().await?;
+        drop(file);
+
+        let checksum = hex::encode(hasher.finalize());
+        let (width, height) = imagesize::size(temp_file.path()).map_or((None, None), |d| {
+            (Some(d.width as i32), Some(d.height as i32))
+        });
+
+        let byte_stream = aws_sdk_s3::primitives::ByteStream::from_path(temp_file.path())
+            .await
+            .map_err(|e| SeedError::S3(e.to_string()))?;
+
+        s3_client
+            .put_object()
+            .bucket(s3_bucket)
+            .key(s3_key)
+            .body(byte_stream)
+            .content_type(get_format_info(format).mime)
             .send()
             .await
             .map_err(|e| SeedError::S3(e.to_string()))?;
