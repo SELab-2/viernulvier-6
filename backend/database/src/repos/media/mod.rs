@@ -569,9 +569,12 @@ impl<'a> MediaRepo<'a> {
         Ok(rows.into_iter().map(|r| r.0).collect())
     }
 
-    /// Batch-fetch the cover image s3_key for multiple entities of the same type.
-    /// Returns a map from entity_id -> s3_key. Only rows where is_cover_image = true
-    /// are considered, so entities without a designated cover return no entry.
+    /// Batch-fetch the preferred cover image s3_key for multiple entities of the same type.
+    /// Returns a map from entity_id -> s3_key.
+    ///
+    /// If an entity has a media row marked `is_cover_image = true`, that media item is used.
+    /// Otherwise, the first connected media item by `sort_order` is used as a deterministic fallback.
+    /// Entities without any connected media return no entry.
     pub async fn cover_s3_keys_for_entities(
         &self,
         entity_type: EntityType,
@@ -590,11 +593,14 @@ impl<'a> MediaRepo<'a> {
             JOIN media m ON m.id = em.media_id
             WHERE em.entity_type = $1
               AND em.entity_id = ANY($2)
-              AND em.is_cover_image = true
-            ORDER BY em.entity_id, em.sort_order ASC
+            ORDER BY
+                em.entity_id,
+                em.is_cover_image DESC,
+                em.sort_order ASC NULLS LAST,
+                em.media_id ASC
             "#,
         )
-        .bind(entity_type as EntityType)
+        .bind(entity_type)
         .bind(entity_ids)
         .fetch_all(self.db)
         .await?;
@@ -612,8 +618,8 @@ impl<'a> MediaRepo<'a> {
             SELECT
                 em.id, em.entity_type, em.entity_id, em.media_id,
                 em.role, em.sort_order, em.is_cover_image, em.created_at,
-                COALESCE(pt_en.title, a.title, ct_en.title, ar.name, l.name, st_en.name, ept_en.title) as title_en,
-                COALESCE(pt_nl.title, a.title, ct_nl.title, ar.name, l.name, st_nl.name, ept_nl.title) as title_nl
+                COALESCE(pt_en.title, a.title, ct_en.title, ar.name, l.name, ept_en.title) as title_en,
+                COALESCE(pt_nl.title, a.title, ct_nl.title, ar.name, l.name, ept_nl.title) as title_nl
             FROM entity_media em
             LEFT JOIN production_translations pt_en
                 ON em.entity_type = 'production' AND em.entity_id = pt_en.production_id AND pt_en.language_code = 'en'
@@ -629,10 +635,6 @@ impl<'a> MediaRepo<'a> {
                 ON em.entity_type = 'artist' AND em.entity_id = ar.id
             LEFT JOIN locations l
                 ON em.entity_type = 'location' AND em.entity_id = l.id
-            LEFT JOIN series_translations st_en
-                ON em.entity_type = 'series' AND em.entity_id = st_en.series_id AND st_en.language_code = 'en'
-            LEFT JOIN series_translations st_nl
-                ON em.entity_type = 'series' AND em.entity_id = st_nl.series_id AND st_nl.language_code = 'nl'
             LEFT JOIN events ev
                 ON em.entity_type = 'event' AND em.entity_id = ev.id
             LEFT JOIN production_translations ept_en
