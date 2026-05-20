@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import Image from "next/image";
+import { ResultCoverImage } from "@/components/shared/result-cover-image";
 import { useTranslations } from "next-intl";
 import { ChevronDown } from "lucide-react";
 import { Link } from "@/i18n/routing";
@@ -12,7 +12,6 @@ import { getLocalizedField } from "@/lib/locale";
 import { useGetEventsByProduction } from "@/hooks/api/useEvents";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EntityTagStrip } from "@/components/shared/entity-tag-strip";
-import { ImagePlaceholder } from "@/components/shared/image-placeholder";
 
 interface ProductionItemProps {
     production: Production;
@@ -110,19 +109,15 @@ export function ProductionItem({ production, locale }: ProductionItemProps) {
                 }`}
                 style={{ animation: "fadein 0.3s ease both" }}
             >
-                <div className="bg-muted relative h-[108px] w-[144px] shrink-0 overflow-hidden sm:h-[136px] sm:w-[180px]">
-                    {production.coverImageUrl ? (
-                        <Image
-                            src={production.coverImageUrl}
-                            alt={title}
-                            fill
-                            className="object-cover"
-                            sizes="180px"
-                        />
-                    ) : (
-                        <ImagePlaceholder className="h-full w-full" />
-                    )}
-                </div>
+                <ResultCoverImage
+                    entityType="production"
+                    entityId={production.id}
+                    coverImageUrl={production.coverImageUrl}
+                    alt={title}
+                    sizes="180px"
+                    wrapperClassName="bg-muted relative h-[108px] w-[144px] shrink-0 overflow-hidden sm:h-[136px] sm:w-[180px]"
+                    placeholderClassName="h-full w-full"
+                />
 
                 <div className="min-w-0 flex-1">
                     <Link
