@@ -100,6 +100,57 @@ describe("ResultCoverImage", () => {
         expect(screen.getByTestId("result-img")).toHaveAttribute("src", FALLBACK);
     });
 
+    it("advances to next media when the first fallback also errors", () => {
+        const SECOND_FALLBACK = "https://cdn.example/second.jpg";
+        useGetEntityMediaMock.mockReturnValue({
+            data: [{ url: FALLBACK }, { url: SECOND_FALLBACK }],
+        });
+
+        render(
+            <ResultCoverImage
+                entityType="production"
+                entityId="p5"
+                coverImageUrl={null}
+                alt="cover"
+                sizes="180px"
+                wrapperClassName={WRAPPER}
+            />
+        );
+
+        const first = screen.getByTestId("result-img");
+        expect(first).toHaveAttribute("src", FALLBACK);
+
+        fireEvent.error(first);
+
+        expect(screen.getByTestId("result-img")).toHaveAttribute("src", SECOND_FALLBACK);
+    });
+
+    it("renders the placeholder when the fallback media also errors and no more exist", () => {
+        useGetEntityMediaMock.mockReturnValue({
+            data: [{ url: FALLBACK }],
+        });
+
+        render(
+            <ResultCoverImage
+                entityType="production"
+                entityId="p6"
+                coverImageUrl={null}
+                alt="cover"
+                sizes="180px"
+                wrapperClassName={WRAPPER}
+                placeholderId="p6"
+            />
+        );
+
+        const img = screen.getByTestId("result-img");
+        expect(img).toHaveAttribute("src", FALLBACK);
+
+        fireEvent.error(img);
+
+        expect(screen.queryByTestId("result-img")).toBeNull();
+        expect(screen.getByTestId("image-placeholder")).toBeInTheDocument();
+    });
+
     it("renders the placeholder when no cover and no linked media exist", () => {
         useGetEntityMediaMock.mockReturnValue({ data: [] });
 

@@ -30,7 +30,8 @@ export function ResultCoverImage({
     placeholderId,
     placeholderClassName = "absolute inset-0",
 }: ResultCoverImageProps) {
-    const [coverFailed, setCoverFailed] = useState(false);
+    const [failedUrls, setFailedUrls] = useState<Set<string>>(() => new Set());
+    const coverFailed = !!coverImageUrl && failedUrls.has(coverImageUrl);
     const useFallback = !coverImageUrl || coverFailed;
 
     const { data: media } = useGetEntityMedia(entityType, entityId, {
@@ -38,10 +39,20 @@ export function ResultCoverImage({
     });
 
     const fallbackUrl = useFallback
-        ? (media?.find((m) => m.url && m.url !== coverImageUrl)?.url ?? null)
+        ? (media?.find((m) => m.url && m.url !== coverImageUrl && !failedUrls.has(m.url))?.url ??
+          null)
         : null;
 
     const src = useFallback ? fallbackUrl : coverImageUrl;
+
+    const handleError = (failedSrc: string) => {
+        setFailedUrls((prev) => {
+            if (prev.has(failedSrc)) return prev;
+            const next = new Set(prev);
+            next.add(failedSrc);
+            return next;
+        });
+    };
 
     return (
         <div className={wrapperClassName}>
@@ -53,9 +64,7 @@ export function ResultCoverImage({
                     fill
                     className={imageClassName}
                     sizes={sizes}
-                    onError={() => {
-                        if (!coverFailed) setCoverFailed(true);
-                    }}
+                    onError={() => handleError(src)}
                 />
             ) : (
                 <ImagePlaceholder id={placeholderId} className={placeholderClassName} />
