@@ -569,9 +569,12 @@ impl<'a> MediaRepo<'a> {
         Ok(rows.into_iter().map(|r| r.0).collect())
     }
 
-    /// Batch-fetch the cover image s3_key for multiple entities of the same type.
-    /// Returns a map from entity_id -> s3_key. Only rows where is_cover_image = true
-    /// are considered, so entities without a designated cover return no entry.
+    /// Batch-fetch the preferred cover image s3_key for multiple entities of the same type.
+    /// Returns a map from entity_id -> s3_key.
+    ///
+    /// If an entity has a media row marked `is_cover_image = true`, that media item is used.
+    /// Otherwise, the first connected media item by `sort_order` is used as a deterministic fallback.
+    /// Entities without any connected media return no entry.
     pub async fn cover_s3_keys_for_entities(
         &self,
         entity_type: EntityType,
@@ -590,11 +593,14 @@ impl<'a> MediaRepo<'a> {
             JOIN media m ON m.id = em.media_id
             WHERE em.entity_type = $1
               AND em.entity_id = ANY($2)
-              AND em.is_cover_image = true
-            ORDER BY em.entity_id, em.sort_order ASC
+            ORDER BY
+                em.entity_id,
+                em.is_cover_image DESC,
+                em.sort_order ASC NULLS LAST,
+                em.media_id ASC
             "#,
         )
-        .bind(entity_type as EntityType)
+        .bind(entity_type)
         .bind(entity_ids)
         .fetch_all(self.db)
         .await?;
